@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.intentions.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" exported="" />
@@ -208,5 +209,6 @@
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.ide" exported="" />
+    <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
   </component>
 </module>

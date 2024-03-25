@@ -1,9 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl
 
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ml.*
+import com.intellij.platform.ml.FeatureFilter.Companion.inverted
 import com.intellij.platform.ml.ScopeEnvironment.Companion.narrowedTo
+import com.intellij.platform.ml.impl.FeatureSelector.Companion.asFilter
 import com.intellij.platform.ml.impl.LogDrivenModelInference.SessionDetails.Companion.getLevels
 import com.intellij.platform.ml.impl.LogDrivenModelInference.SessionDetails.Companion.validate
 import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
@@ -14,9 +15,6 @@ import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener
 import com.intellij.platform.ml.impl.monitoring.MLSessionListener
 import com.intellij.platform.ml.impl.session.*
-import com.intellij.platform.ml.impl.session.analysis.MLModelAnalyser
-import com.intellij.platform.ml.impl.session.analysis.MLSessionAnalyser
-import com.intellij.platform.ml.impl.session.analysis.StructureAnalyser
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -44,15 +42,33 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
     }
 
     /**
-     * The analyzers, that are analyzing session's tree-like structure, giving additional features,
-     * not used by the ML model, to the nodes.
+     * Use this details for quick start with the ML API.
      */
-    val structureAnalysers: Collection<StructureAnalyser<M, P>>
+    abstract class Default<M : MLModel<P>, P : Any>(private val mlTask: MLTask<P>) : SessionDetails<M, P> {
+      /**
+       * Nothing is cached, all features are recomputed each time
+       */
+      override val descriptionComputer: DescriptionComputer
+        get() = StateFreeDescriptionComputer
 
-    /**
-     * The analyzers, that are giving features to the model, that was used during the session.
-     */
-    val mlModelAnalysers: Collection<MLModelAnalyser<M, P>>
+      override val additionallyDescribedTiers: List<Set<Tier<*>>>
+        get() = mlTask.levels.map { emptySet() }
+
+      /**
+       * All available features will be logged.
+       * If you know for sure that you won't use some features in your pipeline,
+       * you could remove such features from this function's return value.
+       * Then those [TierDescriptor]s won't be run, that are computing only 'useless' features
+       */
+      override fun getNotUsedDescription(callParameters: Environment, mlModel: M): PerTier<FeatureFilter> {
+        val allTiers: Set<Tier<*>> = mlTask.levels.flatten().toSet() + additionallyDescribedTiers.flatten()
+
+        return allTiers.associateWith { tier ->
+          val modelsFeatureSelector = mlModel.knownFeatures[tier] ?: return@associateWith FeatureFilter.ACCEPT_ALL
+          modelsFeatureSelector.asFilter().inverted()
+        }
+      }
+    }
 
     /**
      * Provides an ML model to use during session's lifetime.
@@ -123,20 +139,16 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
       return LogDrivenModelInference(task, apiPlatform, sessionDetails, this)
     }
 
-    override fun buildApproachSessionDeclaration(apiPlatform: MLApiPlatform): MLTaskApproach.SessionDeclaration {
+    override fun buildApproachSessionDeclaration(apiPlatform: MLApiPlatform): List<DescribedLevelScheme> {
       val sessionDetails = details.build(apiPlatform)
       sessionDetails.validate(task)
-      val sessionAnalyser = MLSessionAnalyser(sessionDetails.structureAnalysers, sessionDetails.mlModelAnalysers)
       val levels = (task.levels zip sessionDetails.additionallyDescribedTiers).map { LevelSignature(it.first, it.second) }
-      return MLTaskApproach.SessionDeclaration(
-        sessionFeatures = sessionAnalyser.sessionAnalysisDeclaration,
-        levelsScheme = levels.map { levelTiers ->
-          LevelSignature(
-            buildMainTiersScheme(sessionAnalyser, levelTiers.main, apiPlatform),
-            buildAdditionalTiersScheme(levelTiers.additional, apiPlatform),
-          )
-        }
-      )
+      return levels.map { levelTiers ->
+        DescribedLevelScheme(
+          buildTiersScheme(levelTiers.main, apiPlatform),
+          buildTiersScheme(levelTiers.additional, apiPlatform),
+        )
+      }
     }
 
     private fun buildTierDescriptionDeclaration(tierDescriptors: Collection<TierDescriptor>): Set<FeatureDeclaration<*>> {
@@ -145,24 +157,13 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
       }.toSet()
     }
 
-    private fun buildMainTiersScheme(sessionAnalyser: MLSessionAnalyser<M, P>, tiers: Set<Tier<*>>, apiEnvironment: MLApiPlatform): PerTier<MainTierScheme> {
+    private fun buildTiersScheme(tiers: Set<Tier<*>>, apiEnvironment: MLApiPlatform): PerTier<DescribedTierScheme> {
       val tiersDescriptors = apiEnvironment.getDescriptorsOfTiers(tiers)
 
       return tiers.associateWith { tier ->
         val tierDescriptors = tiersDescriptors.getValue(tier)
         val descriptionDeclaration = buildTierDescriptionDeclaration(tierDescriptors)
-        val analysisDeclaration = sessionAnalyser.structureAnalysisDeclaration[tier] ?: emptySet()
-        MainTierScheme(descriptionDeclaration, analysisDeclaration)
-      }
-    }
-
-    private fun buildAdditionalTiersScheme(tiers: Set<Tier<*>>, apiEnvironment: MLApiPlatform): PerTier<AdditionalTierScheme> {
-      val tiersDescriptors = apiEnvironment.getDescriptorsOfTiers(tiers)
-
-      return tiers.associateWith { tier ->
-        val tierDescriptors = tiersDescriptors.getValue(tier)
-        val descriptionDeclaration = buildTierDescriptionDeclaration(tierDescriptors)
-        AdditionalTierScheme(descriptionDeclaration)
+        DescribedTierScheme(descriptionDeclaration)
       }
     }
   }
@@ -172,7 +173,7 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
   }
 
   private suspend fun startSessionMonitoring(callParameters: Environment, permanentSessionEnvironment: Environment): Session.StartOutcome<P> {
-    val approachListener = apiPlatform.getJoinedListenerForTask<M, P>(thisBuilder, permanentSessionEnvironment)
+    val approachListener = apiPlatform.getJoinedListenerForTask<M, P>(thisBuilder, callParameters, permanentSessionEnvironment)
     try {
       return acquireModelAndStartSession(callParameters, permanentSessionEnvironment, approachListener)
     }
@@ -200,15 +201,8 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
 
     var sessionListener: MLSessionListener<M, P>? = null
 
-    val sessionAnalyser = MLSessionAnalyser(sessionDetails.structureAnalysers, sessionDetails.mlModelAnalysers)
-
     val analyseThenLogStructure = SessionTreeHandler<DescribedRootContainer<M, P>, M, P> { treeRoot ->
       sessionListener?.onSessionDescriptionFinished(treeRoot)
-      sessionAnalyser.analyseSessionStructure(treeRoot).thenApplyAsync { analysedSession ->
-        sessionListener?.onSessionAnalysisFinished(analysedSession)
-      }.exceptionally {
-        thisLogger().error(it)
-      }
     }
 
     val notUsedDescription = sessionDetails.getNotUsedDescription(callParameters, mlModel)
@@ -231,7 +225,7 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
       MLModelPredictionBranching(mlModel, collector)
     }
 
-    sessionListener = approachListener.onStartedSession(session)
+    sessionListener = approachListener.onStartedSession(session, mlModel)
 
     return Session.StartOutcome.Success(session)
   }

@@ -423,7 +423,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   }
 
   static void assertEqualsFileText(@NotNull String expectedFile, @NotNull String actual) {
-    String actualText = replaceEnvironmentDependentContent(actual);
+    String actualText = replaceEnvironmentDependentContent(actual).replaceAll("[ \t]+\\n", "\n");
     File htmlPath = new File(expectedFile);
     String expectedText = loadFile(htmlPath);
     if (!StringUtil.equals(expectedText, actualText)) {

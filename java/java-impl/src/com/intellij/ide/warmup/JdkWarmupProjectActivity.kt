@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.warmup
 
 import com.intellij.execution.environment.JvmEnvironmentKeyProvider
@@ -14,24 +14,24 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
 
-class JdkWarmupProjectActivity : ProjectActivity {
-
+internal class JdkWarmupProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (!Registry.`is`("ide.warmup.use.predicates")) {
-      return
+    if (Registry.`is`("ide.warmup.use.predicates")) {
+      configureJdk(project)
     }
-    configureJdk(project)
   }
 
   suspend fun configureJdk(project: Project) {
-    if (WarmupStatus.currentStatus(ApplicationManager.getApplication()) != WarmupStatus.InProgress) {
+    if (WarmupStatus.currentStatus() != WarmupStatus.InProgress) {
       return
     }
+
     val configuredJdk = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_KEY, SENTINEL)
     if (configuredJdk == SENTINEL) {
       println("Environment does not provide configured JDK")
       return
     }
+
     val configuredJdkPath = Path.of(configuredJdk)
     val jdkName = serviceAsync<EnvironmentService>().getEnvironmentValue(JvmEnvironmentKeyProvider.Keys.JDK_NAME, "warmup_jdk")
     val jdk = JavaSdk.getInstance().createJdk(jdkName, configuredJdkPath.toString())

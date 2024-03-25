@@ -4,14 +4,13 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.sealedInheritors
 import com.google.gson.JsonObject
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.analysis.providers.KotlinSealedInheritorsProviderFactory
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.projectStructureTest.AbstractProjectStructureTest
-import org.jetbrains.kotlin.idea.test.projectStructureTest.ModulesByName
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectLibrary
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectModule
 import org.jetbrains.kotlin.idea.test.projectStructureTest.TestProjectStructure
@@ -21,20 +20,19 @@ import org.jetbrains.kotlin.psi.KtClass
 import java.io.File
 import kotlin.io.path.Path
 
-abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTest<SealedInheritorsProviderTestProjectStructure>() {
+abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTest<SealedInheritorsProviderTestProjectStructure>(
+    SealedInheritorsProviderTestProjectStructureParser,
+) {
     override fun isFirPlugin(): Boolean = true
 
     override fun getTestDataDirectory(): File =
-        KotlinRoot.DIR.resolve("fir-low-level-api-ide-impl").resolve("testData").resolve("sealedInheritors")
+        KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("sealedInheritors")
 
-    protected fun doTest(testDirectory: String) {
-        val (testStructure, _, modulesByName) =
-            initializeProjectStructure(testDirectory, SealedInheritorsProviderTestProjectStructureParser)
-
-        testStructure.targets.forEach { checkTargetFile(it, modulesByName, testDirectory) }
+    override fun doTestWithProjectStructure(testDirectory: String) {
+        testProjectStructure.targets.forEach { checkTargetFile(it, testDirectory) }
     }
 
-    private fun checkTargetFile(testTarget: SealedInheritorsProviderTestTarget, modulesByName: ModulesByName, testDirectory: String) {
+    private fun checkTargetFile(testTarget: SealedInheritorsProviderTestTarget, testDirectory: String) {
         val module = modulesByName[testTarget.moduleName] ?: error("The target module `${testTarget.moduleName}` does not exist.")
         val ktFile = module.findSourceKtFile(testTarget.filePath)
 
@@ -50,9 +48,13 @@ abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTe
     private fun resolveActualInheritors(targetClass: KtClass): List<ClassId> = runBlocking {
         readAction {
             assertTrue("Expected the target type `${targetClass.classIdIfNonLocal}` to be sealed.", targetClass.isSealed())
-            KotlinSealedInheritorsProviderFactory.getInstance(project)!!
-                .createSealedInheritorsProvider()
-                .getSealedInheritors(targetClass)
+
+            analyze(targetClass) {
+                val classSymbol = targetClass.getNamedClassOrObjectSymbol()
+                    ?: error("Expected the target class `${targetClass.classIdIfNonLocal}` to have a class or object symbol.")
+
+                classSymbol.getSealedClassInheritors().map { it.classIdIfNonLocal ?: error("Sealed class inheritors should not be local.") }
+            }
         }
     }
 }

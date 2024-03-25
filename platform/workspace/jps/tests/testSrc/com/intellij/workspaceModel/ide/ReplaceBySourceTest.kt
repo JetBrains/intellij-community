@@ -64,16 +64,16 @@ class ReplaceBySourceTest {
                                                                 moduleEntity.entitySource) {
       module = moduleEntity
     }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl2), "", source) {
+    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl2), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
       contentRoot = contentRootEntity
     }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl3), "", source) {
+    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl3), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
       contentRoot = contentRootEntity
     }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl4), "", source) {
+    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl4), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
       contentRoot = contentRootEntity
     }
-    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl5), "", source) {
+    builder addEntity SourceRootEntity(virtualFileManager.getOrCreateFromUrl(fileUrl5), DEFAULT_SOURCE_ROOT_TYPE_ID, source) {
       contentRoot = contentRootEntity
     }
     return builder

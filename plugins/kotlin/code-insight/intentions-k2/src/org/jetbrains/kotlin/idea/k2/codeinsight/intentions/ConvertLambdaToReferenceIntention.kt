@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -13,16 +14,13 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getCallReferencedName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getSafeReferencedName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.isArgument
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -31,16 +29,21 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertLambdaToReferenceIntention :
-    AbstractKotlinModCommandWithContext<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
+    KotlinApplicableModCommandAction<KtLambdaExpression, ConvertLambdaToReferenceIntention.Context>(KtLambdaExpression::class) {
 
     data class Context(
-        val newElement: SmartPsiElementPointer<KtElement>, val renderedPropertyType: String?, val renderedTypeArguments: String?
+        val newElement: SmartPsiElementPointer<KtElement>,
+        val renderedPropertyType: String?,
+        val renderedTypeArguments: String?,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.lambda.to.reference.before.text")
-    override fun getActionName(element: KtLambdaExpression, context: Context): String = KotlinBundle.message("convert.lambda.to.reference")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtLambdaExpression> = ApplicabilityRanges.SELF
+    override fun getActionName(
+        context: ActionContext,
+        element: KtLambdaExpression,
+        elementContext: Context,
+    ): String = KotlinBundle.message("convert.lambda.to.reference")
 
     override fun isApplicableByPsi(element: KtLambdaExpression): Boolean {
         val singleStatement = element.singleStatementOrNull() ?: return false
@@ -132,11 +135,15 @@ internal class ConvertLambdaToReferenceIntention :
         }
     }
 
-    override fun apply(element: KtLambdaExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
-        val analyzeContext = context.analyzeContext
-        val newElement = analyzeContext.newElement.element ?: return
+    override fun invoke(
+        context: ActionContext,
+        element: KtLambdaExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        val newElement = elementContext.newElement.element ?: return
         val parent = element.parent
-        val renderedPropertyType = analyzeContext.renderedPropertyType
+        val renderedPropertyType = elementContext.renderedPropertyType
 
         if (parent is KtProperty && renderedPropertyType != null) {
             parent.typeReference = KtPsiFactory(element.project).createType(renderedPropertyType)
@@ -145,8 +152,8 @@ internal class ConvertLambdaToReferenceIntention :
 
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
         if (outerCallExpression != null) {
-            analyzeContext.renderedTypeArguments?.let {
-                addTypeArguments(outerCallExpression, it, context.actionContext.project)
+            elementContext.renderedTypeArguments?.let {
+                addTypeArguments(outerCallExpression, it, context.project)
                 outerCallExpression.typeArgumentList?.let(::shortenReferences)
             }
         }

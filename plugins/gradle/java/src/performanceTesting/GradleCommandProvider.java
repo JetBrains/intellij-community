@@ -5,17 +5,24 @@ import com.jetbrains.performancePlugin.CommandProvider;
 import com.jetbrains.performancePlugin.CreateCommand;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.Map;
 
 final class GradleCommandProvider implements CommandProvider {
   @Override
   public @NotNull Map<String, CreateCommand> getCommands() {
-    return Map.of(ImportGradleProjectCommand.PREFIX, ImportGradleProjectCommand::new,
-                  ExecuteGradleTaskCommand.PREFIX, ExecuteGradleTaskCommand::new,
-                  LinkGradleProjectCommand.PREFIX, LinkGradleProjectCommand::new,
-                  UnlinkGradleProjectCommand.PREFIX, UnlinkGradleProjectCommand::new,
-                  SetGradleJdkCommand.PREFIX, SetGradleJdkCommand::new,
-                  DownloadGradleSourcesCommand.PREFIX, DownloadGradleSourcesCommand::new,
-                  SetGradleDelegatedBuildCommand.PREFIX, SetGradleDelegatedBuildCommand::new);
+    return new HashMap<>() {{
+      put(ImportGradleProjectCommand.PREFIX, ImportGradleProjectCommand::new);
+      put(ExecuteGradleTaskCommand.PREFIX, ExecuteGradleTaskCommand::new);
+      put(LinkGradleProjectCommand.PREFIX, LinkGradleProjectCommand::new);
+      put(UnlinkGradleProjectCommand.PREFIX, UnlinkGradleProjectCommand::new);
+      put(SetGradleJdkCommand.PREFIX, SetGradleJdkCommand::new);
+      put(DownloadGradleSourcesCommand.PREFIX, DownloadGradleSourcesCommand::new);
+      put(SetGradleDelegatedBuildCommand.PREFIX, SetGradleDelegatedBuildCommand::new);
+      put(SetBuildToolsAutoReloadTypeCommand.PREFIX, SetBuildToolsAutoReloadTypeCommand::new);
+      put(ProjectNotificationAwareShouldBeVisibleCommand.PREFIX, ProjectNotificationAwareShouldBeVisibleCommand::new);
+      put(RefreshProjectCommand.PREFIX, RefreshProjectCommand::new);
+      put(CreateGradleProjectCommand.PREFIX, CreateGradleProjectCommand::new);
+    }};
   }
 }

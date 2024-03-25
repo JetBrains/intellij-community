@@ -1,4 +1,3 @@
-//class
 class Foo {}
 class Bar {
     void bar() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typing;
 
 import com.intellij.lang.Language;
@@ -48,9 +48,8 @@ public final class PyTypingAnnotationInjector extends PyInjectorBase {
     return result;
   }
 
-  @Nullable
   @Override
-  public Language getInjectedLanguage(@NotNull PsiElement context) {
+  public @Nullable Language getInjectedLanguage(@NotNull PsiElement context) {
     if (context instanceof PyStringLiteralExpression expr) {
       final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
       if (isTypingLiteralArgument(expr, typeEvalContext) || isTypingAnnotatedMetadataArgument(expr, typeEvalContext)) {
@@ -78,9 +77,8 @@ public final class PyTypingAnnotationInjector extends PyInjectorBase {
     return isExplicitTypeAlias(assignment, TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile()));
   }
 
-  @NotNull
-  private static PyInjectionUtil.InjectionResult registerCommentInjection(@NotNull MultiHostRegistrar registrar,
-                                                                          @NotNull PsiLanguageInjectionHost host) {
+  private static @NotNull PyInjectionUtil.InjectionResult registerCommentInjection(@NotNull MultiHostRegistrar registrar,
+                                                                                   @NotNull PsiLanguageInjectionHost host) {
     final String text = host.getText();
     final String annotationText = getTypeCommentValue(text);
     if (annotationText != null) {

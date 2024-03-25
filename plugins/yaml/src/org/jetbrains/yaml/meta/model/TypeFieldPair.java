@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -6,23 +6,19 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class TypeFieldPair {
-  @NotNull
-  private final Field myField;
-  @NotNull
-  private final YamlMetaType myOwnerClass;
+  private final @NotNull Field myField;
+  private final @NotNull YamlMetaType myOwnerClass;
 
   public TypeFieldPair(@NotNull YamlMetaType ownerClass, @NotNull Field field) {
     myField = field;
     myOwnerClass = ownerClass;
   }
 
-  @NotNull
-  public YamlMetaType getMetaType() {
+  public @NotNull YamlMetaType getMetaType() {
     return myOwnerClass;
   }
 
-  @NotNull
-  public Field getField() {
+  public @NotNull Field getField() {
     return myField;
   }
 }

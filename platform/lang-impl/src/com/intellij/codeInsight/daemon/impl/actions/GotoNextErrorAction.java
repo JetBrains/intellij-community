@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.GotoNextErrorHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.inspections.actions.TrafficLightGroup;
+import com.intellij.openapi.editor.impl.inspector.InspectionsGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -34,7 +34,7 @@ public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAw
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    LOGGER.debug("GotoNextErrorAction: "+ e.getData(TrafficLightGroup.Companion.getINSPECTION_TYPED_ERROR()));
+    LOGGER.debug("GotoNextErrorAction: "+ e.getData(InspectionsGroup.Companion.getINSPECTION_TYPED_ERROR()));
     super.actionPerformed(e);
   }
 

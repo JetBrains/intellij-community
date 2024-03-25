@@ -1,7 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.logging;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
 public class StringConcatenationArgumentToLogCallInspectionTest extends LightJavaInspectionTestCase {
@@ -13,41 +18,58 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
   }
 
   @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    HighlightDisplayKey displayKey = HighlightDisplayKey.find(getInspection().getShortName());
+    Project project = getProject();
+    InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(project).getCurrentProfile();
+    currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);
+  }
+
+  @Override
   protected String[] getEnvironmentClasses() {
     return new String[]{
-      "package org.slf4j;" +
-      "public interface Logger { " +
-      "  void debug(String format, Object... arguments); " +
-      "  void info(String format, Object... arguments);" +
-      "}",
+      """
+      package org.slf4j;
+      public interface Logger {\s
+        void debug(String format, Object... arguments);
+        void info(String format, Object... arguments);
+      }""",
 
-      "package org.slf4j; " +
-      "public class LoggerFactory {" +
-      "  public static Logger getLogger(Class clazz) {" +
-      "    return null; " +
-      "  }" +
-      "}",
+      """
+      package org.slf4j;\s
+      public class LoggerFactory {
+        public static Logger getLogger(Class clazz) {
+          return null;\s
+        }
+      }""",
 
-      "package org.apache.logging.log4j;" +
-      "public interface Logger {" +
-      "  void info(String var2);" +
-      "  void fatal(String var1);" +
-      "  LogBuilder atDebug();" +
-      "  LogBuilder atInfo();" +
-      "}",
+      """
+      package org.apache.logging.log4j;
+      public interface Logger {
+        void info(String var2);
+        void fatal(String var1);
+        LogBuilder atDebug();
+        LogBuilder atInfo();
+      }""",
 
-      "package org.apache.logging.log4j;" +
-      "public class LogManager {" +
-      "  public static Logger getLogger() {" +
-      "    return null;" +
-      "  }" +
-      "}",
+      """
+      package org.apache.logging.log4j;
+      public class LogManager {
+        public static Logger getLogger() {
+          return null;
+        }
+        public static Logger getFormattedLogger() {
+          return null;
+        }
+      }""",
 
-      "package org.apache.logging.log4j;" +
-      "public interface LogBuilder {" +
-      "  void log(String format, Object p0);" +
-      "  void log(String format, Object... params);" +
-      "}"
+      """
+      package org.apache.logging.log4j;
+      public interface LogBuilder {
+        void log(String format, Object p0);
+        void log(String format, Object... params);
+      }"""
     };
   }
 
@@ -66,34 +88,51 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
   }
 
   public void testWarnLevel() {
-    doTest("import org.slf4j.*;" +
-           "class X {" +
-           "  Logger LOG = LoggerFactory.getLogger(X.class);" +
-           "  void foo(String s) {" +
-           "    LOG.info(\"value: \" + s);" +
-           "  }" +
-           "}");
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               Logger LOG = LoggerFactory.getLogger(X.class);
+               void foo(String s) {
+                 LOG.info("value: " + s);
+               }
+             }""");
   }
 
   public void testLog4j2() {
-    doTest("import org.apache.logging.log4j.*;" +
-           "class Logging {" +
-           "  private static final Logger LOG = LogManager.getLogger();" +
-           "  void m(int i) {" +
-           "    LOG./*Non-constant string concatenation as argument to 'info()' logging call*/info/**/(\"hello? \" + i);" +
-           "    LOG./*Non-constant string concatenation as argument to 'fatal()' logging call*/fatal/**/(\"you got me \" + i);" +
-           "  }" +
-           "}");
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                 LOG./*Non-constant string concatenation as argument to 'info()' logging call*/info/**/("hello? " + i);
+                 LOG./*Non-constant string concatenation as argument to 'fatal()' logging call*/fatal/**/("you got me " + i);
+               }
+             }""");
+  }
+
+  public void testLog4j2FormattedLogger() {
+    doTest("""
+             import org.apache.logging.log4j.*;
+             
+             class Log4JFormatted {
+             
+               private static final Logger logger = LogManager.getFormattedLogger();
+             
+               public static void m(String a) {
+                 logger./*Non-constant string concatenation as argument to 'info()' logging call*/info/**/("1" + "2" + a);
+                                       }
+             }""");
   }
 
   public void testLog4j2LogBuilder() {
-    doTest("import org.apache.logging.log4j.*;" +
-           "class Logging {" +
-           "  private static final Logger LOG = LogManager.getLogger();" +
-           "  void m(int i) {" +
-           "    LOG.atDebug()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/(\"hello? \" + i);" +
-           "    LOG.atInfo()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/(\"you got me \" + i);" +
-           "  }" +
-           "}");
+    doTest("""
+             import org.apache.logging.log4j.*;
+             class Logging {
+               private static final Logger LOG = LogManager.getLogger();
+               void m(int i) {
+                 LOG.atDebug()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/("hello? " + i);
+                 LOG.atInfo()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/("you got me " + i);
+               }
+             }""");
   }
 }

@@ -2,61 +2,82 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.platform.backend.observation.Observation
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.jetbrains.rd.util.AtomicInteger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
-import java.util.concurrent.Callable
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = Logger.getInstance(ProjectIndexableFilesFilterHealthCheck::class.java)
 
 internal typealias FileId = Int
 private fun FileId.fileInfo(): String = "file id=$this path=${PersistentFS.getInstance().findFileById(this)?.path}"
 
-internal class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val filter: ProjectIndexableFilesFilter) {
-  private val attemptsCount = AtomicInteger()
-  private val successfulAttemptsCount = AtomicInteger()
-  @Volatile
-  private var healthCheckFuture: ScheduledFuture<*>? = null
-
-  fun setUpHealthCheck() {
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
-      healthCheckFuture = AppExecutorUtil
-        .getAppScheduledExecutorService()
-        .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable("Index files filter health check for project ${project.name}") {
-          runHealthCheck()
-        }, 5, 5, TimeUnit.MINUTES)
+private class ProjectIndexableFilesFilterHealthCheckStarter : ProjectActivity {
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
     }
   }
 
-  fun triggerHealthCheck() {
+  override suspend fun execute(project: Project) {
+    val delay = if (ApplicationManagerEx.isInIntegrationTest()) 1.minutes else 5.minutes
+    // don't get service too early
+    delay(delay)
+    val healthCheck = project.serviceAsync<ProjectIndexableFilesFilterHealthCheck>()
+    while (true) {
+      healthCheck.launchHealthCheck()
+      delay(delay)
+    }
+  }
+}
+
+@Service(Service.Level.PROJECT)
+class ProjectIndexableFilesFilterHealthCheck(private val project: Project, private val coroutineScope: CoroutineScope) {
+  private val isRunning = AtomicBoolean()
+  private val attemptsCount = AtomicInteger()
+  private val cancelledAttemptsCount = AtomicInteger()
+  private val successfulAttemptsCount = AtomicInteger()
+
+  fun launchHealthCheck() {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
 
-    stopHealthCheck()
-    AppExecutorUtil.getAppExecutorService().submit {
+    coroutineScope.launch {
+      if (!isRunning.compareAndSet(false, true)) {
+        return@launch
+      }
       try {
         runHealthCheck()
       }
       finally {
-        setUpHealthCheck()
+        isRunning.set(false)
       }
     }
   }
@@ -70,29 +91,52 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
    *    This is fine because files can be removed from workspace, but we clear indexes for them lazily
    * 2. False negatives - files that were NOT found in filter but were iterated by [FileBasedIndexImpl.iterateIndexableFiles]
    */
-  @Synchronized // don't allow two parallel health checks in case of triggerHealthCheck()
-  private fun runHealthCheck() {
+  private suspend fun runHealthCheck() {
     if (!IndexInfrastructure.hasIndices()) return
+    val filter = (FileBasedIndex.getInstance() as? FileBasedIndexImpl)?.indexableFilesFilterHolder?.getProjectIndexableFiles(project)
+                 ?: return
 
     try {
       val attemptNumber = attemptsCount.incrementAndGet()
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, attemptNumber)
+      val startTime = System.currentTimeMillis()
 
-      val (nonIndexableFilesInFilter, indexableFilesNotInFilter) = doRunHealthCheckInReadAction()
+      Observation.awaitConfiguration(project) // wait for project import IDEA-348501
+      val res: HealthCheckResult = smartReadActionWithDelays(5.seconds, 20) {
+        try {
+          runHealthCheck(project, filter)
+        }
+        catch (e: FilterActionCancelledException) {
+          HealthCheckCancelled(e.reason)
+        }
+      }
+      when (res) {
+        is HealthCheckFinished -> {
+          res.nonIndexableFilesInFilter.fix(filter)
+          res.indexableFilesNotInFilter.fix(filter)
 
-      nonIndexableFilesInFilter.fix(filter)
-      indexableFilesNotInFilter.fix(filter)
+          IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(
+            project,
+            filter,
+            attemptNumber,
+            successfulAttemptsCount.incrementAndGet(),
+            (System.currentTimeMillis() - startTime).toInt(),
+            res.nonIndexableFilesInFilter.size,
+            res.indexableFilesNotInFilter.size)
 
-      IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheck(
-        project,
-        filter,
-        attemptNumber,
-        successfulAttemptsCount.incrementAndGet(),
-        nonIndexableFilesInFilter.size,
-        indexableFilesNotInFilter.size)
-
-      nonIndexableFilesInFilter.logMessage()
-      indexableFilesNotInFilter.logMessage()
+          res.nonIndexableFilesInFilter.logMessage()
+          res.indexableFilesNotInFilter.logMessage()
+        }
+        is HealthCheckCancelled -> {
+          IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckCancelled(
+            project,
+            filter,
+            attemptNumber,
+            cancelledAttemptsCount.incrementAndGet(),
+            (System.currentTimeMillis() - startTime).toInt(),
+            res.reason)
+        }
+      }
     }
     catch (_: ProcessCanceledException) {
 
@@ -102,13 +146,28 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
     }
   }
 
-  private fun doRunHealthCheckInReadAction(): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
-    return ReadAction.nonBlocking(::doRunHealthCheck).inSmartMode(project).executeSynchronously()
+  private suspend fun smartReadActionWithDelays(delay: Duration, attemptsAtATime: Int, action: () -> HealthCheckResult): HealthCheckResult {
+    while (true) {
+      val res = smartReadActionWithMaxAttempts(attemptsAtATime, action)
+      if (res != null) {
+        return res
+      }
+      delay(delay) // allow a batch of write actions to finish
+    }
   }
 
-  private fun doRunHealthCheck(): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
-    return runIfScanningScanningIsCompleted(project) {
-      filter.runAndCheckThatNoChangesHappened {
+  private suspend fun smartReadActionWithMaxAttempts(maxAttemptsCount: Int, action: () -> HealthCheckResult): HealthCheckResult? {
+    val attemptsCount = AtomicInteger(0)
+
+    return smartReadAction(project) {
+      if (attemptsCount.getAndIncrement() > maxAttemptsCount) null
+      else action()
+    }
+  }
+
+  private fun runHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): HealthCheckResult {
+    return filter.runAndCheckThatNoChangesHappened {
+      runIfScanningScanningIsCompleted(project) {
         // It is possible that scanning will start and finish while we are performing healthcheck,
         // but then healthcheck will be terminated by the fact that filter was update.
         // If it was not updated, then we don't care that scanning happened, and we can trust healthcheck result
@@ -128,7 +187,7 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
    */
   private fun doRunHealthCheck(project: Project,
                                checkAllExpectedIndexableFiles: Boolean,
-                               fileStatuses: Sequence<Pair<FileId, Boolean>>): Pair<NonIndexableFilesInFilterGroup, IndexableFilesNotInFilterGroup> {
+                               fileStatuses: Sequence<Pair<FileId, Boolean>>): HealthCheckFinished {
     val nonIndexableFilesInFilter = mutableListOf<FileId>()
     val indexableFilesNotInFilter = mutableListOf<FileId>()
 
@@ -156,40 +215,51 @@ internal class ProjectIndexableFilesFilterHealthCheck(private val project: Proje
       }
     }
 
-    return NonIndexableFilesInFilterGroup(nonIndexableFilesInFilter) to
-      IndexableFilesNotInFilterGroup(indexableFilesNotInFilter, shouldBeIndexable)
+    return HealthCheckFinished(NonIndexableFilesInFilterGroup(nonIndexableFilesInFilter),
+                               IndexableFilesNotInFilterGroup(indexableFilesNotInFilter, shouldBeIndexable))
   }
 
   private fun getFilesThatShouldBeIndexable(project: Project): IndexableFiles {
     val indexableFiles = IndexableFiles()
-    iterateIndexableFiles(project) { provider, fileSet ->
-      indexableFiles.add(fileSet, provider)
-    }
+    getFilesThatShouldBeIndexable(project, if (shouldLogProviders) IndexableFilesSetWithProvidersHandler(indexableFiles) else IndexableFilesSetHandler(indexableFiles))
     return indexableFiles
   }
 
-  private fun iterateIndexableFiles(project: Project, processor: (IndexableFilesIterator, BitSet) -> Unit) {
+  private fun <T> getFilesThatShouldBeIndexable(project: Project, handler: FilesSetHandler<T>) {
     val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
     val providers = index.getIndexableFilesProviders(project)
     for (provider in providers) {
-      val set = BitSet()
+      val state: T = handler.createStateForProvider()
       val outerProcessor = ContentIterator {
         if (it is VirtualFileWithId) {
           ProgressManager.checkCanceled()
-          set.set(it.id)
+          handler.addToState(state, it.id)
         }
         true
       }
       ProgressManager.checkCanceled()
       provider.iterateFiles(project, outerProcessor, VirtualFileFilter.ALL)
-      processor(provider, set)
+      handler.flushState(state, provider)
     }
   }
+}
 
-  fun stopHealthCheck() {
-    healthCheckFuture?.cancel(true)
-    healthCheckFuture = null
-  }
+private interface FilesSetHandler<T> {
+  fun createStateForProvider(): T
+  fun addToState(state: T, id: FileId)
+  fun flushState(state: T, iterator: IndexableFilesIterator)
+}
+
+private class IndexableFilesSetWithProvidersHandler(val indexableFiles: IndexableFiles) : FilesSetHandler<BitSet> {
+  override fun createStateForProvider(): BitSet = BitSet()
+  override fun addToState(state: BitSet, id: FileId) = state.set(id)
+  override fun flushState(state: BitSet, iterator: IndexableFilesIterator) = indexableFiles.add(state, iterator)
+}
+
+private class IndexableFilesSetHandler(val indexableFiles: IndexableFiles) : FilesSetHandler<Unit> {
+  override fun createStateForProvider() = Unit
+  override fun addToState(state: Unit, id: FileId) = indexableFiles.add(id)
+  override fun flushState(state: Unit, iterator: IndexableFilesIterator) = Unit
 }
 
 private sealed class HealthCheckErrorGroup(val fileIds: List<FileId>, val message: String) {
@@ -202,11 +272,13 @@ private sealed class HealthCheckErrorGroup(val fileIds: List<FileId>, val messag
     }
   }
 
-  fun logMessage() {
+  suspend fun logMessage() {
     if (fileIds.isEmpty()) return
 
-    val message = "${message}. Errors count: ${fileIds.size}. Examples:\n" + fileIds.joinToString("\n", limit = 5) { error ->
-      ReadAction.nonBlocking(Callable { fileInfo(error) }).executeSynchronously()
+    val message = readAction {
+      "${message}. Errors count: ${fileIds.size}. Examples:\n" + fileIds.joinToString("\n", limit = 5) { error ->
+        fileInfo(error)
+      }
     }
     log(message)
   }
@@ -230,6 +302,8 @@ private class NonIndexableFilesInFilterGroup(files: List<FileId>) : HealthCheckE
   }
 }
 
+private val shouldLogProviders = SystemProperties.getBooleanProperty("project.indexable.files.filter.health.check.log.provider", false) // may consume too much memory
+
 private class IndexableFilesNotInFilterGroup(files: List<FileId>, private val shouldBeIndexableFiles: IndexableFiles) : HealthCheckErrorGroup(files, "Following files are indexable but they were NOT found in filter") {
   override fun fix(fileId: FileId, filter: ProjectIndexableFilesFilter) {
     filter.ensureFileIdPresent(fileId) { true }
@@ -240,7 +314,8 @@ private class IndexableFilesNotInFilterGroup(files: List<FileId>, private val sh
   }
 
   override fun fileInfo(fileId: FileId): String {
-    return "${fileId.fileInfo()} provider=${shouldBeIndexableFiles.getProvider(fileId)?.debugName}"
+    return if (shouldLogProviders) "${fileId.fileInfo()} provider=${shouldBeIndexableFiles.getProvider(fileId)?.debugName}"
+    else fileId.fileInfo()
   }
 }
 
@@ -249,6 +324,10 @@ private class IndexableFiles {
   private val perProvider: MutableList<Pair<IndexableFilesIterator, BitSet>> = mutableListOf()
 
   val size = allFiles.size()
+
+  fun add(fileId: FileId) {
+    allFiles.set(fileId)
+  }
 
   fun add(fileSet: BitSet, provider: IndexableFilesIterator) {
     allFiles.or(fileSet)
@@ -263,3 +342,8 @@ private class IndexableFiles {
     return perProvider.find { it.second.get(fileId) }?.first
   }
 }
+
+sealed interface HealthCheckResult
+
+private class HealthCheckFinished(val nonIndexableFilesInFilter: NonIndexableFilesInFilterGroup, val indexableFilesNotInFilter: IndexableFilesNotInFilterGroup) : HealthCheckResult
+private class HealthCheckCancelled(val reason: FilterActionCancellationReason) : HealthCheckResult

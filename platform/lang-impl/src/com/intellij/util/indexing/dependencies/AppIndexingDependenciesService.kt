@@ -98,7 +98,7 @@ class AppIndexingDependenciesService @NonInjectable @VisibleForTesting construct
   }
 
   @RequiresBackgroundThread
-  internal fun getCurrent(): AppIndexingDependenciesToken {
+  fun getCurrent(): AppIndexingDependenciesToken {
     val fingerprint = application.service<IndexingDependenciesFingerprint>().getFingerprint()
     if (latestFingerprint.get() == NULL_FINGERPRINT) {
       latestFingerprint.compareAndSet(NULL_FINGERPRINT, storage.readAppFingerprint())

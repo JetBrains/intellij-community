@@ -45,6 +45,7 @@ internal fun getK2J2KConversions(context: NewJ2kConverterContext): List<Conversi
     LabeledStatementConversion(context),
     ArrayOperationsConversion(context),
     EqualsOperatorConversion(context),
+    SimplifyNegatedBinaryExpressionConversion(context),
     TypeMappingConversion(context),
     InternalDeclarationConversion(context),
     InnerClassConversion(context),

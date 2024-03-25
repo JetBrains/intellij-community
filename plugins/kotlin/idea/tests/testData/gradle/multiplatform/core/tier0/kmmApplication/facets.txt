@@ -30,6 +30,7 @@ project.iosArm64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_arm64)
+    compilerSettings = -nostdlib
 
 project.iosArm64Test
     externalProjectId = project
@@ -39,6 +40,7 @@ project.iosArm64Test
     dependsOnModuleNames = project:commonTest, project:iosTest
     additionalVisibleModuleNames = project:commonMain, project:iosArm64Main, project:iosMain
     targetPlatform = Native (ios_arm64)
+    compilerSettings = -nostdlib
 
 project.iosMain
     externalProjectId = project
@@ -64,6 +66,7 @@ project.iosX64Main
     mppVersion = M3
     dependsOnModuleNames = project:commonMain, project:iosMain
     targetPlatform = Native (ios_x64)
+    compilerSettings = -nostdlib
 
 project.iosX64Test
     externalProjectId = project
@@ -73,6 +76,7 @@ project.iosX64Test
     dependsOnModuleNames = project:commonTest, project:iosTest
     additionalVisibleModuleNames = project:commonMain, project:iosMain, project:iosX64Main
     targetPlatform = Native (ios_x64)
+    compilerSettings = -nostdlib
 
 project.main
     externalProjectId = project

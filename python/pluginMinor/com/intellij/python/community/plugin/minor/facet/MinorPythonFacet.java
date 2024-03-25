@@ -16,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
  * @author traff
  */
 @ApiStatus.Internal
-public class MinorPythonFacet extends LibraryContributingFacet<MinorPythonFacetType.PythonFacetConfiguration> {
+public final class MinorPythonFacet extends LibraryContributingFacet<PythonFacetConfiguration> {
   public static final FacetTypeId<MinorPythonFacet> ID = new FacetTypeId<>("python");
 
-  MinorPythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final MinorPythonFacetType.PythonFacetConfiguration configuration,
+  MinorPythonFacet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final PythonFacetConfiguration configuration,
                           Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }

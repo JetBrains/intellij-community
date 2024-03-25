@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierListStub> implements PsiModifierList {
@@ -150,10 +151,16 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     setMirrorCheckingType(element, JavaElementType.MODIFIER_LIST);
     PsiAnnotation[] annotations = getAnnotations();
     PsiAnnotation[] mirrorAnnotations = SourceTreeToPsiMap.<PsiModifierList>treeToPsiNotNull(element).getAnnotations();
-    if (annotations.length == mirrorAnnotations.length) {
+    for (PsiAnnotation annotation : annotations) {
+      String qualifiedName = annotation.getQualifiedName();
       // Annotations could be inconsistent, as in stubs all type annotations are attached to the types
       // not to modifier list
-      setMirrors(annotations, mirrorAnnotations);
+      if (qualifiedName != null) {
+        PsiAnnotation mirror = ContainerUtil.find(mirrorAnnotations, m -> qualifiedName.equals(m.getQualifiedName()));
+        if (mirror != null) {
+          setMirror(annotation, mirror);
+        }
+      }
     }
   }
 

@@ -51,7 +51,7 @@ final class JavaTelescope {
     ProgressIndicator progress = ObjectUtils.notNull(ProgressIndicatorProvider.getGlobalProgressIndicator(), /*todo remove*/new EmptyProgressIndicator());
     AtomicInteger totalUsageCount = new AtomicInteger();
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(members, progress, member -> {
-      int count = usagesCount(project, file, member, scope, progress);
+      int count = usagesCount(project, file, member, scope);
       int newCount = totalUsageCount.updateAndGet(old -> count == TOO_MANY_USAGES ? TOO_MANY_USAGES : old + count);
       return newCount != TOO_MANY_USAGES;
     });
@@ -61,11 +61,10 @@ final class JavaTelescope {
   private static int usagesCount(@NotNull Project project,
                                  @NotNull PsiFile containingFile,
                                  @NotNull final PsiMember member,
-                                 @NotNull SearchScope scope,
-                                 @NotNull ProgressIndicator progress) {
+                                 @NotNull SearchScope scope) {
     SearchScope searchScope = getSearchScope(project, member, scope);
     AtomicInteger count = new AtomicInteger();
-    boolean ok = UnusedSymbolUtil.processUsages(project, containingFile, searchScope, member, progress, null, info -> {
+    boolean ok = UnusedSymbolUtil.processUsages(project, containingFile, searchScope, member, null, info -> {
       PsiFile psiFile = info.getFile();
       if (psiFile == null) {
         return true;

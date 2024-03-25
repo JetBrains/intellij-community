@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui.svg
@@ -203,7 +203,8 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
     return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path)
   }
 
-  val data = if (precomputedCacheKey == 0) (dataProvider() ?: return null) else null
+  val isPrecomputedKey = precomputedCacheKey != 0
+  val data = if (isPrecomputedKey) null else (dataProvider() ?: return null)
   val key = if (data == null) {
     createPrecomputedIconCacheKey(precomputedCacheKey = precomputedCacheKey,
                                   compoundKey = compoundCacheKey,
@@ -215,7 +216,7 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
 
   try {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val result = svgCache.loadFromCache(key = key)
+    val result = svgCache.loadFromCache(key = key, isPrecomputed = data == null)
     if (start != -1L) {
       IconLoadMeasurer.svgCacheRead.end(start)
     }
@@ -233,20 +234,26 @@ internal inline fun loadAndCacheIfApplicable(path: String?,
     logger<SVGLoader>().warn("Cannot load from icon cache (path=$path, precomputedCacheKey=$precomputedCacheKey)", e)
   }
 
-  return renderAndCache(colorPatcher = colorPatcher,
-                        data = data ?: dataProvider() ?: return null,
-                        scale = scale,
-                        path = path,
-                        key = key,
-                        cache = svgCache)
+  return renderAndCache(
+    colorPatcher = colorPatcher,
+    data = data ?: dataProvider() ?: return null,
+    scale = scale,
+    path = path,
+    key = key,
+    cache = svgCache,
+    isPrecomputedKey = isPrecomputedKey,
+  )
 }
 
-private fun renderAndCache(colorPatcher: SvgAttributePatcher?,
-                           data: ByteArray,
-                           scale: Float,
-                           path: String?,
-                           key: LongArray,
-                           cache: SvgCacheManager): BufferedImage {
+private fun renderAndCache(
+  colorPatcher: SvgAttributePatcher?,
+  data: ByteArray,
+  scale: Float,
+  path: String?,
+  key: LongArray,
+  cache: SvgCacheManager,
+  isPrecomputedKey: Boolean,
+): BufferedImage {
   val image = renderImage(colorPatcher = colorPatcher, data = data, scale = scale, path = path)
   // maybe closed during rendering
   if (!cache.isActive()) {
@@ -255,7 +262,7 @@ private fun renderAndCache(colorPatcher: SvgAttributePatcher?,
 
   try {
     val cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    cache.storeLoadedImage(key = key, image = image)
+    cache.storeLoadedImage(key = key, image = image, isPrecomputedKey = isPrecomputedKey)
     IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart)
   }
   catch (e: ProcessCanceledException) {
@@ -295,10 +302,10 @@ fun loadWithSizes(sizes: List<Int>, data: ByteArray, scale: Float = JBUIScale.sy
   return sizes.map { size ->
     val compoundKey = SvgCacheClassifier(scale = scale, size = size)
     val key = createIconCacheKey(imageBytes = data, compoundKey = compoundKey, colorPatcherDigest = null)
-    var image = svgCache?.loadFromCache(key)
+    var image = svgCache?.loadFromCache(key, isPrecomputed = false)
     if (image == null) {
       image = renderSvgWithSize(document = document, width = (size * scale), height = (size * scale))
-      svgCache?.storeLoadedImage(key = key, image = image)
+      svgCache?.storeLoadedImage(key = key, image = image, isPrecomputedKey = false)
     }
 
     if (isHiDpiNeeded) {

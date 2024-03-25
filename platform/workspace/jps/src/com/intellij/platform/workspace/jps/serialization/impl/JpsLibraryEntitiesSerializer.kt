@@ -204,9 +204,10 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
       if (legacyName != null) {
         libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
       }
+      val libraryTypeId = library.typeId
       val customProperties = library.libraryProperties
-      if (customProperties != null) {
-        libraryTag.setAttribute(TYPE_ATTRIBUTE, customProperties.libraryType)
+      if (customProperties != null && libraryTypeId != null) {
+        libraryTag.setAttribute(TYPE_ATTRIBUTE, libraryTypeId.name)
         val propertiesXmlTag = customProperties.propertiesXmlTag
         if (propertiesXmlTag != null) {
           libraryTag.addContent(JDOMUtil.load(propertiesXmlTag))
@@ -296,12 +297,13 @@ open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFileUrl,
         }
       }
       val libProperties = type?.let {
-        LibraryPropertiesEntity(type, source) {
+        LibraryPropertiesEntity(source) {
           this.propertiesXmlTag = properties
         }
       }
       val excludes = excludedRoots.map { ExcludeUrlEntity(it, source) }
       val libraryEntity = LibraryEntity(name, libraryTableId, roots, source) {
+        this.typeId = type?.let { LibraryTypeId(it) }
         this.excludedRoots = excludes
         this.libraryProperties = libProperties
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.diagnostic.PluginException
@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
@@ -35,7 +34,10 @@ abstract class JBProtocolCommand(private val command: String) {
       require(parts.size >= 2) { query }  // expected: at least a platform prefix and a command name
       val commandName = parts[1]
       val command = EP_NAME.lazySequence().find { it.command == commandName }
-      return if (command != null) {
+      if (command == null) {
+        return CliResult(0, IdeBundle.message("jb.protocol.unknown.command", commandName))
+      }
+      else {
         val target = if (parts.size > 2) parts[2] else null
         val parameters = LinkedHashMap<String, String>()
         for ((key, list) in decoder.parameters()) {
@@ -43,12 +45,9 @@ abstract class JBProtocolCommand(private val command: String) {
         }
         val fragmentStart = query.lastIndexOf('#')
         val fragment = if (fragmentStart > 0) query.substring(fragmentStart + 1) else null
-        command.executeAndGetResult(target, parameters, fragment)?.let {
+        return command.executeAndGetResult(target, parameters, fragment)?.let {
           CliResult(if (!it.focusIdeWindow) ProtocolHandler.PLEASE_DO_NOT_FOCUS else 0, it.dialogMessage)
         } ?: CliResult(0, null)
-      }
-      else {
-        CliResult(0, IdeBundle.message("jb.protocol.unknown.command", commandName))
       }
     }
   }

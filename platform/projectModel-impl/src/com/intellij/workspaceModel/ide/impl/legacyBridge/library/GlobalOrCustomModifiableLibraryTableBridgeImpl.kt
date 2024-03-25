@@ -6,10 +6,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -40,11 +37,12 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
     if (name.isNullOrBlank()) error("${libraryTableId.level} library must have a name")
     assertModelIsLive()
 
-    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), entitySource)
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), entitySource) {
+      this.typeId = type?.kindId?.let { LibraryTypeId(it) }
+    }
 
     if (type != null) {
-      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
-                                             entitySource = libraryEntity.entitySource) {
+      diff addEntity LibraryPropertiesEntity(libraryEntity.entitySource) {
         library = libraryEntity
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
                                                       type.createDefaultProperties())

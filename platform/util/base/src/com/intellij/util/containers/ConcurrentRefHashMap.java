@@ -8,7 +8,7 @@ import java.lang.ref.ReferenceQueue;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * Base class for concurrent (soft/weak) key:K -> strong value:V map
@@ -23,9 +23,9 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   static final float LOAD_FACTOR = 0.75f;
   static final int DEFAULT_CAPACITY = 16;
   static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
-  private final Consumer<? super V> myEvictionListener;
+  private final BiConsumer<? super ConcurrentMap<K, V>, ? super V> myEvictionListener;
 
-  ConcurrentRefHashMap(@Nullable Consumer<? super V> evictionListener) {
+  ConcurrentRefHashMap(@Nullable BiConsumer<? super ConcurrentMap<K,V>, ? super V> evictionListener) {
     myHashingStrategy = this;
     myMap = new ConcurrentHashMap<>(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL);
     myEvictionListener = evictionListener;
@@ -66,7 +66,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     while ((wk = (KeyReference<K>)myReferenceQueue.poll()) != null) {
       V v = myMap.remove(wk);
       if (myEvictionListener != null) {
-        myEvictionListener.accept(v);
+        myEvictionListener.accept(this, v);
       }
       processed = true;
     }

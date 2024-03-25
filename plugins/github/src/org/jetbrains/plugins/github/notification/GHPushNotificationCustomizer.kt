@@ -5,6 +5,7 @@ import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import git4idea.account.AccountUtil
 import git4idea.account.RepoAndAccount
@@ -14,6 +15,7 @@ import git4idea.push.GitPushRepoResult
 import git4idea.push.isSuccessful
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -28,9 +30,9 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
-typealias GitHubRepoAndAccount = RepoAndAccount<GHGitRepositoryMapping, GithubAccount>
+private val LOG = logger<GHPushNotificationCustomizer>()
 
-class GHPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
+internal class GHPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
   private val settings: GithubPullRequestsProjectUISettings = GithubPullRequestsProjectUISettings.getInstance(project)
   private val projectsManager: GHHostedRepositoriesManager = project.service<GHHostedRepositoriesManager>()
   private val defaultAccountHolder: GithubProjectDefaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
@@ -42,17 +44,26 @@ class GHPushNotificationCustomizer(private val project: Project) : GitPushNotifi
     customParams: Map<String, VcsPushOptionValue>
   ): List<AnAction> {
     if (!pushResult.isSuccessful) return emptyList()
-    val repoAndAccount = selectRepoAndAccount(repository, pushResult) ?: return emptyList()
-    val exists = doesReviewExist(pushResult, repoAndAccount) ?: return emptyList()
-    if (exists) return emptyList()
+    val (projectMapping, account) = findRepoAndAccount(repository, pushResult) ?: return emptyList()
+    try {
+      val exists = doesReviewExist(pushResult, projectMapping, account)
+      if (exists) return emptyList()
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to lookup an existing pull request for $pushResult", e)
+      return emptyList()
+    }
 
     val connection = project.serviceAsync<GHRepositoryConnectionManager>().connectionState.value
-    if (connection?.account != repoAndAccount.account || connection.repo != repoAndAccount.projectMapping) return emptyList()
+    if (connection?.account != account || connection.repo != projectMapping) return emptyList()
 
-    return listOf(GHPRCreatePullRequestNotificationAction(project, repoAndAccount.projectMapping, repoAndAccount.account))
+    return listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
   }
 
-  private fun selectRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): GitHubRepoAndAccount? {
+  private fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GHGitRepositoryMapping, GithubAccount>? {
     val (url, account) = settings.selectedUrlAndAccount ?: return null
     val projectMapping = projectsManager.knownRepositories.find { mapping: GHGitRepositoryMapping ->
       mapping.remote.url == url
@@ -68,11 +79,10 @@ class GHPushNotificationCustomizer(private val project: Project) : GitPushNotifi
     return null
   }
 
-  private suspend fun doesReviewExist(pushResult: GitPushRepoResult, repoAndAccount: GitHubRepoAndAccount): Boolean? {
-    val (projectMapping, account) = repoAndAccount
-    val token = accountManager.findCredentials(account) ?: return null
+  private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {
+    val token = accountManager.findCredentials(account) ?: return false
     val executor = GithubApiRequestExecutor.Factory.getInstance().create(token)
-    val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return null
+    val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return false
     val pullRequest = getPullRequest(executor, projectMapping, prBranch)
 
     return pullRequest != null

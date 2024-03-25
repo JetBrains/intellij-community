@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import org.cef.handler.CefRenderHandler;
@@ -17,10 +18,9 @@ import java.awt.*;
  * @author tav
  */
 public interface JBCefOSRHandlerFactory {
-  /**
-   * Default implementation provides buffered rendering onto a lightweight Swing component.
-   */
-  @NotNull JBCefOSRHandlerFactory DEFAULT = new JBCefOSRHandlerFactory() {};
+  static JBCefOSRHandlerFactory getInstance() {
+    return ApplicationManager.getApplication().getService(JBCefOSRHandlerFactory.class);
+  }
 
   /**
    * Creates a lightweight component on which the browser will be rendered.
@@ -39,7 +39,9 @@ public interface JBCefOSRHandlerFactory {
    */
   default @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
     assert component instanceof JBCefOsrComponent;
-    return new JBCefOsrHandler((JBCefOsrComponent)component, createScreenBoundsProvider());
+    JBCefOsrComponent osrComponent = (JBCefOsrComponent)component;
+    Function<? super JComponent, ? extends Rectangle> screenBoundsProvider = createScreenBoundsProvider();
+    return new JBCefOsrHandler(osrComponent, screenBoundsProvider);
   }
 
   /**

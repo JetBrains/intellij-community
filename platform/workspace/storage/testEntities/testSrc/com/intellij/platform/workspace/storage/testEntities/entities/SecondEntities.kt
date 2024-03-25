@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -24,7 +29,12 @@ interface SampleEntity2 : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, boolData: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity2 {
+    operator fun invoke(
+      data: String,
+      boolData: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SampleEntity2 {
       val builder = builder()
       builder.data = data
       builder.boolData = boolData
@@ -38,8 +48,12 @@ interface SampleEntity2 : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SampleEntity2, modification: SampleEntity2.Builder.() -> Unit): SampleEntity2 = modifyEntity(
-  SampleEntity2.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SampleEntity2,
+  modification: SampleEntity2.Builder.() -> Unit,
+): SampleEntity2 {
+  return modifyEntity(SampleEntity2.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface VFUEntity2 : WorkspaceEntity {
@@ -62,11 +76,13 @@ interface VFUEntity2 : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        directoryPath: VirtualFileUrl,
-                        notNullRoots: List<VirtualFileUrl>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): VFUEntity2 {
+    operator fun invoke(
+      data: String,
+      directoryPath: VirtualFileUrl,
+      notNullRoots: List<VirtualFileUrl>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): VFUEntity2 {
       val builder = builder()
       builder.data = data
       builder.directoryPath = directoryPath
@@ -81,6 +97,10 @@ interface VFUEntity2 : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: VFUEntity2, modification: VFUEntity2.Builder.() -> Unit): VFUEntity2 = modifyEntity(
-  VFUEntity2.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: VFUEntity2,
+  modification: VFUEntity2.Builder.() -> Unit,
+): VFUEntity2 {
+  return modifyEntity(VFUEntity2.Builder::class.java, entity, modification)
+}
 //endregion

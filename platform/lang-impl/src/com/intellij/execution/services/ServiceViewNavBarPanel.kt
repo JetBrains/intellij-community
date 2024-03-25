@@ -1,18 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem
 import com.intellij.execution.services.ServiceViewNavBarService.ServiceViewNavBarSelector
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemPresentation
-import com.intellij.ide.navbar.ide.NavBarVmImpl
-import com.intellij.ide.navbar.ide.NavBarVmItem
-import com.intellij.ide.navbar.ui.StaticNavBarPanel
-import com.intellij.ide.navbar.vm.NavBarVm
-import com.intellij.model.Pointer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarVmItem
+import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.ide.ui.StaticNavBarPanel
+import com.intellij.platform.navbar.vm.NavBarVm
+import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.update.Activatable
@@ -91,9 +90,9 @@ internal class ServiceViewNavBarPanel(
     updateRequests.tryEmit(Unit)
   }
 
-  private fun requestNavigation(pointer: Pointer<out NavBarItem>) {
+  private fun requestNavigation(item: NavBarVmItem) {
     cs.launch(Dispatchers.EDT) {
-      (pointer as? ServiceViewNavBarItem)?.item?.let {
+      (item as? ServiceViewNavBarItem)?.item?.let {
         selector.select(it)
       }
     }
@@ -117,9 +116,7 @@ private fun trackVisibility(component: Component): StateFlow<Boolean> {
 
 internal class ServiceViewRootNavBarItem(
   private val viewModel: ServiceViewModel,
-) : NavBarVmItem,
-    NavBarItem,
-    Pointer<ServiceViewRootNavBarItem> {
+) : NavBarVmItem {
 
   override fun equals(other: Any?): Boolean {
     return this === other || other is ServiceViewRootNavBarItem && viewModel == other.viewModel
@@ -129,15 +126,10 @@ internal class ServiceViewRootNavBarItem(
     return viewModel.hashCode()
   }
 
-  override fun createPointer(): Pointer<out ServiceViewRootNavBarItem> = this
-  override val pointer: Pointer<out ServiceViewRootNavBarItem> get() = this
-  override fun dereference(): ServiceViewRootNavBarItem = this // hard pointer
-
-  override fun presentation(): NavBarItemPresentation = presentation
   override val presentation: NavBarItemPresentation = NavBarItemPresentation(
     AllIcons.Nodes.Services, "", null,
     REGULAR_ATTRIBUTES,
-    REGULAR_ATTRIBUTES, false
+    false
   )
 
   override suspend fun children(): List<NavBarVmItem> {
@@ -150,9 +142,7 @@ internal class ServiceViewRootNavBarItem(
 private class ServiceViewNavBarItem(
   private val viewModel: ServiceViewModel,
   val item: ServiceViewItem,
-) : NavBarItem,
-    NavBarVmItem,
-    Pointer<ServiceViewNavBarItem> {
+) : NavBarVmItem {
 
   override fun equals(other: Any?): Boolean {
     return this === other || other is ServiceViewNavBarItem && viewModel == other.viewModel && item == other.item
@@ -162,15 +152,10 @@ private class ServiceViewNavBarItem(
     return Objects.hash(viewModel, item)
   }
 
-  override fun createPointer(): Pointer<out NavBarItem> = this
-  override val pointer: Pointer<out NavBarItem> get() = this
-  override fun dereference(): ServiceViewNavBarItem = this // hard pointer
-
-  override fun presentation(): NavBarItemPresentation = presentation
   override val presentation: NavBarItemPresentation = run {
     val icon = item.getViewDescriptor().getPresentation().getIcon(false)
     val text = ServiceViewDragHelper.getDisplayName(item.getViewDescriptor().getPresentation())
-    NavBarItemPresentation(icon, text, null, REGULAR_ATTRIBUTES, REGULAR_ATTRIBUTES, false)
+    NavBarItemPresentation(icon, text, null, REGULAR_ATTRIBUTES, false)
   }
 
   override suspend fun children(): List<NavBarVmItem> {

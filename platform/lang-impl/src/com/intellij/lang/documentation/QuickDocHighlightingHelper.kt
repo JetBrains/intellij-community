@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
-import com.intellij.ide.ui.html.StyleSheetRulesProviderForCodeHighlighting
 import com.intellij.lang.Language
 import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
@@ -13,12 +12,13 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementKind
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration.ElementProperty
+import com.intellij.util.applyIf
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.Color
 
 /**
  * This class facilitates generation of highlighted text and code for Quick Documentation.
@@ -26,11 +26,11 @@ import java.awt.Color
  */
 object QuickDocHighlightingHelper {
 
-  const val CODE_BLOCK_PREFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_PREFIX
-  const val CODE_BLOCK_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.CODE_BLOCK_SUFFIX
+  const val CODE_BLOCK_PREFIX = "<pre><code>"
+  const val CODE_BLOCK_SUFFIX = "</code></pre>"
 
-  const val INLINE_CODE_PREFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_PREFIX
-  const val INLINE_CODE_SUFFIX = StyleSheetRulesProviderForCodeHighlighting.INLINE_CODE_SUFFIX
+  const val INLINE_CODE_PREFIX = "<code>"
+  const val INLINE_CODE_SUFFIX = "</code>"
 
   /**
    * The returned code block HTML (prefixed with [CODE_BLOCK_PREFIX] and suffixed with [CODE_BLOCK_SUFFIX])
@@ -57,12 +57,9 @@ object QuickDocHighlightingHelper {
   @RequiresReadLock
   fun StringBuilder.appendStyledCodeBlock(project: Project, language: Language?, code: @NlsSafe CharSequence): @NlsSafe StringBuilder =
     append(CODE_BLOCK_PREFIX)
-      .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code, true)
+      .appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfCodeBlocksEnabled(), code,
+                             isForRenderedDoc = true, trim = true)
       .append(CODE_BLOCK_SUFFIX)
-
-  @JvmStatic
-  fun removeSurroundingStyledCodeBlock(string: String): String =
-    string.trim().removeSurrounding(CODE_BLOCK_PREFIX, CODE_BLOCK_SUFFIX)
 
   /**
    * The returned inline code HTML (prefixed with [INLINE_CODE_PREFIX] and suffixed with [INLINE_CODE_SUFFIX])
@@ -93,7 +90,7 @@ object QuickDocHighlightingHelper {
     append(INLINE_CODE_PREFIX)
       .appendHighlightedCode(
         project, language, DocumentationSettings.getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.SEMANTIC_HIGHLIGHTING, code,
-        true)
+        isForRenderedDoc = true, trim = false)
       .append(INLINE_CODE_SUFFIX)
 
   /**
@@ -116,7 +113,7 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun StringBuilder.appendStyledCodeFragment(project: Project, language: Language, @NlsSafe code: String): StringBuilder =
-    appendHighlightedCode(project, language, true, code, false)
+    appendHighlightedCode(project, language, true, code, isForRenderedDoc = false, trim = false)
 
   /**
    * This method should be used when generating links to PsiElements.
@@ -187,7 +184,8 @@ object QuickDocHighlightingHelper {
   @JvmStatic
   @RequiresReadLock
   fun StringBuilder.appendStyledSignatureFragment(project: Project, language: Language?, code: String): StringBuilder =
-    appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code, false)
+    appendHighlightedCode(project, language, DocumentationSettings.isHighlightingOfQuickDocSignaturesEnabled(), code,
+                          isForRenderedDoc = false, trim = false)
 
   /**
    * Returns an HTML fragment containing [contents] colored according to [textAttributes].
@@ -271,63 +269,38 @@ object QuickDocHighlightingHelper {
         )
         .firstOrNull()
 
-  @Internal
-  @JvmStatic
-  fun getDefaultFormattingStyles(spacingBefore: Int, spacingAfter: Int): List<String> {
-    val fontSize = StartupUiUtil.labelFont.size
-    val paragraphSpacing = """padding: ${spacingBefore}px 0 ${spacingAfter}px 0"""
-    return listOf(
-      "h6 { font-size: ${fontSize + 1}}",
-      "h5 { font-size: ${fontSize + 2}}",
-      "h4 { font-size: ${fontSize + 3}}",
-      "h3 { font-size: ${fontSize + 4}}",
-      "h2 { font-size: ${fontSize + 6}}",
-      "h1 { font-size: ${fontSize + 8}}",
-      "h1, h2, h3, h4, h5, h6 {margin: 0 0 0 0; ${paragraphSpacing}; }",
-      "p { margin: 0 0 0 0; ${paragraphSpacing}; line-height: 125%; }",
-      "ul { margin: 0 0 0 ${scale(10)}px; ${paragraphSpacing};}",
-      "ol { margin: 0 0 0 ${scale(20)}px; ${paragraphSpacing};}",
-      "li { padding: ${scale(1)}px 0 ${scale(2)}px 0; }",
-      "li p { padding-top: 0; padding-bottom: 0; }",
-      "th { text-align: left; }",
-      "tr, table { margin: 0 0 0 0; padding: 0 0 0 0; }",
-      "td { margin: 0 0 0 0; padding: ${spacingBefore}px ${spacingBefore + spacingAfter}px ${spacingAfter}px 0; }",
-      "td p { padding-top: 0; padding-bottom: 0; }",
-      "td pre { padding: ${scale(1)}px 0 0 0; margin: 0 0 0 0 }",
-      ".$CLASS_CENTERED { text-align: center}",
-    )
-  }
 
   @Internal
   @JvmStatic
-  fun getDefaultDocCodeStyles(
-    colorScheme: EditorColorsScheme,
-    editorPaneBackgroundColor: Color,
-    spacingBefore: Int,
-    spacingAfter: Int,
-  ): List<String> = StyleSheetRulesProviderForCodeHighlighting.getRules(
-    colorScheme, editorPaneBackgroundColor,
-    listOf(".$CLASS_CONTENT", ".$CLASS_CONTENT_SEPARATED", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)", ".$CLASS_CONTENT div:not(.$CLASS_TOP)",
-           ".$CLASS_SECTIONS"),
-    listOf(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_DEFINITION_SEPARATED code", ".$CLASS_DEFINITION_SEPARATED pre",
-           ".$CLASS_BOTTOM code", ".$CLASS_TOP code"),
-    DocumentationSettings.isCodeBackgroundEnabled()
-    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING,
-    DocumentationSettings.isCodeBackgroundEnabled()
-    && DocumentationSettings.isHighlightingOfCodeBlocksEnabled(),
-    "${spacingBefore}px 0 ${spacingAfter}px 0"
-  )
+  fun getDefaultDocStyleOptions(colorScheme: EditorColorsScheme, editorInlineContext: Boolean): JBHtmlPaneStyleConfiguration =
+    JBHtmlPaneStyleConfiguration {
+      this.colorScheme = colorScheme
+      this.editorInlineContext = editorInlineContext
+      inlineCodeParentSelectors(".$CLASS_CONTENT", ".$CLASS_CONTENT div:not(.$CLASS_BOTTOM)",
+                                ".$CLASS_CONTENT div:not(.$CLASS_TOP)", ".$CLASS_SECTIONS")
+      largeCodeFontSizeSelectors(".$CLASS_DEFINITION code", ".$CLASS_DEFINITION pre", ".$CLASS_BOTTOM code", ".$CLASS_TOP code")
+      enableInlineCodeBackground = (DocumentationSettings.isCodeBackgroundEnabled()
+                                    && DocumentationSettings.getInlineCodeHighlightingMode() !== InlineCodeHighlightingMode.NO_HIGHLIGHTING)
+      enableCodeBlocksBackground = DocumentationSettings.isCodeBackgroundEnabled()
+                                   && DocumentationSettings.isHighlightingOfCodeBlocksEnabled()
+      if (editorInlineContext)
+        overrideElementStyle {
+          elementKindThemePropertySuffix = "EditorPane"
+          overrideThemeProperties(ElementKind.CodeBlock, ElementProperty.BackgroundColor, ElementProperty.BackgroundOpacity, ElementProperty.BorderColor)
+        }
+    }
 
   private fun StringBuilder.appendHighlightedCode(project: Project, language: Language?, doHighlighting: Boolean,
-                                                  code: CharSequence, isForRenderedDoc: Boolean): StringBuilder {
-    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ').trimEnd()
+                                                  code: CharSequence, isForRenderedDoc: Boolean, trim: Boolean): StringBuilder {
+    val processedCode = code.toString().trim('\n', '\r').replace(' ', ' ')
+      .applyIf(trim) { trimEnd() }
     if (language != null && doHighlighting) {
       HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(
         this, project, language, processedCode,
-        DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
+        trim, DocumentationSettings.getHighlightingSaturation(isForRenderedDoc))
     }
     else {
-      append(XmlStringUtil.escapeString(processedCode.trimIndent()))
+      append(XmlStringUtil.escapeString(processedCode.applyIf(trim) { trimIndent() }))
     }
     return this
   }

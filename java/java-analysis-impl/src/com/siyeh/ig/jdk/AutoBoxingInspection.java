@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -45,18 +44,16 @@ public final class AutoBoxingInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreAddedToCollection = false;
 
-  @NonNls static final Map<String, String> s_boxingClasses = new HashMap<>(8);
-
-  static {
-    s_boxingClasses.put("byte", CommonClassNames.JAVA_LANG_BYTE);
-    s_boxingClasses.put("short", CommonClassNames.JAVA_LANG_SHORT);
-    s_boxingClasses.put("int", CommonClassNames.JAVA_LANG_INTEGER);
-    s_boxingClasses.put("long", CommonClassNames.JAVA_LANG_LONG);
-    s_boxingClasses.put("float", CommonClassNames.JAVA_LANG_FLOAT);
-    s_boxingClasses.put("double", CommonClassNames.JAVA_LANG_DOUBLE);
-    s_boxingClasses.put("boolean", CommonClassNames.JAVA_LANG_BOOLEAN);
-    s_boxingClasses.put("char", CommonClassNames.JAVA_LANG_CHARACTER);
-  }
+  @NonNls static final Map<String, String> s_boxingClasses = Map.of(
+    "byte", CommonClassNames.JAVA_LANG_BYTE,
+    "short", CommonClassNames.JAVA_LANG_SHORT,
+    "int", CommonClassNames.JAVA_LANG_INTEGER,
+    "long", CommonClassNames.JAVA_LANG_LONG,
+    "float", CommonClassNames.JAVA_LANG_FLOAT,
+    "double", CommonClassNames.JAVA_LANG_DOUBLE,
+    "boolean", CommonClassNames.JAVA_LANG_BOOLEAN,
+    "char", CommonClassNames.JAVA_LANG_CHARACTER
+  );
 
   @Override
   public String getAlternativeID() {
@@ -95,6 +92,7 @@ public final class AutoBoxingInspection extends BaseInspection {
 
   /**
    * Replaces expression of primitive type with explicitly boxed expression
+   *
    * @param expression expression to box
    */
   public static void replaceWithBoxing(@NotNull PsiExpression expression) {
@@ -136,7 +134,8 @@ public final class AutoBoxingInspection extends BaseInspection {
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiTypeCastExpression typeCastExpression) {
       PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression, commentTracker);
-    } else {
+    }
+    else {
       PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }

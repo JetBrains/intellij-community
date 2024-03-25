@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -970,6 +970,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       if (!classMember.hasModifierProperty(PsiModifier.STATIC)) {
         myElementReference = classMemberReference;
       }
+    }
+
+    @Override
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
+      myElementReference = expression;
     }
 
     @Override

@@ -1,5 +1,4 @@
 // IGNORE_K2
-//class
 package demo;
 
 enum Color {

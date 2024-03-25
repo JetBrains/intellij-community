@@ -9,7 +9,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.*
-import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
@@ -25,8 +24,7 @@ import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginId
@@ -235,9 +233,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   }
 
   override fun createCenterPanel(): JComponent? {
-    val editorFont = EditorColorsManager.getInstance().globalScheme
-      .getFont(EditorFontType.PLAIN)
-      .deriveFont(UISettingsUtils.getInstance().scaledEditorFontSize)
+    val editorFont = EditorUtil.getEditorFont()
     myCommentArea = JBTextArea(5, 0)
     myCommentArea.font = editorFont
     myCommentArea.emptyText.setText(DiagnosticBundle.message("error.dialog.comment.prompt"))

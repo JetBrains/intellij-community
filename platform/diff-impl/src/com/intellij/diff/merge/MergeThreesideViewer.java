@@ -151,10 +151,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected void onInit() {
     super.onInit();
     myModifierProvider.init();
-
-    for (EditorEx editor : getEditors()) {
-      editor.putUserData(DiffUserDataKeys.DIFF_VIEWER, this);
-    }
   }
 
   @Override

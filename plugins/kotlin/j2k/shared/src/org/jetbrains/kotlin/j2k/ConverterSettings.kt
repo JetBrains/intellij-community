@@ -7,7 +7,10 @@ data class ConverterSettings(
     var specifyLocalVariableTypeByDefault: Boolean,
     var specifyFieldTypeByDefault: Boolean,
     var openByDefault: Boolean,
-    var publicByDefault: Boolean
+    var publicByDefault: Boolean,
+    // TODO KTIJ-29063
+    // In the basic mode, only essential conversions/processings are performed
+    var basicMode: Boolean,
 ) {
 
     companion object {
@@ -16,7 +19,8 @@ data class ConverterSettings(
             specifyLocalVariableTypeByDefault = false,
             specifyFieldTypeByDefault = false,
             openByDefault = false,
-            publicByDefault = false
+            publicByDefault = false,
+            basicMode = false,
         )
 
         val publicByDefault: ConverterSettings = defaultSettings.copy(publicByDefault = true)

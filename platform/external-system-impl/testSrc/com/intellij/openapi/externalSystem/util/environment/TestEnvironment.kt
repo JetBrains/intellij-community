@@ -18,7 +18,7 @@ class TestEnvironment : Environment {
     this.variables.putAll(variables)
   }
 
-  fun <R> withVariables(vararg variables: Pair<String, String?>, action: () -> R): R {
+  inline fun <R> withVariables(vararg variables: Pair<String, String?>, action: () -> R): R {
     val environment = TestEnvironment()
     environment.variables(*variables)
     val application = ApplicationManager.getApplication()

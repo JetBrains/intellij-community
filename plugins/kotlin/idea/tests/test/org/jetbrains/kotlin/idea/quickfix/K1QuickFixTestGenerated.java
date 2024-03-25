@@ -5237,6 +5237,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberFunNoReceiver.kt");
                     }
 
+                    @TestMetadata("memberLocalVarDelegateRuntime.kt")
+                    public void testMemberLocalVarDelegateRuntime() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberLocalVarDelegateRuntime.kt");
+                    }
+
                     @TestMetadata("memberValDelegateRuntime.kt")
                     public void testMemberValDelegateRuntime() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberValDelegateRuntime.kt");

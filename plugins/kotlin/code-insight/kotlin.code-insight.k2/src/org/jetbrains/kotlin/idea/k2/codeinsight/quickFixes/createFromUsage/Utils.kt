@@ -1,29 +1,32 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.lang.jvm.JvmClass
+import com.intellij.lang.jvm.actions.ExpectedParameter
+import com.intellij.lang.jvm.actions.ExpectedTypeWithNullability
+import com.intellij.lang.jvm.actions.expectedParameter
 import com.intellij.lang.jvm.types.JvmType
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.isAncestor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.calls
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.components.buildClassType
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeProjectionRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -34,6 +37,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -68,37 +72,111 @@ context (KtAnalysisSession)
 internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
 
 context (KtAnalysisSession)
-internal fun KtElement.getExpectedJvmType(): JvmType? = getExpectedType()?.convertToJvmType(this)
+internal fun KtElement.getExpectedKotlinType(): ExpectedTypeWithNullability? {
+    var expectedType = getExpectedType()
+    if (expectedType == null) {
+        val parent = this.parent
+        expectedType = when {
+            parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL -> builtinTypes.BOOLEAN
+            parent is KtStringTemplateEntryWithExpression -> builtinTypes.STRING
+            parent is KtPropertyDelegate -> {
+                val variable = parent.parent as KtProperty
+                val delegateClassName = if (variable.isVar) "ReadWriteProperty" else "ReadOnlyProperty"
+                val ktType = variable.getReturnKtType()
+                val symbol = variable.getSymbol() as? KtCallableSymbol
+                val parameterType = symbol?.receiverType ?: (variable.getSymbol()
+                    .getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.buildSelfClassType() ?: builtinTypes.NULLABLE_ANY
+                buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
+                    argument(parameterType)
+                    argument(ktType)
+                }
+            }
+            parent is KtNamedFunction && parent.nameIdentifier == null && parent.bodyExpression == this && parent.parent is KtValueArgument -> {
+                (parent.getExpectedType() as? KtFunctionalType)?.returnType
+            }
+            else -> null
+        }
+        if (expectedType == null && this is KtExpression) {
+            expectedType = getExpectedTypeByFunctionExpressionBody(this)
+        }
+        if (expectedType == null && this is KtExpression) {
+            expectedType = getExpectedTypeByStringTemplateEntry(this)
+        }
+    }
+    val jvmType = expectedType?.convertToJvmType(this) ?: return null
+    return ExpectedTypeWithNullability.createExpectedKotlinType(jvmType, expectedType.nullability.toNullability())
+}
+
+// Given: `println("a = ${A().foo()}")`
+// Expected type of `foo()` is `String`
+context (KtAnalysisSession)
+fun getExpectedTypeByStringTemplateEntry(expression: KtExpression): KtType? {
+    var e:PsiElement = expression
+    while (e is KtExpression && e !is KtStringTemplateEntry) {
+        val parent = e.parent
+        if (parent is KtQualifiedExpression && parent.selectorExpression != e) break
+        e = parent
+    }
+    if (e is KtStringTemplateEntry) {
+        return withValidityAssertion { analysisSession.builtinTypes.STRING }
+    }
+    return null
+}
+
+// Given: `fun f(): T = expression`
+// Expected type of `expression` is `T`
+context (KtAnalysisSession)
+private fun getExpectedTypeByFunctionExpressionBody(expression: KtExpression): KtType? {
+    var e:PsiElement = expression
+    while (e is KtExpression && e !is KtFunction) {
+        e=e.parent
+    }
+    if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
+        return e.getExpectedType() ?: withValidityAssertion { analysisSession.builtinTypes.ANY }
+    }
+    return null
+}
 
 context (KtAnalysisSession)
 private fun KtType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
 context (KtAnalysisSession)
 internal fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
-    is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
+    //is KtCallableSymbol -> symbol.returnType.expandedClassSymbol // When the receiver is a function call or access to a variable
     is KtClassLikeSymbol -> symbol // When the receiver is an object
     else -> getKtType()?.expandedClassSymbol
 }?.psi
 
-internal data class ParameterInfo(val nameCandidates: List<String>, val type: JvmType?)
-
 context (KtAnalysisSession)
-internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ParameterInfo {
+internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ExpectedParameter {
     val parameterNameAsString = getArgumentName()?.asName?.asString()
     val argumentExpression = getArgumentExpression()
     val expectedArgumentType = argumentExpression?.getKtType()
     val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
     val parameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
-    return ParameterInfo(parameterNames?.toList() ?: listOf("p$parameterIndex"), parameterType)
+    val expectedType = if (parameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedTypeWithNullability.createExpectedKotlinType(parameterType, expectedArgumentType.nullability.toNullability())
+    val names = parameterNames?.toList()?.toTypedArray() ?: arrayOf("p$parameterIndex")
+    return expectedParameter(expectedType, *names)
 }
 
 context (KtAnalysisSession)
-internal fun KtSimpleNameExpression.getReceiverOrContainerClass(): JvmClass? =
-    when (val ktClassOrPsiClass = getReceiverExpression()?.getClassOfExpressionType()) {
-        is PsiClass -> ktClassOrPsiClass
-        is KtClassOrObject -> ktClassOrPsiClass.toLightClass()?.let { return it }
+internal fun KtSimpleNameExpression.getReceiverOrContainerClass(containerPsi: PsiElement?): JvmClass? {
+    return when(containerPsi) {
+        is PsiClass -> containerPsi
+        is KtClass -> containerPsi.getContainerClass()
+        is KtClassOrObject -> containerPsi.toLightClass()
         else -> getContainerClass()
     }
+}
+context (KtAnalysisSession)
+internal fun KtSimpleNameExpression.getReceiverOrContainerPsiElement(): PsiElement? {
+    val receiverExpression = getReceiverExpression()
+    return when (val ktClassOrPsiClass = receiverExpression?.getClassOfExpressionType()) {
+        is PsiClass -> ktClassOrPsiClass
+        is KtClassOrObject -> ktClassOrPsiClass
+        else -> computeImplicitReceiverClass(this) ?: getNonStrictParentOfType<KtClassOrObject>()
+    }
+}
 
 context (KtAnalysisSession)
 internal fun KtSimpleNameExpression.getReceiverOrContainerClassPackageName(): FqName? =
@@ -142,7 +220,9 @@ internal fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this
     is PsiType -> if (isValid) {
         try {
             asKtType(useSitePosition)
-        } catch (e: Error) {
+        } catch (e: Throwable) {
+            if (e is ControlFlowException) throw e
+
             // Some requests from Java side do not have a type. For example, in `var foo = dep.<caret>foo();`, we cannot guess
             // the type of `foo()`. In this case, the request passes "PsiType:null" whose name is "null" as a text. The analysis
             // API cannot get a KtType from this weird type. We return `Any?` for this case.
@@ -153,4 +233,22 @@ internal fun JvmType.toKtType(useSitePosition: PsiElement): KtType? = when (this
     }
 
     else -> null
+}
+
+context (KtAnalysisSession)
+fun toKtTypeWithNullability(type: ExpectedTypeWithNullability, useSitePosition: PsiElement): KtType? {
+    val ktTypeNullability = when (type.nullability) {
+        Nullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
+        Nullability.NULLABLE -> KtTypeNullability.NULLABLE
+        Nullability.UNKNOWN -> KtTypeNullability.UNKNOWN
+    }
+    return type.type.toKtType(useSitePosition)?.withNullability(ktTypeNullability)
+}
+
+fun KtTypeNullability.toNullability() : Nullability {
+    return when (this) {
+        KtTypeNullability.NON_NULLABLE -> Nullability.NOT_NULL
+        KtTypeNullability.NULLABLE -> Nullability.NULLABLE
+        KtTypeNullability.UNKNOWN -> Nullability.UNKNOWN
+    }
 }

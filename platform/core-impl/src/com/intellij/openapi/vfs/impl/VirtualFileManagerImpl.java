@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -29,6 +29,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -45,7 +46,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   private final List<? extends VirtualFileSystem> myPreCreatedFileSystems;
 
-  private static class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
+  private static final class VirtualFileSystemBean extends KeyedLazyInstanceEP<VirtualFileSystem> {
     @Attribute
     public boolean physical;
   }
@@ -53,8 +54,8 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   private final KeyedExtensionCollector<VirtualFileSystem, String> myCollector = new KeyedExtensionCollector<>(VirtualFileSystem.EP_NAME);
   private final EventDispatcher<VirtualFileListener> myVirtualFileListenerMulticaster = EventDispatcher.create(VirtualFileListener.class);
   private final List<VirtualFileManagerListener> virtualFileManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<AsyncFileListener> myAsyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private int myRefreshCount;
+  private final List<AsyncFileListener> asyncFileListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private int refreshCount;
 
   public VirtualFileManagerImpl(@NotNull List<? extends VirtualFileSystem> preCreatedFileSystems) {
     this(preCreatedFileSystems, ApplicationManager.getApplication().getMessageBus());
@@ -186,13 +187,13 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @Override
   public void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable) {
-    myAsyncFileListeners.add(listener);
-    Disposer.register(parentDisposable, () -> myAsyncFileListeners.remove(listener));
+    asyncFileListeners.add(listener);
+    Disposer.register(parentDisposable, () -> asyncFileListeners.remove(listener));
   }
 
   @ApiStatus.Internal
-  public void addAsyncFileListenersTo(@NotNull List<? super AsyncFileListener> listeners) {
-    listeners.addAll(myAsyncFileListeners);
+  public @NotNull @Unmodifiable List<AsyncFileListener> withAsyncFileListeners(@NotNull @Unmodifiable List<AsyncFileListener> listeners) {
+    return ContainerUtil.concat(listeners, asyncFileListeners);
   }
 
   @Override
@@ -206,7 +207,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
         ApplicationManager.getApplication().runWriteAction(() -> {
           List<VFileEvent> events =
             Collections.singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
-          BulkFileListener listener = app.getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
+          BulkFileListener listener = app.getMessageBus().syncPublisher(VFS_CHANGES);
           listener.before(events);
           listener.after(events);
         });
@@ -216,7 +217,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @ApiStatus.Internal
   public void fireBeforeRefreshStart(boolean asynchronous) {
-    if (myRefreshCount++ == 0) {
+    if (refreshCount++ == 0) {
       for (VirtualFileManagerListener listener : virtualFileManagerListeners) {
         try {
           listener.beforeRefreshStart(asynchronous);
@@ -237,7 +238,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
 
   @ApiStatus.Internal
   public void fireAfterRefreshFinish(boolean asynchronous) {
-    if (--myRefreshCount == 0) {
+    if (--refreshCount == 0) {
       for (VirtualFileManagerListener listener : virtualFileManagerListeners) {
         try {
           listener.afterRefreshFinish(asynchronous);

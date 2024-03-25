@@ -13,9 +13,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.colors.ColorKey
-import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState
@@ -32,6 +29,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI
@@ -156,9 +154,9 @@ object TerminalUiUtils {
 
     Disposer.register(alarm) {
       if (!result.isDone) {
-        ApplicationManager.getApplication().invokeLater({
-                                                          result.completeExceptionally(IllegalStateException("parent disposed"))
-                                                        }, ModalityState.stateForComponent(component))
+        invokeLater(modalityState = ModalityState.stateForComponent(component)) {
+          result.completeExceptionally(IllegalStateException("parent disposed"))
+        }
       }
     }
     result.whenComplete { _, _ ->
@@ -233,30 +231,18 @@ object TerminalUiUtils {
   const val YELLOW_COLOR_INDEX: Int = 3
 }
 
-fun Component.bindBackgroundToColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null) {
-  bindColorKey(colorKey, parentDisposable, editor) {
-    background = it
-  }
-}
-
-fun Component.bindForegroundToColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null) {
-  bindColorKey(colorKey, parentDisposable, editor) {
-    foreground = it
-  }
-}
-
-fun bindColorKey(colorKey: ColorKey, parentDisposable: Disposable, editor: Editor? = null, applier: (Color?) -> Unit) {
-  applier(getColor(editor, colorKey))
-  ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-    applier(getColor(editor, colorKey))
-  })
-}
-
-private fun getColor(editor: Editor?, colorKey: ColorKey): Color? {
-  return if (editor != null) {
-    editor.colorsScheme.getColor(colorKey)
+@RequiresBlockingContext
+fun invokeLater(expired: (() -> Boolean)? = null,
+                modalityState: ModalityState = ModalityState.defaultModalityState(),
+                runnable: Runnable) {
+  if (expired != null) {
+    ApplicationManager.getApplication().invokeLater(runnable, modalityState) {
+      expired()
+    }
   }
   else {
-    EditorColorsManager.getInstance().globalScheme.getColor(colorKey)
+    ApplicationManager.getApplication().invokeLater(runnable, modalityState)
   }
 }
+
+fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }

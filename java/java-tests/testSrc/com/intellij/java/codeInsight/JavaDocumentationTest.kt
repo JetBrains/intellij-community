@@ -289,11 +289,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
 
-    val expected = "<html><div class='content'>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
+    val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                    "<br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                   "</div>"
+                   "</p></div></body></html>"
 
     TestCase.assertEquals(expected, actual)
   }
@@ -309,11 +309,11 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val documentationManager = DocumentationManager.getInstance(myFixture.project)
     JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
-      val expected = "<html><div class='content'>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
+      val expected = "<html><head></head><body><div class=\"content\"><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                      "<br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
-                     "</div>"
+                     "</p></div></body></html>"
       assertEquals(expected, component.decoratedText)
 
       documentationManager.navigateByLink(component, null, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
@@ -326,7 +326,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
       // Here we check that the covering module (SDK in this case) is rendered in decorated info
       assertTrue(
-        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\"/>&nbsp;&lt; java 1.7 &gt;</div>"))
+        component.decoratedText.contains("<div class=\"bottom\"><icon src=\"AllIcons.Nodes.PpLibFolder\" />&nbsp;&lt; java 1.7 &gt;</div>"))
       return@getDocumentationText null
     }
   }
@@ -361,12 +361,12 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
     val expected = """
       <div class="bottom"><icon src="AllIcons.Nodes.Class">&nbsp;<a href="psi_element://C"><code><span style="color:#000000;">C</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span>&nbsp;<span style="color:#000080;font-weight:bold;">void</span>&nbsp;<span style="color:#000000;">m</span><span style="">(</span><span style="">)</span></pre></div><div class='content'> 
         <p> Examples of expected usage:
-        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></pre></div>
-        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></pre></div>
+        <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
+        <pre><code><span style="">StringBuilder&#32;sb&#32;=&#32;</span><span style="color:#000080;font-weight:bold;">new&#32;</span><span style="">StringBuilder();</span></code></pre>
         <p> Continuing...
-        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></pre></div>
+        <pre><code><span style="">quote&#32;nr&#32;</span><span style="color:#0000ff;">2</span><span style="">;</span></code></pre>
         <p> Continuing...
-        <div class='styled-code'><pre style="padding: 0px; margin: 0px"><span style="">(</span><span style="color:#000080;font-weight:bold;">this</span><span style="">.charAt(&lt;i&gt;k&lt;/i&gt;)&#32;==&#32;ch)&#32;&amp;&amp;&#32;(&lt;i&gt;k&lt;/i&gt;&#32;&lt;=&#32;fromIndex)</span></pre></div>
+        <pre><code><span style="">(</span><span style="color:#000080;font-weight:bold;">this</span><span style="">.charAt(&lt;i&gt;k&lt;/i&gt;)&#32;==&#32;ch)&#32;&amp;&amp;&#32;(&lt;i&gt;k&lt;/i&gt;&#32;&lt;=&#32;fromIndex)</span></code></pre>
         <blockquote><pre>
           Unfinished blockquote
         </pre> </blockquote>

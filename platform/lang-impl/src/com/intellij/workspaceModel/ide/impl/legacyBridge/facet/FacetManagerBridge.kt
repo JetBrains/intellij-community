@@ -16,10 +16,7 @@ import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
@@ -136,7 +133,7 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
     // Initialize facet bridges after loading from cache
     val moduleEntity = (moduleBridge.diff ?: moduleBridge.entityStorage.current).resolve(moduleBridge.moduleEntityId)
                        ?: error("Module entity should be available")
-    val facetTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { it.supportedFacetType }
+    val facetTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { FacetEntityTypeId(it.supportedFacetType) }
     val facetMapping = facetMapping()
     val mappings = ArrayList<Pair<WorkspaceEntity, Facet<*>>>()
     for (facetContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
@@ -148,7 +145,7 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
         }
       }
       else {
-        moduleEntity.facets.filter { !facetTypeToSerializer.containsKey(it.facetType) }.forEach {
+        moduleEntity.facets.filter { !facetTypeToSerializer.containsKey(it.typeId) }.forEach {
           fun initFacet(entity: FacetEntity): Facet<*> {
             val under = entity.underlyingFacet?.let { initFacet(it) }
             var existingFacet = facetMapping().getDataByEntity(entity)
@@ -190,13 +187,13 @@ class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModelBase(
 
   internal fun createFacet(entity: FacetEntity, underlyingFacet: Facet<*>?): Facet<*> {
     val registry = FacetTypeRegistry.getInstance()
-    val facetType = registry.findFacetType(entity.facetType)
+    val facetType = registry.findFacetType(entity.typeId.name)
     if (facetType == null) {
       return FacetManagerBase.createInvalidFacet(moduleBridge, FacetState().apply {
         name = entity.name
-        setFacetType(entity.facetType)
+        setFacetType(entity.typeId.name)
         configuration = entity.configurationXmlTag?.let { JDOMUtil.load(it) }
-      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.facetType), true, true)
+      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.typeId.name), true, true)
     }
 
     val configuration = facetType.createDefaultConfiguration()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,38 +31,20 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public final class ConstantMathCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
-  @NonNls static final Set<String> constantMathCall = new HashSet<>(23);
-
-  static {
-    constantMathCall.add("abs");
-    constantMathCall.add("acos");
-    constantMathCall.add("asin");
-    constantMathCall.add("atan");
-    constantMathCall.add("cbrt");
-    constantMathCall.add("ceil");
-    constantMathCall.add("cos");
-    constantMathCall.add("cosh");
-    constantMathCall.add("exp");
-    constantMathCall.add("expm1");
-    constantMathCall.add("floor");
-    constantMathCall.add("log");
-    constantMathCall.add("log10");
-    constantMathCall.add("log1p");
-    constantMathCall.add("rint");
-    constantMathCall.add("round");
-    constantMathCall.add("sin");
-    constantMathCall.add("sinh");
-    constantMathCall.add("sqrt");
-    constantMathCall.add("tan");
-    constantMathCall.add("tanh");
-    constantMathCall.add("toDegrees");
-    constantMathCall.add("toRadians");
-  }
+  @NonNls static final Set<String> constantMathCall = Set.of(
+    "abs", "acos", "asin", "atan",
+    "cbrt", "ceil", "cos", "cosh",
+    "exp", "expm1",
+    "floor",
+    "log", "log10", "log1p",
+    "rint", "round",
+    "sin", "sinh", "sqrt",
+    "tan", "tanh",
+    "toDegrees", "toRadians");
 
   @Override
   @NotNull

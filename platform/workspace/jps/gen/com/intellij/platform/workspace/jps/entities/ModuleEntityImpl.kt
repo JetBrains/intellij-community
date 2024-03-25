@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("ModuleEntityAndExtensions")
+
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
@@ -33,8 +35,10 @@ import org.jetbrains.annotations.NonNls
 open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, ContentRootEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
@@ -49,7 +53,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
       return dataSource.name
     }
 
-  override val type: String?
+  override val type: ModuleTypeId?
     get() {
       readField("type")
       return dataSource.type
@@ -179,12 +183,13 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         changedProperty.add("name")
       }
 
-    override var type: String?
+    override var type: ModuleTypeId?
       get() = getEntityData().type
       set(value) {
         checkModificationAllowed()
         getEntityData(true).type = value
         changedProperty.add("type")
+
       }
 
     private val dependenciesUpdater: (value: List<ModuleDependencyItem>) -> Unit = { value ->
@@ -216,8 +221,8 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity>
-                                                                                                            ?: emptyList())
+          _diff.extractOneToManyChildren<ContentRootEntity>(CONTENTROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(
+            true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity> ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootEntity> ?: emptyList()
@@ -236,7 +241,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CONTENTROOTS_CONNECTION_ID, this, value)
@@ -261,7 +266,8 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetEntity>
+          _diff.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                            FACETS_CONNECTION_ID)] as? List<FacetEntity>
                                                                                                 ?: emptyList())
         }
         else {
@@ -281,7 +287,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(FACETS_CONNECTION_ID, this, value)
@@ -305,7 +311,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
 
 class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEntity>(), SoftLinkable {
   lateinit var name: String
-  var type: String? = null
+  var type: ModuleTypeId? = null
   lateinit var dependencies: MutableList<ModuleDependencyItem>
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized

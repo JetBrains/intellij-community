@@ -247,7 +247,14 @@ public final class VfsData {
     }
 
     void setUserMap(int fileId, @NotNull KeyFMap map) {
-      objectFieldsArray.set(objectOffsetInSegment(fileId), map);
+      int index = objectOffsetInSegment(fileId);
+      Object oldMap = objectFieldsArray.getAndSet(index, map);
+      if (oldMap == null) {
+        //Entry in the objectFieldsArray must be initialized first in .initFileData(), during
+        // VirtualFile lookup -- only after that VirtualFile could be made publicly available,
+        // and this method is available to call. This seems to be violated:
+        throw new IllegalStateException("file[#" + fileId + "]: cache record wasn't initialized yet, but already used (set " + map + ")");
+      }
     }
 
     @NotNull
@@ -260,6 +267,13 @@ public final class VfsData {
     }
 
     boolean changeUserMap(int fileId, KeyFMap oldMap, KeyFMap newMap) {
+      if (oldMap == null) {
+        //Entry in the objectFieldsArray must be initialized first in .initFileData(), during
+        // VirtualFile lookup -- only after that VirtualFile could be made publicly available,
+        // and this method is available to call. This seems to be violated:
+        throw new IllegalStateException(
+          "file[#" + fileId + "]: cache record wasn't initialized yet, but already used (change -> " + newMap + ")");
+      }
       return objectFieldsArray.compareAndSet(objectOffsetInSegment(fileId), oldMap, newMap);
     }
 
@@ -303,11 +317,13 @@ public final class VfsData {
     }
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
+      int segmentIndex = segmentIndex(fileId);
+
       assert replacement == null;
       replacement = new Segment(owningVfsData, objectFieldsArray, intFieldsArray);
-      int segmentIndex = segmentIndex(fileId);
       boolean replaced = owningVfsData.segments.replace(segmentIndex, this, replacement);
       assert replaced;
+
       owningVfsData.changeParent(fileId, directory);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.fileEditor.impl
@@ -18,6 +18,7 @@ import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -90,7 +91,7 @@ private const val IDE_FINGERPRINT: @NonNls String = "ideFingerprint"
 @DirtyUI
 open class EditorsSplitters internal constructor(
   val manager: FileEditorManagerImpl,
-  internal val coroutineScope: CoroutineScope,
+  @JvmField internal val coroutineScope: CoroutineScope,
 ) : JPanel(BorderLayout()), UISettingsListener {
   companion object {
     const val SPLITTER_KEY: @NonNls String = "EditorsSplitters"
@@ -102,7 +103,6 @@ open class EditorsSplitters internal constructor(
       }
     }
 
-    @JvmStatic
     fun findDefaultComponentInSplitters(project: Project?): JComponent? {
       return getSplittersToFocus(project)?.currentWindow?.selectedComposite?.preferredFocusedComponent
     }
@@ -321,6 +321,11 @@ open class EditorsSplitters internal constructor(
     currentCompositeFlow.value = window?.selectedComposite
   }
 
+  @Deprecated("Use openFilesAsync(Boolean) instead", ReplaceWith("openFilesAsync(true)"))
+  fun openFilesAsync(): Job {
+    return openFilesAsync(true)
+  }
+
   fun openFilesAsync(requestFocus: Boolean): Job {
     return coroutineScope.launch {
       restoreEditors(state = state.getAndSet(null) ?: return@launch,
@@ -425,9 +430,7 @@ open class EditorsSplitters internal constructor(
         window.getComposites().filter { updatedFile == null || it.file.nameSequence.contentEquals(updatedFile.nameSequence) }.toList()
       }
       for (composite in composites) {
-        val title = readAction {
-          EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
-        }
+        val title = EditorTabPresentationUtil.getEditorTabTitle(manager.project, composite.file)
         withContext(Dispatchers.EDT) {
           val index = window.findCompositeIndex(composite)
           if (index != -1) {
@@ -616,7 +619,9 @@ open class EditorsSplitters internal constructor(
     LOG.assertTrue(currentWindow == null)
     val window = EditorWindow(owner = this, coroutineScope.childScope(CoroutineName("EditorWindow")))
     add(window.component, BorderLayout.CENTER)
-    setCurrentWindowAndComposite(window)
+    windows.add(window)
+    currentWindowFlow.value = window
+    currentCompositeFlow.value = window.selectedComposite
   }
 
   /**
@@ -900,17 +905,25 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
                                    requestFocus: Boolean) {
     coroutineScope {
       val windowDeferred = async(Dispatchers.EDT) {
-        val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
-        editorWindow.component.isFocusable = false
-        if (tabSizeLimit != 1) {
-          editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+        splitters.insideChange++
+        try {
+          val editorWindow = EditorWindow(owner = splitters, splitters.coroutineScope.childScope(CoroutineName("EditorWindow")))
+          splitters.addWindow(editorWindow)
+          editorWindow.component.isFocusable = false
+          if (tabSizeLimit != 1) {
+            editorWindow.tabbedPane.component.putClientProperty(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, tabSizeLimit)
+          }
+          addChild(editorWindow.component)
+          editorWindow
         }
-        addChild(editorWindow.component)
-        editorWindow
+        finally {
+          // do not call `validate` - will be called on editor `add` in any case
+          splitters.insideChange--
+        }
       }
 
       val fileEditorManager = splitters.manager
-      val fileDocumentManager = serviceAsync<FileDocumentManager>()
+      var fileDocumentManager: FileDocumentManager? = null
       val fileEditorProviderManager = serviceAsync<FileEditorProviderManager>()
 
       fun weight(item: FileEntry) = (if (item.currentInTab) 1 else 0)
@@ -927,20 +940,34 @@ private class UiBuilder(private val splitters: EditorsSplitters) {
         span("opening editor") {
           val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return@span
           file.putUserData(AsyncEditorLoader.OPENED_IN_BULK, true)
-          if (isFirstInBulk) {
-            // add selected tab on EditorTabs without waiting for the rest tabs on startup.
-            // this allows painting the first editor as soon as it is ready IJPL-687
-            file.putUserData(AsyncEditorLoader.FIRST_IN_BULK, true)
-            isFirstInBulk = false
-          }
           try {
-            openFile(file = file,
-                     fileEntry = fileEntry,
-                     fileEditorProviderManager = fileEditorProviderManager,
-                     fileEditorManager = fileEditorManager,
-                     fileDocumentManager = fileDocumentManager,
-                     windowDeferred = windowDeferred,
-                     index = index)
+            if (isFirstInBulk) {
+              // Add the selected tab to EditorTabs without waiting for the other tabs to load on startup.
+              // This enables painting the first editor as soon as it's ready (IJPL-687).
+              file.putUserData(AsyncEditorLoader.FIRST_IN_BULK, true)
+              isFirstInBulk = false
+            }
+
+            val document = async {
+              var m = fileDocumentManager
+              if (m == null) {
+                m = serviceAsync<FileDocumentManager>()
+                fileDocumentManager = m
+              }
+              readAction {
+                m.getDocument(file)
+              }
+            }
+
+            openFile(
+              file = file,
+              fileEntry = fileEntry,
+              fileEditorProviderManager = fileEditorProviderManager,
+              fileEditorManager = fileEditorManager,
+              document = document,
+              windowDeferred = windowDeferred,
+              index = index,
+            )
             if (fileEntry.currentInTab) {
               focusedFile = file
             }
@@ -980,13 +1007,15 @@ private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEn
   return null
 }
 
-private suspend fun openFile(file: VirtualFile,
-                             fileEntry: FileEntry,
-                             fileEditorProviderManager: FileEditorProviderManager,
-                             fileEditorManager: FileEditorManagerImpl,
-                             fileDocumentManager: FileDocumentManager,
-                             windowDeferred: Deferred<EditorWindow>,
-                             index: Int) {
+private suspend fun openFile(
+  file: VirtualFile,
+  fileEntry: FileEntry,
+  fileEditorProviderManager: FileEditorProviderManager,
+  fileEditorManager: FileEditorManagerImpl,
+  document: Deferred<Document?>,
+  windowDeferred: Deferred<EditorWindow>,
+  index: Int,
+) {
   coroutineScope {
     val deferredProviders: Deferred<List<FileEditorProvider>> = if (fileEntry.ideFingerprint == ideFingerprint()) {
       async(CoroutineName("editor provider resolving")) {
@@ -1027,10 +1056,6 @@ private suspend fun openFile(file: VirtualFile,
       override suspend fun getState(provider: FileEditorProvider): FileEditorState? {
         return providerAndStateList.await().firstOrNull { it.first === provider }?.second
       }
-    }
-
-    val document = readAction {
-      fileDocumentManager.getDocument(file)
     }
 
     val session = fileEditorManager.project.serviceAsync<ClientSessionsManager<ClientProjectSession>>().getSession(ClientId.current)

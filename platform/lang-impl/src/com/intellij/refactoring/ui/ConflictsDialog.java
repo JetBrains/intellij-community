@@ -452,18 +452,17 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
   }
   
   private static final class ConflictPresentation implements UsagePresentation {
-    private static final String CODE_START = " <b><code>";
-    private static final String CODE_END = "</code></b>";
+    private static final String CODE_START = " <b>";
+    private static final String CODE_END = "</b>";
     private final @NlsContexts.Tooltip String myConflictDescription;
     private final boolean myUpdatedDialog;
 
     ConflictPresentation(@NotNull @NlsContexts.Tooltip String conflictDescription) {
       myUpdatedDialog = Registry.is("refactorings.use.updated.conflicts.detected.dialog");
       if (myUpdatedDialog) {
-        myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription);
+        myConflictDescription = conflictDescription;
       }
       else {
-        //noinspection HardCodedStringLiteral
         myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
           .replace("<code>", "")
           .replace("</code>", "")
@@ -477,21 +476,26 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       if (myUpdatedDialog) {
         List<TextChunk> chunks = new SmartList<>();
         int start = 0;
-        int refStart = myConflictDescription.indexOf(CODE_START);
+        String conflictDescription = StringUtil.unescapeXmlEntities(myConflictDescription)
+          .replace("<b><code>", "<b>")
+          .replace("<code>", "<b>")
+          .replace("</code></b>", "</b>")
+          .replace("</code>", "</b>");
+        int refStart = conflictDescription.indexOf(CODE_START);
         while (refStart > 0) {
           // workaround for UsageViewTreeCellRenderer adding a space after the first chunk
-          String substring = myConflictDescription.substring(start, chunks.isEmpty() ? refStart : refStart + 1);
+          String substring = conflictDescription.substring(start, chunks.isEmpty() ? refStart : refStart + 1);
           chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), substring));
-          int refEnd = myConflictDescription.indexOf(CODE_END, refStart);
+          int refEnd = conflictDescription.indexOf(CODE_END, refStart);
           if (refEnd < 0) {
-            return new TextChunk[]{new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription)};
+            return new TextChunk[]{new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), conflictDescription)};
           }
           chunks.add(new TextChunk(REGULAR_BOLD_ATTRIBUTES.toTextAttributes(),
-                                   myConflictDescription.substring(refStart + CODE_START.length(), refEnd)));
+                                   conflictDescription.substring(refStart + CODE_START.length(), refEnd)));
           start = refEnd + CODE_END.length();
-          refStart = myConflictDescription.indexOf(CODE_START, refEnd);
+          refStart = conflictDescription.indexOf(CODE_START, refEnd);
         }
-        chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), myConflictDescription.substring(start)));
+        chunks.add(new TextChunk(REGULAR_ATTRIBUTES.toTextAttributes(), conflictDescription.substring(start)));
         return chunks.toArray(TextChunk.EMPTY_ARRAY);
       }
       else {

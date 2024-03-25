@@ -45,5 +45,7 @@
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
     <orderEntry type="library" name="opentelemetry-exporter-otlp-common" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
   </component>
 </module>

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -1043,7 +1044,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     complete();
     assertStringItems("_bar", "_goo", "_foo");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
-    selectItem(getLookup().getItems().get(2), getLookup().NORMAL_SELECT_CHAR);
+    selectItem(getLookup().getItems().get(2), Lookup.NORMAL_SELECT_CHAR);
     checkResult();
   }
 
@@ -1090,16 +1091,16 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertNull(getLookup());
   }
 
-  public void testSmartEnterWrapsConstructorCall() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterWrapsConstructorCall() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterNoNewLine() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterNoNewLine() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterWithNewLine() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterWithNewLine() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   @NeedsIndex.SmartMode(reason = "MethodCallFixer.apply needs smart mode to count number of parameters")
-  public void testSmartEnterGuessArgumentCount() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterGuessArgumentCount() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterInsideArrayBrackets() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterInsideArrayBrackets() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   public void testTabReplacesMethodNameWithLocalVariableName() { doTest("\t"); }
 
@@ -1301,7 +1302,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testSynchronizedArgumentSmartEnter() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSynchronizedArgumentSmartEnter() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   @NeedsIndex.Full
   public void testImportStringValue() {
@@ -2196,7 +2197,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testSmartEnterWrapsTypeArguments() {
     myFixture.configureByText("a.java", "class Foo<T> { F<caret>List<String> }");
     myFixture.completeBasic();
-    myFixture.type(getLookup().COMPLETE_STATEMENT_SELECT_CHAR);
+    myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
     myFixture.checkResult("class Foo<T> { Foo<List<String>><caret> }");
   }
 
@@ -2499,10 +2500,587 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                             }""");
   }
 
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
   public void testAfterTry() {
     myFixture.configureByText("Test.java", "class X{X() {try {}<caret>}}");
     myFixture.completeBasic();
-    assertEquals(myFixture.getLookupElementStrings(), List.of("catch", "finally"));
+    assertEquals(myFixture.getLookupElementStrings(),
+                 List.of("catch", "finally", "catch (Exception e)", "catch (RuntimeException e)"));
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptions() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends Exception {
+        }
+        class CheckedException2 extends Exception {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+            } c<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (CheckedException1 e)", "catch (CheckedException2 e)"),
+      myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+      """
+        class X{
+          class CheckedException1 extends Exception {
+          }
+          class CheckedException2 extends Exception {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+              } catch (CheckedException1 e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithCatch() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends Exception {
+        }
+        class CheckedException2 extends Exception {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+            } catch(CheckedException2 e) {
+            } catc<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (CheckedException1 e)"), myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+        """
+        class X{
+          class CheckedException1 extends Exception {
+          }
+          class CheckedException2 extends Exception {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+              } catch(CheckedException2 e) {
+              } catch (CheckedException1 e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithAllCaught() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends Exception {
+        }
+        class CheckedException2 extends Exception {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+            } catch(CheckedException1 e) {
+            } catch(CheckedException2 e) {
+            } catc<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"), myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+        """
+        class X{
+          class CheckedException1 extends Exception {
+          }
+          class CheckedException2 extends Exception {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+              } catch(CheckedException1 e) {
+              } catch(CheckedException2 e) {
+              } catch (Exception e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithParents() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException extends Exception {
+        }
+        class CheckedException1 extends CheckedException {
+        }
+        class CheckedException2 extends CheckedException {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+            } catch(CheckedException e) {
+            } catc<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"), myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+        """
+        class X{
+          class CheckedException extends Exception {
+          }
+          class CheckedException1 extends CheckedException {
+          }
+          class CheckedException2 extends CheckedException {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+              } catch(CheckedException e) {
+              } catch (Exception e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithExistedImport() {
+    myFixture.addClass("""
+    package com.test;
+    
+    public class TestException extends RuntimeException{}
+    """);
+    myFixture.addClass("""
+    package com.test2;
+    import com.test.TestException;
+    
+    public final class Test{
+      public static void test() throws TestException{}
+    }
+    """);
+    myFixture.configureByText("Test.java",
+    """
+      package com.test3;
+      import com.test.TestException;
+      import com.test2.Test;
+
+      class X{
+        public void test() {
+            try {
+                Test.test();
+            } catc<caret>
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (TestException e)"), myFixture.getLookupElementStrings());
+
+    LookupElement element = elements[1];
+    LookupElementPresentation presentation = renderElement(element);
+    String text = presentation.getTailText();
+    assertEquals(" (TestException e)", text);
+    selectItem(element);
+
+    myFixture.checkResult(
+        """
+      package com.test3;
+      import com.test.TestException;
+      import com.test2.Test;
+
+      class X{
+        public void test() {
+            try {
+                Test.test();
+            } catch (TestException e)<caret>
+        }
+      }
+      """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithImport() {
+    myFixture.addClass("""
+    package com.test;
+    
+    public class TestException extends RuntimeException{}
+    """);
+    myFixture.addClass("""
+    package com.test2;
+    import com.test.TestException;
+    
+    public final class Test{
+      public static void test() throws TestException{}
+    }
+    """);
+    myFixture.configureByText("Test.java",
+    """
+      package com.test3;
+      import com.test2.Test;
+
+      class X{
+        public void test() {
+            try {
+                Test.test();
+            } catc<caret>
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (com.test.TestException e)"), myFixture.getLookupElementStrings());
+
+    LookupElement element = elements[1];
+    LookupElementPresentation presentation = renderElement(element);
+    String text = presentation.getTailText();
+    assertEquals(" (TestException e)", text);
+    selectItem(element);
+
+    myFixture.checkResult(
+        """
+      package com.test3;
+      import com.test.TestException;
+      import com.test2.Test;
+
+      class X{
+        public void test() {
+            try {
+                Test.test();
+            } catch (TestException e)<caret>
+        }
+      }
+      """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testManyUnhandledCheckedExceptions() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends Exception {
+        }
+        class CheckedException2 extends Exception {
+        }
+        public void test() {
+            try {
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                method1();
+                throw new CheckedException2();
+            } c<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"),
+                 myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+      """
+        class X{
+          class CheckedException1 extends Exception {
+          }
+          class CheckedException2 extends Exception {
+          }
+          public void test() {
+              try {
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  method1();
+                  throw new CheckedException2();
+              } catch (Exception e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithDefault() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends Exception {
+        }
+        class CheckedException2 extends Exception {
+        }
+        class CheckedException3 extends Exception {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+                throw new CheckedException3();
+            } c<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"),
+                 myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+      """
+        class X{
+          class CheckedException1 extends Exception {
+          }
+          class CheckedException2 extends Exception {
+          }
+          class CheckedException3 extends Exception {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+                  throw new CheckedException3();
+              } catch (Exception e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledRuntimeExceptions() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends RuntimeException {
+        }
+        class CheckedException2 extends RuntimeException {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+            } c<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (CheckedException1 e)", "catch (CheckedException2 e)"),
+                 myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+      """
+        class X{
+          class CheckedException1 extends RuntimeException {
+          }
+          class CheckedException2 extends RuntimeException {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+              } catch (CheckedException1 e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testUnhandledCheckedExceptionsWithRuntimeException() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        class CheckedException1 extends Exception {
+        }
+        class CheckedException2 extends Exception {
+        }
+        public void test() {
+            try {
+                method1();
+                throw new CheckedException2();
+                throw new RuntimeException();
+            } c<caret>
+        }
+  
+        private void method1() throws CheckedException1{
+  
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (CheckedException1 e)", "catch (CheckedException2 e)"),
+                 myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+      """
+        class X{
+          class CheckedException1 extends Exception {
+          }
+          class CheckedException2 extends Exception {
+          }
+          public void test() {
+              try {
+                  method1();
+                  throw new CheckedException2();
+                  throw new RuntimeException();
+              } catch (CheckedException1 e)<caret>
+          }
+        
+          private void method1() throws CheckedException1{
+        
+          }
+        }
+        """);
+  }
+
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
+  public void testEmptyTryCatch() {
+    myFixture.configureByText("Test.java",
+    """
+      class X{
+        public void test() {
+            try {
+            } c<caret>
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+
+    assertEquals(List.of("catch", "catch (Exception e)", "catch (RuntimeException e)"),
+                 myFixture.getLookupElementStrings());
+
+    selectItem(elements[1]);
+
+    myFixture.checkResult(
+      """
+        class X{
+          public void test() {
+              try {
+              } catch (Exception e)<caret>
+          }
+        }
+        """);
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -2996,21 +3574,21 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       import java.util.List;
 
       public final class Complete {
-      	public static void main(String[] args) {
-      		SubClass instance;
+        public static void main(String[] args) {
+          SubClass instance;
               instance.<caret>
-      	}
+        }
 
-      	static class SuperClass<T> {
-      		public List<T> list(Object param) {return null;}
-      	}
+        static class SuperClass<T> {
+          public List<T> list(Object param) {return null;}
+        }
 
-      	static class SubClass extends SuperClass<String> {
-      		@Override
-      		public List<String> list(Object paramName) {
-      			return super.list(paramName);
-      		}
-      	}
+        static class SubClass extends SuperClass<String> {
+          @Override
+          public List<String> list(Object paramName) {
+            return super.list(paramName);
+          }
+        }
 
       }""");
     LookupElement[] elements = myFixture.completeBasic();

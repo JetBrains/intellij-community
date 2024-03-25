@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 
@@ -27,13 +32,15 @@ interface SimplePropsEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(text: String,
-                        list: List<Int>,
-                        set: Set<List<String>>,
-                        map: Map<Set<String>, List<String>>,
-                        bool: Boolean,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimplePropsEntity {
+    operator fun invoke(
+      text: String,
+      list: List<Int>,
+      set: Set<List<String>>,
+      map: Map<Set<String>, List<String>>,
+      bool: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SimplePropsEntity {
       val builder = builder()
       builder.text = text
       builder.list = list.toMutableWorkspaceList()
@@ -49,7 +56,10 @@ interface SimplePropsEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimplePropsEntity,
-                                      modification: SimplePropsEntity.Builder.() -> Unit): SimplePropsEntity = modifyEntity(
-  SimplePropsEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimplePropsEntity,
+  modification: SimplePropsEntity.Builder.() -> Unit,
+): SimplePropsEntity {
+  return modifyEntity(SimplePropsEntity.Builder::class.java, entity, modification)
+}
 //endregion

@@ -51,7 +51,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
       actions.add(new ToggleColumnAction(column));
     }
 
-    return actions.toArray(AnAction.EMPTY_ARRAY);
+    return actions.toArray(EMPTY_ARRAY);
   }
 
   @Override

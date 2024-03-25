@@ -11,13 +11,11 @@ End of files
 Exit code: OK
 ------------------------------------------
 Cleaning output files:
-  out/production/module/CompanionExtensionKt.class
   out/production/module/CompanionReferenceExplicitKt.class
   out/production/module/CompanionReferenceImplicitKt.class
   out/production/module/META-INF/module.kotlin_module
 End of files
 Compiling files:
-  src/companionExtension.kt
   src/companionReferenceExplicit.kt
   src/companionReferenceImplicit.kt
 End of files
@@ -34,7 +32,6 @@ Cleaning output files:
 End of files
 Compiling files:
   src/A.kt
-  src/companionExtension.kt
   src/companionReferenceExplicit.kt
   src/companionReferenceImplicit.kt
 End of files

@@ -131,6 +131,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     GitFileHistory.loadHistory(myProject, path, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
                                exception -> partner.reportException(exception),
+                               rename -> { },
                                additionalArgs);
   }
 

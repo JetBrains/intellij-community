@@ -86,6 +86,7 @@
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="EBECF0"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="C9CCD6"/>
       <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="ED99A1"/>
+      <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="EBECF0"/>
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
@@ -281,7 +282,8 @@
       <option name="DOC_TIPS_SHORTCUT">
         <value>
           <option name="FOREGROUND" value="6e6e6e"/>
-          <option name="BACKGROUND" value="f2f2f2"/>
+          <option name="EFFECT_COLOR" value="A8ADBD" />
+          <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEFAULT_DOC_COMMENT_TAG_VALUE">
@@ -1562,6 +1564,7 @@
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_BACKGROUND" value="393B40"/>
       <option name="BLOCK_TERMINAL_INACTIVE_SELECTED_BLOCK_STROKE_COLOR" value="5A5D63"/>
       <option name="BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR" value="9C4E4E"/>
+      <option name="BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR" value="393B40"/>
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
@@ -2023,7 +2026,8 @@
       <option name="DOC_TIPS_SHORTCUT">
         <value>
           <option name="FOREGROUND" value="afb1b3"/>
-          <option name="BACKGROUND" value="3c3f41"/>
+          <option name="EFFECT_COLOR" value="6F737A" />
+          <option name="EFFECT_TYPE" value="0" />
         </value>
       </option>
       <option name="DEFAULT_DOC_MARKUP">
@@ -2864,7 +2868,7 @@
           <option name="FOREGROUND" value="9d527c" />
         </value>
       </option>
-      
+
       <option name="BREADCRUMBS_DEFAULT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>

@@ -16,7 +16,6 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
@@ -24,7 +23,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
@@ -47,7 +45,6 @@ import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ArrayUtil
-import com.intellij.util.Consumer
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -66,7 +63,6 @@ import java.awt.event.ComponentEvent
 import java.awt.event.InputEvent
 import java.util.function.Supplier
 import javax.swing.*
-import javax.swing.text.JTextComponent
 import kotlin.math.abs
 
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
@@ -152,7 +148,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   private class UpdateBackgroundContentManager(private val decorator: InternalDecoratorImpl?) : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+      InternalDecoratorImpl.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
       addAdjustListener(decorator, event.content.component)
     }
   }
@@ -596,7 +592,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     currentContentFactory.createToolWindowContent(toolWindowManager.project, this)
 
     if (toolWindowManager.isNewUi) {
-      setBackgroundRecursively(component = contentManager.value.component, bg = JBUI.CurrentTheme.ToolWindow.background())
+      InternalDecoratorImpl.setBackgroundRecursively(component = contentManager.value.component, bg = JBUI.CurrentTheme.ToolWindow.background())
       addAdjustListener(decorator = decorator, component = contentManager.value.component)
     }
   }
@@ -891,14 +887,6 @@ private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, com
         }
       })
   }
-}
-
-private fun setBackgroundRecursively(component: Component, bg: Color) {
-  UIUtil.forEachComponentInHierarchy(component, Consumer { c ->
-    if (c !is ActionButton && c !is Divider && c !is JTextComponent) {
-      c.background = bg
-    }
-  })
 }
 
 private fun addAdjustListener(decorator: InternalDecoratorImpl?, component: JComponent) {

@@ -17,10 +17,12 @@ package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.ui.treeStructure.TreeBulkExpansionEvent;
+import com.intellij.ui.treeStructure.TreeBulkExpansionListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
-import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.table.AbstractTableModel;
@@ -51,16 +53,34 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     this.table = table;
     this.treeTableModel.setTree(tree);
 
-    tree.addTreeExpansionListener(new TreeExpansionListener() {
+    tree.addTreeExpansionListener(new TreeBulkExpansionListener() {
       // Don't use fireTableRowsInserted() here; the selection model
       // would get updated twice.
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
-        fireTableDataChanged();
+        if (!isBulkOperationInProgress(event)) {
+          fireTableDataChanged();
+        }
       }
 
       @Override
       public void treeCollapsed(TreeExpansionEvent event) {
+        if (!isBulkOperationInProgress(event)) {
+          fireTableDataChanged();
+        }
+      }
+
+      private static boolean isBulkOperationInProgress(TreeExpansionEvent event) {
+        return event instanceof TreeBulkExpansionEvent bulkEvent && bulkEvent.isBulkOperationInProgress();
+      }
+
+      @Override
+      public void treeBulkExpansionEnded(@NotNull TreeBulkExpansionEvent event) {
+        fireTableDataChanged();
+      }
+
+      @Override
+      public void treeBulkCollapseEnded(@NotNull TreeBulkExpansionEvent event) {
         fireTableDataChanged();
       }
     });

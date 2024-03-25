@@ -201,6 +201,10 @@ public class JavaKeywordCompletion {
       .accepts(myPrevLeaf)) {
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CATCH), JavaTailTypes.CATCH_LPARENTH));
       addKeyword(new OverridableSpace(createKeyword(PsiKeyword.FINALLY), JavaTailTypes.FINALLY_LBRACE));
+      List<LookupElement> elements = CatchLookupElement.create(myPrevLeaf);
+      for (LookupElement element : elements) {
+        addKeyword(element);
+      }
       if (myPrevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
         return;
       }

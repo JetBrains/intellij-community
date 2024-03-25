@@ -54,6 +54,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
             model("${idea}intentions/removeExplicitTypeArguments", pattern = pattern)
             model("${idea}intentions/specifyExplicitLambdaSignature", pattern = pattern)
+            model("${idea}intentions/changeVisibility", pattern = pattern)
 
             //
             model("${idea}intentions/addJvmOverloads", pattern = pattern, isIgnored = true)
@@ -126,6 +127,8 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertFilteringFunctionWithDemorgansLaw", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeExplicitSuperQualifier", pattern = pattern, isIgnored = true)
             model("${idea}intentions/mergeElseIf", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/branched/ifWhen/ifToWhen", pattern = pattern)
+            model("${idea}intentions/branched/when/flatten", pattern = pattern)
 
             //model("${idea}intentions/loopToCallChain", pattern = pattern, isIgnored = true)
             //model("${idea}intentions/loopToCallChain/forEach", pattern = pattern, isIgnored = true)
@@ -154,7 +157,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/indentRawString", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceAddWithPlusAssign", pattern = pattern, isIgnored = true)
             model("${idea}intentions/reconstructTypeInCastOrIs", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/removeLabeledReturnInLambda", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertParameterToReceiver", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertCollectionConstructorToFunction", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceMapGetOrDefault", pattern = pattern, isIgnored = true)

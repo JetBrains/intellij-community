@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.converters;
 
@@ -24,7 +24,7 @@ import java.util.*;
 
 public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<T>> implements CustomReferenceConverter<List<T>> {
 
-  protected final static Object[] EMPTY_ARRAY = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+  protected static final Object[] EMPTY_ARRAY = ArrayUtilRt.EMPTY_OBJECT_ARRAY;
 
   private final String myDelimiters;
 
@@ -33,24 +33,19 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     myDelimiters = delimiters;
   }
 
-  @Nullable
-  protected abstract T convertString(final @Nullable String string, final ConvertContext context);
+  protected abstract @Nullable T convertString(final @Nullable String string, final ConvertContext context);
 
-  @Nullable
-  protected abstract String toString(@Nullable final T t);
+  protected abstract @Nullable String toString(final @Nullable T t);
 
 
   protected abstract Object[] getReferenceVariants(final ConvertContext context, GenericDomValue<? extends List<T>> genericDomValue);
 
-  @Nullable
-  protected abstract PsiElement resolveReference(@Nullable final T t, final ConvertContext context);
+  protected abstract @Nullable PsiElement resolveReference(final @Nullable T t, final ConvertContext context);
 
-  @InspectionMessage
-  protected abstract String getUnresolvedMessage(String value);
+  protected abstract @InspectionMessage String getUnresolvedMessage(String value);
 
   @Override
-  @NotNull
-  public Collection<? extends List<T>> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends List<T>> getVariants(final ConvertContext context) {
     return Collections.emptyList();
   }
 
@@ -74,7 +69,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
   }
 
   @Override
-  public List<T> fromString(@Nullable final String str, final ConvertContext context) {
+  public List<T> fromString(final @Nullable String str, final ConvertContext context) {
     if (str == null) {
       return null;
     }
@@ -125,13 +120,12 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     return references.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-  @NotNull
-  protected PsiReference createPsiReference(final PsiElement element,
-                                            int start,
-                                            int end,
-                                            final ConvertContext context,
-                                            final GenericDomValue<List<T>> genericDomValue,
-                                            final boolean delimitersOnly) {
+  protected @NotNull PsiReference createPsiReference(final PsiElement element,
+                                                     int start,
+                                                     int end,
+                                                     final ConvertContext context,
+                                                     final GenericDomValue<List<T>> genericDomValue,
+                                                     final boolean delimitersOnly) {
 
     return new MyPsiReference(element, getTextRange(genericDomValue, start, end), context, genericDomValue, delimitersOnly);
   }
@@ -175,8 +169,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       if (myDelimitersOnly) {
         return getElement();
       }
@@ -190,7 +183,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     }
 
     @Override
-    public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(final @NotNull String newElementName) throws IncorrectOperationException {
       final Ref<IncorrectOperationException> ref = new Ref<>();
       PsiElement element = referenceHandleElementRename(this, newElementName, getSuperElementRenameFunction(ref));
       if (!ref.isNull()) {
@@ -201,7 +194,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
     }
 
     @Override
-    public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+    public PsiElement bindToElement(final @NotNull PsiElement element) throws IncorrectOperationException {
       final Ref<IncorrectOperationException> ref = new Ref<>();
       PsiElement bindElement =
         referenceBindToElement(this, element, getSuperBindToElementFunction(ref), getSuperElementRenameFunction(ref));
@@ -243,8 +236,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
 
 
     @Override
-    @NotNull
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       return getUnresolvedMessage(getValue());
     }
   }

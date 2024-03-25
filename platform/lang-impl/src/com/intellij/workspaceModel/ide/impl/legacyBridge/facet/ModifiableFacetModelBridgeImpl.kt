@@ -65,7 +65,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
       val facetTypeId = if (facet !is InvalidFacet) facet.type.stringId else facet.configuration.facetState.facetType
-      val entity = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, facetTypeId, source) {
+      val entity = diff addEntity FacetEntity(facet.name, moduleEntity.symbolicId, FacetEntityTypeId(facetTypeId), source) {
         configurationXmlTag = facetConfigurationXml
         module = moduleEntity
         underlyingFacet = underlyingEntity

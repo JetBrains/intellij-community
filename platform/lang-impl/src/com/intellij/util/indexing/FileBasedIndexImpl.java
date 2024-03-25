@@ -83,6 +83,8 @@ import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlinx.coroutines.CoroutineScope;
@@ -155,6 +157,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final IntSet myStaleIds = new IntOpenHashSet();
+  private final IntSet myDirtyFilesIds = new IntOpenHashSet();
 
   final Lock myReadLock;
   public final Lock myWriteLock;
@@ -333,6 +336,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   void addStaleIds(@NotNull IntSet staleIds) {
     synchronized (myStaleIds) {
       myStaleIds.addAll(staleIds);
+    }
+  }
+
+  void addDirtyFileIds(@NotNull IntSet dirtyFileIds) {
+    synchronized (myDirtyFilesIds) {
+      myDirtyFilesIds.addAll(dirtyFileIds);
     }
   }
 
@@ -572,7 +581,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void persistDirtyFiles(@NotNull Project project) {
     IntSet dirtyFileIds = getAllDirtyFiles(project);
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueuesDir().resolve(project.getLocationHash()), dirtyFileIds, vfsCreationStamp);
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(project), dirtyFileIds, vfsCreationStamp);
   }
 
   @NotNull
@@ -615,15 +624,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
-        IntSet staleIds = new IntOpenHashSet();
-        synchronized (myStaleIds) {
-          staleIds.addAll(myStaleIds);
-          myStaleIds.clear();
+        IntSet unprocessedDirtyFiles = new IntOpenHashSet();
+        synchronized (myDirtyFilesIds) {
+          unprocessedDirtyFiles.addAll(myDirtyFilesIds);
+          myDirtyFilesIds.clear();
         }
 
         if (myIsUnitTestMode) {
           IntSet allStaleIdsToCheck = new IntOpenHashSet();
-          allStaleIdsToCheck.addAll(staleIds);
+          allStaleIdsToCheck.addAll(unprocessedDirtyFiles);
+          synchronized (myStaleIds) {
+            allStaleIdsToCheck.addAll(myStaleIds);
+            myStaleIds.clear();
+          }
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
           persistProjectsDirtyFiles();
@@ -640,8 +653,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IntSet dirtyFilesWithoutProject = getAllDirtyFiles(null);
-        // we need to persist myStaleIds to disk otherwise we lose them if FileBasedIndexTumbler shutdown is performed twice in a row
-        dirtyFilesWithoutProject.addAll(staleIds);
+        // we need to persist unprocessed dirty files to disk otherwise we lose them if
+        // FileBasedIndexTumbler shutdown is performed twice in a row, or IDE is quickly closed
+        dirtyFilesWithoutProject.addAll(unprocessedDirtyFiles);
         PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
                                                      dirtyFilesWithoutProject, vfsCreationStamp);
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
@@ -858,14 +872,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myChangedFilesCollector.getValue();
   }
 
-  void filesUpdateStarted() {
-    ensureStaleIdsDeleted();
-    getChangedFilesCollector().ensureUpToDate();
-  }
-
   void ensureStaleIdsDeleted() {
-    loadIndexes();
-    waitUntilIndicesAreInitialized();
     synchronized (myStaleIds) {
       if (myStaleIds.isEmpty()) return;
       try {
@@ -878,6 +885,30 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myStaleIds.clear();
       }
     }
+  }
+
+  @NotNull
+  IntList ensureDirtyFileIndexesDeleted() {
+    synchronized (myDirtyFilesIds) {
+      try {
+        return ensureDirtyFileIndexesDeleted(myDirtyFilesIds);
+      }
+      finally {
+        myDirtyFilesIds.clear();
+      }
+    }
+  }
+
+  @NotNull
+  IntList ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
+    if (dirtyFiles.isEmpty()) return new IntArrayList();
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
+      for (int fileId : dirtyFiles) {
+        removeFileDataFromIndices(indexIDs, fileId, null);
+      }
+    });
+    return new IntArrayList(dirtyFiles);
   }
 
   @Override

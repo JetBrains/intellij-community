@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -21,14 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class VcsAnnotateUtil {
-  @NotNull
-  public static List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file) {
-    FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(file);
+  public static @NotNull List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file) {
+    List<FileEditor> editors = FileEditorManager.getInstance(project).getEditorList(file);
     return ContainerUtil.mapNotNull(editors, fileEditor -> fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
   }
 
-  @Nullable
-  public static Editor getEditorFor(@NotNull VirtualFile file, @NotNull DataContext dataContext) {
+  public static @Nullable Editor getEditorFor(@NotNull VirtualFile file, @NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor != null && file.equals(editor.getVirtualFile())) {
       return editor;
@@ -45,8 +43,7 @@ public final class VcsAnnotateUtil {
       .first();
   }
 
-  @NotNull
-  public static BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @NotNull BackgroundableActionLock getBackgroundableLock(@NotNull Project project, @NotNull VirtualFile file) {
     return BackgroundableActionLock.getLock(project, VcsBackgroundableActions.ANNOTATE, file);
   }
 }

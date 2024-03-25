@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.editor.Editor;
@@ -35,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PyPushDownHandler extends PyClassRefactoringHandler {
   @Override
-  protected void doRefactorImpl(@NotNull final Project project,
-                                @NotNull final PyClass classUnderRefactoring,
-                                @NotNull final PyMemberInfoStorage infoStorage,
+  protected void doRefactorImpl(final @NotNull Project project,
+                                final @NotNull PyClass classUnderRefactoring,
+                                final @NotNull PyMemberInfoStorage infoStorage,
                                 @NotNull Editor editor) {
 
     //TODO: Move to presenter?
@@ -50,15 +36,13 @@ public class PyPushDownHandler extends PyClassRefactoringHandler {
 
     ViewPresenterUtils
       .linkViewWithPresenterAndLaunch(PyPushDownPresenter.class, PyPushDownView.class, new Creator<>() {
-        @NotNull
         @Override
-        public PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {
+        public @NotNull PyPushDownPresenter createPresenter(@NotNull PyPushDownView view) {
           return new PyPushDownPresenterImpl(project, view, classUnderRefactoring, infoStorage);
         }
 
-        @NotNull
         @Override
-        public PyPushDownView createView(@NotNull PyPushDownPresenter presenter) {
+        public @NotNull PyPushDownView createView(@NotNull PyPushDownPresenter presenter) {
           return new PyPushDownViewSwingImpl(classUnderRefactoring, project, presenter);
         }
       });

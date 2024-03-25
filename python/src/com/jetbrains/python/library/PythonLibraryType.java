@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.library;
 
 import com.intellij.openapi.project.Project;
@@ -33,9 +19,8 @@ import javax.swing.*;
  */
 public final class PythonLibraryType extends LibraryType<DummyLibraryProperties> {
   private static final PersistentLibraryKind<DummyLibraryProperties> LIBRARY_KIND = new PersistentLibraryKind<>("python") {
-    @NotNull
     @Override
-    public DummyLibraryProperties createDefaultProperties() {
+    public @NotNull DummyLibraryProperties createDefaultProperties() {
       return DummyLibraryProperties.INSTANCE;
     }
   };
@@ -53,23 +38,20 @@ public final class PythonLibraryType extends LibraryType<DummyLibraryProperties>
     return null;
   }
 
-  @Nullable
   @Override
-  public NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent,
-                                                  @Nullable VirtualFile contextDirectory,
-                                                  @NotNull Project project) {
+  public @Nullable NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent,
+                                                            @Nullable VirtualFile contextDirectory,
+                                                            @NotNull Project project) {
     return null;
   }
 
-  @Nullable
   @Override
-  public LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<DummyLibraryProperties> editorComponent) {
+  public @Nullable LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<DummyLibraryProperties> editorComponent) {
     return null;
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(DummyLibraryProperties properties) {
+  public @Nullable Icon getIcon(DummyLibraryProperties properties) {
     return null;
   }
 

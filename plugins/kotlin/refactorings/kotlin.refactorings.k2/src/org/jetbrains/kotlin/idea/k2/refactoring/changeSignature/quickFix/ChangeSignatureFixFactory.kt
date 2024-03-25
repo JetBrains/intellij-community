@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -9,14 +11,7 @@ import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -28,33 +23,13 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.*
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.defaultValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
-import kotlin.collections.firstOrNull
-import kotlin.collections.forEach
-import kotlin.collections.indexOf
-import kotlin.let
-import kotlin.sequences.firstOrNull
-import kotlin.sequences.map
-import kotlin.takeIf
 
 object ChangeSignatureFixFactory {
 
@@ -63,40 +38,57 @@ object ChangeSignatureFixFactory {
     }
 
     private data class ParameterInfo(val name: String, val type: String)
-    private class Input(
+
+    private data class Input(
         val type: ChangeType,
         val name: String,
         val isConstructor: Boolean,
         val idx: Int,
         val parameterCount: Int,
-        val expectedParameterTypes: Array<ParameterInfo>? = null
-    ) : KotlinApplicatorInput
+        val expectedParameterTypes: List<ParameterInfo>? = null,
+    ) : KotlinApplicatorBasedQuickFix.Input
 
-    private val applicator = applicator<PsiElement, Input> {
-        familyName { KotlinBundle.message("fix.change.signature.family") }
-        actionName(::getActionName)
-        applyTo { psi, input ->
-            val changeInfo = analyzeInModalWindow(psi as KtElement, KotlinBundle.message("fix.change.signature.prepare")) {
-                prepareChangeInfo(psi, input)
-            } ?: return@applyTo
+    private class ParameterQuickFix(
+        element: PsiElement,
+        input: ChangeSignatureFixFactory.Input,
+    ) : KotlinApplicatorBasedQuickFix<PsiElement, Input>(element, input) {
+
+        override fun getFamilyName(): String = KotlinBundle.message("fix.change.signature.family")
+
+        override fun getActionName(
+            element: PsiElement,
+            input: ChangeSignatureFixFactory.Input,
+        ): String = ChangeSignatureFixFactory.getActionName(element, input)
+
+        override fun invoke(
+            element: PsiElement,
+            input: ChangeSignatureFixFactory.Input,
+            project: Project,
+            editor: Editor?,
+        ) {
+            val changeInfo = analyzeInModalWindow(element as KtElement, KotlinBundle.message("fix.change.signature.prepare")) {
+                prepareChangeInfo(element, input)
+            } ?: return
+
             KotlinChangeSignatureProcessor(changeInfo.method.project, changeInfo).run()
         }
-        startInWriteAction { false }
+
+        override fun startInWriteAction(): Boolean = false
     }
 
-    val addParameterFactory = diagnosticFixFactory(KtFirDiagnostic.TooManyArguments::class, applicator) { diagnostic ->
+    val addParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.TooManyArguments ->
         createAddParameterFix(diagnostic.function, diagnostic.psi)
     }
 
-    val removeParameterFactory = diagnosticFixFactory(KtFirDiagnostic.NoValueForParameter::class, applicator) { diagnostic ->
+    val removeParameterFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NoValueForParameter ->
         createRemoveParameterFix(diagnostic.violatedParameter, diagnostic.psi)
     }
 
-    val typeMismatchFactory = diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class, applicator) { diagnostic ->
+    val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         createMismatchParameterTypeFix(diagnostic.psi, diagnostic.expectedType)
     }
 
-    val nullForNotNullFactory = diagnosticFixFactory(KtFirDiagnostic.NullForNonnullType::class, applicator) { diagnostic ->
+    val nullForNotNullFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NullForNonnullType ->
         createMismatchParameterTypeFix(diagnostic.psi, diagnostic.expectedType)
     }
 
@@ -174,7 +166,7 @@ object ChangeSignatureFixFactory {
                 val argumentExpression = currentArgument.getArgumentExpression()
                 val ktType = getKtType(argumentExpression) ?: return null
                 return KotlinParameterInfo(
-                    originalType = KotlinTypeInfo(ktType.render(position = Variance.IN_VARIANCE), callElement),
+                    originalType = KotlinTypeInfo(ktType, callElement),
                     name = getNewArgumentName(currentArgument, validator),
                     originalIndex = -1,
                     valOrVar = defaultValOrVar(ktCallableDeclaration),
@@ -319,31 +311,36 @@ object ChangeSignatureFixFactory {
 
     context(KtAnalysisSession)
     private fun createAddParameterFix(
-        ktCallableSymbol: KtCallableSymbol, psi: PsiElement
-    ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
+        ktCallableSymbol: KtCallableSymbol,
+        element: PsiElement,
+    ): List<ParameterQuickFix> {
         if (ktCallableSymbol !is KtFunctionLikeSymbol) return emptyList()
-        val isConstructor = ktCallableSymbol is KtConstructorSymbol
         val name = getDeclarationName(ktCallableSymbol) ?: return emptyList()
-        val valueArgument = psi.parentOfType<KtValueArgument>(true) ?: return emptyList()
+        val valueArgument = element.parentOfType<KtValueArgument>(true) ?: return emptyList()
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
         val valueArguments = callElement.valueArguments
         val idx = valueArguments.indexOf(valueArgument)
         val hasTypeMismatch = idx > 0 && valueArguments.take(idx).zip(ktCallableSymbol.valueParameters).any { (arg, s) ->
             (arg as? KtValueArgument)?.getArgumentExpression()?.getKtType()?.isSubTypeOf(s.returnType) != true
         }
+
+        val input = Input(
+            type = if (hasTypeMismatch) ChangeType.TOO_MANY_ARGUMENTS_WITH_TYPE_MISMATCH else ChangeType.ADD,
+            name = name,
+            isConstructor = ktCallableSymbol is KtConstructorSymbol,
+            idx = idx,
+            parameterCount = ktCallableSymbol.valueParameters.size,
+        )
         return listOf(
-            psi withInput Input(
-                type = if (hasTypeMismatch) ChangeType.TOO_MANY_ARGUMENTS_WITH_TYPE_MISMATCH else ChangeType.ADD,
-                name,
-                isConstructor,
-                idx,
-                ktCallableSymbol.valueParameters.size
-            )
+            ParameterQuickFix(element, input),
         )
     }
 
     context(KtAnalysisSession)
-    private fun createRemoveParameterFix(symbol: KtSymbol, psi: PsiElement): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
+    private fun createRemoveParameterFix(
+        symbol: KtSymbol,
+        element: PsiElement,
+    ): List<ParameterQuickFix> {
         if (symbol !is KtParameterSymbol) return emptyList()
         val containingSymbol = symbol.getContainingSymbol() as? KtFunctionLikeSymbol ?: return emptyList()
         if (containingSymbol is KtFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
@@ -351,22 +348,27 @@ object ChangeSignatureFixFactory {
             containingSymbol.origin == KtSymbolOrigin.LIBRARY
         ) return emptyList()
 
-        val isConstructor = containingSymbol is KtConstructorSymbol
         val name = (symbol as? KtNamedSymbol)?.name?.asString() ?: return emptyList()
-        psi.parentOfType<KtCallElement>(true) ?: return emptyList()
-        val idx = containingSymbol.valueParameters.indexOf(symbol)
+        element.parentOfType<KtCallElement>(true) ?: return emptyList()
+
+        val input = Input(
+            type = ChangeType.REMOVE,
+            name = name,
+            isConstructor = containingSymbol is KtConstructorSymbol,
+            idx = containingSymbol.valueParameters.indexOf<Any>(symbol),
+            parameterCount = containingSymbol.valueParameters.size,
+        )
         return listOf(
-            psi withInput Input(
-                type = ChangeType.REMOVE, name, isConstructor, idx, containingSymbol.valueParameters.size
-            )
+            ParameterQuickFix(element, input),
         )
     }
 
     context(KtAnalysisSession)
     private fun createMismatchParameterTypeFix(
-        psi: PsiElement, expectedType: KtType
-    ): List<KotlinApplicatorTargetWithInput<PsiElement, Input>> {
-        val valueArgument = psi.getStrictParentOfType<KtValueArgument>()
+        element: PsiElement,
+        expectedType: KtType
+    ): List<ParameterQuickFix> {
+        val valueArgument = element.getStrictParentOfType<KtValueArgument>()
         if (valueArgument == null) return emptyList()
 
         val callElement = valueArgument.parentOfType<KtCallElement>() ?: return emptyList()
@@ -374,33 +376,32 @@ object ChangeSignatureFixFactory {
             ((callElement.resolveCall() as? KtErrorCallInfo)?.candidateCalls?.firstOrNull() as? KtCallableMemberCall<*, *>)?.symbol as? KtFunctionLikeSymbol
                 ?: return emptyList()
 
-        val isConstructor = functionLikeSymbol is KtConstructorSymbol
         val name = getDeclarationName(functionLikeSymbol) ?: return emptyList()
 
         val newParametersCnt = callElement.valueArguments.size - functionLikeSymbol.valueParameters.size
 
-        if (newParametersCnt <= 0 && psi !is KtLambdaExpression) return emptyList()
+        if (newParametersCnt <= 0 && element !is KtLambdaExpression) return emptyList()
 
-        val functionalType = expectedType as? KtFunctionalType
-        val ktTypes = functionalType?.let { it.parameterTypes + it.returnType }
+        val expectedParameterTypes = (expectedType as? KtFunctionalType)
+            ?.let { it.parameterTypes + it.returnType }
+            ?.map {
+                ParameterInfo(
+                    KotlinNameSuggester().suggestTypeNames(it).firstOrNull() ?: "param",
+                    it.render(position = Variance.IN_VARIANCE)
+                )
+            }
+
+        val input = Input(
+            type = if (element is KtLambdaExpression) ChangeType.CHANGE_FUNCTIONAL else ChangeType.TYPE_MISMATCH,
+            name = name,
+            isConstructor = functionLikeSymbol is KtConstructorSymbol,
+            idx = callElement.valueArguments.indexOf(valueArgument),
+            parameterCount = functionLikeSymbol.valueParameters.size,
+            expectedParameterTypes = expectedParameterTypes,
+        )
+
         return listOf(
-            psi withInput Input(
-                if (psi is KtLambdaExpression) {
-                    ChangeType.CHANGE_FUNCTIONAL
-                } else {
-                    ChangeType.TYPE_MISMATCH
-                },
-                name,
-                isConstructor,
-                callElement.valueArguments.indexOf(valueArgument),
-                functionLikeSymbol.valueParameters.size,
-                ktTypes?.map {
-                    ParameterInfo(
-                        KotlinNameSuggester().suggestTypeNames(it).firstOrNull() ?: "param",
-                        it.render(position = Variance.IN_VARIANCE)
-                    )
-                }?.toTypedArray()
-            )
+            ParameterQuickFix(element, input),
         )
     }
 }

@@ -204,7 +204,7 @@ public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiId
     PsiParameter[] prevParameters = previousLambda.getParameterList().getParameters();
     LOG.assertTrue(prevParameters.length == 1);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
-    for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0], body)) {
+    for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0])) {
       PsiExpression replacement = ct.markUnchanged(previousBody);
       if (ref.getParent() instanceof PsiExpression &&
           ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)ref.getParent(), false)) {

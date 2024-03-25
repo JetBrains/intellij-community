@@ -8,7 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
@@ -427,7 +427,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     ReadAction.run(() -> {
       getTool().checkForReachableRefs(getContext());
       clearContents();
-      final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
+      final UnusedSymbolLocalInspection localInspectionTool = getTool().getSharedLocalInspectionTool();
       getContext().getRefManager().iterate(new RefJavaVisitor() {
         @Override public void visitElement(@NotNull RefEntity refEntity) {
           if (!(refEntity instanceof RefJavaElement refElement)) return;//dead code doesn't work with refModule | refPackage
@@ -452,7 +452,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @PsiModifier.ModifierConstant
-  private static String getAcceptedVisibility(UnusedSymbolLocalInspectionBase tool, RefJavaElement element) {
+  private static String getAcceptedVisibility(UnusedSymbolLocalInspection tool, RefJavaElement element) {
     if (element instanceof RefImplicitConstructor) {
       element = ((RefImplicitConstructor)element).getOwnerClass();
     }
@@ -481,7 +481,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   private static boolean compareVisibilities(RefJavaElement listOwner,
-                                             UnusedSymbolLocalInspectionBase localInspectionTool) {
+                                             UnusedSymbolLocalInspection localInspectionTool) {
     return compareVisibilities(listOwner, getAcceptedVisibility(localInspectionTool, listOwner));
   }
 

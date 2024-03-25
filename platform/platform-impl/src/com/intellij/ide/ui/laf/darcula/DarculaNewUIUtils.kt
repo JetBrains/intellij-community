@@ -11,7 +11,8 @@ import kotlin.math.max
 /**
  * Paints rounded border for focusable component. Non focused border rect is inside [rect], focused/outlined border can come outside
  */
-internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean) {
+internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: DarculaUIUtil.Outline?, focused: Boolean, enabled: Boolean,
+                                  bw: Int = DarculaUIUtil.BW.get()) {
   val g2 = g.create() as Graphics2D
 
   try {
@@ -20,7 +21,6 @@ internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: Darcula
                         if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
     val lw = DarculaUIUtil.LW.get()
-    val bw = DarculaUIUtil.BW.get()
     val arc = DarculaUIUtil.COMPONENT_ARC.get()
 
     when {
@@ -49,6 +49,10 @@ internal fun paintComponentBorder(g: Graphics, rect: Rectangle, outline: Darcula
  * Fills part of component inside border
  */
 internal fun fillInsideComponentBorder(g: Graphics, rect: Rectangle, color: Color) {
+  if (rect.width <= 0 || rect.height <= 0) {
+    return
+  }
+
   val g2 = g.create() as Graphics2D
 
   try {
@@ -58,7 +62,8 @@ internal fun fillInsideComponentBorder(g: Graphics, rect: Rectangle, color: Colo
 
     val arc = DarculaUIUtil.COMPONENT_ARC.float
     val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
-    border.append(RoundRectangle2D.Float(0f, 0f, rect.width.toFloat(), rect.height.toFloat(), arc, arc), false)
+    // Reduce size a little bit, so inside background is not protruded outside the border near rounded corners
+    border.append(RoundRectangle2D.Float(0.5f, 0.5f, rect.width - 1f, rect.height - 1f, arc, arc), false)
     g2.translate(rect.x, rect.y)
     g2.color = color
     g2.fill(border)

@@ -28,6 +28,7 @@ import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import javax.swing.Icon
@@ -39,7 +40,7 @@ open class PyAddNewCondaEnvPanel(
   private val module: Module?,
   private val existingSdks: List<Sdk>,
   newProjectPath: String?
-) : PyAddNewEnvPanel() {
+) : PyAddNewEnvPanel(PythonInterpreterSelectionMode.BASE_CONDA) {
   override val envName: String = "Conda"
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda

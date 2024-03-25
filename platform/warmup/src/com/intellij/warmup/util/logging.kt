@@ -191,7 +191,7 @@ private val loggerFactory: WarmupLoggerFactory? by lazyPub {
 }
 
 private val warmupLogger: Logger? by lazyPub {
-  if (WarmupStatus.currentStatus(application) != WarmupStatus.InProgress) {
+  if (WarmupStatus.currentStatus() != WarmupStatus.InProgress) {
     null
   }
   else {

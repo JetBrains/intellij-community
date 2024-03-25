@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.remote.vfs;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -13,21 +13,18 @@ public class PyRemoteDebugFileType implements FileType {
   private PyRemoteDebugFileType() {
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return PyBundle.message("python.debug.remote.name");
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return PyBundle.message("filetype.python.debug.remote.description");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "py";
   }
 

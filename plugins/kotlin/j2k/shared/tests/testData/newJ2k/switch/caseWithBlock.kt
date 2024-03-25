@@ -1,4 +1,5 @@
 fun foo() {
+    // comment
     when (a) {
         1 -> {
             val x = 1

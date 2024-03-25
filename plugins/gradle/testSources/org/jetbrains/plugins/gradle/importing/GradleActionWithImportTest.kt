@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.tooling.GradleConnectionException
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -20,8 +20,7 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
 
   override fun setUp() {
     super.setUp()
-    val point = Extensions.getRootArea().getExtensionPoint(GradleProjectResolverExtension.EP_NAME)
-    point.registerExtension(TestProjectResolverExtension(), testRootDisposable)
+    GradleProjectResolverExtension.EP_NAME.point.registerExtension(TestProjectResolverExtension(), testRootDisposable)
   }
 
   override fun tearDown() {
@@ -146,8 +145,15 @@ class TestProjectResolverExtension : AbstractProjectResolverExtension() {
     register(this, projectResolverContext.projectPath)
   }
 
-  override fun buildFinished(exception: GradleConnectionException?) {
-    buildFinished.complete(true)
+  override fun createBuildListener() = object : GradleBuildActionListener {
+
+    override fun onBuildCompleted() {
+      buildFinished.complete(true)
+    }
+
+    override fun onBuildFailed(exception: GradleConnectionException) {
+      buildFinished.complete(true)
+    }
   }
 
   override fun getModelProviders() = listOf(

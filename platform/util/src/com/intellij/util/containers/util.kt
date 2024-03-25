@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ArrayUtil
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.Java11Shim
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
@@ -13,6 +15,28 @@ import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
 import kotlin.collections.isNullOrEmpty
+
+@Internal
+@Experimental
+@JvmInline
+value class UList<T>(private val array: Array<Any?> = ArrayUtilRt.EMPTY_OBJECT_ARRAY) {
+  val size: Int
+    get() = array.size
+
+  fun add(item: T): UList<T> {
+    return UList(ArrayUtil.append(/* src = */ array, /* element = */ item, /* factory = */ ArrayUtil.OBJECT_ARRAY_FACTORY))
+  }
+
+  fun remove(item: T): UList<T> {
+    return UList(ArrayUtil.remove(/* src = */ array, /* element = */ item, /* factory = */ ArrayUtil.OBJECT_ARRAY_FACTORY))
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  fun toList(): List<T> = Java11Shim.INSTANCE.listOf(array, array.size) as List<T>
+
+  @Suppress("UNCHECKED_CAST")
+  fun asIterable(): Iterable<T> = array.asIterable() as Iterable<T>
+}
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)

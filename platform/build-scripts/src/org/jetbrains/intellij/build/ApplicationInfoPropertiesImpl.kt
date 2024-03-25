@@ -7,8 +7,8 @@ import org.jdom.Element
 import org.jdom.Namespace
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
+import org.jetbrains.intellij.build.impl.SnapshotBuildNumber
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
-import org.jetbrains.intellij.build.impl.readSnapshotBuildNumber
 import org.jetbrains.jps.model.JpsProject
 import java.nio.file.Files
 import java.nio.file.Path
@@ -138,7 +138,7 @@ internal class ApplicationInfoPropertiesImpl(
 
 internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoProperties): String {
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
-  val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
+  val snapshotBuildNumber = SnapshotBuildNumber.VALUE.takeWhile { it != '.' }
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
     "'major=${appInfo.majorVersion}' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
   }

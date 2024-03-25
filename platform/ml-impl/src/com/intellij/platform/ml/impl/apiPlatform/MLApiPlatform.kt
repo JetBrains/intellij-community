@@ -3,11 +3,13 @@ package com.intellij.platform.ml.impl.apiPlatform
 
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.MLTaskApproachBuilder
+import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener.Companion.asJoinedListener
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.Companion.onAttemptedToStartSession
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.Companion.targetedApproaches
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -68,17 +70,23 @@ abstract class MLApiPlatform {
     fun removeExtension()
   }
 
+  /**
+   * Used to run analysis & description tasks asynchronously
+   */
+  abstract val coroutineScope: CoroutineScope
+
   companion object {
     fun MLApiPlatform.getDescriptorsOfTiers(tiers: Set<Tier<*>>): PerTier<List<TierDescriptor>> {
       val descriptorsPerTier = tierDescriptors.groupBy { it.tier }
       return tiers.associateWith { descriptorsPerTier[it] ?: emptyList() }
     }
 
-    fun <R, P : Any> MLApiPlatform.getJoinedListenerForTask(taskApproachBuilder: MLTaskApproachBuilder<P>,
-                                                            permanentSessionEnvironment: Environment): MLApproachListener<R, P> {
+    fun <M : MLModel<P>, P : Any> MLApiPlatform.getJoinedListenerForTask(taskApproachBuilder: MLTaskApproachBuilder<P>,
+                                                                         callEnvironment: Environment,
+                                                                         permanentSessionEnvironment: Environment): MLApproachListener<M, P> {
       val relevantGroupListeners = taskListeners.filter { taskApproachBuilder.javaClass in it.targetedApproaches }
       val approachListeners = relevantGroupListeners.mapNotNull {
-        it.onAttemptedToStartSession<P, R>(taskApproachBuilder, permanentSessionEnvironment)
+        it.onAttemptedToStartSession<P, M>(taskApproachBuilder, this, callEnvironment, permanentSessionEnvironment)
       }
       return approachListeners.asJoinedListener()
     }

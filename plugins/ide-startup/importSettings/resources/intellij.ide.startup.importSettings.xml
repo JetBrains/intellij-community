@@ -10,6 +10,9 @@
   </actions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.startupWizardPages"
+                    interface="com.intellij.ide.startup.importSettings.data.StartupWizardService"
+                    dynamic="true" />
     <extensionPoint name="transferSettings.vscode.pluginMapping"
                     interface="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.VSCodePluginMapping"
                     dynamic="true" />
@@ -22,6 +25,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.StartupWizardService"
+                        serviceImplementation="com.intellij.ide.startup.importSettings.data.DisabledStartupWizardPages"/>
+
     <transferSettings.thirdPartyProductSettingsTransfer id="VSCodeSettingsTransfer"
                                                        implementation="com.intellij.ide.startup.importSettings.transfer.VsCodeSettingsTransfer"/>
 
@@ -30,14 +36,16 @@
 
     <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.SettingsService"
                         serviceImplementation="com.intellij.ide.startup.importSettings.data.SettingsServiceImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.startup.importSettings.data.WizardProvider"
-                        serviceImplementation="com.intellij.ide.startup.importSettings.data.WizardProviderImpl"/>
+
     <registryKey defaultValue="true" description="Hide import settings sync in unlogged mode" key="import.setting.unlogged.sync.hide" restartRequired="false" />
 
     <transferSettings.vscode.pluginMapping id="CommonPluginMapping"
                                            implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.CommonPluginMapping"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector"/>
+
     <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
     <transferSettings.externalProjectImportChecker implementation="com.intellij.ide.startup.importSettings.transfer.backend.CargoExternalProjectImportChecker"/>
   </extensions>

@@ -11,19 +11,24 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableModCommandIntention<KtForExpression>(KtForExpression::class) {
+internal class ConvertToForEachFunctionCallIntention :
+    KotlinApplicableModCommandAction<KtForExpression, Unit>(KtForExpression::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
-    override fun getActionName(element: KtForExpression): String {
+    override fun getActionName(
+        context: ActionContext,
+        element: KtForExpression,
+        elementContext: Unit,
+    ): String {
         val callExpression = element.loopRange?.getPossiblyQualifiedCallExpression()
         return KotlinBundle.message(
             "replace.with.a.foreach.function.call",
@@ -36,26 +41,38 @@ internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableM
         return element.body.getJumpExpressions<KtBreakExpression>(element.getLabelName()).isEmpty()
     }
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtForExpression> = applicabilityRange {
-        val rParen = it.rightParenthesis ?: return@applicabilityRange null
-        TextRange(it.startOffset, rParen.endOffset).shiftLeft(it.startOffset)
+    override fun getApplicableRanges(element: KtForExpression): List<TextRange> {
+        val rParen = element.rightParenthesis
+            ?: return emptyList()
+
+        val textRange = TextRange(element.startOffset, rParen.endOffset)
+            .shiftLeft(element.startOffset)
+        return listOf(textRange)
     }
 
+
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtForExpression): Boolean {
-        val loopRange = element.loopRange ?: return false
+    override fun prepareContext(element: KtForExpression): Unit? {
+        val loopRange = element.loopRange ?: return null
 
         val calleeExpression = loopRange.getPossiblyQualifiedCallExpression()?.calleeExpression
         if (calleeExpression?.text == WITH_INDEX_NAME) {
-            if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return false
-            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return false
-            if (symbol.callableIdIfNonLocal?.asSingleFqName() !in withIndexedFunctionFqNames) return false
+            if (element.loopParameter?.destructuringDeclaration?.entries?.size != 2) return null
+            val symbol = calleeExpression.mainReference?.resolveToSymbol() as? KtFunctionSymbol ?: return null
+            if (symbol.callableIdIfNonLocal?.asSingleFqName() !in withIndexedFunctionFqNames) return null
         }
 
-        return loopRange.getKtType()?.isLoopRangeType() == true
+        return loopRange.getKtType()
+            ?.isLoopRangeType()
+            ?.asUnit
     }
 
-    override fun apply(element: KtForExpression, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtForExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
         val labelName = element.getLabelName()

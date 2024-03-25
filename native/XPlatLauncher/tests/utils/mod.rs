@@ -385,11 +385,19 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
-    if original.is_dir() { std::os::windows::fs::symlink_dir(original, link) }
-    else { std::os::windows::fs::symlink_file(original, link) }
-        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
+    let result = match original.is_dir() {
+        true => std::os::windows::fs::symlink_dir(original, link),
+        false => std::os::windows::fs::symlink_file(original, link)
+    };
 
-    Ok(())
+    let message = match &result {
+        Ok(_) => "",
+        Err(e) if e.raw_os_error() == Some(1314) => "can not use CreateSymbolicLink.\
+         Consider having a privilege to do that or enabling Developer Mode",
+        Err(_) => "failed to create symlink, but not due to privileges",
+    };
+
+    result.with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}; {message}"))
 }
 
 pub fn get_custom_config_dir() -> PathBuf {

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.test.projectStructureTest
 
+import com.google.gson.JsonObject
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
@@ -11,6 +12,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.io.jarFile
 import com.intellij.util.io.write
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
@@ -38,17 +40,45 @@ typealias ModulesByName = Map<String, Module>
  * Each source module file may contain an optional `<caret>`. Its position will be memorized by the test (see [getCaretPosition]), and it
  * will be removed from the file for test execution.
  */
-abstract class AbstractProjectStructureTest<S : TestProjectStructure> : AbstractMultiModuleTest() {
+abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
+    private val testProjectStructureParser: TestProjectStructureParser<S>,
+) : AbstractMultiModuleTest() {
     private val caretProvider = CaretProvider()
 
-    protected fun initializeProjectStructure(
+    private lateinit var _testProjectStructure: S
+
+    protected val testProjectStructure: S get() = _testProjectStructure
+
+    private lateinit var _projectLibrariesByName: ProjectLibrariesByName
+
+    protected val projectLibrariesByName: ProjectLibrariesByName get() = _projectLibrariesByName
+
+    private lateinit var _modulesByName: ModulesByName
+
+    protected val modulesByName: ModulesByName get() = _modulesByName
+
+    /**
+     * Executes the test with a parsed and initialized [testProjectStructure], [projectLibrariesByName], and [modulesByName].
+     */
+    protected abstract fun doTestWithProjectStructure(testDirectory: String)
+
+    protected fun doTest(testDirectory: String) {
+        val jsonFile = Paths.get(testDirectory).resolve("structure.json")
+        val json = TestProjectStructureReader.readJsonFile(jsonFile)
+        val isDisabled = json.getAsJsonPrimitive(TestProjectStructureFields.IS_DISABLED_FIELD)?.asBoolean == true
+
+        IgnoreTests.runTestIfEnabled(isEnabled = !isDisabled, jsonFile) {
+            initializeProjectStructure(testDirectory, json, testProjectStructureParser)
+            doTestWithProjectStructure(testDirectory)
+        }
+    }
+
+    private fun initializeProjectStructure(
         testDirectory: String,
+        json: JsonObject,
         parser: TestProjectStructureParser<S>,
-    ): Triple<S, ProjectLibrariesByName, ModulesByName> {
-        val testStructure = TestProjectStructureReader.readToTestStructure(
-            Paths.get(testDirectory),
-            testProjectStructureParser = parser,
-        )
+    ) {
+        val testStructure = TestProjectStructureReader.parseTestStructure(json, parser)
 
         val libraryRootsByLabel = testStructure.libraries
             .flatMapTo(mutableSetOf()) { it.roots }
@@ -89,7 +119,9 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
             setUpSpecialDependenciesAndPlatform(module, moduleData.targetPlatform, modulesByName, refinementMap, directFriendDependencies)
         }
 
-        return Triple(testStructure, projectLibrariesByName, modulesByName)
+        _testProjectStructure = testStructure
+        _projectLibrariesByName = projectLibrariesByName
+        _modulesByName = modulesByName
     }
 
     private class LibraryRoot(val classRoot: File, val sourceRoot: File?)

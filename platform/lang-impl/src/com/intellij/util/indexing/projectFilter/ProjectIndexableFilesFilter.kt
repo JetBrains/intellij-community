@@ -1,17 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.projectFilter
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
+import com.intellij.util.indexing.projectFilter.FilterActionCancellationReason.FILTER_IS_UPDATED
+import com.intellij.util.indexing.projectFilter.FilterActionCancellationReason.SCANNING_IS_IN_PROGRESS
 import java.util.concurrent.atomic.AtomicReference
 
 internal abstract class ProjectIndexableFilesFilterFactory {
   abstract fun create(project: Project): ProjectIndexableFilesFilter
-  fun createHealthCheck(project: Project, filter: ProjectIndexableFilesFilter): ProjectIndexableFilesFilterHealthCheck {
-    return ProjectIndexableFilesFilterHealthCheck(project, filter)
-  }
 }
 
 internal abstract class ProjectIndexableFilesFilter(protected val project: Project, val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {
@@ -41,16 +39,25 @@ internal abstract class ProjectIndexableFilesFilter(protected val project: Proje
 
   fun <T> runAndCheckThatNoChangesHappened(action: () -> T): T {
     val (numberOfParallelUpdates, version) = parallelUpdatesCounter.getCounterAndVersion()
-    if (numberOfParallelUpdates != 0) throw ProcessCanceledException()
+    if (numberOfParallelUpdates != 0) {
+      throw FilterActionCancelledException(FILTER_IS_UPDATED)
+    }
     val res = action()
     val (numberOfParallelUpdates2, version2) = parallelUpdatesCounter.getCounterAndVersion()
-    if (numberOfParallelUpdates2 != 0 || version2 != version) {
-      throw ProcessCanceledException()
+    return if (numberOfParallelUpdates2 != 0 || version2 != version) {
+      throw FilterActionCancelledException(FILTER_IS_UPDATED)
     }
-    return res
+    else res
   }
 
   abstract fun getFileStatuses(): Sequence<Pair<Int, Boolean>>
+}
+
+internal class FilterActionCancelledException(val reason: FilterActionCancellationReason) : Exception()
+
+internal enum class FilterActionCancellationReason {
+  FILTER_IS_UPDATED,
+  SCANNING_IS_IN_PROGRESS
 }
 
 private class AtomicVersionedCounter {
@@ -68,8 +75,12 @@ private class AtomicVersionedCounter {
 
 internal fun <T> runIfScanningScanningIsCompleted(project: Project, action: () -> T): T {
   val service = project.getService(ProjectIndexingDependenciesService::class.java)
-  if (!service.isScanningCompleted()) throw ProcessCanceledException()
+  if (!service.isScanningCompleted()) {
+    throw FilterActionCancelledException(SCANNING_IS_IN_PROGRESS)
+  }
   val res = action()
-  if (!service.isScanningCompleted()) throw ProcessCanceledException()
+  if (!service.isScanningCompleted()) {
+    throw FilterActionCancelledException(SCANNING_IS_IN_PROGRESS)
+  }
   return res
 }

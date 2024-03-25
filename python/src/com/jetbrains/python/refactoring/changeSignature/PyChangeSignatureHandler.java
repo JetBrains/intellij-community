@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -32,16 +30,14 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public class PyChangeSignatureHandler implements ChangeSignatureHandler {
-  @Nullable
   @Override
-  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     return findTargetMember(element);
   }
 
-  @Nullable
   @Override
-  public PsiElement findTargetMember(@Nullable PsiElement element) {
+  public @Nullable PsiElement findTargetMember(@Nullable PsiElement element) {
     if (element == null) return null;
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(element.getProject());
 
@@ -81,9 +77,8 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     invokeOnElement(project, elements[0], editor);
   }
 
-  @Nullable
   @Override
-  public String getTargetNotFoundMessage() {
+  public @Nullable String getTargetNotFoundMessage() {
     return PyBundle.message("refactoring.change.signature.error.wrong.caret.position.method.name");
   }
 
@@ -131,8 +126,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), "refactoring.renameRefactorings");
   }
 
-  @Nullable
-  protected static PyFunction getSuperMethod(@Nullable PyFunction function) {
+  protected static @Nullable PyFunction getSuperMethod(@Nullable PyFunction function) {
     if (function == null) {
       return null;
     }

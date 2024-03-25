@@ -1,0 +1,9 @@
+<idea-plugin>
+  <id>org.intellij.kotlinScripting</id>
+  <name>Kotlin Scripting Support</name>
+  <vendor>JetBrains</vendor>
+
+  <description><![CDATA[
+    Provides Kotlin JSR223 Scripting support to the IDE: kotlin scripting console and other features depending on Kotlin JSR223 Scripting.
+    ]]></description>
+</idea-plugin>

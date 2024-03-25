@@ -2,11 +2,9 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.module.ModuleComponent
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.progress.blockingContext
@@ -43,35 +41,21 @@ import kotlinx.coroutines.CoroutineScope
 import java.io.IOException
 import java.nio.file.Path
 
-
 internal class ModuleManagerComponentBridge(private val project: Project, coroutineScope: CoroutineScope)
   : ModuleManagerBridgeImpl(project = project, coroutineScope = coroutineScope, moduleRootListenerBridge = ModuleRootListenerBridgeImpl) {
   private val virtualFileManager: VirtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
 
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
-      val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
-      val modules = moduleManager.modules().toList()
+      val modules = (project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge).modules().toList()
       span("firing modules_added event") {
         blockingContext {
           fireModulesAdded(project, modules)
         }
       }
       span("deprecated module component moduleAdded calling") {
-        @Suppress("removal", "DEPRECATION")
-        val deprecatedComponents = mutableListOf<ModuleComponent>()
         for (module in modules) {
-          if (!module.isLoaded) {
-            module.moduleAdded(deprecatedComponents)
-          }
-        }
-        if (!deprecatedComponents.isEmpty()) {
-          writeAction {
-            for (deprecatedComponent in deprecatedComponents) {
-              @Suppress("DEPRECATION", "removal")
-              deprecatedComponent.moduleAdded()
-            }
-          }
+          module.markAsLoaded()
         }
       }
     }

@@ -30,6 +30,14 @@ internal fun ModifiableRootModel.addJUnit5Library(version: String = "5.9.1") {
   MavenDependencyUtil.addFromMaven(this, "org.junit.jupiter:junit-jupiter-params:$version")
 }
 
-internal fun ModifiableRootModel.addAssertJLibrary() {
-  MavenDependencyUtil.addFromMaven(this, "org.assertj:assertj-core:3.24.2")
+internal fun ModifiableRootModel.addAssertJLibrary(version: String = "3.24.2") {
+  MavenDependencyUtil.addFromMaven(this, "org.assertj:assertj-core:$version")
+}
+
+internal fun ModifiableRootModel.addMockitoLibrary(version: String = "1.10.19") {
+  MavenDependencyUtil.addFromMaven(this, "org.mockito:mockito-all:$version")
+}
+
+internal fun ModifiableRootModel.addEasyMockLibrary(version: String = "5.2.0") {
+  MavenDependencyUtil.addFromMaven(this, "org.easymock:easymock:$version")
 }

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -35,13 +34,10 @@ object IdeaReferenceSearcher : ReferenceSearcher {
         searchJava: Boolean,
         searchKotlin: Boolean
     ): Collection<PsiReference> {
-        val fileTypes = ArrayList<FileType>()
-        if (searchJava) {
-            fileTypes.add(JavaLanguage.INSTANCE.associatedFileType!!)
-        }
-        if (searchKotlin) {
-            fileTypes.add(KotlinLanguage.INSTANCE.associatedFileType!!)
-        }
+        val javaFileType = JavaLanguage.INSTANCE.associatedFileType.takeIf { searchJava }
+        val kotlinFileType = KotlinLanguage.INSTANCE.associatedFileType.takeIf { searchKotlin }
+        val fileTypes = listOfNotNull(javaFileType, kotlinFileType)
+
         val searchScope =
             GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.projectScope(element.project), *fileTypes.toTypedArray())
         return ReferencesSearch.search(element, searchScope).findAll()

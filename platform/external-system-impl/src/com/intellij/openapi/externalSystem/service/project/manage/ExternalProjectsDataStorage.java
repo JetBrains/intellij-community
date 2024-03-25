@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -362,7 +361,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     for (ExternalProjectPojo childProject : childProjects) {
       String moduleConfigPath = childProject.getPath();
       ModuleData moduleData = new ModuleData(childProject.getName(), systemId,
-                                             ModuleTypeId.JAVA_MODULE, childProject.getName(),
+                                             "JAVA_MODULE", childProject.getName(),
                                              moduleConfigPath, moduleConfigPath);
       projectDataNode.createChild(MODULE, moduleData);
     }

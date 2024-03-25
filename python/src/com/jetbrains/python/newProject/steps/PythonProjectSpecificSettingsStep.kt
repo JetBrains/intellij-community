@@ -28,6 +28,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.PlatformUtils
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.PythonProjectGenerator
 import com.jetbrains.python.newProject.PythonPromoProjectGenerator
@@ -66,6 +67,9 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
     return createContentPanelWithAdvancedSettingsPanel()
   }
 
+  @RequiresEdt
+  override fun createWelcomeScript(): Boolean  = createScript.get()
+
   /**
    * Returns the project location that is either:
    * - constructed using two parts (using the values from "Location" and "Name" fields) for Python project types ("Pure Python", "Django",
@@ -88,18 +92,20 @@ class PythonProjectSpecificSettingsStep<T>(projectGenerator: DirectoryProjectGen
 
   override fun createBasePanel(): JPanel {
     val projectGenerator = myProjectGenerator
-    if (projectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
     if (projectGenerator is PythonPromoProjectGenerator) {
       myCreateButton.isEnabled = false
       myLocationField = TextFieldWithBrowseButton()
       return projectGenerator.createPromoPanel()
     }
+    if (projectGenerator !is PythonProjectGenerator<*>) return super.createBasePanel()
 
     val nextProjectName = myProjectDirectory.get()
     projectName.set(nextProjectName.nameWithoutExtension)
     projectLocation.set(nextProjectName.parent)
 
-    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName)).also { interpreterPanel = it }
+    // Instead of setting this type as default, we limit types to it
+    val onlyAllowedInterpreterTypes = projectGenerator.preferredEnvironmentType?.let { setOf(it) }
+    val interpreterPanel = PythonAddNewEnvironmentPanel(projectLocation.joinSystemDependentPath(projectName), onlyAllowedInterpreterTypes).also { interpreterPanel = it }
 
     mainPanel = panel {
       row(message("new.project.name")) {

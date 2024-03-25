@@ -22,6 +22,8 @@ import com.intellij.openapi.ui.isFocusAncestor
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
+import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
+import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
 import com.intellij.remoteDev.tests.modelGenerated.RdProductType
 import com.intellij.remoteDev.tests.modelGenerated.RdTestSession

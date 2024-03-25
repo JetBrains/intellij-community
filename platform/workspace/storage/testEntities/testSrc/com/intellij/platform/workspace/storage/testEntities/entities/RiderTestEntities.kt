@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -30,10 +35,12 @@ interface ProjectModelTestEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(info: String,
-                        descriptor: Descriptor,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ProjectModelTestEntity {
+    operator fun invoke(
+      info: String,
+      descriptor: Descriptor,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ProjectModelTestEntity {
       val builder = builder()
       builder.info = info
       builder.descriptor = descriptor
@@ -46,9 +53,12 @@ interface ProjectModelTestEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ProjectModelTestEntity,
-                                      modification: ProjectModelTestEntity.Builder.() -> Unit): ProjectModelTestEntity = modifyEntity(
-  ProjectModelTestEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ProjectModelTestEntity,
+  modification: ProjectModelTestEntity.Builder.() -> Unit,
+): ProjectModelTestEntity {
+  return modifyEntity(ProjectModelTestEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 private val ContentRootTestEntity.projectModelTestEntity: ProjectModelTestEntity? by WorkspaceEntity.extension()

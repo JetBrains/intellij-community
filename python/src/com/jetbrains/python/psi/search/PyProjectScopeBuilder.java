@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.search;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -24,9 +24,8 @@ final class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
    *
    * @return all scope
    */
-  @NotNull
   @Override
-  public GlobalSearchScope buildAllScope() {
+  public @NotNull GlobalSearchScope buildAllScope() {
     return new ProjectAndLibrariesScope(myProject) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
@@ -45,9 +44,8 @@ final class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
    *
    * @return project search scope
    */
-  @NotNull
   @Override
-  public GlobalSearchScope buildProjectScope() {
+  public @NotNull GlobalSearchScope buildProjectScope() {
     final FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
     return new ProjectScopeImpl(myProject, fileIndex) {
       @Override

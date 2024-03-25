@@ -249,6 +249,8 @@ public class SingleClassesTest {
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
 
+  @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
+
   private void doTest(String testFile, String... companionFiles) {
     var decompiler = fixture.getDecompiler();
 

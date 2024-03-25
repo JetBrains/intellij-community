@@ -579,6 +579,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterOfNullableFieldIsNotNull() { doTest(); }
 
   public void testArrayStoreProblems() { doTest(); }
+  public void testArrayAccessInTry() { doTest(); }
 
   public void testNestedScopeComplexity() { doTest(); }
 

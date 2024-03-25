@@ -14,11 +14,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateOptions;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jdom.JDOMException;
@@ -31,7 +33,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
@@ -50,18 +51,31 @@ public final class RepositoryHelper {
    */
   public static @NotNull List<@Nullable String> getPluginHosts() {
     var hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
+
+    var pluginHosts = System.getProperty("idea.plugin.hosts");
+    if (pluginHosts != null) {
+      ContainerUtil.addAll(hosts, pluginHosts.split(";"));
+    }
+
+    hosts.addAll(UpdateSettingsProvider.getRepositoriesFromProviders());
+
     @SuppressWarnings("deprecation") var pluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
     if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
       hosts.add(pluginsUrl);
     }
+
     pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
     if (pluginsUrl != null) {
       hosts.add(pluginsUrl);
     }
-    for (var contributor : CustomPluginRepoContributor.EP_NAME.getExtensionsIfPointIsRegistered()) {
-      hosts.addAll(contributor.getRepoUrls());
-    }
+
+    @SuppressWarnings("removal") var fromContributors = CustomPluginRepoContributor.getRepositoriesFromContributors();
+    hosts.addAll(fromContributors);
+
+    ContainerUtil.removeDuplicates(hosts);
+
     hosts.add(null);  // main plugin repository
+
     return hosts;
   }
 
@@ -228,13 +242,9 @@ public final class RepositoryHelper {
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);
   }
 
-
   @ApiStatus.Internal
-  public static void updatePluginHostsFromConfigDir(@NotNull Path oldConfigDir, @Nullable Consumer<String> logger) {
-    if (logger == null) {
-      logger = s -> LOG.info(s);
-    }
-    logger.accept("Reading plugin repositories from " + oldConfigDir);
+  public static void updatePluginHostsFromConfigDir(@NotNull Path oldConfigDir, @NotNull Logger logger) {
+    logger.info("reading plugin repositories from " + oldConfigDir);
     try {
       var text = ComponentStorageUtil.loadTextContent(oldConfigDir.resolve("options/updates.xml"));
       var components = ComponentStorageUtil.loadComponents(JDOMUtil.load(text), null);
@@ -243,12 +253,12 @@ public final class RepositoryHelper {
         var hosts = XmlSerializer.deserialize(element, UpdateOptions.class).getPluginHosts();
         if (!hosts.isEmpty()) {
           amendPluginHostsProperty(hosts);
-          logger.accept("Plugin hosts: " + System.getProperty("idea.plugin.hosts"));
+          logger.info("plugin hosts: " + System.getProperty("idea.plugin.hosts"));
         }
       }
     }
     catch (InvalidPathException | IOException | JDOMException e) {
-      logger.accept("... failed: " + e.getMessage());
+      logger.error("... failed: " + e.getMessage());
     }
   }
 

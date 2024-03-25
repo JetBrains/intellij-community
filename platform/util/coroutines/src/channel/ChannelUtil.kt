@@ -21,7 +21,7 @@ import kotlin.coroutines.cancellation.CancellationException
 @ApiStatus.Experimental
 class ChannelInputStream(
   parentCoroutineScope: CoroutineScope,
-  channel: ReceiveChannel<ByteArray>,
+  private val channel: ReceiveChannel<ByteArray>,
 ) : InputStream() {
   private sealed class Content {
     class Data(val stream: ByteArrayInputStream) : Content()
@@ -31,27 +31,29 @@ class ChannelInputStream(
 
   private val myBuffer = LinkedBlockingDeque<Content>()
 
-  private val transferJob = parentCoroutineScope.launch {
-    try {
-      channel.consumeEach { bytes ->
-        if (bytes.isNotEmpty()) {
-          myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
+  init {
+    parentCoroutineScope.launch {
+      try {
+        channel.consumeEach { bytes ->
+          if (bytes.isNotEmpty()) {
+            myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
+          }
         }
-      }
-      myBuffer.offerLast(Content.End)
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) {
         myBuffer.offerLast(Content.End)
       }
-      else {
-        myBuffer.offerLast(Content.Error(e))
+      catch (e: Throwable) {
+        if (e is CancellationException) {
+          myBuffer.offerLast(Content.End)
+        }
+        else {
+          myBuffer.offerLast(Content.Error(e))
+        }
       }
     }
   }
 
   override fun close() {
-    transferJob.cancel(CancellationException("ChannelInputStream was closed"))
+    channel.cancel(CancellationException("ChannelInputStream was closed"))
   }
 
   override fun read(): Int {

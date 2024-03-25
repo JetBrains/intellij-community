@@ -13,5 +13,3 @@ object Test {
         val ss = bar(Test.foo<String>())
     }
 }
-
-// IGNORE_K2

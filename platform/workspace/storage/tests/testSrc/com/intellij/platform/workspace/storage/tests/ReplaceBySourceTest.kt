@@ -13,7 +13,6 @@ import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.RepetitionInfo
-import org.junit.jupiter.api.assertAll
 import java.util.*
 import kotlin.test.*
 
@@ -419,8 +418,11 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `entity with soft reference`() {
-    val named = builder.addNamedEntity("MyName")
-    builder.addWithSoftLinkEntity(named.symbolicId)
+    val named = builder addEntity NamedEntity("MyName", MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
+    builder addEntity WithSoftLinkEntity(named.symbolicId, MySource)
     resetChanges()
     builder.assertConsistency()
 
@@ -440,8 +442,11 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `entity with soft reference remove reference`() {
-    val named = builder.addNamedEntity("MyName")
-    val linked = builder.addWithListSoftLinksEntity("name", listOf(named.symbolicId))
+    val named = builder addEntity NamedEntity("MyName", MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
+    val linked = builder addEntity WithListSoftLinksEntity("name", listOf(named.symbolicId), MySource)
     resetChanges()
     builder.assertConsistency()
 
@@ -460,9 +465,12 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `replace by source with composite id`() {
     replacement = createEmptyBuilder()
-    val namedEntity = replacement.addNamedEntity("MyName")
-    val composedEntity = replacement.addComposedIdSoftRefEntity("AnotherName", namedEntity.symbolicId)
-    replacement.addComposedLinkEntity(composedEntity.symbolicId)
+    val namedEntity = replacement addEntity NamedEntity("MyName", MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
+    val composedEntity = replacement addEntity ComposedIdSoftRefEntity("AnotherName", namedEntity.symbolicId, MySource)
+    replacement addEntity ComposedLinkEntity(composedEntity.symbolicId, MySource)
 
     replacement.assertConsistency()
     rbsAllSources()
@@ -475,13 +483,19 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `trying to create two similar persistent ids`() {
-    val namedEntity = builder.addNamedEntity("MyName", source = AnotherSource)
+    val namedEntity = builder addEntity NamedEntity("MyName", entitySource = AnotherSource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
     replacement = createBuilderFrom(builder)
     replacement.modifyEntity(namedEntity.from(replacement)) {
       this.myName = "AnotherName"
     }
 
-    replacement.addNamedEntity("MyName", source = MySource)
+    replacement addEntity NamedEntity("MyName", entitySource = MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
 
     rbsMySources()
 
@@ -508,9 +522,15 @@ class ReplaceBySourceTest {
   @RepeatedTest(10)
   fun `replace same entity with persistent id and different sources`() {
     val name = "Hello"
-    builder.addNamedEntity(name, source = MySource)
+    builder addEntity NamedEntity(name, entitySource = MySource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
     replacement = createEmptyBuilder()
-    replacement.addNamedEntity(name, source = AnotherSource)
+    replacement addEntity NamedEntity(name, entitySource = AnotherSource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
 
@@ -520,11 +540,19 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace dummy parent entity by real entity`() {
-    val namedParent = builder.addNamedEntity("name", "foo", MyDummyParentSource)
-    builder.addNamedChildEntity(namedParent, "fooChild", AnotherSource)
+    val namedParent = builder addEntity NamedEntity("name", MyDummyParentSource) {
+      this.additionalProperty = "foo"
+      children = emptyList()
+    }
+    builder addEntity NamedChildEntity("fooChild", AnotherSource) {
+      this.parentEntity = namedParent
+    }
 
     replacement = createEmptyBuilder()
-    replacement.addNamedEntity("name", "bar", MySource)
+    replacement addEntity NamedEntity("name", MySource) {
+      this.additionalProperty = "bar"
+      children = emptyList()
+    }
     builder.replaceBySource({ it is MySource || it is MyDummyParentSource }, replacement)
 
     assertEquals("bar", builder.entities(NamedEntity::class.java).single().additionalProperty)
@@ -535,11 +563,19 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `do not replace real parent entity by dummy entity`() {
-    val namedParent = builder.addNamedEntity("name", "foo", MySource)
-    builder.addNamedChildEntity(namedParent, "fooChild", AnotherSource)
+    val namedParent = builder addEntity NamedEntity("name", MySource) {
+      this.additionalProperty = "foo"
+      children = emptyList()
+    }
+    builder addEntity NamedChildEntity("fooChild", AnotherSource) {
+      this.parentEntity = namedParent
+    }
 
     replacement = createEmptyBuilder()
-    replacement.addNamedEntity("name", "bar", MyDummyParentSource)
+    replacement addEntity NamedEntity("name", MyDummyParentSource) {
+      this.additionalProperty = "bar"
+      children = emptyList()
+    }
     builder.replaceBySource({ it is MySource || it is MyDummyParentSource }, replacement)
 
     assertEquals("foo", builder.entities(NamedEntity::class.java).single().additionalProperty)
@@ -550,12 +586,22 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `do not replace real parent entity by dummy entity but replace children`() {
-    val namedParent = builder.addNamedEntity("name", "foo", MySource)
-    builder.addNamedChildEntity(namedParent, "fooChild", MySource)
+    val namedParent = builder addEntity NamedEntity("name", MySource) {
+      this.additionalProperty = "foo"
+      children = emptyList()
+    }
+    builder addEntity NamedChildEntity("fooChild", MySource) {
+      this.parentEntity = namedParent
+    }
 
     replacement = createEmptyBuilder()
-    val newParent = replacement.addNamedEntity("name", "bar", MyDummyParentSource)
-    replacement.addNamedChildEntity(newParent, "barChild", MySource)
+    val newParent = replacement addEntity NamedEntity("name", MyDummyParentSource) {
+      this.additionalProperty = "bar"
+      children = emptyList()
+    }
+    replacement addEntity NamedChildEntity("barChild", MySource) {
+      this.parentEntity = newParent
+    }
     builder.replaceBySource({ it is MySource || it is MyDummyParentSource }, replacement)
 
     assertEquals("foo", builder.entities(NamedEntity::class.java).single().additionalProperty)
@@ -589,14 +635,30 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace parents with completely different children`() {
-    val parentEntity = builder.addNamedEntity("PrimaryParent", additionalProperty = "Initial", source = AnotherSource)
-    builder.addNamedChildEntity(parentEntity, "PrimaryChild", source = MySource)
-    builder.addNamedEntity("SecondaryParent", source = AnotherSource)
+    val parentEntity = builder addEntity NamedEntity("PrimaryParent", entitySource = AnotherSource) {
+      this.additionalProperty = "Initial"
+      children = emptyList()
+    }
+    builder addEntity NamedChildEntity("PrimaryChild", entitySource = MySource) {
+      this.parentEntity = parentEntity
+    }
+    builder addEntity NamedEntity("SecondaryParent", entitySource = AnotherSource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
 
     replacement = createEmptyBuilder()
-    replacement.addNamedEntity("PrimaryParent", additionalProperty = "New", source = AnotherSource)
-    val anotherParentEntity = replacement.addNamedEntity("SecondaryParent2", source = AnotherSource)
-    replacement.addNamedChildEntity(anotherParentEntity, source = MySource)
+    replacement addEntity NamedEntity("PrimaryParent", entitySource = AnotherSource) {
+      this.additionalProperty = "New"
+      children = emptyList()
+    }
+    val anotherParentEntity = replacement addEntity NamedEntity("SecondaryParent2", entitySource = AnotherSource) {
+      this.additionalProperty = null
+      children = emptyList()
+    }
+    replacement addEntity NamedChildEntity("child", entitySource = MySource) {
+      this.parentEntity = anotherParentEntity
+    }
 
     builder.replaceBySource({ it is AnotherSource }, replacement)
 
@@ -607,12 +669,16 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace oneToOne connection with partial move`() {
-    val parentEntity = builder.addOoParentEntity()
-    builder.addOoChildEntity(parentEntity)
+    val parentEntity = builder addEntity OoParentEntity("parent", MySource)
+    builder addEntity OoChildEntity("child", MySource) {
+      this.parentEntity = parentEntity
+    }
 
     replacement = createEmptyBuilder()
-    val anotherParent = replacement.addOoParentEntity(source = AnotherSource)
-    replacement.addOoChildEntity(anotherParent)
+    val anotherParent = replacement addEntity OoParentEntity("parent", entitySource = AnotherSource)
+    replacement addEntity OoChildEntity("child", MySource) {
+      this.parentEntity = anotherParent
+    }
 
     builder.replaceBySource({ it is MySource }, replacement)
 
@@ -621,11 +687,15 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace oneToOne connection with partial move and pid`() {
-    val parentEntity = builder.addOoParentWithPidEntity(source = AnotherSource)
-    builder.addOoChildForParentWithPidEntity(parentEntity, source = MySource)
+    val parentEntity = builder addEntity OoParentWithPidEntity("parent", entitySource = AnotherSource)
+    builder addEntity OoChildForParentWithPidEntity("child", entitySource = MySource) {
+      this.parentEntity = parentEntity
+    }
 
-    val anotherParent = replacement.addOoParentWithPidEntity(source = MySource)
-    replacement.addOoChildForParentWithPidEntity(anotherParent, source = MySource)
+    val anotherParent = replacement addEntity OoParentWithPidEntity("parent", entitySource = MySource)
+    replacement addEntity OoChildForParentWithPidEntity("child", entitySource = MySource) {
+      this.parentEntity = anotherParent
+    }
 
     builder.replaceBySource({ it is MySource }, replacement)
 
@@ -1869,21 +1939,5 @@ class ReplaceBySourceTest {
   private infix fun <T : WorkspaceEntity> MutableEntityStorage.add(entity: T): T {
     this.addEntity(entity)
     return entity
-  }
-
-  private fun ChangeEntry?.assertReplaceEntity(
-    removedChildren: Int = 0,
-    newChildren: Int = 0,
-    newParents: Int = 0,
-    removedParents: Int = 0,
-  ): ChangeEntry.ReplaceEntity {
-    assertTrue(this is ChangeEntry.ReplaceEntity)
-    assertAll(
-      { assertEquals(removedChildren, references!!.removedChildren.size) },
-      { assertEquals(newChildren, references!!.newChildren.size) },
-      { assertEquals(newParents, references!!.newParents.size) },
-      { assertEquals(removedParents, references!!.removedParents.size) },
-    )
-    return this
   }
 }

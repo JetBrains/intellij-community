@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.settings.*
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -20,6 +21,18 @@ class SettingsControllerMediatorTest {
     )) {
       val mediator = SettingsControllerMediator()
       assertThat(mediator.getItem(key("foo"))).isEqualTo("hi")
+    }
+  }
+
+  @Test
+  fun `set - forbid`() {
+    withControllers(listOf(
+      createSet { SetResult.forbid() },
+    )) {
+      val mediator = SettingsControllerMediator()
+      assertThatThrownBy {
+        mediator.setItem(key("foo"), "")
+      }.isInstanceOf(ReadOnlySettingException::class.java)
     }
   }
 
@@ -67,6 +80,14 @@ private fun createGet(resultSupplier: () -> GetResult<String?>): DelegatedSettin
     }
 
     override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = SetResult.inapplicable()
+  }
+}
+
+private fun createSet(setSupplier: () -> SetResult): DelegatedSettingsController {
+  return object : DelegatedSettingsController {
+    override fun <T : Any> getItem(key: SettingDescriptor<T>) = GetResult.inapplicable<T>()
+
+    override fun <T : Any> setItem(key: SettingDescriptor<T>, value: T?): SetResult = setSupplier()
   }
 }
 

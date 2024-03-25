@@ -500,7 +500,8 @@ public class HighlightInfo implements Segment {
     s += "; severity=" + getSeverity();
     synchronized (this) {
       if (quickFixActionRanges != null) {
-        s += "; quickFixes: " + StringUtil.join(quickFixActionRanges, q-> q.getFirst().myAction.getClass().getName(), ", ");
+        s += "; quickFixes: " + StringUtil.join(
+          quickFixActionRanges, q -> ReportingClassSubstitutor.getClassToReport(q.getFirst().myAction).getName(), ", ");
       }
     }
     if (gutterIconRenderer != null) {
@@ -797,12 +798,6 @@ public class HighlightInfo implements Segment {
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
       InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
-      if (!(toolWrapper instanceof LocalInspectionToolWrapper)) {
-        HighlightDisplayKey idKey = HighlightDisplayKey.findById(key.toString());
-        if (idKey != null) {
-          toolWrapper = profile.getInspectionTool(idKey.toString(), element);
-        }
-      }
       if (toolWrapper != null) {
         myCanCleanup = toolWrapper.isCleanupTool();
 
@@ -1080,5 +1075,8 @@ public class HighlightInfo implements Segment {
   }
   boolean isFromAnnotator() {
     return toolId instanceof Class<?> c && Annotator.class.isAssignableFrom(c);
+  }
+  boolean isFromInspection() {
+    return toolId instanceof String;
   }
 }

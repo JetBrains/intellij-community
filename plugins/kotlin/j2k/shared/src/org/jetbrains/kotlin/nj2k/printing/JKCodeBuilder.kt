@@ -137,11 +137,11 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderSymbol(classAccessExpression.identifier, classAccessExpression)
         }
 
-        override fun visitMethodAccessExpression(methodAccessExpression: JKMethodAccessExpression) {
+        override fun visitMethodAccessExpressionRaw(methodAccessExpression: JKMethodAccessExpression) {
             printer.renderSymbol(methodAccessExpression.identifier, methodAccessExpression)
         }
 
-        override fun visitTypeQualifierExpression(typeQualifierExpression: JKTypeQualifierExpression) {
+        override fun visitTypeQualifierExpressionRaw(typeQualifierExpression: JKTypeQualifierExpression) {
             printer.renderType(typeQualifierExpression.type, typeQualifierExpression)
         }
 
@@ -268,7 +268,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitIsExpressionRaw(isExpression: JKIsExpression) {
             isExpression.expression.accept(this)
-            printer.printWithSurroundingSpaces("is")
+            printer.printWithSurroundingSpaces(if (isExpression.isNegated)  "!is" else "is")
             isExpression.type.accept(this)
         }
 
@@ -768,33 +768,29 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
-            fun printLambda() {
-                printer.par(ParenthesisKind.CURVED) {
-                    val isMultiStatement = lambdaExpression.statement.statements.size > 1
-                    if (isMultiStatement) printer.println()
-
-                    printer.renderList(lambdaExpression.parameters) { it.accept(this) }
-                    if (lambdaExpression.parameters.isNotEmpty()) {
-                        printer.printWithSurroundingSpaces("->")
-                    }
-
-                    val statement = lambdaExpression.statement
-                    if (statement is JKBlockStatement) {
-                        printer.renderList(statement.block.statements, ::ensureLineBreak) { it.accept(this) }
-                    } else {
-                        statement.accept(this)
-                    }
-
-                    if (isMultiStatement) printer.println()
-                }
-            }
-
             if (lambdaExpression.functionalType.present()) {
+                // print SAM constructor
                 printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
                 printer.print(" ")
-                printer.par(ParenthesisKind.ROUND, ::printLambda)
-            } else {
-                printLambda()
+            }
+
+            printer.par(ParenthesisKind.CURVED) {
+                val isMultiStatement = lambdaExpression.statement.statements.size > 1
+                if (isMultiStatement) printer.println()
+
+                printer.renderList(lambdaExpression.parameters) { it.accept(this) }
+                if (lambdaExpression.parameters.isNotEmpty()) {
+                    printer.printWithSurroundingSpaces("->")
+                }
+
+                val statement = lambdaExpression.statement
+                if (statement is JKBlockStatement) {
+                    printer.renderList(statement.block.statements, ::ensureLineBreak) { it.accept(this) }
+                } else {
+                    statement.accept(this)
+                }
+
+                if (isMultiStatement) printer.println()
             }
         }
 
@@ -839,11 +835,11 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        override fun visitKtWhenExpression(ktWhenExpression: JKKtWhenExpression) {
+        override fun visitKtWhenExpressionRaw(ktWhenExpression: JKKtWhenExpression) {
             visitKtWhenBlockRaw(ktWhenExpression)
         }
 
-        override fun visitKtWhenStatement(ktWhenStatement: JKKtWhenStatement) {
+        override fun visitKtWhenStatementRaw(ktWhenStatement: JKKtWhenStatement) {
             visitKtWhenBlockRaw(ktWhenStatement)
         }
 

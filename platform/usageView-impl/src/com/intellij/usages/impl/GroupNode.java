@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.ide.tags.TagManager;
@@ -68,6 +68,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
   }
 
+  /**
+   * Important: Access to the children list should be synchronized on this GroupNode
+   */
   @NotNull
   List<Node> getChildren() {
     return myChildren;

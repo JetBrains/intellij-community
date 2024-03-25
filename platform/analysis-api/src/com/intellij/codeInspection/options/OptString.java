@@ -26,7 +26,7 @@ public record OptString(@Language("jvm-field-name") @NotNull String bindId, @Not
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptString description(@NotNull @NlsContexts.Tooltip String description) {
+  public @NotNull OptString description(@NotNull @NlsContexts.Tooltip String description) {
     return description(HtmlChunk.text(description));
   }
 
@@ -36,7 +36,7 @@ public record OptString(@Language("jvm-field-name") @NotNull String bindId, @Not
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptString description(@NotNull HtmlChunk description) {
+  public @NotNull OptString description(@NotNull HtmlChunk description) {
     if (this.description != null) {
       throw new IllegalStateException("Description is already set");
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -315,17 +315,28 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return allClientFileEditorManagers.any { it.isFileOpen(file) }
   }
 
+  override fun getEditorList(file: VirtualFile): List<FileEditor> {
+    return listOf(getSelectedEditor(file) ?: return emptyList())
+  }
+
   override fun getEditors(file: VirtualFile): Array<FileEditor> {
     return arrayOf(getSelectedEditor(file) ?: return FileEditor.EMPTY_ARRAY)
   }
 
-  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+  override fun getAllEditorList(file: VirtualFile): MutableList<FileEditor> {
     val result = ArrayList<FileEditor>()
-    result.addAll(getEditors(file))
+    result.addAll(getEditorList(file))
     for (clientManager in allClientFileEditorManagers) {
       result.addAll(clientManager.getEditors(file))
     }
-    return result.toArray(FileEditor.EMPTY_ARRAY)
+    return result
+  }
+
+  override fun getAllEditors(file: VirtualFile): Array<FileEditor> {
+    val list = getAllEditorList(file)
+    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
+    return if (list.isEmpty()) FileEditor.EMPTY_ARRAY else (list as java.util.Collection<FileEditor>).toArray(FileEditor.EMPTY_ARRAY)
+
   }
 
   override fun getOpenFilesWithRemotes(): List<VirtualFile> {

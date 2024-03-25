@@ -92,7 +92,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
 
-  private final SafeNullableLazyValue<IpOrException> myLazyHostIp = SafeNullableLazyValue.create(() -> {
+  private final WslDistributionSafeNullableLazyValue<IpOrException> myLazyHostIp = WslDistributionSafeNullableLazyValue.create(() -> {
     try {
       return new IpOrException(readHostIp());
     }
@@ -100,7 +100,7 @@ public class WSLDistribution implements AbstractWslDistribution {
       return new IpOrException(e);
     }
   });
-  private final SafeNullableLazyValue<String> myLazyWslIp = SafeNullableLazyValue.create(() -> {
+  private final WslDistributionSafeNullableLazyValue<String> myLazyWslIp = WslDistributionSafeNullableLazyValue.create(() -> {
     try {
       return readWslIp();
     }
@@ -110,8 +110,10 @@ public class WSLDistribution implements AbstractWslDistribution {
       return DEFAULT_WSL_IP;
     }
   });
-  private final SafeNullableLazyValue<String> myLazyShellPath = SafeNullableLazyValue.create(this::readShellPath);
-  private final SafeNullableLazyValue<String> myLazyUserHome = SafeNullableLazyValue.create(this::readUserHome);
+  private final WslDistributionSafeNullableLazyValue<String> myLazyShellPath =
+    WslDistributionSafeNullableLazyValue.create(this::readShellPath);
+  private final WslDistributionSafeNullableLazyValue<String> myLazyUserHome =
+    WslDistributionSafeNullableLazyValue.create(this::readUserHome);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -678,9 +680,8 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * Windows IP address. See class doc before using it, because this is probably not what you are looking for.
    *
-   * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
-   *
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
+   * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
    */
   @Deprecated
   public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
@@ -817,7 +818,7 @@ public class WSLDistribution implements AbstractWslDistribution {
                                                               true);
   }
 
-  private <T> @Nullable T getValueWithLogging(final @NotNull SafeNullableLazyValue<T> lazyValue,
+  private <T> @Nullable T getValueWithLogging(final @NotNull WslDistributionSafeNullableLazyValue<T> lazyValue,
                                               final @NotNull String fieldName) {
     final T value = lazyValue.getValue();
 

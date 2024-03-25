@@ -1,0 +1,88 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
+
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes2
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+
+internal object AddSuspendModifierFixFactory {
+    val addSuspendModifierFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.IllegalSuspendFunctionCall ->
+        val function = (diagnostic.psi as? KtElement)?.containingFunction() ?: return@ModCommandBased emptyList()
+        val functionName = function.name ?: return@ModCommandBased emptyList()
+
+        listOf(AddSuspendModifierFix(function, ElementContext(functionName)))
+    }
+
+    private data class ElementContext(
+        val functionName: String,
+    )
+
+    private class AddSuspendModifierFix(
+        element: KtModifierListOwner,
+        private val context: ElementContext,
+    ) : KotlinModCommandAction.ElementBased<KtModifierListOwner, ElementContext>(element, context) {
+
+        override fun invoke(
+            context: ActionContext,
+            element: KtModifierListOwner,
+            elementContext: ElementContext,
+            updater: ModPsiUpdater,
+        ) {
+            element.addModifier(KtTokens.SUSPEND_KEYWORD)
+        }
+
+        override fun getFamilyName(): String = KotlinBundle.message("fix.add.suspend.modifier.function", context.functionName)
+    }
+}
+
+context(KtAnalysisSession)
+private fun KtElement.containingFunction(): KtNamedFunction? {
+    return when (val containingFunction = getParentOfTypes2<KtFunctionLiteral, KtNamedFunction>()) {
+        is KtFunctionLiteral -> {
+            val call = containingFunction.getStrictParentOfType<KtCallExpression>()
+            val resolvedCall = call?.resolveCall()?.successfulFunctionCallOrNull()
+            if (resolvedCall?.partiallyAppliedSymbol?.symbol?.isInlineOrInsideInline() == true) {
+                containingFunction.containingFunction()
+            } else {
+                null
+            }
+        }
+
+        is KtNamedFunction -> containingFunction
+        else -> null
+    }
+}
+
+context(KtAnalysisSession)
+private fun KtDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCallSiteVisibility() != null
+
+context(KtAnalysisSession)
+private fun KtDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
+    var declaration: KtDeclarationSymbol? = this
+    var result: Visibility? = null
+    while (declaration != null) {
+        if (declaration is KtFunctionSymbol && declaration.isInline) {
+            val visibility = declaration.visibility
+            if (Visibilities.isPrivate(visibility)) {
+                return visibility
+            }
+            result = visibility
+        }
+        declaration = declaration.getContainingSymbol()
+    }
+    return result
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl
@@ -13,9 +13,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -61,12 +59,6 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
     @JvmStatic
     fun getInstance(project: Project): EditorHistoryManager = project.service()
-  }
-
-  internal class EditorHistoryManagerStartUpActivity : ProjectActivity {
-    override suspend fun execute(project: Project) : Unit = blockingContext {
-      getInstance(project)
-    }
   }
 
   @Synchronized

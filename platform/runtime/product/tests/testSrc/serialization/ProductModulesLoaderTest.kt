@@ -31,7 +31,7 @@ class ProductModulesLoaderTest {
                                       RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
-    val xml = generateProductModulesWithPlugins("plugin")
+    val xml = generateProductModulesWithPlugin()
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
@@ -85,7 +85,7 @@ class ProductModulesLoaderTest {
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "optional", "unknown")
 
-    val xml = generateProductModulesWithPlugins("plugin")
+    val xml = generateProductModulesWithPlugin()
     val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
     val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
     val pluginModules = pluginModuleGroup.includedModules
@@ -112,7 +112,7 @@ class ProductModulesLoaderTest {
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "plugin.common", "plugin.frontend", "plugin.localIde")
 
-    val xml = generateProductModulesWithPlugins("plugin")
+    val xml = generateProductModulesWithPlugin()
     fun checkGroup(productMode: ProductMode, additionalModuleName: String) {
       val productModules = ProductModulesSerialization.loadProductModules(xml, productMode, repository)
       val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
@@ -139,7 +139,7 @@ class ProductModulesLoaderTest {
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("common.plugin"), "common")
     writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
     val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
-    productModulesWithPlugins("common.plugin").generate(rootProductModulesPath.toFile())
+    productModulesWithPlugins(plugins = listOf("common.plugin")).generate(rootProductModulesPath.toFile())
 
     val xmlPath = directoryContent {
       xml(FILE_NAME, """
@@ -162,6 +162,41 @@ class ProductModulesLoaderTest {
     val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId }
     assertEquals(listOf("plugin", "common.plugin"), bundledPlugins)
   }
+  
+  @Test
+  fun `inclusion without some modules`() {
+    val repository = createRepository(
+      tempDirectory.rootPath,
+      RawRuntimeModuleDescriptor("root", listOf("root"), emptyList()),
+      RawRuntimeModuleDescriptor("additional", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor("plugin", listOf("plugin"), emptyList()),
+      RawRuntimeModuleDescriptor("plugin2", listOf("plugin2"), emptyList()),
+    )
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin"), "plugin")
+    writePluginXmlWithModules(tempDirectory.rootPath.resolve("plugin2"), "plugin2")
+    val rootProductModulesPath = tempDirectory.rootPath.resolve("root/META-INF/root")
+    productModulesWithPlugins(
+      mainModules = listOf("root", "additional"),
+      plugins = listOf("plugin", "plugin2")
+    ).generate(rootProductModulesPath.toFile())
+
+    val xmlPath = directoryContent {
+      xml(FILE_NAME, """
+          <product-modules>
+            <include>
+              <from-module>root</from-module>
+              <without-module>additional</without-module>
+              <without-module>plugin2</without-module>
+            </include>
+          </product-modules>
+        """.trimIndent())
+    }.generateInTempDir().resolve(FILE_NAME)
+    val productModules = ProductModulesSerialization.loadProductModules(xmlPath, ProductMode.FRONTEND, repository)
+    val mainModules = productModules.mainModuleGroup.includedModules
+    assertEquals(listOf("root"), mainModules.map { it.moduleDescriptor.moduleId.stringId })
+    val bundledPlugins = productModules.bundledPluginModuleGroups.map { it.mainModule.moduleId.stringId }
+    assertEquals(listOf("plugin"), bundledPlugins)
+  }
 
   private fun writePluginXmlWithModules(resourcePath: Path, pluginId: String, vararg contentModules: String) {
     writePluginXml(resourcePath, """
@@ -174,14 +209,16 @@ class ProductModulesLoaderTest {
         """.trimMargin())
   }
 
-  private fun generateProductModulesWithPlugins(vararg plugins: String): Path = 
-    productModulesWithPlugins(*plugins).generateInTempDir().resolve(FILE_NAME)
+  private fun generateProductModulesWithPlugin(): Path = 
+    productModulesWithPlugins(plugins = listOf("plugin")).generateInTempDir().resolve(FILE_NAME)
 
-  private fun productModulesWithPlugins(vararg plugins: String) = directoryContent {
+  private fun productModulesWithPlugins(mainModules: List<String> = listOf("root"), plugins: List<String>) = directoryContent {
       xml(FILE_NAME, """
             <product-modules>
               <main-root-modules>
-                <module importance="functional">root</module>
+               ${mainModules.joinToString("\n") { 
+                  "<module importance=\"functional\">$it</module>"
+               }}
               </main-root-modules>
               <bundled-plugins>
                 ${plugins.joinToString("\n") { "<module>$it</module>" }}

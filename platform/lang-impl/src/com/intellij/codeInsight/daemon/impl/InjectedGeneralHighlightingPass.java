@@ -11,10 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.TextAttributesScheme;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.util.LayeredTextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -38,8 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLanguageFragmentKey;
-
+/**
+ * Perform injections, run highlight visitors and annotators on discovered injected files
+ */
 final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
   private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
@@ -79,11 +77,11 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
     List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.outside()));
 
-    List<HighlightInfo> resultInside = new ArrayList<>(100);
-    List<HighlightInfo> resultOutside = new ArrayList<>(100);
-
+    List<HighlightInfo> resultInside = new ArrayList<>(100); // guarded by myHighlights
+    List<HighlightInfo> resultOutside = new ArrayList<>(100); // guarded by myHighlights
+    Set<PsiFile> injected = new HashSet<>(); // guarded by myHighlights
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
-    TextAttributesKey fragmentKey = createInjectedLanguageFragmentKey(myFile.getLanguage());
+    TextAttributesKey fragmentKey = EditorColors.createInjectedLanguageFragmentKey(myFile.getLanguage());
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, (injectedPsi, places) ->
       addInjectedPsiHighlights(injectedLanguageManager, injectedPsi, places, fragmentKey, patchedInfo -> {
         queueInfoToUpdateIncrementally(patchedInfo, getId());
@@ -95,10 +93,14 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
             // non-conditionally apply injected results regardless whether they are in myRestrictRange
             resultOutside.add(patchedInfo);
           }
+          injected.add(injectedPsi);
         }
       }));
 
     synchronized (myHighlights) {
+      // injections were re-calculated, remove highlights stuck in highlightInfoUpdater from the previous invalid injection fragments
+      HighlightInfoUpdater.getInstance(myProject).removeInjectedFilesOtherThan(myFile, myRestrictRange, myHighlightingSession, injected);
+
       // all infos for the "injected fragment for the host which is inside" are inside indeed,
       // but some infos for the "injected fragment for the host which is outside" can be still inside
       if (resultOutside.isEmpty()) {
@@ -299,7 +301,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder, List<PsiElement> elements) {
+  private void runHighlightVisitorsForInjected(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder, @NotNull List<? extends PsiElement> elements) {
     HighlightVisitor[] filtered = getHighlightVisitors(injectedPsi);
     try {
       for (HighlightVisitor visitor : filtered) {
@@ -317,26 +319,8 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   }
 
   private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places, @NotNull Consumer<? super HighlightInfo> outInfos) {
-    List<InjectedLanguageUtil.TokenInfo> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
-    if (tokens == null) return;
-
-    int shredIndex = -1;
-    int injectionHostTextRangeStart = -1;
-    for (InjectedLanguageUtil.TokenInfo token : tokens) {
-      ProgressManager.checkCanceled();
-      TextRange range = token.rangeInsideInjectionHost();
-      if (range.getLength() == 0) continue;
-      if (shredIndex != token.shredIndex()) {
-        shredIndex = token.shredIndex();
-        PsiLanguageInjectionHost.Shred shred = places.get(shredIndex);
-        PsiLanguageInjectionHost host = shred.getHost();
-        if (host == null) return;
-        injectionHostTextRangeStart = host.getTextRange().getStartOffset();
-      }
-      TextRange hostRange = range.shiftRight(injectionHostTextRangeStart);
-
-      addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, token.textAttributesKeys(), outInfos);
-    }
+    InjectedLanguageUtil.processTokens(injectedPsi, places, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) ->
+      addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys, outInfos));
   }
 
   @Override

@@ -265,6 +265,7 @@ class GlobalWorkspaceModel : Disposable {
       val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
       val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
       val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
+        typeId = libraryEntity.typeId
         excludedRoots = excludedRootsCopy
         libraryProperties = libraryPropertiesCopy
       }
@@ -355,7 +356,7 @@ private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFi
 
 private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity {
   val originalPropertiesXmlTag = propertiesXmlTag
-  return LibraryPropertiesEntity(libraryType, entitySource) {
+  return LibraryPropertiesEntity(entitySource) {
     this.propertiesXmlTag = originalPropertiesXmlTag
   }
 }

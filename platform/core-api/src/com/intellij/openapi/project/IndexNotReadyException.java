@@ -64,6 +64,10 @@ public final class IndexNotReadyException extends RuntimeException implements Ex
   }
 
   public static @NotNull IndexNotReadyException create(@Nullable Throwable startTrace) {
-    return new IndexNotReadyException(startTrace);
+    IndexNotReadyException inre = new IndexNotReadyException(startTrace);
+    if (startTrace != null) {
+      inre.addSuppressed(startTrace);
+    }
+    return inre;
   }
 }

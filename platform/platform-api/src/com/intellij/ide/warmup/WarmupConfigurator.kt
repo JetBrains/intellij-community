@@ -12,9 +12,10 @@ import java.nio.file.Path
  * This class allows to configure different processes that the IDE needs in order to successfully and completely open the required projects.
  * Typical examples of the clients of this API are build systems (Maven, Gradle) and SDK detectors (Python SDK, JDK).
  *
- * Obsolescence notice: A more complete approach would be to use [com.intellij.ide.observation.ActivityInProgressPredicate]
+ * Obsolescence notice: A more complete approach would be to use [com.intellij.platform.backend.observation.ActivityTracker]
  */
-@ApiStatus.Obsolete
+@ApiStatus.ScheduledForRemoval
+@Deprecated("This file represents the obsolete way of configuring a project. Consider using ActivityTracker")
 interface WarmupConfigurator {
 
   companion object {

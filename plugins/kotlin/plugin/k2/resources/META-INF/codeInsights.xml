@@ -7,5 +7,6 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.compiler.K2KotlinCompilerIdeAllowedErrorFilter"/>
+
   </extensions>
 </idea-plugin>

@@ -1,4 +1,10 @@
 {
+    "apply": {
+        "prefix": "apply",
+        "body": "{% apply %}\n\t$0\n{% endapply %}",
+        "description": "apply",
+        "scope": "text.html.twig"
+    },
     "asset": {
         "prefix": "asset",
         "body":
@@ -251,10 +257,22 @@
         "description": "else",
         "scope": "text.html.twig"
     },
+    "elseif": {
+        "prefix": "elseif",
+        "body": "{% elseif %}\n\t$0",
+        "description": "elseif",
+        "scope": "text.html.twig"
+    },
     "embed": {
         "prefix": "embed",
         "body": "{% embed \"${1:template}\" %}\n\t$0\n{% endembed %}",
         "description": "embed",
+        "scope": "text.html.twig"
+    },
+    "endapply": {
+        "prefix": "endapply",
+        "body": "{% endapply %}$0",
+        "description": "endapply",
         "scope": "text.html.twig"
     },
     "endautoescape": {

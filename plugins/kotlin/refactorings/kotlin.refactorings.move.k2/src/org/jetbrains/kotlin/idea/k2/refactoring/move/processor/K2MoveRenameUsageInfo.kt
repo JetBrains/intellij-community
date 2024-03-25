@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -133,8 +132,6 @@ sealed class K2MoveRenameUsageInfo(
     }
 
     companion object {
-        private val LOG = Logger.getInstance(K2MoveRenameUsageInfo::class.java)
-
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
             return preProcessUsages(findInternalUsages(declaration) + findExternalUsages(declaration))
         }
@@ -231,7 +228,7 @@ sealed class K2MoveRenameUsageInfo(
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
         }
 
-        internal fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
+        internal fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
             retargetInternalUsages(oldToNewMap)
             retargetExternalUsages(usages, oldToNewMap)
         }
@@ -240,7 +237,7 @@ sealed class K2MoveRenameUsageInfo(
          * After moving, internal usages might have become invalid, this method restores these usage infos.
          * @see internalUsageInfo
          */
-        private fun restoreInternalUsages(containingDecl: KtNamedDeclaration, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
+        private fun restoreInternalUsages(containingDecl: KtNamedDeclaration, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>): List<UsageInfo> {
             return containingDecl.collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
                 val usageInfo = refExpr.internalUsageInfo
                 if (usageInfo?.element != null) return@mapNotNull usageInfo
@@ -251,8 +248,8 @@ sealed class K2MoveRenameUsageInfo(
             }
         }
 
-        private fun retargetInternalUsages(oldToNewMap: MutableMap<PsiElement, PsiElement>) {
-            val newDeclarations = oldToNewMap.values.filterIsInstance<KtNamedDeclaration>()
+        private fun retargetInternalUsages(oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
+            val newDeclarations = oldToNewMap.values.toList()
             val internalUsages = newDeclarations
                 .flatMap { decl -> restoreInternalUsages(decl, oldToNewMap) }
                 .filterIsInstance<K2MoveRenameUsageInfo>()
@@ -260,7 +257,7 @@ sealed class K2MoveRenameUsageInfo(
             shortenUsages(retargetMoveUsages(internalUsages, oldToNewMap))
         }
 
-        private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
+        private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
             val externalUsages = usages
                 .filterIsInstance<K2MoveRenameUsageInfo>()
                 .filter { it.element != null && (it is Light || (it is Source && !it.isInternal)) } // if the element is null, it means that this external usage was moved
@@ -268,28 +265,9 @@ sealed class K2MoveRenameUsageInfo(
             shortenUsages(retargetMoveUsages(externalUsages, oldToNewMap))
         }
 
-        private fun List<K2MoveRenameUsageInfo>.sortedByFile(): Map<PsiFile, List<K2MoveRenameUsageInfo>> {
-            return buildMap {
-                for (usageInfo in this@sortedByFile) {
-                    val element = usageInfo.element
-                    if (element == null) {
-                        LOG.error("Could not update usage because element is invalid")
-                        continue
-                    }
-                    val containingFile = element.containingFile
-                    if (containingFile == null) {
-                        LOG.error("Could not update usage because element has no containing file")
-                        continue
-                    }
-                    val usageInfos: MutableList<K2MoveRenameUsageInfo> = getOrPut(containingFile) { mutableListOf() }
-                    usageInfos.add(usageInfo)
-                }
-            }.mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
-        }
-
         private fun retargetMoveUsages(
             usageInfosByFile: Map<PsiFile, List<K2MoveRenameUsageInfo>>,
-            oldToNewMap: MutableMap<PsiElement, PsiElement>
+            oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>
         ): Map<PsiFile, Map<PsiElement, PsiNamedElement>> {
             return usageInfosByFile.map { (file, usageInfos) ->
                 // TODO instead of manually handling of qualifiable/non-qualifiable references we should invoke `bindToElement` in bulk

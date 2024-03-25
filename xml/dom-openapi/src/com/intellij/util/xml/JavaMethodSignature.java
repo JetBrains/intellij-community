@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
@@ -35,8 +35,7 @@ public final class JavaMethodSignature {
     return myMethodName;
   }
 
-  @Nullable
-  public Method findMethod(@NotNull Class<?> aClass) {
+  public @Nullable Method findMethod(@NotNull Class<?> aClass) {
     Method method = getDeclaredMethod(aClass);
     if (method == null && aClass.isInterface() && OBJECT_METHOD_NAMES.contains(myMethodName)) {
       method = ReflectionUtil.getDeclaredMethod(Object.class, myMethodName, myMethodParameters);
@@ -44,8 +43,7 @@ public final class JavaMethodSignature {
     return method;
   }
 
-  @Nullable
-  private Method getDeclaredMethod(@NotNull Class<?> aClass) {
+  private @Nullable Method getDeclaredMethod(@NotNull Class<?> aClass) {
     Method method = ReflectionUtil.getMethod(aClass, myMethodName, myMethodParameters);
     return method == null ? ReflectionUtil.getDeclaredMethod(aClass, myMethodName, myMethodParameters) : method;
   }
@@ -65,8 +63,7 @@ public final class JavaMethodSignature {
     return result;
   }
 
-  @Nullable
-  static Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
+  static @Nullable Method findMethod(@NotNull Method sampleMethod, @NotNull Class<?> startFrom, @NotNull Predicate<Method> checker) {
     String sampleMethodName = sampleMethod.getName();
     Class<?>[] sampleMethodParameters = sampleMethod.getParameterCount() == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : sampleMethod.getParameterTypes();
 

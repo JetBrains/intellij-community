@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
@@ -154,7 +154,7 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
@@ -196,7 +196,7 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
                 item_value.entityLinks[EntityLink(false, CHILDREN_CONNECTION_ID)] = this
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToAbstractManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value.asSequence())
@@ -233,7 +233,7 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
             value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToAbstractOneParentOfChild(PARENT_CONNECTION_ID, this, value)

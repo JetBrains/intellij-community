@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject;
 
 import com.intellij.execution.ExecutionException;
@@ -50,6 +36,7 @@ import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode;
 import com.jetbrains.python.statistics.PyStatisticToolsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +46,8 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 
@@ -96,32 +85,43 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
   private final List<SettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final boolean myAllowRemoteProjectCreation;
-  @Nullable private MouseListener myErrorLabelMouseListener;
+  private @Nullable MouseListener myErrorLabelMouseListener;
 
   protected Consumer<String> myErrorCallback;
 
-  protected PythonProjectGenerator() {
-    this(false);
-  }
+  @Nullable
+  private final PythonInterpreterSelectionMode preferredEnvironmentType;
 
   /**
    * @param allowRemoteProjectCreation if project of this type could be created remotely
    */
   protected PythonProjectGenerator(final boolean allowRemoteProjectCreation) {
-    myAllowRemoteProjectCreation = allowRemoteProjectCreation;
+    this(allowRemoteProjectCreation, null);
   }
 
-  public final void setErrorCallback(@NotNull final Consumer<String> errorCallback) {
+  protected PythonProjectGenerator() {
+    this(false, null);
+  }
+
+  /**
+   * @param allowRemoteProjectCreation if project of this type could be created remotely
+   * @param preferredInterpreter       interpreter type to select by default
+   */
+  protected PythonProjectGenerator(final boolean allowRemoteProjectCreation,
+                                   @Nullable PythonInterpreterSelectionMode preferredInterpreter) {
+    myAllowRemoteProjectCreation = allowRemoteProjectCreation;
+    preferredEnvironmentType = preferredInterpreter;
+  }
+
+  public final void setErrorCallback(final @NotNull Consumer<String> errorCallback) {
     myErrorCallback = errorCallback;
   }
 
-  @Nullable
-  public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
+  public @Nullable JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
     return null;
   }
 
-  @Nullable
-  public JPanel extendBasePanel() throws ProcessCanceledException {
+  public @Nullable JPanel extendBasePanel() throws ProcessCanceledException {
     return null;
   }
 
@@ -133,8 +133,8 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param projectDirectory base project directory
    * @throws PyNoProjectAllowedOnSdkException project can't be created (check message)
    */
-  public void checkProjectCanBeCreatedOnSdk(@NotNull final Sdk sdk,
-                                            @NotNull final File projectDirectory) throws PyNoProjectAllowedOnSdkException {
+  public void checkProjectCanBeCreatedOnSdk(final @NotNull Sdk sdk,
+                                            final @NotNull File projectDirectory) throws PyNoProjectAllowedOnSdkException {
 
     // Check if project does not support remote creation at all
     if (!myAllowRemoteProjectCreation && PythonSdkUtil.isRemote(sdk)) {
@@ -157,10 +157,10 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   }
 
   @Override
-  public final void generateProject(@NotNull final Project project,
-                                    @NotNull final VirtualFile baseDir,
-                                    @NotNull final T settings,
-                                    @NotNull final Module module) {
+  public final void generateProject(final @NotNull Project project,
+                                    final @NotNull VirtualFile baseDir,
+                                    final @NotNull T settings,
+                                    final @NotNull Module module) {
     // Use NO_SETTINGS to avoid nullable settings of project generator
     if (settings == NO_SETTINGS) {
       // We are in Intellij Module and framework is implemented as project template, not facet.
@@ -214,7 +214,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * Report FUS statics on the created project.
    * Inheritors can override this method to supply customized data for the statistics.
    */
-  protected void reportStatistics(@NotNull final T settings) {
+  protected void reportStatistics(final @NotNull T settings) {
     var statisticsInfo = settings.getInterpreterInfoForStatistics();
     if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo && settings.getSdk() != null) {
       PythonNewProjectWizardCollector.logPythonNewProjectGenerated(interpreterStatisticsInfo,
@@ -228,9 +228,9 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * Same as {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module, PyProjectSynchronizer)}
    * but with out of settings. Called by Intellij Plugin when framework is installed as project template.
    */
-  protected void configureProjectNoSettings(@NotNull final Project project,
-                                            @NotNull final VirtualFile baseDir,
-                                            @NotNull final Module module) {
+  protected void configureProjectNoSettings(final @NotNull Project project,
+                                            final @NotNull VirtualFile baseDir,
+                                            final @NotNull Module module) {
     throw new IllegalStateException(String.format("%s does not support project creation with out of settings. " +
                                                   "See %s doc for detail", getClass(), PythonProjectGenerator.class));
   }
@@ -255,11 +255,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    *                     </ol>
    */
 
-  protected void configureProject(@NotNull final Project project,
-                                  @NotNull final VirtualFile baseDir,
-                                  @NotNull final T settings,
-                                  @NotNull final Module module,
-                                  @Nullable final PyProjectSynchronizer synchronizer) {
+  protected void configureProject(final @NotNull Project project,
+                                  final @NotNull VirtualFile baseDir,
+                                  final @NotNull T settings,
+                                  final @NotNull Module module,
+                                  final @Nullable PyProjectSynchronizer synchronizer) {
     // Automatic deployment works only after first sync
     if (synchronizer != null) {
       synchronizer.syncProject(module, PySyncDirection.LOCAL_TO_REMOTE, null);
@@ -270,7 +270,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return new PyNewProjectSettings();
   }
 
-  public ValidationResult warningValidation(@Nullable final Sdk sdk) {
+  public ValidationResult warningValidation(final @Nullable Sdk sdk) {
     return ValidationResult.OK;
   }
 
@@ -278,7 +278,14 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     myListeners.add(listener);
   }
 
-  public void locationChanged(@NotNull final String newLocation) {
+  public void locationChanged(final @NotNull String newLocation) {
+  }
+
+  /**
+   * @return Python interpreter type this generator prefered to use. Null if no preferences
+   */
+  public final @Nullable PythonInterpreterSelectionMode getPreferredEnvironmentType() {
+    return preferredEnvironmentType;
   }
 
   public interface SettingsListener {
@@ -291,20 +298,18 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
   }
 
-  @Nullable
-  public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable final Sdk sdk) {
+  public @Nullable BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(final @Nullable Sdk sdk) {
     return null;
   }
 
-  public void afterProjectGenerated(@NotNull final Project project) {
+  public void afterProjectGenerated(final @NotNull Project project) {
   }
 
-  public void addErrorLabelMouseListener(@NotNull final MouseListener mouseListener) {
+  public void addErrorLabelMouseListener(final @NotNull MouseListener mouseListener) {
     myErrorLabelMouseListener = mouseListener;
   }
 
-  @Nullable
-  public MouseListener getErrorLabelMouseListener() {
+  public @Nullable MouseListener getErrorLabelMouseListener() {
     return myErrorLabelMouseListener;
   }
 
@@ -314,8 +319,8 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   /**
    * @param sdkAndException if you have SDK and execution exception provide them here (both must not be null).
    */
-  protected static void reportPackageInstallationFailure(@NotNull final String frameworkName,
-                                                         @Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
+  protected static void reportPackageInstallationFailure(final @NotNull String frameworkName,
+                                                         final @Nullable Pair<Sdk, ExecutionException> sdkAndException) {
 
     final PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription =
       getErrorDescription(sdkAndException, frameworkName);
@@ -326,9 +331,8 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     });
   }
 
-  @NotNull
-  private static PyPackageManagementService.PyPackageInstallationErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException,
-                                                                                                      @NotNull String packageName) {
+  private static @NotNull PyPackageManagementService.PyPackageInstallationErrorDescription getErrorDescription(final @Nullable Pair<Sdk, ExecutionException> sdkAndException,
+                                                                                                               @NotNull String packageName) {
     PyPackageManagementService.PyPackageInstallationErrorDescription errorDescription = null;
     if (sdkAndException != null) {
       final ExecutionException exception = sdkAndException.second;
@@ -360,36 +364,39 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
    * @param requirement           name of requirement to install (i.e. "django")
    * @param forceInstallFramework pass true if you are sure required framework is missing
    * @param callback              to be called after installation (or instead of is framework is installed) on AWT thread
+   * @return future to be used instead of callback.
    */
-  public static void installFrameworkIfNeeded(@NotNull final Project project,
-                                              @NotNull final String frameworkName,
-                                              @NotNull final String requirement,
-                                              @Nullable final Sdk sdk,
-                                              final boolean forceInstallFramework,
-                                              @Nullable final Runnable callback) {
-    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
+  public static @NotNull Future<Void> installFrameworkIfNeeded(final @NotNull Project project,
+                                                               final @NotNull String frameworkName,
+                                                               final @NotNull String requirement,
+                                                               final @Nullable Sdk sdk,
+                                                               final boolean forceInstallFramework,
+                                                               final @Nullable Runnable callback) {
+    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, false, callback);
   }
 
-  public static void installFrameworkInBackground(@NotNull final Project project,
-                                                  @NotNull final String frameworkName,
-                                                  @NotNull final String requirement,
-                                                  @Nullable final Sdk sdk,
-                                                  final boolean forceInstallFramework,
-                                                  @Nullable final Runnable callback) {
-    installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
+  public static @NotNull Future<Void> installFrameworkInBackground(final @NotNull Project project,
+                                                                   final @NotNull String frameworkName,
+                                                                   final @NotNull String requirement,
+                                                                   final @Nullable Sdk sdk,
+                                                                   final boolean forceInstallFramework,
+                                                                   final @Nullable Runnable callback) {
+    return installFrameworkIfNeeded(project, frameworkName, requirement, sdk, forceInstallFramework, true, callback);
   }
 
-  private static void installFrameworkIfNeeded(@NotNull final Project project,
-                                               @NotNull final String frameworkName,
-                                               @NotNull final String requirement,
-                                               @Nullable final Sdk sdk,
-                                               final boolean forceInstallFramework,
-                                               boolean asBackgroundTask,
-                                               @Nullable final Runnable callback) {
+  private static @NotNull Future<Void> installFrameworkIfNeeded(final @NotNull Project project,
+                                                                final @NotNull String frameworkName,
+                                                                final @NotNull String requirement,
+                                                                final @Nullable Sdk sdk,
+                                                                final boolean forceInstallFramework,
+                                                                boolean asBackgroundTask,
+                                                                final @Nullable Runnable callback) {
 
+    var future = new CompletableFuture<Void>();
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
-      return;
+      future.completeExceptionally(new RuntimeException(("No SDK provided")));
+      return future;
     }
 
     // For remote SDK we are not sure if framework exists or not, so we'll check it anyway
@@ -399,12 +406,18 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
         ProgressManager.getInstance()
           .run(new Task.Backgroundable(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
             @Override
-            public void run(@NotNull final ProgressIndicator indicator) {
+            public void run(final @NotNull ProgressIndicator indicator) {
               installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
             }
 
             @Override
+            public void onThrowable(@NotNull Throwable error) {
+              future.completeExceptionally(error);
+            }
+
+            @Override
             public void onSuccess() {
+              future.complete(null);
               // Installed / checked successfully, call callback on AWT
               if (callback != null) {
                 callback.run();
@@ -416,12 +429,18 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
         ProgressManager.getInstance()
           .run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
             @Override
-            public void run(@NotNull final ProgressIndicator indicator) {
+            public void run(final @NotNull ProgressIndicator indicator) {
               installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
             }
 
             @Override
+            public void onThrowable(@NotNull Throwable error) {
+              future.completeExceptionally(error);
+            }
+
+            @Override
             public void onSuccess() {
+              future.complete(null);
               // Installed / checked successfully, call callback on AWT
               if (callback != null) {
                 callback.run();
@@ -431,21 +450,17 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
       }
     }
     else {
+      future.complete(null);
       // No need to install, but still need to call callback on AWT
       if (callback != null) {
         assert SwingUtilities.isEventDispatchThread();
         callback.run();
       }
     }
+    return future;
   }
 
-  @Nullable
-  public String getPreferredEnvironmentType() {
-    return null;
-  }
-
-  @Nullable
-  public String getNewProjectPrefix() {
+  public @Nullable String getNewProjectPrefix() {
     return null;
   }
 
@@ -462,16 +477,16 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     /**
      * @param reason why project can't be created
      */
-    PyNoProjectAllowedOnSdkException(@NotNull @DialogMessage final String reason) {
+    PyNoProjectAllowedOnSdkException(final @NotNull @DialogMessage String reason) {
       super(reason);
     }
   }
 
-  private static void installPackages(@NotNull final String frameworkName,
+  private static void installPackages(final @NotNull String frameworkName,
                                       boolean forceInstallFramework,
                                       @NotNull ProgressIndicator indicator,
-                                      @NotNull final String requirement,
-                                      @NotNull final Sdk sdk) {
+                                      final @NotNull String requirement,
+                                      final @NotNull Sdk sdk) {
     final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
     boolean installed = false;
     if (!forceInstallFramework) {

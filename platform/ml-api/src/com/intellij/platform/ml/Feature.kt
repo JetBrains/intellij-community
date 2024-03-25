@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * An instantiated tier's feature. It could be either
  * description's feature (that was provided by a [TierDescriptor]), or an
- * analysis feature (that was provided by a [com.intellij.platform.ml.impl.session.analysis.SessionAnalyser]).
+ * analysis feature (that was provided by a [com.intellij.platform.ml.impl.session.analysis.StructureAnalyser]).
  *
  * If you need another type of feature, and it is not supported yet, contact the ML API developers.
  */
@@ -86,6 +86,11 @@ sealed class Feature {
   class Version(name: String, value: com.intellij.openapi.util.Version)
     : TypedFeature<com.intellij.openapi.util.Version>(name, value) {
     override val valueType = FeatureValueType.Version
+  }
+
+  class Language(name: String, value: com.intellij.lang.Language)
+    : TypedFeature<com.intellij.lang.Language>(name, value) {
+    override val valueType = FeatureValueType.Language
   }
 
   companion object {

@@ -163,7 +163,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS)
             }
         } catch (e: Throwable) {
-            if (e !is EvaluateException && !isUnitTestMode()) {
+            if (e !is EvaluateException && e !is Eval4JInterpretingException && !isUnitTestMode()) {
                 KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE)
                 if (isApplicationInternalMode()) {
                     reportErrorWithAttachments(context, codeFragment, e,

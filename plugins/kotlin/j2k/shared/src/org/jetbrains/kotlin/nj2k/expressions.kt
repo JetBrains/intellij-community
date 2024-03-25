@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.INTERFACE
+import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.nj2k.types.JKType
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -141,14 +142,9 @@ fun throwsAnnotation(throws: List<JKType>, symbolProvider: JKSymbolProvider): JK
 fun JKAnnotationList.annotationByFqName(fqName: String): JKAnnotation? =
     annotations.firstOrNull { it.classSymbol.fqName == fqName }
 
-fun stringLiteral(content: String, typeFactory: JKTypeFactory): JKExpression {
-    val lines = content.split('\n')
-    return lines.mapIndexed { i, line ->
-        val newlineSeparator = if (i == lines.size - 1) "" else "\\n"
-        JKLiteralExpression("\"$line$newlineSeparator\"", JKLiteralExpression.LiteralType.STRING)
-    }.reduce { acc: JKExpression, literalExpression: JKLiteralExpression ->
-        JKBinaryExpression(acc, literalExpression, JKKtOperatorImpl(JKOperatorToken.PLUS, typeFactory.types.string))
-    }
+fun annotationArgumentStringLiteral(content: String): JKExpression {
+    val string = if (content.contains("\n")) "\n\"\"\"$content\"\"\"" else "\"$content\""
+    return JKLiteralExpression(string, LiteralType.STRING)
 }
 
 context(KtAnalysisSession)

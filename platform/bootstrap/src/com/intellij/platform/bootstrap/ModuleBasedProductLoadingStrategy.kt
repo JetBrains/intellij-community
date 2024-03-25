@@ -82,7 +82,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       scope.async {
         if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet }) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
-          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, serviceModuleMapping, mainGroupResourceRootSet)
+          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, serviceModuleMapping, mainGroupResourceRootSet,
+                                                isBundled = true, pluginDir = null)
         }
         else {
           /* todo: intellij.performanceTesting.async plugin has different distributions for different IDEs, in some IDEs it has dependencies 
@@ -160,7 +161,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
             .filter { it != mainModuleId }
             .mapTo(descriptors) { moduleRepository.getModule(RuntimeModuleId.raw(it)) }
           val moduleGroup = CustomPluginModuleGroup(descriptors, mainModule)
-          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, null, emptySet())
+          loadPluginDescriptorFromRuntimeModule(moduleGroup, context, zipFilePool, null, emptySet(), 
+                                                isBundled = false, pluginDir = path.parent)
         }
         catch (t: Throwable) {
           logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load custom plugin '$mainModuleId': $t", t)
@@ -176,6 +178,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     zipFilePool: ZipFilePool,
     serviceModuleMapping: ServiceModuleMapping?,
     mainGroupResourceRootSet: Set<Path>,
+    isBundled: Boolean,
+    pluginDir: Path?,
   ): IdeaPluginDescriptorImpl? {
     val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull()
     if (mainResourceRoot == null) {
@@ -198,9 +202,9 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
         dir = mainResourceRoot,
-        pluginDir = mainResourceRoot,
+        pluginDir = pluginDir,
         context = context,
-        isBundled = true,
+        isBundled = isBundled,
         pathResolver = ModuleBasedPluginXmlPathResolver(
           includedModules = includedModules,
           pluginModuleGroup.optionalModuleIds,
@@ -225,8 +229,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         file = mainResourceRoot,
         pathResolver = pathResolver,
         parentContext = context,
-        isBundled = true,
-        pluginDir = mainResourceRoot.parent.parent,
+        isBundled = isBundled,
+        pluginDir = pluginDir ?: mainResourceRoot.parent.parent,
         pool = zipFilePool,
       )
     }

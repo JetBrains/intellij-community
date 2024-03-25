@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
 import java.util.function.Function;
@@ -24,17 +23,24 @@ public final class Utils {
   private final @Nullable Graph myDelta;
 
   private final @NotNull BackDependencyIndex myDirectSubclasses;
+  private final @Nullable BackDependencyIndex myDeltaDirectSubclasses;
 
   public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
     myContext = context;
     myGraph = context.getGraph();
     myDelta = isDelta? context.getDelta() : null;
     myDirectSubclasses = Objects.requireNonNull(myGraph.getIndex(SubclassesIndex.NAME));
+    myDeltaDirectSubclasses = myDelta != null? Objects.requireNonNull(myDelta.getIndex(SubclassesIndex.NAME)) : null;
   }
 
   public Iterable<NodeSource> getNodeSources(ReferenceID nodeId) {
-    Iterable<NodeSource> sources = myDelta != null? myDelta.getSources(nodeId) : null;
-    return sources != null? sources : filter(myGraph.getSources(nodeId), myContext.getParams().affectionFilter()::test);
+    Predicate<? super NodeSource> srcFilter = myContext.getParams().affectionFilter();
+    if (myDelta != null) {
+      Iterable<NodeSource> _src = myDelta.getSources(nodeId);
+      Iterable<NodeSource> deltaSources = _src instanceof Set? _src : collect(_src, new HashSet<>()) /*ensure Set data structure*/;
+      return flat(deltaSources, filter(myGraph.getSources(nodeId), src -> !contains(deltaSources, src) && srcFilter.test(src)));
+    }
+    return filter(myGraph.getSources(nodeId), srcFilter::test);
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
@@ -90,22 +96,37 @@ public final class Utils {
    * @return all nodes with the given ReferenceID. Nodes in the returned collection will have the same ReferenceID, but may be associated with different sources
    */
   public <T extends JVMClassNode<T, ?>> Iterable<T> getNodes(@NotNull ReferenceID id, Class<T> selector) {
+    return getNodesImpl(id, selector, false);
+  }
+
+  /**
+   * @param id a node reference ID
+   * @return all nodes with the given ReferenceID that have been compiled in the current compilation session (defined by the DifferentiateContext).
+   */
+  public <T extends JVMClassNode<T, ?>> Iterable<T> getCompiledNodes(@NotNull ReferenceID id, Class<T> selector) {
+    return getNodesImpl(id, selector, true);
+  }
+
+  private <T extends JVMClassNode<T, ?>> @NotNull Iterable<T> getNodesImpl(@NotNull ReferenceID id, Class<T> selector, boolean fromDeltaOnly) {
     if (id instanceof JvmNodeReferenceID && "".equals(((JvmNodeReferenceID)id).getNodeName())) {
       return Collections.emptyList();
     }
     Predicate<? super NodeSource> srcFilter = myContext.getParams().affectionFilter();
     Iterable<T> allNodes;
     if (myDelta != null) {
-      Set<NodeSource> deltaSources = collect(myDelta.getSources(id), new HashSet<>());
-      allNodes = flat(
-        flat(map(deltaSources, src -> myDelta.getNodes(src, selector))), flat(map(filter(myGraph.getSources(id), src -> !deltaSources.contains(src) && srcFilter.test(src)), src -> myGraph.getNodes(src, selector)))
+      Iterable<NodeSource> deltaSrc = myDelta.getSources(id);
+      Iterable<NodeSource> deltaSources = fromDeltaOnly? deltaSrc : deltaSrc instanceof Set? deltaSrc : collect(deltaSrc, new HashSet<>()) /*ensure Set data structure*/;
+      Iterable<T> deltaNodes = flat(map(deltaSources, src -> myDelta.getNodes(src, selector)));
+      allNodes = fromDeltaOnly? deltaNodes : flat(
+        deltaNodes, flat(map(filter(myGraph.getSources(id), src -> !contains(deltaSources, src) && srcFilter.test(src)), src -> myGraph.getNodes(src, selector)))
       );
     }
     else {
-      allNodes = flat(map(filter(myGraph.getSources(id), srcFilter::test), src -> myGraph.getNodes(src, selector)));
+      allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), srcFilter::test), src -> myGraph.getNodes(src, selector)));
     }
-    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new Iterators.BooleanFunction<>() {
+    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new BooleanFunction<>() {
       Set<T> visited;
+
       @Override
       public boolean fun(T t) {
         if (visited == null) {
@@ -133,12 +154,29 @@ public final class Utils {
 
   @NotNull
   public Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
-    return recurse(from, myDirectSubclasses::getDependencies, true);
+    return recurse(from, this::directSubclasses, true);
   }
 
   @NotNull
   public Iterable<ReferenceID> allSubclasses(ReferenceID from) {
-    return recurse(from, myDirectSubclasses::getDependencies, false);
+    return recurse(from, this::directSubclasses, false);
+  }
+
+  @NotNull
+  public Iterable<ReferenceID> directSubclasses(ReferenceID from) {
+    if (myDeltaDirectSubclasses != null) {
+      BooleanFunction<ReferenceID> subClassFilter = sub -> {
+        if (myContext.isDeleted(sub)) {
+          return false;
+        }
+        Iterable<JvmClass> justCompiled = getCompiledNodes(sub, JvmClass.class);
+        // If the class has just been compiled and is stored in the delta, need to ensure the class is still a subclass of the given class
+        return isEmpty(justCompiled) || contains(flat(map(justCompiled, cl -> map(cl.getSuperTypes(), st -> new JvmNodeReferenceID(st)))), from);
+      };
+
+      return unique(flat(filter(myDirectSubclasses.getDependencies(from), subClassFilter), myDeltaDirectSubclasses.getDependencies(from)));
+    }
+    return myDirectSubclasses.getDependencies(from);
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, JvmField field) {
@@ -154,8 +192,8 @@ public final class Utils {
     Predicate<ReferenceID> containsMember = id -> isEmpty(filter(getNodes(id, JvmClass.class), cls -> isEmpty(filter(membersGetter.apply(cls), isSame::test))));
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
     Iterable<JvmNodeReferenceID> result = getNodesData(
-      (ReferenceID)classId,
-      id -> myDirectSubclasses.getDependencies(id),
+      classId,
+      this::directSubclasses,
       id -> id instanceof JvmNodeReferenceID && !containsMember.test(id)? (JvmNodeReferenceID)id : null,
       Objects::nonNull,
       false
@@ -189,7 +227,7 @@ public final class Utils {
       new SmartList<>()
     ) : Collections.emptyList();
     return flat(
-      getNodesData(fromCls, cl -> flat(map(myDirectSubclasses.getDependencies(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
+      getNodesData(fromCls, cl -> flat(map(directSubclasses(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
     );
   }
 

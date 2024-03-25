@@ -92,14 +92,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     }
 
     AnAction[] actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-    AnActionEvent event = createActionEvent(element);
 
-    //prepare fields (including for dumb mode)
-    for (AnAction action : actions) {
-      event.getPresentation().copyFrom(action.getTemplatePresentation());
-      event.getPresentation().setEnabledAndVisible(true);
-      action.update(event);
-    }
     return new Info(AllIcons.RunConfigurations.TestState.Run, actions, new ActionsTooltipProvider(actions));
   }
 

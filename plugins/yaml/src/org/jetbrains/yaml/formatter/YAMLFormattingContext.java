@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.formatter;
 
 import com.intellij.formatting.*;
@@ -34,31 +34,25 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 class YAMLFormattingContext {
-  private final static Indent DIRECT_NORMAL_INDENT = Indent.getNormalIndent(true);
-  private final static Indent SAME_AS_PARENT_INDENT = Indent.getSpaceIndent(0, true);
-  private final static Indent SAME_AS_INDENTED_ANCESTOR_INDENT = Indent.getSpaceIndent(0);
+  private static final Indent DIRECT_NORMAL_INDENT = Indent.getNormalIndent(true);
+  private static final Indent SAME_AS_PARENT_INDENT = Indent.getSpaceIndent(0, true);
+  private static final Indent SAME_AS_INDENTED_ANCESTOR_INDENT = Indent.getSpaceIndent(0);
 
-  @NotNull
-  public final CodeStyleSettings mySettings;
-  @NotNull
-  private final PsiFile myFile;
-  @NotNull
-  private final SpacingBuilder mySpaceBuilder;
+  public final @NotNull CodeStyleSettings mySettings;
+  private final @NotNull PsiFile myFile;
+  private final @NotNull SpacingBuilder mySpaceBuilder;
 
   /** This alignments increase partial reformatting stability in case of initially incorrect indents */
-  @NotNull
-  private final Map<ASTNode, Alignment> myChildIndentAlignments = FactoryMap.create(node -> Alignment.createAlignment(true));
+  private final @NotNull Map<ASTNode, Alignment> myChildIndentAlignments = FactoryMap.create(node -> Alignment.createAlignment(true));
 
-  @NotNull
-  private final Map<ASTNode, Alignment> myChildValueAlignments = FactoryMap.create(node -> Alignment.createAlignment(true));
+  private final @NotNull Map<ASTNode, Alignment> myChildValueAlignments = FactoryMap.create(node -> Alignment.createAlignment(true));
 
   private final boolean shouldIndentSequenceValue;
   private final boolean shouldInlineSequenceIntoSequence;
   private final boolean shouldInlineBlockMappingIntoSequence;
   private final int getValueAlignment;
 
-  @Nullable
-  private String myFullText = null;
+  private @Nullable String myFullText = null;
 
   YAMLFormattingContext(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
     mySettings = settings;
@@ -298,8 +292,7 @@ class YAMLFormattingContext {
     }
   }
 
-  @Nullable
-  private Indent computeTemplateIndent(TextRange nodeTextRange) {
+  private @Nullable Indent computeTemplateIndent(TextRange nodeTextRange) {
     Document document = PsiDocumentManager.getInstance(myFile.getProject()).getDocument(myFile);
     if (document == null) return null;
     int lineNumber = document.getLineNumber(nodeTextRange.getStartOffset());
@@ -337,16 +330,14 @@ class YAMLFormattingContext {
     return FormatterUtil.isIncomplete(node);
   }
 
-  @NotNull
-  public String getFullText() {
+  public @NotNull String getFullText() {
     if (myFullText == null) {
       myFullText = myFile.getText();
     }
     return myFullText;
   }
 
-  @Nullable
-  private static Indent computeKeyValuePairIndent(@NotNull ASTNode node) {
+  private static @Nullable Indent computeKeyValuePairIndent(@NotNull ASTNode node) {
     IElementType parentType = PsiUtilCore.getElementType(node.getTreeParent());
     IElementType grandParentType = parentType == null ? null : PsiUtilCore.getElementType(node.getTreeParent().getTreeParent());
     boolean grandParentIsDocument = grandParentType == YAMLElementTypes.DOCUMENT;
@@ -373,8 +364,7 @@ class YAMLFormattingContext {
     }
   }
 
-  @NotNull
-  private Indent computeSequenceItemIndent(@NotNull ASTNode node) {
+  private @NotNull Indent computeSequenceItemIndent(@NotNull ASTNode node) {
     IElementType parentType = PsiUtilCore.getElementType(node.getTreeParent());
     IElementType grandParentType = parentType == null ? null : PsiUtilCore.getElementType(node.getTreeParent().getTreeParent());
     boolean grandParentIsDocument = grandParentType == YAMLElementTypes.DOCUMENT;
@@ -410,8 +400,7 @@ class YAMLFormattingContext {
     }
   }
 
-  @Nullable
-  private static ASTNode getPreviousNonBlankNode(ASTNode node) {
+  private static @Nullable ASTNode getPreviousNonBlankNode(ASTNode node) {
     while (true) {
       node = TreeUtil.prevLeaf(node);
       if (node == null || !YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node))) {

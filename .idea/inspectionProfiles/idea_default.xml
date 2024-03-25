@@ -1219,6 +1219,13 @@
         <constraint name="key" within="" contains="" />
         <constraint name="value" regexp="[^{]*''[^{]*" target="true" within="" contains="" />
       </searchConfiguration>
+      <replaceConfiguration name="Empty ResolveState usage" uuid="be0e4d0f-a75b-39d7-8c95-5c554e8fcb40" description="&lt;code&gt;ResolveState#initial&lt;/code&gt; is an empty state that does not contain any data valuable for reference resolution such as&#10;&lt;code&gt;GoPsiImplUtil#CONTEXT&lt;/code&gt; or &lt;code&gt;GoPsiImplUtil#CURRENT_ELEMENT&lt;/code&gt;.&#10;&#10;Use &lt;code&gt;GoPsiImplUtil#createContextOnElement&lt;/code&gt; or &lt;code&gt;GoPsiImplUtil#withContextOnElement&lt;/code&gt; with a proper substitution context instead." suppressId="EmptyResolveStateUsage" problemDescriptor="Empty resolve state usage" text="$Class$.initial()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.goide.psi.impl.GoPsiImplUtil.createContextOnElement()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Class" nameOfExprType="com\.intellij\.psi\.ResolveState" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Empty ResolveState usage" uuid="be0e4d0f-a75b-39d7-8c95-5c554e8fcb40" text="com.intellij.psi.ResolveState.initial()" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.goide.psi.impl.GoPsiImplUtil.createContextOnElement()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
       <searchConfiguration name="EventLogGroup version should be &gt; 0" text="EventLogGroup($Parameter1$, $Parameter2$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Parameter2" regexp="0" within="" contains="" />
@@ -2581,6 +2588,7 @@
     <inspection_tool class="acb41802-9e8a-3e32-8b29-0e1d0a2aa770" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="EntityStorage" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="be0e4d0f-a75b-39d7-8c95-5c554e8fcb40" enabled="true" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcClassInDefaultPackage" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="osmorcNonOsgiMavenDependency" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcUnknownManifestPackage" enabled="false" level="ERROR" enabled_by_default="false" />

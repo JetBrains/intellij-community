@@ -6,6 +6,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.descendantsOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
@@ -61,6 +62,34 @@ class FunctionCallTarget(
         get() = partiallyAppliedSymbol.symbol
 }
 
+interface KotlinCallTargetProcessor {
+    /**
+     * Processes a successfully resolved [CallTarget].
+     * If false is returned from this function, no further elements will be processed.
+     */
+    fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean
+
+    /**
+     * Processes a call that resolved as an error.
+     * If false is returned from this function, no further elements will be processed.
+     */
+    fun KtAnalysisSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean
+}
+
+private fun (KtAnalysisSession.(CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
+    val processor = this
+    return object : KotlinCallTargetProcessor {
+        override fun KtAnalysisSession.processCallTarget(target: CallTarget): Boolean {
+            processor(target)
+            return true
+        }
+
+        override fun KtAnalysisSession.processUnresolvedCall(element: KtElement, callInfo: KtCallInfo?): Boolean {
+            return true
+        }
+    }
+}
+
 object KotlinCallProcessor {
     private val NAME_REFERENCE_IGNORED_PARENTS = arrayOf(
         KtUserType::class.java,
@@ -72,7 +101,11 @@ object KotlinCallProcessor {
     )
 
     fun process(element: PsiElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
-        when (element) {
+        process(element, processor.toCallTargetProcessor())
+    }
+
+    fun process(element: PsiElement, processor: KotlinCallTargetProcessor): Boolean {
+        return when (element) {
             is KtArrayAccessExpression -> handle(element, processor)
             is KtCallExpression -> handle(element, processor)
             is KtUnaryExpression -> handle(element, processor)
@@ -83,8 +116,12 @@ object KotlinCallProcessor {
             is KtNameReferenceExpression -> {
                 if (shouldHandleNameReference(element)) {
                     handle(element, processor)
+                } else {
+                    true
                 }
             }
+
+            else -> true
         }
     }
 
@@ -117,57 +154,75 @@ object KotlinCallProcessor {
         return current
     }
 
-    private fun handle(element: KtElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+    private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            fun handleSpecial(element: KtElement, filter: (KtSymbol) -> Boolean) {
-                val symbols = element.mainReference?.resolveToSymbols() ?: return
+            fun handleSpecial(element: KtElement, filter: (KtSymbol) -> Boolean): Boolean {
+                val symbols = element.mainReference?.resolveToSymbols() ?: return true
                 for (symbol in symbols) {
                     if (!filter(symbol)) {
                         continue
                     }
 
-                    if (symbol is KtFunctionLikeSymbol) {
-                        val signature = symbol.asSignature()
-                        val partiallyAppliedSymbol = KtPartiallyAppliedFunctionSymbol(signature, null, null)
-                        val call = KtSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), _isImplicitInvoke = false)
-                        processor(FunctionCallTarget(element, call, partiallyAppliedSymbol))
-                    } else if (symbol is KtVariableLikeSymbol) {
-                        val signature = symbol.asSignature()
-                        val partiallyAppliedSymbol = KtPartiallyAppliedVariableSymbol(signature, null, null)
-                        val call = KtSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KtSimpleVariableAccess.Read)
-                        processor(VariableCallTarget(element, call, partiallyAppliedSymbol))
+                    val shouldContinue = with(processor) {
+                        when (symbol) {
+                            is KtFunctionLikeSymbol -> {
+                                val signature = symbol.asSignature()
+                                val partiallyAppliedSymbol = KtPartiallyAppliedFunctionSymbol(signature, null, null)
+                                val call = KtSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), _isImplicitInvoke = false)
+                                processCallTarget(FunctionCallTarget(element, call, partiallyAppliedSymbol))
+                            }
+
+                            is KtVariableLikeSymbol -> {
+                                val signature = symbol.asSignature()
+                                val partiallyAppliedSymbol = KtPartiallyAppliedVariableSymbol(signature, null, null)
+                                val call = KtSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KtSimpleVariableAccess.Read)
+                                processCallTarget(VariableCallTarget(element, call, partiallyAppliedSymbol))
+                            }
+
+                            else -> true
+                        }
+                    }
+                    if (!shouldContinue) {
+                        return false
                     }
                 }
+                return true
             }
 
             if (element is KtForExpression) {
-                handleSpecial(element) { it is KtFunctionLikeSymbol }
-                return
+                return handleSpecial(element) { it is KtFunctionLikeSymbol }
             }
 
             if (element is KtDestructuringDeclarationEntry) {
-                handleSpecial(element) { !(it is KtLocalVariableSymbol && it.psi == element) }
-                return
+                return handleSpecial(element) { !(it is KtLocalVariableSymbol && it.psi == element) }
             }
 
-            val call = element.resolveCall()?.successfulCallOrNull<KtCall>()
+            val callInfo = element.resolveCall()
+            val call = callInfo?.successfulCallOrNull<KtCall>()
 
-            if (call != null) {
-                when (call) {
-                    is KtDelegatedConstructorCall -> processor(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                    is KtSimpleFunctionCall -> processor(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                    is KtCompoundVariableAccessCall -> {
-                        processor(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                        processor(FunctionCallTarget(element, call, call.compoundAccess.operationPartiallyAppliedSymbol))
+            return with(processor) {
+                if (call != null) {
+                    when (call) {
+                        is KtDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                        is KtSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                        is KtCompoundVariableAccessCall -> {
+                            processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
+                            processCallTarget(FunctionCallTarget(element, call, call.compoundAccess.operationPartiallyAppliedSymbol))
+                        }
+
+                        is KtSimpleVariableAccessCall -> {
+                            processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
+                        }
+
+                        is KtCompoundArrayAccessCall -> {
+                            processCallTarget(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
+                            processCallTarget(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
+                        }
+
+                        else -> true
                     }
-                    is KtSimpleVariableAccessCall -> {
-                        processor(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                    }
-                    is KtCompoundArrayAccessCall -> {
-                        processor(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
-                        processor(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
-                    }
-                    else -> {}
+                } else {
+                    processUnresolvedCall(element, callInfo)
                 }
             }
         }
@@ -175,8 +230,23 @@ object KotlinCallProcessor {
 }
 
 fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+    process(elements, processor.toCallTargetProcessor())
+}
+
+fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KotlinCallTargetProcessor) {
     for (element in elements) {
         ProgressManager.checkCanceled()
-        process(element, processor)
+        if (!process(element, processor)) {
+            return
+        }
     }
+}
+
+fun KotlinCallProcessor.processExpressionsRecursively(element: PsiElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+    processExpressionsRecursively(element, processor.toCallTargetProcessor())
+}
+
+fun KotlinCallProcessor.processExpressionsRecursively(element: PsiElement, processor: KotlinCallTargetProcessor) {
+    val allExpressions = element.descendantsOfType<KtExpression>().toList()
+    process(allExpressions, processor)
 }

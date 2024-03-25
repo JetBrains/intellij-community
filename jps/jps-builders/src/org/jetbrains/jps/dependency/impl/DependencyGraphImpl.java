@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
-import org.jetbrains.jps.dependency.java.ClassShortNameIndex;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
 import org.jetbrains.jps.dependency.java.SubclassesIndex;
 
@@ -25,7 +24,6 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   public DependencyGraphImpl(MapletFactory containerFactory) throws IOException {
     super(containerFactory);
     addIndex(new SubclassesIndex(containerFactory));
-    addIndex(new ClassShortNameIndex(containerFactory));
     myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
   }
 
@@ -82,6 +80,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       private final Predicate<Node<?, ?>> ANY_CONSTRAINT = node -> true;
 
       final Set<NodeSource> compiledSources = deltaSources instanceof Set? (Set<NodeSource>)deltaSources : collect(deltaSources, new HashSet<>());
+      final Set<ReferenceID> deleted = collect(map(deletedNodes, n -> n.getReferenceID()), new HashSet<>());
       final Map<Usage, Predicate<Node<?, ?>>> affectedUsages = new HashMap<>();
       final Set<Predicate<Node<?, ?>>> usageQueries = new HashSet<>();
       final Set<NodeSource> affectedSources = new HashSet<>();
@@ -104,6 +103,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       @Override
       public boolean isCompiled(NodeSource src) {
         return compiledSources.contains(src);
+      }
+
+      @Override
+      public boolean isDeleted(ReferenceID id) {
+        return deleted.contains(id);
       }
 
       @Override

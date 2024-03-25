@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
+import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinCallChainHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
@@ -174,6 +175,23 @@ fun generateK1Tests(isUpToDateCheck: Boolean = false) {
 
 private fun assembleWorkspace(): TWorkspace = workspace {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
+
+    testGroup("gradle/gradle-java/tests.k1", testDataPath = "../../../idea/tests/testData") {
+        testClass<AbstractGradleBuildFileHighlightingTest> {
+            model(
+                "gradle/highlighting/gradle8",
+                pattern = DIRECTORY,
+                isRecursive = false,
+                setUpStatements = listOf("gradleVersion = \"8.6\";")
+            )
+            model(
+                "gradle/highlighting/gradle7",
+                pattern = DIRECTORY,
+                isRecursive = false,
+                setUpStatements = listOf("gradleVersion = \"7.6.4\";")
+            )
+        }
+    }
 
     testGroup("jvm-debugger/test") {
         listOf(
@@ -705,6 +723,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractMoveTest> {
+            model("refactoring/changePackage", pattern = TEST, flatten = true)
             model("refactoring/move", pattern = TEST, flatten = true)
         }
 
@@ -1105,7 +1124,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("gradle/gradle-java/tests", testDataPath = "../../../idea/tests/testData") {
+    testGroup("gradle/gradle-java/tests.k1", testDataPath = "../../../idea/tests/testData") {
         testClass<AbstractGradleConfigureProjectByChangingFileTest> {
             model("configuration/gradle", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
             model("configuration/gsk", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestGradle")
@@ -1270,6 +1289,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("j2k/k1.new/tests", testDataPath = "../../shared/tests/testData") {
         testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
             model("newJ2k", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
+        }
+
+        testClass<AbstractNewJavaToKotlinConverterSingleFileFullJDKTest> {
+            model("fullJDK", pattern = Patterns.forRegex("""^([^.]+)\.java$"""))
         }
 
         testClass<AbstractNewJavaToKotlinConverterPartialTest> {

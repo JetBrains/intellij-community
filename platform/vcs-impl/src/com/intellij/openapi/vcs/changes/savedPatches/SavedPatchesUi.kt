@@ -9,6 +9,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.ui.*
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.Processor
 import com.intellij.util.containers.orNull
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ProportionKey
@@ -43,6 +45,12 @@ open class SavedPatchesUi(project: Project,
 
     changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
     CombinedSpeedSearch(changesBrowser.viewer, tree.speedSearch)
+
+    tree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
+      changesBrowser.showDiff()
+      return@Processor true
+    }
 
     val bottomToolbar = buildBottomToolbar()
 

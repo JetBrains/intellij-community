@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -57,10 +57,16 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
   private static final CallMatcher STRING_INTERN = exactInstanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
   private static final CallMatcher STRING_LENGTH = exactInstanceCall(JAVA_LANG_STRING, HardcodedMethodConstants.LENGTH).parameterCount(0);
   private static final CallMatcher STRING_SUBSTRING_ONE_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int");
+  private static final CallMatcher STRING_BUILDER_SUBSTRING_ONE_ARG = exactInstanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "substring").parameterTypes("int");
   private static final CallMatcher STRING_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int");
+  private static final CallMatcher STRING_BUILDER_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "substring").parameterTypes("int", "int");
   private static final CallMatcher STRING_SUBSTRING = anyOf(STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
+  private static final CallMatcher SUBSTRING = anyOf(STRING_BUILDER_SUBSTRING_ONE_ARG, STRING_BUILDER_SUBSTRING_TWO_ARG,
+                                                     STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
   private static final CallMatcher STRING_BUILDER_APPEND =
     instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher SINGLE_ARG_STRING_BUILDER_APPEND =
+    instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterCount(1);
   private static final CallMatcher STRING_BUILDER_TO_STRING = instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, TO_STRING).parameterCount(0);
   private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall("java.io.PrintStream", "println")
     .parameterTypes(JAVA_LANG_STRING);
@@ -79,12 +85,15 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
+  public boolean ignoreSingleArgSubstring = true;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreStringConstructor",
-               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors")));
+               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors")),
+      checkbox("ignoreSingleArgSubstring",
+               InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.single.argument.substring")));
   }
 
   @NotNull
@@ -102,7 +111,8 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
   private static class RedundantStringOperationVisitor extends JavaElementVisitor {
     private final CallMapper<ProblemDescriptor> myProcessors = new CallMapper<ProblemDescriptor>()
       .register(STRING_TO_STRING, call -> getProblem(call, "inspection.redundant.string.call.message"))
-      .register(STRING_SUBSTRING, this::getSubstringProblem)
+      .register(SUBSTRING, this::getSubstringProblem)
+      .register(SUBSTRING, this::getAppendSubstringProblem)
       .register(STRING_BUILDER_APPEND, this::getAppendProblem)
       .register(STRING_BUILDER_TO_STRING, this::getStringBuilderToStringProblem)
       .register(STRING_INTERN, this::getInternProblem)
@@ -561,6 +571,35 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     }
 
     @Nullable
+    private ProblemDescriptor getAppendSubstringProblem(PsiMethodCallExpression call) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      PsiExpression stringExpression = call.getMethodExpression().getQualifierExpression();
+      if (args.length == 1) {
+        if (myInspection.ignoreSingleArgSubstring ||
+            ExpressionUtils.isZero(args[0]) ||
+            isLengthOf(args[0], stringExpression) ||
+            !(PsiUtil.deparenthesizeExpression(stringExpression) instanceof PsiReferenceExpression)) {
+          return null;
+        }
+      }
+      else if (args.length == 2) {
+        if (ExpressionUtils.isZero(args[0]) && isLengthOf(args[1], stringExpression) || isBetterWithCharAt(call)) {
+          return null;
+        }
+      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      if (parent instanceof PsiExpressionList list && list.getExpressionCount() == 1 &&
+          parent.getParent() instanceof PsiMethodCallExpression parentCall && SINGLE_ARG_STRING_BUILDER_APPEND.test(parentCall)) {
+        PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
+        return myManager.createProblemDescriptor(nameElement,
+                                                 InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
+                                                 new RemoveRedundantStringCallFix(nameElement.getText(), FixType.REPLACE_WITH_ARGUMENTS),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
+      }
+      return null;
+    }
+
+    @Nullable
     private ProblemDescriptor getSubstringProblem(PsiMethodCallExpression call) {
       PsiExpression[] args = call.getArgumentList().getExpressions();
       PsiExpression stringExpression = call.getMethodExpression().getQualifierExpression();
@@ -595,16 +634,6 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
                                                  InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "charAt"),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                  new SubstringToCharAtQuickFix(call.getText(), converted, false));
-      }
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-      if (parent instanceof PsiExpressionList list && list.getExpressionCount() == 1 &&
-          parent.getParent() instanceof PsiMethodCallExpression parentCall && STRING_BUILDER_APPEND.test(parentCall)) {
-        PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-        return myManager.createProblemDescriptor(nameElement,
-                                                 InspectionGadgetsBundle.message("inspection.redundant.string.call.message"),
-                                                 new RemoveRedundantStringCallFix(
-                                                   nameElement.getText(), FixType.REPLACE_WITH_ARGUMENTS),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
       }
       return null;
     }
@@ -946,8 +975,14 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
         case REPLACE_WITH_ARGUMENTS -> {
           PsiExpressionList list = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiExpressionList.class);
           if (list == null) return;
-          for (PsiExpression arg : call.getArgumentList().getExpressions()) {
+          PsiExpression[] expressions = call.getArgumentList().getExpressions();
+          for (PsiExpression arg : expressions) {
             list.add(ct.markUnchanged(arg));
+          }
+          if (expressions.length == 1) {
+            PsiExpression expression =
+              JavaPsiFacade.getElementFactory(project).createExpressionFromText(qualifier.getText() + ".length()", call);
+            list.add(expression);
           }
           ct.replaceAndRestoreComments(call, qualifier);
         }

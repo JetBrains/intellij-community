@@ -11,12 +11,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
@@ -28,6 +26,7 @@ import org.jetbrains.annotations.Async
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 
 /**
@@ -52,12 +51,11 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
   private val myRunWhenSmartQueue: Deque<Runnable> = ConcurrentLinkedDeque()
 
-  private val projectOpening: AtomicBoolean = AtomicBoolean(true)
-
   private val dumbServiceImpl get() = DumbService.getInstance(project) as DumbServiceImpl
   private val filesScannerExecutor get() = UnindexedFilesScannerExecutor.getInstance(project)
   private val projectDumbState: StateFlow<DumbServiceImpl.DumbState> = dumbServiceImpl.dumbStateAsFlow
   private val projectScanningChanged: Flow<*> = filesScannerExecutor.startedOrStoppedEvent
+  internal val runWhenSmartCondition: BooleanSupplier = BooleanSupplier { getCurrentMode() == 0 }
 
   init {
     project.messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
@@ -89,14 +87,9 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
 
-  internal fun onProjectOpened() {
-    LOG.info("Post-startup activity executed. Current mode: ${getCurrentMode()}")
-    projectOpening.set(false)
-    onStateChanged()
-  }
-
   private fun onStateChanged() {
-    if (isSmart()) {
+    LOG.info("State changed. Current mode: ${getCurrentMode()}")
+    if (runWhenSmartCondition.asBoolean) {
       // Always reschedule execution to avoid unexpected write lock acquired.
       //
       // Note2: DumbService tracks modality by itself: exit event occurs in the same modality as the enter event.
@@ -106,7 +99,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   fun runWhenSmart(runnable: Runnable) {
-    if (isSmart() && ApplicationManager.getApplication().isDispatchThread) {
+    if (runWhenSmartCondition.asBoolean && ApplicationManager.getApplication().isDispatchThread) {
       // Execute immediately only because some tests expect this behavior. No production need.
       runnable.run()
     }
@@ -124,7 +117,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
     // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
-    while (isSmart()) {
+    while (runWhenSmartCondition.asBoolean) {
       val runnable = myRunWhenSmartQueue.pollFirst() ?: break
       resetThreadContext().use {
         doRun(runnable)
@@ -145,11 +138,9 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     }
   }
 
-  private fun isSmart() = (getCurrentMode() == 0)
   fun getCurrentMode(): Int =
     (if (filesScannerExecutor.isRunning.value) SCANNING else 0) +
-    (if (projectDumbState.value.isDumb) DUMB else 0) +
-    (if (projectOpening.get()) OPENING else 0)
+    (if (projectDumbState.value.isDumb) DUMB else 0)
 
   fun clear() {
     myRunWhenSmartQueue.clear()
@@ -159,16 +150,9 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
     clear()
   }
 
-  class SmartModeSchedulerStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      project.service<SmartModeScheduler>().onProjectOpened()
-    }
-  }
-
   companion object {
     val LOG: Logger = logger<SmartModeScheduler>()
     const val SCANNING: Int = 1
     const val DUMB: Int = 1.shl(1)
-    const val OPENING: Int = 1.shl(2)
   }
 }

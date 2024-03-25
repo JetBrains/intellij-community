@@ -4,11 +4,12 @@ package com.intellij.testFramework;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher;
+import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
@@ -62,7 +64,7 @@ public class PerformanceTestInfo {
   }
 
   private static void initOpenTelemetry() {
-    // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.*.csv)
+    // Open Telemetry file will be located at ../system/test/log/opentelemetry.json (alongside with open-telemetry-metrics.* files)
     System.setProperty("idea.diagnostic.opentelemetry.file",
                        PathManager.getLogDir().resolve("opentelemetry.json").toAbsolutePath().toString());
 
@@ -102,14 +104,16 @@ public class PerformanceTestInfo {
       // remove content of the previous tests from the idea.log
       MetricsPublisher.Companion.truncateTestLog();
 
-      var csvFilesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) -> it.toString().endsWith(".csv")).toList();
-      for (Path file : csvFilesWithMetrics) {
+      var filesWithMetrics = Files.list(PathManager.getLogDir()).filter((it) ->
+                                                                          it.toString().contains("-metrics") ||
+                                                                          it.toString().contains("-meters")).toList();
+      for (Path file : filesWithMetrics) {
         Files.deleteIfExists(file);
       }
     }
     catch (Exception e) {
       System.err.println(
-        "Error during removing Telemetry .csv files with meters before start of perf test. This might affect metrics value");
+        "Error during removing Telemetry files with meters before start of perf test. This might affect collected metrics value.");
       e.printStackTrace();
     }
   }
@@ -309,8 +313,9 @@ public class PerformanceTestInfo {
    * @see PerformanceTestInfo#start()
    */
   public void start(String fullQualifiedTestMethodName) {
-    start(IterationMode.WARMUP, fullQualifiedTestMethodName);
-    start(IterationMode.MEASURE, fullQualifiedTestMethodName);
+    String sanitizedFullQualifiedTestMethodName = sanitizeFullTestNameForArtifactPublishing(fullQualifiedTestMethodName);
+    start(IterationMode.WARMUP, sanitizedFullQualifiedTestMethodName);
+    start(IterationMode.MEASURE, sanitizedFullQualifiedTestMethodName);
   }
 
   /**
@@ -408,6 +413,17 @@ public class PerformanceTestInfo {
 
       return null;
     };
+  }
+
+  private static @NotNull String sanitizeFullTestNameForArtifactPublishing(@NotNull String fullTestName) {
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      Path.of("./" + fullTestName); // prefix with "./" to make sure "C:/Users" is sanitized
+      return fullTestName;
+    }
+    catch (InvalidPathException e) {
+      return FileUtil.sanitizeFileName(fullTestName, false);
+    }
   }
 
   private static final class Profiler {

@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.assertj.core.api.Assertions;
@@ -60,6 +61,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 
 /**
  * @author Vladislav.Soroka
@@ -86,6 +88,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     Assertions.assertThat(actualModules)
       .extracting("name")
       .containsExactlyInAnyOrder(expectedNames);
+  }
+
+  protected void assertModules(List<String> expectedNames) {
+    assertModules(ArrayUtil.toStringArray(expectedNames));
   }
 
   protected void assertContentRoots(String moduleName, String... expectedRoots) {
@@ -491,6 +497,10 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     if (!error.isNull()) {
       handleImportFailure(error.get().first, error.get().second);
     }
+
+    // allow all the invokeLater to pass through the queue, before waiting for indexes to be ready
+    // (specifically, all the invokeLater that schedule indexing after language level change performed by import)
+    runInEdtAndWait(() -> PlatformTestUtil.dispatchAllEventsInIdeEventQueue());
     IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 

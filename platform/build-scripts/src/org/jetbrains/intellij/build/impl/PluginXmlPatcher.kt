@@ -7,9 +7,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
 import java.nio.file.Files
-import java.time.format.DateTimeFormatter
 
-internal val pluginDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
 private val buildNumberRegex = Regex("(\\d+\\.)+\\d+")
 
 fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange, buildNumber: String): Pair<String, String> {
@@ -57,7 +55,7 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, context.buildNumber, context)
+  val pluginVersion = plugin.versionEvaluator.evaluate(pluginXmlFile, context.pluginBuildNumber, context)
   val sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, context.buildNumber)
   @Suppress("TestOnlyProblems") val content = try {
     plugin.pluginXmlPatcher(

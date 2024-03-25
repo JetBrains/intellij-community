@@ -2,19 +2,18 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -23,25 +22,26 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 
 private val TO_STRING_CALLABLE_ID = CallableId(StandardClassIds.Any, OperatorNameConventions.TO_STRING)
 
-internal class RemoveToStringInStringTemplateInspection :
-    AbstractKotlinApplicableInspection<KtDotQualifiedExpression>(),
-    CleanupLocalInspectionTool {
+internal class RemoveToStringInStringTemplateInspection : KotlinApplicableInspectionBase.Simple<KtDotQualifiedExpression, Unit>(),
+                                                          CleanupLocalInspectionTool {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
-    override fun getProblemDescription(element: KtDotQualifiedExpression): String = KotlinBundle.message("remove.to.string.fix.text")
-    override fun getActionFamilyName(): String = KotlinBundle.message("remove.to.string.fix.text")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDotQualifiedExpression> =
-        applicabilityRanges { dotQualifiedExpression: KtDotQualifiedExpression ->
-            val selectorExpression = dotQualifiedExpression.selectorExpression ?: return@applicabilityRanges emptyList()
-            listOf(selectorExpression.textRange.shiftLeft(dotQualifiedExpression.startOffset))
-        }
+    override fun getProblemDescription(
+        element: KtDotQualifiedExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("remove.to.string.fix.text")
+
+    override fun getApplicableRanges(element: KtDotQualifiedExpression): List<TextRange> =
+        ApplicabilityRange.single(element) { element.selectorExpression }
 
     override fun isApplicableByPsi(element: KtDotQualifiedExpression): Boolean {
         if (element.parent !is KtBlockStringTemplateEntry) return false
@@ -52,23 +52,37 @@ internal class RemoveToStringInStringTemplateInspection :
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtDotQualifiedExpression): Boolean {
-        val call = element.resolveCall()?.successfulFunctionCallOrNull() ?: return false
+    override fun prepareContext(element: KtDotQualifiedExpression): Unit? {
+        val call = element.resolveCall()?.successfulFunctionCallOrNull() ?: return null
         val allOverriddenSymbols = listOf(call.symbol) + call.symbol.getAllOverriddenSymbols()
         return allOverriddenSymbols.any { it.callableIdIfNonLocal == TO_STRING_CALLABLE_ID }
+            .asUnit
     }
 
-    override fun apply(element: KtDotQualifiedExpression, project: Project, updater: ModPsiUpdater) {
-        val receiverExpression = element.receiverExpression
-        val templateEntry = element.parent as? KtBlockStringTemplateEntry
-        if (receiverExpression is KtNameReferenceExpression &&
-            templateEntry != null &&
-            canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)
+    override fun createQuickFix(
+        element: KtDotQualifiedExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtDotQualifiedExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("remove.to.string.fix.text")
+
+        override fun applyFix(
+            project: Project,
+            element: KtDotQualifiedExpression,
+            updater: ModPsiUpdater,
         ) {
-            val factory = KtPsiFactory(templateEntry.project)
-            templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
-        } else {
-            element.replace(receiverExpression)
+            val receiverExpression = element.receiverExpression
+            val templateEntry = element.parent as? KtBlockStringTemplateEntry
+            if (receiverExpression is KtNameReferenceExpression &&
+                templateEntry != null &&
+                canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)
+            ) {
+                val factory = KtPsiFactory(templateEntry.project)
+                templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
+            } else {
+                element.replace(receiverExpression)
+            }
         }
     }
 }

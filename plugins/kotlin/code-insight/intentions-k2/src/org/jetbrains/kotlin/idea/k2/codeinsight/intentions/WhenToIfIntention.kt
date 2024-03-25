@@ -2,16 +2,14 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.combineWhenConditions
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
@@ -33,8 +31,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
  *   else "More"
  */
 internal class WhenToIfIntention :
-    AbstractKotlinModCommandWithContext<KtWhenExpression, WhenToIfIntention.Context>(KtWhenExpression::class), LowPriorityAction {
-    class Context(val hasNullableSubject: Boolean, val nameCandidatesForWhenSubject: List<String> = emptyList())
+    KotlinApplicableModCommandAction<KtWhenExpression, WhenToIfIntention.Context>(KtWhenExpression::class),
+    LowPriorityAction {
+
+    data class Context(
+        val hasNullableSubject: Boolean,
+        val nameCandidatesForWhenSubject: List<String> = emptyList(),
+    )
 
     context(KtAnalysisSession)
     private fun KtWhenExpression.hasNoElseButUsedAsExpression(): Boolean {
@@ -115,13 +118,15 @@ internal class WhenToIfIntention :
         return Context(isNullableSubject)
     }
 
-    override fun shouldApplyInWriteAction(): Boolean = false
-
-    override fun apply(element: KtWhenExpression, context: AnalysisActionContext<Context>, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtWhenExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
         val subject = element.subjectExpression
-        val analyzeContext = context.analyzeContext
         val temporaryNameForWhenSubject =
-            analyzeContext.nameCandidatesForWhenSubject.ifNotEmpty { analyzeContext.nameCandidatesForWhenSubject.last() } ?: ""
+            elementContext.nameCandidatesForWhenSubject.ifNotEmpty { elementContext.nameCandidatesForWhenSubject.last() } ?: ""
         val propertyForWhenSubject = if (temporaryNameForWhenSubject.isNotEmpty() && subject != null) {
             buildPropertyForWhenSubject(subject, temporaryNameForWhenSubject)
         } else {
@@ -129,7 +134,7 @@ internal class WhenToIfIntention :
         }
 
         val ifExpressionToReplaceWhen = buildIfExpressionForWhen(
-            element, propertyForWhenSubject?.referenceToProperty ?: subject, analyzeContext.hasNullableSubject
+            element, propertyForWhenSubject?.referenceToProperty ?: subject, elementContext.hasNullableSubject
         ) ?: return
 
         val commentSaver = CommentSaver(element)
@@ -154,11 +159,7 @@ internal class WhenToIfIntention :
         }
     }
 
-    override fun getActionName(element: KtWhenExpression, context: Context): String = familyName
-
     override fun getFamilyName(): String = KotlinBundle.message("replace.when.with.if")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean {
         val entries = element.entries

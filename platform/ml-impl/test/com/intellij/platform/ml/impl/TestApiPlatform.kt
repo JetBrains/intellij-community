@@ -4,6 +4,9 @@ package com.intellij.platform.ml.impl
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.ExtensionController
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 
 abstract class TestApiPlatform : MLApiPlatform() {
   private val dynamicTaskListeners: MutableList<MLTaskGroupListener> = mutableListOf()
@@ -21,4 +24,7 @@ abstract class TestApiPlatform : MLApiPlatform() {
     collection.add(obj)
     return ExtensionController { collection.remove(obj) }
   }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  override val coroutineScope: CoroutineScope = GlobalScope
 }

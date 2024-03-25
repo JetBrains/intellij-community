@@ -40,6 +40,6 @@ internal class ReplacePrintlnWithLoggingInspection : AbstractKotlinInspection() 
 
         if (!callableId.isPrintFunction()) return
 
-        holder.registerProblem(call, KotlinBundle.message("print.should.be.replaced.with.logging", identifier))
+        holder.registerProblem(call, KotlinBundle.message("uses.of.should.be.replaced.with.logging", identifier))
     })
 }

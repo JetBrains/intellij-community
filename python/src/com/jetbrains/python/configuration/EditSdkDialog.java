@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.intellij.execution.target.BrowsableTargetEnvironmentType;
-import com.intellij.execution.target.TargetBrowserHints;
 import com.intellij.execution.target.TargetBasedSdkAdditionalData;
+import com.intellij.execution.target.TargetBrowserHints;
 import com.intellij.execution.target.TargetEnvironmentConfigurationKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -22,9 +22,9 @@ import com.intellij.util.NullableFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,8 +132,7 @@ public class EditSdkDialog extends DialogWrapper {
     return myNameTextField;
   }
 
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe String getName() {
     return myNameTextField.getText();
   }
 

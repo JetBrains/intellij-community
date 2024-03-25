@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
@@ -220,7 +220,7 @@ open class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipsePro
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(MODULE_CONNECTION_ID, this, value)

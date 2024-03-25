@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.Disposable
@@ -114,7 +114,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
 
   init {
     val args = if (Registry.`is`("wsl.proxy.connect.localhost")) arrayOf("--loopback") else emptyArray()
-    val wslCommandLine = runBlocking { distro.getTool("wslproxy", *args) }
+    val wslCommandLine = distro.getTool("wslproxy", *args)
     val process =
       if (Registry.`is`("wsl.use.remote.agent.for.launch.processes"))
         wslCommandLine.createProcess()

@@ -162,8 +162,9 @@ internal class LogVisitor(private val probableClassName: ProbableClassName) : Ps
     startPoint += probableClassName.fullClassName.length
     if (calculateValue.none { it.isConstant && it.text != null }) return false
     for (value in calculateValue) {
-      if (value.isConstant && value.text != null) {
-        for (part in value.text.split("{}")) {
+      val text = value.text
+      if (value.isConstant && text != null) {
+        for (part in text.split("{}")) {
           startPoint = fullLine.indexOf(part, startPoint)
           if (startPoint == -1) return false
           startPoint += part.length

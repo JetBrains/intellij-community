@@ -10,6 +10,7 @@ import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass;
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
@@ -65,7 +66,6 @@ import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHel
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunnableState.*;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.addAllNotNull;
-import static org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil.isGradleOlderThan;
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
 public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecutionSettings> {
@@ -104,15 +104,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
 
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
+    CancellationToken cancellationToken = cancellationTokenSource.token();
     myCancellationMap.put(id, cancellationTokenSource);
     try {
       if (effectiveSettings.getDistributionType() == DistributionType.WRAPPED) {
         String rootProjectPath = determineRootProject(projectPath);
-        CancellationToken cancellationToken = cancellationTokenSource.token();
         myHelper.ensureInstalledWrapper(id, rootProjectPath, effectiveSettings, listener, cancellationToken);
       }
-      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationTokenSource, connection -> {
-        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationTokenSource);
+      myHelper.execute(projectPath, effectiveSettings, id, listener, cancellationToken, connection -> {
+        executeTasks(id, tasks, projectPath, effectiveSettings, jvmParametersSetup, listener, connection, cancellationToken);
         return null;
       });
     }
@@ -128,10 +128,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                             @Nullable String jvmParametersSetup,
                             @NotNull ExternalSystemTaskNotificationListener listener,
                             @NotNull ProjectConnection connection,
-                            @NotNull CancellationTokenSource cancellationTokenSource) {
+                            @NotNull CancellationToken cancellationToken) {
     BuildEnvironment buildEnvironment = null;
     try {
-      buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationTokenSource, settings);
+      buildEnvironment = GradleExecutionHelper.getBuildEnvironment(connection, id, listener, cancellationToken, settings);
       var gradleVersion = getGradleVersion(buildEnvironment);
 
       setupGradleScriptDebugging(settings);
@@ -153,12 +153,12 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
       if (isApplicableTestLauncher(id, projectPath, tasks, settings, gradleVersion)) {
         TestLauncher launcher = myHelper.getTestLauncher(connection, id, tasks, settings, listener);
-        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.withCancellationToken(cancellationToken);
         launcher.run();
       }
       else {
         BuildLauncher launcher = myHelper.getBuildLauncher(connection, id, tasks, settings, listener);
-        launcher.withCancellationToken(cancellationTokenSource.token());
+        launcher.withCancellationToken(cancellationToken);
         launcher.run();
       }
       GradleTaskResultListener.EP_NAME.forEachExtensionSafe(ext -> ext.onSuccess(id, projectPath));
@@ -189,7 +189,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: disabled by registry");
       return false;
     }
-    if (ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings) != null) {
+    if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) {
       LOG.debug("TestLauncher isn't applicable: unsupported execution with remote target");
       return false;
     }
@@ -201,7 +201,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: Gradle version cannot be determined");
       return false;
     }
-    if (isGradleOlderThan(gradleVersion, "8.3")) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.3")) {
       LOG.debug("TestLauncher isn't applicable: unsupported Gradle version: " + gradleVersion);
       return false;
     }
@@ -210,7 +210,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: Project is already closed");
       return false;
     }
-    if (isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
+    if (GradleVersionUtil.isGradleOlderThan(gradleVersion, "8.4") && hasProjectIncludedBuild(project, projectPath)) {
       LOG.debug("TestLauncher isn't applicable: Project has included build. " + gradleVersion);
       return false;
     }
@@ -287,9 +287,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   private static void prepareTaskState(@NotNull ExternalSystemTaskId id,
                                        @NotNull GradleExecutionSettings settings,
                                        @NotNull ExternalSystemTaskNotificationListener listener) {
-    TargetEnvironmentConfigurationProvider provider =
-      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
-    if (provider != null) return; // Prepared by TargetBuildLauncher.
+    if (ExternalSystemExecutionAware.hasTargetEnvironmentConfiguration(settings)) return; // Prepared by TargetBuildLauncher.
 
     RunConfigurationTaskState taskState = settings.getUserData(RunConfigurationTaskState.getKEY());
     if (taskState == null) return;
@@ -442,7 +440,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   private static void setupBuiltInTestEvents(@NotNull GradleExecutionSettings settings, @Nullable GradleVersion gradleVersion) {
-    if (gradleVersion != null && !isGradleOlderThan(gradleVersion, "7.6")) {
+    if (gradleVersion != null && GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.6")) {
       settings.setBuiltInTestEventsUsed(true);
     }
   }

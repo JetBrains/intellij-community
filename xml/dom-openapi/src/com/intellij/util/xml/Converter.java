@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -29,19 +15,15 @@ import org.jetbrains.annotations.Nullable;
  * @param <T> Type to convert from/to.
  */
 public abstract class Converter<T> {
-  @Nullable
-  public abstract T fromString(@Nullable @NonNls String s, final ConvertContext context);
-  @Nullable
-  public abstract String toString(@Nullable T t, final ConvertContext context);
+  public abstract @Nullable T fromString(@Nullable @NonNls String s, final ConvertContext context);
+  public abstract @Nullable String toString(@Nullable T t, final ConvertContext context);
 
   /**
    * @param s string value that couldn't be resolved
    * @param context context
    * @return error message used to highlight the errors somewhere in the UI, most often - like unresolved references in XML
    */
-  @InspectionMessage
-  @Nullable
-  public String getErrorMessage(@Nullable String s, final ConvertContext context) {
+  public @InspectionMessage @Nullable String getErrorMessage(@Nullable String s, final ConvertContext context) {
     return XmlDomBundle.message("dom.converter.cannot.convert.default", s);
   }
 

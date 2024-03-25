@@ -9,7 +9,7 @@ import java.awt.event.InputEvent
 
 @Remote(value = "com.intellij.openapi.actionSystem.ActionManager")
 interface ActionManager {
-  fun getAction(actionId: String): AnAction
+  fun getAction(actionId: String): AnAction?
 
   fun tryToExecute(action: AnAction,
                    inputEvent: InputEvent?,
@@ -28,6 +28,11 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true) {
   withContext(OnDispatcher.EDT) {
     val actionManager = service<ActionManager>()
     val action = actionManager.getAction(actionId)
-    actionManager.tryToExecute(action, null, null, null, now)
+    if (action == null) {
+      throw IllegalStateException("Action $actionId was not found")
+    }
+    else {
+      actionManager.tryToExecute(action, null, null, null, now)
+    }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.ExperimentalUI;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-
-public class ScrollableSingleRowLayout extends SingleRowLayout {
+public final class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private int myScrollOffset = 0;
   private final boolean myWithScrollBar;

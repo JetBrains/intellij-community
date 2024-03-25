@@ -1924,6 +1924,7 @@ public final class PluginManagerConfigurable
     if (myPluginModel.createShutdownCallback) {
       InstalledPluginsState.getInstance().setShutdownCallback(() -> {
         ApplicationManager.getApplication().invokeLater(() -> {
+          if (ApplicationManager.getApplication().isExitInProgress()) return; // already shutting down
           shutdownOrRestartApp();
         });
       });

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -14,8 +15,13 @@ internal fun AbstractWslDistribution.createWslCommandLine(vararg commands: Strin
  * Executes [commands] on [AbstractWslDistribution], waits its completion and returns stdout as string
  */
 @RequiresBackgroundThread
-fun AbstractWslDistribution.runCommand(vararg commands: String, options: WSLCommandLineOptions = WSLCommandLineOptions()): Result<String> =
-  runBlocking { createProcess(commands = commands, options = options).getResultStdoutStr() }
+fun AbstractWslDistribution.runCommand(vararg commands: String, options: WSLCommandLineOptions = WSLCommandLineOptions()): Result<String> {
+  val process = createProcess(commands = commands, options = options)
+  // TODO: Use runBlockingCancellable
+  return runBlocking {
+    process.getResultStdoutStr()
+  }
+}
 
 /**
  * Executes [commands] on [AbstractWslDistribution] and returns process

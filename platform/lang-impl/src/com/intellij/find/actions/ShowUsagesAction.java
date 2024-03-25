@@ -293,6 +293,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     if (handler == null) return null;
     //noinspection deprecation
     FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+    if (options instanceof PersistentFindUsagesOptions) {
+      ((PersistentFindUsagesOptions)options).setDefaults(project);
+    }
     if (scope != null) options.searchScope = scope;
     return showElementUsagesWithResult(ShowUsagesParameters.initial(project, editor, popupPosition), 
                                        createActionHandler(handler, options, title));
@@ -993,7 +996,11 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
+    SearchScope maximalScope;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-349679, EA-891094")) {
+      maximalScope = actionHandler.getMaximalScope();
+    }
+    if (!(maximalScope instanceof LocalSearchScope)) {
       DefaultActionGroup scopeChooserGroup = new DefaultActionGroup(createScopeChooser(project, contentDisposable, usageView, showUsagesPopupData));
       ActionToolbar scopeChooserToolbar =
         ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, scopeChooserGroup, true);

@@ -19,7 +19,7 @@ import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -255,7 +255,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassesShadowing() { doTest(false); }
 
   public void testUnusedParamsOfPublicMethodDisabled() {
-    UnusedSymbolLocalInspectionBase tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
+    UnusedSymbolLocalInspection tool = myUnusedDeclarationInspection.getSharedLocalInspectionTool();
     assertNotNull(tool);
     String oldVal = tool.getParameterVisibility();
     try {

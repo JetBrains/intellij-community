@@ -42,16 +42,20 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
     if (canLoadMore() || update) {
       loading = true
       requestLoadMore(indicator, update).handleOnEdt { list, error ->
-        if (indicator.isCanceled) return@handleOnEdt
-        if (error != null) {
-          if (!CompletableFutureUtil.isCancellation(error)) this.error = error
+        try {
+          if (indicator.isCanceled) return@handleOnEdt
+          if (error != null) {
+            if (!CompletableFutureUtil.isCancellation(error)) this.error = error
+          }
+          else if (!list.isNullOrEmpty()) {
+            val startIdx = loadedData.size
+            loadedData.addAll(list)
+            dataEventDispatcher.multicaster.onDataAdded(startIdx)
+          }
         }
-        else if (!list.isNullOrEmpty()) {
-          val startIdx = loadedData.size
-          loadedData.addAll(list)
-          dataEventDispatcher.multicaster.onDataAdded(startIdx)
+        finally {
+          loading = false
         }
-        loading = false
       }
     }
   }

@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.RenameUtil
+import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
@@ -34,19 +36,19 @@ import org.jetbrains.kotlin.psi.*
  *
  * @see topLevelDeclarationsToUpdate
  */
-internal val KtDeclarationContainer.allDeclarationsToUpdate: List<KtNamedDeclaration> get() {
-    val declarationsToSearch = mutableListOf<KtNamedDeclaration>()
-    if (this is KtNamedDeclaration && needsReferenceUpdate) declarationsToSearch.add(this)
-    declarations.forEach { decl ->
-        if (decl is KtDeclarationContainer) {
-            declarationsToSearch.addAll(decl.allDeclarationsToUpdate)
+internal val KtDeclarationContainer.allDeclarationsToUpdate: List<KtNamedDeclaration>
+    get() {
+        val declarationsToSearch = mutableListOf<KtNamedDeclaration>()
+        if (this is KtNamedDeclaration && needsReferenceUpdate) declarationsToSearch.add(this)
+        declarations.forEach { decl ->
+            if (decl is KtDeclarationContainer) {
+                declarationsToSearch.addAll(decl.allDeclarationsToUpdate)
+            } else if (decl is KtNamedDeclaration && decl.needsReferenceUpdate) {
+                declarationsToSearch.add(decl)
+            }
         }
-        else if (decl is KtNamedDeclaration && decl.needsReferenceUpdate) {
-            declarationsToSearch.add(decl)
-        }
+        return declarationsToSearch
     }
-    return declarationsToSearch
-}
 
 /**
  * Retrieves top level declarations that might need there references to be updated. This excludes for example instance and local methods and
@@ -70,9 +72,10 @@ internal val KtDeclarationContainer.allDeclarationsToUpdate: List<KtNamedDeclara
  *
  * @see allDeclarationsToUpdate
  */
-internal val KtDeclarationContainer.topLevelDeclarationsToUpdate: List<KtNamedDeclaration> get() {
-    return declarations.filterIsInstance<KtNamedDeclaration>().filter(KtNamedDeclaration::needsReferenceUpdate)
-}
+internal val KtDeclarationContainer.topLevelDeclarationsToUpdate: List<KtNamedDeclaration>
+    get() {
+        return declarations.filterIsInstance<KtNamedDeclaration>().filter(KtNamedDeclaration::needsReferenceUpdate)
+    }
 
 /**
  * @return whether references to this declaration need to be updated. Instance or local methods and properties for example don't need to be
@@ -151,8 +154,27 @@ private fun KtNamedDeclaration.findNonCodeUsages(
 /**
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
  */
-internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
+internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
     K2MoveRenameUsageInfo.retargetUsages(usages, oldToNewMap)
     val project = oldToNewMap.values.firstOrNull()?.project ?: return
     RenameUtil.renameNonCodeUsages(project, usages.filterIsInstance<NonCodeUsageInfo>().toTypedArray())
+}
+
+internal fun <T : MoveRenameUsageInfo> List<T>.sortedByFile(): Map<PsiFile, List<T>> {
+    return buildMap {
+        for (usageInfo in this@sortedByFile) {
+            val element = usageInfo.element
+            if (element == null) {
+                fileLogger().error("Could not update usage because element is invalid")
+                continue
+            }
+            val containingFile = element.containingFile
+            if (containingFile == null) {
+                fileLogger().error("Could not update usage because element has no containing file")
+                continue
+            }
+            val usageInfos: MutableList<T> = getOrPut(containingFile) { mutableListOf() }
+            usageInfos.add(usageInfo)
+        }
+    }.mapValues { (_, value) -> value.sortedBy { it.element?.textOffset } }
 }

@@ -4,6 +4,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -679,11 +680,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static void appendCallees(@NotNull PsiMember method, @NotNull List<? super UsageInfo> usages) {
-    List<PsiElement> calleesSafeToDelete = SafeDeleteJavaCalleeChooser.computeReferencedCodeSafeToDelete(method);
-    if (calleesSafeToDelete != null) {
-      for (PsiElement callee : calleesSafeToDelete) {
-        usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
-      }
+    List<PsiElement> calleesSafeToDelete = SafeDeleteFix.computeReferencedCodeSafeToDelete(method);
+    for (PsiElement callee : calleesSafeToDelete) {
+      usages.add(new SafeDeleteMemberCalleeUsageInfo(callee, method));
     }
   }
 

@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-fe10" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fe10-for-ide:2.0.0-dev-17421">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-fe10-for-ide:2.0.0-dev-19480">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/2.0.0-dev-17421/high-level-api-fe10-for-ide-2.0.0-dev-17421.jar">
-          <sha256sum>7ab9daaa0b6a5d0260db7c3ec72a89da1d42e0050a042b207ada6f88d6688ad2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/2.0.0-dev-19480/high-level-api-fe10-for-ide-2.0.0-dev-19480.jar">
+          <sha256sum>23ef3fdc182462721ba2dcea2b118ccc12444db4936d84bc5928de01268c53e1</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/2.0.0-dev-17421/high-level-api-fe10-for-ide-2.0.0-dev-17421.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/2.0.0-dev-19480/high-level-api-fe10-for-ide-2.0.0-dev-19480.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/2.0.0-dev-17421/high-level-api-fe10-for-ide-2.0.0-dev-17421-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-fe10-for-ide/2.0.0-dev-19480/high-level-api-fe10-for-ide-2.0.0-dev-19480-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

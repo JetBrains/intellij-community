@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.navigation;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -43,14 +43,12 @@ public class YAMLKeyNavigationItem implements NavigationItem {
     return true;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -58,25 +56,21 @@ public class YAMLKeyNavigationItem implements NavigationItem {
     return myFile;
   }
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new ItemPresentation() {
-      @NotNull
       @Override
-      public String getPresentableText() {
+      public @NotNull String getPresentableText() {
         return myName;
       }
 
-      @NotNull
       @Override
-      public String getLocationString() {
+      public @NotNull String getLocationString() {
         return myFile.toString();
       }
 
-      @NotNull
       @Override
-      public Icon getIcon(boolean unused) {
+      public @NotNull Icon getIcon(boolean unused) {
         return YAMLKeyValueImpl.YAML_KEY_ICON;
       }
     };

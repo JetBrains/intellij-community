@@ -1,5 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
 import com.intellij.ide.ui.search.OptionDescription
@@ -8,9 +9,10 @@ import com.intellij.ide.util.gotoByName.getAnActionText
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.ACTION_SIMILARITY_SCORE
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ACTION_PURE_SEMANTIC
+import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_HIGH_PRIORITY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.ITEM_TYPE
@@ -23,14 +25,12 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
 
     internal val ITEM_TYPE = EventFields.Enum<GotoActionModel.MatchedValueType>("type")
     internal val TYPE_WEIGHT = EventFields.Int("typeWeight")
-    internal val ACTION_SIMILARITY_SCORE = EventFields.Double("actionSimilarityScore")
-    internal val IS_ACTION_PURE_SEMANTIC = EventFields.Boolean("isActionPureSemantic")
     internal val IS_HIGH_PRIORITY = EventFields.Boolean("isHighPriority")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
     return arrayListOf(
-      IS_ENABLED, ITEM_TYPE, TYPE_WEIGHT, IS_HIGH_PRIORITY, ACTION_SIMILARITY_SCORE, IS_ACTION_PURE_SEMANTIC
+      IS_ENABLED, ITEM_TYPE, TYPE_WEIGHT, IS_HIGH_PRIORITY
     )
   }
 
@@ -42,16 +42,19 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     val data = arrayListOf<EventPair<*>>()
     data.addIfTrue(IS_HIGH_PRIORITY, isHighPriority(elementPriority))
 
+    var similarityScore: Double? = null
+
     // (element is GotoActionModel.MatchedValue) for actions and option provided by 'ActionSearchEverywhereContributor'
     // (element is OptionDescription || element is AnAction) for actions and option provided by 'TopHitSEContributor'
     if (element is GotoActionModel.MatchedValue) {
       data.add(ITEM_TYPE.with(element.type))
       data.add(TYPE_WEIGHT.with(element.valueTypeWeight))
 
-      element.similarityScore?.let {
-        data.add(ACTION_SIMILARITY_SCORE.with(it))
-      }
-      data.add(IS_ACTION_PURE_SEMANTIC.with(element.type == GotoActionModel.MatchedValueType.SEMANTIC))
+      element.similarityScore?.let { similarityScore = it }
+      data.add(IS_SEMANTIC_ONLY.with(element.type == GotoActionModel.MatchedValueType.SEMANTIC))
+    }
+    else {
+      data.add(IS_SEMANTIC_ONLY.with(false))
     }
 
     val value = if (element is GotoActionModel.MatchedValue) element.value else element
@@ -59,6 +62,18 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     valueName?.let {
       data.addAll(getNameMatchingFeatures(it, searchQuery))
     }
+    if (similarityScore != null) {
+      data.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
+    }
+    else {
+      val action = extractAction(element)
+      val actionEmbedding = getActionEmbedding(action, valueName)
+      val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
+      if (actionEmbedding != null && queryEmbedding != null) {
+        data.add(SIMILARITY_SCORE.with(roundDouble(actionEmbedding.cosine(queryEmbedding).toDouble())))
+      }
+    }
+
     return data
   }
 
@@ -72,5 +87,23 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     }
   }
 
+  private fun extractAction(item: Any): AnAction? {
+    if (item is AnAction) return item
+    return ((if (item is GotoActionModel.MatchedValue) item.value else item) as? GotoActionModel.ActionWrapper)?.action
+  }
+
   private fun isHighPriority(priority: Int): Boolean = priority >= 11001
+
+  private fun getActionEmbedding(action: AnAction?, actionText: String?): FloatTextEmbedding? {
+    var embedding: FloatTextEmbedding? = null
+    if (action != null) {
+      embedding = ActionManager.getInstance().getId(action)?.let { id ->
+        ActionEmbeddingsStorage.getInstance().index.lookup(id)
+      }
+    }
+    if (embedding == null && actionText != null) {
+      embedding = generateEmbeddingBlocking(actionText)
+    }
+    return embedding
+  }
 }

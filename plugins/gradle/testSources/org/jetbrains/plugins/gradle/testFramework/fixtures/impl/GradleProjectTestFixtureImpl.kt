@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
@@ -11,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.util.indexing.FileBasedIndexEx
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
@@ -67,6 +70,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
 
   override fun tearDown() {
     runAll(
+      { ApplicationManager.getApplication().serviceIfCreated<FileBasedIndexEx>()?.waitUntilIndicesAreInitialized() },
       { runBlocking { fileFixture.root.refreshAndAwait() } },
       {
         runBlocking {

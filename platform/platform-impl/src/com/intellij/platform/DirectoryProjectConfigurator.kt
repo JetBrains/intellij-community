@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
 import com.intellij.openapi.module.Module
@@ -15,18 +15,15 @@ import com.intellij.openapi.vfs.VirtualFile
 interface DirectoryProjectConfigurator {
   /**
    * @return if code must be called or EDT or not.
-   * If [.configureProject] is slow (heavy computations, network access etc) return "false" here.
+   * If [.configureProject] is slow (heavy computations, network access, etc.) return "false" here.
    */
   val isEdtRequired: Boolean
     get() = true
 
   /**
-   * @param isProjectCreatedWithWizard if true then new project created with wizard, existing folder opened otherwise
+   * @param isProjectCreatedWithWizard if true, then new project created with wizard, existing folder opened otherwise
    */
-  fun configureProject(project: Project,
-                       baseDir: VirtualFile,
-                       moduleRef: Ref<Module>,
-                       isProjectCreatedWithWizard: Boolean)
+  fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean)
 
   abstract class AsyncDirectoryProjectConfigurator : DirectoryProjectConfigurator {
     final override val isEdtRequired: Boolean
@@ -39,11 +36,6 @@ interface DirectoryProjectConfigurator {
       throw IllegalStateException("Call configure instead.")
     }
 
-    abstract suspend fun configure(
-      project: Project,
-      baseDir: VirtualFile,
-      moduleRef: Ref<Module>,
-      isProjectCreatedWithWizard: Boolean
-    )
+    abstract suspend fun configure(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean)
   }
 }

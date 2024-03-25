@@ -14,6 +14,10 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface BackFileViewProvider {
   Key<VirtualFile> FRONT_FILE_KEY = new Key<>("FRONT_FILE_KEY");
+  /**
+   * Heuristic for Front File size
+   */
+  Key<Float> FRONT_FILE_SIZE_RATIO_KEY = new Key<>("FRONT_FILE_KEY");
 
   @Nullable
   PsiFile getFrontPsiFile();

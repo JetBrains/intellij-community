@@ -35,17 +35,15 @@ import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.runSuppressing
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.picocontainer.ComponentAdapter
-import java.lang.StackWalker.StackFrame
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -54,7 +52,6 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import java.util.stream.Stream
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.coroutines.CoroutineContext
@@ -296,14 +293,6 @@ abstract class ComponentManagerImpl(
       return getOrCreateMessageBusUnderLock()
     }
     return messageBus
-  }
-
-  fun getDeprecatedModuleLevelMessageBus(): MessageBus {
-    if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
-      ProgressManager.checkCanceled()
-      throw AlreadyDisposedException("Already disposed: $this")
-    }
-    return messageBus ?: getOrCreateMessageBusUnderLock()
   }
 
   final override fun getExtensionArea(): ExtensionsAreaImpl = extensionArea
@@ -1048,14 +1037,13 @@ abstract class ComponentManagerImpl(
 
         if (plugin.pluginId != PluginManagerCore.CORE_ID) {
           val impl = getServiceImplementation(service, this)
-          if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
-            val message = "`preload=true` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
-            if (service.preload == PreloadMode.AWAIT) {
-              LOG.error(PluginException(message, plugin.pluginId))
-            }
-            else {
-              LOG.warn(message)
-            }
+          val message = "`preload=${service.preload.name}` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+          val isKnown = servicePreloadingAllowListForNonCorePlugin.contains(impl)
+          if (service.preload == PreloadMode.AWAIT && !isKnown) {
+            LOG.error(PluginException(message, plugin.pluginId))
+          }
+          else if (!isKnown || !impl.startsWith("com.intellij.")) {
+            LOG.warn(message)
           }
         }
 
@@ -1214,11 +1202,11 @@ abstract class ComponentManagerImpl(
   fun instances(createIfNeeded: Boolean = false, filter: ((implClass: Class<*>) -> Boolean)? = null): Sequence<Any> {
     return (componentContainer.instanceHolders().asSequence() + serviceContainer.instanceHolders()).mapNotNull { holder ->
       try {
-        val instanceClass = holder.instanceClass()
         if (filter == null) {
-          holder.getInstanceBlocking(debugString = instanceClass.name, keyClass = null, createIfNeeded = createIfNeeded)
+          holder.getInstanceBlocking(debugString = holder.instanceClassName(), keyClass = null, createIfNeeded = createIfNeeded)
         }
         else {
+          val instanceClass = holder.instanceClass()
           if (filter(instanceClass)) {
             holder.getInstanceBlocking(debugString = instanceClass.name, keyClass = null, createIfNeeded = createIfNeeded)
           }
@@ -1335,18 +1323,14 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T) -> Unit) {
+  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
+    val result = ArrayList<T>()
     for (instance in componentContainer.initializedInstances()) {
       if (aClass.isAssignableFrom(instance.javaClass)) {
         @Suppress("UNCHECKED_CAST")
-        processor(instance as T)
+        (result.add(instance as T))
       }
     }
-  }
-
-  fun <T : Any> collectInitializedComponents(aClass: Class<T>): List<T> {
-    val result = ArrayList<T>()
-    processInitializedComponents(aClass, result::add)
     return result
   }
 
@@ -1408,7 +1392,7 @@ abstract class ComponentManagerImpl(
 
 private class PluginServicesStore {
   private val regularServices = ConcurrentHashMap<IdeaPluginDescriptor, UnregisterHandle>()
-  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, PersistentList<InstanceHolder>>()
+  private val dynamicServices = ConcurrentHashMap<IdeaPluginDescriptor, UList<InstanceHolder>>()
 
   fun putServicesUnregisterHandle(descriptor: IdeaPluginDescriptor, handle: UnregisterHandle) {
     val prev = regularServices.put(descriptor, handle)
@@ -1421,12 +1405,12 @@ private class PluginServicesStore {
 
   fun addDynamicService(descriptor: IdeaPluginDescriptor, holder: InstanceHolder) {
     dynamicServices.compute(descriptor) { _, instances ->
-      (instances ?: persistentListOf()).add(holder)
+      (instances ?: UList()).add(holder)
     }
   }
 
   fun removeDynamicServices(descriptor: IdeaPluginDescriptor): List<InstanceHolder> {
-    return dynamicServices.remove(descriptor) ?: java.util.List.of()
+    return dynamicServices.remove(descriptor)?.toList() ?: java.util.List.of()
   }
 }
 
@@ -1476,6 +1460,7 @@ private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescripto
   executeRegisterTaskForOldContent(mainPluginDescriptor, task)
 }
 
+// Ask Core team approve before changing this set
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SpellCheckingInspection")
 private val servicePreloadingAllowListForNonCorePlugin = java.util.Set.of(
   "com.android.tools.adtui.webp.WebpMetadata\$WebpMetadataRegistrar",
@@ -1558,8 +1543,7 @@ internal fun InstanceHolder.getOrCreateInstanceBlocking(debugString: String, key
  * @return `true` if called outside a class initializer, `false` if called inside a class initializer
  */
 private fun checkOutsideClassInitializer(debugString: String): Boolean {
-  val className = isInsideClassInitializer()
-                  ?: return true
+  val className = isInsideClassInitializer() ?: return true
   // TODO make this an error
   LOG.warn(
     "$className <clinit> requests $debugString instance. " +
@@ -1569,13 +1553,15 @@ private fun checkOutsideClassInitializer(debugString: String): Boolean {
   return false
 }
 
-private fun isInsideClassInitializer(): String? = StackWalker.getInstance().walk { frames: Stream<StackFrame> ->
-  frames.asSequence().firstNotNullOfOrNull { frame ->
-    if (frame.methodName == "<clinit>") {
-      frame.className
-    }
-    else {
-      null
+private fun isInsideClassInitializer(): String? {
+  return StackWalker.getInstance().walk { frames ->
+    frames.asSequence().firstNotNullOfOrNull { frame ->
+      if (frame.methodName == "<clinit>") {
+        frame.className
+      }
+      else {
+        null
+      }
     }
   }
 }

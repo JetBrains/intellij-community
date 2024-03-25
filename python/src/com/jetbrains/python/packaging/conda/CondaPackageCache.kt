@@ -17,7 +17,10 @@ import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
-import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +46,7 @@ class CondaPackageCache : PythonPackageCache<String> {
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
-      val helpers = helpersAware.preparePyCharmHelpers()
+      val (communityHelpers) = helpersAware.preparePyCharmHelpers()
 
 
       val targetReq = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
@@ -51,7 +54,7 @@ class CondaPackageCache : PythonPackageCache<String> {
       val targetEnv = targetReq.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
 
-      val helpersPath = helpers.apply(targetEnv)
+      val helpersPath = communityHelpers.targetPathFun.apply(targetEnv)
 
       // SDK associated with another conda env, not the base one, so we do not pass it not to activate wrong conda
       addCondaPythonToTargetCommandLine(commandLineBuilder, baseConda, null)

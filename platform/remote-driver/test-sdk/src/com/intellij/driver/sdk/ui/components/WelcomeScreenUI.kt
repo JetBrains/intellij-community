@@ -3,13 +3,10 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.*
 
-fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit) {
-  x("//div[@class='FlatWelcomeFrame']", WelcomeScreenUI::class.java).action()
-}
+fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}) =
+  x("//div[@class='FlatWelcomeFrame']", WelcomeScreenUI::class.java).apply(action)
 
-fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit) {
-  this.ui.welcomeScreen(action)
-}
+fun Driver.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}) = this.ui.welcomeScreen(action)
 
 class WelcomeScreenUI(data: ComponentData) : UiComponent(data) {
   val createNewProjectButton = x("//div[(@accessiblename='New Project' and @class='JButton') or (@visible_text='New Project' and @class!='JBLabel')]")

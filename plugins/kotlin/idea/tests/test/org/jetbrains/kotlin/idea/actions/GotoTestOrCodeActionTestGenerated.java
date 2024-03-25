@@ -48,9 +48,19 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
         runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToTest.main.kt");
     }
 
+    @TestMetadata("fromKotlinFileToJavaFacade.main.kt")
+    public void testFromKotlinFileToJavaFacade() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToJavaFacade.main.kt");
+    }
+
     @TestMetadata("fromKotlinFileToTest.main.kt")
     public void testFromKotlinFileToTest() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToTest.main.kt");
+    }
+
+    @TestMetadata("fromKotlinJvmFileToJavaFacadeTest.main.kt")
+    public void testFromKotlinJvmFileToJavaFacadeTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinJvmFileToJavaFacadeTest.main.kt");
     }
 
     @TestMetadata("fromKotlinTestToJavaClass.main.kt")

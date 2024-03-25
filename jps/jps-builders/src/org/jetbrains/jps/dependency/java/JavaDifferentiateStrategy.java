@@ -48,17 +48,11 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
     debug("Processing added classes:");
 
-    BackDependencyIndex index = context.getGraph().getIndex(ClassShortNameIndex.NAME);
-    assert index != null;
-
-    // affecting dependencies on all other classes with the same short name
-    Set<ReferenceID> affectedNodes = new HashSet<>();
-
     for (JvmClass addedClass : addedClasses) {
       debug("Class name: ", addedClass.getName());
 
       // class duplication checks
-      if (!addedClass.isAnonymous() && !addedClass.isLocal() && addedClass.getOuterFqName().isEmpty()) {
+      if (!addedClass.isAnonymous() && !addedClass.isLocal() && !addedClass.isInnerClass()) {
         Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
         Predicate<? super NodeSource> belongsToChunk = context.getParams().belongsToCurrentCompilationChunk();
         Set<NodeSource> candidates = collect(
@@ -78,15 +72,23 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      if (!addedClass.isAnonymous() && !addedClass.isLocal()) {
-        collect(index.getDependencies(new JvmNodeReferenceID(addedClass.getShortName())), affectedNodes);
-        affectedNodes.add(addedClass.getReferenceID());
-      }
+      String shortName = addedClass.getShortName();
+      String scope = addedClass.isInnerClass()? addedClass.getOuterFqName().replace('$', '/') : addedClass.getPackageName();
+      debug("Affecting dependencies importing package/class '", scope, "' on-demand and having class-usages with the same short name: '", shortName, "' ");
+      context.affectUsage(
+        new ImportPackageOnDemandUsage(scope),
+        n -> find(n.getUsages(), u -> {
+          if (u instanceof ClassUsage || u instanceof MemberUsage) {
+            String ownerName = ((JvmElementUsage)u).getElementOwner().getNodeName();
+            if (ownerName.endsWith(shortName) && (ownerName.length() == shortName.length() || ownerName.charAt(ownerName.length() - shortName.length() - 1) == '/')) {
+              return true;
+            }
+          }
+          return false;
+        }) != null
+      );
     }
 
-    for (ReferenceID id : unique(flat(map(affectedNodes, id -> context.getGraph().getDependingNodes(id))))) {
-      affectNodeSources(context, id, "Affecting dependencies on class with the same short name: " + id + " ", true);
-    }
     debug("End of added classes processing.");
     return true;
   }
@@ -324,10 +326,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
       debug("Method: ", changedMethod.getName());
 
-      if (!processChangedMethod(context, clsChange, change, future, present)) {
-        return false;
-      }
-
       if (changedClass.isAnnotation()) {
         if (diff.valueRemoved())  {
           debug("Class is annotation, default value is removed => adding annotation query");
@@ -360,8 +358,22 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         debug("Return type, throws list or signature changed --- affecting method usages");
         affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
 
-        for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
-          affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ");
+        if (!changedMethod.isPrivate() && !changedMethod.isConstructor() && !changedMethod.isStatic()) {
+          if (!changedMethod.isFinal()) {
+            for (JvmNodeReferenceID subClass : unique(map(future.getOverridingMethods(changedClass, changedMethod, changedMethod::isSameByJavaRules), p -> p.getFirst().getReferenceID()))) {
+              affectNodeSources(context, subClass, "Affect source file of a class which overrides the changed method: ", future);
+            }
+          }
+          for (JvmNodeReferenceID id : propagated) {
+            for (JvmClass subClass : future.getNodes(id, JvmClass.class)) {
+              Iterable<Pair<JvmClass, JvmMethod>> overriddenInSubclass = filter(future.getOverriddenMethods(subClass, changedMethod::isSameByJavaRules), p -> !Objects.equals(p.getFirst().getReferenceID(), id));
+              if (!isEmpty(overriddenInSubclass)) {
+                debug("Changed method is inherited in some subclass & overrides/implements some interface method which this subclass implements. ", subClass.getName());
+                affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
+                break;
+              }
+            }
+          }
         }
       }
       else if (diff.flagsChanged()) {
@@ -426,7 +438,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         if (toRecompile.contains(AnnotationChangesTracker.Recompile.USAGES)) {
           affectMemberUsages(context, changedClass.getReferenceID(), changedMethod, propagated);
           if (changedMethod.isAbstract() || toRecompile.contains(AnnotationChangesTracker.Recompile.SUBCLASSES)) {
-            for (Pair<JvmClass, JvmMethod> pair : recurse(Pair.create(changedClass, changedMethod), p -> future.getOverridingMethods(p.first, p.second, p.second::isSameByJavaRules), false)) {
+            for (Pair<JvmClass, JvmMethod> pair : recurse(Pair.create(changedClass, changedMethod), p -> p.second.isOverridable()? future.getOverridingMethods(p.first, p.second, p.second::isSameByJavaRules) : Collections.emptyList(), false)) {
               JvmNodeReferenceID clsId = pair.first.getReferenceID();
               JvmMethod meth = pair.getSecond();
               affectMemberUsages(context, clsId, meth, future.collectSubclassesWithoutMethod(clsId, meth));
@@ -486,26 +498,24 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod removedMethod : removed) {
       debug("Method ", removedMethod.getName());
 
-      if (!processRemovedMethod(context, change, removedMethod, future, present)) {
-        return false;
-      }
-
       Iterable<JvmNodeReferenceID> propagated = lazy(() -> {
         return future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), removedMethod);
       });
 
-      if (!removedMethod.isPrivate() && removedMethod.isStatic()) {
+      if (!removedMethod.isPrivate() && removedMethod.isStatic() && !removedMethod.isStaticInitializer()) {
         debug("The method was static --- affecting static method import usages");
         affectStaticMemberImportUsages(context, changedClass.getReferenceID(), removedMethod.getName(), propagated);
       }
 
       if (removedMethod.isPackageLocal()) {
-        // Sometimes javac cannot find an overridden package local method in superclasses, when superclasses are defined in different packages.
-        // This results in compilation error when the code is compiled from the very beginning.
-        // So even if we correctly find a corresponding overridden method and the bytecode compatibility remains,
-        // we still need to affect package local method usages to behave similar to javac.
-        debug("Removed method is package-local, affecting method usages");
-        affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+        if (!removedMethod.isStaticInitializer()) {
+          // Sometimes javac cannot find an overridden package local method in superclasses, when superclasses are defined in different packages.
+          // This results in compilation error when the code is compiled from the very beginning.
+          // So even if we correctly find a corresponding overridden method and the bytecode compatibility remains,
+          // we still need to affect package local method usages to behave similar to javac.
+          debug("Removed method is package-local, affecting method usages");
+          affectMemberUsages(context, changedClass.getReferenceID(), removedMethod, propagated);
+        }
       }
       else {
         Iterable<Pair<JvmClass, JvmMethod>> overridden = removedMethod.isConstructor()? Collections.emptyList() : lazy(() -> {
@@ -520,8 +530,10 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
-        affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ");
+      if (removedMethod.isOverridable()) {
+        for (Pair<JvmClass, JvmMethod> overriding : future.getOverridingMethods(changedClass, removedMethod, removedMethod::isSameByJavaRules)) {
+          affectNodeSources(context, overriding.getFirst().getReferenceID(), "Affecting file by overriding: ", future);
+        }
       }
 
       if (!removedMethod.isConstructor() && !removedMethod.isAbstract() && !removedMethod.isStatic()) {
@@ -531,9 +543,9 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
             boolean allOverriddenAbstract = !isEmpty(overriddenForSubclass) && isEmpty(filter(overriddenForSubclass, p -> !p.getSecond().isAbstract()));
             if (allOverriddenAbstract || future.inheritsFromLibraryClass(subClass)) {
               debug("Removed method is not abstract & overrides some abstract method which is not then over-overridden in subclass ", subClass.getName());
-              affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ");
+              affectNodeSources(context, subClass.getReferenceID(), "Affecting subclass source file: ", future);
+              break;
             }
-            break;
           }
         }
       }
@@ -563,10 +575,6 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     for (JvmMethod addedMethod : added) {
       debug("Method: ", addedMethod.getName());
 
-      if (!processAddedMethod(context, change, addedMethod, future, present)) {
-        return false;
-      }
-
       if (addedMethod.isPrivate()) {
         continue;
       }
@@ -585,7 +593,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
         }
       }
 
-      if (addedMethod.isStatic()) {
+      if (addedMethod.isStatic() && !addedMethod.isStaticInitializer()) {
         affectStaticMemberOnDemandUsages(context, changedClass.getReferenceID(), propagated);
       }
 
@@ -618,7 +626,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
 
         if (overridingMethod.isSameByJavaRules(addedMethod)) {
           debug("Current method overrides the added method");
-          affectNodeSources(context, cls.getReferenceID(), "Affecting source ");
+          affectNodeSources(context, cls.getReferenceID(), "Affecting source ", future);
         }
         else {
           debug("Current method does not override the added method");
@@ -686,7 +694,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       }
 
       if (affectReason != null) {
-        affectNodeSources(context, subClass, affectReason);
+        affectNodeSources(context, subClass, affectReason, future);
       }
 
       if (!addedField.isPrivate() && addedField.isStatic()) {
@@ -947,7 +955,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
       debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
       debug("Root class: ", owner);
       for (ReferenceID id : proto instanceof JvmField? utils.collectSubclassesWithoutField(owner, ((JvmField)proto)) : utils.allSubclasses(owner)) {
-        affectNodeSources(context, id, "Adding ");
+        affectNodeSources(context, id, "Adding ", utils);
       }
     }
 
@@ -955,7 +963,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     debug("Softening non-incremental decision: adding all package classes for a recompilation");
     debug("Package name: ", packageName);
     for (ReferenceID nodeWithinPackage : filter(context.getGraph().getRegisteredNodes(), id -> id instanceof JvmNodeReferenceID && packageName.equals(JvmClass.getPackageName(((JvmNodeReferenceID)id).getNodeName())))) {
-      affectNodeSources(context, nodeWithinPackage, "Adding ");
+      affectNodeSources(context, nodeWithinPackage, "Adding ", utils);
     }
     
     return true;

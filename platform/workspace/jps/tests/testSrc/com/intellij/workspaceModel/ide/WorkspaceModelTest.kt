@@ -10,7 +10,7 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -55,13 +55,13 @@ class WorkspaceModelTest {
   @Test
   fun `async model update`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.internal.getBuilderSnapshot()
+    val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
     builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
 
     val updated = runWriteActionAndWait {
-      model.internal.replaceProjectModel(replacement)
+      (model as WorkspaceModelInternal).replaceProjectModel(replacement)
     }
 
     assertTrue(updated)
@@ -73,7 +73,7 @@ class WorkspaceModelTest {
   @Test
   fun `async model update with fail`() {
     val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = model.internal.getBuilderSnapshot()
+    val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
     builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
     val replacement = builderSnapshot.getStorageReplacement()
@@ -85,7 +85,7 @@ class WorkspaceModelTest {
     }
 
     val updated = runWriteActionAndWait {
-      WorkspaceModel.getInstance(projectModel.project).internal.replaceProjectModel(replacement)
+      (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(replacement)
     }
 
     assertFalse(updated)

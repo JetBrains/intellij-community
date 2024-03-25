@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
+import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import java.util.function.BiPredicate
@@ -18,15 +19,17 @@ import java.util.function.BiPredicate
 abstract class JetBrainsProductProperties : ProductProperties() {
   init {
     scrambleMainJar = true
-    includeIntoSourcesArchiveFilter = BiPredicate { module, context ->
-      module.contentRootsList.urls.all { url ->
-        Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
-      }
-    }
+    includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
     embeddedJetBrainsClientMainModule = "intellij.cwm.guest"
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
     sbomOptions.copyrightText = "Copyright 2000-2023 ${Suppliers.JETBRAINS} and contributors"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
+  }
+
+  protected fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
+    return module.contentRootsList.urls.all { url ->
+      Path.of(JpsPathUtil.urlToPath(url)).startsWith(context.paths.communityHomeDir)
+    }
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

@@ -21,7 +21,11 @@ interface SimpleEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleEntity {
+    operator fun invoke(
+      name: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SimpleEntity {
       val builder = builder()
       builder.name = name
       builder.entitySource = entitySource
@@ -33,6 +37,10 @@ interface SimpleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleEntity, modification: SimpleEntity.Builder.() -> Unit): SimpleEntity =
-  modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleEntity,
+  modification: SimpleEntity.Builder.() -> Unit,
+): SimpleEntity {
+  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
+}
 //endregion

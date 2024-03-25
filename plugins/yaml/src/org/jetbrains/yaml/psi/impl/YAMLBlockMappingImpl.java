@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -26,8 +27,7 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
     super(node);
   }
 
-  @NotNull
-  public YAMLKeyValue getFirstKeyValue() {
+  public @NotNull YAMLKeyValue getFirstKeyValue() {
     YAMLKeyValue firstKeyValue = findChildByType(YAMLElementTypes.KEY_VALUE_PAIR);
     if (firstKeyValue == null) {
       throw new IllegalStateException(EMPTY_MAP_MESSAGE);
@@ -177,8 +177,7 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
   }
 
   /** @return deepest created or found key or null if nothing could be created */
-  @Nullable
-  public YAMLKeyValue getOrCreateKeySequence(@NotNull List<String> keyComponents, int preferableOffset) {
+  public @Nullable YAMLKeyValue getOrCreateKeySequence(@NotNull List<String> keyComponents, int preferableOffset) {
     if (keyComponents.isEmpty()) {
       return null;
     }

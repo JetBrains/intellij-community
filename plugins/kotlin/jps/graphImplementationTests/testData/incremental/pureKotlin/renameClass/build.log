@@ -11,12 +11,10 @@ Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
-  out/production/module/foo/FunsKt.class
   out/production/module/use/UseAKt.class
   out/production/module/use/UseBKt.class
 End of files
 Compiling files:
-  src/funs.kt
   src/useA.kt
   src/useB.kt
 End of files

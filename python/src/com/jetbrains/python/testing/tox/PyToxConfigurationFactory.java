@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.tox;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -14,13 +14,12 @@ import org.jetbrains.annotations.NotNull;
 public final  class PyToxConfigurationFactory extends PythonConfigurationFactoryBase {
   public static final ConfigurationFactory INSTANCE = new PyToxConfigurationFactory(PyToxConfigurationType.INSTANCE);
 
-  public PyToxConfigurationFactory(@NotNull final ConfigurationType type) {
+  public PyToxConfigurationFactory(final @NotNull ConfigurationType type) {
     super(type);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Tox"; //NON-NLS
   }
 
@@ -29,9 +28,8 @@ public final  class PyToxConfigurationFactory extends PythonConfigurationFactory
     return "Tox";
   }
 
-  @NotNull
   @Override
-  public RunConfiguration createTemplateConfiguration(@NotNull final Project project) {
+  public @NotNull RunConfiguration createTemplateConfiguration(final @NotNull Project project) {
     return new PyToxConfiguration(this, project);
   }
 }

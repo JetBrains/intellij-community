@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -56,9 +56,8 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     super(project, configurationFactory);
   }
 
-  @NotNull
   @Override
-  public String getWorkingDirectorySafe() {
+  public @NotNull String getWorkingDirectorySafe() {
     final String workingDirectoryFromConfig = getWorkingDirectory();
     if (StringUtil.isNotEmpty(workingDirectoryFromConfig)) {
       return getExpandedWorkingDir(this);
@@ -272,9 +271,8 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     };
   }
 
-  @Nullable
   @Override
-  public String getActionName() {
+  public @Nullable String getActionName() {
     if (TestType.TEST_METHOD.equals(myTestType)) {
       return getTitle() + " " + myMethodName;
     }

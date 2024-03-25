@@ -139,7 +139,7 @@ public final class ModifierChooser {
     if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_SEALED;
     }
-    if (PsiUtil.isLanguageLevel9OrHigher(list)) {
+    if (PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, list)) {
       return INTERFACE_MEMBER_MODIFIERS_WITH_PRIVATE;
     }
     if (PsiUtil.isAvailable(JavaFeature.STATIC_INTERFACE_CALLS, list)) {

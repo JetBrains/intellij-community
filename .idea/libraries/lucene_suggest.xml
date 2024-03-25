@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-suggest" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:9.9.1">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:9.10.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.9.1/lucene-suggest-9.9.1.jar">
-          <sha256sum>a94a72156b2ebe91b955d5cf7e2a3d28f7cc456baa1e7908e2edc22be288c2b8</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.10.0/lucene-suggest-9.10.0.jar">
+          <sha256sum>374b9529c2332cec6d3a17efd73c15200c3e3f453d1fb2553d8268a193354688</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.9.1/lucene-suggest-9.9.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.10.0/lucene-suggest-9.10.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.9.1/lucene-suggest-9.9.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.10.0/lucene-suggest-9.10.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.9.1/lucene-suggest-9.9.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-suggest/9.10.0/lucene-suggest-9.10.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -4,6 +4,7 @@ package com.intellij.java.dev.psiViewer
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.dev.psiViewer.properties.tree.nodes.computePsiViewerApiClassesNodes
 import com.intellij.dev.psiViewer.properties.tree.nodes.psiViewerApiClassesExtending
+import com.intellij.dev.psiViewer.properties.tree.nodes.psiViewerPsiTypeAttributes
 import com.intellij.psi.PsiType
 
 private class PsiViewerPsiTypeNode(
@@ -21,7 +22,7 @@ private class PsiViewerPsiTypeNode(
 
   override val presentation = PsiViewerPropertyNode.Presentation {
     @Suppress("HardCodedStringLiteral")
-    it.append(psiType.toString())
+    it.append(psiType.toString(), psiViewerPsiTypeAttributes())
   }
 
   override val children = PsiViewerPropertyNode.Children.Async {

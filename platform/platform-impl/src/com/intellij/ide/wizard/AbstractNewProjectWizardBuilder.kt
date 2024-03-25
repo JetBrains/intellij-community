@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import javax.swing.Icon
 
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
@@ -42,7 +43,9 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     val step = panel!!.step
     step.context.putUserData(MODIFIABLE_MODULE_MODEL_KEY, model)
     return detectCreatedModule(project, model) {
-      step.setupProject(project)
+      project.trackActivityBlocking(NewProjectWizardActivityKey) {
+        step.setupProject(project)
+      }
     }
   }
 

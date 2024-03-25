@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.openapi.fileEditor.impl
 
@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
@@ -49,6 +48,7 @@ import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
+import com.intellij.ui.tabs.impl.SingleHeightTabs.Companion.UNSCALED_PREF_HEIGHT
 import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
 import com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout
 import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
@@ -74,8 +74,10 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import javax.swing.*
 
-class EditorTabbedContainer internal constructor(private val window: EditorWindow,
-                                                 private val coroutineScope: CoroutineScope) : CloseTarget {
+class EditorTabbedContainer internal constructor(
+  private val window: EditorWindow,
+  private val coroutineScope: CoroutineScope,
+) : CloseTarget {
   private val editorTabs: EditorTabs
   private val dragOutDelegate = MyDragOutDelegate()
 
@@ -259,13 +261,15 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     return selectedInfo?.component?.let { (it as EditorWindowTopComponent).composite }
   }
 
-  fun insertTab(file: VirtualFile,
-                icon: Icon?,
-                component: JComponent,
-                tooltip: @NlsContexts.Tooltip String?,
-                indexToInsert: Int,
-                composite: EditorComposite,
-                parentDisposable: Disposable) {
+  fun insertTab(
+    file: VirtualFile,
+    icon: Icon?,
+    component: JComponent,
+    tooltip: @NlsContexts.Tooltip String?,
+    indexToInsert: Int,
+    composite: EditorComposite,
+    parentDisposable: Disposable,
+  ) {
     val existing = editorTabs.findInfo(file)
     if (existing != null) {
       return
@@ -281,7 +285,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     tab.setTestableUi { it.put("editorTab", tab.text) }
 
     coroutineScope.launch {
-      val title = readAction { EditorTabPresentationUtil.getEditorTabTitle(project, file) }
+      val title = EditorTabPresentationUtil.getEditorTabTitle(project, file)
       withContext(Dispatchers.EDT) {
         tab.text = title
       }
@@ -293,7 +297,7 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
       }
     }
 
-    val closeTab = CloseTab(component, file, window, parentDisposable)
+    val closeTab = CloseTab(component = component, file = file, editorWindow = window, parentDisposable = parentDisposable)
     val editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup")
     val group = DefaultActionGroup(editorActionGroup, closeTab)
     tab.setTabLabelActions(group, ActionPlaces.EDITOR_TAB)
@@ -489,37 +493,28 @@ class EditorTabbedContainer internal constructor(private val window: EditorWindo
     }
   }
 
-  class DockableEditor(val img: Image?,
-                       val file: VirtualFile,
-                       private val presentation: Presentation,
-                       private val preferredSize: Dimension,
-                       val isPinned: Boolean,
-                       val isNorthPanelAvailable: Boolean) : DockableContent<VirtualFile?> {
-
-    @Suppress("UNUSED_PARAMETER")
-    @Deprecated("project is not required.")
-    constructor(project: Project?,
-                img: Image,
-                file: VirtualFile,
-                presentation: Presentation,
-                preferredSize: Dimension,
-                isFilePinned: Boolean) : this(img = img,
-                                              file = file,
-                                              presentation = presentation,
-                                              preferredSize = preferredSize,
-                                              isPinned = isFilePinned,
-                                              isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()))
-
-    constructor(img: Image,
-                file: VirtualFile,
-                presentation: Presentation,
-                preferredSize: Dimension,
-                isFilePinned: Boolean) : this(img = img,
-                                              file = file,
-                                              presentation = presentation,
-                                              preferredSize = preferredSize,
-                                              isPinned = isFilePinned,
-                                              isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()))
+  class DockableEditor(
+    val img: Image?,
+    val file: VirtualFile,
+    private val presentation: Presentation,
+    private val preferredSize: Dimension,
+    val isPinned: Boolean,
+    val isNorthPanelAvailable: Boolean,
+  ) : DockableContent<VirtualFile?> {
+    constructor(
+      img: Image,
+      file: VirtualFile,
+      presentation: Presentation,
+      preferredSize: Dimension,
+      isFilePinned: Boolean,
+    ) : this(
+      img = img,
+      file = file,
+      presentation = presentation,
+      preferredSize = preferredSize,
+      isPinned = isFilePinned,
+      isNorthPanelAvailable = isNorthPanelVisible(UISettings.getInstance()),
+    )
 
     override fun getKey(): VirtualFile = file
 
@@ -552,7 +547,7 @@ private class EditorTabs(
   coroutineScope: CoroutineScope,
   parentDisposable: Disposable,
   private val window: EditorWindow,
-) : SingleHeightTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder {
+) : JBEditorTabs(window.manager.project, parentDisposable), ComponentWithMnemonics, EditorWindowHolder {
   private val _entryPointActionGroup: DefaultActionGroup
   private var isActive = false
 
@@ -578,13 +573,13 @@ private class EditorTabs(
         )
       }
     })
+
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-    _entryPointActionGroup = DefaultActionGroup(source)
+    _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
   }
 
   override fun getEditorWindow(): EditorWindow = window
-
 
   override fun useMultiRowLayout(): Boolean {
     return !isSingleRow || (isHorizontalTabs && (TabLayout.showPinnedTabsSeparately() || !UISettings.getInstance().hideTabsIfNeeded))
@@ -617,68 +612,12 @@ private class EditorTabs(
   override val entryPointActionGroup: DefaultActionGroup
     get() = _entryPointActionGroup
 
-  private fun getTabLabelInsets(): JBInsets {
+  fun getTabLabelInsets(): JBInsets {
     val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
     return insets as? JBInsets ?: error("JBInsets expected, but was: $insets")
   }
 
-  override fun createTabLabel(info: TabInfo): TabLabel {
-    return EditorTabLabel(info)
-  }
-
-  private inner class EditorTabLabel(info: TabInfo) : SingleHeightLabel(this, info) {
-    init {
-      updateFont()
-    }
-
-    override fun updateUI() {
-      super.updateUI()
-      updateFont()
-    }
-
-    private fun updateFont() {
-      if (ExperimentalUI.isNewUI()) {
-        val font = JBUI.CurrentTheme.EditorTabs.font()
-        GuiUtils.iterateChildren(this, { c ->
-          c.font = font
-        })
-      }
-    }
-
-    override fun getPreferredHeight(): Int {
-      val insets = getTabLabelInsets().unscaled
-      val height = JBUI.scale(UNSCALED_PREF_HEIGHT - insets.top - insets.bottom)
-      val layoutInsets = layoutInsets
-      return height - layoutInsets.top - layoutInsets.bottom
-    }
-
-    override fun isShowTabActions(): Boolean = UISettings.getInstance().showCloseButton || isPinned
-
-    override fun isTabActionsOnTheRight(): Boolean = UISettings.getInstance().closeTabButtonOnTheRight
-
-    override fun shouldPaintFadeout(): Boolean {
-      return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
-    }
-
-    override fun editLabelForeground(baseForeground: Color?): Color? {
-      return if (baseForeground != null && paintDimmed()) {
-        val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
-        ColorUtil.blendColorsInRgb(effectiveBackground, baseForeground, blendValue.toDouble())
-      }
-      else baseForeground
-    }
-
-    override fun editIcon(baseIcon: Icon): Icon {
-      return if (paintDimmed()) {
-        IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
-      }
-      else baseIcon
-    }
-
-    private fun paintDimmed(): Boolean {
-      return ExperimentalUI.isNewUI() && myTabs.selectedInfo != info && !myTabs.isHoveredTab(this)
-    }
-  }
+  override fun createTabLabel(info: TabInfo): TabLabel = EditorTabLabel(info = info, tabs = this)
 
   override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
     if (!tabs.contains(info)) {
@@ -733,9 +672,70 @@ private class EditorTabs(
   override fun revalidateAndRepaint(layoutNow: Boolean) {
     // called from super constructor
     @Suppress("SENSELESS_COMPARISON")
-    if (window != null && window.owner.isInsideChange) {
-      return
+    if (window != null && !window.owner.isInsideChange) {
+      super.revalidateAndRepaint(layoutNow)
     }
-    super.revalidateAndRepaint(layoutNow)
+  }
+}
+
+private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, info) {
+  init {
+    updateFont()
+  }
+
+  override fun getPreferredSize(): Dimension {
+    return Dimension(super.getPreferredSize().width, getPreferredHeight())
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    updateFont()
+  }
+
+  private fun updateFont() {
+    if (ExperimentalUI.isNewUI()) {
+      val font = JBUI.CurrentTheme.EditorTabs.font()
+      GuiUtils.iterateChildren(this, { c ->
+        c.font = font
+      })
+    }
+  }
+
+  private fun getPreferredHeight(): Int {
+    val insets = (tabs as EditorTabs).getTabLabelInsets().unscaled
+    val height = JBUI.scale(UNSCALED_PREF_HEIGHT - insets.top - insets.bottom)
+    val layoutInsets = tabs.layoutInsets
+    return height - layoutInsets.top - layoutInsets.bottom
+  }
+
+  override fun isShowTabActions(): Boolean = isPinned || UISettings.getInstance().showCloseButton
+
+  override fun isTabActionsOnTheRight(): Boolean = UISettings.getInstance().closeTabButtonOnTheRight
+
+  override fun shouldPaintFadeout(): Boolean {
+    return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
+  }
+
+  override fun editLabelForeground(baseForeground: Color?): Color? {
+    if (baseForeground != null && paintDimmed()) {
+      val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()
+      return ColorUtil.blendColorsInRgb(effectiveBackground, baseForeground, blendValue.toDouble())
+    }
+    else {
+      return baseForeground
+    }
+  }
+
+  override fun editIcon(baseIcon: Icon): Icon {
+    if (paintDimmed()) {
+      return IconLoader.getTransparentIcon(baseIcon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha())
+    }
+    else {
+      return baseIcon
+    }
+  }
+
+  private fun paintDimmed(): Boolean {
+    return ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredTab(this)
   }
 }

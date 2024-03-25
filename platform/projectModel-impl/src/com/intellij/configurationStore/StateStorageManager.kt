@@ -2,15 +2,15 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.util.xmlb.SettingsInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
-import kotlin.io.path.invariantSeparatorsPathString
 
 @ApiStatus.NonExtendable
+@Internal
 interface StateStorageManager {
   val macroSubstitutor: PathMacroSubstitutor?
     get() = null
@@ -29,24 +29,18 @@ interface StateStorageManager {
 
   fun collapseMacro(path: String): String
 
-  @get:Internal
   val streamProvider: StreamProvider
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(level = DeprecationLevel.ERROR, message = "Use expandMacro(collapsedPath)", replaceWith = ReplaceWith("expandMacro(collapsedPath)"))
-  fun expandMacros(collapsedPath: String): String = expandMacro(collapsedPath).invariantSeparatorsPathString
-
-  @IntellijInternalApi
-  @Internal
+  @SettingsInternalApi
   fun clearStorages() {
   }
 
-  @IntellijInternalApi
-  @Internal
+  @SettingsInternalApi
   fun release() {
   }
 }
 
+@Internal
 interface RenameableStateStorageManager {
   /**
    * @param newName Only new file name (foo.iml)
@@ -56,6 +50,7 @@ interface RenameableStateStorageManager {
   fun pathRenamed(newPath: Path, event: VFileEvent?)
 }
 
+@Internal
 interface StorageCreator {
   val key: String
 
@@ -64,6 +59,7 @@ interface StorageCreator {
 
 // no need to fire events for known requestors - all current subscribers are not interested in internal changes,
 // better to reduce message bus usage
+@Internal
 fun isFireStorageFileChangedEvent(event: VFileEvent): Boolean {
   // ignore VFilePropertyChangeEvent because doesn't affect content
   return event !is VFilePropertyChangeEvent && event.requestor !is StorageManagerFileWriteRequestor

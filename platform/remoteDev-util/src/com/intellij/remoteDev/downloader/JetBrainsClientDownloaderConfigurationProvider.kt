@@ -234,6 +234,8 @@ class TestJetBrainsClientDownloaderConfigurationProvider : JetBrainsClientDownlo
     val server = tarGzServer
     require(server != null)
 
+    thisLogger().info("Serving file $file from ${server.address}")
+
     server.createContext("/${file.name}", HttpHandler { httpExchange ->
       httpExchange.sendResponseHeaders(200, file.fileSize())
       httpExchange.responseBody.use { responseBody ->

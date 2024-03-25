@@ -1063,9 +1063,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/class/oneStaticMethodOneNonStatic.java");
         }
 
-        @TestMetadata("pivateClass.java")
-        public void testPivateClass() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/class/pivateClass.java");
+        @TestMetadata("privateClass.java")
+        public void testPrivateClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/class/privateClass.java");
         }
 
         @TestMetadata("privateInit.java")
@@ -1144,39 +1144,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("stringClass.java")
         public void testStringClass() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/classExpression/stringClass.java");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../shared/tests/testData/newJ2k/collections")
-    public static class Collections extends AbstractK2JavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("Arrays.java")
-        public void testArrays() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/Arrays.java");
-        }
-
-        @TestMetadata("common.java")
-        public void testCommon() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/common.java");
-        }
-
-        @TestMetadata("listRestriction.java")
-        public void testListRestriction() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/listRestriction.java");
-        }
-
-        @TestMetadata("literalRestriction.java")
-        public void testLiteralRestriction() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/literalRestriction.java");
-        }
-
-        @TestMetadata("setRestriction.java")
-        public void testSetRestriction() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/collections/setRestriction.java");
         }
     }
 
@@ -1277,9 +1244,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/comments/removeNoInspectionComment.java");
         }
 
-        @TestMetadata("shashBeforeEndOfMultilineComment.java")
-        public void testShashBeforeEndOfMultilineComment() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/comments/shashBeforeEndOfMultilineComment.java");
+        @TestMetadata("slashBeforeEndOfMultilineComment.java")
+        public void testSlashBeforeEndOfMultilineComment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/comments/slashBeforeEndOfMultilineComment.java");
         }
     }
 
@@ -1600,6 +1567,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("AbstractPropertyPrivateSetter.java")
         public void testAbstractPropertyPrivateSetter() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/AbstractPropertyPrivateSetter.java");
+        }
+
+        @TestMetadata("AbstractProtectedProperty.java")
+        public void testAbstractProtectedProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/AbstractProtectedProperty.java");
         }
 
         @TestMetadata("AccessInGetterWithThis.java")
@@ -2136,11 +2108,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/enum/enumValueOf.java");
         }
 
-        @TestMetadata("enumValues.java")
-        public void testEnumValues() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/enum/enumValues.java");
-        }
-
         @TestMetadata("enumValuesOldVersion.java")
         public void testEnumValuesOldVersion() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/enum/enumValuesOldVersion.java");
@@ -2558,9 +2525,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/for/multipleInitializers.java");
         }
 
-        @TestMetadata("multipleInitializersWithvariableDeclarations.java")
-        public void testMultipleInitializersWithvariableDeclarations() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/for/multipleInitializersWithvariableDeclarations.java");
+        @TestMetadata("multipleInitializersWithVariableDeclarations.java")
+        public void testMultipleInitializersWithVariableDeclarations() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/for/multipleInitializersWithVariableDeclarations.java");
         }
 
         @TestMetadata("mutatedCondition.java")
@@ -3228,9 +3195,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("abstactInterface.java")
-        public void testAbstactInterface() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/interface/abstactInterface.java");
+        @TestMetadata("abstractInterface.java")
+        public void testAbstractInterface() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/interface/abstractInterface.java");
         }
 
         @TestMetadata("emptyInterface.java")
@@ -3540,16 +3507,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("kt-19636.java")
         public void testKt_19636() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/issues/kt-19636.java");
-        }
-
-        @TestMetadata("kt-19639.java")
-        public void testKt_19639() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/issues/kt-19639.java");
-        }
-
-        @TestMetadata("kt-19652.java")
-        public void testKt_19652() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/issues/kt-19652.java");
         }
 
         @TestMetadata("kt-19943.java")
@@ -4333,6 +4290,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("mutableParameters.java")
+        public void testMutableParameters() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutability/mutableParameters.java");
+        }
+
         @TestMetadata("NestedIfStatements.java")
         public void testNestedIfStatements() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutability/NestedIfStatements.java");
@@ -4386,9 +4348,24 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/listOfMutableList.java");
         }
 
+        @TestMetadata("MutableCollection.java")
+        public void testMutableCollection() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableCollection.java");
+        }
+
+        @TestMetadata("MutableList.java")
+        public void testMutableList() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableList.java");
+        }
+
         @TestMetadata("mutableListInOtherClass.java")
         public void testMutableListInOtherClass() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/mutableListInOtherClass.java");
+        }
+
+        @TestMetadata("MutableMap.java")
+        public void testMutableMap() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableMap.java");
         }
 
         @TestMetadata("Overrides.java")
@@ -4619,9 +4596,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
                 runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/switchExpression/caseWithBlock.java");
             }
 
-            @TestMetadata("comlicatedFallDown.java")
-            public void testComlicatedFallDown() throws Exception {
-                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/switchExpression/comlicatedFallDown.java");
+            @TestMetadata("complicatedFallDown.java")
+            public void testComplicatedFallDown() throws Exception {
+                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/switchExpression/complicatedFallDown.java");
             }
 
             @TestMetadata("continueAndBreakWithLabel.java")
@@ -4977,14 +4954,14 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("AccesssThisInsideAnonClass.java")
-        public void testAccesssThisInsideAnonClass() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/objectLiteral/AccesssThisInsideAnonClass.java");
+        @TestMetadata("AccessThisInsideAnonClass.java")
+        public void testAccessThisInsideAnonClass() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/objectLiteral/AccessThisInsideAnonClass.java");
         }
 
-        @TestMetadata("AccesssThisInsideAnonClass2.java")
-        public void testAccesssThisInsideAnonClass2() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/objectLiteral/AccesssThisInsideAnonClass2.java");
+        @TestMetadata("AccessThisInsideAnonClass2.java")
+        public void testAccessThisInsideAnonClass2() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/objectLiteral/AccessThisInsideAnonClass2.java");
         }
 
         @TestMetadata("kt-36149.java")
@@ -5227,11 +5204,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/mutablePropertyAnnotatedWithJpaColumn.java");
         }
 
-        @TestMetadata("NotIs.java")
-        public void testNotIs() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/NotIs.java");
-        }
-
         @TestMetadata("NullChecksToSafeCall.java")
         public void testNullChecksToSafeCall() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/NullChecksToSafeCall.java");
@@ -5257,9 +5229,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/RedundantTypeCastAndInline.java");
         }
 
-        @TestMetadata("RedunduntTypeCastAndProhibitedInline.java")
-        public void testRedunduntTypeCastAndProhibitedInline() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/RedunduntTypeCastAndProhibitedInline.java");
+        @TestMetadata("RedundantTypeCastAndProhibitedInline.java")
+        public void testRedundantTypeCastAndProhibitedInline() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/RedundantTypeCastAndProhibitedInline.java");
         }
 
         @TestMetadata("SortModifiers.java")
@@ -5480,6 +5452,44 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression")
+    public static class SimplifyNegatedBinaryExpression extends AbstractK2JavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basicMode.java")
+        public void testBasicMode() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/basicMode.java");
+        }
+
+        @TestMetadata("equals.java")
+        public void testEquals() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/equals.java");
+        }
+
+        @TestMetadata("floatingPoint.java")
+        public void testFloatingPoint() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/floatingPoint.java");
+        }
+
+        @TestMetadata("greaterThan.java")
+        public void testGreaterThan() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/greaterThan.java");
+        }
+
+        @TestMetadata("lessThan.java")
+        public void testLessThan() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/lessThan.java");
+        }
+
+        @TestMetadata("notIs.java")
+        public void testNotIs() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/simplifyNegatedBinaryExpression/notIs.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/staticMembers")
     public static class StaticMembers extends AbstractK2JavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -5516,9 +5526,14 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticImport.java");
         }
 
-        @TestMetadata("StaticMemmberAccessedViaInstance.java")
-        public void testStaticMemmberAccessedViaInstance() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticMemmberAccessedViaInstance.java");
+        @TestMetadata("StaticMemberAccessedViaInstance.java")
+        public void testStaticMemberAccessedViaInstance() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticMemberAccessedViaInstance.java");
+        }
+
+        @TestMetadata("StaticMethodInInterface.java")
+        public void testStaticMethodInInterface() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/staticMembers/StaticMethodInInterface.java");
         }
 
         @TestMetadata("StaticQualifiedByInheritor.java")
@@ -5595,9 +5610,9 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/switch/caseWithBlock.java");
         }
 
-        @TestMetadata("comlicatedFallDown.java")
-        public void testComlicatedFallDown() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/switch/comlicatedFallDown.java");
+        @TestMetadata("complicatedFallDown.java")
+        public void testComplicatedFallDown() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/switch/complicatedFallDown.java");
         }
 
         @TestMetadata("continueAndBreakWithLabel.java")

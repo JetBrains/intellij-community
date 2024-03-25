@@ -8,6 +8,7 @@ import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
 import com.intellij.ide.startup.importSettings.chooser.ui.ScrollSnapToFocused
 import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
@@ -43,6 +44,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
   protected val settingPanes = mutableListOf<BaseSettingPane>()
 
   protected val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
+    ImportSettingsEventsCollector.configurePageBack()
     controller.goToProductChooserPage()
   }
 
@@ -142,7 +144,7 @@ class ConfigurableSettingChooserPage<T : BaseService>(val provider: ActionsDataP
     val productService = provider.productService
     val dataForSaves = prepareDataForSave()
     val importSettings = productService.importSettings(product.id, dataForSaves)
-
+    ImportSettingsEventsCollector.importProgressPageShown()
     controller.goToImportPage(importSettings)
   }
 

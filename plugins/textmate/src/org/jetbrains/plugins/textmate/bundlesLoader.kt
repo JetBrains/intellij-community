@@ -6,12 +6,12 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.IntellijInternalApi
-import com.intellij.util.io.blockingDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import java.util.function.Consumer
 
-@OptIn(DelicateCoroutinesApi::class)
 @IntellijInternalApi
 @JvmOverloads
 internal fun registerBundlesInParallel(scope: CoroutineScope,
@@ -29,7 +29,7 @@ internal fun registerBundlesInParallel(scope: CoroutineScope,
     }
   }
 
-  val initializationJob = scope.launch(blockingDispatcher) {
+  val initializationJob = scope.launch(Dispatchers.IO) {
     bundlesToLoad.map { bundleToLoad ->
       launch {
         runCatching {

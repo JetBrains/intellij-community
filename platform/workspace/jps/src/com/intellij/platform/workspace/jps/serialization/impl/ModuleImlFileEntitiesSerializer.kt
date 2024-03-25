@@ -12,6 +12,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntities
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.containers.ConcurrentFactoryMap
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Attribute
 import org.jdom.Element
@@ -49,6 +50,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                                     internal val internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     internal val externalModuleListSerializer: JpsModuleListSerializer? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
+  private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
+  private val sourceRootTypes = ConcurrentFactoryMap.createMap<String, SourceRootTypeId> { SourceRootTypeId(it) }
 
   override val mainEntityClass: Class<ModuleEntity>
     get() = ModuleEntity::class.java
@@ -244,9 +247,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       }
     }
 
-    val moduleType = moduleOptions["type"]
-    if (moduleType != null) {
-      moduleEntity.type = moduleType
+    val moduleTypeName = moduleOptions["type"]
+    if (moduleTypeName != null) {
+      moduleEntity.type = moduleTypes[moduleTypeName]
     }
     @Suppress("UNCHECKED_CAST")
     val customModuleOptions =
@@ -551,7 +554,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
       val sourceRoot = SourceRootEntity(
         url = virtualFileManager.getOrCreateFromUrl(sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)),
-        rootType = type,
+        rootTypeId = sourceRootTypes[type]!!,
         entitySource = sourceRootSource
       )
 
@@ -695,7 +698,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                                  writer: JpsFileContentWriter) {
     val externalSystemOptions = module.exModuleOptions
     val customImlData = module.customImlData
-    saveModuleOptions(externalSystemOptions, module.type, customImlData, writer)
+    saveModuleOptions(externalSystemOptions, module.type?.name, customImlData, writer)
     val moduleOptions = customImlData?.customModuleOptions
     val customSerializerId = moduleOptions?.get(JpsProjectLoader.CLASSPATH_ATTRIBUTE)
     if (customSerializerId != null) {
@@ -900,7 +903,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   private fun saveSourceRoot(sourceRoot: SourceRootEntity): Element {
     val sourceRootTag = Element(SOURCE_FOLDER_TAG)
     sourceRootTag.setAttribute(URL_ATTRIBUTE, sourceRoot.url.url)
-    val rootType = sourceRoot.rootType
+    val rootType = sourceRoot.rootTypeId.name
     if (rootType !in listOf(JAVA_SOURCE_ROOT_TYPE_ID, JAVA_TEST_ROOT_TYPE_ID)) {
       sourceRootTag.setAttribute(SOURCE_ROOT_TYPE_ATTRIBUTE, rootType)
     }

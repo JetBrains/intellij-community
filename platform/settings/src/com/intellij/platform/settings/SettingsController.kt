@@ -3,6 +3,8 @@ package com.intellij.platform.settings
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.xmlb.SettingsInternalApi
+import kotlinx.serialization.json.JsonElement
 import org.jetbrains.annotations.ApiStatus.*
 import java.nio.file.Path
 import java.util.*
@@ -27,21 +29,25 @@ interface SettingsController {
   fun createChild(container: ComponentManager): SettingsController?
 
   @Internal
+  @SettingsInternalApi
   fun release()
 
   @Internal
+  @SettingsInternalApi
   fun <T : Any> doGetItem(key: SettingDescriptor<T>): GetResult<T?>
 
   @Internal
+  @SettingsInternalApi
   fun <T : Any> doSetItem(key: SettingDescriptor<T>, value: T?): SetResult
 
   @Internal
+  @SettingsInternalApi
   fun isPersistenceStateComponentProxy(): Boolean
 }
 
 @Internal
 @JvmInline
-value class GetResult<out T : Any?> @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
+value class GetResult<out T : Any?> @PublishedApi internal constructor(internal val value: Any?) {
   companion object {
     fun <T : Any> resolved(value: T?): GetResult<T?> = GetResult(value)
 
@@ -61,15 +67,18 @@ value class GetResult<out T : Any?> @PublishedApi internal constructor(@Publishe
 
 @Internal
 @JvmInline
-value class SetResult @PublishedApi internal constructor(@PublishedApi internal val value: Any?) {
+value class SetResult @PublishedApi internal constructor(@Internal @SettingsInternalApi val value: Any?) {
   companion object {
     fun inapplicable(): SetResult = SetResult(SetResultResolution.INAPPLICABLE)
 
     fun forbid(): SetResult = SetResult(SetResultResolution.FORBID)
 
     fun done(): SetResult = SetResult(SetResultResolution.DONE)
+
+    fun substituted(value: JsonElement): SetResult = SetResult(value)
   }
 
+  @OptIn(SettingsInternalApi::class)
   override fun toString(): String = "SetResult($value)"
 }
 
@@ -100,6 +109,9 @@ interface DelegatedSettingsController {
 
   fun createChild(container: ComponentManager): DelegatedSettingsController? = null
 
+  /**
+   * Called when the configuration store is closed, which occurs prior to a full disposal of the service container.
+   */
   fun close() {
   }
 }

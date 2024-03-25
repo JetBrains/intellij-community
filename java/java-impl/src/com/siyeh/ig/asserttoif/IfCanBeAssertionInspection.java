@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.asserttoif;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -76,7 +77,7 @@ public final class IfCanBeAssertionInspection extends BaseInspection {
       if (condition == null || statement.getElseBranch() != null || getThrownNewException(statement.getThenBranch()) == null) {
         return;
       }
-      final boolean isObjectsRequireNonNullAvailable = PsiUtil.isLanguageLevel7OrHigher(statement) &&
+      final boolean isObjectsRequireNonNullAvailable = PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, statement) &&
                                                        ComparisonUtils.isNullComparison(condition) &&
                                                        ((PsiBinaryExpression)condition).getOperationTokenType() == JavaTokenType.EQEQ;
       registerStatementError(statement, isObjectsRequireNonNullAvailable, true);
@@ -86,7 +87,7 @@ public final class IfCanBeAssertionInspection extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       if (MATCHER.test(expression) && expression.getArgumentList().getExpressionCount() <= 2) { // for parametrized messages we don't suggest anything
-        registerMethodCallError(expression, PsiUtil.isLanguageLevel7OrHigher(expression), false);
+        registerMethodCallError(expression, PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, expression), false);
       }
     }
   }

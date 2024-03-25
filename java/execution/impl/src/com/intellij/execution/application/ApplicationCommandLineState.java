@@ -22,6 +22,8 @@ import com.intellij.psi.impl.light.LightJavaModule;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.Callable;
+
 public abstract class ApplicationCommandLineState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule, Element> &
   CommonJavaRunConfigurationParameters &
@@ -46,7 +48,7 @@ public abstract class ApplicationCommandLineState<T extends
     }
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-    ReadAction.run(() -> {
+    ReadAction.nonBlocking((Callable<Void>)() -> {
       final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
       if (module.getModule() != null) {
         DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
@@ -61,7 +63,10 @@ public abstract class ApplicationCommandLineState<T extends
       else {
         JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
       }
-    });
+      return null;
+    })
+      .expireWith(getEnvironment())
+      .executeSynchronously();
 
     setupModulePath(params, module);
 

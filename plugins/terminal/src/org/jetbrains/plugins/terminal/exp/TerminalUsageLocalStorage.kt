@@ -1,0 +1,41 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.terminal.exp
+
+import com.intellij.openapi.components.*
+import com.intellij.util.xmlb.annotations.XMap
+
+/**
+ * Note, that this class is about block terminal usage.
+ */
+@Service
+@State(name = "BlockTerminalUsage", storages = [Storage(value = "terminal.xml", roamingType = RoamingType.DISABLED)])
+internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsageLocalStorage.State> {
+  private var state = State()
+
+  val executedCommandsNumber: Int
+    get() = state.shellToExecutedCommandsNumber.values.sum()
+
+  val mostUsedShell: String
+    get() = state.shellToExecutedCommandsNumber.keys.maxBy { state.shellToExecutedCommandsNumber[it]!! }
+
+  fun recordCommandExecuted(shellName: String) {
+    state.shellToExecutedCommandsNumber.merge(shellName.lowercase(), 1, Int::plus)
+  }
+
+  override fun getState(): State = state
+
+  override fun loadState(state: State) {
+    this.state = state
+  }
+
+  class State {
+    @get:XMap
+    val shellToExecutedCommandsNumber: MutableMap<String, Int> = HashMap()
+    var feedbackNotificationShown: Boolean = false
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): TerminalUsageLocalStorage = service()
+  }
+}

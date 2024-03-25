@@ -11,16 +11,16 @@ sealed interface WarmupStatus {
     private val key = Key<WarmupStatus>("intellij.warmup.status")
 
     fun isWarmupInProgress(): Boolean {
-      return currentStatus(ApplicationManager.getApplication()) == InProgress
+      return currentStatus() == InProgress
     }
 
-    fun currentStatus(app: Application): WarmupStatus {
-      return app.getUserData(key) ?: NotStarted
+    fun currentStatus(): WarmupStatus {
+      return ApplicationManager.getApplication().getUserData(key) ?: NotStarted
     }
 
     @Internal
-    fun statusChanged(app: Application, newStatus: WarmupStatus) {
-      app.putUserData(key, newStatus)
+    fun statusChanged(newStatus: WarmupStatus) {
+      ApplicationManager.getApplication().putUserData(key, newStatus)
     }
   }
 

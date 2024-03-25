@@ -159,11 +159,17 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     if (!placeMethod.hasModifierProperty(PsiModifier.STATIC) && target.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!target.hasModifierProperty(PsiModifier.STATIC) &&
         !placeMethod.hasModifierProperty(PsiModifier.STATIC) &&
-        methodCanBeCalledFromConstructorBeforeFieldInitializing(target, placeMethod, placeClass)) {
+        (isReadResolveMethod(placeMethod, placeClass) ||
+         methodCanBeCalledFromConstructorBeforeFieldInitializing(target, placeMethod, placeClass))) {
       return true;
     }
     return getAccessOffset(placeMethod) < getWriteOffset(target);
   }
+
+  private static boolean isReadResolveMethod(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
+    return "readResolve".equals(method.getName()) && method.getParameterList().isEmpty() &&
+           InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_IO_SERIALIZABLE);
+   }
 
   private record TargetCallInfo(@NotNull PsiMethod constructor,
                                 @NotNull PsiMethodCallExpression call){}

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml;
 
 import com.intellij.application.options.*;
@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
 import javax.swing.*;
-
 import java.lang.reflect.Field;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
@@ -31,9 +30,8 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     };
   }
 
-  @NotNull
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull final CodeStyleSettings settings, @NotNull final CodeStyleSettings originalSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(final @NotNull CodeStyleSettings settings, final @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, YAMLLanguage.INSTANCE.getDisplayName()) {
       @Override
       protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
@@ -60,9 +58,8 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return YAMLLanguage.INSTANCE.getDisplayName();
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new YAMLCodeStyleSettings(settings);
   }
 
@@ -81,9 +78,8 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return new YAMLIndentOptionsEditor(this);
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return YAMLLanguage.INSTANCE;
   }
 

@@ -20,10 +20,10 @@ import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
+import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ExternalSystemListenerLeakTracker
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
@@ -35,7 +35,7 @@ class GradleTestFixtureImpl(
   override val gradleVersion: GradleVersion,
 ) : GradleTestFixture {
 
-  private lateinit var listenerLeakTracker: ESListenerLeakTracker
+  private lateinit var listenerLeakTracker: ExternalSystemListenerLeakTracker
   private lateinit var reloadLeakTracker: OperationLeakTracker
 
   private lateinit var testDisposable: Disposable
@@ -48,7 +48,7 @@ class GradleTestFixtureImpl(
   override lateinit var gradleJvm: String
 
   override fun setUp() {
-    listenerLeakTracker = ESListenerLeakTracker()
+    listenerLeakTracker = ExternalSystemListenerLeakTracker()
     listenerLeakTracker.setUp()
 
     reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
@@ -93,7 +93,7 @@ class GradleTestFixtureImpl(
   override suspend fun linkProject(project: Project, relativePath: String) {
     val projectRoot = testRoot.getDirectory(relativePath)
     awaitAnyGradleProjectReload(wait = true) {
-      linkAndRefreshGradleProject(projectRoot.path, project)
+      linkAndSyncGradleProject(project, projectRoot)
     }
   }
 

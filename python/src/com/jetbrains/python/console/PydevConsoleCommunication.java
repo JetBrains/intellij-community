@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +79,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   /**
    * Response that should be sent back to the shell.
    */
-  @Nullable protected volatile InterpreterResponse nextResponse;
+  protected volatile @Nullable InterpreterResponse nextResponse;
 
   private boolean myExecuting;
   private PythonDebugConsoleCommunication myDebugCommunication;
@@ -88,18 +88,17 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * UI sends a lot of repeated requests for the same expression
    * Store result of the previous request to avoid sending the same command several times
    */
-  @Nullable private Pair<String, String> myPrevNameToDescription = null;
+  private @Nullable Pair<String, String> myPrevNameToDescription = null;
 
   private int myFullValueSeq = 0;
   private final Map<Integer, List<PyFrameAccessor.PyAsyncValue<String>>> myCallbackHashMap = new ConcurrentHashMap<>();
 
-  @Nullable private PythonConsoleView myConsoleView;
+  private @Nullable PythonConsoleView myConsoleView;
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @Nullable private XCompositeNode myCurrentRootNode;
+  private @Nullable XCompositeNode myCurrentRootNode;
 
-  @Nullable
-  public PsiFile getHistoryPsiFile() {
+  public @Nullable PsiFile getHistoryPsiFile() {
     return myConsoleView != null ? myConsoleView.getHistoryPsiFile() : null;
   }
 
@@ -122,8 +121,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * {@link PythonConsoleBackendService.Iface}
    * @throws CommunicationClosedException if transport is closed
    */
-  @NotNull
-  protected abstract PythonConsoleBackendServiceDisposable getPythonConsoleBackendClient();
+  protected abstract @NotNull PythonConsoleBackendServiceDisposable getPythonConsoleBackendClient();
 
   /**
    * Sends <i>handshake</i> message to Python Console backend. Returns
@@ -182,8 +180,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * @return {@link Future} that allows to wait for Python Console transport
    * thread(s) to finish its execution
    */
-  @NotNull
-  public Future<?> closeAsync() {
+  public @NotNull Future<?> closeAsync() {
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
     myCallbackHashMap.clear();
 
@@ -201,8 +198,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    *
    * @return {@link Future}
    */
-  @NotNull
-  protected abstract Future<?> closeCommunication();
+  protected abstract @NotNull Future<?> closeCommunication();
 
   public abstract boolean isCommunicationClosed();
 
@@ -340,8 +336,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * @return completions from the client
    */
   @Override
-  @NotNull
-  public List<PydevCompletionVariant> getCompletions(String text, String actTok) throws Exception {
+  public @NotNull List<PydevCompletionVariant> getCompletions(String text, String actTok) throws Exception {
     if (waitingForInput || isExecuting()) {
       return Collections.emptyList();
     }
@@ -403,8 +398,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     return doGetCompletions(text, actTok);
   }
 
-  @NotNull
-  private static PydevCompletionVariant toPydevCompletionVariant(@NotNull CompletionOption option) {
+  private static @NotNull PydevCompletionVariant toPydevCompletionVariant(@NotNull CompletionOption option) {
     String args = String.join(" ", option.arguments);
     return new PydevCompletionVariant(option.name, option.documentation, args, option.type.getValue());
   }
@@ -420,11 +414,10 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
-  @Nullable
-  private <T> T executeBackgroundTask(Callable<T> task,
-                                      boolean waitForResult,
-                                      @NlsContexts.ProgressTitle String userVisibleMessage,
-                                      String errorLogMessage)
+  private @Nullable <T> T executeBackgroundTask(Callable<T> task,
+                                                boolean waitForResult,
+                                                @NlsContexts.ProgressTitle String userVisibleMessage,
+                                                String errorLogMessage)
     throws PyDebuggerException {
     final FutureResult<T> future = new FutureResult<>();
     new Task.Backgroundable(myProject, userVisibleMessage, false) {
@@ -583,9 +576,8 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
-  @Nullable
   @Override
-  public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
+  public @Nullable XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
     return loadFrame(() -> {
       List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(ProcessDebugger.GROUP_TYPE.DEFAULT.ordinal());
       XValueChildrenList frameValues = parseVars(frame, null, this);
@@ -705,8 +697,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  @Nullable
-  public XCompositeNode getCurrentRootNode() {
+  public @Nullable XCompositeNode getCurrentRootNode() {
     return myCurrentRootNode;
   }
 
@@ -726,9 +717,8 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
-  @Nullable
   @Override
-  public PyReferrersLoader getReferrersLoader() {
+  public @Nullable PyReferrersLoader getReferrersLoader() {
     return null;
   }
 
@@ -777,15 +767,13 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     return DataViewerCommandResult.makeErrorResult(UNHANDLED_ERROR, "Console communication is closed");
   }
 
-  @Nullable
   @Override
-  public XSourcePosition getSourcePositionForName(String name, String parentType) {
+  public @Nullable XSourcePosition getSourcePositionForName(String name, String parentType) {
     return null;
   }
 
-  @Nullable
   @Override
-  public XSourcePosition getSourcePositionForType(String type) {
+  public @Nullable XSourcePosition getSourcePositionForType(String type) {
     return null;
   }
 
@@ -898,8 +886,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     myFrameListeners.add(listener);
   }
 
-  @NotNull
-  protected final PythonConsoleFrontendService.Iface createPythonConsoleFrontendHandler() {
+  protected final @NotNull PythonConsoleFrontendService.Iface createPythonConsoleFrontendHandler() {
     return new PythonConsoleFrontendHandler();
   }
 

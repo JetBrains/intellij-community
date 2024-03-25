@@ -21,16 +21,12 @@ import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import static junit.framework.TestCase.*;
-import static junit.framework.TestCase.assertTrue;
 
 @SuppressWarnings("JavadocDeclaration")
 public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
@@ -172,8 +168,10 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   @NeedsIndex.ForStandardLibrary
   public void testInlineLookup16() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> configureByFile("InlineTagName16.java"));
-    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "return", "summary", "systemProperty", "value");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> {
+      configureByFile("InlineTagName16.java");
+      assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "return", "summary", "systemProperty", "value");
+    });
   }
 
   public void testFinishWithSharp() {

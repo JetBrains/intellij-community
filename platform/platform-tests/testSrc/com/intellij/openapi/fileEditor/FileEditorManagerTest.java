@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
@@ -257,7 +258,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.waitForAsyncUpdateOnDumbModeFinished();
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-    assertEquals(2, manager.getAllEditors(createdFile).length);
+    assertThat(manager.getAllEditorList(createdFile)).hasSize(2);
   }
 
   public void testOpenSpecificTextEditor() {
@@ -302,7 +303,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2", "passive");
-    assertEquals(3, manager.getAllEditors(file).length);
+    assertEquals(3, manager.getAllEditorList(file).size());
   }
 
   public void testHideOtherEditors() {

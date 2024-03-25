@@ -56,32 +56,31 @@ fun createCompilationContextBlocking(projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
   return runBlocking(Dispatchers.Default) {
-    createCompilationContext(projectHome = projectHome,
-                             defaultOutputRoot = defaultOutputRoot,
-                             options = options)
+    createCompilationContext(projectHome = projectHome, defaultOutputRoot = defaultOutputRoot, options = options)
   }
 }
 
-suspend fun createCompilationContext(projectHome: Path,
-                                     defaultOutputRoot: Path,
-                                     options: BuildOptions = BuildOptions()): CompilationContextImpl {
-  val logDir = options.logPath?.let { Path.of(it) }
-               ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
+suspend fun createCompilationContext(
+  projectHome: Path,
+  defaultOutputRoot: Path,
+  options: BuildOptions = BuildOptions(),
+): CompilationContextImpl {
+  val logDir = options.logDir ?: (options.outRootDir ?: defaultOutputRoot).resolve("log")
   JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
-  return CompilationContextImpl.createCompilationContext(projectHome = projectHome,
-                                                         setupTracer = false,
-                                                         buildOutputRootEvaluator = { defaultOutputRoot },
-                                                         options = options)
+  return CompilationContextImpl.createCompilationContext(
+    projectHome = projectHome,
+    setupTracer = false,
+    buildOutputRootEvaluator = { defaultOutputRoot },
+    options = options,
+  )
 }
 
-internal fun computeBuildPaths(options: BuildOptions,
-                              project: JpsProject,
-                              buildOutputRootEvaluator: (JpsProject) -> Path,
+internal fun computeBuildPaths(options: BuildOptions, project: JpsProject, buildOutputRootEvaluator: (JpsProject) -> Path,
   artifactPathSupplier: (() -> Path)?,
   projectHome: Path,
 ): BuildPaths {
   val buildOut = options.outRootDir ?: buildOutputRootEvaluator(project)
-  val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
+  val logDir = options.logDir ?: buildOut.resolve("log")
   val result = BuildPaths(
     communityHomeDirRoot = COMMUNITY_ROOT,
     buildOutputDir = buildOut,
@@ -100,6 +99,7 @@ class CompilationContextImpl private constructor(
   override val paths: BuildPaths,
   override val options: BuildOptions,
 ) : CompilationContext {
+  @JvmField
   val global: JpsGlobal = model.global
   private val nameToModule: Map<String?, JpsModule>
 
@@ -189,10 +189,11 @@ class CompilationContextImpl private constructor(
         isCompilationRequired = CompiledClasses.isCompilationRequired(options),
       )
 
-      val buildPaths = computeBuildPaths(project = model.project,
-                                         options = options,
-                                         buildOutputRootEvaluator = buildOutputRootEvaluator,
-                                         projectHome = projectHome,
+      val buildPaths = computeBuildPaths(
+        project = model.project,
+        options = options,
+        buildOutputRootEvaluator = buildOutputRootEvaluator,
+        projectHome = projectHome,
         artifactPathSupplier = null,
       )
 
@@ -202,10 +203,7 @@ class CompilationContextImpl private constructor(
         JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
       }
 
-      val context = CompilationContextImpl(model = model,
-                                           messages = messages,
-                                           paths = buildPaths,
-                                           options = options)
+      val context = CompilationContextImpl(model = model, messages = messages, paths = buildPaths, options = options)
       /**
        * [defineJavaSdk] may be skipped using [CompiledClasses.isCompilationRequired]
        * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
@@ -248,18 +246,21 @@ class CompilationContextImpl private constructor(
     CompiledClasses.checkOptions(this)
 
     val logDir = paths.logDir
-    if (Files.exists(logDir)) {
-      Files.newDirectoryStream(logDir).use { stream ->
-        for (file in stream) {
-          if (!file.endsWith("trace.json")) {
-            NioFiles.deleteRecursively(file)
+    if (options.compilationLogEnabled) {
+      if (Files.exists(logDir)) {
+        Files.newDirectoryStream(logDir).use { stream ->
+          for (file in stream) {
+            if (!file.endsWith("trace.json")) {
+              NioFiles.deleteRecursively(file)
+            }
           }
         }
       }
+      else {
+        Files.createDirectories(logDir)
+      }
     }
-    else {
-      Files.createDirectories(logDir)
-    }
+
     overrideClassesOutputDirectory()
     if (!this::compilationData.isInitialized) {
       compilationData = JpsCompilationData(

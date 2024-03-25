@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.inspections;
 
 import com.intellij.codeInspection.*;
@@ -16,9 +16,8 @@ import java.util.Collection;
 import java.util.Map;
 
 public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
-  @NotNull
   @Override
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new YamlPsiElementVisitor() {
       @Override
       public void visitMapping(@NotNull YAMLMapping mapping) {
@@ -53,10 +52,8 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
   }
 
   private static class RemoveDuplicatedKeyQuickFix implements LocalQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return YAMLBundle.message("YAMLDuplicatedKeysInspection.remove.key.quickfix.name");
     }
 

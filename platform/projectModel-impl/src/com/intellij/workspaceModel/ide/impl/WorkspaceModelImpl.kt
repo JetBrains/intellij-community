@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceIfCreated
@@ -18,9 +17,9 @@ import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
+import com.intellij.platform.workspace.storage.impl.query.Diff
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
-import com.intellij.platform.workspace.storage.impl.query.Diff
 import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -41,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 @ApiStatus.Internal
-open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal, Disposable {
+open class WorkspaceModelImpl(private val project: Project, private val cs: CoroutineScope) : WorkspaceModelInternal {
   @Volatile
   var loadedFromCache = false
     protected set
@@ -390,8 +389,6 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   override suspend fun <T> flowOfQuery(query: StorageQuery<T>): Flow<T> = reactive.flowOfQuery(query)
   override suspend fun <T> flowOfNewElements(query: CollectionQuery<T>): Flow<T> = reactive.flowOfNewElements(query)
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
-
-  final override fun dispose() = Unit
 
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()

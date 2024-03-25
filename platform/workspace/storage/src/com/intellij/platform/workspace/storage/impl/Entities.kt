@@ -287,7 +287,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
       someEntity as WorkspaceEntityBase
       val resultingConnection = someEntity.connectionIdList().firstOrNull(connectionChecker)
       if (resultingConnection != null) return resultingConnection
-      return this.connectionIdList().first(connectionChecker)
+      return this.connectionIdList().firstOrNull(connectionChecker) ?: error("Cannot find connection for $entityClass and ${someEntity::class.java}")
     }
     else {
       val resultingConnection = entityLinks.keys.asSequence().map { it.connectionId }.firstOrNull(connectionChecker)

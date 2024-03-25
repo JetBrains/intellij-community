@@ -144,7 +144,7 @@ internal class ModuleBridgeImpl(
   override fun getOptionValue(key: String): String? {
     val moduleEntity = this.findModuleEntity(entityStorage.current)
     if (key == Module.ELEMENT_TYPE) {
-      return moduleEntity?.type
+      return moduleEntity?.type?.name
     }
     return moduleEntity?.customImlData?.customModuleOptions?.get(key)
   }
@@ -152,7 +152,9 @@ internal class ModuleBridgeImpl(
   override fun setOption(key: String, value: String?) {
     fun updateOptionInEntity(diff: MutableEntityStorage, entity: ModuleEntity) {
       if (key == Module.ELEMENT_TYPE) {
-        diff.modifyEntity(entity) { type = value }
+        diff.modifyEntity(entity) {
+          type = if (value != null) ModuleTypeId(value) else null
+        }
       }
       else {
         val customImlData = entity.customImlData

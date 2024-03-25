@@ -29,7 +29,9 @@ private val LOG: Logger = logger<Sdks>()
  */
 enum class Product(val title: String) {
   CPython("Python"),
-  PyPy("PyPy");
+  PyPy("PyPy"),
+  Miniconda("Miniconda"),
+  Anaconda("Anaconda");
 }
 
 /**
@@ -39,6 +41,7 @@ enum class ResourceType(vararg val extensions: String) {
   MICROSOFT_WINDOWS_EXECUTABLE("exe"),
   MICROSOFT_SOFTWARE_INSTALLER("msi"),
   APPLE_SOFTWARE_PACKAGE("pkg"),
+  SHELL_SCRIPT("sh"),
   COMPRESSED("zip", "xz", "tgz", "bz2");
 
   companion object {
@@ -70,6 +73,7 @@ data class Binary(
   val os: OS,
   val cpuArch: CpuArch?,
   val resources: List<Resource>,
+  val tags: List<String>? = null,
 ) {
   fun isCompatible(os: OS = OS.CURRENT, cpuArch: CpuArch = CpuArch.CURRENT) = this.os == os && (this.cpuArch?.equals(cpuArch) ?: true)
 }
@@ -80,7 +84,7 @@ data class Binary(
  * Vendor + Version is a primary key.
  */
 data class Release(
-  val version: Version,
+  val version: String,
   val product: Product,
   val sources: List<Resource>?,
   val binaries: List<Binary>?,
@@ -99,29 +103,12 @@ data class Release(
  */
 data class Sdks(
   val python: List<Release> = listOf(),
+  val conda: List<Release> = listOf(),
 )
 
 
-fun Version.toLanguageLevel(): LanguageLevel? = LanguageLevel.fromPythonVersion("$major.$minor")
+fun Version?.toLanguageLevel(): LanguageLevel? = this?.let { LanguageLevel.fromPythonVersion("$major.$minor") }
 
-
-/**
- * This class replaces missed String-arg constructor in Version class for jackson deserialization.
- *
- * @see com.intellij.openapi.util.Version
- */
-class VersionDeserializer : JsonDeserializer<Version>() {
-  override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): Version {
-    return Version.parseVersion(p!!.valueAsString)!!
-  }
-}
-class VersionSerializer : JsonSerializer<Version>() {
-  override fun serialize(value: Version?, gen: JsonGenerator?, serializers: SerializerProvider?) {
-    value?.let {
-      gen?.writeString(it.toString())
-    }
-  }
-}
 
 /**
  * This class replaces missed String-arg constructor in Url class for jackson deserialization.
@@ -150,7 +137,13 @@ object SdksKeeper {
   }
 
   fun pythonReleasesByLanguageLevel(): Map<LanguageLevel, List<Release>> {
-    return sdks.python.filter { it.version.toLanguageLevel() != null }.groupBy { it.version.toLanguageLevel()!! }
+    return sdks.python.mapNotNull { release ->
+      Version.parseVersion(release.version)?.toLanguageLevel()?.let { it to release }
+    }.groupBy({ it.first }, { it.second })
+  }
+
+  fun condaReleases(vararg products: Product = arrayOf(Product.Miniconda, Product.Anaconda)): List<Release> {
+    return sdks.conda.filter { it.product in products }
   }
 
 
@@ -158,7 +151,6 @@ object SdksKeeper {
     jacksonObjectMapper()
       .registerModule(
         SimpleModule()
-          .addDeserializer(Version::class.java, VersionDeserializer())
           .addDeserializer(Url::class.java, UrlDeserializer())
       )
       .readValue(content, Sdks::class.java)
@@ -167,11 +159,11 @@ object SdksKeeper {
     LOG.error("Json syntax error in the $configUrl", ex)
     Sdks()
   }
+
   fun serialize(sdks: Sdks): String {
     return jacksonObjectMapper()
       .registerModule(
         SimpleModule()
-          .addSerializer(Version::class.java, VersionSerializer())
           .addSerializer(Url::class.java, UrlSerializer())
       )
       .setSerializationInclusion(JsonInclude.Include.NON_NULL)

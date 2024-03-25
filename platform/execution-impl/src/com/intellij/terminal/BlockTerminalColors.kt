@@ -21,6 +21,8 @@ object BlockTerminalColors {
 
   @JvmField val ERROR_BLOCK_STROKE_COLOR: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_ERROR_BLOCK_STROKE_COLOR")
 
+  @JvmField val PROMPT_SEPARATOR_COLOR: ColorKey = ColorKey.createColorKey("BLOCK_TERMINAL_PROMPT_SEPARATOR_COLOR")
+
   @JvmField val COMMAND: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_COMMAND")
 
   @JvmField val SEARCH_ENTRY: TextAttributesKey = textAttributesKey("BLOCK_TERMINAL_SEARCH_ENTRY")

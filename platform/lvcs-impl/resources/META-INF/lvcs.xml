@@ -81,13 +81,6 @@
     <advancedSetting id="localHistory.daysToKeep" default="5" groupKey="group.advanced.settings.ide"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter"/>
-
-    <applicationService serviceImplementation="com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings"/>
-    <applicationConfigurable id="lvcs.activity"
-                             parentId="project.propVCSSupport.Mappings"
-                             provider="com.intellij.platform.lvcs.impl.settings.ActivityConfigurableProvider"
-                             key="activity.configurable.title"
-                             bundle="messages.LocalHistoryBundle"/>
   </extensions>
 
   <applicationListeners>

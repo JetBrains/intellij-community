@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.dashboard.tree.RunConfigurationNode;
 import com.intellij.execution.dashboard.tree.RunDashboardStatusFilter;
 import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.services.*;
@@ -604,12 +606,32 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private @Nullable RunnerAndConfigurationSettings findSettings(@NotNull RunContentDescriptor descriptor) {
-    Set<RunnerAndConfigurationSettings> settingsSet = ExecutionManagerImpl.getInstance(myProject).getConfigurations(descriptor);
-    RunnerAndConfigurationSettings result = ContainerUtil.getFirstItem(settingsSet);
-    if (result != null) return result;
+    Set<ExecutionEnvironment> environments = ExecutionManagerImpl.getInstance(myProject).getExecutionEnvironments(descriptor);
+    ExecutionEnvironment environment = ContainerUtil.getFirstItem(environments);
+    if (environment == null) return null;
 
-    ProcessHandler processHandler = descriptor.getProcessHandler();
-    return processHandler == null ? null : processHandler.getUserData(RunContentManagerImpl.TEMPORARY_CONFIGURATION_KEY);
+    RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+    if (settings != null) {
+      return settings;
+    }
+
+    RunProfile runProfile = environment.getRunProfile();
+    if (!(runProfile instanceof RunConfiguration runConfiguration)) return null;
+
+    myServiceLock.readLock().lock();
+    try {
+      for (List<RunDashboardServiceImpl> services : myServices) {
+        for (RunDashboardServiceImpl service : services) {
+          if (runConfiguration.equals(service.getSettings().getConfiguration())) {
+            return service.getSettings();
+          }
+        }
+      }
+    }
+    finally {
+      myServiceLock.readLock().unlock();
+    }
+    return new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), runConfiguration);
   }
 
   private @Nullable List<RunDashboardServiceImpl> getServices(@NotNull RunnerAndConfigurationSettings settings) {
@@ -622,7 +644,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private static boolean updateServiceSettings(List<? extends List<RunDashboardServiceImpl>> newServiceList,
-                                               List<? extends RunDashboardServiceImpl> oldServices) {
+                                               List<RunDashboardServiceImpl> oldServices) {
     RunDashboardServiceImpl oldService = oldServices.get(0);
     RunnerAndConfigurationSettings oldSettings = oldService.getSettings();
     for (List<RunDashboardServiceImpl> newServices : newServiceList) {

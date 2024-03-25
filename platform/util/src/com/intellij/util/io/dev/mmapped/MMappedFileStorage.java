@@ -689,7 +689,9 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
             //NoSuchFileException usually means 'parent dir doesn't exist'
             Path parent = mappingLockFile.getParent();
             if (!Files.exists(parent)) {
-              throw new IOException("Parent dir[" + parent.toAbsolutePath() + "] is not exist/was removed -- can't create .lock-file", e);
+              Path firstExistingParent = firstExistingParent(parent);
+              throw new IOException("Parent dir[" + parent.toAbsolutePath() + "] is not exist/was removed -- can't create .lock-file.\n" +
+                                    "First existing parent: [" + firstExistingParent + "]", e);
             }
             else {
               throw new IOException("Can't create .lock-file for unknown reasons", e);
@@ -714,6 +716,14 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
         @Override
         public String toString() {
           return "FileBasedRegionAllocationLock[" + mappingLockFile + "][" + regionStartOffset + ".. +" + pageSize + "]";
+        }
+
+        private static @Nullable Path firstExistingParent(@NotNull Path parent) {
+          Path firstExistingParent = parent.toAbsolutePath();
+          while (firstExistingParent != null && !Files.exists(firstExistingParent)) {
+            firstExistingParent = firstExistingParent.getParent();
+          }
+          return firstExistingParent;
         }
       }
     }

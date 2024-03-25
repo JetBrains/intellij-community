@@ -5,8 +5,8 @@ import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.IndexOutOfBoundsProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayAccessInstruction extends ExpressionPushingInstruction {
@@ -47,6 +48,10 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState stateBefore) {
     DfaValue index = stateBefore.pop();
     DfaValue array = stateBefore.pop();
+    List<DfaInstructionState> finalStates = new ArrayList<>();
+    if (myOutOfBoundsTransfer != null) {
+      finalStates.addAll(IndexOutOfBoundsProblem.dispatchTransfer(interpreter, stateBefore.createCopy(), myOutOfBoundsTransfer));
+    }
     DfaInstructionState[] states = myProblem.processOutOfBounds(interpreter, stateBefore, index, array, myOutOfBoundsTransfer);
     if (states != null) return states;
     LongRangeSet rangeSet = DfIntType.extractRange(stateBefore.getDfType(index));
@@ -68,7 +73,8 @@ public class ArrayAccessInstruction extends ExpressionPushingInstruction {
       }
     }
     pushResult(interpreter, stateBefore, result);
-    return nextStates(interpreter, stateBefore);
+    finalStates.add(nextState(interpreter, stateBefore));
+    return finalStates.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   @Override

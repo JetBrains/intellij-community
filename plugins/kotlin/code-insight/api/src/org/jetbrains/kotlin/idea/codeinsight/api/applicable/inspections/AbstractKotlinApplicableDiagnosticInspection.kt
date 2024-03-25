@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 
 import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.ApplicableRangesProvider
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
@@ -15,11 +15,9 @@ import kotlin.reflect.KClass
 interface AbstractKotlinApplicableDiagnosticInspection<
     ELEMENT : KtElement,
     DIAGNOSTIC : KtDiagnosticWithPsi<ELEMENT>
-> : KotlinApplicableToolBase<ELEMENT> {
+        > : ApplicableRangesProvider<ELEMENT> {
     /**
      * The type of the [KtDiagnosticWithPsi] which should be filtered for.
      */
     fun getDiagnosticType(): KClass<DIAGNOSTIC>
-
-    override fun isApplicableByPsi(element: ELEMENT): Boolean = true
 }

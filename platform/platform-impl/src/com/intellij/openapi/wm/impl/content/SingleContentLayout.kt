@@ -257,15 +257,28 @@ internal class SingleContentLayout(
 
       var x = labelWidth
 
-      tabAdapter?.apply {
-        bounds = Rectangle(x, 0, tabsWidth, component.height)
-        x += tabsWidth
+      fun computeMainToolbarBounds() {
+        toolbars[ToolbarType.MAIN]?.component?.apply {
+          val height = preferredSize.height
+          bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
+          x += mainToolbarWidth
+        }
       }
 
-      toolbars[ToolbarType.MAIN]?.component?.apply {
-        val height = preferredSize.height
-        bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
-        x += mainToolbarWidth
+      fun computeTabsBounds() {
+        tabAdapter?.apply {
+          bounds = Rectangle(x, 0, tabsWidth, component.height)
+          x += tabsWidth
+        }
+      }
+
+      if (Registry.`is`("debugger.toolbar.before.tabs")) {
+        computeMainToolbarBounds()
+        computeTabsBounds()
+      }
+      else {
+        computeTabsBounds()
+        computeMainToolbarBounds()
       }
 
       wrapper?.apply {

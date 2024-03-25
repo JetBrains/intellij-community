@@ -23,7 +23,7 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.state.PyRuntime
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
-import com.jetbrains.python.debugger.values.completePandasDataFrameColumns
+import com.jetbrains.python.debugger.values.completeDataFrameColumns
 import com.jetbrains.python.psi.PyStringElement
 import java.util.concurrent.Callable
 
@@ -158,7 +158,7 @@ interface PyRuntimeCompletionRetrievalService {
     val (node, listOfCalls) = result ?: return null
     val debugValue = node.valueContainer
     if (debugValue is DataFrameDebugValue) {
-      val dfColumns = completePandasDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
+      val dfColumns = completeDataFrameColumns(debugValue.treeColumns, listOfCalls.map { it.pyQualifiedName }) ?: return null
       return CompletionResultData(dfColumns, PyRuntimeCompletionType.DATA_FRAME_COLUMNS, getReferenceExpression(debugValue, node.name))
     }
     if (completionType == CompletionType.BASIC) return null

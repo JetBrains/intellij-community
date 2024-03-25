@@ -163,6 +163,7 @@ public final class InspectionTestUtil {
   public static void runTool(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                              @NotNull final AnalysisScope scope,
                              @NotNull final GlobalInspectionContextForTests globalContext) {
+    IndexingTestUtil.waitUntilIndexesAreReady(scope.getProject());
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){

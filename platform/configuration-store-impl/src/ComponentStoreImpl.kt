@@ -1,5 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
+@file:OptIn(SettingsInternalApi::class)
 
 package com.intellij.configurationStore
 
@@ -19,6 +20,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.buildNsUnawareJdom
 import com.intellij.openapi.util.registry.Registry
@@ -29,6 +31,7 @@ import com.intellij.util.ResourceUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
+import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,6 +76,13 @@ internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
   NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
 }
 
+class ComponentStoreImplReloadListener : ConfigFolderChangedListener {
+  override fun onChange(changedFileSpecs: Set<String>, deletedFileSpecs: Set<String>) {
+    val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+    componentStore.reloadComponents(changedFileSpecs, deletedFileSpecs)
+  }
+}
+
 @ApiStatus.Internal
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = ConcurrentHashMap<String, ComponentInfo>()
@@ -82,6 +92,9 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
+
+  protected open val allowSavingWithoutModifications: Boolean
+    get() = false
 
   abstract override val storageManager: StateStorageManager
 
@@ -288,7 +301,7 @@ abstract class ComponentStoreImpl : IComponentStore {
               SAVE_MOD_LOG.debug(
                 "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
             }
-            if (isUseModificationCount && !isForce) {
+            if (isUseModificationCount && !(isForce && allowSavingWithoutModifications)) {
               continue
             }
           }

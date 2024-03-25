@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppUIUtil
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import kotlin.system.exitProcess
 
@@ -54,7 +55,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       }
     )
 
-    if (ApplicationInfoImpl.getShadowInstance().isEAP) {
+    if (ApplicationInfoImpl.getShadowInstance().isEAP && isReleaseAgreementsEnabled()) {
       acceptButton(
         text = bundle.getString("userAgreement.dialog.continue"),
         isEnabled = false,
@@ -129,3 +130,7 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     .append(preferenceChunk)
     .wrapWithHtmlBody()
 }
+
+//test.release.agreements property is only for test purposes. To get release dialogs on EAP versions
+@VisibleForTesting
+internal fun isReleaseAgreementsEnabled(): Boolean = System.getProperty("test.release.agreements").toBoolean()

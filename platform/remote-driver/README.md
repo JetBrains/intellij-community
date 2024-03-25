@@ -89,7 +89,7 @@ Managing references to objects that exist in another JVM process is a tricky bus
 
 Let's take a look at the example:
 ```kotlin
-val roots = driver.service<ProjectRootManager>.getContentRoots()
+val roots = driver.service<ProjectRootManager>().getContentRoots()
 val name = roots[0].getName() // may throw an error
 ```
 
@@ -136,7 +136,7 @@ header.shouldBe("AI assistant header not present", visible)
 
 To simplify exploration of UIs and make XPath selectors easier to write, you can use UI hierarchy web interface. It can be enabled via a VM option `-Dexpose.ui.hierarchy.url=true`. UI hierarchy is available then from a web browser at http://localhost:<buildin server port>/api/remote-driver/.
 
-UI Robot enables you to reuse locators via a Page Object pattern: 
+UI Robot enables you to reuse locators via a Page Object pattern:
 ```kotlin
 fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit) {
   x("//div[@class='FlatWelcomeFrame']", WelcomeScreenUI::class.java).action()
@@ -177,42 +177,59 @@ waitForCodeAnalysis(file)
 
 ## Bootstrapping IDE for Test
 
-The easiest way to prepare a product under test is JUnit extension - `DriverManager`. It enables you to specify product, project, SDK, system properties and command line arguments via `DriverBuilder`.
+Creating with a test requires two main steps:
+1. Create `IDETestContext` using `Starter.newContext`
+2. Start IDE using `IDETestContext.runIdeWithDriver()`
 
-DriverManager enables sensitive defaults including UI hierarchy available by default at http://localhost:<port>/api/remote-driver/. The exact link is printed to the test output. 
-
-Example:
+The simplest test looks like:
 ```kotlin
-@ExtendWith(DriverManager::class)
 class OpenGradleJavaFileTest {
-  val driver: Driver = DriverManager.create {
-    product = IdeProductProvider.IU
-    project = IdeaUltimateCases.Alfio.projectInfo
-    sdk = JdkDownloaderFacade.jdk11.toSdk()
-  }
+  private lateinit var bgRun: BackgroundRun
 
   @BeforeEach
-  fun import() {
-    driver.importGradleProject()
+  fun startIde() {
+    bgRun = Starter.newContext(ideInfo = IdeProductProvider.IU) {
+      project = RemoteArchiveProjectInfo(projectURL = "https://repo.labs.intellij.net/artifactory/idea-test-data/lwjgl3-maven-gradle_2.zip")
+    }.runIdeWithDriver()
   }
-}
-```
-
-Additionally, DriverManager can inject information about running product to test instance, such as `IDEDataPaths`. Declare a `lateinit var` with the corresponding type in a test:
-
-```kotlin
-@ExtendWith(DriverManager::class)
-class SlowVisitorsPerformanceTest {
-  private val driver: Driver = DriverManager.create {
-    product = IdeProductProvider.IU
-  }
-
-  private lateinit var dataPaths: IDEDataPaths
 
   @Test
-  fun test() {
-    val logDir = dataPaths.testHome.resolve("log")
-    println("Log folder: $log")
+  fun import() {
+    bgRun.useDriverAndCloseIde {
+      // your test using a driver
+    }
   }
 }
 ```
+
+If you want to reuse IDE between tests and manage IDE run in @BeforeAll/@AfterAll
+```kotlin
+class OpenGradleJavaFileTest {
+  companion object {
+    private lateinit var run: BackgroundRun
+  
+    @BeforeAll
+    @JvmStatic
+    fun startIde() {
+      run = Starter.newContext(ideInfo = IdeProductProvider.IU) {
+        project = RemoteArchiveProjectInfo(projectURL = "https://repo.labs.intellij.net/artifactory/idea-test-data/lwjgl3-maven-gradle_2.zip")
+      }.runIdeWithDriver()
+    }
+
+    @AfterAll
+    @JvmStatic
+    fun closeIde() {
+      run.closeIdeAndWait()
+    }
+  }
+  
+  @Test
+  fun import() {
+    run.driver.withContext {
+      //your test goes here
+    }
+  }
+}
+```
+
+Tests that follow convention will work for local IDE runs and for RemDev with client/host where driver instance will be a driver of client.

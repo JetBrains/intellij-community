@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Iterators;
@@ -43,8 +43,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   public static final Key<Boolean> CHANGE_SIGNATURE_ORIGINAL_CALL = Key.create("CHANGE_SIGNATURE_ORIGINAL_CALL");
 
-  @NotNull
-  public static PyChangeSignatureQuickFix forMismatchedCall(@NotNull PyArgumentsMapping mapping) {
+  public static @NotNull PyChangeSignatureQuickFix forMismatchedCall(@NotNull PyArgumentsMapping mapping) {
     assert mapping.getCallableType() != null;
     final PyFunction function = as(mapping.getCallableType().getCallable(), PyFunction.class);
     assert function != null;
@@ -78,8 +77,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     return new PyChangeSignatureQuickFix(function, newParameters, mapping.getCallSiteExpression());
   }
 
-  @NotNull
-  public static PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
+  public static @NotNull PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
     final int paramLength = function.getParameterList().getParameters().length;
     final int complementaryParamLength = complementary.getParameterList().getParameters().length;
     final List<Pair<Integer, PyParameterInfo>> extraParams;
@@ -93,7 +91,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   }
 
   private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
-  @Nullable private final SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
+  private final @Nullable SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
 
 
   /**
@@ -114,14 +112,12 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyBundle.message("QFIX.NAME.change.signature");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     final PyFunction function = getFunction();
     if (function == null) {
       return getFamilyName();
@@ -133,8 +129,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     return XmlStringUtil.wrapInHtml(message);
   }
 
-  @Nullable
-  private PyFunction getFunction() {
+  private @Nullable PyFunction getFunction() {
     return (PyFunction)getStartElement();
   }
 
@@ -172,11 +167,10 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     }
   }
 
-  @NotNull
-  private static String generateParameterName(@NotNull PyExpression argumentValue,
-                                              @NotNull PyFunction function,
-                                              @NotNull Set<String> usedParameterNames,
-                                              @NotNull TypeEvalContext context) {
+  private static @NotNull String generateParameterName(@NotNull PyExpression argumentValue,
+                                                       @NotNull PyFunction function,
+                                                       @NotNull Set<String> usedParameterNames,
+                                                       @NotNull TypeEvalContext context) {
     final Collection<String> suggestions = new LinkedHashSet<>();
     final PyCallExpression callExpr = as(argumentValue, PyCallExpression.class);
     final PyElement referenceElem = as(callExpr != null ? callExpr.getCallee() : argumentValue, PyReferenceExpression.class);
@@ -202,8 +196,7 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     return result;
   }
 
-  @NotNull
-  private PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
+  private @NotNull PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
     return new PyMethodDescriptor(function) {
       @Override
       public @NotNull List<PyParameterInfo> getParameters() {
@@ -224,9 +217,8 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     };
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return getFunction();
   }
 

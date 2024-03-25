@@ -1202,6 +1202,17 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return marks != null ? marks : Collections.emptyList();
   }
 
+  @Override
+  public @NotNull List<Pair<GutterMark, Rectangle>> getGutterRenderersAndRectangles(int visualLine) {
+    List<GutterMark> renderers = getGutterRenderers(visualLine);
+    int lineY = myEditor.visualLineToY(visualLine);
+    List<Pair<GutterMark, Rectangle>> result = new ArrayList<Pair<GutterMark, Rectangle>>();
+    processIconsRowForY(lineY, renderers, (x, y, renderer) -> {
+      result.add(Pair.pair(renderer, new Rectangle(x, y, renderer.getIcon().getIconWidth(), renderer.getIcon().getIconHeight())));
+    });
+    return result;
+  }
+
   private @NotNull ObjectIterable<Int2ObjectMap.Entry<List<GutterMark>>> processGutterRenderers() {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();

@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -20,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-public final class DumpThreadsAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+public final class DumpThreadsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     dumpThreads(e.getProject());

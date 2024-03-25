@@ -17,7 +17,7 @@ object Dfs {
 private fun walk(start: Int, stack: IntArrayList, nextNodeFun: (Int) -> Int) {
   stack.push(start)
 
-  while (!stack.isEmpty()) {
+  while (!stack.isEmpty) {
     val nextNode = nextNodeFun(stack.topInt())
     if (nextNode == Dfs.NextNode.EXIT) return
     if (nextNode != Dfs.NextNode.NODE_NOT_FOUND) {

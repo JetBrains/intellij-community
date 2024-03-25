@@ -2,30 +2,27 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.pom.java.LanguageLevel.HIGHEST
-import com.intellij.pom.java.LanguageLevel.JDK_1_8
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
+import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.regex.Pattern
 
-private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method|class)\n")
+private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method)\n")
+
+private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
+private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
+private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        val languageLevel = if (testDataDirectory.toString().contains("newJavaFeatures")) HIGHEST else JDK_1_8
-        val testDataFile = File(testDataDirectory, fileName())
-        return descriptorByFileDirective(testDataFile, languageLevel)
-    }
-
     override fun setUp() {
         super.setUp()
         JavaCodeStyleSettings.getInstance(project).USE_EXTERNAL_ANNOTATIONS = true
@@ -50,20 +47,31 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     }
 
     private fun doTest(javaFile: File, fileContents: String) {
-        addExternalFiles(javaFile)
-
         val (prefix, javaCode) = getPrefixAndJavaCode(fileContents)
         val directives = KotlinTestUtils.parseDirectives(javaCode)
+
+        addExternalFiles(javaFile)
+        addDependencies(directives)
+
         val settings = configureSettings(directives)
         val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
+        val expectedFile = File(javaFile.path.replace(".java", ".kt"))
+        val shouldCheckForErrors = expectedFile.readText().contains(ERROR_HEADER)
 
-        val actualText = if (prefix == "file") {
+        val actualText = if (prefix == "file" && shouldCheckForErrors) {
+            // Optimization: K2 `getFileTextWithErrors` is expensive
             createKotlinFile(convertedText).getFileTextWithErrors()
         } else {
             convertedText
         }
-        val expectedFile = File(javaFile.path.replace(".java", ".kt"))
+
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+    }
+
+    private fun addDependencies(directives: Directives) {
+        if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaColumnAnnotations()
+        if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
+        if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
     }
 
     private fun addExternalFiles(javaFile: File) {
@@ -103,6 +111,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             directives["PUBLIC_BY_DEFAULT"]?.let {
                 publicByDefault = it.toBoolean()
             }
+            directives["BASIC_MODE"]?.let {
+                basicMode = it.toBoolean()
+            }
         }
 
     private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings): String =
@@ -110,14 +121,18 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "class" -> fileToKotlin(javaCode, settings)
             "file" -> fileToKotlin(javaCode, settings)
-            else -> throw IllegalStateException(
-                "Specify what is it: file, class, method, statement or expression using the first line of test data file"
-            )
+            else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
 
-    abstract fun fileToKotlin(text: String, settings: ConverterSettings): String
+    open fun fileToKotlin(text: String, settings: ConverterSettings): String {
+        val file = createJavaFile(text)
+        val j2kKind = if (isFirPlugin) K2 else K1_NEW
+        val extension = J2kConverterExtension.extension(j2kKind)
+        val converter = extension.createJavaToKotlinConverter(project, module, settings)
+        val postProcessor = extension.createPostProcessor()
+        return converter.filesToKotlin(listOf(file), postProcessor).results.single()
+    }
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
         val result = fileToKotlin("final class C {$text}", settings)

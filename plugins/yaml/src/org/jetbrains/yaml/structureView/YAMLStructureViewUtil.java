@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.util.PlatformIcons;
@@ -17,8 +17,7 @@ import static org.jetbrains.yaml.structureView.YAMLStructureViewFactory.ALIAS_IC
 final class YAMLStructureViewUtil {
   private YAMLStructureViewUtil() {}
 
-  @Nullable
-  static String getKeyValueLocationString(@NotNull YAMLKeyValue kv) {
+  static @Nullable String getKeyValueLocationString(@NotNull YAMLKeyValue kv) {
     YAMLValue value = kv.getValue();
     if (value instanceof YAMLScalar) {
       return kv.getValueText();
@@ -31,8 +30,7 @@ final class YAMLStructureViewUtil {
     }
   }
 
-  @Nullable
-  static Icon getKeyValueIcon(@NotNull YAMLKeyValue kv) {
+  static @Nullable Icon getKeyValueIcon(@NotNull YAMLKeyValue kv) {
     YAMLValue value = kv.getValue();
     if (value instanceof YAMLScalar) {
       return kv.getIcon(0);
@@ -45,8 +43,7 @@ final class YAMLStructureViewUtil {
     }
   }
 
-  @NotNull
-  static String getSeqItemPresentableText(@Nullable YAMLValue itemValue) {
+  static @NotNull String getSeqItemPresentableText(@Nullable YAMLValue itemValue) {
     if (itemValue instanceof YAMLScalar) {
       return ((YAMLScalar)itemValue).getTextValue();
     }
@@ -58,8 +55,7 @@ final class YAMLStructureViewUtil {
     }
   }
 
-  @NotNull
-  static Icon getSeqItemIcon(@Nullable YAMLValue itemValue) {
+  static @NotNull Icon getSeqItemIcon(@Nullable YAMLValue itemValue) {
     if (itemValue instanceof YAMLScalar) {
       return PlatformIcons.PROPERTY_ICON;
     }

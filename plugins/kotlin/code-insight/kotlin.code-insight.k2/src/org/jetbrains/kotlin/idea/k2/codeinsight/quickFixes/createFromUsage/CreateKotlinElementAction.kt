@@ -11,7 +11,7 @@ import com.intellij.psi.SmartPsiElementPointer
 
 internal abstract class CreateKotlinElementAction(
     protected open val request: ActionRequest,
-    private val pointerToContainer: SmartPsiElementPointer<*>,
+    protected val pointerToContainer: SmartPsiElementPointer<*>,
 ) : IntentionAction {
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
         return pointerToContainer.element != null && request.isValid

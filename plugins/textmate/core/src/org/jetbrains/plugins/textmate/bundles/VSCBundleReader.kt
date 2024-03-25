@@ -19,23 +19,26 @@ import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
 import java.util.*
 
-typealias VSCodeExtensionLanguageId = String
+private typealias VSCodeExtensionLanguageId = String
+
+private val vsCodeExtensionJsonReader by lazy {
+  JsonPlistReader.createJsonReader().registerKotlinModule().readerFor(VSCodeExtension::class.java)
+}
+
+private val vsCodeExtensionLanguageConfigurationJsonReader by lazy {
+  JsonPlistReader.createJsonReader().registerKotlinModule().readerFor(VSCodeExtensionLanguageConfiguration::class.java)
+}
 
 fun readVSCBundle(resourceLoader: (relativePath: String) -> InputStream?): TextMateBundleReader? {
-  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.buffered()?.let { packageJsonStream ->
-    val jsonReader = JsonPlistReader.createJsonReader().registerKotlinModule()
-    val extension = jsonReader.readValue(packageJsonStream, VSCodeExtension::class.java)
-    VSCBundleReader(extension, resourceLoader)
+  return resourceLoader(Constants.PACKAGE_JSON_NAME)?.let { packageJsonStream ->
+    val extension = vsCodeExtensionJsonReader.readValue(packageJsonStream, VSCodeExtension::class.java)
+    VSCBundleReader(extension = extension, resourceLoader = resourceLoader)
   }
 }
 
 private class VSCBundleReader(private val extension: VSCodeExtension,
                               private val resourceLoader: (relativePath: String) -> InputStream?) : TextMateBundleReader {
   override val bundleName: String = extension.name
-
-  private val jsonReader by lazy {
-    JsonPlistReader.createJsonReader().registerKotlinModule()
-  }
 
   private val languages: Map<VSCodeExtensionLanguageId, VSCodeExtensionLanguage> by lazy {
     extension.contributes.languages.associateBy { language -> language.id }
@@ -46,13 +49,13 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   }
 
   private val embeddedLanguages: Map<VSCodeExtensionLanguageId, Collection<TextMateScopeName>> by lazy {
-    buildMap<VSCodeExtensionLanguageId, MutableSet<TextMateScopeName>> {
-      extension.contributes.grammars.map { grammar ->
-        grammar.embeddedLanguages.forEach { (scopeName, languageId) ->
-          getOrPut(languageId) { HashSet() }.add(scopeName)
-        }
+    val map = HashMap<VSCodeExtensionLanguageId, MutableSet<TextMateScopeName>>()
+    extension.contributes.grammars.map { grammar ->
+      for ((scopeName, languageId) in grammar.embeddedLanguages) {
+        map.computeIfAbsent(languageId) { HashSet() }.add(scopeName)
       }
     }
+    map
   }
 
   override fun readGrammars(): Sequence<TextMateGrammar> {
@@ -79,16 +82,20 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   override fun readPreferences(): Sequence<TextMatePreferences> {
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
-        resourceLoader(path)?.buffered()?.let { inputStream ->
-          val configuration = jsonReader.readValue(inputStream,
-                                                   VSCodeExtensionLanguageConfiguration::class.java)
+        resourceLoader(path)?.let { inputStream ->
+          val configuration = vsCodeExtensionLanguageConfigurationJsonReader
+            .readValue(inputStream, VSCodeExtensionLanguageConfiguration::class.java)
           val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
-          val smartTypingPairs = configuration.autoClosingPairs.map {
-            TextMateAutoClosingPair(it.open, it.close, it.notIn)
-          }.toSet().takeIf { it.isNotEmpty() }
-          val surroundingPairs = configuration.surroundingPairs.map {
-            TextMateBracePair(it.open, it.close)
-          }.toSet().takeIf { it.isNotEmpty() }
+          val smartTypingPairs = configuration.autoClosingPairs
+            .mapTo(LinkedHashSet(configuration.autoClosingPairs.size)) {
+              TextMateAutoClosingPair(it.open, it.close, it.notIn)
+            }
+            .takeIf { it.isNotEmpty() }
+          val surroundingPairs = configuration.surroundingPairs
+            .mapTo(LinkedHashSet(configuration.surroundingPairs.size)) {
+              TextMateBracePair(it.open, it.close)
+            }
+            .takeIf { it.isNotEmpty() }
           val indentationRules = IndentationRules(configuration.indentationRules?.increaseIndentPattern,
                                                   configuration.indentationRules?.decreaseIndentPattern,
                                                   configuration.indentationRules?.indentNextLinePattern,
@@ -169,36 +176,42 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   }
 }
 
-data class VSCodeExtensionLanguage(val id: VSCodeExtensionLanguageId,
-                                   val filenames: List<String> = emptyList(),
-                                   val extensions: List<String> = emptyList(),
-                                   val aliases: List<String> = emptyList(),
-                                   val filenamePatterns: List<String> = emptyList(),
-                                   val configuration: String?,
-                                   val firstLine: String?)
+internal data class VSCodeExtensionLanguage(
+  @JvmField val id: VSCodeExtensionLanguageId,
+  @JvmField val filenames: List<String> = emptyList(),
+  @JvmField val extensions: List<String> = emptyList(),
+  @JvmField val aliases: List<String> = emptyList(),
+  @JvmField val filenamePatterns: List<String> = emptyList(),
+  @JvmField val configuration: String?,
+  @JvmField val firstLine: String?,
+)
 
-data class VSCodeExtensionGrammar(val language: VSCodeExtensionLanguageId?,
-                                  val scopeName: String,
-                                  val path: String,
-                                  val embeddedLanguages: Map<TextMateScopeName, VSCodeExtensionLanguageId> = emptyMap())
+internal data class VSCodeExtensionGrammar(
+  @JvmField val language: VSCodeExtensionLanguageId?,
+  @JvmField val scopeName: String,
+  @JvmField val path: String,
+  @JvmField val embeddedLanguages: Map<TextMateScopeName, VSCodeExtensionLanguageId> = emptyMap(),
+)
 
-data class VSCodeExtensionSnippet(val language: VSCodeExtensionLanguageId,
-                                  val path: String)
+internal data class VSCodeExtensionSnippet(@JvmField val language: VSCodeExtensionLanguageId, @JvmField val path: String)
 
-data class VSCodeExtensionContributes(val languages: List<VSCodeExtensionLanguage> = emptyList(),
-                                      val grammars: List<VSCodeExtensionGrammar> = emptyList(),
-                                      val snippets: List<VSCodeExtensionSnippet> = emptyList())
+internal data class VSCodeExtensionContributes(
+  @JvmField val languages: List<VSCodeExtensionLanguage> = emptyList(),
+  @JvmField val grammars: List<VSCodeExtensionGrammar> = emptyList(),
+  @JvmField val snippets: List<VSCodeExtensionSnippet> = emptyList(),
+)
 
-data class VSCodeExtension(val name: String,
-                           val contributes: VSCodeExtensionContributes)
+internal data class VSCodeExtension(@JvmField val name: String, @JvmField val contributes: VSCodeExtensionContributes)
 
-data class VSCodeExtensionLanguageConfiguration(val brackets: List<List<String>> = emptyList(),
-                                                val autoClosingPairs: List<VSCodeExtensionAutoClosingPairs> = emptyList(),
-                                                val autoCloseBefore: String?,
-                                                val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
-                                                val comments: VSCodeExtensionComments,
-                                                val indentationRules: VSCodeExtensionIndentationRules?,
-                                                val onEnterRules: List<OnEnterRule> = emptyList())
+internal data class VSCodeExtensionLanguageConfiguration(
+  @JvmField val brackets: List<List<String>> = emptyList(),
+  @JvmField val autoClosingPairs: List<VSCodeExtensionAutoClosingPairs> = emptyList(),
+  @JvmField val autoCloseBefore: String?,
+  @JvmField val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
+  @JvmField val comments: VSCodeExtensionComments,
+  @JvmField val indentationRules: VSCodeExtensionIndentationRules?,
+  @JvmField val onEnterRules: List<OnEnterRule> = emptyList(),
+)
 
 @JsonDeserialize(using = VSCodeExtensionSurroundingPairsDeserializer::class)
 data class VSCodeExtensionSurroundingPairs(val open: String, val close: String)
@@ -217,18 +230,22 @@ class VSCodeExtensionSurroundingPairsDeserializer(vc: Class<*>?) : StdDeserializ
 }
 
 @JsonDeserialize(using = VSCodeExtensionAutoClosingPairsDeserializer::class)
-data class VSCodeExtensionAutoClosingPairs(val open: String, val close: String, val notIn: EnumSet<TextMateStandardTokenType>?)
+internal data class VSCodeExtensionAutoClosingPairs(
+  @JvmField val open: String,
+  @JvmField val close: String,
+  @JvmField val notIn: EnumSet<TextMateStandardTokenType>?,
+)
 
-class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionAutoClosingPairs>(vc) {
+internal class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionAutoClosingPairs>(vc) {
   @Suppress("unused")
   constructor() : this(null)
 
   override fun deserialize(p: JsonParser, ctxt: DeserializationContext): VSCodeExtensionAutoClosingPairs {
     return when (val node: JsonNode = p.codec.readTree(p)) {
       is ArrayNode -> VSCodeExtensionAutoClosingPairs(node.get(0).asText(), node.get(1).asText(), null)
-      is ObjectNode -> VSCodeExtensionAutoClosingPairs(node["open"].asText(),
-                                                       node["close"].asText(),
-                                                       (node["notIn"] as? ArrayNode)?.mapNotNull {
+      is ObjectNode -> VSCodeExtensionAutoClosingPairs(open = node["open"].asText(),
+                                                       close = node["close"].asText(),
+                                                       notIn = (node["notIn"] as? ArrayNode)?.mapNotNull {
                                                          when (it.asText()) {
                                                            "string" -> TextMateStandardTokenType.STRING
                                                            "comment" -> TextMateStandardTokenType.COMMENT
@@ -240,17 +257,17 @@ class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializ
   }
 }
 
-data class VSCodeExtensionComments(val lineComment: String?,
-                                   val blockComment: List<String> = emptyList())
+internal data class VSCodeExtensionComments(@JvmField val lineComment: String?, @JvmField val blockComment: List<String> = emptyList())
 
 @JsonDeserialize(using = VSCodeExtensionIndentationRulesDeserializer::class)
-data class VSCodeExtensionIndentationRules(val increaseIndentPattern: String?,
-                                           val decreaseIndentPattern: String?,
-                                           val indentNextLinePattern: String?,
-                                           val unIndentedLinePattern: String?)
+internal data class VSCodeExtensionIndentationRules(
+  @JvmField val increaseIndentPattern: String?,
+  @JvmField val decreaseIndentPattern: String?,
+  @JvmField val indentNextLinePattern: String?,
+  @JvmField val unIndentedLinePattern: String?,
+)
 
-
-class VSCodeExtensionIndentationRulesDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionIndentationRules>(vc) {
+internal class VSCodeExtensionIndentationRulesDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionIndentationRules>(vc) {
   @Suppress("unused")
   constructor() : this(null)
 
@@ -264,16 +281,16 @@ class VSCodeExtensionIndentationRulesDeserializer(vc: Class<*>?) : StdDeserializ
   }
 
   private fun readPattern(node: JsonNode, name: String): String? {
-    return when (val child = node[name]) {
+    return when (val child = node.get(name)) {
       is TextNode -> child.asText()
-      is ObjectNode -> child["pattern"].asText()
+      is ObjectNode -> child.get("pattern").asText()
       null -> null
       else -> error("unexpected indentationRules node")
     }
   }
 }
 
-class TextRuleDeserializer(vc: Class<*>?) : StdDeserializer<TextRule>(vc) {
+internal class TextRuleDeserializer(vc: Class<*>?) : StdDeserializer<TextRule>(vc) {
   @Suppress("unused")
   constructor() : this(null)
   override fun deserialize(p: JsonParser, ctxt: DeserializationContext): TextRule {

@@ -53,9 +53,9 @@ internal abstract class PropertyRenderer(
   }
   
   private val expectedTypes: List<ExpectedTypeInfo> = when (propertyKind) {
-    PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType).orObject(target)
+    PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType, target).orObject(target)
     PropertyKind.BOOLEAN_GETTER -> listOf(PsiTypes.booleanType().toExpectedType())
-    PropertyKind.SETTER -> extractExpectedTypes(project, request.expectedParameters.single().expectedTypes).orObject(target)
+    PropertyKind.SETTER -> extractExpectedTypes(project, request.expectedParameters.single().expectedTypes, target).orObject(target)
   }
 
   private lateinit var targetDocument: Document
@@ -72,6 +72,7 @@ internal abstract class PropertyRenderer(
     if (!navigate()) return
     val builder = TemplateBuilderImpl(target)
     builder.setGreedyToRight(true)
+    builder.setScrollToTemplate(request.isStartTemplate)
     val typeExpression = fillTemplate(builder) ?: return
     val template = builder.buildInlineTemplate().apply {
       isToShortenLongNames = true

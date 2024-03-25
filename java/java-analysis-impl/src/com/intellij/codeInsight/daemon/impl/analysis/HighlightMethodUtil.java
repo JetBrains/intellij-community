@@ -547,20 +547,11 @@ public final class HighlightMethodUtil {
     }
   }
 
-  private static void registerStaticMethodQualifierFixes(@NotNull PsiMethodCallExpression methodCall, @Nullable HighlightInfo.Builder info) {
+  private static void registerStaticMethodQualifierFixes(@NotNull PsiMethodCallExpression methodCall, @NotNull HighlightInfo.Builder info) {
     TextRange methodExpressionRange = methodCall.getMethodExpression().getTextRange();
-    IntentionAction action2 = QuickFixFactory.getInstance().createStaticImportMethodFix(methodCall);
-    if (info != null) {
-      info.registerFix(action2, null, null, methodExpressionRange, null);
-    }
-    IntentionAction action1 = QuickFixFactory.getInstance().createQualifyStaticMethodCallFix(methodCall);
-    if (info != null) {
-      info.registerFix(action1, null, null, methodExpressionRange, null);
-    }
-    IntentionAction action = QuickFixFactory.getInstance().addMethodQualifierFix(methodCall);
-    if (info != null) {
-      info.registerFix(action, null, null, methodExpressionRange, null);
-    }
+    info.registerFix(QuickFixFactory.getInstance().createStaticImportMethodFix(methodCall), null, null, methodExpressionRange, null);
+    info.registerFix(QuickFixFactory.getInstance().createQualifyStaticMethodCallFix(methodCall), null, null, methodExpressionRange, null);
+    info.registerFix(QuickFixFactory.getInstance().addMethodQualifierFix(methodCall), null, null, methodExpressionRange, null);
   }
 
   /**
@@ -1514,8 +1505,7 @@ public final class HighlightMethodUtil {
   }
 
   static HighlightInfo.Builder checkConstructorCallsBaseClassConstructor(@NotNull PsiMethod constructor,
-                                                                 @Nullable RefCountHolder refCountHolder,
-                                                                 @NotNull PsiResolveHelper resolveHelper) {
+                                                                         @NotNull PsiResolveHelper resolveHelper) {
     if (!constructor.isConstructor()) return null;
     PsiClass aClass = constructor.getContainingClass();
     if (aClass == null) return null;
@@ -1526,7 +1516,7 @@ public final class HighlightMethodUtil {
     if (JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor) != null) return null;
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(constructor);
     PsiClassType[] handledExceptions = constructor.getThrowsList().getReferencedTypes();
-    HighlightInfo.Builder info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);
+    HighlightInfo.Builder info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, resolveHelper, textRange, handledExceptions);
     if (info != null) {
       IntentionAction action2 = QuickFixFactory.getInstance().createInsertSuperFix(constructor);
       info.registerFix(action2, null, null, null, null);

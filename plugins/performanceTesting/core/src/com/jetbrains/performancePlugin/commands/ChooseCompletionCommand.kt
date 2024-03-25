@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.codeInsight.completion.BaseCompletionLookupArranger.getDefaultPresentation
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -8,7 +9,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.jetbrains.performancePlugin.commands.IdeEditorKeyCommand.pressKey
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
 import kotlin.time.Duration.Companion.seconds
@@ -24,28 +24,34 @@ class ChooseCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutin
 
   override suspend fun doExecute(context: PlaybackContext) {
     val completionName = extractCommandArgument(PREFIX).trim()
-    val itemsCount = getLookup(context).items.size
-    for (i in 1..itemsCount) {
-      //we need to get lookup every time because otherwise currentItem is not updated
-      val lookup = getLookup(context)
-      if (lookup.currentItem?.lookupString != completionName) {
-        ApplicationManager.getApplication().invokeAndWait {
-          pressKey(IdeEditorKeyCommand.EditorKey.ARROW_DOWN, context.project)
-        }
-      }
-      else {
-        withContext(Dispatchers.EDT) {
-          ApplicationManager.getApplication().invokeAndWait {
-            lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+    try {
+      withTimeout(5.seconds) {
+        var selected = false
+        while (!selected) {
+          val lookup = getLookup(context)
+          lookup?.items?.firstOrNull { getDefaultPresentation(it).itemText!! == completionName }?.also {
+            withContext(Dispatchers.EDT) {
+              ApplicationManager.getApplication().invokeAndWait {
+                lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR, it)
+                selected = true
+              }
+            }
           }
+          yield()
         }
-        return
       }
     }
-    throw IllegalArgumentException("There is no completion with name $completionName")
+    catch (ignore: TimeoutCancellationException) {
+      throw IllegalArgumentException("There is no completion with name $completionName." +
+                                     " Actual items: ${
+                                       getLookup(context)
+                                         ?.items
+                                         ?.joinToString("\n------\n") { getDefaultPresentation(it).itemText!! }
+                                     }")
+    }
   }
 
-  private fun getLookup(context: PlaybackContext): LookupImpl {
+  private fun getLookup(context: PlaybackContext): LookupImpl? {
     val editor = FileEditorManager.getInstance(context.project).selectedTextEditor!!
     try {
       runBlocking {
@@ -57,6 +63,6 @@ class ChooseCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutin
     catch (e: TimeoutCancellationException) {
       throw IllegalStateException("There is no lookup after 5 seconds")
     }
-    return LookupManager.getActiveLookup(editor) as LookupImpl
+    return LookupManager.getActiveLookup(editor) as? LookupImpl
   }
 }

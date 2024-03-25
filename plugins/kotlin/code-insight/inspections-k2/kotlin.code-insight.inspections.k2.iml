@@ -27,6 +27,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
@@ -56,5 +57,6 @@
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

@@ -1,13 +1,12 @@
-package com.intellij.remoteDev.tests.impl
+package com.intellij.remoteDev.tests.impl.utils
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.remoteDev.tests.impl.RdctTestFrameworkLoggerCategory
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTimedValue
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
+import kotlin.time.measureTimedValue
 
 // it is easier to sort out logs from just testFramework
 private val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category)

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -41,7 +42,7 @@ public abstract class MultiFileTestCase extends JavaCodeInsightTestCase {
 
       String pathAfter = path + "/after";
       final VirtualFile rootAfter = LocalFileSystem.getInstance().findFileByPath(pathAfter.replace(File.separatorChar, '/'));
-
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       performAction.performAction(rootDir, rootAfter);
       WriteCommandAction.runWriteCommandAction(getProject(), () -> PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting());
 

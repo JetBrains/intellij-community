@@ -105,7 +105,8 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
                                       sourceBranchName: String,
                                       targetBranchName: String?): List<GitLabMergeRequestByBranchDTO> =
     withContext(Dispatchers.IO) {
-      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, state, sourceBranchName, targetBranchName).body()!!.nodes
+      val body = api.graphQL.findMergeRequestsByBranch(projectMapping.repository, state, sourceBranchName, targetBranchName).body()
+      body!!.nodes
     }
 
   override fun findCachedDetails(iid: String): GitLabMergeRequestDetails? = detailsCache.getIfPresent(iid)

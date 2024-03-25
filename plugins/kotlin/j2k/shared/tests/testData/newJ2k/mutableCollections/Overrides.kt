@@ -1,3 +1,4 @@
+// !ADD_KOTLIN_API
 package javaApi
 
 import kotlinApi.KotlinClass

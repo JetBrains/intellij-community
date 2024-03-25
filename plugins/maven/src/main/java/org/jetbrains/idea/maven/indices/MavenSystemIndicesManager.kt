@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.ApplicationManager
@@ -18,7 +18,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtilRt
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.OptionTag
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -307,7 +306,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
 
   @TestOnly
   fun getAllGavIndices(): List<MavenGAVIndex> {
-    return inMemoryIndices.values.toImmutableList()
+    return java.util.List.copyOf(inMemoryIndices.values)
   }
 
   fun updateIndexContent(repositoryInfo: MavenRepositoryInfo, project: Project) {

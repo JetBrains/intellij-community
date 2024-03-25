@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.Str
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.convertInfixCallToOrdinary
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendElement
@@ -34,7 +35,6 @@ import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.core.toVisibility
 import org.jetbrains.kotlin.idea.inspections.PublicApiImplicitTypeInspection
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
-import org.jetbrains.kotlin.idea.intentions.InfixCallToOrdinaryIntention
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
@@ -292,7 +292,7 @@ private fun makeCall(
             val newNameExpression = when (val operationExpression = anchor.parent as? KtOperationExpression ?: return null) {
                 is KtUnaryExpression -> OperatorToFunctionConverter.convert(operationExpression).second
                 is KtBinaryExpression -> {
-                    InfixCallToOrdinaryIntention.Holder.convert(operationExpression).getCalleeExpressionIfAny()
+                    convertInfixCallToOrdinary(operationExpression).getCalleeExpressionIfAny()
                 }
                 else -> null
             }

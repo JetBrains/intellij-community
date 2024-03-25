@@ -51,7 +51,7 @@ class SpanExtractionFromUnitPerfTest {
   }
 
   private val openTelemetryReports by lazy {
-    Paths.get(this::class.java.classLoader.getResource("opentelemetry")!!.toURI())
+    Paths.get(this::class.java.classLoader.getResource("telemetry")!!.toURI())
   }
 
   @Test

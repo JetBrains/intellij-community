@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -32,8 +32,7 @@ public class YamlMetaClass extends YamlMetaType {
   }
 
   @Override
-  @Nullable
-  public Field findFeatureByName(@NotNull String name) {
+  public @Nullable Field findFeatureByName(@NotNull String name) {
     if (getFeatures().isEmpty()) {
       return null;
     }
@@ -47,9 +46,8 @@ public class YamlMetaClass extends YamlMetaType {
     );
   }
 
-  @NotNull
   @Override
-  public List<String> computeMissingFields(@NotNull Set<String> existingFields) {
+  public @NotNull List<String> computeMissingFields(@NotNull Set<String> existingFields) {
     return myFeatures.stream()
       .filter(Field::isRequired)
       .map(Field::getName)
@@ -57,39 +55,32 @@ public class YamlMetaClass extends YamlMetaType {
       .collect(Collectors.toList());
   }
 
-  @NotNull
   @Override
-  public List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
+  public @NotNull List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
     return ContainerUtil.filter(myFeatures, Field::isEditable);
   }
 
-  @NotNull
-  public List<Field> getFeatures() {
+  public @NotNull List<Field> getFeatures() {
     return myFeaturesRO;
   }
 
-  @NotNull
-  protected final Field addStringFeature(@NotNull String name) {
+  protected final @NotNull Field addStringFeature(@NotNull String name) {
     return addFeature(new Field(name, YamlStringType.getInstance()));
   }
 
-  @NotNull
-  protected Field addBooleanFeature(@NotNull String name) {
+  protected @NotNull Field addBooleanFeature(@NotNull String name) {
     return addScalarFeature(name, YamlBooleanType.getSharedInstance());
   }
 
-  @NotNull
-  protected final Field addScalarFeature(@NotNull YamlScalarType type) {
+  protected final @NotNull Field addScalarFeature(@NotNull YamlScalarType type) {
     return addScalarFeature(type.getTypeName(), type);
   }
 
-  @NotNull
-  protected final Field addScalarFeature(@NotNull String name, @NotNull YamlScalarType type) {
+  protected final @NotNull Field addScalarFeature(@NotNull String name, @NotNull YamlScalarType type) {
     return addFeature(new Field(name, type));
   }
 
-  @NotNull
-  protected final Field addObjectFeature(@NotNull YamlMetaClass metaClass) {
+  protected final @NotNull Field addObjectFeature(@NotNull YamlMetaClass metaClass) {
     return addFeature(new Field(metaClass.getTypeName(), metaClass));
   }
 

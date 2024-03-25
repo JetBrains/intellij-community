@@ -27,7 +27,7 @@ public final class ShowSelectionHistoryAction extends ShowHistoryAction {
     int to = sel.getSelectionEndLineNumber();
 
     if (ActivityView.isViewEnabled()) {
-      ActivityView.show(p, gw, new ActivityScope.Selection(f, from, to));
+      ActivityView.showInDialog(p, gw, new ActivityScope.Selection(f, from, to));
     }
     else {
       LocalHistoryCounter.INSTANCE.logLocalHistoryOpened(LocalHistoryCounter.Kind.Selection);

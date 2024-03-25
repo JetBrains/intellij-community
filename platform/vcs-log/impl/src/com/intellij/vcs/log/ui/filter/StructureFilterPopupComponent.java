@@ -28,6 +28,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -47,7 +48,7 @@ import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
-public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPair<VcsLogStructureFilter, VcsLogRootFilter>, FileFilterModel> {
+public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFilterCollection, FileFilterModel> {
   private static final String PATHS = "Paths";
   private static final int FILTER_LABEL_LENGTH = 30;
   private static final int CHECKBOX_ICON_SIZE = 15;
@@ -65,14 +66,14 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
     myColorManager = colorManager;
   }
 
-  private static VcsLogRootFilter getRootFilter(@Nullable FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  private static VcsLogRootFilter getRootFilter(@Nullable VcsLogFilterCollection filter) {
     if (filter == null) return null;
-    return filter.getFilter2();
+    return filter.get(VcsLogFilterCollection.ROOT_FILTER);
   }
 
-  private static VcsLogStructureFilter getStructureFilter(@Nullable FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  private static VcsLogStructureFilter getStructureFilter(@Nullable VcsLogFilterCollection filter) {
     if (filter == null) return null;
-    return filter.getFilter1();
+    return filter.get(VcsLogFilterCollection.STRUCTURE_FILTER);
   }
 
   private @NotNull Collection<VirtualFile> getFilterRoots(@Nullable VcsLogRootFilter filter) {
@@ -84,7 +85,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
   }
 
   @Override
-  protected @NotNull @Nls String getText(@NotNull FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  protected @NotNull @Nls String getText(@NotNull VcsLogFilterCollection filter) {
     VcsLogRootFilter rootFilter = getRootFilter(filter);
     VcsLogStructureFilter structureFilter = getStructureFilter(filter);
     Collection<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(getAllRoots(), rootFilter, structureFilter);
@@ -130,7 +131,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
   }
 
   @Override
-  protected @Nls String getToolTip(@NotNull FilterPair<VcsLogStructureFilter, VcsLogRootFilter> filter) {
+  protected @Nls String getToolTip(@NotNull VcsLogFilterCollection filter) {
     return getToolTip(getFilterRoots(getRootFilter(filter)), getFilterFiles(getStructureFilter(filter)));
   }
 
@@ -230,11 +231,11 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
                      ? ContainerUtil.union(new HashSet<>(rootFilter.getRoots()), Collections.singleton(root))
                      : ContainerUtil.subtract(rootFilter.getRoots(), Collections.singleton(root));
     }
-    myFilterModel.setFilter(new FilterPair<>(null, VcsLogFilterObject.fromRoots(visibleRoots)));
+    myFilterModel.setFilter(VcsLogFilterObject.collection(VcsLogFilterObject.fromRoots(visibleRoots)));
   }
 
   private void setVisibleOnly(@NotNull VirtualFile root) {
-    myFilterModel.setFilter(new FilterPair<>(null, VcsLogFilterObject.fromRoot(root)));
+    myFilterModel.setFilter(VcsLogFilterObject.collection(VcsLogFilterObject.fromRoot(root)));
   }
 
   private @NotNull @NlsActions.ActionText String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
@@ -440,8 +441,8 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
   }
 
   private void setStructureFilter(@NotNull VcsLogStructureFilter newFilter) {
-    myFilterModel.setFilter(new FilterPair<>(newFilter, null));
-    myUiProperties.addRecentlyFilteredGroup(PATHS, FileFilterModel.getFilterValues(newFilter));
+    myFilterModel.setFilter(VcsLogFilterObject.collection(newFilter));
+    myUiProperties.addRecentlyFilteredGroup(PATHS, FileFilterModel.getStructureFilterValues(newFilter));
   }
 
   private final class SelectFromHistoryAction extends ToggleAction implements DumbAware {
@@ -463,7 +464,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<FilterPa
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myFilterModel.setFilter(new FilterPair<>(myFilter, null));
+      myFilterModel.setFilter(VcsLogFilterObject.collection(myFilter));
     }
 
     @Override

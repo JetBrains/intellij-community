@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.impl
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemPresentation
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.LangBundle
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.*
@@ -34,6 +36,7 @@ import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.util.IconUtil
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.JBUI
@@ -55,8 +58,7 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
     val text: String = fromOldExtensions { ext -> ext.getPresentableText(data, false) } ?: getText(false)
     val popupText: String = fromOldExtensions { ext -> ext.getPresentableText(data, true) } ?: getText(true)
 
-    val textAttributes = getTextAttributes(selected = false)
-    val selectedTextAttributes = getTextAttributes(selected = true)
+    val textAttributes = getTextAttributes()
 
     val hasContainingFile = (data as? PsiElement)?.containingFile != null
 
@@ -65,7 +67,6 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
       text,
       popupText,
       textAttributes,
-      selectedTextAttributes,
       hasContainingFile
     )
   }
@@ -74,7 +75,7 @@ open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
   open fun getText(forPopup: Boolean): @Nls String = data.toString()
 
-  open fun getTextAttributes(selected: Boolean): SimpleTextAttributes = REGULAR_ATTRIBUTES
+  open fun getTextAttributes(): SimpleTextAttributes = REGULAR_ATTRIBUTES
 
 }
 
@@ -87,7 +88,7 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
 
   override fun getIcon(): Icon = AllIcons.Nodes.Project
 
-  override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
+  override fun getTextAttributes(): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstanceIfCreated(data) ?: return REGULAR_ATTRIBUTES
     val hasProblems = ModuleManager.getInstance(data)
       .modules
@@ -119,7 +120,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
 
   override fun getIcon(): Icon = ModuleType.get(data).icon
 
-  override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
+  override fun getTextAttributes(): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstance(data.project)
     val hasProblems = problemSolver.hasProblemFilesBeneath(data)
 
@@ -156,14 +157,14 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
       null
     }
 
-  override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
+  override fun getTextAttributes(): SimpleTextAttributes {
     val psiFile = data.containingFile
 
     if (psiFile != null) {
       val virtualFile = psiFile.virtualFile ?: return SimpleTextAttributes(null, null, navBarErrorAttributes.waveColor, STYLE_PLAIN)
       val problemSolver = WolfTheProblemSolver.getInstance(data.project)
       val style = if (problemSolver.isProblemFile(virtualFile)) navBarErrorAttributes.style else STYLE_PLAIN
-      val color = if (!selected) FileStatusManager.getInstance(data.project).getStatus(virtualFile).color else null
+      val color = FileStatusManager.getInstance(data.project).getStatus(virtualFile).color
       return SimpleTextAttributes(null, color, navBarErrorAttributes.waveColor, style)
     }
     else {

@@ -20,11 +20,7 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclarationContainer
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtEnumEntry
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.*
 import kotlin.reflect.KMutableProperty0
 
 /**
@@ -174,11 +170,21 @@ sealed class K2MoveModel {
                 return null
             }
 
+            fun PsiElement?.isSingleClassContainer(): Boolean {
+                if (this !is KtClass) return false
+                val file = parent as? KtFile ?: return false
+                return this == file.declarations.singleOrNull()
+            }
+
+            fun isSingleFileMove(movedElement: Array<out KtElement>) = movedElement.all { it is KtNamedDeclaration }
+                    || movedElement.singleOrNull() is KtFile
+
+            fun isMultiFileMove(movedElement: Array<out KtElement>) = movedElement.map { it.containingFile }.toSet().size > 1
+
             val inSourceRoot = inSourceRoot()
-            val targetFile = targetContainer?.containingFile
             return when {
-                targetContainer is PsiDirectory || (elements.all { it is KtFile } && elements.size > 1) -> {
-                    val source = K2MoveSourceModel.FileSource(elements.filterIsInstance<KtFile>().toSet())
+                targetContainer is PsiDirectory || isMultiFileMove(elements) -> {
+                    val source = K2MoveSourceModel.FileSource(elements.map { it.containingKtFile }.toSet())
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.SourceDirectory(pkg, targetContainer)
@@ -190,7 +196,7 @@ sealed class K2MoveModel {
                     }
                     Files(project, source, target, inSourceRoot)
                 }
-                targetFile is KtFile || elements.all { it is KtDeclarationContainer } -> {
+                targetContainer is KtFile || targetContainer.isSingleClassContainer() || isSingleFileMove(elements) -> {
                     val elementsFromFiles = elements.flatMap { elem ->
                         when (elem) {
                             is KtFile -> elem.declarations.filterIsInstance<KtNamedDeclaration>()
@@ -199,6 +205,7 @@ sealed class K2MoveModel {
                         }
                     }.toSet()
                     val source = K2MoveSourceModel.ElementSource(elementsFromFiles)
+                    val targetFile = targetContainer?.containingFile
                     val target = if (targetFile is KtFile) {
                         K2MoveTargetModel.File(targetFile)
                     } else { // no default target is provided, happens when invoking refactoring via keyboard instead of drag-and-drop
@@ -214,7 +221,7 @@ sealed class K2MoveModel {
                     }
                     Declarations(project, source, target, inSourceRoot)
                 }
-                else -> error("Can't mix file and element source")
+                else -> error("Unsupported move operation")
             }
         }
     }

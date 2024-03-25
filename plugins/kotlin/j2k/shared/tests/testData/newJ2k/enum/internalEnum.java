@@ -1,2 +1,1 @@
-//class
 enum Test {}

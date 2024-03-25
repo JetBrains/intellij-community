@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.LookupManagerListener
 
-class InlineCompletionLookupManagerListener : LookupManagerListener {
+private class InlineCompletionLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     newLookup?.addLookupListener(object : LookupListener {
       override fun currentItemChanged(event: LookupEvent) {

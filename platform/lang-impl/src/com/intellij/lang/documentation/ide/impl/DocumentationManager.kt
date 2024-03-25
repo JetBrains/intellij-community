@@ -60,8 +60,6 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     cs.cancel()
   }
 
-  private val toolWindowManager: DocumentationToolWindowManager get() = DocumentationToolWindowManager.instance(project)
-
   fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null) {
     EDT.assertIsEdt()
 
@@ -79,16 +77,18 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     } ?: quickSearchPopupContext(project)?.also {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE)
     }
+
+    val toolWindowManager = DocumentationToolWindowManager.getInstanceIfCreated(project)
     if (secondaryPopupContext == null) {
       // no popups
-      if (toolWindowManager.focusVisibleReusableTab()) {
+      if (toolWindowManager?.focusVisibleReusableTab() == true) {
         // Explicit invocation moves focus to a visible preview tab.
         return
       }
     }
     else {
       // some popup is already visible
-      if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
+      if (toolWindowManager?.hasVisibleAutoUpdatingTab() == true) {
         // don't show another popup is a preview tab is visible, it will be updated
         return
       }
@@ -142,6 +142,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   private fun showDocumentation(requests: List<DocumentationRequest>,
                                 popupContext: PopupContext,
                                 popupDependencies: Disposable? = null) {
+    val toolWindowManager = DocumentationToolWindowManager.getInstance(project)
     val initial = requests.first()
     if (skipPopup) {
       toolWindowManager.showInToolWindow(requests)
@@ -208,7 +209,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
       // the user might've explicitly invoked the action during the delay
       return // return here to not compute the request unnecessarily
     }
-    if (toolWindowManager.hasVisibleAutoUpdatingTab()) {
+    if (DocumentationToolWindowManager.getInstanceIfCreated(project)?.hasVisibleAutoUpdatingTab() == true) {
       return // don't show a documentation popup if an auto-updating tab is visible, it will be updated
     }
     val request = withContext(Dispatchers.Default) {
@@ -260,7 +261,8 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     editor: Editor,
     popupPosition: Point,
   ): Boolean = coroutineScope {
-    val pauseAutoUpdateHandle = toolWindowManager.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
+    val toolWindowManager = DocumentationToolWindowManager.getInstanceIfCreated(project)
+    val pauseAutoUpdateHandle = toolWindowManager?.getVisibleAutoUpdatingContent()?.toolWindowUI?.pauseAutoUpdate()
     try {
       val result = withContext(Dispatchers.Default) {
         resolveLink(targetSupplier, url)

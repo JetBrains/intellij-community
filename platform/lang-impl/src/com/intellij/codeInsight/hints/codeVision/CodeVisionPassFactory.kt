@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
@@ -7,7 +7,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionHost
-import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.lensContext
 import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.openapi.application.EDT
@@ -91,7 +90,7 @@ private class CodeVisionTextEditorInitializer : TextEditorInitializer {
     val editor = editorSupplier.invoke()
     val psiManager = project.serviceAsync<PsiManager>()
     val psiFile = readActionBlocking { psiManager.findFile(file) }
-    val placeholders = project.serviceAsync<CodeVisionInitializer>().getCodeVisionHost().collectPlaceholders(editor, psiFile)
+    val placeholders = project.serviceAsync<CodeVisionHost>().collectPlaceholders(editor, psiFile)
     if (placeholders.isEmpty()) {
       return
     }

@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
@@ -21,7 +22,11 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -52,6 +57,7 @@ import com.intellij.usages.UsageContextPanel
 import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -76,6 +82,7 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import java.util.concurrent.Callable
 import java.util.regex.Pattern
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -111,9 +118,9 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
     return null
   }
-  
+
   fun setShowTooltipBalloon(showTooltipBalloon: Boolean) {
-    myShowTooltipBalloon = showTooltipBalloon;
+    myShowTooltipBalloon = showTooltipBalloon
   }
 
   class Provider : UsageContextPanel.Provider {
@@ -197,7 +204,27 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       LOG.debug("Creating preview for " + psiFile.virtualFile)
     }
     val project = psiFile.project
-    val editor = EditorFactory.getInstance().createEditor(document, project, psiFile.virtualFile, !myIsEditor, EditorKind.PREVIEW)
+    val editor = if (myIsEditor) {
+      EditorFactory.getInstance().createEditor(document, project, EditorKind.PREVIEW)
+    }
+    else {
+      EditorFactory.getInstance().createViewer(document, project, EditorKind.PREVIEW)
+    }
+    if (editor is EditorEx) {
+      val disposable = (editor as? EditorImpl)?.disposable ?: project
+      ReadAction
+        .nonBlocking(
+          Callable {
+            EditorHighlighterFactory.getInstance().createEditorHighlighter(project, psiFile.virtualFile).also {
+              it.setText(editor.document.immutableCharSequence)
+            }
+          })
+        .finishOnUiThread(ModalityState.any()) { result: EditorHighlighter? ->
+          if (result != null) editor.setHighlighter(result)
+        }
+        .expireWith(disposable)
+        .submit(NonUrgentExecutor.getInstance())
+    }
     customizeEditorSettings(editor.settings)
     editor.putUserData(PREVIEW_EDITOR_FLAG, this)
 
@@ -449,10 +476,10 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
           editor.caretModel.moveToOffset(rangeToHighlight.endOffset)
         }
         if (infos.size == 1 && infoRange != null) {
-          var balloonText : String? = null
+          var balloonText: String? = null
           if (findModel != null) {
             val replacementText =
-              FindManager.getInstance(project).getStringToReplace(editor.document.getText(rangeToHighlight), findModel, 
+              FindManager.getInstance(project).getStringToReplace(editor.document.getText(rangeToHighlight), findModel,
                                                                   rangeToHighlight.startOffset, editor.document.text) ?: return
             val previewText = createPreviewHtml(replacementText)
             if (previewText != findModel.stringToReplace || Registry.`is`("ide.find.show.replacement.hint.for.simple.regexp")) {
@@ -534,6 +561,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     }
 
     val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
+
     @Contract("null -> !null")
     private fun cannotPreviewMessage(infos: List<UsageInfo>?): @NlsContexts.StatusText String? {
       if (infos == null) {

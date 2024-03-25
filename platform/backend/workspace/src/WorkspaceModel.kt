@@ -75,6 +75,10 @@ public interface WorkspaceModel {
    *     of updates.
    * - Receive events of the workspace model updates. For this only the flow of updates can be used.
    *
+   * **If the subscription should be set up after application start**, the [ProjectActivity][com.intellij.openapi.startup.ProjectActivity]
+   *   can be used. This is also the way to migrate from [WorkspaceModelChangeListener] to this subscription. Keep in mind that
+   *   such an approach may miss a few first updates of the model, what is normal.
+   *
    * Keep in mind that since this listener is asynchronous, there is no guarantee that file index or jps bridges will be updated.
    *
    * # Behavior details

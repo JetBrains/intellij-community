@@ -17,7 +17,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridg
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -258,7 +258,7 @@ class ArtifactModifiableModelBridge(
       }
     }
 
-    val entityStorage = WorkspaceModel.getInstance(project).internal.entityStorage
+    val entityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage
     added.forEach { bridge ->
       bridge.elementsWithDiff.forEach { it.setStorage(entityStorage, project, HashSet(), PackagingElementInitializer) }
       bridge.elementsWithDiff.clear()

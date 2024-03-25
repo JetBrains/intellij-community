@@ -1178,9 +1178,9 @@ public final class HighlightUtil {
         isAllowed = false;
       }
 
-      boolean isInterface = modifierOwnerParent instanceof PsiClass && ((PsiClass)modifierOwnerParent).isInterface();
+      boolean isInterface = modifierOwnerParent instanceof PsiClass psiClass && psiClass.isInterface();
       if (PsiModifier.PRIVATE.equals(modifier) && modifierOwnerParent instanceof PsiClass) {
-        isAllowed &= !isInterface || PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType();
+        isAllowed &= !isInterface || PsiUtil.isAvailable(JavaFeature.PRIVATE_INTERFACE_METHODS, modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType();
       }
       else if (PsiModifier.STRICTFP.equals(modifier)) {
         isAllowed &= !isInterface || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, modifierOwner);

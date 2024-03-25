@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -43,7 +44,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
       jb-annotations = { module = "org.jetbrains:annotations", version = "16.0.2" }
       """);
 
-    if (isGradleOlderOrSameAs("7.0.2")) {
+    if (GradleVersionUtil.isGradleOlderOrSameAs(getCurrentGradleBaseVersion(), "7.0.2")) {
       createSettingsFile("enableFeaturePreview('VERSION_CATALOGS')");
     }
 
@@ -59,7 +60,7 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
   public void testCustomVersionCatalogTomlIsWatched() throws Exception {
     var settingsFile = new StringBuilder();
 
-    if (isGradleOlderOrSameAs("7.0.2")) {
+    if (GradleVersionUtil.isGradleOlderOrSameAs(getCurrentGradleBaseVersion(), "7.0.2")) {
       settingsFile.append("enableFeaturePreview('VERSION_CATALOGS')\n\n");
     }
 

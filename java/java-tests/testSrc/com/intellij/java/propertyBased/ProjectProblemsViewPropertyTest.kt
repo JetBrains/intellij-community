@@ -51,7 +51,6 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     PropertyChecker.customized()
-      .rechecking("6NPkvxPGro77DQMBOrenewIECAQCAwoG")
       .withIterationCount(50)
       .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
   }
@@ -222,7 +221,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val module = ModuleUtilCore.findModuleForPsiElement(member) ?: return false
     val scope = GlobalSearchScope.moduleScope(module)
     val memberFile = member.containingFile
-    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile, null) != TOO_MANY_OCCURRENCES
+    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile) != TOO_MANY_OCCURRENCES
   }
 
   private fun isOverride(possibleOverride: PsiMethod, target: PsiMember): Boolean {

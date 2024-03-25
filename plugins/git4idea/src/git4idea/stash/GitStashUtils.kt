@@ -4,7 +4,6 @@
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
-import com.intellij.history.ActivityId
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger

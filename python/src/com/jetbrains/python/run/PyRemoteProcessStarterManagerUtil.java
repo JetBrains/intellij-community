@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -22,8 +22,7 @@ public final class PyRemoteProcessStarterManagerUtil {
    *                                           the type of the provided
    *                                           additional SDK data
    */
-  @NotNull
-  public static PyRemoteProcessStarterManager getManager(@NotNull PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase) {
+  public static @NotNull PyRemoteProcessStarterManager getManager(@NotNull PyRemoteSdkAdditionalDataBase pyRemoteSdkAdditionalDataBase) {
     for (PyRemoteProcessStarterManager processManager : PyRemoteProcessStarterManager.EP_NAME.getExtensions()) {
       if (processManager.supports(pyRemoteSdkAdditionalDataBase)) {
         return processManager;

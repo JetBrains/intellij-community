@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.analysis-project-structure" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-project-structure-for-ide:2.0.0-dev-17421">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-project-structure-for-ide:2.0.0-dev-19480">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.0-dev-17421/analysis-project-structure-for-ide-2.0.0-dev-17421.jar">
-          <sha256sum>f18de922e93c64767670992f3aba7379f8b9df04fc2612bd03a86e0c0c86b831</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.0-dev-19480/analysis-project-structure-for-ide-2.0.0-dev-19480.jar">
+          <sha256sum>971aceb3c727fa15a3ea890055a7702cd6929e60d20f885be4b87b6de5ac1e5a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.0-dev-17421/analysis-project-structure-for-ide-2.0.0-dev-17421.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.0-dev-19480/analysis-project-structure-for-ide-2.0.0-dev-19480.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.0-dev-17421/analysis-project-structure-for-ide-2.0.0-dev-17421-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-project-structure-for-ide/2.0.0-dev-19480/analysis-project-structure-for-ide-2.0.0-dev-19480-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

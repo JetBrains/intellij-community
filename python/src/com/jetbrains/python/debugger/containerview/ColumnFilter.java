@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.containerview;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +13,10 @@ public class ColumnFilter {
   public static final String VAR_ALIAS = "x";
 
   private final int myColumn;
-  @NotNull private final String myFilter;
+  private final @NotNull String myFilter;
 
   private final Mode myMode;
-  @NotNull private final String myStrFormat;
+  private final @NotNull String myStrFormat;
 
   public ColumnFilter(int column, @NotNull String filter, Mode mode, @NotNull String strFormat) {
     myColumn = column;
@@ -49,18 +49,15 @@ public class ColumnFilter {
     return myMode == Mode.EXPRESSION;
   }
 
-  @NotNull
-  public String getFilter() {
+  public @NotNull String getFilter() {
     return myFilter;
   }
 
-  @NotNull
-  public String getStrFormat() {
+  public @NotNull String getStrFormat() {
     return myStrFormat;
   }
 
-  @NotNull
-  public String replaceAlias(@NotNull String replacement) {
+  public @NotNull String replaceAlias(@NotNull String replacement) {
     return myFilter.replace(VAR_ALIAS, replacement);
   }
 

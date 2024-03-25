@@ -13,7 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,11 +30,13 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
   private final boolean myIsFix;
 
   public AssignFieldFromParameterAction() {
-    this(false);
-  }
-  public AssignFieldFromParameterAction(boolean isFix) {
     super(PsiParameter.class);
-    myIsFix = isFix;
+    myIsFix = false;
+  }
+  
+  public AssignFieldFromParameterAction(@NotNull PsiParameter parameter) {
+    super(parameter);
+    myIsFix = true;
   }
 
   @Override

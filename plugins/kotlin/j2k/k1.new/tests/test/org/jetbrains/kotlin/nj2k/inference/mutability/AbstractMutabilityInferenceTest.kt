@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.FunctionConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.j2k.descriptorByFileDirective
+import org.jetbrains.kotlin.j2k.J2K_PROJECT_DESCRIPTOR
 import org.jetbrains.kotlin.nj2k.inference.AbstractConstraintCollectorTest
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import java.io.File
 
 abstract class AbstractMutabilityInferenceTest : AbstractConstraintCollectorTest() {
     override fun createInferenceFacade(resolutionFacade: ResolutionFacade): InferenceFacade {
@@ -76,5 +75,5 @@ abstract class AbstractMutabilityInferenceTest : AbstractConstraintCollectorTest
         deleteComments()
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = descriptorByFileDirective(File(testDataDirectory, fileName()))
+    override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
 }

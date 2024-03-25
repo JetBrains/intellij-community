@@ -73,7 +73,7 @@ class TypingSpeedTracker {
   }
 
   companion object {
-    private val DECAY_DURATIONS = listOf(1, 2, 5, 30).associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), FeatureDeclaration.float("typing_speed_${it}s")) }
+    private val DECAY_DURATIONS = listOf(1, 2, 5, 30).associate { it.seconds to Pair(EventFields.Float("typing_speed_${it}s"), FeatureDeclaration.float("typing_speed_${it}s").nullable()) }
 
     fun getInstance(): TypingSpeedTracker = service()
     fun getEventFields(): Array<EventField<*>> = DECAY_DURATIONS.values.map { it.first }.toTypedArray()

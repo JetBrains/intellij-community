@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 interface ChangedValueTypeEntity: WorkspaceEntity {
@@ -22,11 +27,13 @@ interface ChangedValueTypeEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(type: String,
-                        someKey: String,
-                        text: List<String>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ChangedValueTypeEntity {
+    operator fun invoke(
+      type: String,
+      someKey: String,
+      text: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChangedValueTypeEntity {
       val builder = builder()
       builder.type = type
       builder.someKey = someKey
@@ -40,7 +47,10 @@ interface ChangedValueTypeEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChangedValueTypeEntity,
-                                      modification: ChangedValueTypeEntity.Builder.() -> Unit): ChangedValueTypeEntity = modifyEntity(
-  ChangedValueTypeEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChangedValueTypeEntity,
+  modification: ChangedValueTypeEntity.Builder.() -> Unit,
+): ChangedValueTypeEntity {
+  return modifyEntity(ChangedValueTypeEntity.Builder::class.java, entity, modification)
+}
 //endregion

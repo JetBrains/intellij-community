@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.indexingDiagnosticDir
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.jacksonMapper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils.oldVersionIndexingDiagnosticDir
@@ -27,6 +26,8 @@ import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.fileSizeSafe
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.io.Reader
 import java.nio.file.Files
@@ -39,8 +40,9 @@ import kotlin.math.min
 import kotlin.streams.asSequence
 
 private const val DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY = "intellij.indexes.diagnostics.limit.of.files"
+private const val FILE_NAME_PREFIX = "diagnostic-"
 
-class IndexDiagnosticDumper : Disposable {
+class IndexDiagnosticDumper(private val coroutineScope: CoroutineScope) : Disposable {
   private val indexingActivityHistoryListenerPublisher =
     ApplicationManager.getApplication().messageBus.syncPublisher(ProjectIndexingActivityHistoryListener.TOPIC)
 
@@ -48,24 +50,19 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service()
 
-    private const val FILE_NAME_PREFIX = "diagnostic-"
-
-    @JvmStatic
+    @JvmField
     val projectIndexingActivityHistoryListenerEpName: ExtensionPointName<ProjectIndexingActivityHistoryListener> =
-      ExtensionPointName.create("com.intellij.projectIndexingActivityHistoryListener")
+      ExtensionPointName("com.intellij.projectIndexingActivityHistoryListener")
 
-    @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean
-      get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
 
     @JvmStatic
     private val indexingDiagnosticsLimitOfFiles: Int
       get() = SystemProperties.getIntProperty(DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY, 300)
 
     private fun hasProvidedDiagnosticsLimitOfFilesFromProperty(): Boolean {
-      val providedLimitOfFiles = System.getProperty(DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY)
-      if (providedLimitOfFiles == null) return false
+      val providedLimitOfFiles = System.getProperty(DIAGNOSTIC_LIMIT_OF_FILES_PROPERTY) ?: return false
       try {
         providedLimitOfFiles.toInt()
       }
@@ -75,7 +72,6 @@ class IndexDiagnosticDumper : Disposable {
       return true
     }
 
-    @JvmStatic
     private val indexingDiagnosticsSizeLimitOfFilesInMiBPerProject: Int
       get() {
         val providedValue = System.getProperty("intellij.indexes.diagnostics.size.limit.of.files.MiB.per.project")
@@ -90,15 +86,11 @@ class IndexDiagnosticDumper : Disposable {
         return if (hasProvidedDiagnosticsLimitOfFilesFromProperty()) 0 else 10
       }
 
-    @JvmStatic
     val shouldDumpPathsOfIndexedFiles: Boolean
-      get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
 
-    @JvmStatic
     val shouldDumpProviderRootPaths: Boolean
-      get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.provider.root.paths", false)
 
     /**
      * Some processes may be done in multiple threads, like content loading,
@@ -108,24 +100,19 @@ class IndexDiagnosticDumper : Disposable {
      *
      * This property allows providing more details on those times and ratio in html
      */
-    @JvmStatic
     val shouldProvideVisibleAndAllThreadsTimeInfo: Boolean
-      get() =
-        SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
+      get() = SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.provide.visible.and.all.threads.time.info", false)
 
-    @JvmStatic
     @TestOnly
     var shouldDumpInUnitTestMode: Boolean = false
 
-    @JvmStatic
     val shouldDumpPathsOfFilesIndexedByInfrastructureExtensions: Boolean =
       SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.indexed.by.infrastructure.extensions",
                                           ApplicationManagerEx.isInIntegrationTest())
 
-    @JvmStatic
     val shouldPrintInformationAboutChangedDuringIndexingActionFilesInAggregateHtml: Boolean = false
 
-    private val LOG = Logger.getInstance(IndexDiagnosticDumper::class.java)
+    private val LOG = logger<IndexDiagnosticDumper>()
 
     fun readJsonIndexingActivityDiagnostic(file: Path): JsonIndexingActivityDiagnostic? {
       return readJsonIndexingActivityDiagnostic { file.bufferedReader() }
@@ -181,9 +168,10 @@ class IndexDiagnosticDumper : Disposable {
     }
 
     @TestOnly
-    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>): Int =
-      getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
-                                              indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
+    fun getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics: List<ExistingIndexingActivityDiagnostic>): Int {
+      return getDiagnosticNumberLimitWithinSizeLimit(existingDiagnostics,
+                                                     indexingDiagnosticsSizeLimitOfFilesInMiBPerProject * 1024 * 1024.toLong()).first
+    }
 
     private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
       return fastReadJsonField(jsonFile.bufferedReader(), propertyName, type)
@@ -209,11 +197,13 @@ class IndexDiagnosticDumper : Disposable {
       return null
     }
 
-    private fun fastReadAppInfo(jsonFile: Reader): JsonIndexDiagnosticAppInfo? =
-      fastReadJsonField(jsonFile, "appInfo", JsonIndexDiagnosticAppInfo::class.java)
+    private fun fastReadAppInfo(jsonFile: Reader): JsonIndexDiagnosticAppInfo? {
+      return fastReadJsonField(jsonFile, "appInfo", JsonIndexDiagnosticAppInfo::class.java)
+    }
 
-    private fun fastReadRuntimeInfo(jsonFile: Reader): JsonRuntimeInfo? =
-      fastReadJsonField(jsonFile, "runtimeInfo", JsonRuntimeInfo::class.java)
+    private fun fastReadRuntimeInfo(jsonFile: Reader): JsonRuntimeInfo? {
+      return fastReadJsonField(jsonFile, "runtimeInfo", JsonRuntimeInfo::class.java)
+    }
   }
 
   private var isDisposed = false
@@ -236,7 +226,7 @@ class IndexDiagnosticDumper : Disposable {
         return
       }
       unsavedIndexingActivityHistories.add(projectScanningHistory)
-      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
+      coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectScanningHistory) }
     }
      finally {
        runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
@@ -263,7 +253,7 @@ class IndexDiagnosticDumper : Disposable {
       projectDumbIndexingHistory.indexingFinished()
       projectDumbIndexingHistory.finishTotalUpdatingTime()
       unsavedIndexingActivityHistories.add(projectDumbIndexingHistory)
-      NonUrgentExecutor.getInstance().execute { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
+      coroutineScope.launch { dumpProjectIndexingActivityHistoryToLogSubdirectory(projectDumbIndexingHistory) }
     }
     finally {
       runAllListenersSafely(projectIndexingActivityHistoryListenerEpName, indexingActivityHistoryListenerPublisher) {
@@ -420,5 +410,14 @@ class IndexDiagnosticDumper : Disposable {
     }
     // The synchronized block allows waiting for unfinished background dumpers.
     isDisposed = true
+  }
+
+  @TestOnly
+  @Synchronized
+  fun waitAllActivitiesAreDumped() {
+    if (unsavedIndexingActivityHistories.isEmpty()) return
+    for (unsavedIndexingActivityHistory in unsavedIndexingActivityHistories) {
+      dumpProjectIndexingActivityHistoryToLogSubdirectory(unsavedIndexingActivityHistory)
+    }
   }
 }

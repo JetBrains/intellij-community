@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer
 
 private const val workspaceBasePackageName = "com.intellij.platform.workspace"
@@ -45,6 +46,7 @@ internal object EntityStorage {
 }
 internal val MutableEntityStorage = fqn(workspaceStoragePackageName, "MutableEntityStorage")
 internal val EntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentation")
+internal val MutableEntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "MutableEntityStorageInstrumentation")
 internal val EntityStorageInstrumentationApi = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentationApi")
 
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
@@ -21,7 +21,11 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentWithLinkToAbstractChild {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ParentWithLinkToAbstractChild {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -33,9 +37,12 @@ interface ParentWithLinkToAbstractChild : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentWithLinkToAbstractChild,
-                                      modification: ParentWithLinkToAbstractChild.Builder.() -> Unit): ParentWithLinkToAbstractChild = modifyEntity(
-  ParentWithLinkToAbstractChild.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ParentWithLinkToAbstractChild,
+  modification: ParentWithLinkToAbstractChild.Builder.() -> Unit,
+): ParentWithLinkToAbstractChild {
+  return modifyEntity(ParentWithLinkToAbstractChild.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Abstract
@@ -53,9 +60,11 @@ interface AbstractChildWithLinkToParentEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String,
-                        entitySource: EntitySource,
-                        init: (Builder<AbstractChildWithLinkToParentEntity>.() -> Unit)? = null): AbstractChildWithLinkToParentEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder<AbstractChildWithLinkToParentEntity>.() -> Unit)? = null,
+    ): AbstractChildWithLinkToParentEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -83,7 +92,11 @@ interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEnt
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SpecificChildWithLinkToParentEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SpecificChildWithLinkToParentEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -95,9 +108,12 @@ interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEnt
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SpecificChildWithLinkToParentEntity,
-                                      modification: SpecificChildWithLinkToParentEntity.Builder.() -> Unit): SpecificChildWithLinkToParentEntity = modifyEntity(
-  SpecificChildWithLinkToParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SpecificChildWithLinkToParentEntity,
+  modification: SpecificChildWithLinkToParentEntity.Builder.() -> Unit,
+): SpecificChildWithLinkToParentEntity {
+  return modifyEntity(SpecificChildWithLinkToParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 

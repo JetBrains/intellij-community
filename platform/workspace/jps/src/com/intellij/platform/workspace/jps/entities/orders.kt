@@ -32,7 +32,11 @@ interface FacetsOrderEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(orderOfFacets: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FacetsOrderEntity {
+    operator fun invoke(
+      orderOfFacets: List<String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): FacetsOrderEntity {
       val builder = builder()
       builder.orderOfFacets = orderOfFacets.toMutableWorkspaceList()
       builder.entitySource = entitySource
@@ -45,7 +49,12 @@ interface FacetsOrderEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: FacetsOrderEntity.Builder.() -> Unit): FacetsOrderEntity = modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: FacetsOrderEntity,
+  modification: FacetsOrderEntity.Builder.() -> Unit,
+): FacetsOrderEntity {
+  return modifyEntity(FacetsOrderEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @get:ApiStatus.Internal

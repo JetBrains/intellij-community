@@ -170,7 +170,7 @@ fun KtDeclaration.safeAnalyzeWithContentNonSourceRootCode(
 fun KtExpression.computeTypeInfoInContext(
     scope: LexicalScope,
     contextExpression: KtExpression = this,
-    trace: BindingTrace = BindingTraceContext(),
+    trace: BindingTrace = BindingTraceContext(this.project),
     dataFlowInfo: DataFlowInfo = DataFlowInfo.EMPTY,
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE,
     isStatement: Boolean = false,
@@ -188,7 +188,7 @@ fun KtExpression.computeTypeInfoInContext(
 fun KtExpression.analyzeInContext(
     scope: LexicalScope,
     contextExpression: KtExpression = this,
-    trace: BindingTrace = BindingTraceContext(),
+    trace: BindingTrace = BindingTraceContext(this.project),
     dataFlowInfo: DataFlowInfo = DataFlowInfo.EMPTY,
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE,
     isStatement: Boolean = false,
@@ -212,7 +212,7 @@ fun KtExpression.analyzeInContext(
 fun KtExpression.computeTypeInContext(
     scope: LexicalScope,
     contextExpression: KtExpression = this,
-    trace: BindingTrace = BindingTraceContext(),
+    trace: BindingTrace = BindingTraceContext(this.project),
     dataFlowInfo: DataFlowInfo = DataFlowInfo.EMPTY,
     expectedType: KotlinType = TypeUtils.NO_EXPECTED_TYPE
 ): KotlinType? = computeTypeInfoInContext(scope, contextExpression, trace, dataFlowInfo, expectedType).type

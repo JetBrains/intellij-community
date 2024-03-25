@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -29,9 +30,8 @@ public class YAMLPlainTextImpl extends YAMLBlockScalarImpl implements YAMLScalar
   public @NotNull YamlScalarTextEvaluator getTextEvaluator() {
     return new YamlScalarTextEvaluator<>(this) {
 
-      @NotNull
       @Override
-      public List<TextRange> getContentRanges() {
+      public @NotNull List<TextRange> getContentRanges() {
         final int myStart = getTextRange().getStartOffset();
         final List<TextRange> result = new ArrayList<>();
 
@@ -52,9 +52,8 @@ public class YAMLPlainTextImpl extends YAMLBlockScalarImpl implements YAMLScalar
         return result;
       }
 
-      @NotNull
       @Override
-      protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+      protected @NotNull String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
         if (isNewline(text, contentRanges.get(indexBefore)) || isNewline(text, contentRanges.get(indexBefore + 1))) {
           return "";
         }

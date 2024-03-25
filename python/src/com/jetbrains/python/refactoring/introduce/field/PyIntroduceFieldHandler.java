@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -141,9 +141,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
   }
 
-  @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
+  protected @Nullable PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     assert clazz != null;
@@ -169,8 +168,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     return false;
   }
 
-  @NotNull
-  private static PsiElement addFieldToSetUp(PyClass clazz, Function<String, PyStatement> callback) {
+  private static @NotNull PsiElement addFieldToSetUp(PyClass clazz, Function<String, PyStatement> callback) {
     final PyFunction init = clazz.findMethodByName(PyNames.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);

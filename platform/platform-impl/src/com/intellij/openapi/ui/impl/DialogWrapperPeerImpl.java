@@ -1144,7 +1144,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       @Override
       protected @NotNull JLayeredPane createLayeredPane() {
-        JLayeredPane p = new JBLayeredPane();
+        JLayeredPane p = new JBLayeredPane() {
+          @Override
+          protected Graphics getComponentGraphics(Graphics g) {
+            return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
+          }
+        };
         p.setName(this.getName()+".layeredPane");
         return p;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.classes
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
@@ -7,9 +7,8 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.impl.metadata.fullName
 import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
+import com.intellij.workspaceModel.codegen.impl.writer.fields.*
 import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldCode
-import com.intellij.workspaceModel.codegen.impl.writer.fields.implWsDataFieldInitializedCode
-import com.intellij.workspaceModel.codegen.impl.writer.fields.javaType
 
 /**
  * - Soft links
@@ -121,7 +120,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
       }
 
-      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity}>): $WorkspaceEntity") {
+      sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity.Builder}<*>>): ${WorkspaceEntity.Builder}<*>") {
         val noRefs = allFields.noRefs().noSymbolicId()
         val mandatoryFields = allFields.mandatoryFields()
         val constructor = mandatoryFields.joinToString(", ") { it.name }.let { if (it.isNotBlank()) "($it)" else "" }
@@ -134,9 +133,9 @@ fun ObjClass<*>.implWsDataClassCode(): String {
           allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
             val parentType = it.valueType
             if (parentType is ValueType.Optional) {
-              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
+              line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaBuilderTypeWithGeneric}>().singleOrNull()")
             } else {
-              line("parents.filterIsInstance<${parentType.javaType}>().singleOrNull()?.let { this.${it.name} = it }")
+              line("parents.filterIsInstance<${parentType.javaBuilderTypeWithGeneric}>().singleOrNull()?.let { this.${it.name} = it }")
             }
           }
         }

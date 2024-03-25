@@ -53,7 +53,8 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
             }
         }
 
-        psi<PsiMethod>()?.let { psiMethod ->
+        if (isExternallyAccessible()) {
+            val psiMethod = psi<PsiMethod>() ?: return
             context.externalCodeProcessor.addMember(JKPhysicalMethodData(psiMethod))
         }
     }
@@ -82,7 +83,11 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
         val hasMutableAnnotation = annotationList.annotations.any { MUTABLE_ANNOTATIONS.contains(it.classSymbol.fqName) }
-        val scope = if (this.parentOfType<JKClass>()?.visibility == PRIVATE) this.parentOfType<JKClass>() else this.parentOfType<JKFile>()
+        val scope = when {
+            parentOfType<JKConstructor>() != null -> parentOfType<JKFile>()
+            parentOfType<JKClass>()?.visibility == PRIVATE && parentOfType<JKClass>()?.parentOfType<JKClass>() == null -> parentOfType<JKClass>()
+            else -> parentOfType<JKTreeRoot>() ?: parentOfType<JKFile>()
+        }
         mutability = when {
             modality == FINAL -> IMMUTABLE
             hasMutableAnnotation -> MUTABLE
@@ -90,8 +95,24 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
             else -> inferMutabilityFromWritableUsages(scope, context)
         }
         modality = FINAL
-        psi<PsiField>()?.let { psiField ->
+
+        if (isExternallyAccessible()) {
+            val psiField = psi<PsiField>() ?: return
             context.externalCodeProcessor.addMember(JKFieldDataFromJava(psiField))
         }
+    }
+
+    private fun JKDeclaration.isExternallyAccessible(): Boolean {
+        require(this is JKVisibilityOwner)
+        val container = parentOfType<JKClass>() ?: return false
+        if (container.visibility == PRIVATE) return false
+        if (container.isLocalClass()) return false
+        if (this is JKMethod && visibility == PRIVATE) {
+            // This condition does not apply to private fields, that may be later merged
+            // with public accessors, and so become public Kotlin properties
+            return false
+        }
+
+        return true
     }
 }

@@ -44,6 +44,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     const val INTERNAL_BORDER = 10
     const val EXTERNAL_BORDER = 14
     const val LAYOUT_MIN_WIDTH = 40
+    const val TOOLBAR_MIN_HEIGHT = 30
   }
 
   private val statusesActionGroup = DefaultActionGroup()
@@ -92,7 +93,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
     val maxHeight = 22 * 4
-    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight"))
+    add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight").minHeight("$TOOLBAR_MIN_HEIGHT"))
 
     updateStatusToolbar(false)
   }

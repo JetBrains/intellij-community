@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentProcessUtil")
 
 package com.intellij.platform.ijent
@@ -6,14 +6,17 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.map2Array
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * If [selfDeleteOnExit] is true, IJent tries to delete itself AND its parent directory during/after it has exited.
  */
+@ApiStatus.Experimental
 fun getIjentGrpcArgv(
   remotePathToIjent: String,
   additionalEnv: Map<String, String> = mapOf(),
   selfDeleteOnExit: Boolean = false,
+  usrBinEnv: String = "/usr/bin/env",
 ): List<String> {
   val (debuggingLogLevel, backtrace) = when {
     ApplicationManager.getApplication()?.isUnitTestMode == true -> "trace" to true
@@ -23,7 +26,7 @@ fun getIjentGrpcArgv(
   }
 
   return listOfNotNull(
-    "/usr/bin/env",
+    usrBinEnv,
     "RUST_LOG=ijent=$debuggingLogLevel",
     if (backtrace) "RUST_BACKTRACE=1" else null,
     *additionalEnv.entries.map2Array { (k, v) -> "$k=$v" },
@@ -34,6 +37,7 @@ fun getIjentGrpcArgv(
   )
 }
 
+@ApiStatus.Internal
 fun ByteArray.toDebugString(offset: Int = 0, length: Int = size - offset): String = (offset until length).joinToString("") {
   var code = this[it].toInt()
   if (code < 0) {

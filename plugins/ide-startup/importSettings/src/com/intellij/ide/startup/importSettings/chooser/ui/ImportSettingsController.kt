@@ -8,6 +8,8 @@ import com.intellij.ide.startup.importSettings.data.ActionsDataProvider
 import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.SettingsContributor
 import com.intellij.ide.startup.importSettings.data.SettingsService
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
+import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 
 interface ImportSettingsController : BaseController {
@@ -48,12 +50,14 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
   override fun goToSettingsPage(provider: ActionsDataProvider<*>, product: SettingsContributor) {
     val page = SettingChooserPage.createPage(provider, product, this)
     Disposer.tryRegister(dialog.disposable, page)
+    provider.productSelected(product)
     dialog.changePage(page)
   }
 
   override fun goToProductChooserPage() {
-    val page = ProductChooserPage(this)
+    val page = ProductChooserPage(this, OnboardingBackgroundImageProvider.getInstance().getImage())
     Disposer.tryRegister(dialog.disposable, page)
+    ImportSettingsEventsCollector.productPageShown()
     dialog.changePage(page)
   }
 

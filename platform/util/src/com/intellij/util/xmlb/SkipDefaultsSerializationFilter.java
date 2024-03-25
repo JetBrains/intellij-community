@@ -6,7 +6,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ThreeState;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -26,11 +25,6 @@ public class SkipDefaultsSerializationFilter extends SkipDefaultValuesSerializat
 
   public SkipDefaultsSerializationFilter(Object... defaultBeans) {
     super(defaultBeans);
-  }
-
-  protected boolean equal(@NotNull NestedBinding binding, @NotNull Object bean) {
-    Accessor accessor = binding.getAccessor();
-    return equal(binding, accessor.read(bean), accessor.read(getDefaultBean(bean)));
   }
 
   boolean equal(@Nullable Binding binding, @Nullable Object currentValue, @Nullable Object defaultValue) {

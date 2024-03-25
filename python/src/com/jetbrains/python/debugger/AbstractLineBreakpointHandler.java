@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
@@ -19,7 +19,7 @@ public class AbstractLineBreakpointHandler extends XBreakpointHandler<XLineBreak
 
   public AbstractLineBreakpointHandler(
     Class<? extends XBreakpointType<XLineBreakpoint<XBreakpointProperties>, ?>> breakpointTypeClass,
-    @NotNull final PyDebugProcess debugProcess) {
+    final @NotNull PyDebugProcess debugProcess) {
     super(breakpointTypeClass);
     myDebugProcess = debugProcess;
   }
@@ -33,7 +33,7 @@ public class AbstractLineBreakpointHandler extends XBreakpointHandler<XLineBreak
   }
 
   @Override
-  public void registerBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint) {
+  public void registerBreakpoint(final @NotNull XLineBreakpoint<XBreakpointProperties> breakpoint) {
     final XSourcePosition position = breakpoint.getSourcePosition();
     if (position != null && position.getFile().isValid()) {
       myDebugProcess.addBreakpoint(myDebugProcess.getPositionConverter().convertToPython(position), breakpoint);
@@ -42,7 +42,7 @@ public class AbstractLineBreakpointHandler extends XBreakpointHandler<XLineBreak
   }
 
   @Override
-  public void unregisterBreakpoint(@NotNull final XLineBreakpoint<XBreakpointProperties> breakpoint, final boolean temporary) {
+  public void unregisterBreakpoint(final @NotNull XLineBreakpoint<XBreakpointProperties> breakpoint, final boolean temporary) {
     final XSourcePosition position = myBreakPointPositions.get(breakpoint);
     if (position != null && position.getFile().isValid()) {
       myDebugProcess.removeBreakpoint(myDebugProcess.getPositionConverter().convertToPython(position));

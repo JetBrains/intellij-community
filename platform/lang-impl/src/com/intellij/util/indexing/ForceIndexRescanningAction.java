@@ -20,7 +20,8 @@ final class ForceIndexRescanningAction extends DumbAwareAction {
                                                             null,
                                                            null,
                                                            "Force re-scanning",
-                                                           ScanningType.FULL_FORCED);
+                                                           ScanningType.FULL_FORCED,
+                                                           null);
     task.queue();
   }
 

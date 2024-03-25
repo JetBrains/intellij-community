@@ -7,6 +7,7 @@ import com.intellij.psi.stubs.SerializationManagerEx
 import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
+import com.intellij.util.indexing.projectFilter.deletePersistentIndexableFilesFilters
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.write
 import org.jetbrains.annotations.ApiStatus
@@ -88,6 +89,8 @@ object CorruptionMarker {
     if (SystemProperties.getBooleanProperty("idea.index.clear.diagnostic.on.invalidation", true)) {
       IndexDiagnosticDumper.clearDiagnostic()
     }
+
+    deletePersistentIndexableFilesFilters()
 
     // serialization manager is initialized before and use removed index root so we need to reinitialize it
     SerializationManagerEx.getInstanceEx().reinitializeNameStorage()

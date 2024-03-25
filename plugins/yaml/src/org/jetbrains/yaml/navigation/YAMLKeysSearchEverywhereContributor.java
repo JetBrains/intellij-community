@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.navigation;
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
@@ -41,15 +41,13 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return getClass().getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return YAMLBundle.message("YAMLKeysSearchEverywhereContributor.group.name");
   }
 
@@ -90,9 +88,8 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     return true;
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer<? super Object> getElementsRenderer() {
+  public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
     return new NavigationItemListCellRenderer();
   }
 
@@ -141,10 +138,9 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static List<String> applyPattern(@NotNull Collection<String> keys,
-                                           @NotNull String pattern,
-                                           ProgressIndicator progressIndicator) {
+  private static @NotNull List<String> applyPattern(@NotNull Collection<String> keys,
+                                                    @NotNull String pattern,
+                                                    ProgressIndicator progressIndicator) {
     Int2ObjectMap<List<String>> priority = new Int2ObjectOpenHashMap<>();
     for (String key : keys) {
       progressIndicator.checkCanceled();
@@ -190,9 +186,8 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<YAMLKeyNavigationItem> {
-    @NotNull
     @Override
-    public SearchEverywhereContributor<YAMLKeyNavigationItem> createContributor(@NotNull AnActionEvent initEvent) {
+    public @NotNull SearchEverywhereContributor<YAMLKeyNavigationItem> createContributor(@NotNull AnActionEvent initEvent) {
       return new YAMLKeysSearchEverywhereContributor(initEvent.getProject());
     }
   }

@@ -34,10 +34,13 @@ import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.*;
+import com.jetbrains.cef.JCefAppConfig;
+import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,9 +175,12 @@ public final class AboutDialog extends DialogWrapper {
     Properties properties = System.getProperties();
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
-    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
+    String jcefSuffix = getJcefVersion();
+    if (jcefSuffix != null && !jcefSuffix.isEmpty())
+      jcefSuffix = " (" + jcefSuffix + ")";
+    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch) + jcefSuffix;
     lines.add(jreInfo);
-    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch));
+    myInfo.add(MessageFormat.format("Runtime version: {0} {1}", javaVersion, arch) + jcefSuffix);
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
@@ -386,5 +392,15 @@ public final class AboutDialog extends DialogWrapper {
   private static @NotNull String getFullNameForAboutDialog() {
     if (!PlatformUtils.isJetBrainsClient()) return ApplicationNamesInfo.getInstance().getFullProductName();
     return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
+  }
+
+  private static String getJcefVersion() {
+    if (JBCefApp.isSupported()) {
+      try {
+        JCefVersionDetails version = JCefAppConfig.getVersionDetails();
+        return IdeBundle.message("about.box.jcef", version.cefVersion.major, version.cefVersion.api, version.cefVersion.patch);
+      } catch (JCefVersionDetails.VersionUnavailableException e) {}
+    }
+    return "";
   }
 }

@@ -1,9 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
-import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.data.NotificationData
+import com.intellij.ide.startup.importSettings.data.StartupWizardService
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
@@ -12,6 +15,7 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Image
 import java.awt.event.ActionEvent
 import javax.swing.Action
 import javax.swing.JButton
@@ -40,6 +44,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
 
     if (shouldExit) {
       tracker.onLeave()
+      StartupWizardService.getInstance()?.onCancel()
       cancelCallback()
       super.doCancelAction()
     }
@@ -47,6 +52,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
 
   fun dialogClose() {
     if(isShowing && isVisible) {
+      ImportSettingsEventsCollector.dialogClosed()
       doClose(CANCEL_EXIT_CODE)
     }
   }
@@ -70,6 +76,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
     currentPage = page
     tracker.onEnter(page.stage)
 
+    OnboardingBackgroundImageProvider.getInstance().setBackgroundImageToDialog(this, page.backgroundImage)
   }
 
   override fun createContentPaneBorder(): Border {
@@ -112,11 +119,17 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
       }
     }
   }
+
+  override fun dispose() {
+    StartupWizardService.getInstance()?.onExit()
+    super.dispose()
+  }
 }
 
 interface OnboardingPage: Disposable {
   val content: JComponent
   val stage: StartupWizardStage?
+  val backgroundImage: Image? get() = null
 
   override fun dispose() {}
 

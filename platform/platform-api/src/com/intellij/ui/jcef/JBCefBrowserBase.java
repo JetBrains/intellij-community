@@ -44,6 +44,8 @@ import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -87,6 +89,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
   }
 
+  private static Logger LOG = Logger.getInstance(JBCefBrowserBase.class);
+  private static final boolean IS_REMOTE_ENABLED = JBCefApp.isRemoteEnabled();
   protected static final @NotNull String BLANK_URI = "about:blank";
   private static final @NotNull Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
 
@@ -109,7 +113,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         JBCefApp.class.getResourceAsStream("resources/load_error.html"))), StandardCharsets.UTF_8);
     }
     catch (IOException | NullPointerException e) {
-      Logger.getInstance(JBCefBrowserBase.class).error("couldn't find load_error.html", e);
+      LOG.error("couldn't find load_error.html", e);
     }
     return "";
   });
@@ -122,7 +126,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         return Base64.getEncoder().encodeToString(out.toByteArray());
       }
       catch (IOException ex) {
-        Logger.getInstance(JBCefBrowserBase.class).error("couldn't write an error image", ex);
+        LOG.error("couldn't write an error image", ex);
       }
       return "";
     });
@@ -175,7 +179,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         JBCefApp.checkOffScreenRenderingModeEnabled();
         CefBrowserSettings settings = new CefBrowserSettings();
         settings.windowless_frame_rate = builder.myWindowlessFrameRate;
-        cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.DEFAULT),
+        cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.getInstance()),
                                       myCefClient.getCefClient(), builder.myUrl, null, null, null,
                                       builder.myMouseWheelEventEnable, settings);
       }
@@ -249,7 +253,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
               callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
               return true;
             }
-            Logger.getInstance(JBCefBrowserBase.class).error("missing credentials to sign in to proxy");
+            LOG.error("missing credentials to sign in to proxy");
           }
           return super.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
         }
@@ -316,7 +320,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }, myCefBrowser);
   }
 
-  private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
+  private @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
                                                              @NotNull CefClient client,
                                                              @Nullable String url,
                                                              @Nullable CefRequestContext context,
@@ -327,7 +331,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return createOsrBrowser(factory, client, url, context, parentBrowser, inspectAt, isMouseWheelEventEnabled, null);
   }
 
-  private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
+  private @NotNull CefBrowser createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
                                                              @NotNull CefClient client,
                                                              @Nullable String url,
                                                              @Nullable CefRequestContext context,
@@ -338,6 +342,13 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                                              CefBrowserSettings settings) {
     JComponent comp = factory.createComponent(isMouseWheelEventEnabled);
     CefRenderHandler handler = factory.createCefRenderHandler(comp);
+    if (IS_REMOTE_ENABLED) {
+      CefBrowser browser = client.createBrowser(validateUrl(url), new CefRendering.CefRenderingWithHandler(handler, comp), true/*unused*/, context);
+      if (comp instanceof JBCefOsrComponent)
+        ((JBCefOsrComponent)comp).setBrowser(browser);
+      return browser;
+    }
+
     CefBrowserOsrWithHandler browser =
       new CefBrowserOsrWithHandler(client, validateUrl(url), context, handler, comp, parentBrowser, inspectAt, settings) {
         @Override
@@ -525,13 +536,46 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   final boolean isCefBrowserCreated() {
-    assert myCefBrowser instanceof CefNativeAdapter;
-    // [tav] todo: this can be thread race prone
     return isCefBrowserCreated(myCefBrowser);
   }
 
   static boolean isCefBrowserCreated(@NotNull CefBrowser cefBrowser) {
-    return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0;
+    if (cefBrowser instanceof CefNativeAdapter)
+      return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0; // [tav] todo: this can be thread race prone
+
+    // Temporary use reflection to avoid jcef-version increment
+    // TODO: use isNativeBrowserCreated directly
+    try {
+      Method m = cefBrowser.getClass().getMethod("isNativeBrowserCreated");
+      return (boolean)m.invoke(cefBrowser);
+    }
+    catch (NoSuchMethodException e) {
+    }
+    catch (InvocationTargetException e) {
+    }
+    catch (IllegalAccessException e) {
+    }
+    return false;
+  }
+
+  static boolean isCefBrowserCreationStarted(@NotNull CefBrowser browser) {
+    // Temporary use reflection to avoid jcef-version increment
+    // TODO: use isNativeBrowserCreationStarted directly
+    try {
+      Method m = browser.getClass().getMethod("isNativeBrowserCreationStarted");
+      return (boolean)m.invoke(browser);
+    }
+    catch (NoSuchMethodException e) {
+    }
+    catch (InvocationTargetException e) {
+    }
+    catch (IllegalAccessException e) {
+    }
+
+    // Fallback to old logic (incorrect in general, since creation is always started before native ref obtained)
+    if (browser instanceof CefNativeAdapter)
+      return ((CefNativeAdapter)browser).getNativeRef("CefBrowser") != 0;
+    return false;
   }
 
   /**

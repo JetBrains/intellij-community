@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
@@ -15,11 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeGlassPane
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.InternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
@@ -47,11 +44,12 @@ import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.util.EnumSet
+import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
@@ -64,6 +62,8 @@ class InternalDecoratorImpl internal constructor(
 
     internal val HIDE_COMMON_TOOLWINDOW_BUTTONS: Key<Boolean> = Key.create("HideCommonToolWindowButtons")
     internal val INACTIVE_LOOK: Key<Boolean> = Key.create("InactiveLook")
+
+    private val PREVENT_RECURSIVE_BACKGROUND_CHANGE = Key.create<Boolean>("prevent.recursive.background.change")
 
     /**
      * Catches all event from tool window and modifies decorator's appearance.
@@ -162,6 +162,37 @@ class InternalDecoratorImpl internal constructor(
       val decorator = findNearestDecorator(header) ?: return false
       return decorator.toolWindow.type == ToolWindowType.WINDOWED &&
           SideProperty.TOP_TOOL_WINDOW_EDGE in decorator.getSideProperties(decorator)
+    }
+
+    @JvmStatic
+    fun preventRecursiveBackgroundUpdateOnToolwindow(component: JComponent) {
+      component.putClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE, true)
+    }
+
+    private fun isRecursiveBackgroundUpdateDisabled(component: Component): Boolean {
+      val preventRecoloring = (component as? JComponent)?.getClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE) ?: return false
+
+      return preventRecoloring == true
+    }
+
+    internal fun setBackgroundRecursively(component: Component, bg: Color) {
+      val action: (Component) -> Unit = { c ->
+        if (c !is ActionButton && c !is Divider && c !is JTextComponent) {
+          c.background = bg
+        }
+      }
+      setBackgroundRecursively(action, component)
+    }
+
+    private fun setBackgroundRecursively(action: (Component) -> Unit, component: Component) {
+      if (isRecursiveBackgroundUpdateDisabled(component)) return
+
+      action(component)
+      if (component is Container) {
+        for (c in component.components) {
+          setBackgroundRecursively(action, c)
+        }
+      }
     }
 
     private fun installDefaultFocusTraversalKeys(container: Container, id: Int) {

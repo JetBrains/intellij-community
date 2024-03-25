@@ -1,0 +1,8 @@
+// FIX: Use property access syntax
+// LANGUAGE_VERSION: 2.1
+
+fun main() {
+    doSth(Foo::foo)
+}
+
+fun doSth(foo: (Foo) -> Int): Any = foo

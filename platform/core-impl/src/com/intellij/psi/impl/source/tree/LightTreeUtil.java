@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.lang.LighterASTTokenNode;
-import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.tree.IElementType;
@@ -87,6 +84,9 @@ public final class LightTreeUtil {
   }
 
   public static @NotNull String toFilteredString(@NotNull LighterAST tree, @NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
+    CharSequence text = getTextFromNode(node, skipTypes);
+    if (text != null) return text.toString();
+
     int length = node.getEndOffset() - node.getStartOffset();
     if (length < 0) {
       length = 0;
@@ -102,13 +102,9 @@ public final class LightTreeUtil {
       return;
     }
 
-    if (node instanceof LighterASTTokenNode) {
-      buffer.append(((LighterASTTokenNode)node).getText());
-      return;
-    }
-
-    if (node instanceof LighterLazyParseableNode) {
-      buffer.append(((LighterLazyParseableNode)node).getText());
+    CharSequence text = getTextFromNode(node, skipTypes);
+    if (text != null) {
+      buffer.append(text);
       return;
     }
 
@@ -116,6 +112,22 @@ public final class LightTreeUtil {
     for (int i = 0, size = children.size(); i < size; ++i) {
       toBuffer(tree, children.get(i), buffer, skipTypes);
     }
+  }
+
+  private static @Nullable CharSequence getTextFromNode(@NotNull LighterASTNode node, @Nullable TokenSet skipTypes) {
+    if (node instanceof LighterASTTokenNode) {
+      return ((LighterASTTokenNode)node).getText();
+    }
+    if (node instanceof LighterLazyParseableNode) {
+      return ((LighterLazyParseableNode)node).getText();
+    }
+    // LighterASTSyntaxTreeBuilderBackedNode instances can be composite nodes. Therefore, when there
+    // are tokens that should be filtered, we should not return the text directly.
+    boolean filterTokens = skipTypes != null && skipTypes != TokenSet.EMPTY;
+    if (!filterTokens && node instanceof LighterASTSyntaxTreeBuilderBackedNode) {
+      return ((LighterASTSyntaxTreeBuilderBackedNode)node).getText();
+    }
+    return null;
   }
 
   public static @Nullable LighterASTNode getParentOfType(@NotNull LighterAST tree, @Nullable LighterASTNode node,

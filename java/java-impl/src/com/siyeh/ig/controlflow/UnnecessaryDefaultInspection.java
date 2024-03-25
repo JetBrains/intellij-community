@@ -259,7 +259,7 @@ public final class UnnecessaryDefaultInspection extends BaseInspection {
     if (result == null) {
       return null;
     }
-    final CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchBlock);
+    final CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(switchBlock, false);
     return completenessResult == COMPLETE_WITHOUT_UNCONDITIONAL ? result : null;
   }
 }

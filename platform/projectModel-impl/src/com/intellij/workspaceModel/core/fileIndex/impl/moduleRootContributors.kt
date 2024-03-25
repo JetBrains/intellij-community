@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
@@ -37,14 +38,14 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     val module = entity.contentRoot.module.findModule(storage)
     if (module != null) {
       val contentRoot = entity.contentRoot.url.virtualFile
-      val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
+      val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootTypeId)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
       val javaProperties = entity.asJavaSourceRoot()
       val resourceProperties = entity.asJavaResourceRoot()
       val packagePrefix = javaProperties?.packagePrefix
                           ?: resourceProperties?.relativeOutputPath?.replace('/', '.')
                           ?: ""
       val forGeneratedSources = javaProperties != null && javaProperties.generated || resourceProperties != null && resourceProperties.generated
-      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType, packagePrefix, forGeneratedSources))
+      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootTypeId, packagePrefix, forGeneratedSources))
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
@@ -96,7 +97,7 @@ internal data class ModuleContentRootData(override val module: Module, override 
 internal data class ModuleSourceRootData(
   override val module: Module,
   override val customContentRoot: VirtualFile?,
-  val rootType: String,
+  val rootTypeId: SourceRootTypeId,
   override val packagePrefix: String,
   val forGeneratedSources: Boolean
 ) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal

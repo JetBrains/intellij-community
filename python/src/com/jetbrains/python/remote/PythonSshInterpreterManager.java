@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.google.common.base.Function;
@@ -46,7 +46,7 @@ public interface PythonSshInterpreterManager {
    * @throws InterruptedException credentials can't be obtained due to remote server error
    */
   @Nullable
-  Pair<Supplier<String>, JPanel> createServerBrowserForm(@NotNull final Sdk remoteSdk)
+  Pair<Supplier<String>, JPanel> createServerBrowserForm(final @NotNull Sdk remoteSdk)
     throws ExecutionException, InterruptedException;
 
 
@@ -55,8 +55,7 @@ public interface PythonSshInterpreterManager {
                                                                                        @NotNull RemoteConnectionCredentialsWrapper connectionWrapper);
 
   final class Factory {
-    @Nullable
-    public static PythonSshInterpreterManager getInstance() {
+    public static @Nullable PythonSshInterpreterManager getInstance() {
       List<PythonSshInterpreterManager> extensions = EP_NAME.getExtensionList();
       if (extensions.isEmpty()) {
         LOG.debug(MessageFormat.format("Extension for ''{0}'' extension point is absent", EP_NAME.getName()));

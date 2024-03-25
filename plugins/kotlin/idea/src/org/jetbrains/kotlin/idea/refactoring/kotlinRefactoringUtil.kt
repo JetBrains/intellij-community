@@ -453,7 +453,7 @@ fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
 
 fun dropOperatorKeywordIfNecessary(element: KtNamedDeclaration) {
     val callableDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor ?: return
-    val diagnosticHolder = BindingTraceContext()
+    val diagnosticHolder = BindingTraceContext(element.project)
     OperatorModifierChecker.check(element, callableDescriptor, diagnosticHolder, element.languageVersionSettings)
     if (diagnosticHolder.bindingContext.diagnostics.any { it.factory == Errors.INAPPLICABLE_OPERATOR_MODIFIER }) {
         element.removeModifier(KtTokens.OPERATOR_KEYWORD)

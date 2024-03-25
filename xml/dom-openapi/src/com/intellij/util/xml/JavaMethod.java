@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.util.SmartFMap;
@@ -36,8 +36,7 @@ public final class JavaMethod implements AnnotatedElement {
     return mySignature;
   }
 
-  @NotNull
-  public List<Method> getHierarchy() {
+  public @NotNull List<Method> getHierarchy() {
     List<Method> hierarchy = myHierarchy;
     if (hierarchy == null) {
       hierarchy = Collections.unmodifiableList(mySignature.getAllMethods(myDeclaringClass));
@@ -78,8 +77,7 @@ public final class JavaMethod implements AnnotatedElement {
     return "JavaMethod: " + myMethod.toString();
   }
 
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return myMethod.getName();
   }
 
@@ -93,8 +91,7 @@ public final class JavaMethod implements AnnotatedElement {
     return annotation == NONE ? null : (T)annotation;
   }
 
-  @NotNull
-  private Object findAnnotation(Class<? extends Annotation> annotationClass) {
+  private @NotNull Object findAnnotation(Class<? extends Annotation> annotationClass) {
     for (Method method : getHierarchy()) {
       Annotation annotation = method.getAnnotation(annotationClass);
       if (annotation != null) {

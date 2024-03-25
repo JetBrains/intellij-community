@@ -1897,9 +1897,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       .isInstance(expression);
   }
 
-  void addMethodThrows(@Nullable PsiMethod method) {
+  void addMethodThrows(@Nullable PsiMember methodOrClass) {
     if (myTrapTracker.shouldHandleException()) {
-      addThrows(method == null ? Collections.emptyList() : Arrays.asList(method.getThrowsList().getReferencedTypes()));
+      if (methodOrClass == null) {
+        DfaControlTransferValue transfer = myTrapTracker.transferValue(JAVA_LANG_THROWABLE);
+        addInstruction(new EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer));
+      } else {
+        addThrows(methodOrClass instanceof PsiMethod method ? Arrays.asList(method.getThrowsList().getReferencedTypes()) : List.of());
+      }
     }
   }
 
@@ -2103,7 +2108,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new JvmPushInstruction(qualifierValue, null));
       }
 
-      PsiMethod constructor = pushConstructorArguments(expression);
+      PsiMember constructorOrClass = pushConstructorArguments(expression);
+      PsiMethod constructor = ObjectUtils.tryCast(constructorOrClass, PsiMethod.class);
       PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
         handleClosure(anonymousClass);
@@ -2117,7 +2123,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
       processFailResult(constructor, contracts, expression);
 
-      addMethodThrows(constructor);
+      addMethodThrows(constructorOrClass);
     }
 
     finishElement(expression);
@@ -2157,16 +2163,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private @Nullable PsiMethod pushConstructorArguments(PsiConstructorCall call) {
+  /**
+   * @return resolved constructor, class (in case of default constructor), or null if resolve failes
+   */
+  private @Nullable PsiMember pushConstructorArguments(PsiConstructorCall call) {
     PsiExpressionList args = call.getArgumentList();
-    PsiMethod ctr = call.resolveConstructor();
+    PsiMember ctr = call.resolveConstructor();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    if (call instanceof PsiNewExpression) {
+    if (call instanceof PsiNewExpression newExpression) {
+      if (ctr == null) {
+        PsiJavaCodeReferenceElement classRef = newExpression.getClassReference();
+        ctr = classRef == null ? null : ObjectUtils.tryCast(classRef.resolve(), PsiClass.class);
+      }
       substitutor = call.resolveMethodGenerics().getSubstitutor();
     }
     if (args != null) {
       PsiExpression[] arguments = args.getExpressions();
-      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+      PsiParameter[] parameters = ctr instanceof PsiMethod method ? method.getParameterList().getParameters() : null;
       for (int i = 0; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
         argument.accept(this);

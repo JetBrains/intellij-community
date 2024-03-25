@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.invariantSeparatorsPathString
@@ -57,16 +54,19 @@ class BuildContextImpl(
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
   override val buildNumber: String by lazy {
+    options.buildNumber ?: SnapshotBuildNumber.VALUE
+  }
+
+  override val pluginBuildNumber: String by lazy {
+    options.pluginBuildNumber ?: buildNumber
+  }
+
+  override fun checkDistributionBuildNumber() {
     val suppliedBuildNumber = options.buildNumber
-    val snapshotBuildNumber = readSnapshotBuildNumber(paths.communityHomeDirRoot)
-    val baseBuildNumber = snapshotBuildNumber.removeSuffix(".SNAPSHOT")
-    if (suppliedBuildNumber != null) {
-      suppliedBuildNumber
-    }
-    else {
-      val buildDate = ZonedDateTime.ofInstant(Instant.ofEpochSecond(options.buildDateInSeconds), ZoneOffset.UTC)
-      // .SNAPSHOT suffix is required for a remote dev + IDE built from sources scenario, IJI-1603
-      "$baseBuildNumber.${pluginDateFormat.format(buildDate)}.SNAPSHOT"
+    val baseBuildNumber = SnapshotBuildNumber.VALUE.removeSuffix(".SNAPSHOT")
+    check(suppliedBuildNumber == null || suppliedBuildNumber.startsWith(baseBuildNumber)) {
+      "Supplied build number '$suppliedBuildNumber' is expected to start with '$baseBuildNumber' base build number " +
+      "defined in ${SnapshotBuildNumber.PATH}"
     }
   }
 
@@ -112,17 +112,19 @@ class BuildContextImpl(
   companion object {
     suspend fun createContext(
       projectHome: Path,
-                              productProperties: ProductProperties,
-                              setupTracer: Boolean = true,
-                              proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-                              options: BuildOptions = BuildOptions(),
+      productProperties: ProductProperties,
+      setupTracer: Boolean = true,
+      proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
+      options: BuildOptions = BuildOptions(),
     ): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         projectHome = projectHome,
         setupTracer = setupTracer,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome,
-                                                                  productProperties = productProperties,
-                                                                  buildOptions = options),
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(
+          projectHome = projectHome,
+          productProperties = productProperties,
+          buildOptions = options
+        ),
         options = options,
       )
       return createContext(compilationContext = compilationContext,
@@ -238,11 +240,15 @@ class BuildContextImpl(
   ): BuildContext {
     val projectHomeForCustomizersAsString = projectHomeForCustomizers.invariantSeparatorsPathString
     val sourceOptions = this.options
-    val options = sourceOptions.copy()
-    if (options.useCompiledClassesFromProjectOutput) {
+    val options = if (options.useCompiledClassesFromProjectOutput) {
       // compiled classes are already reused
-      options.pathToCompiledClassesArchivesMetadata = null
-      options.pathToCompiledClassesArchive = null
+      sourceOptions.copy(
+        pathToCompiledClassesArchive = null,
+        pathToCompiledClassesArchivesMetadata = null,
+      )
+    }
+    else {
+      sourceOptions.copy()
     }
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
@@ -406,16 +412,4 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
       }
       Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
     }
-}
-
-private val BuildDependenciesCommunityRoot.snapshotBuildNumberFile: Path
-  get() = communityRoot.resolve("build.txt")
-
-internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
-  val snapshotBuildNumber = Files.readString(communityHome.snapshotBuildNumberFile).trim()
-  val snapshotSuffix = ".SNAPSHOT"
-  check(snapshotBuildNumber.endsWith(snapshotSuffix)) {
-    "$snapshotBuildNumber is expected to have a '$snapshotSuffix' suffix"
-  }
-  return snapshotBuildNumber
 }

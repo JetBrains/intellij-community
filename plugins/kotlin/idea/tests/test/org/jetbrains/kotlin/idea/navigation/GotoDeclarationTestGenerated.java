@@ -33,6 +33,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/dataClassToString.test");
     }
 
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/flexibleType.test");
+    }
+
     @TestMetadata("importAlias.test")
     public void testImportAlias() throws Exception {
         runTest("testData/navigation/gotoDeclaration/importAlias.test");
@@ -71,6 +76,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
     @TestMetadata("labeledThisToMemberExtension.test")
     public void testLabeledThisToMemberExtension() throws Exception {
         runTest("testData/navigation/gotoDeclaration/labeledThisToMemberExtension.test");
+    }
+
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/listFlexibleType.test");
     }
 
     @TestMetadata("thisExtensionFunction.test")

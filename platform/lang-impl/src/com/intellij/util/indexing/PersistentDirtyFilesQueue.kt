@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.application
+import com.intellij.openapi.project.Project
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -19,15 +20,20 @@ import kotlin.io.path.*
 
 object PersistentDirtyFilesQueue {
   private val isUnittestMode: Boolean
-    get() = application.isUnitTestMode
+    get() = ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode
 
   val currentVersion = 1L
 
+  val queuesDirName: String = "dirty-file-queues"
+
   @JvmStatic
-  fun getQueuesDir(): Path = PathManager.getIndexRoot() / "dirty-file-queues"
+  fun getQueuesDir(): Path = PathManager.getIndexRoot() / queuesDirName
 
   @JvmStatic
   fun getQueueFile(): Path = PathManager.getIndexRoot() / "dirty-file-ids"
+
+  @JvmStatic
+  fun Project.getQueueFile(): Path = getQueuesDir() / locationHash
 
   @JvmStatic
   fun removeCurrentFile(queueFile: Path) {
@@ -42,7 +48,7 @@ object PersistentDirtyFilesQueue {
   }
 
   @JvmStatic
-  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long): IntList {
+  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): IntList {
     val result = IntArrayList()
     try {
       DataInputStream(queueFile.inputStream().buffered()).use {
@@ -53,7 +59,7 @@ object PersistentDirtyFilesQueue {
           it.readLong()
         }
         else version
-        if (storedVfsVersion == currentVfsVersion) {
+        if (currentVfsVersion == null || storedVfsVersion == currentVfsVersion) {
           while (it.available() > -1) {
             result.add(it.readInt())
           }

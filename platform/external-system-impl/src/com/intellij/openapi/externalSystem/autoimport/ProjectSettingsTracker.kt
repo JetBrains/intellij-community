@@ -168,8 +168,13 @@ class ProjectSettingsTracker(
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
         val localFileSystem = LocalFileSystem.getInstance()
         val settingsFiles = settingsPaths.map { Path.of(it) }
-        localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
+        if (settingsFiles.isEmpty()) {
           callback(settingsPaths)
+        }
+        else {
+          localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
+            callback(settingsPaths)
+          }
         }
       }
     }

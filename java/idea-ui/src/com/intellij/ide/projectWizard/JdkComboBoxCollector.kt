@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 internal object JdkComboBoxCollector: CounterUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("npw.jdk.combo", 2)
   private const val UNKNOWN_VENDOR = "unknown"
+  @OptIn(ExperimentalStdlibApi::class)
   private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
     .mapNotNull { it.displayName }
     .toList() + UNKNOWN_VENDOR
@@ -48,8 +49,8 @@ internal object JdkComboBoxCollector: CounterUsagesCollector() {
     null -> -1
     else -> {
       val matchResult = when {
-        "GraalVM" in sdkVersionString -> Regex("Java ([0-9]+)(?:[.0-9]+)?").find(sdkVersionString)
-        else -> Regex("([0-9]+)(?:[.0-9]+)?").find(sdkVersionString)
+        "GraalVM" in sdkVersionString -> Regex("Java ([0-9]+)").find(sdkVersionString)
+        else -> Regex("([0-9]+)").find(sdkVersionString)
       }
       matchResult?.groups?.get(1)?.value?.toInt() ?: -1
     }

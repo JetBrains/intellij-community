@@ -237,7 +237,7 @@ public class Test {
   }
 
   fun `test suppress for erroneous parameters`() {
-    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(false)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -249,7 +249,7 @@ public class Test {
     }
 }
 """)
-    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 public class Test {
     void foo(String foo) {}
@@ -585,7 +585,7 @@ class Test {
   }
 
   fun `test do not show hint for name contained in method`() {
-    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -599,7 +599,7 @@ class Test {
   }
 
   fun `test show if multiple params but name contained`() {
-    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class Test {
   void main() {
@@ -613,7 +613,7 @@ class Test {
   }
 
   fun `test show same params`() {
-    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -628,7 +628,7 @@ class Test {
   }
 
   fun `test show triple`() {
-    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -642,7 +642,7 @@ class Test {
   }
 
   fun `test show couple of doubles`() {
-    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void main() {
@@ -794,7 +794,7 @@ class Test {
 
 
   fun `test params with same type`() {
-    JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.set(true)
     check("""
 class Test {
   void test() {
@@ -836,7 +836,7 @@ public class Test {
   }
 
   fun `test one-char one-digit hints enabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(true)
     check("""
 class Test {
   void main() {
@@ -848,7 +848,7 @@ class Test {
   }
 
   fun `test ordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -868,7 +868,7 @@ class Test {
   }
 
   fun `test unordered sequential`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -882,7 +882,7 @@ class Test {
   }
 
   fun `test ordered with varargs`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void test() {
@@ -896,7 +896,7 @@ class Test {
   }
 
   fun `test one-char one-digit hints disabled`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -908,7 +908,7 @@ class Test {
   }
 
   fun `test just some unparsable parameter name`() {
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 class Test {
   void main() {
@@ -922,7 +922,7 @@ class Test {
   }
 
   fun `test unclear expression type setting true`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
     check("""
 class Test {
   void main() {
@@ -937,7 +937,7 @@ class Test {
 
 
   fun `test unclear expression type setting false`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
     check("""
 class Test {
   void main() {
@@ -972,7 +972,7 @@ public enum Thingy {
 
 
   fun `test enum parameter names disabled`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintsForEnumConstants.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForEnumConstants.set(false)
     check("""
 public enum Thingy {
     ONE(false, true),
@@ -993,7 +993,7 @@ public enum Thingy {
 
 
   fun `test constructor call`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(true)
     check("""
 public class Test {
     static class A {
@@ -1008,7 +1008,7 @@ public class Test {
 
 
   fun `test constructor call disabled`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(false)
     check("""
 public class Test {
     static class A {
@@ -1022,8 +1022,8 @@ public class Test {
   }
 
   fun `test constructor call with other features`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintsForNewExpressions.set(true)
-    JavaInlayParameterHintsProvider.getInstance().ignoreOneCharOneDigitHints.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintsForNewExpressions.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().ignoreOneCharOneDigitHints.set(false)
     check("""
 public class Test {
     static class A {
@@ -1086,8 +1086,8 @@ class C {
 
 
   fun `test same argument and parameter names`() {
-    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
-    JavaInlayParameterHintsProvider.getInstance().showIfMethodNameContainsParameterName.set(false)
+    JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    JavaInlayParameterHintsProvider.Utils.getInstance().showIfMethodNameContainsParameterName.set(false)
     check("""
 class A {
     static class ClassA {

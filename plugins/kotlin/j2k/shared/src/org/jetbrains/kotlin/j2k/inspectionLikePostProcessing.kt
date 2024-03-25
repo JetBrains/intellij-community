@@ -7,6 +7,9 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.createSmartPointer
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
@@ -33,10 +36,19 @@ class InspectionLikeProcessingGroup(
                 collectAvailableActions(file, converterContext, rangeMarker)
             }
 
-            for ((processing, element, _) in elementToActions) {
-                val needRun = runReadAction {
+            for ((processing, pointer, _) in elementToActions) {
+                val element = runReadAction { pointer.element }
+                if (element == null) {
+                    modificationStamp = null
+                    continue
+                }
+
+                // In K2 J2K, don't reanalyze the file after write actions, just assume that
+                // the processing is still applicable if the smart pointer points to a valid element
+                val needRun = if (KotlinPluginModeProvider.isK2Mode()) true else runReadAction {
                     element.isValid && processing.isApplicableToElement(element, converterContext.converter.settings)
                 }
+
                 if (needRun) runUndoTransparentActionInEdt(inWriteAction = processing.writeActionNeeded) {
                     processing.applyToElement(element)
                 } else {
@@ -52,7 +64,7 @@ class InspectionLikeProcessingGroup(
 
     private data class ProcessingData(
         val processing: InspectionLikeProcessing,
-        val element: PsiElement,
+        val pointer: SmartPsiElementPointer<PsiElement>,
         val priority: Int
     )
 
@@ -74,7 +86,7 @@ class InspectionLikeProcessingGroup(
                 if (rangeResult == PROCESS) {
                     for (processing in processings) {
                         if (processing.isApplicableToElement(element, context.converter.settings)) {
-                            availableActions.add(ProcessingData(processing, element, priority(processing)))
+                            availableActions.add(ProcessingData(processing, element.createSmartPointer(), priority(processing)))
                         }
                     }
                 }

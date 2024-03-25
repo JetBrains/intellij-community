@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
@@ -953,8 +953,7 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     return null;
   }
 
-  @NotNull
-  private static String getExternalDocumentationRoot(@NotNull Sdk sdk) {
+  private static @NotNull String getExternalDocumentationRoot(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
     if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
       return "http://jython.org/docs/library/";
@@ -973,9 +972,8 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
     return urlBuilder.toString();
   }
 
-  @Nullable
   @Override
-  public Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+  public @Nullable Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 

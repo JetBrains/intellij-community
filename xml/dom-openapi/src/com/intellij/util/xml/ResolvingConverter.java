@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -36,9 +22,8 @@ import java.util.Set;
  */
 public abstract class ResolvingConverter<T> extends Converter<T> implements ResolvingHint {
 
-  @InspectionMessage
   @Override
-  public String getErrorMessage(@Nullable String s, final ConvertContext context) {
+  public @InspectionMessage String getErrorMessage(@Nullable String s, final ConvertContext context) {
     return AnalysisBundle.message("error.cannot.resolve.default.message", s);
   }
 
@@ -46,15 +31,13 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return reference completion variants
    */
-  @NotNull
-  public abstract Collection<? extends T> getVariants(final ConvertContext context);
+  public abstract @NotNull Collection<? extends T> getVariants(final ConvertContext context);
 
   /**
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
    * They will also appear in the completion dropdown.
    */
-  @NotNull
-  public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
+  public @NotNull Set<String> getAdditionalVariants(final @NotNull ConvertContext context) {
     return Collections.emptySet();
   }
 
@@ -88,8 +71,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param resolvedValue {@link #fromString(String, ConvertContext)} result
    * @return the PSI element to which the {@link com.intellij.psi.PsiReference} will resolve
    */
-  @Nullable
-  public PsiElement getPsiElement(@Nullable T resolvedValue) {
+  public @Nullable PsiElement getPsiElement(@Nullable T resolvedValue) {
     if (resolvedValue instanceof PsiElement) {
       return (PsiElement)resolvedValue;
     }
@@ -123,8 +105,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return PSI element to resolve to. By default calls {@link #getPsiElement(Object)} method
    */
-  @Nullable
-  public PsiElement resolve(final T o, final ConvertContext context) {
+  public @Nullable PsiElement resolve(final T o, final ConvertContext context) {
     final PsiElement psiElement = getPsiElement(o);
     return psiElement == null && o != null ? DomUtil.getValueElement((GenericDomValue)context.getInvocationElement()) : psiElement;
   }
@@ -146,15 +127,14 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param t DOM to create lookup element for.
    * @return Lookup element.
    */
-  @Nullable
-  public LookupElement createLookupElement(T t) {
+  public @Nullable LookupElement createLookupElement(T t) {
     return null;
   }
 
   /**
    * Adds {@link #getVariants(ConvertContext)} functionality to a simple String value.
    */
-  public static abstract class StringConverter extends ResolvingConverter<String> {
+  public abstract static class StringConverter extends ResolvingConverter<String> {
 
     @Override
     public String fromString(final String s, final ConvertContext context) {
@@ -170,7 +150,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   /**
    * Adds {@link #getVariants(ConvertContext)} functionality to an existing converter. 
    */
-  public static abstract class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
+  public abstract static class WrappedResolvingConverter<T> extends ResolvingConverter<T> {
 
     private final Converter<T> myWrappedConverter;
 
@@ -196,8 +176,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   @Deprecated
   public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
     @Override
-    @NotNull
-    public Collection getVariants(final ConvertContext context) {
+    public @NotNull Collection getVariants(final ConvertContext context) {
       return Collections.emptyList();
     }
 
@@ -234,8 +213,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
     }
 
     @Override
-    @NotNull
-    public Collection<? extends Boolean> getVariants(final ConvertContext context) {
+    public @NotNull Collection<? extends Boolean> getVariants(final ConvertContext context) {
       final DomElement element = context.getInvocationElement();
       if (element instanceof GenericDomValue) {
         final SubTag annotation = element.getAnnotation(SubTag.class);

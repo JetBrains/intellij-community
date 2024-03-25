@@ -3,13 +3,13 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.useReactiveWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
@@ -29,17 +29,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.system.measureTimeMillis
 
-
-class OrphanageActivity : ProjectActivity {
+private class OrphanageActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (useReactiveWorkspaceModelApi()) {
       setupOpenTelemetryReporting(jpsMetrics.meter)
-      project.service<OrphanService>().start()
+      project.serviceAsync<OrphanService>().start()
     }
   }
 }
 
-class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
+internal class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
   private val entityStorage: VersionedEntityStorageImpl = VersionedEntityStorageImpl(ImmutableEntityStorage.empty())
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
@@ -105,7 +104,7 @@ class OrphanService(
   fun start() {
     cs.launch {
       // flowOfDiff is used to process updates in batches
-      project.workspaceModel.internal.flowOfDiff(query).collect { diff ->
+      (project.workspaceModel as WorkspaceModelInternal).flowOfDiff(query).collect { diff ->
         val added = diff.added
 
         val updateTime = measureTimeMillis {
@@ -151,7 +150,7 @@ class OrphanService(
   }
 }
 
-class OrphanListener(private val project: Project) : WorkspaceModelChangeListener {
+private class OrphanListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun changed(event: VersionedStorageChange) {
     if (!EntitiesOrphanage.isEnabled) return
     if (useReactiveWorkspaceModelApi()) return

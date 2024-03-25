@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.openapi.project.Project;
@@ -21,9 +21,9 @@ public class PyExpressionCodeFragment extends PyFileImpl implements PsiCodeFragm
 
   private GlobalSearchScope myResolveScope;
 
-  public PyExpressionCodeFragment(@NotNull final Project project,
-                                  @NonNls final String name,
-                                  @NotNull final CharSequence text) {
+  public PyExpressionCodeFragment(final @NotNull Project project,
+                                  final @NonNls String name,
+                                  final @NotNull CharSequence text) {
     super(PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
       new LightVirtualFile(name, PythonFileType.INSTANCE, text), true));
     ((SingleRootFileViewProvider)getViewProvider()).forceCachedPsi(this);

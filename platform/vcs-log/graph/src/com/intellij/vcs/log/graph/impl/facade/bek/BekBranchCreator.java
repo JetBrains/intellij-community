@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
@@ -17,6 +18,7 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
 class BekBranchCreator {
+  private final static Logger LOG = Logger.getInstance(BekBranchCreator.class);
   @NotNull private final LinearGraph myPermanentGraph;
   @NotNull private final GraphLayoutImpl myGraphLayout;
   @NotNull private final Flags myDoneNodes;
@@ -43,7 +45,7 @@ class BekBranchCreator {
   public List<Integer> createNextBranch(int headNode) {
     final List<Integer> nodeIndexes = new ArrayList<>();
 
-    assert !myDoneNodes.get(headNode);
+    LOG.assertTrue(!myDoneNodes.get(headNode));
     myDoneNodes.set(headNode, true);
     nodeIndexes.add(headNode);
 

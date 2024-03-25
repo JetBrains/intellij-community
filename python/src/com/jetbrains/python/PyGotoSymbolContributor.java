@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.navigation.ChooseByNameContributorEx;
@@ -27,7 +27,7 @@ import java.util.Collections;
 
 public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNameContributorEx, PossiblyDumbAware {
   @Override
-  public void processNames(@NotNull final Processor<? super String> processor, @NotNull final GlobalSearchScope scope, @Nullable final IdFilter filter) {
+  public void processNames(final @NotNull Processor<? super String> processor, final @NotNull GlobalSearchScope scope, final @Nullable IdFilter filter) {
     FileBasedIndex fileIndex = FileBasedIndex.getInstance();
     StubIndex stubIndex = StubIndex.getInstance();
     DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {

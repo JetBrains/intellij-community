@@ -44,6 +44,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.errorIfNotMessage
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
+import kotlin.random.Random
 
 /**
  * Use [InlineCompletion] for acquiring, installing and uninstalling [InlineCompletionHandler].
@@ -59,6 +60,7 @@ class InlineCompletionHandler(
   private val typingTracker = InlineCompletionTypingTracker(parentDisposable)
 
   private var customDocumentChangesAllowed = false
+  private var isInvokingEvent = false
 
   init {
     addEventListener(InlineCompletionUsageTracker.Listener())
@@ -95,28 +97,40 @@ class InlineCompletionHandler(
   @RequiresEdt
   fun invokeEvent(event: InlineCompletionEvent) {
     ThreadingAssertions.assertEventDispatchThread()
-    LOG.trace("Start processing inline event $event")
 
-    val request = event.toRequest() ?: return
-    if (editor != request.editor) {
-      LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+    if (isInvokingEvent) {
+      LOG.trace("Cannot process inline event $event: another event is being processed right now.")
       return
     }
 
-    if (sessionManager.updateSession(request)) {
-      return
+    isInvokingEvent = true
+    try {
+      LOG.trace("Start processing inline event $event")
+
+      val request = event.toRequest() ?: return
+      if (editor != request.editor) {
+        LOG.warn("Request has an inappropriate editor. Another editor was expected. Will not be invoked.")
+        return
+      }
+
+      if (sessionManager.updateSession(request)) {
+        return
+      }
+
+      val provider = getProvider(event) ?: return
+
+      // At this point, the previous session must be removed, otherwise, `init` will throw.
+      val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
+        sessionManager.sessionCreated(this)
+        guardCaretModifications(request)
+      }
+
+      executor.switchJobSafely(newSession::assignJob) {
+        invokeRequest(request, newSession)
+      }
     }
-
-    val provider = getProvider(event) ?: return
-
-    // At this point, the previous session must be removed, otherwise, `init` will throw.
-    val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
-      sessionManager.sessionCreated(this)
-      guardCaretModifications(request)
-    }
-
-    executor.switchJobSafely(newSession::assignJob) {
-      invokeRequest(request, newSession)
+    finally {
+      isInvokingEvent = false
     }
   }
 
@@ -285,8 +299,9 @@ class InlineCompletionHandler(
     provider: InlineCompletionProvider,
     request: InlineCompletionRequest
   ): InlineCompletionSuggestion {
+    val requestId = Random.nextLong()
     withContext(Dispatchers.EDT) {
-      trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java))
+      trace(InlineCompletionEventType.Request(System.currentTimeMillis(), request, provider::class.java, requestId))
     }
     return provider.getSuggestion(request)
   }

@@ -1,17 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElementVisitor
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -23,37 +22,57 @@ import org.jetbrains.kotlin.psi.*
  *   - `!(nb ?: false)` => `nb != true`
  * See plugins/kotlin/code-insight/descriptions/resources-en/inspectionDescriptions/NullableBooleanElvis.html for details.
  */
-internal class NullableBooleanElvisInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitBinaryExpression(expression: KtBinaryExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitBinaryExpression(expression: KtBinaryExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
-    override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityRange { expr ->
-        (expr as? KtBinaryExpression)?.operationReference?.textRangeInParent
-    }
+    override fun getProblemDescription(
+        element: KtBinaryExpression,
+        context: Unit,
+    ): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
+
+    override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
+        listOf(element.operationReference.textRangeInParent)
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtBinaryExpression): Boolean {
-        val lhsType = element.left?.getKtType() ?: return false
-        return lhsType.isBoolean && lhsType.nullability.isNullable
+    override fun prepareContext(element: KtBinaryExpression): Unit? {
+        return element.left
+            ?.getKtType()
+            ?.let { it.isBoolean && it.nullability.isNullable }
+            ?.asUnit
     }
 
-    override fun apply(element: KtBinaryExpression, project: Project, updater: ModPsiUpdater) {
-        val lhs = element.left ?: return
-        val rhs = element.right as? KtConstantExpression ?: return
-        val parentWithNegation = element.parentThroughParenthesisWithNegation()
-        if (parentWithNegation == null) {
-            element.replaceElvisWithBooleanEqualityOperation(lhs, rhs)
-        } else {
-            parentWithNegation.replaceElvisWithBooleanEqualityOperation(lhs, rhs, hasNegation = true)
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val lhs = element.left ?: return
+            val rhs = element.right as? KtConstantExpression ?: return
+            val parentWithNegation = element.parentThroughParenthesisWithNegation()
+            if (parentWithNegation == null) {
+                element.replaceElvisWithBooleanEqualityOperation(lhs, rhs)
+            } else {
+                parentWithNegation.replaceElvisWithBooleanEqualityOperation(lhs, rhs, hasNegation = true)
+            }
         }
     }
 

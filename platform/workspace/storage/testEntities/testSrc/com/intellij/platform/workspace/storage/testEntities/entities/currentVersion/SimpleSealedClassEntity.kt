@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Open
 
 interface SimpleSealedClassEntity: WorkspaceEntity {
@@ -20,10 +25,12 @@ interface SimpleSealedClassEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(text: String,
-                        someData: SimpleSealedClass,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleSealedClassEntity {
+    operator fun invoke(
+      text: String,
+      someData: SimpleSealedClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SimpleSealedClassEntity {
       val builder = builder()
       builder.text = text
       builder.someData = someData
@@ -36,9 +43,12 @@ interface SimpleSealedClassEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleSealedClassEntity,
-                                      modification: SimpleSealedClassEntity.Builder.() -> Unit): SimpleSealedClassEntity = modifyEntity(
-  SimpleSealedClassEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SimpleSealedClassEntity,
+  modification: SimpleSealedClassEntity.Builder.() -> Unit,
+): SimpleSealedClassEntity {
+  return modifyEntity(SimpleSealedClassEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Open

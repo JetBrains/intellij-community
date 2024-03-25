@@ -18,7 +18,7 @@ import java.util.*
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 18)
+  private val GROUP = EventLogGroup(GROUP_ID, 19)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
@@ -47,6 +47,9 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val blockTerminalSwitchedEvent = GROUP.registerEvent("new.terminal.switched",
                                                                EventFields.Boolean("enabled"),
                                                                EventFields.Enum<BlockTerminalSwitchPlace>("switch_place"))
+  private val feedbackSurveyEvent = GROUP.registerEvent("feedback.event.happened",
+                                                        EventFields.Enum<TerminalFeedbackEvent>("event_type"),
+                                                        EventFields.Enum<TerminalFeedbackMoment>("moment"))
 
   @JvmStatic
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
@@ -104,6 +107,10 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     blockTerminalSwitchedEvent.log(project, enabled, place)
   }
 
+  internal fun triggerFeedbackSurveyEvent(project: Project, event: TerminalFeedbackEvent, moment: TerminalFeedbackMoment) {
+    feedbackSurveyEvent.log(project, event, moment)
+  }
+
   @JvmStatic
   private fun getShellNameForStat(shellName: String?): String {
     if (shellName == null) return "unspecified"
@@ -126,6 +133,14 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
 
 internal enum class BlockTerminalSwitchPlace {
   SETTINGS, TOOLWINDOW_OPTIONS
+}
+
+internal enum class TerminalFeedbackEvent {
+  NOTIFICATION_SHOWN, DIALOG_SHOWN, FEEDBACK_SENT
+}
+
+internal enum class TerminalFeedbackMoment {
+  ON_DISABLING, AFTER_USAGE
 }
 
 private const val GROUP_ID = "terminalShell"

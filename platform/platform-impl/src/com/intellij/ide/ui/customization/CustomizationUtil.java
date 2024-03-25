@@ -93,50 +93,52 @@ public final class CustomizationUtil {
   }
 
 
-  static AnAction[] getReordableChildren(@NotNull ActionGroup group,
-                                         AnAction @NotNull[] children,
-                                         @NotNull CustomActionsSchema schema,
-                                         String defaultGroupName,
-                                         String rootGroupName) {
+  static AnAction @NotNull [] getReordableChildren(@NotNull ActionGroup group,
+                                                   AnAction @NotNull [] children,
+                                                   @NotNull CustomActionsSchema schema,
+                                                   String defaultGroupName,
+                                                   String rootGroupName) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
-    final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
+    ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, children);
     for (ActionUrl actionUrl : schema.getActions()) {
-      if (actionUrl.getParentGroup() == null) continue;
-      if ((actionUrl.getParentGroup().equals(text) ||
-           actionUrl.getParentGroup().equals(defaultGroupName) ||
-           actionUrl.getParentGroup().equals(actionManager.getId(group)) && actionUrl.getRootGroup().equals(rootGroupName))) {
-        AnAction componentAction = actionUrl.getComponentAction();
-        if (componentAction != null) {
-          if (actionUrl.getActionType() == ActionUrl.ADDED) {
-            if (componentAction == group) {
-              LOG.error("Attempt to add group to itself; group ID=" + actionManager.getId(group));
-              continue;
-            }
-            if (reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
-              reorderedChildren.add(actionUrl.getAbsolutePosition(), componentAction);
-            }
-            else {
-              reorderedChildren.add(componentAction);
-            }
-          }
-          else if (actionUrl.getActionType() == ActionUrl.DELETED && reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
-            final AnAction anAction = reorderedChildren.get(actionUrl.getAbsolutePosition());
-            if (anAction.getTemplatePresentation().getText() == null
-                ? (componentAction.getTemplatePresentation().getText() != null &&
-                   !componentAction.getTemplatePresentation().getText().isEmpty())
-                : !anAction.getTemplatePresentation().getText().equals(componentAction.getTemplatePresentation().getText())) {
-              continue;
-            }
-            reorderedChildren.remove(actionUrl.getAbsolutePosition());
-          }
+      String pg = actionUrl.getParentGroup();
+      if (pg == null) continue;
+      if (!(pg.equals(text) ||
+            pg.equals(defaultGroupName) ||
+            pg.equals(actionManager.getId(group)) &&
+            actionUrl.getRootGroup().equals(rootGroupName))) {
+        continue;
+      }
+      AnAction ca = actionUrl.getComponentAction();
+      if (ca == null) continue;
+      if (actionUrl.getActionType() == ActionUrl.ADDED) {
+        if (ca == group) {
+          LOG.error("Attempt to add group to itself; group ID=" + actionManager.getId(group));
+          continue;
         }
+        if (reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
+          reorderedChildren.add(actionUrl.getAbsolutePosition(), ca);
+        }
+        else {
+          reorderedChildren.add(ca);
+        }
+      }
+      else if (actionUrl.getActionType() == ActionUrl.DELETED && reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
+        AnAction ra = reorderedChildren.get(actionUrl.getAbsolutePosition());
+        Presentation rt = ra.getTemplatePresentation();
+        Presentation ct = ca.getTemplatePresentation();
+        if (rt.getText() == null ? !(ct.getText() == null || ct.getText().isEmpty())
+                                 : !rt.getText().equals(ct.getText())) {
+          continue;
+        }
+        reorderedChildren.remove(actionUrl.getAbsolutePosition());
       }
     }
     for (int i = 0; i < reorderedChildren.size(); i++) {
       if (reorderedChildren.get(i) instanceof ActionGroup groupToCorrect) {
-        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
+        AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
     }

@@ -1,4 +1,5 @@
 [package]
+build = "build.rs"
 name = "xplat-launcher"
 version = "0.9.0"
 edition = "2021"
@@ -24,7 +25,7 @@ va_list = "0.1.4"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 version = "0.51.1"
-features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Environment", "Win32_System_Services", "Win32_Security"]
+features = ["Win32_Foundation", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_System_Environment", "Win32_System_Services", "Win32_Security", "Win32_System_Console"]
 
 [target.'cfg(target_family = "unix")'.dependencies]
 libc = "0.2.142"
@@ -35,9 +36,17 @@ core-foundation = "0.9.3"
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
 native-dialog = "0.6.3"
 
-[build-dependencies]
+# cargo-deny and cargo-about are used implicitly by the Kotlin counterpart responsible for building this
+# relies on the simplest syntax (packageName = "version")
+# (build/src/BuildXPlatLaunchersBuildTarget.kt)
+# we don't need to actually build them (it's +300 crates), but having them in Cargo.toml shows if any updates are available
+[target.'cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))'.build-dependencies]
 cargo-deny = "0.14.2" # checks licenses / vulns
 cargo-about = "0.5.7" # generates license report
 
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winresource = "0.1.17"
+windows = { version = "0.51.1", features = [ "Win32_System_SystemInformation", "Win32_Foundation" ] }
+
 [dev-dependencies]
-tempfile = "3"
+tempfile = "3.8.0"

@@ -51,13 +51,13 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
         }
         switch (name) {
           case PsiKeyword.ASSERT -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_1_4) &&
+            if (!JavaFeature.ASSERTIONS.isSufficient(languageLevel) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("assert.identifier.warn");
             }
           }
           case PsiKeyword.ENUM -> {
-            if (languageLevel.isLessThan(LanguageLevel.JDK_1_5) &&
+            if (!JavaFeature.ENUMS.isSufficient(languageLevel) &&
                 (parent instanceof PsiClass || parent instanceof PsiMethod || parent instanceof PsiVariable)) {
               return JavaErrorBundle.message("enum.identifier.warn");
             }

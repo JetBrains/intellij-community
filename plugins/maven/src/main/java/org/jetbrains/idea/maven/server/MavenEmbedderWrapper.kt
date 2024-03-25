@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
 import java.io.Serializable
 import java.nio.file.Path
@@ -185,6 +186,20 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().readModel(file, ourToken)
   }
 
+  @Deprecated("use suspend method")
+  @Throws(MavenProcessCanceledException::class)
+  fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
+                  goal: String,
+                  progressIndicator: MavenProgressIndicator?,
+                  console: MavenConsole): List<MavenGoalExecutionResult> {
+    val progressReporter = object : RawProgressReporter {
+      override fun text(text: @NlsContexts.ProgressText String?) {
+        progressIndicator?.indicator?.text = text
+      }
+    }
+    return runBlockingMaybeCancellable { executeGoal(requests, goal, progressReporter, console) }
+  }
+
   @Throws(MavenProcessCanceledException::class)
   suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest>,
                           goal: String,
@@ -290,9 +305,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
             response.result
           }
         }
-      }
-      catch (e: Exception) {
-        throw ProcessCanceledException(e)
       }
       finally {
         progressIndication.cancelAndJoin()

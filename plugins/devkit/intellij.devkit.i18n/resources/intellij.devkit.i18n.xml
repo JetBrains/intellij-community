@@ -31,6 +31,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.i18n.DevKitPropertiesMessageValidationInspection"
                      key="inspection.dev.kit.properties.message.validation.display.name"/>
+    <localInspection language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupBundle="messages.DevKitBundle" groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.i18n.LiveTemplateI18nInspection"
+                     key="inspection.plugin.xml.i18n.templates.display.name"/>
     <inspectionElementsMerger implementation="org.jetbrains.idea.devkit.i18n.DevKitPropertiesMessageValidationInspectionMerger"/>
   </extensions>
 </idea-plugin>

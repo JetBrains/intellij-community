@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -28,11 +27,11 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
+import java.util.function.Consumer
 import java.util.function.Supplier
 
 private const val FOLDING_ELEMENT: @NonNls String = "folding"
@@ -44,6 +43,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
   }
 
   override suspend fun createEditorBuilder(project: Project, file: VirtualFile, document: Document?): AsyncFileEditorProvider.Builder {
+    val asyncLoader = createAsyncEditorLoader(provider = this, project = project, fileForTelemetry = file)
+
     val effectiveDocument = if (document == null) {
       val fileDocumentManager = serviceAsync<FileDocumentManager>()
       fileDocumentManager.getCachedDocument(file) ?: readActionBlocking {
@@ -73,7 +74,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val editorDeferred = CompletableDeferred<EditorEx>()
 
-      val task = TextEditorImpl.editorLoaderScope(project).async(CoroutineName("call TextEditorInitializers")) {
+      val task = asyncLoader.coroutineScope.async(CoroutineName("call TextEditorInitializers")) {
         val editorSupplier = suspend { editorDeferred.await() }
         val highlighterReady = suspend { highlighterDeferred.join() }
 
@@ -88,24 +89,25 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
             val initializer = item.instance ?: continue
             launch(CoroutineName(item.implementationClassName)) {
-              catchingExceptionsAsync {
-                initializer.initializeEditor(project = project,
-                                             file = file,
-                                             document = effectiveDocument,
-                                             editorSupplier = editorSupplier,
-                                             highlighterReady = highlighterReady)
+              try {
+                initializer.initializeEditor(
+                  project = project,
+                  file = file,
+                  document = effectiveDocument,
+                  editorSupplier = editorSupplier,
+                  highlighterReady = highlighterReady,
+                )
+              }
+              catch (e: CancellationException) {
+                throw e
+              }
+              catch (e: Throwable) {
+                logger<AsyncFileEditorProvider>().warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
               }
             }
           }
         }
 
-        val psiManager = project.serviceAsync<PsiManager>()
-        val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
-        span("DaemonCodeAnalyzer.restart") {
-          readActionBlocking {
-            daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
-          }
-        }
         val editor = editorSupplier()
         span("editor languageSupplier set", Dispatchers.EDT) {
           editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
@@ -117,10 +119,14 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       object : AsyncFileEditorProvider.Builder() {
         override fun build(): FileEditor {
-          val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter)
+          val editor = factory.createMainEditor(effectiveDocument, project, file, highlighter, Consumer {
+            it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+          })
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           editorDeferred.complete(editor)
-          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, provider = this@PsiAwareTextEditorProvider, editor = editor, task = task)
+          val component = createPsiAwareTextEditorComponent(file, editor to asyncLoader).first
+          val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
+          asyncLoader.start(textEditor = textEditor, task = task)
           return textEditor
         }
       }
@@ -222,15 +228,3 @@ private class PsiAwareTextEditorDelayedFoldingState(private val project: Project
   fun cloneSerializedState(): Element = state.clone()
 }
 
-private inline fun <T : Any> catchingExceptionsAsync(computable: () -> T?): T? {
-  try {
-    return computable()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    logger<AsyncFileEditorProvider>().warn("Exception during editor loading", if (e is ControlFlowException) RuntimeException(e) else e)
-    return null
-  }
-}

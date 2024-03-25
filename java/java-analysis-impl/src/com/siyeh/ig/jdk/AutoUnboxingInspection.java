@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,23 +42,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 
 public final class AutoUnboxingInspection extends BaseInspection {
 
-  @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
-
-  static {
-    s_unboxingMethods.put("byte", "byteValue");
-    s_unboxingMethods.put("short", "shortValue");
-    s_unboxingMethods.put("int", "intValue");
-    s_unboxingMethods.put("long", "longValue");
-    s_unboxingMethods.put("float", "floatValue");
-    s_unboxingMethods.put("double", "doubleValue");
-    s_unboxingMethods.put("boolean", "booleanValue");
-    s_unboxingMethods.put("char", "charValue");
-  }
+  @NonNls static final Map<String, String> s_unboxingMethods = Map.of(
+    "byte", "byteValue",
+    "short", "shortValue",
+    "int", "intValue",
+    "long", "longValue",
+    "float", "floatValue",
+    "double", "doubleValue",
+    "boolean", "booleanValue",
+    "char", "charValue"
+  );
 
   @Override
   @NotNull
@@ -148,8 +145,10 @@ public final class AutoUnboxingInspection extends BaseInspection {
         else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
           commentTracker.markUnchanged(expression);
           PsiReplacementUtil.replaceExpression(prefixExpression, expressionText + '=' + newExpressionText + "-1", commentTracker);
-        } else {
-          PsiReplacementUtil.replaceExpression(prefixExpression, prefixExpression.getOperationSign().getText() + newExpressionText, commentTracker);
+        }
+        else {
+          PsiReplacementUtil.replaceExpression(prefixExpression, prefixExpression.getOperationSign().getText() + newExpressionText,
+                                               commentTracker);
         }
       }
       else if (parent instanceof PsiPostfixExpression postfixExpression) {

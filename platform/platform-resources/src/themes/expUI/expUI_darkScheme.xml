@@ -260,10 +260,25 @@
         <option name="FOREGROUND" value="abadb3" />
       </value>
     </option>
+    <option name="DOC_CODE_BLOCK">
+      <value>
+        <option name="FOREGROUND" value="ced0d6"/>
+        <option name="BACKGROUND" value="26292c"/>
+        <option name="EFFECT_COLOR" value="393B40" />
+        <option name="EFFECT_TYPE" value="0" />
+      </value>
+    </option>
+    <option name="DOC_CODE_INLINE">
+      <value>
+        <option name="FOREGROUND" value="ced0d6"/>
+        <option name="BACKGROUND" value="343539"/>
+      </value>
+    </option>
     <option name="DOC_TIPS_SHORTCUT">
       <value>
         <option name="FOREGROUND" value="ced0d6"/>
-        <option name="BACKGROUND" value="393b40"/>
+        <option name="EFFECT_COLOR" value="6F737A" />
+        <option name="EFFECT_TYPE" value="0" />
       </value>
     </option>
     <option name="DEFAULT_DOC_MARKUP">

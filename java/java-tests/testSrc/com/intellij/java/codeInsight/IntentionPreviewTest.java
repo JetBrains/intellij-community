@@ -141,7 +141,6 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
           private final String b;
 
           Test(int a, String b) {
-
               this.a = a;
               this.b = b;
           }

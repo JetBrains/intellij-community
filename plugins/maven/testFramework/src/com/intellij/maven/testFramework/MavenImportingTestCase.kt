@@ -424,6 +424,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
         assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
       }
     }
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
   }
 
   protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {

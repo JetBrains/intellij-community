@@ -201,6 +201,10 @@ fun KtCallExpression.getContainingValueArgument(expression: KtExpression): KtVal
     return null
 }
 
+fun KtCallExpression.getSamConstructorValueArgument(): KtValueArgument? {
+    return valueArguments.singleOrNull()?.takeIf { it.getArgumentExpression() is KtLambdaExpression }
+}
+
 fun KtClass.mustHaveNonEmptyPrimaryConstructor(): Boolean =
     isData() || isInlineOrValue()
 
@@ -275,3 +279,33 @@ fun getCallElement(argument: KtValueArgument): KtCallElement? {
 
 val PsiElement.isInsideKtTypeReference: Boolean
     get() = getNonStrictParentOfType<KtTypeReference>() != null
+
+/**
+ * Returns the name of the label which can be used to perform the labeled return
+ * from the current lambda, if the lambda is present and if the labeled return is possible.
+ *
+ * The name corresponds either to:
+ * - lambda's explicit label (`foo@{ ... }`)
+ * - the name of the outer function call (`foo { ... }`)
+ */
+fun KtBlockExpression.getParentLambdaLabelName(): String? {
+    val lambdaExpression = getStrictParentOfType<KtLambdaExpression>() ?: return null
+    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
+    val valueArgument = callExpression.valueArguments.find {
+        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
+    } ?: return null
+    val lambdaLabelName = (valueArgument.getArgumentExpression() as? KtLabeledExpression)?.getLabelName()
+    return lambdaLabelName ?: callExpression.getCallNameExpression()?.text
+}
+
+/**
+ * Searches for a parameter with the given [name] in the parent function of the element.
+ * If not found in the immediate parent function, it recursively searches in the enclosing parent functions.
+ *
+ * @param name The name of the parameter to search for.
+ * @return The found `KtParameter` with the given name, or `null` if no parameter with such [name] is found.
+ */
+fun KtElement.findParameterWithName(name: String): KtParameter? {
+    val function = getStrictParentOfType<KtFunction>() ?: return null
+    return function.valueParameters.firstOrNull { it.name == name } ?: function.findParameterWithName(name)
+}

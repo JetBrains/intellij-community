@@ -409,15 +409,15 @@ class WSLDistributionTest {
       }
     }
 
-    return when (this) {
-      WslTestStrategy.Legacy -> mockWslDistribution.patchCommandLine(cmd, null, options)
-      WslTestStrategy.Ijent -> ProgressManager.getInstance().runProcess(
-        Computable {
-          passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
-        },
-        EmptyProgressIndicator()  // These particular tests don't require any really cancellable progress indicator.
-      )
-    }
+    return ProgressManager.getInstance().runProcess(
+      Computable {
+        when (this) {
+          WslTestStrategy.Legacy -> mockWslDistribution.patchCommandLine(cmd, null, options)
+          WslTestStrategy.Ijent -> passGeneralCommandLineThroughWslIjentManager(mockWslDistribution, cmd, options)
+        }
+      },
+      EmptyProgressIndicator()  // These particular tests don't require any really cancellable progress indicator.
+    )
   }
 
   private fun passGeneralCommandLineThroughWslIjentManager(

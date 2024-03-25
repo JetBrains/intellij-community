@@ -5,24 +5,15 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceRegistrar
 import com.jetbrains.python.PyElementTypes
+import org.jetbrains.annotations.ApiStatus
 
-
-class HuggingFaceModelReferenceContributor: PsiReferenceContributor() {
+@ApiStatus.Internal
+class HuggingFaceIdentifierReferenceContributor: PsiReferenceContributor() {
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(PyElementTypes.STRING_LITERAL_EXPRESSION),
-      HuggingFaceModelReferenceProvider(),
-      PsiReferenceRegistrar.DEFAULT_PRIORITY
-    )
-  }
-}
-
-class HuggingFaceDatasetReferenceContributor: PsiReferenceContributor() {
-  override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-    registrar.registerReferenceProvider(
-      PlatformPatterns.psiElement(PyElementTypes.STRING_LITERAL_EXPRESSION),
-      HuggingFaceDatasetReferenceProvider(),
-      PsiReferenceRegistrar.DEFAULT_PRIORITY
+      HuggingFaceIdentifierReferenceProvider(),
+      PsiReferenceRegistrar.LOWER_PRIORITY
     )
   }
 }

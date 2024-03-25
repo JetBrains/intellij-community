@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -7,9 +7,6 @@ import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.Java11Shim
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import kotlinx.collections.immutable.mutate
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
@@ -132,8 +129,8 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
 
   internal fun createPluginSet(incompletePlugins: Collection<IdeaPluginDescriptorImpl>): PluginSet {
     val sortedPlugins = getSortedPlugins()
-    // ordered - do not use persistentHashSetOf
-    val allPlugins = persistentSetOf<IdeaPluginDescriptorImpl>().mutate { result ->
+    // must be ordered
+    val allPlugins = LinkedHashSet<IdeaPluginDescriptorImpl>().also { result ->
       result.addAll(sortedPlugins)
       result.addAll(incompletePlugins)
     }
@@ -142,12 +139,12 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return PluginSet(
       moduleGraph = moduleGraph,
       allPlugins = allPlugins,
-      enabledPlugins = persistentListOf<IdeaPluginDescriptorImpl>().mutate { result ->
+      enabledPlugins = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
         sortedPlugins.filterTo(result) { it.isEnabled }
       },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
-      enabledModules = persistentListOf<IdeaPluginDescriptorImpl>().mutate { result ->
+      enabledModules = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
         for (module in moduleGraph.nodes) {
           if (if (module.moduleName == null) module.isEnabled else enabledModuleV2Ids.containsKey(module.moduleName)) {
             result.add(module)

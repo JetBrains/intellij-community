@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -96,8 +96,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     }
 
     @Override
-    @Nullable
-    protected Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull final TypeEvalContext context) {
+    protected @Nullable Query<PsiElement> search(@NotNull PsiElement nameIdentifier, final @NotNull TypeEvalContext context) {
       if (!(nameIdentifier.getParent() instanceof PyFunction)) return null;
       return PySuperMethodsSearch.search((PyFunction)nameIdentifier.getParent(), context);
     }
@@ -111,8 +110,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     }
 
     @Override
-    @Nullable
-    protected Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull TypeEvalContext context) {
+    protected @Nullable Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull TypeEvalContext context) {
       if (!(nameIdentifier.getParent() instanceof PyTargetExpression)) return null;
       final List<PsiElement> result = new ArrayList<>();
       final PyClass containingClass = PsiTreeUtil.getParentOfType(nameIdentifier, PyClass.class);
@@ -135,9 +133,8 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
       return parent instanceof PyClass ? PyBundle.message("line.markers.popup.title.choose.subclass", ((PyClass)parent).getName()) : "";
     }
 
-    @Nullable
     @Override
-    protected Query<? extends PsiElement> search(PsiElement elt, @NotNull TypeEvalContext context) {
+    protected @Nullable Query<? extends PsiElement> search(PsiElement elt, @NotNull TypeEvalContext context) {
       PsiElement parent = elt.getParent();
       return parent instanceof PyClass ? PyClassInheritorsSearch.search((PyClass)parent, true) : null;
     }
@@ -199,8 +196,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     return false;
   }
 
-  @Nullable
-  private static LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement identifier, final PyFunction function) {
+  private static @Nullable LineMarkerInfo<PsiElement> getMethodMarker(final PsiElement identifier, final PyFunction function) {
     if (PyUtil.isInitMethod(function)) {
       return null;
     }
@@ -220,8 +216,7 @@ public final class PyLineMarkerProvider implements LineMarkerProvider, PyLineSep
     return null;
   }
 
-  @Nullable
-  private static LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
+  private static @Nullable LineMarkerInfo<PsiElement> getAttributeMarker(PyTargetExpression element) {
     final String name = element.getReferencedName();
     if (name == null) {
       return null;

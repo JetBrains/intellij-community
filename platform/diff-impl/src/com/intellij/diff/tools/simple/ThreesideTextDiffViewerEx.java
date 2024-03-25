@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -329,6 +330,9 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
         return new LineRange(change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide()));
       }
     }
+    else if (DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER.is(dataId)) {
+      return new MyChangedRangeProvider();
+    }
     return super.getData(dataId);
   }
 
@@ -489,6 +493,18 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     @Override
     protected boolean doScrollToFirstChange() {
       return ThreesideTextDiffViewerEx.this.doScrollToChange(ScrollToPolicy.FIRST_CHANGE);
+    }
+  }
+
+  private class MyChangedRangeProvider implements DiffChangedRangeProvider {
+    @Override
+    public @Nullable List<TextRange> getChangedRanges(@NotNull Editor editor) {
+      ThreeSide side = ThreeSide.fromValue(getEditors(), editor);
+      if (side == null) return null;
+
+      return ContainerUtil.map(getAllChanges(), change -> {
+        return DiffUtil.getLinesRange(editor.getDocument(), change.getStartLine(side), change.getEndLine(side));
+      });
     }
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.BundleBase;
-import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.*;
@@ -40,6 +39,8 @@ import java.util.regex.Pattern;
 
 public final class SearchUtil {
   public static final Key<List<@Nls String>> ADDITIONAL_SEARCH_LABELS_KEY = Key.create("ADDITIONAL_SEARCH_LABELS");
+  public static final Key<Boolean> SEARCH_SKIP_COMPONENT_KEY = Key.create("SEARCH_SKIP_COMPONENT_KEY");
+
   private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
@@ -132,7 +133,7 @@ public final class SearchUtil {
   }
 
   private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path, boolean i18n) {
-    if (component instanceof SkipSelfSearchComponent) {
+    if (Boolean.TRUE.equals(ClientProperty.get(component, SEARCH_SKIP_COMPONENT_KEY))) {
       return;
     }
     List<String> additional = ClientProperty.get(component, ADDITIONAL_SEARCH_LABELS_KEY);

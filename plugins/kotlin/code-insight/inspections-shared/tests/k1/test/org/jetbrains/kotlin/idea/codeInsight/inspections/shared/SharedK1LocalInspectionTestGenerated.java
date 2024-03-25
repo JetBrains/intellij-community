@@ -429,6 +429,44 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/infixCallToOrdinary")
+    public static class InfixCallToOrdinary extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("functionCallAfterInfixCall.kt")
+        public void testFunctionCallAfterInfixCall() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/functionCallAfterInfixCall.kt");
+        }
+
+        @TestMetadata("functionLiteralArgument.kt")
+        public void testFunctionLiteralArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/functionLiteralArgument.kt");
+        }
+
+        @TestMetadata("nonApplicableBinaryOperation.kt")
+        public void testNonApplicableBinaryOperation() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/nonApplicableBinaryOperation.kt");
+        }
+
+        @TestMetadata("nullAssertedCall.kt")
+        public void testNullAssertedCall() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/nullAssertedCall.kt");
+        }
+
+        @TestMetadata("parenthesesAroundRightHandArgument.kt")
+        public void testParenthesesAroundRightHandArgument() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/parenthesesAroundRightHandArgument.kt");
+        }
+
+        @TestMetadata("simpleInfixFunctionCall.kt")
+        public void testSimpleInfixFunctionCall() throws Exception {
+            runTest("../testData/inspectionsLocal/infixCallToOrdinary/simpleInfixFunctionCall.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/javaIoSerializableObjectMustHaveReadResolve")
     public static class JavaIoSerializableObjectMustHaveReadResolve extends AbstractSharedK1LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -662,6 +700,64 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("withAnnotationAndTrivialExpressionBody.kt")
         public void testWithAnnotationAndTrivialExpressionBody() throws Exception {
             runTest("../testData/inspectionsLocal/redundantGetter/withAnnotationAndTrivialExpressionBody.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda")
+    public static class RedundantLabeledReturnOnLastExpressionInLambda extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inLabelRange.kt")
+        public void testInLabelRange() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/inLabelRange.kt");
+        }
+
+        @TestMetadata("inReturnedExpressionRange.kt")
+        public void testInReturnedExpressionRange() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/inReturnedExpressionRange.kt");
+        }
+
+        @TestMetadata("labeledLambda.kt")
+        public void testLabeledLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/labeledLambda.kt");
+        }
+
+        @TestMetadata("multipleBlocks.kt")
+        public void testMultipleBlocks() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/multipleBlocks.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/normal.kt");
+        }
+
+        @TestMetadata("notInsideLabeled.kt")
+        public void testNotInsideLabeled() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/notInsideLabeled.kt");
+        }
+
+        @TestMetadata("notLabeled.kt")
+        public void testNotLabeled() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/notLabeled.kt");
+        }
+
+        @TestMetadata("notLastLine.kt")
+        public void testNotLastLine() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/notLastLine.kt");
+        }
+
+        @TestMetadata("outerLambda.kt")
+        public void testOuterLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/outerLambda.kt");
+        }
+
+        @TestMetadata("unit.kt")
+        public void testUnit() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantLabeledReturnOnLastExpressionInLambda/unit.kt");
         }
     }
 
@@ -926,6 +1022,144 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("withAnnotaionAndTrivialBlockBody.kt")
         public void testWithAnnotaionAndTrivialBlockBody() throws Exception {
             runTest("../testData/inspectionsLocal/redundantSetter/withAnnotaionAndTrivialBlockBody.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantSuspend")
+    public static class RedundantSuspend extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actual.kt")
+        public void testActual() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/actual.kt");
+        }
+
+        @TestMetadata("coroutineContext.kt")
+        public void testCoroutineContext() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
+        }
+
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/interface.kt");
+        }
+
+        @TestMetadata("interfaceNoBody.kt")
+        public void testInterfaceNoBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/interfaceNoBody.kt");
+        }
+
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
+        }
+
+        @TestMetadata("invokingByQualified.kt")
+        public void testInvokingByQualified() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
+        @TestMetadata("lambdaCall.kt")
+        public void testLambdaCall() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoop.kt")
+        public void testNonSuspendingLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoop.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoopExtensionProperty.kt")
+        public void testNonSuspendingLoopExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoopExtensionProperty.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoopIteratorOtherClass.kt")
+        public void testNonSuspendingLoopIteratorOtherClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoopIteratorOtherClass.kt");
+        }
+
+        @TestMetadata("nonSuspendingLoopLocalExtensionProperty.kt")
+        public void testNonSuspendingLoopLocalExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nonSuspendingLoopLocalExtensionProperty.kt");
+        }
+
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
+        }
+
+        @TestMetadata("operator.kt")
+        public void testOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/operator.kt");
+        }
+
+        @TestMetadata("operatorAssignment.kt")
+        public void testOperatorAssignment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/operatorAssignment.kt");
+        }
+
+        @TestMetadata("override.kt")
+        public void testOverride() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/override.kt");
+        }
+
+        @TestMetadata("parenthesized.kt")
+        public void testParenthesized() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/parenthesized.kt");
+        }
+
+        @TestMetadata("recursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/recursiveCall.kt");
+        }
+
+        @TestMetadata("recursiveOperator.kt")
+        public void testRecursiveOperator() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/recursiveOperator.kt");
+        }
+
+        @TestMetadata("recursiveOperatorAssignment.kt")
+        public void testRecursiveOperatorAssignment() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/recursiveOperatorAssignment.kt");
+        }
+
+        @TestMetadata("selfCallWithDifferentReceiver.kt")
+        public void testSelfCallWithDifferentReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/selfCallWithDifferentReceiver.kt");
+        }
+
+        @TestMetadata("suspendingLoop.kt")
+        public void testSuspendingLoop() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoop.kt");
+        }
+
+        @TestMetadata("suspendingLoopExtensionProperty.kt")
+        public void testSuspendingLoopExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopExtensionProperty.kt");
+        }
+
+        @TestMetadata("suspendingLoopIteratorOtherClass.kt")
+        public void testSuspendingLoopIteratorOtherClass() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopIteratorOtherClass.kt");
+        }
+
+        @TestMetadata("suspendingLoopLocalExtensionProperty.kt")
+        public void testSuspendingLoopLocalExtensionProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/suspendingLoopLocalExtensionProperty.kt");
+        }
+
+        @TestMetadata("unresolvedFunction.kt")
+        public void testUnresolvedFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/unresolvedFunction.kt");
+        }
+
+        @TestMetadata("unresolvedProperty.kt")
+        public void testUnresolvedProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSuspend/unresolvedProperty.kt");
         }
     }
 

@@ -18,27 +18,17 @@ import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTest
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
-abstract class AbstractK2BindToElementTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
-    override fun isFirPlugin() = true
-
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
-
-    @OptIn(KtAllowAnalysisOnEdt::class)
-    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) = allowAnalysisOnEdt {
-      val mainFile = files.first()
-      myFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
-      val elem = mainFile.findElementAt(myFixture.caretOffset) ?: error("Couldn't find element at caret")
-      val refElement = elem.parentOfType<KtSimpleNameExpression>(withSelf = true)
-                       ?: elem.parentOfType<KDocName>()
-                       ?: error("Element at caret isn't of type 'KtSimpleNameExpression'")
-      val mainReference = refElement.mainReference ?: error("Ref element doesn't have a main reference")
-      val bindTarget = findElementToBind()?.unwrapped ?: error("Could not find element to bind")
-      myFixture.project.executeWriteCommand("bindToElement") {
-        mainReference.bindToElement(bindTarget)
-      }
-      myFixture.checkResultByFile("${dataFile().name}.after")
+abstract class AbstractK2BindToElementTest : AbstractK2BindToTest() {
+    override fun bindElement(refElement: KtElement) {
+        val mainReference = refElement.mainReference ?: error("Ref element doesn't have a main reference")
+        val bindTarget = findElementToBind()?.unwrapped ?: error("Could not find element to bind")
+        myFixture.project.executeWriteCommand("bindToElement") {
+            mainReference.bindToElement(bindTarget)
+        }
+        myFixture.checkResultByFile("${dataFile().name}.after")
     }
 
     private fun findElementToBind(): PsiElement? {
@@ -47,9 +37,5 @@ abstract class AbstractK2BindToElementTest : KotlinMultiFileLightCodeInsightFixt
         return JavaPsiFacade.getInstance(myFixture.project).findClass(nameToBind, projectScope)
                ?: KotlinTopLevelFunctionFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
                ?: KotlinTopLevelPropertyFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
-    }
-
-    private companion object {
-        const val BIND_TO = "BIND_TO"
     }
 }

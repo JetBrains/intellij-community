@@ -79,7 +79,7 @@ public class TypeCastInstruction extends ExpressionPushingInstruction {
     List<DfaInstructionState> result = new ArrayList<>();
     if (myTransferValue != null) {
       DfaMemoryState castFail = stateBefore.createCopy();
-      if (fromType != null && myCastTo.isConvertibleFrom(fromType)) {
+      if (fromType != null && (!constraint.isResolved() || myCastTo.isConvertibleFrom(fromType))) {
         if (!castTopOfStack(factory, stateBefore, constraint)) {
           castPossible = false;
         } else {

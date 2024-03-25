@@ -3,6 +3,7 @@ package com.intellij.find.findUsages;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -12,7 +13,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class JavaUsageTargetProvider implements UsageTargetProvider {
+public final class JavaUsageTargetProvider implements UsageTargetProvider, DumbAware {
   @Override
   public UsageTarget @Nullable [] getTargets(@NotNull Editor editor, @NotNull final PsiFile file) {
     int offset = editor.getCaretModel().getOffset();

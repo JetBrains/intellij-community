@@ -2,32 +2,25 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.codeInspection.util.IntentionName
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.AddQualifiersUtil
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
-internal class AddFullQualifierIntention : AbstractKotlinModCommandWithContext<KtNameReferenceExpression, AddFullQualifierIntention.Context>(
-    KtNameReferenceExpression::class
-), LowPriorityAction {
-    class Context(val fqName: FqName)
+internal class AddFullQualifierIntention :
+    KotlinApplicableModCommandAction<KtNameReferenceExpression, AddFullQualifierIntention.Context>(KtNameReferenceExpression::class),
+    LowPriorityAction {
+
+    data class Context(
+        val fqName: FqName,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("add.full.qualifier")
-
-    override fun getActionName(
-        element: KtNameReferenceExpression,
-        context: Context
-    ): @IntentionName String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtNameReferenceExpression> = ApplicabilityRanges.SELF
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtNameReferenceExpression): Context? {
@@ -40,17 +33,12 @@ internal class AddFullQualifierIntention : AbstractKotlinModCommandWithContext<K
         return null
     }
 
-    override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean = true
-
-    override fun apply(
+    override fun invoke(
+        context: ActionContext,
         element: KtNameReferenceExpression,
-        context: AnalysisActionContext<Context>,
-        updater: ModPsiUpdater
+        elementContext: Context,
+        updater: ModPsiUpdater,
     ) {
-        AddQualifiersUtil.applyTo(element, context.analyzeContext.fqName)
-    }
-
-    override fun shouldApplyInWriteAction(): Boolean {
-        return false
+        AddQualifiersUtil.applyTo(element, elementContext.fqName)
     }
 }

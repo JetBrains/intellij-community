@@ -3,7 +3,9 @@ package com.intellij.platform.ide.impl.startup.multiProcess;
 
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.project.impl.P3SupportInstaller;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +16,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static com.intellij.idea.Main.customTargetDirectoryToImportConfig;
 import static com.intellij.idea.Main.isConfigImportNeeded;
@@ -29,6 +32,12 @@ import static com.intellij.idea.Main.isConfigImportNeeded;
 public final class PerProcessPathCustomizer implements PathCustomizer {
   private static final String LOCK_FILE_NAME = "process.lock";
 
+  private static final Set<String> FILES_TO_KEEP = ContainerUtil.newHashSet(
+    LOCK_FILE_NAME,
+    ".pid", // Required by PerformanceWatcherImpl to report native crashes
+    ".appinfo" // Required by PerformanceWatcherImpl to report native crashes
+  );
+
   // Leave the folder locked until we exit. Store reference to keep CleanerFactory from releasing the file channel.
   @SuppressWarnings("unused") private static FileLock ourConfigLock;
   private static volatile boolean enabled;
@@ -40,11 +49,6 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
       return null;
     }
     
-    Path oldConfigPath = PathManager.getConfigDir();
-    if (isConfigImportNeeded(oldConfigPath)) {
-      customTargetDirectoryToImportConfig = oldConfigPath;
-    }
-
     Path newConfig;
     Path tempFolder = Paths.get(PathManager.getTempPath());
 
@@ -75,6 +79,28 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
     }
     cleanDirectory(newConfig);
     cleanDirectory(newSystem);
+
+    prepareConfig(newConfig, PathManager.getConfigDir());
+
+    Path startupScriptDir = getStartupScriptDir();
+    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
+    enabled = true;
+    return new CustomPaths(newConfig.toString(), newSystem.toString(), PathManager.getPluginsPath(), newLog.toString(), startupScriptDir);
+  }
+
+  public static boolean isEnabled() {
+    return enabled;
+  }
+
+  public static Path getStartupScriptDir() {
+    return PathManager.getSystemDir().resolve("startup-script");
+  }
+
+  public static void prepareConfig(Path newConfig, Path oldConfigPath) {
+    if (isConfigImportNeeded(oldConfigPath)) {
+      customTargetDirectoryToImportConfig = oldConfigPath;
+    }
+
     try {
       CustomConfigFiles.prepareConfigDir(newConfig, oldConfigPath);
     }
@@ -83,13 +109,6 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
-    Path startupScriptDir = PathManager.getSystemDir().resolve("startup-script");
-    enabled = true;
-    return new CustomPaths(newConfig.toString(), newSystem.toString(), PathManager.getPluginsPath(), newLog.toString(), startupScriptDir);
-  }
-
-  public static boolean isEnabled() {
-    return enabled;
   }
 
   private static @Nullable Path computeLogDirPath(Path baseLogDir, int directoryCounter) {
@@ -130,7 +149,7 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
   private static void cleanDirectory(@NotNull Path directory) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
       stream.forEach(path -> {
-        if (!path.getFileName().toString().equals(LOCK_FILE_NAME)) {
+        if (!FILES_TO_KEEP.contains(path.getFileName().toString())) {
           try {
             NioFiles.deleteRecursively(path);
           }

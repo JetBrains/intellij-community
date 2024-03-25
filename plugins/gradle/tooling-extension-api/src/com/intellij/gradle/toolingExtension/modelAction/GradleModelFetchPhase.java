@@ -10,6 +10,7 @@ public enum GradleModelFetchPhase {
    * This can be used to set up "sync" tasks for the import
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#projectsLoaded
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_LOADED_PHASE("Project loaded phase"),
 
@@ -22,6 +23,7 @@ public enum GradleModelFetchPhase {
    * These configurations may modify a Gradle project model which is necessary for the following phases.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   WARM_UP_PHASE("Configuration warm-up phase"),
 
@@ -29,6 +31,7 @@ public enum GradleModelFetchPhase {
    * Model providers, in this phase, fetch a Gradle project source set models and resolve dependencies.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_SOURCE_SET_PHASE("Project source set phase"),
 
@@ -40,6 +43,7 @@ public enum GradleModelFetchPhase {
    * </ul>
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_SOURCE_SET_DEPENDENCY_PHASE("Project source set dependency phase"),
 
@@ -49,6 +53,7 @@ public enum GradleModelFetchPhase {
    * It is module names, source sets and content roots, project and module SDKs, language level, etc.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   PROJECT_MODEL_PHASE("Project model phase"),
 
@@ -58,6 +63,7 @@ public enum GradleModelFetchPhase {
    * data for code profiling, etc.
    *
    * @see org.gradle.tooling.BuildActionExecuter.Builder#buildFinished
+   * @see org.gradle.tooling.BuildActionExecuter#setStreamedValueListener
    */
   ADDITIONAL_MODEL_PHASE("Additional model phase");
 

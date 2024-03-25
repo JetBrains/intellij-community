@@ -12,6 +12,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
 import com.intellij.driver.sdk.waitFor
 import java.awt.Point
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -60,6 +61,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       throw AssertionError("Found ${filteredTexts.size} texts '$text', expected 1")
     }
     return filteredTexts.first()
+  }
+
+  fun waitForText(text: String, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds) : UiText {
+    waitFor(duration) {
+      findAllText().any { it.text == text }
+    }
+    return findText(text)
   }
 
   fun hasText(text: String): Boolean {
@@ -140,5 +148,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun moveMouse(point: Point) {
     robotService.robot.moveMouse(component, point)
+  }
+
+  fun hasFocus(): Boolean {
+    return component.isFocusOwner()
   }
 }

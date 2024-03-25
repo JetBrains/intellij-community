@@ -440,4 +440,4 @@ internal suspend fun ensureFilesWritable(project: Project, files: Collection<Vir
 }
 
 internal val useBackgroundSave: Boolean
-  get() = Registry.`is`("ide.background.save.settings", false)
+  get() = Registry.`is`("ide.background.save.settings", true)

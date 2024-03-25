@@ -2,9 +2,11 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +22,10 @@ final class JavaFramesListRenderer {
       component.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
     }
 
-    final String label = descriptor.getLabel();
+    Location location = descriptor.getLocation();
+    String offsetPrefix = location != null && Registry.is("debugger.show.offsets.in.frames") ? ("[" + location.codeIndex() + "]: ") : "";
+
+    final String label = offsetPrefix + descriptor.getLabel();
     final int openingBrace = label.indexOf("{");
     final int closingBrace = (openingBrace < 0) ? -1 : label.indexOf("}");
     final SimpleTextAttributes attributes = getAttributes(descriptor);

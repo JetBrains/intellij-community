@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.spellchecker.grazie
@@ -24,7 +24,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -54,13 +55,17 @@ internal class GrazieSpellCheckerEngine(
   private val adapter = WordListAdapter()
 
   internal class SpellerLoadActivity : ProjectActivity {
-    override suspend fun execute(project: Project) {
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        // Do not preload speller in test mode, so it won't slow down tests not related to the spellchecker.
-        // We will still load it in tests, but only when it is actually needed.
-        project.service<GrazieSpellCheckerEngine>().waitForSpeller()
-        SpellCheckerManager.getInstance(project)
+    init {
+      // Do not preload speller in test mode, so it won't slow down tests not related to the spellchecker.
+      // We will still load it in tests but only when it is actually needed.
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
       }
+    }
+
+    override suspend fun execute(project: Project) {
+      project.serviceAsync<GrazieSpellCheckerEngine>().waitForSpeller()
+      project.serviceAsync<SpellCheckerManager>()
     }
   }
 

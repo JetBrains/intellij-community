@@ -195,6 +195,8 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
       }
 
       override fun getId() = taskId
+
+      override fun isHeadless(): Boolean = false
     }
 
     if (shouldShowProgressIndicator()) {

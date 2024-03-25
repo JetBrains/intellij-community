@@ -11,7 +11,7 @@ import javax.swing.JComponent
 
 internal class JTextFieldPanel : UISandboxPanel {
 
-  override val title: String = "JTextField"
+  override val title: String = "JBTextField"
 
   override fun createContent(disposable: Disposable): JComponent {
     val result = panel {

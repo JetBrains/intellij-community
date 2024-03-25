@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -50,11 +51,19 @@ public class InlineWatch {
     }
   }
 
-  public void setMarker() {
+  /**
+   * @return true if marker was added successfully
+   */
+  public boolean setMarker() {
     Document document = FileDocumentManager.getInstance().getDocument(myFile);
-    if (document == null) return;
-    int offset = document.getLineEndOffset(myPosition.getLine());
-    myRangeMarker = document.createRangeMarker(offset, offset, true);
+    if (document != null) {
+      int line = myPosition.getLine();
+      if (DocumentUtil.isValidLine(line, document)) {
+        int offset = document.getLineEndOffset(line);
+        myRangeMarker = document.createRangeMarker(offset, offset, true);
+        return true;
+      }
+    }
+    return false;
   }
-
 }

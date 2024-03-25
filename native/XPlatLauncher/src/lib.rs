@@ -41,7 +41,8 @@ use serde::{Deserialize, Serialize};
 use {
     windows::core::{GUID, PWSTR},
     windows::Win32::Foundation,
-    windows::Win32::UI::Shell
+    windows::Win32::UI::Shell,
+    windows::Win32::System::Console::{AllocConsole, ATTACH_PARENT_PROCESS, AttachConsole},
 };
 
 #[cfg(target_family = "unix")]
@@ -67,6 +68,10 @@ const CLASS_PATH_SEPARATOR: &str = ":";
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
     let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
+    if remote_dev {
+        attach_console();
+    }
+
     let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
 
     if let Err(e) = main_impl(exe_path, remote_dev, debug_mode) {
@@ -74,6 +79,19 @@ pub fn main_lib() {
         std::process::exit(1);
     }
 }
+
+#[cfg(target_os = "windows")]
+fn attach_console() {
+    unsafe {
+        match AttachConsole(ATTACH_PARENT_PROCESS) {
+            Ok(_) => {}
+            Err(_) => AllocConsole().expect("Failed to attach to existing console or allocate a new one")
+        }
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn attach_console() { }
 
 fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()> {
     let level = if debug_mode { LevelFilter::Debug } else { LevelFilter::Error };

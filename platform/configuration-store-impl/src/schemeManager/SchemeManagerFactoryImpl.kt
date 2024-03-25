@@ -2,7 +2,6 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
-import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
@@ -163,16 +162,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    private fun <T : Scheme, M:T>addVfsListener(schemeManager: SchemeManagerImpl<T, M>) {
-      project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
-    }
-
     override fun createFileChangeSubscriber(): FileChangeSubscriber {
       return { schemeManager ->
         if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
-          StartupManagerEx.getInstanceEx(project).runAfterOpened {
-            addVfsListener(schemeManager)
-          }
+          project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
         }
       }
     }

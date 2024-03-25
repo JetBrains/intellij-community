@@ -8,9 +8,11 @@ import com.intellij.usages.impl.FileStructureGroupRuleProvider
 import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.usages.rules.SingleParentUsageGroupingRule
 import com.intellij.usages.rules.UsageGroupingRule
+import org.jetbrains.kotlin.idea.projectView.KtDeclarationTreeNode.Companion.tryGetRepresentableText
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -27,12 +29,17 @@ class KotlinDeclarationGroupingRule(val level: Int = 0) : SingleParentUsageGroup
             }
         }
 
-        val parentList = element.parents.filterIsInstance<KtNamedDeclaration>().filterNot { it is KtProperty && it.isLocal }.toList()
+        val parentList =
+            element.parents.filterIsInstance<KtNamedDeclaration>().filterNot {
+            it is KtProperty && it.isLocal || (it is KtScript)
+        }.toList()
         if (parentList.size <= level) {
             return null
         }
 
-        return PsiNamedElementUsageGroupBase(parentList[parentList.size - level - 1])
+        val declaration = parentList[parentList.size - level - 1]
+        val name = tryGetRepresentableText(declaration, renderReceiverType = false, renderArguments = false, renderReturnType = false)
+        return PsiNamedElementUsageGroupBase(declaration, name)
     }
 }
 

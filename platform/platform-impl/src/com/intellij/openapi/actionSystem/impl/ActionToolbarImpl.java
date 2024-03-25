@@ -1115,8 +1115,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (pairs.size() == newVisibleActions.size()) return false;
     myVisibleActions = newVisibleActions;
     for (Pair<Integer, AnAction> pair : pairs) {
-      remove(components[pair.first]);
-      addActionButtonImpl(pair.second, pair.first);
+      int index = pair.first;
+      remove(index);
+      addActionButtonImpl(pair.second, index);
+      Component button = getComponent(index);
+      button.setBounds(components[index].getBounds());
+      button.validate();
     }
     return true;
   }

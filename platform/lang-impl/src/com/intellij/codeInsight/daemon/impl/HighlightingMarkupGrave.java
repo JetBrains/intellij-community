@@ -68,7 +68,7 @@ public class HighlightingMarkupGrave {
   protected void subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
-    myProject.getMessageBus().connect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+    myProject.getMessageBus().simpleConnect().subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished(@NotNull Collection<? extends @NotNull FileEditor> fileEditors) {
         if (!DumbService.getInstance(myProject).isDumb()) {
@@ -271,7 +271,7 @@ public class HighlightingMarkupGrave {
     }
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
     if (info != null &&
-        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
+        (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g., field text attribute)
          || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY)) {
       return true;
     }
@@ -362,9 +362,9 @@ public class HighlightingMarkupGrave {
     }
 
     private void writeTextAttributesKey(@NotNull DataOutput out) throws IOException {
-      boolean attributesKeyExists = textAttributesKey != null;
-      out.writeBoolean(attributesKeyExists);
-      if (attributesKeyExists) {
+      boolean attributeKeyExists = textAttributesKey != null;
+      out.writeBoolean(attributeKeyExists);
+      if (attributeKeyExists) {
         IOUtil.writeUTF(out, textAttributesKey.getExternalName());
       }
     }
@@ -413,7 +413,7 @@ public class HighlightingMarkupGrave {
         return STORE_NEW;
       }
       if (oldMarkup == null) {
-        // no a limb to put in grave
+        // no, a limb to put in grave
         return KEEP_OLD;
       }
       if (oldMarkup.contentHash() != newMarkup.contentHash() && !newMarkup.isEmpty()) {
@@ -429,7 +429,7 @@ public class HighlightingMarkupGrave {
         return KEEP_OLD;
       }
       if (isNewMoreRelevant == null) {
-        // should never happen. file is closed without being opened before
+        // should never happen. the file is closed without being opened before
         return STORE_NEW;
       }
       if (isNewMoreRelevant) {
@@ -482,6 +482,6 @@ public class HighlightingMarkupGrave {
   }
 
   private void logFusStatistic(@NotNull VirtualFileWithId file, @NotNull MarkupGraveEvent event, int restoredCount) {
-    FileEditorCollector.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
+    FileEditorCollector.INSTANCE.logEditorMarkupGrave(myProject, (VirtualFile) file, event, restoredCount);
   }
 }

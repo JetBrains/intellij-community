@@ -4,6 +4,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler.getCandidateContainers
@@ -11,11 +15,17 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringExcep
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService
 import org.jetbrains.kotlin.idea.refactoring.introduce.findStringTemplateOrStringTemplateEntryExpression
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.findElement
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project) : KotlinIntroduceVariableService {
     override fun findElement(
@@ -25,9 +35,21 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
         failOnNoExpression: Boolean,
         elementKind: ElementKind
     ): PsiElement? {
-        val element = findElement(file, startOffset, endOffset, elementKind)
+        var element = findElement(file, startOffset, endOffset, elementKind)
             ?: findStringTemplateOrStringTemplateEntryExpression(file, startOffset, endOffset, elementKind)
             ?: findStringTemplateFragment(file, startOffset, endOffset, elementKind)
+
+        if (element is KtSimpleNameExpression) {
+            val qualifiedExpression = element.parent as? KtDotQualifiedExpression
+            if (qualifiedExpression != null && qualifiedExpression.receiverExpression == element) {
+                val resolved = element.mainReference.resolve()
+                val isObjectReferenceInQualifier = resolved is KtClassOrObject &&
+                        resolved.getDeclarationKeyword()?.elementType == KtTokens.OBJECT_KEYWORD
+                if (!isObjectReferenceInQualifier) {
+                    element = null
+                }
+            }
+        }
 
         if (element == null) {
             if (failOnNoExpression) {

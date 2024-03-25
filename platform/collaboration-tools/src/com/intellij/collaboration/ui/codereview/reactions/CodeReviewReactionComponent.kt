@@ -20,7 +20,7 @@ object CodeReviewReactionComponent {
   fun createReactionButtonIn(cs: CoroutineScope, presentation: Flow<CodeReviewReactionPillPresentation>, toggle: () -> Unit): JComponent =
     PillButton().apply {
       isFocusable = false
-      font = JBFont.create(font, false).deriveFont(CodeReviewReactionsUIUtil.COUNTER_FONT_SIZE)
+      font = JBFont.create(font.deriveFont(CodeReviewReactionsUIUtil.COUNTER_FONT_SIZE))
 
       cs.launchNow {
         presentation.distinctUntilChanged().collectLatest {

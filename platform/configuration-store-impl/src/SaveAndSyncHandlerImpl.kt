@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdleTracker
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.SaveAndSyncHandlerListener
@@ -100,7 +100,9 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
 
           val job = currentJob.updateAndGet { oldJob ->
             oldJob?.cancel()
-            launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
+            launch(start = CoroutineStart.LAZY) {
+              processTasks(forceExecuteImmediately)
+            }
           }!!
           try {
             if (job.start()) {
@@ -163,7 +165,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         blockingContext {
           eventPublisher.beforeSave(task, forceExecuteImmediately)
         }
-        saveProjectsAndApp(forceSavingAllSettings = task.forceSavingAllSettings, onlyProject = task.project)
+        saveProjectsAndApp(task.forceSavingAllSettings, task.project)
       }.getOrLogException(LOG)
     }
   }
@@ -403,9 +405,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   @NlsContexts.ProgressTitle
-  private fun getProgressTitle(componentManager: ComponentManager): String {
-    return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
-  }
+  private fun getProgressTitle(componentManager: ComponentManager): String =
+    if (componentManager is Project) IdeBundle.message("progress.saving.project", componentManager.name) else IdeBundle.message("progress.saving.app")
 
   private fun <T> generalSettingFlow(
     settings: GeneralSettings,

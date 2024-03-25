@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
-import com.intellij.idea.TestFor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.concurrent.CyclicBarrier;
@@ -20,12 +21,25 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
-public class MergingTaskQueueTest extends BasePlatformTestCase {
-  private final MergingTaskQueue myQueue = new MergingTaskQueue<>();
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+
+@TestApplication
+@SuppressWarnings("unchecked")
+public class MergingTaskQueueTest {
+  private static final Logger LOG = Logger.getInstance(MergingTaskQueueTest.class);
+
+  private final MergingTaskQueue queue = new MergingTaskQueue<>();
+
+  @AfterEach
+  public void clearQueue() {
+    queue.cancelAllTasks();
+    queue.disposePendingTasks();
+  }
 
   private void runAllTasks() {
     while (true) {
-      try (MergingTaskQueue.QueuedTask<?> nextTask = myQueue.extractNextTask()) {
+      try (MergingTaskQueue.QueuedTask<?> nextTask = queue.extractNextTask()) {
         if (nextTask == null) return;
         nextTask.executeTask();
       }
@@ -33,13 +47,13 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
   }
 
   static abstract class TaskWithEquivalentObject implements MergeableQueueTask<TaskWithEquivalentObject> {
-    private final @NotNull Object myEquivalenceObject;
+    private final @NotNull Object equivalenceObject;
 
-    TaskWithEquivalentObject(@NotNull Object object) { myEquivalenceObject = object; }
+    TaskWithEquivalentObject(@NotNull Object object) { equivalenceObject = object; }
 
     @Override
     public @Nullable TaskWithEquivalentObject tryMergeWith(@NotNull TaskWithEquivalentObject taskFromQueue) {
-      if (taskFromQueue.getClass().equals(getClass()) && taskFromQueue.myEquivalenceObject.equals(myEquivalenceObject)) {
+      if (taskFromQueue.getClass().equals(getClass()) && taskFromQueue.equivalenceObject.equals(equivalenceObject)) {
         return this;
       }
       return null;
@@ -90,12 +104,13 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     }
   }
 
+  @Test
   public void testEquivalentTasksAreMerged() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       int taskId = i;
-      myQueue.addTask(new TaskWithEquivalentObject("child") {
+      queue.addTask(new TaskWithEquivalentObject("child") {
         @Override
         public void perform(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -110,36 +125,39 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
 
     runAllTasks();
 
-    Assert.assertEquals("Only one child task should run, but were: " + childLog, 1, childLog.size());
-    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
+    assertEquals(1, childLog.size(), "Only one child task should run, but were: " + childLog);
+    assertEquals(100, disposeLog.size(), "All tasks must be disposed, but were: " + disposeLog);
   }
 
+  @Test
   public void testCanReturnThatAsResultOfTryMerge() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
-      myQueue.addTask(new LoggingTask(i, childLog, disposeLog, (thiz, other) -> other /* always merges */));
+      queue.addTask(new LoggingTask(i, childLog, disposeLog, (thiz, other) -> other /* always merges */));
     }
 
     runAllTasks();
 
-    Assert.assertEquals("Only one child task should run, but were: " + childLog, 1, childLog.size());
-    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
+    assertEquals(1, childLog.size(), "Only one child task should run, but were: " + childLog);
+    assertEquals(100, disposeLog.size(), "All tasks must be disposed, but were: " + disposeLog);
   }
 
+  @Test
   public void testCanReturnThisAsResultOfTryMerge() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
-      myQueue.addTask(new LoggingTask(i, childLog, disposeLog, (thiz, other) -> thiz /* always merges */));
+      queue.addTask(new LoggingTask(i, childLog, disposeLog, (thiz, other) -> thiz /* always merges */));
     }
 
     runAllTasks();
 
-    Assert.assertEquals("Only one child task should run, but were: " + childLog, 1, childLog.size());
-    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 100, disposeLog.size());
+    assertEquals(1, childLog.size(), "Only one child task should run, but were: " + childLog);
+    assertEquals(100, disposeLog.size(), "All tasks must be disposed, but were: " + disposeLog);
   }
 
+  @Test
   public void testDifferentClassesWithSameEquivalentAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
     final String commonEquivalence = "child";
@@ -157,18 +175,19 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       }
     };
 
-    //both taskA and taskB submits the same equality object, it must run both
-    myQueue.addTask(taskA);
-    myQueue.addTask(taskB);
+    //both taskA and taskB submit the same equality object, it must run both
+    queue.addTask(taskA);
+    queue.addTask(taskB);
     runAllTasks();
-    Assert.assertEquals("All tasks should run, but were: " + childLog, 2, childLog.size());
+    assertEquals(2, childLog.size(), "All tasks should run, but were: " + childLog);
   }
 
+  @Test
   public void testNonEquivalentTasksAreNotMerged() {
     List<Integer> childLog = new ArrayList<>();
     for (int i = 0; i < 100; i++) {
       int taskId = i;
-      myQueue.addTask(new TaskWithEquivalentObject("child" + i) {
+      queue.addTask(new TaskWithEquivalentObject("child" + i) {
         @Override
         public void perform(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -176,16 +195,17 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       });
     }
     runAllTasks();
-    Assert.assertEquals("Every child task are not unique, all must be executed: " + childLog, 100, childLog.size());
+    assertEquals(100, childLog.size(), "Every child task are not unique, all must be executed: " + childLog);
   }
 
+  @Test
   public void testNewTaskIsRunWhenMerged() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
     for (int i = 0; i < 3; i++) {
       int taskId = i;
-      myQueue.addTask(new TaskWithEquivalentObject("child") {
+      queue.addTask(new TaskWithEquivalentObject("child") {
         @Override
         public void perform(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -199,10 +219,11 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     }
 
     runAllTasks();
-    Assert.assertEquals("The last child task should run, but were: " + childLog, Collections.singletonList(2), childLog);
-    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, 3, disposeLog.size());
+    assertEquals(Collections.singletonList(2), childLog, "The last child task should run, but were: " + childLog);
+    assertEquals(3, disposeLog.size(), "All tasks must be disposed, but were: " + disposeLog);
   }
 
+  @Test
   public void testMergedTaskIsRunWhenMerged() {
     List<String> disposeLog = new ArrayList<>();
     List<String> childLog = new ArrayList<>();
@@ -232,35 +253,37 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       }
     }
     for (int i = 0; i < 3; i++) {
-      myQueue.addTask(new TaskWithId(String.valueOf(i)));
+      queue.addTask(new TaskWithId(String.valueOf(i)));
     }
 
     runAllTasks();
-    Assert.assertEquals("The last child task should run, but were: " + childLog, Collections.singletonList("0 1 2"), childLog);
-    Assert.assertEquals("All tasks must be disposed, but were: " + disposeLog, List.of("0", "1", "0 1", "2", "0 1 2"), disposeLog);
+    assertEquals(Collections.singletonList("0 1 2"), childLog, "The last child task should run, but were: " + childLog);
+    assertEquals(List.of("0", "1", "0 1", "2", "0 1 2"), disposeLog, "All tasks must be disposed, but were: " + disposeLog);
   }
 
+  @Test
   public void testCancelledTask() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
     MergeableQueueTask<?> task = new LoggingTask(1, childLog, disposeLog);
 
-    myQueue.addTask(task);
-    myQueue.cancelTask(task);
+    queue.addTask(task);
+    queue.cancelTask(task);
 
     runAllTasks();
-    Assert.assertEquals("Cancelled task must not run " + childLog, Collections.emptyList(), childLog);
-    Assert.assertEquals("Cancelled task must dispose " + disposeLog, Collections.singletonList(1), disposeLog);
+    assertEquals(Collections.emptyList(), childLog, "Cancelled task must not run " + childLog);
+    assertEquals(Collections.singletonList(1), disposeLog, "Cancelled task must dispose " + disposeLog);
   }
 
+  @Test
   public void testMergedTaskShouldDispose() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
     for (int i = 0; i < 3; i++) {
       int taskId = i;
-      myQueue.addTask(new TaskWithEquivalentObject("child") {
+      queue.addTask(new TaskWithEquivalentObject("child") {
         @Override
         public void perform(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -273,15 +296,16 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       });
     }
 
-    Assert.assertEquals("No task should run by now " + childLog, Collections.emptyList(), childLog);
-    Assert.assertEquals("older task must be disposed" + disposeLog, Arrays.asList(0, 1), disposeLog);
+    assertEquals(Collections.emptyList(), childLog, "No task should run by now " + childLog);
+    assertEquals(Arrays.asList(0, 1), disposeLog, "older task must be disposed" + disposeLog);
 
     runAllTasks();
 
-    Assert.assertEquals("The last task should only run " + childLog, Collections.singletonList(2), childLog);
-    Assert.assertEquals("older task must be disposed" + disposeLog, Arrays.asList(0, 1, 2), disposeLog);
+    assertEquals(Collections.singletonList(2), childLog, "The last task should only run " + childLog);
+    assertEquals(Arrays.asList(0, 1, 2), disposeLog, "older task must be disposed" + disposeLog);
   }
 
+  @Test
   public void testTasksAreDisposed() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
@@ -298,24 +322,25 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       }
     };
 
-    myQueue.addTask(task);
-    myQueue.disposePendingTasks();
+    queue.addTask(task);
+    queue.disposePendingTasks();
 
-    Assert.assertEquals("The last task should only run " + childLog, Collections.emptyList(), childLog);
-    Assert.assertEquals("older task must be disposed" + disposeLog, Arrays.asList(1), disposeLog);
+    assertEquals(Collections.emptyList(), childLog, "The last task should only run " + childLog);
+    assertEquals(Arrays.asList(1), disposeLog, "older task must be disposed" + disposeLog);
 
     runAllTasks();
-    Assert.assertEquals("The last task should only run " + childLog, Collections.emptyList(), childLog);
-    Assert.assertEquals("older task must be disposed" + disposeLog, Arrays.asList(1), disposeLog);
+    assertEquals(Collections.emptyList(), childLog, "The last task should only run " + childLog);
+    assertEquals(Arrays.asList(1), disposeLog, "older task must be disposed" + disposeLog);
   }
 
+  @Test
   public void testMergedTasksShouldNotReserveEarlierSlots() {
     List<Integer> disposeLog = new ArrayList<>();
     List<Integer> childLog = new ArrayList<>();
 
     for (int i = 1; i <= 3; i++) {
       int taskId = i;
-      myQueue.addTask(new TaskWithEquivalentObject("child") {
+      queue.addTask(new TaskWithEquivalentObject("child") {
         @Override
         public void perform(@NotNull ProgressIndicator indicator) {
           childLog.add(taskId);
@@ -327,7 +352,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
         }
       });
 
-      myQueue.addTask(new TaskWithEquivalentObject("boss-" + i) {
+      queue.addTask(new TaskWithEquivalentObject("boss-" + i) {
         @Override
         public void perform(@NotNull ProgressIndicator indicator) {
           childLog.add(-taskId);
@@ -341,14 +366,15 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     }
 
     runAllTasks();
-    Assert.assertEquals("The last task should only run " + childLog, Arrays.asList(-1, -2, 3, -3), childLog);
-    Assert.assertEquals("older task must be disposed " + disposeLog, Arrays.asList(1, 2, -1, -2, 3, -3), disposeLog);
+    assertEquals(Arrays.asList(-1, -2, 3, -3), childLog, "The last task should only run " + childLog);
+    assertEquals(Arrays.asList(1, 2, -1, -2, 3, -3), disposeLog, "older task must be disposed " + disposeLog);
   }
 
-  @TestFor(issues = "IDEA-241378")
+  // IDEA-241378
+  @Test
   public void testRunningTaskShouldNotBeDisposed() {
     AtomicReference<Boolean> isDisposed = new AtomicReference<>();
-    myQueue.addTask(new TaskWithEquivalentObject("any") {
+    queue.addTask(new TaskWithEquivalentObject("any") {
       @Override
       public void perform(@NotNull ProgressIndicator indicator) { }
 
@@ -358,28 +384,24 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       }
     });
 
-    MergingTaskQueue.QueuedTask<?> task = myQueue.extractNextTask();
-    myQueue.disposePendingTasks();
-
-    Assert.assertNull(isDisposed.get());
-    try {
+    try (MergingTaskQueue.QueuedTask<?> task = queue.extractNextTask()) {
+      queue.disposePendingTasks();
+      assertNull(isDisposed.get());
       task.executeTask();
-      Assert.fail();
+      fail();
     }
     catch (ProcessCanceledException ignore) {
       //OK
     }
-    finally {
-      task.close();
-    }
-    Assert.assertEquals(Boolean.TRUE, isDisposed.get());
+    assertEquals(Boolean.TRUE, isDisposed.get());
   }
 
-  @TestFor(issues = "IDEA-241378")
+  // IDEA-241378
+  @Test
   public void testRunningTaskIndicatorShouldBeCancelledOnDisposeRunningTasks() {
     CyclicBarrier b = new CyclicBarrier(2);
     AtomicReference<Boolean> isRun = new AtomicReference<>();
-    myQueue.addTask(new TaskWithEquivalentObject("any") {
+    queue.addTask(new TaskWithEquivalentObject("any") {
       @Override
       public void perform(@NotNull ProgressIndicator indicator) {
         for (int i = 0; i < 2; i++) {
@@ -390,7 +412,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     });
 
     Thread th = new Thread(() -> {
-      try (MergingTaskQueue.QueuedTask<?> nextTask = myQueue.extractNextTask()) {
+      try (MergingTaskQueue.QueuedTask<?> nextTask = queue.extractNextTask()) {
         nextTask.executeTask();
       }
       catch (Exception e) {
@@ -402,7 +424,7 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
 
     await(b);
     //now the task is in the middle
-    myQueue.disposePendingTasks();
+    queue.disposePendingTasks();
     await(b);
 
     //not it should complete
@@ -411,12 +433,13 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
     }
     catch (InterruptedException e) {
       th.interrupt();
-      Assert.fail();
+      fail();
     }
 
-    Assert.assertEquals(Boolean.TRUE, isRun.get());
+    assertEquals(Boolean.TRUE, isRun.get());
   }
 
+  @Test
   public void testNoLeaks() {
     for (int i = 0; i < 1000; i++) {
       TaskWithEquivalentObject task = new TaskWithEquivalentObject("q-" + i) {
@@ -425,24 +448,25 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
         }
       };
 
-      myQueue.addTask(task);
+      queue.addTask(task);
       if (i % 3 == 0) {
         Disposer.dispose(task);
       }
 
       if (i % 3 == 1) {
-        myQueue.cancelTask(task);
+        queue.cancelTask(task);
       }
     }
 
     runAllTasks();
 
-    LeakHunter.checkLeak(myQueue, ProgressIndicator.class);
-    LeakHunter.checkLeak(myQueue, TaskWithEquivalentObject.class);
+    LeakHunter.checkLeak(queue, ProgressIndicator.class);
+    LeakHunter.checkLeak(queue, TaskWithEquivalentObject.class);
   }
 
+  @Test
   public void testNoDisposeLeaksOnClose() {
-    final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
+    AtomicBoolean disposeFlag = new AtomicBoolean(false);
     TaskWithEquivalentObject task = new TaskWithEquivalentObject(this) {
       @Override
       public void perform(@NotNull ProgressIndicator indicator) {
@@ -450,17 +474,18 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
 
       @Override
       public void dispose() {
-        myDisposeFlag.set(true);
+        disposeFlag.set(true);
       }
     };
 
-    myQueue.addTask(task);
-    myQueue.disposePendingTasks();
+    queue.addTask(task);
+    queue.disposePendingTasks();
 
-    Assert.assertTrue(Disposer.isDisposed(task));
-    Assert.assertTrue(myDisposeFlag.get());
+    assertTrue(Disposer.isDisposed(task));
+    assertTrue(disposeFlag.get());
   }
 
+  @Test
   public void testNoDisposeLeaksOnClose2() {
     final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
     TaskWithEquivalentObject task = new TaskWithEquivalentObject(this) {
@@ -474,14 +499,15 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       }
     };
 
-    myQueue.addTask(task);
-    myQueue.cancelAllTasks();
-    myQueue.disposePendingTasks();
+    queue.addTask(task);
+    queue.cancelAllTasks();
+    queue.disposePendingTasks();
 
-    Assert.assertTrue(Disposer.isDisposed(task));
-    Assert.assertTrue(myDisposeFlag.get());
+    assertTrue(Disposer.isDisposed(task));
+    assertTrue(myDisposeFlag.get());
   }
 
+  @Test
   public void testNoDisposeLeaksOnClose3() {
     final AtomicBoolean myDisposeFlag = new AtomicBoolean(false);
     TaskWithEquivalentObject task = new TaskWithEquivalentObject(this) {
@@ -495,15 +521,16 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       }
     };
 
-    myQueue.addTask(task);
-    myQueue.cancelTask(task);
-    myQueue.disposePendingTasks();
+    queue.addTask(task);
+    queue.cancelTask(task);
+    queue.disposePendingTasks();
 
-    Assert.assertTrue(Disposer.isDisposed(task));
-    Assert.assertTrue(myDisposeFlag.get());
+    assertTrue(Disposer.isDisposed(task));
+    assertTrue(myDisposeFlag.get());
   }
 
-  public void testSubmittedTasksCounterDoesNotDecrease() {
+  @Test
+  public void submittedTasksCounterDoesNotDecrease() {
     AtomicInteger counter = new AtomicInteger(0);
     Random random = new Random();
 
@@ -516,18 +543,19 @@ public class MergingTaskQueueTest extends BasePlatformTestCase {
       };
     });
 
-    SubmissionReceipt lastSubmissionReceipt = myQueue.addTask(taskFactory.get());
+    SubmissionReceipt lastSubmissionReceipt = queue.addTask(taskFactory.get());
     for (int i = 0; i < 100; i++) {
-      SubmissionReceipt submissionReceipt = myQueue.addTask(taskFactory.get());
-      assertFalse("old=" + lastSubmissionReceipt + " new=" + submissionReceipt, lastSubmissionReceipt.isAfter(submissionReceipt));
-      assertEquals(submissionReceipt, myQueue.getLatestSubmissionReceipt());
+      SubmissionReceipt submissionReceipt = queue.addTask(taskFactory.get());
+      assertThat(lastSubmissionReceipt.isAfter(submissionReceipt)).describedAs("old=" + lastSubmissionReceipt + " new=" + submissionReceipt).isFalse();
+      assertEquals(submissionReceipt, queue.getLatestSubmissionReceipt());
       lastSubmissionReceipt = submissionReceipt;
     }
   }
 
+  @Test
   public void testGetLatestSubmissionReceipt() {
-    SubmissionReceipt receiptWhenAdded = myQueue.addTask(new LoggingTask(1, null, null));
-    SubmissionReceipt receiptWhenQueried = myQueue.getLatestSubmissionReceipt();
+    SubmissionReceipt receiptWhenAdded = queue.addTask(new LoggingTask(1, null, null));
+    SubmissionReceipt receiptWhenQueried = queue.getLatestSubmissionReceipt();
     assertEquals(receiptWhenAdded, receiptWhenQueried);
     assertFalse(receiptWhenAdded.isAfter(receiptWhenQueried));
     assertFalse(receiptWhenQueried.isAfter(receiptWhenAdded));

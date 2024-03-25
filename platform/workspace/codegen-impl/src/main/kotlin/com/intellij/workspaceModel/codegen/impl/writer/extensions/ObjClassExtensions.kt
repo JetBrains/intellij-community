@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.extensions
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
@@ -12,6 +12,9 @@ internal val ObjClass<*>.javaFullName: QualifiedName
 
 internal val ObjClass<*>.javaBuilderName: String
   get() = "$name.Builder"
+
+internal val ObjClass<*>.javaBuilderFqnName: QualifiedName
+  get() = fqn(module.name, "$name.Builder")
 
 internal val ObjClass<*>.javaImplName: String
   get() = "${name.replace(".", "")}Impl"

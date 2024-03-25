@@ -30,10 +30,12 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.name.StandardClassIds
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KtType) {
+    var markedNullable = type.isMarkedNullable
     when (type) {
         is KtCapturedType -> text("*")
         is KtDefinitelyNotNullType -> {
@@ -43,13 +45,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
         }
         is KtUsualClassType -> {
             val classId = type.classId
-            text(
-                shortNameWithCompanionNameSkip(classId),
-                InlayActionData(
-                    StringInlayActionPayload(classId.asFqNameString()),
-                    KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
-                )
-            )
+            printClassId(classId, shortNameWithCompanionNameSkip(classId))
             val ownTypeArguments = type.ownTypeArguments
             if (ownTypeArguments.isNotEmpty()) {
                 text("<")
@@ -67,8 +63,14 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
         is KtFlexibleType -> {
             val lower = type.lowerBound
             val upper = type.upperBound
-            printKtType(lower)
-            if (isNullabilityFlexibleType(lower, upper)) {
+            markedNullable = lower.isMarkedNullable
+            if (isMutabilityFlexibleType(lower, upper)) {
+                text("(")
+                printClassId((lower as KtNonErrorClassType).classId, "Mutable")
+                text(")")
+                printKtType(upper.withNullability(KtTypeNullability.NON_NULLABLE))
+            } else if (isNullabilityFlexibleType(lower, upper)) {
+                printKtType(lower)
                 text("!")
             }
         }
@@ -128,8 +130,26 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
         }
     }
 
-    if (type.isMarkedNullable) text("?")
+    if (markedNullable) text("?")
 }
+
+private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String) {
+    text(
+        name,
+        InlayActionData(
+            StringInlayActionPayload(classId.asFqNameString()),
+            KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
+        )
+    )
+}
+
+private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
+    // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
+    if (lower !is KtNonErrorClassType || upper !is KtNonErrorClassType) return false
+
+    return (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] == upper.classId)
+}
+
 
 private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
     val isTheSameType = lower is KtNonErrorClassType && upper is KtNonErrorClassType && lower.classId == upper.classId ||

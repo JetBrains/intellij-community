@@ -49,6 +49,7 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
     return InlayHintsPass(file, collectors, editor, priorityRange, hintSink)
   }
 
+  @Suppress("CompanionObjectInExtension") // used in external plugins (https://youtrack.jetbrains.com/issue/IDEA-333164/Breaking-change-with-InlayHintsPassFactory-class-moved-in-another-package)
   companion object {
     fun forceHintsUpdateOnNextPass() {
       for (editor in EditorFactory.getInstance().allEditors) {
@@ -69,22 +70,6 @@ class InlayHintsPassFactoryInternal : TextEditorHighlightingPassFactory, TextEdi
 
     private fun getCurrentModificationStamp(file: PsiFile): Long {
       return file.manager.modificationTracker.modificationCount
-    }
-
-    /**
-     * For a given editor enables hints providers even if they explicitly disabled in settings or even if hints itself are disabled
-     * @param keys list of keys of provider that must be enabled or null if default behavior is required
-     */
-    @ApiStatus.Experimental
-    @JvmStatic
-    fun setAlwaysEnabledHintsProviders(editor: Editor, keys: Iterable<SettingsKey<*>>?) {
-      if (keys == null) {
-        editor.putUserData(ALWAYS_ENABLED_HINTS_PROVIDERS, null)
-        return
-      }
-      val keySet = keys.toSet()
-      editor.putUserData(ALWAYS_ENABLED_HINTS_PROVIDERS, keySet)
-      forceHintsUpdateOnNextPass()
     }
   }
 }

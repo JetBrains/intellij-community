@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -63,6 +64,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -111,6 +114,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   private Disposable myDisposable;
   private Disposable myManualDisposable;
   private boolean myInHierarchy;
+  private @Nls String myAccessibleName;
 
   public EditorTextField() {
     this("");
@@ -730,6 +734,21 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       editor.setPlaceholder(myHintText);
       editor.setShowPlaceholderWhenFocused(myShowPlaceholderWhenFocused);
 
+      String accessibleName = myAccessibleName;
+      // Fallback to using the label as accessible name, similar to AccessibleJComponent.getAccessibleName.
+      if (accessibleName == null) {
+          Object label = getClientProperty("labeledBy");
+          if (label instanceof Accessible a) {
+            AccessibleContext ac = a.getAccessibleContext();
+            if (ac != null) {
+              accessibleName = ac.getAccessibleName();
+            }
+          }
+      }
+      if (accessibleName != null) {
+        editor.getContentComponent().getAccessibleContext().setAccessibleName(accessibleName);
+      }
+
       initOneLineMode(editor);
 
       if (myIsRendererWithSelection) {
@@ -772,7 +791,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   protected void updateBorder(final @NotNull EditorEx editor) {
     if (editor.isOneLineMode()
-        && !Boolean.TRUE.equals(getClientProperty("JComboBox.isTableCellEditor"))
+        && !Boolean.TRUE.equals(getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY))
         && (SwingUtilities.getAncestorOfClass(JTable.class, this) == null || Boolean.TRUE.equals(getClientProperty("JBListTable.isTableCellEditor")))) {
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
@@ -1172,5 +1191,28 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       if (editor != null) return editor.getContentComponent();
       return aContainer;
     }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJPanel() {
+        @Override
+        public String getAccessibleName() {
+          // Accessible name is not needed on the wrapper, only on the editor component itself. Otherwise, it may be read twice.
+          return null;
+        }
+
+        @Override
+        public void setAccessibleName(@Nls String s) {
+          myAccessibleName = s;
+          EditorEx editor = getEditor(false);
+          if (editor != null) {
+            editor.getContentComponent().getAccessibleContext().setAccessibleName(s);
+          }
+        }
+      };
+    }
+    return accessibleContext;
   }
 }

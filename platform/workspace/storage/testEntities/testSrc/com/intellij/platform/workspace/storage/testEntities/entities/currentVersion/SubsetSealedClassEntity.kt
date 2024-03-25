@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -23,9 +23,11 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someData: SubsetSealedClass,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SubsetSealedClassEntity {
+    operator fun invoke(
+      someData: SubsetSealedClass,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): SubsetSealedClassEntity {
       val builder = builder()
       builder.someData = someData
       builder.entitySource = entitySource
@@ -37,9 +39,12 @@ interface SubsetSealedClassEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SubsetSealedClassEntity,
-                                      modification: SubsetSealedClassEntity.Builder.() -> Unit): SubsetSealedClassEntity = modifyEntity(
-  SubsetSealedClassEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: SubsetSealedClassEntity,
+  modification: SubsetSealedClassEntity.Builder.() -> Unit,
+): SubsetSealedClassEntity {
+  return modifyEntity(SubsetSealedClassEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 @Open

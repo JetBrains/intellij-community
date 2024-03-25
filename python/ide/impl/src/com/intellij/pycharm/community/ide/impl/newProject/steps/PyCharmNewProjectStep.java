@@ -6,6 +6,7 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.impl.welcomeScreen.collapsedActionGroup.CollapsedActionGroup;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle;
@@ -79,8 +80,8 @@ public final class PyCharmNewProjectStep extends AbstractNewProjectStep<PyNewPro
 
         var python = new DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.python.group.name"),
                                             map.get(true).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
-        var other = new DefaultActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.other.group.name"),
-                                          map.get(false).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
+        var other = new CollapsedActionGroup(PyCharmCommunityCustomizationBundle.message("new.project.other.group.name"),
+                                             map.get(false).stream().flatMap(pair -> Arrays.stream(pair.second)).toList());
         return new AnAction[] { python, other };
       }
 

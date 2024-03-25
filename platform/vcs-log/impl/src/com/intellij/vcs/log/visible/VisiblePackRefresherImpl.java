@@ -16,10 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.data.DataPack;
-import com.intellij.vcs.log.data.SingleTaskController;
-import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import kotlin.Pair;
@@ -284,7 +281,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                                                            filters, state.getCommitCount());
         VisiblePack visiblePack = pair.getFirst();
         CommitCountStage commitCount = pair.getSecond();
-        if (dataPack instanceof DataPack.SmallDataPack) {
+        if (dataPack instanceof SmallDataPack) {
           visiblePack = CompoundVisiblePack.build(visiblePack, state.getVisiblePack());
         }
         return state.withVisiblePack(visiblePack).withCommitCount(commitCount);

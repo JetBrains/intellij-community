@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -95,7 +95,7 @@ public final class PackageFileAction extends AnAction {
       if (statusBar != null) {
         StringBuilder fileNames = new StringBuilder();
         for (VirtualFile file : files) {
-          if (fileNames.length() != 0) fileNames.append(", ");
+          if (!fileNames.isEmpty()) fileNames.append(", ");
           fileNames.append("'").append(file.getName()).append("'");
         }
         String time = DateFormatUtil.formatTimeWithSeconds(Clock.getTime());

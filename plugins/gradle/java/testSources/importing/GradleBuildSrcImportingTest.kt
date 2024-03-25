@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -246,11 +246,11 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
       includeBuild('build2')
       """.trimIndent())
     createProjectSubFile("buildSrc/settings.gradle")
+    val build1SettingsFile = createProjectSubFile("build1/settings.gradle") // fist create file so that next call myProjectRoot.findChild("build1") finds the dir
+    setFileContent(build1SettingsFile, including(myProjectRoot.findChild("build1"), "app"), false)
 
-    createProjectSubFile("build1/settings.gradle", "include('app')")
-
-    createProjectSubFile("build2/settings.gradle", "include('app')")
     createProjectSubFile("build2/buildSrc/build.gradle")
+    createProjectSubFile("build2/settings.gradle", including(myProjectRoot.findChild("build2"), "app"))
 
     importProject("")
     assertModules("project",

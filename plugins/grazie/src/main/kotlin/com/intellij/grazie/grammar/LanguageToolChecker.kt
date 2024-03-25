@@ -119,7 +119,10 @@ open class LanguageToolChecker : TextChecker() {
     }
   }
 
-  private fun possiblyMarkupDependent(match: RuleMatch) = match.message.lowercase().contains("capitalize")
+  private fun possiblyMarkupDependent(match: RuleMatch): Boolean {
+    return match.message.lowercase().contains("capitalize") ||
+           match.rule.id == "POSSESSIVE_APOSTROPHE"
+  }
 
   private fun runLT(tool: JLanguageTool, str: String): List<RuleMatch> =
     tool.check(AnnotatedTextBuilder().addText(str).build(), true, JLanguageTool.ParagraphHandling.NORMAL,
@@ -225,6 +228,16 @@ private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
   if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
       (isNumberRange(match.fromPos, match.toPos, text) || isPathPart(match.fromPos, match.toPos, text))) {
     return true
+  }
+
+  if (match.rule.id == "A_RB_NN" &&
+      text.substring(match.fromPos, match.toPos).equals("finally block", ignoreCase = true)  &&
+      (text.domain == TextContent.TextDomain.DOCUMENTATION || text.domain == TextContent.TextDomain.COMMENTS)) {
+    return true // https://github.com/languagetool-org/languagetool/issues/9511
+  }
+
+  if (match.rule.fullId == "UP_TO_DATE_HYPHEN[1]") {
+    return true // https://github.com/languagetool-org/languagetool/issues/8285
   }
 
   return false

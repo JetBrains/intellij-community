@@ -203,7 +203,7 @@ internal class FileHistoryFilterer(private val logData: VcsLogData, private val 
       val commits = revisions.map { GraphCommitImpl.createCommit(it.commit, emptyList(), it.metadata.timestamp) }
       val refs = getFilteredRefs(dataPack)
 
-      val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]), storage, false)
+      val fakeDataPack = DataPack.build(commits, refs, mapOf(root to logProviders[root]!!), storage, false)
       val visibleGraph = createVisibleGraph(fakeDataPack, sortType, null,
                                             null/*no need to filter here, since we do not have any extra commits in this pack*/)
       return VisiblePack(fakeDataPack, visibleGraph, !isDone, allFilters)

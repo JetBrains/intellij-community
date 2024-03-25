@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.startup.importSettings.transfer.TransferSettingsProgress
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -196,11 +197,14 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override fun getOldProducts(): List<Product> {
-    return filterProducts(old = true)
+    return filterProducts(old = true).also {
+      ImportSettingsEventsCollector.oldJbIdes(it.map(JbProductInfo::codeName))
+    }
   }
 
   override fun importFromCustomFolder(folderPath: Path) {
     val modalityState = ModalityState.current()
+    ImportSettingsEventsCollector.customDirectorySelected()
     coroutineScope.async(modalityState.asContextElement()) {
       val importer = JbSettingsImporter(folderPath, folderPath, null)
       importer.importRaw()
@@ -224,11 +228,14 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       catch (tce: TimeoutCancellationException) {
         LOG.info("Timeout waiting for products warmUp. Will show what we have now: ${tce.message}")
       }
-      filterProducts(old = false)
+      filterProducts(old = false).also {
+        ImportSettingsEventsCollector.actualJbIdes(it.map(
+          JbProductInfo::codeName))
+      }
     }
   }
 
-  private fun filterProducts(old: Boolean): List<Product> {
+  private fun filterProducts(old: Boolean): List<JbProductInfo> {
     val products = products.values.toList()
     val newProducts = hashMapOf<String, String>()
     for (product in products) {
@@ -421,21 +428,30 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
           //TODO support plugin list customization for raw import
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
+          ImportSettingsEventsCollector.jbRawSelected(productInfo.codeName)
           importer.importRaw()
-          LOG.info("Imported finished in ${System.currentTimeMillis() - startTime} ms. ")
           return true
         }
         else {
           try {
             LOG.info("Starting migration...")
             var restartRequired = false
+            ImportSettingsEventsCollector.jbImportStarted(
+              productInfo.codeName,
+              filteredCategories,
+              plugins2import?.keys?.map { it.idString } ?: emptyList(),
+              unselectedPlugins ?: emptyList()
+            )
             try {
               if (!plugins2import.isNullOrEmpty()) {
                 LOG.info("Started importing plugins...")
                 restartRequired = true
                 val pluginsStartTime = System.currentTimeMillis()
                 importer.installPlugins(coroutineScope, progressIndicator, plugins2import)
-                LOG.info("Plugins migrated in ${System.currentTimeMillis() - pluginsStartTime} ms.")
+                (System.currentTimeMillis() - pluginsStartTime).let {
+                  LOG.info("Plugins migrated in $it ms.")
+                  ImportSettingsEventsCollector.jbPluginsImportTimeSpent(it)
+                }
               }
               if (progressIndicator.isCanceled()) {
                 LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
@@ -446,7 +462,10 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               if (importer.importOptions(progressIndicator, filteredCategories)) {
                 restartRequired = true
               }
-              LOG.info("Options migrated in ${System.currentTimeMillis() - optionsStartTime} ms.")
+              (System.currentTimeMillis() - optionsStartTime).let {
+                LOG.info("Options migrated in $it ms.")
+                ImportSettingsEventsCollector.jbOptionsImportTimeSpent(it)
+              }
             }
             catch (pce: ProcessCanceledException) {
               LOG.info("Import cancelled")
@@ -454,7 +473,10 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
             }
             progressIndicator.fraction = 0.99
             storeImportConfig(productInfo.configDir, filteredCategories, plugins2import?.keys?.map { it.idString })
-            LOG.info("Imported finished in ${System.currentTimeMillis() - startTime} ms. ")
+            (System.currentTimeMillis() - startTime).let {
+              LOG.info("Imported finished in $it ms.")
+              ImportSettingsEventsCollector.jbTotalImportTimeSpent(it)
+            }
             return restartRequired
           }
           catch (th: Throwable) {
@@ -467,6 +489,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       fun restartIde() {
         LOG.info("Calling restart...")
         ApplicationManager.getApplication().invokeLater({
+                                                          ImportSettingsEventsCollector.importFinished()
                                                           ApplicationManagerEx.getApplicationEx().restart(true)
                                                         }, modalityState)
       }

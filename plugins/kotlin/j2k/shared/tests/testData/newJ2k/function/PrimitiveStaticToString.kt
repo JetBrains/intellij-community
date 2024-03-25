@@ -1,4 +1,3 @@
-// RUNTIME_WITH_FULL_JDK
 class J {
     fun foo(bool: Boolean, c: Char, b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double) {
         bool.toString()

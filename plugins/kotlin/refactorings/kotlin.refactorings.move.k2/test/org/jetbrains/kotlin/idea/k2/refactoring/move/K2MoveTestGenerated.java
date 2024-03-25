@@ -148,6 +148,11 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
         runTest("../../idea/tests/testData/refactoring/move/java/moveField/moveFieldToTopLevelClass/moveFieldToTopLevelClass.test");
     }
 
+    @TestMetadata("java/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test")
+    public void testJava_moveFile_moveFilePackageVisibilityInaccessible_MoveFilePackageVisibilityInaccessible() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/java/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test");
+    }
+
     @TestMetadata("java/moveFile/moveFileToAnotherPackage/moveFileToAnotherPackage.test")
     public void testJava_moveFile_moveFileToAnotherPackage_MoveFileToAnotherPackage() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/java/moveFile/moveFileToAnotherPackage/moveFileToAnotherPackage.test");
@@ -193,46 +198,6 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
         runTest("../../idea/tests/testData/refactoring/move/java/moveMethod/moveMethodToTopLevelClass/moveMethodToTopLevelClass.test");
     }
 
-    @TestMetadata("java/movePackage/movePackageToAnotherPackage/movePackageToAnotherPackage.test")
-    public void testJava_movePackage_movePackageToAnotherPackage_MovePackageToAnotherPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/java/movePackage/movePackageToAnotherPackage/movePackageToAnotherPackage.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/addExtensionImport/addExtensionImport.test")
-    public void testKotlin_changePackage_addExtensionImport_AddExtensionImport() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/addExtensionImport/addExtensionImport.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/changeToDefaultPackage/changeToDefaultPackage.test")
-    public void testKotlin_changePackage_changeToDefaultPackage_ChangeToDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/changeToDefaultPackage/changeToDefaultPackage.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/changeToNonDefaultPackage/changeToNonDefaultPackage.test")
-    public void testKotlin_changePackage_changeToNonDefaultPackage_ChangeToNonDefaultPackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/headerClasses/headerClasses.test")
-    public void testKotlin_changePackage_headerClasses_HeaderClasses() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/headerClasses/headerClasses.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/longName/longName.test")
-    public void testKotlin_changePackage_longName_LongName() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/longName/longName.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/updateAllUsagesByDefault/updateAllUsagesByDefault.test")
-    public void testKotlin_changePackage_updateAllUsagesByDefault_UpdateAllUsagesByDefault() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/updateAllUsagesByDefault/updateAllUsagesByDefault.test");
-    }
-
-    @TestMetadata("kotlin/changePackage/updateOnlyRealReferences/updateOnlyRealReferences.test")
-    public void testKotlin_changePackage_updateOnlyRealReferences_UpdateOnlyRealReferences() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/changePackage/updateOnlyRealReferences/updateOnlyRealReferences.test");
-    }
-
     @TestMetadata("kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test")
     public void testKotlin_moveDirectoryWithQuotation_MoveDirectoryWithQuotation() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test");
@@ -276,6 +241,11 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
     @TestMetadata("kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test")
     public void testKotlin_moveFile_moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir_MoveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveFile/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir/moveFileAndDirWithJavaFileReferringToPackageFragementWithUnmatchedDir.test");
+    }
+
+    @TestMetadata("kotlin/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test")
+    public void testKotlin_moveFile_moveFilePackageVisibilityInaccessible_MoveFilePackageVisibilityInaccessible() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/move/kotlin/moveFile/moveFilePackageVisibilityInaccessible/moveFilePackageVisibilityInaccessible.test");
     }
 
     @TestMetadata("kotlin/moveFile/moveFileToFile/moveFileToFile.test")

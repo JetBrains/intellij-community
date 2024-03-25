@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.resolve;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -18,15 +18,13 @@ public class YAMLAnchorReadWriteAccessDetector extends ReadWriteAccessDetector {
     return element instanceof YAMLAnchor;
   }
 
-  @NotNull
   @Override
-  public Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference) {
+  public @NotNull Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference) {
     return getExpressionAccess(reference.getElement());
   }
 
-  @NotNull
   @Override
-  public Access getExpressionAccess(@NotNull PsiElement expression) {
+  public @NotNull Access getExpressionAccess(@NotNull PsiElement expression) {
     return Access.Read;
   }
 }

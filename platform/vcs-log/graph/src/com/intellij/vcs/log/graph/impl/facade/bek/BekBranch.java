@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import java.util.List;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 
 class BekBranch {
+  private final static Logger LOG = Logger.getInstance(BekBranch.class);
 
   private static final int MAX_BLOCK_SIZE = 20;
   private static final int MAX_DELTA_TIME = 60 * 60 * 24 * 3 * 1000;
@@ -45,7 +47,7 @@ class BekBranch {
   }
 
   public void updatePrepareForInsertPart(@NotNull TimestampGetter timestampGetter, @NotNull BekEdgeRestrictions edgeRestrictions) {
-    assert myPrepareForInsertPart == null;
+    LOG.assertTrue(myPrepareForInsertPart == null);
     int currentNode = myNodeIndexes.get(myNoInsertSize - 1);
 
     if (edgeRestrictions.hasRestriction(currentNode)) return;
@@ -83,7 +85,7 @@ class BekBranch {
   }
 
   public void doneInsertPreparedPart() {
-    assert myPrepareForInsertPart != null;
+    LOG.assertTrue(myPrepareForInsertPart != null);
     myNoInsertSize -= myPrepareForInsertPart.size();
     myPrepareForInsertPart = null;
   }

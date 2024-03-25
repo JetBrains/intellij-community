@@ -124,6 +124,15 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   }
 
   @Override
+  public void updateUI() {
+    super.updateUI();
+
+    if (ExpandedItemListCellRendererWrapper.unwrap(getCellRenderer()) instanceof XDebuggerGroupedFrameListRenderer renderer) {
+      renderer.updateUI();
+    }
+  }
+
+  @Override
   public @Nullable Object getData(@NonNls @NotNull String dataId) {
     if (FRAMES_LIST.is(dataId)) {
       return this;
@@ -269,6 +278,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         }
       });
       mySeparatorComponent.setCaptionCentered(false);
+    }
+
+    public void updateUI() {
+      SwingUtilities.updateComponentTreeUI(myRendererComponent);
     }
 
     @Override

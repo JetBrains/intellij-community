@@ -75,7 +75,7 @@ public final class SwitchStatementsWithoutDefaultInspection extends AbstractBase
           infoMode = true;
         }
         else {
-          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement);
+          CompletenessResult completenessResult = PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness(statement, true);
           if (completenessResult == CompletenessResult.UNEVALUATED || completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL) return;
           if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL) {
             if (!isOnTheFly) return;

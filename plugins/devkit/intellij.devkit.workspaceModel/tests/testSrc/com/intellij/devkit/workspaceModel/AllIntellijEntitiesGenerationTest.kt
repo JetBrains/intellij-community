@@ -32,6 +32,7 @@ import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -141,7 +142,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
     var storageChanged = false
     modulesToCheck.forEach { (moduleEntity, sourceRoot), pathToPackages ->
-      val isTestModule = sourceRoot.rootType == "java-test"
+      val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
       when (moduleEntity.name) {
         "intellij.platform.workspace.storage"-> {
           runWriteActionAndWait {
@@ -245,7 +246,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
           val genFolderVirtualFile = VfsUtil.createDirectories("${sourceRoot.contentRoot.url.presentableUrl}/${WorkspaceModelGenerator.GENERATED_FOLDER_NAME}")
           val javaSourceRoot = sourceRoot.javaSourceRoots.first()
           val result = storage.addEntity(SourceRootEntity(genFolderVirtualFile.toVirtualFileUrl(virtualFileManager),
-                                                          sourceRoot.rootType, sourceRoot.entitySource) {
+                                                          sourceRoot.rootTypeId, sourceRoot.entitySource) {
               contentRoot = sourceRoot.contentRoot
               javaSourceRoots = listOf(
                 JavaSourceRootPropertiesEntity(true, javaSourceRoot.packagePrefix, javaSourceRoot.entitySource))

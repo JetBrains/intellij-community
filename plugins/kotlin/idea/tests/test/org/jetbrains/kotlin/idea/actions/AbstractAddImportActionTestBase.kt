@@ -5,9 +5,17 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import java.io.File
 
 abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTestCase() {
@@ -26,6 +34,14 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         val mainFile = dataFile()
         val fileText = FileUtil.loadFile(mainFile, true)
         assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
+
+        // enable extensions if there is a corresponding directive in the test.
+        if (InTextDirectivesUtils.isDirectiveDefined(fileText, ENABLE_CALL_EXTENSIONS_DIRECTIVE)) {
+            KotlinAutoImportCallableWeigher.EP_NAME.point.registerExtension(
+                MockAutoImportCallableWeigher(),
+                testRootDisposable
+            )
+        }
 
         fixture.configureByFile(fileName())
 
@@ -80,5 +96,27 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         private const val EXPECT_VARIANT_IN_ORDER_DIRECTIVE: String = "EXPECT_VARIANT_IN_ORDER"
         private const val EXPECT_VARIANT_NOT_PRESENT_DIRECTIVE: String = "EXPECT_VARIANT_NOT_PRESENT"
         private const val INCREASE_USE_COUNT_DIRECTIVE: String = "INCREASE_USE_COUNT"
+        private const val ENABLE_CALL_EXTENSIONS_DIRECTIVE: String = "ENABLE_CALL_EXTENSIONS"
+    }
+}
+
+/**
+ * This class mocks the [KotlinAutoImportCallableWeigher] in tests.
+ * To illustrate the extension work, it gives more priority to functions with the specific annotation,
+ * when they are called from the functions, annotated the same way.
+ */
+private class MockAutoImportCallableWeigher : KotlinAutoImportCallableWeigher {
+    override fun KtAnalysisSession.weigh(
+        symbolToBeImported: KtCallableSymbol,
+        unresolvedReferenceExpression: KtNameReferenceExpression
+    ): Int {
+        val symbolAnnotated = symbolToBeImported.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+        val receiverAnnotated =
+            unresolvedReferenceExpression.parentOfType<KtFunction>()?.getSymbol()?.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+        return if (symbolAnnotated && receiverAnnotated == true) 1 else 0
+    }
+
+    companion object {
+        private val TEST_ANNOTATION_CLASS_ID: ClassId = ClassId.fromString("my/test/MyAnnotation")
     }
 }

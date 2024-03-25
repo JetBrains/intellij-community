@@ -42,6 +42,9 @@ import java.nio.file.Path
 import java.time.LocalDate
 import javax.swing.Icon
 
+internal val useMockDataForStartupWizard: Boolean
+  get() = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
+
 interface SettingsService {
   companion object {
     fun getInstance(): SettingsService = service()
@@ -74,19 +77,18 @@ interface SettingsService {
 
 class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
 
-  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
   private var pluginsPreloadedDeferred: Deferred<Set<PluginId>>? = null
 
   override fun getSyncService() =
-    if (shouldUseMockData) TestSyncService()
+    if (useMockDataForStartupWizard) TestSyncService()
     else SyncServiceImpl.getInstance()
 
   override fun getJbService() =
-    if (shouldUseMockData) TestJbService.getInstance()
+    if (useMockDataForStartupWizard) TestJbService.getInstance()
     else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
-    if (shouldUseMockData) TestExternalService()
+    if (useMockDataForStartupWizard) TestExternalService()
     else SettingTransferService.getInstance()
 
   override suspend fun warmUp() {
@@ -126,7 +128,7 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     get() = pluginsPreloadedDeferred?.isCompleted == true
 
   override fun configChosen() {
-    if (shouldUseMockData) {
+    if (useMockDataForStartupWizard) {
       TestJbService.getInstance().configChosen()
     } else {
       val fileChooserDescriptor = FileChooserDescriptor(true, true, false, false, false, false)
@@ -162,10 +164,10 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
   }
 
   override val isSyncEnabled = Property(
-    shouldUseMockData) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+    useMockDataForStartupWizard) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
 
   init {
-    if (shouldUseMockData) {
+    if (useMockDataForStartupWizard) {
       jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
     }
   }

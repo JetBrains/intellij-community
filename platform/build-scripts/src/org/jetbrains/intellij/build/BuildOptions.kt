@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -73,7 +74,23 @@ data class BuildOptions(
         add(MAC_SIGN_STEP)
         add(MAC_NOTARIZE_STEP)
       }
-    }
+    },
+  /**
+   * If `true`, write all compilation messages into a separate file (`compilation.log`).
+   */
+  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true),
+  val logDir: Path? = System.getProperty("intellij.build.log.root")?.let { Path.of(it) },
+
+  /**
+   * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
+   */
+  val pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) },
+
+  /**
+   * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
+   */
+  val pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA),
 ) {
   companion object {
     /**
@@ -138,6 +155,8 @@ data class BuildOptions(
     /** Sign *.exe files in Windows distribution.  */
     const val WIN_SIGN_STEP: String = "windows_sign"
 
+    const val LOCALIZE_STEP: String = "localize"
+
     @JvmField
     @ApiStatus.Internal
     val WIN_SIGN_OPTIONS: PersistentMap<String, String> = System.getProperty("intellij.build.win.sign.options", "")
@@ -160,7 +179,6 @@ data class BuildOptions(
     const val COMMUNITY_DIST_STEP: String = "community_dist"
     const val OS_SPECIFIC_DISTRIBUTIONS_STEP: String = "os_specific_distributions"
     const val PREBUILD_SHARED_INDEXES: String = "prebuild_shared_indexes"
-    const val SETUP_BUNDLED_MAVEN: String = "setup_bundled_maven"
     const val VERIFY_CLASS_FILE_VERSIONS: String = "verify_class_file_versions"
 
     const val ARCHIVE_PLUGINS: String = "archivePlugins"
@@ -230,7 +248,14 @@ data class BuildOptions(
      */
     const val RESOLVE_DEPENDENCIES_DELAY_MS_PROPERTY: String = "intellij.build.dependencies.resolution.retry.delay.ms"
     const val TARGET_OS_PROPERTY: String = "intellij.build.target.os"
+
+    /**
+     * Use this system property to specify the target JVM architecture. 
+     * Possible values are `x64`, `aarch64` and `current` (which refers to the architecture on which the build scripts are executed). 
+     * If no value is provided, artifacts for all supported architectures will be built.  
+     */
     const val TARGET_ARCH_PROPERTY: String = "intellij.build.target.arch"
+    private const val ARCH_CURRENT: String = "current"
 
     /**
      * If `true`, the project modules will be compiled incrementally.
@@ -315,17 +340,6 @@ data class BuildOptions(
   var snapDockerBuildTimeoutMin: Long = System.getProperty("intellij.build.snap.timeoutMin", "20").toLong()
 
   /**
-   * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
-   */
-  var pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) }
-
-  /**
-   * Path to a metadata file containing urls with compiled classes of the project modules inside.
-   * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
-   */
-  var pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA)
-
-  /**
    * If `true`, the project modules will be compiled incrementally.
    */
   var incrementalCompilation: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_INCREMENTAL_COMPILATION, false)
@@ -341,17 +355,14 @@ data class BuildOptions(
   val incrementalCompilationTimeout: Long = SystemProperties.getLongProperty("intellij.build.incremental.compilation.timeoutMin", Long.MAX_VALUE)
 
   /**
-   * Build number without product code (e.g. '162.500.10'); if `null`, `<baseline>.SNAPSHOT` will be used.
    * Use [BuildContext.buildNumber] to get the actual build number in build scripts.
    */
   var buildNumber: String? = System.getProperty("build.number")
 
-  var logPath: String? = System.getProperty("intellij.build.log.root")
-
   /**
-   * If `true`, write all compilation messages into a separate file (`compilation.log`).
+   * Use [BuildContext.pluginBuildNumber] to get the actual build number in build scripts.
    */
-  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true)
+  var pluginBuildNumber: String? = buildNumber
 
   /**
    * If `true`, the build is running as a unit test.
@@ -443,9 +454,8 @@ data class BuildOptions(
       targetOsId == OsFamily.LINUX.osId -> persistentListOf(OsFamily.LINUX)
       else -> throw IllegalStateException("Unknown target OS $targetOsId")
     }
-    targetArch = System.getProperty(TARGET_ARCH_PROPERTY)
-      ?.takeIf { it.isNotBlank() }
-      ?.let(JvmArchitecture::valueOf)
+    val targetArchProperty = System.getProperty(TARGET_ARCH_PROPERTY)?.takeIf { it.isNotBlank() }
+    targetArch = if (targetArchProperty == ARCH_CURRENT) JvmArchitecture.currentJvmArch else targetArchProperty?.let(JvmArchitecture::valueOf)
     val randomSeedString = System.getProperty("intellij.build.randomSeed")
     randomSeedNumber = if (randomSeedString == null || randomSeedString.isBlank()) {
       ThreadLocalRandom.current().nextLong()

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -25,11 +25,10 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<StructureViewTreeElement>, ActionShortcutProvider {
-  @NonNls public static final String ID = "YAML_SHOW_RESOLVED_ALIAS_VALUES";
+  public static final @NonNls String ID = "YAML_SHOW_RESOLVED_ALIAS_VALUES";
 
-  @NotNull
   @Override
-  public String getCheckBoxText() {
+  public @NotNull String getCheckBoxText() {
     return YAMLBundle.message("YAMLAliasResolveNodeProvider.action.name");
   }
 
@@ -38,15 +37,13 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
     throw new IncorrectOperationException("see getActionIdForShortcut()");
   }
 
-  @NotNull
   @Override
-  public String getActionIdForShortcut() {
+  public @NotNull String getActionIdForShortcut() {
     return "FileStructurePopup";
   }
 
-  @NotNull
   @Override
-  public Collection<StructureViewTreeElement> provideNodes(@NotNull TreeElement node) {
+  public @NotNull Collection<StructureViewTreeElement> provideNodes(@NotNull TreeElement node) {
     PsiElement psiElem;
     String details;
     if (node instanceof DuplicatedPsiTreeElementBase) {
@@ -74,30 +71,26 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
     return YAMLStructureViewFactory.createChildrenViewTreeElements(resolveAlias((YAMLAlias)value), details);
   }
 
-  @NotNull
   @Override
-  public ActionPresentation getPresentation() {
+  public @NotNull ActionPresentation getPresentation() {
     return new ActionPresentationData(YAMLBundle.message("YAMLAliasResolveNodeProvider.action.name"),
                                       YAMLBundle.message("YAMLAliasResolveNodeProvider.action.description"),
                                       YAMLStructureViewFactory.ALIAS_ICON);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ID;
   }
 
-  @Nullable
-  private static YAMLValue resolveAlias(@NotNull YAMLAlias alias) {
+  private static @Nullable YAMLValue resolveAlias(@NotNull YAMLAlias alias) {
     YAMLAliasReference ref = alias.getReference();
     YAMLAnchor anchor = ref == null ? null : ref.resolve();
     return anchor != null ? anchor.getMarkedValue() : null;
   }
 
-  @Nullable
   @Contract("null -> null")
-  private static YAMLValue getContainedValue(@Nullable YAMLPsiElement element) {
+  private static @Nullable YAMLValue getContainedValue(@Nullable YAMLPsiElement element) {
     if (element == null) {
       return null;
     }
@@ -116,8 +109,7 @@ public class YAMLAliasResolveNodeProvider implements FileStructureNodeProvider<S
     return result.get();
   }
 
-  @NotNull
-  private static String calculateStartPath(@NotNull PsiElement psiElem) {
+  private static @NotNull String calculateStartPath(@NotNull PsiElement psiElem) {
     if (!(psiElem instanceof YAMLPsiElement)) {
       return "";
     }

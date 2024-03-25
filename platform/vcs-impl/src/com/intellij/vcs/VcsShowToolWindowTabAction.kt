@@ -9,8 +9,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.SHELF
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
-import com.intellij.openapi.wm.ToolWindow
+import org.jetbrains.annotations.NonNls
 
 class VcsShowLocalChangesAction : VcsShowToolWindowTabAction() {
   override val tabName: String get() = LOCAL_CHANGES
@@ -32,7 +31,9 @@ abstract class VcsShowToolWindowTabAction : DumbAwareAction() {
   protected abstract val tabName: String
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = getToolWindow(e.project) != null
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null &&
+                                         ChangesViewContentManager.getToolWindowFor(project, tabName) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -40,21 +41,33 @@ abstract class VcsShowToolWindowTabAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val toolWindow = getToolWindow(project)!!
-    val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
-
-    val isToolWindowActive = toolWindow.isActive
-    val isContentSelected = contentManager.isContentSelected(tabName)
-    val tabSelector = Runnable { contentManager.selectContent(tabName, true) }
-
-    when {
-      isToolWindowActive && isContentSelected -> toolWindow.hide(null)
-      isToolWindowActive && !isContentSelected -> tabSelector.run()
-      !isToolWindowActive && isContentSelected -> toolWindow.activate(null, true)
-      !isToolWindowActive && !isContentSelected -> toolWindow.activate(tabSelector, false)
-    }
+    val project = e.project ?: return
+    activateVcsTab(project, tabName, true)
   }
 
-  private fun getToolWindow(project: Project?): ToolWindow? = project?.let { getToolWindowFor(it, tabName) }
+  companion object {
+    @JvmStatic
+    fun activateVcsTab(project: Project, tabName: @NonNls String, isToggle: Boolean) {
+      val toolWindow = ChangesViewContentManager.getToolWindowFor(project, tabName) ?: return
+      val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
+
+      val isToolWindowActive = toolWindow.isActive
+      val isContentSelected = contentManager.isContentSelected(tabName)
+      val tabSelector = Runnable { contentManager.selectContent(tabName, true) }
+
+      when {
+        isToolWindowActive && isContentSelected -> {
+          if (isToggle) {
+            toolWindow.hide(null)
+          }
+          else {
+            tabSelector.run()
+          }
+        }
+        isToolWindowActive && !isContentSelected -> tabSelector.run()
+        !isToolWindowActive && isContentSelected -> toolWindow.activate(null, true)
+        else -> toolWindow.activate(tabSelector, false)
+      }
+    }
+  }
 }

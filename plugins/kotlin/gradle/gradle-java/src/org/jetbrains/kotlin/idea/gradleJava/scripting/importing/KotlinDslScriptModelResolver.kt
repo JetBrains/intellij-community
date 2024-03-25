@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.service.project.ModifiableGradleProjectModel
 import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.service.project.ToolingModelsProvider
 
 class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 
@@ -34,22 +33,24 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 class KotlinDslScriptModelContributor : ProjectModelContributor {
     override fun accept(
         projectModelBuilder: ModifiableGradleProjectModel,
-        toolingModelsProvider: ToolingModelsProvider,
         resolverCtx: ProjectResolverContext
     ) {
-        toolingModelsProvider.projects().forEach {
-            val projectIdentifier = it.projectIdentifier.projectPath
-            if (projectIdentifier == ":") {
-                if (kotlinDslScriptsModelImportSupported(resolverCtx.projectGradleVersion)) {
-                    val model = toolingModelsProvider.getProjectModel(it, KotlinDslScriptsModel::class.java)
-                    if (model != null) {
-                        if (!processScriptModel(resolverCtx, model, projectIdentifier)) {
-                            return@forEach
+        for (buildModel in resolverCtx.allBuilds) {
+            for (projectModel in buildModel.projects) {
+                val projectIdentifier = projectModel.projectIdentifier.projectPath
+                if (projectIdentifier == ":") {
+                    val gradleVersion = resolverCtx.projectGradleVersion
+                    if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
+                        val model = resolverCtx.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
+                        if (model != null) {
+                            if (!processScriptModel(resolverCtx, model, projectIdentifier)) {
+                                continue
+                            }
                         }
                     }
-                }
 
-                saveGradleBuildEnvironment(resolverCtx)
+                    saveGradleBuildEnvironment(resolverCtx)
+                }
             }
         }
     }

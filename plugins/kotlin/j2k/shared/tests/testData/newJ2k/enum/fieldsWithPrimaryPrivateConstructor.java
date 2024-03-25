@@ -1,5 +1,4 @@
 // IGNORE_K2
-//class
 enum Color {
     WHITE(21), BLACK(22), RED(23), YELLOW(24), BLUE(25);
 

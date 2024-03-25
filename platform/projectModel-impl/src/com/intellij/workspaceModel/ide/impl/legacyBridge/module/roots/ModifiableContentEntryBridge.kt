@@ -10,10 +10,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -66,7 +63,7 @@ internal class ModifiableContentEntryBridge(
 
     val contentRootEntity = currentContentEntry.value.entity
     val sourceRootEntity = diff addEntity SourceRootEntity(url = sourceFolderUrl,
-                                                           rootType = serializer.typeId,
+                                                           rootTypeId = SourceRootTypeId(serializer.typeId),
                                                            entitySource = folderEntitySource
     ) {
       contentRoot = contentRootEntity

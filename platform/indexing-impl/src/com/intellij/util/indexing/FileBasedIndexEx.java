@@ -622,7 +622,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
                                                    @NotNull ThrowableComputable<T, E> computable) throws E {
     Application app = ApplicationManager.getApplication();
-    app.assertReadAccessAllowed();
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
       Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
       boolean preventCaching = dumbModeAccessTypeStack.empty();

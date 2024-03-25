@@ -337,6 +337,10 @@ public final class VcsLogUtil {
                                                        @NotNull Collection<? extends VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
+    return getVcsDisplayName(vcs);
+  }
+
+  public static @Nls @NotNull String getVcsDisplayName(@NotNull Set<AbstractVcs> vcs) {
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
   }

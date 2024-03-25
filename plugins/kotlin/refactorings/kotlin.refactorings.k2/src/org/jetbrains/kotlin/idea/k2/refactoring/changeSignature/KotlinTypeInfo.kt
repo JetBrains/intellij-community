@@ -12,15 +12,33 @@ import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtTypeErrorTypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.Variance
 
-data class KotlinTypeInfo(var text: String?, val context: KtElement)
+data class KotlinTypeInfo(var text: String?, val context: KtElement) {
+    constructor(ktType: KtType, context: KtElement): this(analyze(context) { ktType.render(errorIgnoringRenderer, Variance.INVARIANT) }, context)
+}
+
+private val errorIgnoringRenderer: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+    typeErrorTypeRenderer = object : KtTypeErrorTypeRenderer {
+        context(KtAnalysisSession, KtTypeRenderer)
+        override fun renderType(type: KtTypeErrorType, printer: PrettyPrinter) {
+            type.tryRenderAsNonErrorType()?.let {
+                printer.append(it)
+            }
+        }
+    }
+}
 
 @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
 internal fun KtPsiFactory.createType(

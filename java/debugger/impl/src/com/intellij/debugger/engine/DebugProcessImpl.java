@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -256,8 +256,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
           return r;
         });
-      // check if future is already done
-      myNodeRenderersMap.putIfAbsent(type, res);
+      if (!res.isDone()) {
+        myNodeRenderersMap.putIfAbsent(type, res);
+      }
       return res;
     }
     catch (ClassNotPreparedException e) {
@@ -1820,7 +1821,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    @NotNull
+    @Nullable
     public RequestHint getHint(SuspendContextImpl suspendContext, ThreadReferenceProxyImpl stepThread, @Nullable RequestHint parentHint) {
       // need this hint while stepping over for JSR45 support:
       // several lines of generated java code may correspond to a single line in the source file,

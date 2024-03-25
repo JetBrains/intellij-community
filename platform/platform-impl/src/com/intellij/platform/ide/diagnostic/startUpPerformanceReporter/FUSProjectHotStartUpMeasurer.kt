@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ComparatorUtil
@@ -18,11 +19,16 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+
+
+@Volatile
+private var statsIsWritten = false
 
 @Internal
 object FUSProjectHotStartUpMeasurer {
@@ -326,7 +332,13 @@ object FUSProjectHotStartUpMeasurer {
     }
     finally {
       channel.cancel()
+      statsIsWritten = true
     }
+  }
+
+  @TestOnly
+  fun isHandlingFinished(): Boolean {
+    return statsIsWritten
   }
 
   private suspend fun handleStatisticEvents() {
@@ -462,5 +474,15 @@ private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent(
 internal class HotProjectReopenStartUpPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup {
     return GROUP
+  }
+}
+
+@Suppress("unused")
+@TestOnly
+@Service(Service.Level.APP)
+class FUSProjectHotStartUpMeasurerService {
+  @TestOnly
+  fun isHandlingFinished(): Boolean {
+    return statsIsWritten
   }
 }

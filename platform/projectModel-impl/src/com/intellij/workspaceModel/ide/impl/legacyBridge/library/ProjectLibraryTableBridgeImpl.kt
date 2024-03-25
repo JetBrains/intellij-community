@@ -16,7 +16,7 @@ import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -45,7 +45,7 @@ class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
           libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project),
           project = project,
           initialId = addChange.entity.symbolicId,
-          initialEntityStorage = WorkspaceModel.getInstance(project).internal.entityStorage,
+          initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
           targetBuilder = builder
         )
       }
@@ -57,7 +57,7 @@ class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
-  private val entityStorage: VersionedEntityStorage = WorkspaceModel.getInstance(parentProject).internal.entityStorage
+  private val entityStorage: VersionedEntityStorage = (WorkspaceModel.getInstance(parentProject) as WorkspaceModelInternal).entityStorage
 
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
@@ -68,7 +68,7 @@ class ProjectLibraryTableBridgeImpl(
   }
 
   init {
-    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object  : WorkspaceModelChangeListener {
+    project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       /**
        * This is a flag indicating that the [beforeChanged] method was called. Due to the fact that we subscribe using the code, this
        *   may lead to IDEA-324532.
@@ -103,9 +103,9 @@ class ProjectLibraryTableBridgeImpl(
           when (change) {
             is EntityChange.Added -> {
               val alreadyCreatedLibrary = event.storageAfter.libraryMap.getDataByEntity(change.entity) as? LibraryBridgeImpl
-                                            ?: error("Library bridge should be created in `before` method")
-                alreadyCreatedLibrary.entityStorage = entityStorage
-                alreadyCreatedLibrary.clearTargetBuilder()
+                                          ?: error("Library bridge should be created in `before` method")
+              alreadyCreatedLibrary.entityStorage = entityStorage
+              alreadyCreatedLibrary.clearTargetBuilder()
 
               dispatcher.multicaster.afterLibraryAdded(alreadyCreatedLibrary)
             }
@@ -170,7 +170,8 @@ class ProjectLibraryTableBridgeImpl(
           }
         }
       }
-    } else {
+    }
+    else {
       for ((entity, library) in libraries) {
         targetBuilder.mutableLibraryMap.addIfAbsent(entity, library)
       }

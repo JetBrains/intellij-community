@@ -5,7 +5,6 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import java.util.*
 
 internal class DefaultJava11Shim : Java11Shim() {
-
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> {
     return Collections.unmodifiableMap(map)
   }
@@ -40,6 +39,10 @@ internal class DefaultJava11Shim : Java11Shim() {
 
   override fun <E> listOf(element: E): List<E> {
     return Collections.singletonList(element)
+  }
+
+  override fun <E> copyOfList(collection: Collection<E>): List<E> {
+    return Collections.unmodifiableList(collection.toList())
   }
 
   @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")

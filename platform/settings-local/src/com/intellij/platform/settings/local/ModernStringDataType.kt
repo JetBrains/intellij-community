@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.local
 
 import com.intellij.util.ArrayUtilRt
 import org.h2.mvstore.DataUtils.readVarInt
 import org.h2.mvstore.WriteBuffer
 import org.h2.mvstore.type.BasicDataType
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
@@ -20,8 +19,7 @@ import java.nio.charset.StandardCharsets
  *
  * The trick is that in a case of writing string via just `getBytes`, in most cases only `System.arrayCopy` will be involved in a modern JDK.
  */
-@Internal
-object ModernStringDataType : BasicDataType<String>() {
+internal object ModernStringDataType : BasicDataType<String>() {
   override fun createStorage(size: Int): Array<String?> = if (size == 0) ArrayUtilRt.EMPTY_STRING_ARRAY else arrayOfNulls(size)
 
   override fun compare(a: String, b: String): Int = a.compareTo(b)

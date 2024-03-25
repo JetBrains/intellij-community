@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
@@ -189,8 +189,8 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val size = 3_000_000
 
     repeat(size) {
-      val namedEntity = builder.addNamedEntity("$it")
-      builder.addComposedIdSoftRefEntity("-$it", namedEntity.symbolicId)
+      val namedEntity = builder addEntity NamedEntity("$it", MySource)
+      builder addEntity ComposedIdSoftRefEntity("-$it", namedEntity.symbolicId, MySource)
     }
 
     val storage = builder.toSnapshot()
@@ -356,11 +356,11 @@ class WorkspaceModelBenchmarksPerformanceTest {
                 contentRoots = listOf(
                   ContentRootEntity(manager.getOrCreateFromUrl("$newFolder/data$counter"), emptyList(), OrphanageWorkerEntitySource) {
                     this.sourceRoots = listOf(
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/one$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/two$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/three$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/four$counter"), "", MySource),
-                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/five$counter"), "", MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/one$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/two$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/three$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/four$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
+                      SourceRootEntity(manager.getOrCreateFromUrl("$newFolder/five$counter"), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource),
                     )
                   })
               }
@@ -403,7 +403,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
                 contentRoots = List(10) { contentCounter ->
                   ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$contentCounter$counter")), emptyList(), OrphanageWorkerEntitySource) {
                     sourceRoots = List(10) { sourceCounter ->
-                      SourceRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/one$sourceCounter$contentCounter$counter")), "", MySource)
+                      SourceRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/one$sourceCounter$contentCounter$counter")), DEFAULT_SOURCE_ROOT_TYPE_ID, MySource)
                     }
                   }
                 }
@@ -440,9 +440,9 @@ class WorkspaceModelBenchmarksPerformanceTest {
     PlatformTestUtil.newPerformanceTest(testInfo.displayName) {
       runWriteActionAndWait {
         repeat(1000) {
-          val builderSnapshot = WorkspaceModel.getInstance(projectModel.project).internal.getBuilderSnapshot()
+          val builderSnapshot = (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).getBuilderSnapshot()
           builderSnapshot.builder addEntity ModuleEntity("Module$it", emptyList(), MySource)
-          WorkspaceModel.getInstance(projectModel.project).internal.replaceProjectModel(builderSnapshot.getStorageReplacement())
+          (WorkspaceModel.getInstance(projectModel.project) as WorkspaceModelInternal).replaceProjectModel(builderSnapshot.getStorageReplacement())
         }
       }
     }

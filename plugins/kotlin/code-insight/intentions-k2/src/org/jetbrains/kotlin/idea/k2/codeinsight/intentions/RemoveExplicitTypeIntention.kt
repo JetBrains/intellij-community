@@ -14,9 +14,8 @@ import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.returnTypeOfCallDependsOnTypeParameters
 import org.jetbrains.kotlin.idea.codeinsight.utils.TypeParameterUtils.typeReferencesTypeParameter
@@ -25,19 +24,22 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandIntention<KtDeclaration>(KtDeclaration::class) {
+internal class RemoveExplicitTypeIntention :
+    KotlinApplicableModCommandAction<KtDeclaration, Unit>(KtDeclaration::class) {
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclaration> =
-        applicabilityRanges { declaration ->
-            val typeReference = declaration.typeReference ?: return@applicabilityRanges emptyList()
+    override fun getApplicableRanges(element: KtDeclaration): List<TextRange> {
+        val typeReference = element.typeReference
+            ?: return emptyList()
 
-            if (declaration is KtParameter && declaration.isSetterParameter) {
-                listOf(typeReference.textRangeIn(declaration))
-            } else {
-                val typeReferenceRelativeEndOffset = typeReference.endOffset - declaration.startOffset
-                listOf(TextRange(0, typeReferenceRelativeEndOffset))
-            }
+        val textRange = if (element is KtParameter && element.isSetterParameter) {
+            typeReference.textRangeIn(element)
+        } else {
+            val typeReferenceRelativeEndOffset = typeReference.endOffset - element.startOffset
+            TextRange(0, typeReferenceRelativeEndOffset)
         }
+
+        return listOf(textRange)
+    }
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean {
         val typeReference = element.typeReference ?: return false
@@ -52,12 +54,12 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtDeclaration): Boolean = when {
+    override fun prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
         element is KtNamedFunction && element.hasBlockBody() -> element.getReturnKtType().isUnit
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
-    }
+    }.asUnit
 
     private val KtDeclaration.typeReference: KtTypeReference?
         get() = when (this) {
@@ -161,9 +163,13 @@ internal class RemoveExplicitTypeIntention : AbstractKotlinApplicableModCommandI
         }
 
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
-    override fun getActionName(element: KtDeclaration): String = familyName
 
-    override fun apply(element: KtDeclaration, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtDeclaration,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         element.removeTypeReference()
     }
 

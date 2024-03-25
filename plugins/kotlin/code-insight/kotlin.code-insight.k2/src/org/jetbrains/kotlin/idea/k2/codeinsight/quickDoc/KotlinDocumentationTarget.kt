@@ -292,7 +292,7 @@ private fun renderKDoc(
 
 context(KtAnalysisSession)
 private fun findKDoc(symbol: KtSymbol): KDocContent? {
-    val ktElement = symbol.psi as? KtElement
+    val ktElement = symbol.psi?.navigationElement as? KtElement
     ktElement?.findKDocByPsi()?.let {
         return it
     }

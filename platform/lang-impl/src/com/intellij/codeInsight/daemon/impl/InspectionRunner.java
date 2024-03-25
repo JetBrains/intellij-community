@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
@@ -29,7 +28,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -81,9 +83,27 @@ class InspectionRunner {
                            @NotNull List<? extends PsiElement> elementsInside,
                            @NotNull List<? extends PsiElement> elementsOutside,
                            boolean isVisible,
-                           @NotNull List<Class<?>> acceptingPsiTypes,
-                           // the containing file this tool was called for. In the case of injected context, this will be the injected file.
-                           @NotNull PsiFile psiFile) {
+                           @NotNull List<? extends Class<?>> acceptingPsiTypes,
+                           // The containing file this tool was called for. In the case of injected context, this will be the injected file.
+                           @NotNull PsiFile psiFile,
+                           @NotNull InspectionVisitorOptimizer inspectionVisitorsOptimizer) {
+    InspectionContext(@NotNull LocalInspectionToolWrapper tool,
+                      @NotNull InspectionProblemHolder holder,
+                      @NotNull PsiElementVisitor visitor,
+                      @NotNull List<? extends PsiElement> elementsInside,
+                      @NotNull List<? extends PsiElement> elementsOutside,
+                      boolean isVisible,
+                      @NotNull List<? extends Class<?>> acceptingPsiTypes,
+                      // The containing file this tool was called for. In the case of injected context, this will be the injected file.
+                      @NotNull PsiFile psiFile) {
+      this(tool, holder, visitor, elementsInside, elementsOutside, isVisible, acceptingPsiTypes, psiFile, new InspectionVisitorOptimizer(isVisible ? elementsInside : elementsOutside));
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("inspect: created context: "+psiFile+"; host="+InjectedLanguageManager.getInstance(psiFile.getProject()).injectedToHost(psiFile, psiFile.getTextRange())+"; context="+this+"; acceptingPsiTypes="+acceptingPsiTypes+
+                                      "\n"+" inside:"+elementsInside()+
+                                      "\n"+"; outside:"+elementsOutside());
+      }
+    }
+
     @Override
     public String toString() {
       return tool +"; inside:"+elementsInside().size()+"; outside:"+elementsOutside().size();
@@ -154,16 +174,10 @@ class InspectionRunner {
           }
           tool.inspectionStarted(session, myIsOnTheFly);
 
-          List<Class<?>> acceptingPsiTypes = InspectionVisitorsOptimizer.getAcceptingPsiTypes(visitor);
           List<? extends PsiElement> sortedInside = highlightInfoUpdater.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
           List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
-          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, true, acceptingPsiTypes, myPsiFile);
+          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, true, InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor), myPsiFile);
           init.add(context);
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("inspect: created context: "+myPsiFile+"; host="+InjectedLanguageManager.getInstance(myPsiFile.getProject()).injectedToHost(myPsiFile, myPsiFile.getTextRange())+"; context="+context+"; acceptingPsiTypes="+acceptingPsiTypes+
-                                          "\n"+" inside:"+context.elementsInside()+
-                                          "\n"+"; outside:"+context.elementsOutside());
-          }
         }
       }
       //sort `init`, according to the priorities, saved earlier to run in order
@@ -210,7 +224,7 @@ class InspectionRunner {
         InspectionProfilerDataHolder.saveStats(myPsiFile, init);
       }
       if (myIsOnTheFly && addRedundantSuppressions) {
-        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback, restrictedInside, restrictedOutside);
+        addRedundantSuppressions(init, toolWrappers, redundantContexts, applyIncrementallyCallback, contextFinishedCallback);
       }
     });
     return ContainerUtil.concat(init, redundantContexts, injectedContexts);
@@ -312,9 +326,7 @@ class InspectionRunner {
                                         @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                         @NotNull List<? super InspectionContext> result,
                                         @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                        @NotNull List<? extends PsiElement> restrictedInside,
-                                        @NotNull List<? extends PsiElement> restrictedOutside) {
+                                        @NotNull Consumer<? super InspectionContext> contextFinishedCallback) {
     for (InspectionContext context : init) {
       LocalInspectionToolWrapper toolWrapper = context.tool;
       LocalInspectionTool tool = toolWrapper.getTool();
@@ -388,33 +400,13 @@ class InspectionRunner {
    */
   private static void processContext(@NotNull InspectionContext context) {
     List<? extends PsiElement> elements = context.isVisible() ? context.elementsInside() : context.elementsOutside();
-    Map<Class<?>, Collection<Class<?>>> targetPsiClasses = InspectionVisitorsOptimizer.getTargetPsiClasses(elements);
-    InspectionProblemHolder holder = context.holder;
-    if (context.acceptingPsiTypes == InspectionVisitorsOptimizer.ALL_ELEMENTS_VISIT_LIST) {
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("processContext: " + context + "; elements(" + elements.size() + "): " + StringUtil.join( elements, e->e+"("+e.getClass()+")", ", ") + "; accepts: all");
-      }
-      for (int i = 0; i < elements.size(); i++) {
-        PsiElement element = elements.get(i);
-        ProgressManager.checkCanceled();
-        holder.visitElement(element, context.visitor);
-      }
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("processContext: " +
+                context + "; elements(" + elements.size() + "): " + StringUtil.join(elements, e-> e + "(" + e.getClass() + ")", ", ") + "; accepts=" + context.acceptingPsiTypes());
     }
-    else {
-      Set<Class<?>> accepts = InspectionVisitorsOptimizer.getVisitorAcceptClasses(targetPsiClasses, context.acceptingPsiTypes);
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("processContext: " + context + "; elements(" + elements.size() + "): " + StringUtil.join( elements, e->e+"("+e.getClass()+")", ", ") + "; accepts=" + accepts+"; targetPsiClasses="+targetPsiClasses);
-      }
-      if (accepts != null && !accepts.isEmpty()) {
-        for (int i = 0; i < elements.size(); i++) {
-          PsiElement element = elements.get(i);
-          if (accepts.contains(element.getClass())) {
-            ProgressManager.checkCanceled();
-            holder.visitElement(element, context.visitor);
-          }
-        }
-      }
-    }
+    context.inspectionVisitorsOptimizer().acceptElements(elements,
+                                                         context.acceptingPsiTypes,
+                                                         psiElement -> context.holder.visitElement(psiElement, context.visitor));
   }
 
   private boolean inspectInjectedPsi(@NotNull LocalInspectionToolSession session,

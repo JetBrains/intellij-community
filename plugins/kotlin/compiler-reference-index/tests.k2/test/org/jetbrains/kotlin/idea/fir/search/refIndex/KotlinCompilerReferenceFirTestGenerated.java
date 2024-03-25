@@ -89,6 +89,19 @@ public abstract class KotlinCompilerReferenceFirTestGenerated extends AbstractKo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../tests/testData/compilerIndex/classOrObject")
+        public static class TestJavaInvoke extends AbstractKotlinCompilerReferenceFirTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("javaInvoke")
+            public void testJavaInvoke() throws Exception {
+                runTest("../tests/testData/compilerIndex/classOrObject/javaInvoke/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndex/classOrObject")
         public static class TestJavaNestedClass extends AbstractKotlinCompilerReferenceFirTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -97,6 +110,19 @@ public abstract class KotlinCompilerReferenceFirTestGenerated extends AbstractKo
             @TestMetadata("javaNestedClass")
             public void testJavaNestedClass() throws Exception {
                 runTest("../tests/testData/compilerIndex/classOrObject/javaNestedClass/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndex/classOrObject")
+        public static class TestJavaNestedInvoke extends AbstractKotlinCompilerReferenceFirTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("javaNestedInvoke")
+            public void testJavaNestedInvoke() throws Exception {
+                runTest("../tests/testData/compilerIndex/classOrObject/javaNestedInvoke/");
             }
         }
 
@@ -1538,6 +1564,19 @@ public abstract class KotlinCompilerReferenceFirTestGenerated extends AbstractKo
                 @TestMetadata("javaAnnotationWithSeveralParameters")
                 public void testJavaAnnotationWithSeveralParameters() throws Exception {
                     runTest("../tests/testData/compilerIndex/functions/members/javaAnnotationWithSeveralParameters/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../tests/testData/compilerIndex/functions/members")
+            public static class TestJavaInvoke extends AbstractKotlinCompilerReferenceFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("javaInvoke")
+                public void testJavaInvoke() throws Exception {
+                    runTest("../tests/testData/compilerIndex/functions/members/javaInvoke/");
                 }
             }
 
@@ -3353,6 +3392,19 @@ public abstract class KotlinCompilerReferenceFirTestGenerated extends AbstractKo
                 @TestMetadata("javaField")
                 public void testJavaField() throws Exception {
                     runTest("../tests/testData/compilerIndex/properties/members/javaField/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../tests/testData/compilerIndex/properties/members")
+            public static class TestJavaFieldWithInvoke extends AbstractKotlinCompilerReferenceFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("javaFieldWithInvoke")
+                public void testJavaFieldWithInvoke() throws Exception {
+                    runTest("../tests/testData/compilerIndex/properties/members/javaFieldWithInvoke/");
                 }
             }
 

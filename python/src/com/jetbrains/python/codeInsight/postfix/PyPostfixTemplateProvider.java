@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTempl
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateExpressionCondition;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -39,9 +38,8 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
     new PyLenPostfixTemplate(this)
   );
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "builtin.python";
   }
 
@@ -50,9 +48,8 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
     return PyBundle.message("postfix.template.provider.name");
   }
 
-  @NotNull
   @Override
-  public Set<PostfixTemplate> getTemplates() {
+  public @NotNull Set<PostfixTemplate> getTemplates() {
     return myTemplates;
   }
 
@@ -66,9 +63,8 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
     return null;
   }
 
-  @Nullable
   @Override
-  public PostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element templateElement) {
+  public @Nullable PostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element templateElement) {
     TemplateImpl template = readExternalLiveTemplate(templateElement, this);
     if (template == null) return null;
     Set<PyPostfixTemplateExpressionCondition> conditions =
@@ -84,8 +80,7 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
     }
   }
 
-  @Nullable
-  private static PyPostfixTemplateExpressionCondition readCondition(@NotNull Element conditionElement) {
+  private static @Nullable PyPostfixTemplateExpressionCondition readCondition(@NotNull Element conditionElement) {
     String id = conditionElement.getAttributeValue(PostfixTemplateExpressionCondition.ID_ATTR);
     return PyPostfixTemplateExpressionCondition.PyClassCondition.ID.equals(id) ?
            PyPostfixTemplateExpressionCondition.PyClassCondition.Companion.readFrom(conditionElement) :
@@ -108,9 +103,8 @@ public final class PyPostfixTemplateProvider implements PostfixTemplateProvider 
 
   }
 
-  @NotNull
   @Override
-  public PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
+  public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
     return copyFile;
   }
 }

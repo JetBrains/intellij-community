@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.resolve;
 
 import com.intellij.psi.PsiFile;
@@ -18,8 +18,7 @@ public final class YAMLLocalResolveUtil {
    * Calculates reference map for a file.
    * @return A map: alias → referenced anchor.
    */
-  @NotNull
-  public static Map<YAMLAlias, YAMLAnchor> getResolveAliasMap(@NotNull PsiFile file) {
+  public static @NotNull Map<YAMLAlias, YAMLAnchor> getResolveAliasMap(@NotNull PsiFile file) {
     return getResolveData(file).myResolveMap;
   }
 
@@ -27,13 +26,11 @@ public final class YAMLLocalResolveUtil {
    * This method is useful for completion. It calculates a special collection of anchors in a given file.
    * For every anchor name the result will contain only the first anchor with that name.
    */
-  @NotNull
-  public static Collection<YAMLAnchor> getFirstAnchorDefs(@NotNull PsiFile file) {
+  public static @NotNull Collection<YAMLAnchor> getFirstAnchorDefs(@NotNull PsiFile file) {
     return getResolveData(file).myFirstDefs;
   }
 
-  @NotNull
-  private static YAMLAliasResolveResult getResolveData(@NotNull PsiFile file) {
+  private static @NotNull YAMLAliasResolveResult getResolveData(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<YAMLAlias, YAMLAnchor> resolveMap = new HashMap<>();
       Map<String, YAMLAnchor> defMap = new HashMap<>();
@@ -63,10 +60,8 @@ public final class YAMLLocalResolveUtil {
   }
 
   private static class YAMLAliasResolveResult {
-    @NotNull
-    final Map<YAMLAlias, YAMLAnchor> myResolveMap;
-    @NotNull
-    final Set<YAMLAnchor> myFirstDefs;
+    final @NotNull Map<YAMLAlias, YAMLAnchor> myResolveMap;
+    final @NotNull Set<YAMLAnchor> myFirstDefs;
 
     YAMLAliasResolveResult(@NotNull Map<YAMLAlias, YAMLAnchor> map, @NotNull Set<YAMLAnchor> firstDefs) {
       myResolveMap = Collections.unmodifiableMap(map);

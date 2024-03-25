@@ -64,6 +64,44 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assert(moveFilesModel.target.pkgName.asString() == "bar")
     }
 
+    fun `test single class and file from source directory without target move`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            class Foo { }
+        """.trimIndent()) as KtFile
+        val barClass = (myFixture.addFileToProject("Bar.kt", """
+            class Foo { }
+        """.trimIndent()) as KtFile).declarations.single()
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), null)
+        assertInstanceOf<K2MoveModel.Files>(moveModel)
+        val moveFilesModel = moveModel as K2MoveModel.Files
+        assertSize(2, moveFilesModel.source.elements)
+        val firstElem = moveFilesModel.source.elements.first()
+        assert(firstElem.name == "Foo.kt")
+        val lastElem = moveFilesModel.source.elements.last()
+        assert(lastElem.name == "Bar.kt")
+    }
+
+    fun `test single class and file from source directory to source directory move`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            class Foo { }
+        """.trimIndent()) as KtFile
+        val barClass = (myFixture.addFileToProject("Bar.kt", """
+            class Foo { }
+        """.trimIndent()) as KtFile).declarations.single()
+        val barDir = runWriteAction { fooFile.containingDirectory?.createSubdirectory("bar") }
+        val moveModel = K2MoveModel.create(arrayOf(fooFile, barClass), barDir)
+        assertInstanceOf<K2MoveModel.Files>(moveModel)
+        val moveFilesModel = moveModel as K2MoveModel.Files
+        assertSize(2, moveFilesModel.source.elements)
+        val firstElem = moveFilesModel.source.elements.first()
+        assert(firstElem.name == "Foo.kt")
+        val lastElem = moveFilesModel.source.elements.last()
+        assert(lastElem.name == "Bar.kt")
+        assert(moveFilesModel.target.pkgName.asString() == "bar")
+    }
+
     fun `test file from non-source directory move`() {
         PsiTestUtil.removeSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """

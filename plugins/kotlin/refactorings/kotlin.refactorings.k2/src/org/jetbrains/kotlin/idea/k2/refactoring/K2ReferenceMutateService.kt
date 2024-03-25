@@ -85,9 +85,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
             } else {
                 val oldTarget = simpleNameReference.resolve()
-                if (oldTarget?.isCallableAsExtensionFunction() == targetElement?.isCallableAsExtensionFunction()
-                    && oldTarget?.kotlinFqName == fqName
-                ) return expression
+                if (oldTarget?.isCallableAsExtensionFunction() == null && oldTarget?.kotlinFqName == fqName) return expression
             }
             if (fqName.isRoot) return expression
             val writableFqn = if (fqName.pathSegments().last().asString() == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()) {
@@ -169,7 +167,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     private fun KtExpression.replaceWithQualified(fqName: FqName, selectorExpression: KtExpression): KtExpression {
         val parentFqName = fqName.parent()
-        if (parentFqName.isRoot) return selectorExpression
+        if (parentFqName.isRoot) return replaced(selectorExpression)
         val packageName = fqName.parent().asString()
         val newQualifiedExpression = KtPsiFactory(project).createExpression("$packageName.${selectorExpression.text}")
         return replaced(newQualifiedExpression)

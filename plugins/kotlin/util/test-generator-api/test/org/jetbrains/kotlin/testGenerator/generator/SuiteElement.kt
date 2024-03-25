@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.testGenerator.generator
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.testGenerator.generator.methods.RunTestMethod
 import org.jetbrains.kotlin.testGenerator.generator.methods.SetUpMethod
@@ -65,6 +64,10 @@ class SuiteElement private constructor(
                 }
 
                 val match = model.matcher(file.name) ?: continue
+
+                // Don't generate a directory-based test if the directory is excluded.
+                if (file.isDirectory && file.name in model.excludedDirectories) continue
+
                 val methodNameBase = getTestMethodNameBase(match.methodName)
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
                 methods += TestCaseMethod(
@@ -74,7 +77,8 @@ class SuiteElement private constructor(
                     group.isCompilerTestData,
                     model.passTestDataPath,
                     file,
-                    model.ignored
+                    model.ignored,
+                    model.methodAnnotations
                 )
             }
 
@@ -124,18 +128,23 @@ class SuiteElement private constructor(
                 result += RunTestMethod(model)
             }
 
-            if (group.isCompilerTestData) {
-                result += SetUpMethod(
-                    listOf(
-                        "${TestKotlinArtifacts::compilerTestData.name}(\"${
-                            File(
-                                group.testDataRoot,
-                                model.path
-                            ).toRelativeStringSystemIndependent(group.moduleRoot)
-                                .substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
-                        }\");"
-                    )
-                )
+            if (group.isCompilerTestData || model.setUpStatements.isNotEmpty()) {
+                val statements = buildList {
+                    if (group.isCompilerTestData) {
+                        add(
+                            "${TestKotlinArtifacts::compilerTestData.name}(\"${
+                                File(
+                                    group.testDataRoot,
+                                    model.path
+                                ).toRelativeStringSystemIndependent(group.moduleRoot)
+                                    .substringAfter(TestKotlinArtifacts.compilerTestDataDir.name + "/")
+                            }\");"
+                        )
+                    }
+                    addAll(model.setUpStatements)
+                }
+
+                result += SetUpMethod(statements)
             }
 
             return result
@@ -183,7 +192,7 @@ class SuiteElement private constructor(
             val args = suite.indexingMode
             appendAnnotation(TAnnotation<TestIndexingMode>(*args.toTypedArray()))
         }
-        appendAnnotation(TAnnotation<RunWith>(JUnit3RunnerWithInners::class.java))
+        appendAnnotation(TAnnotation<RunWith>(model.runWithClass))
         appendAnnotation(TAnnotation<TestMetadata>(testDataPath))
         suite.annotations.forEach { appendAnnotation(it) }
 

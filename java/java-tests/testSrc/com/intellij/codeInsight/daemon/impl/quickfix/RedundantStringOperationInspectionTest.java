@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.JavaTestUtil;
@@ -16,7 +16,9 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new RedundantStringOperationInspection();
+    RedundantStringOperationInspection inspection = new RedundantStringOperationInspection();
+    inspection.ignoreSingleArgSubstring = false;
+    return inspection;
   }
 
   @Override

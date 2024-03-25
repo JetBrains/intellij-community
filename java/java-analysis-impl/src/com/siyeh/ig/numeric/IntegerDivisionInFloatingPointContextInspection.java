@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -32,26 +32,23 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public final class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
   @NonNls
-  static final Set<String> s_integralTypes = new HashSet<>(10);
-
-  static {
-    s_integralTypes.add("int");
-    s_integralTypes.add("long");
-    s_integralTypes.add("short");
-    s_integralTypes.add("byte");
-    s_integralTypes.add("char");
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_INTEGER);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_LONG);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_SHORT);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_BYTE);
-    s_integralTypes.add(CommonClassNames.JAVA_LANG_CHARACTER);
-  }
+  static final Set<String> s_integralTypes = Set.of(
+    "int",
+    "long",
+    "short",
+    "byte",
+    "char",
+    CommonClassNames.JAVA_LANG_INTEGER,
+    CommonClassNames.JAVA_LANG_LONG,
+    CommonClassNames.JAVA_LANG_SHORT,
+    CommonClassNames.JAVA_LANG_BYTE,
+    CommonClassNames.JAVA_LANG_CHARACTER
+  );
 
   @Override
   @NotNull

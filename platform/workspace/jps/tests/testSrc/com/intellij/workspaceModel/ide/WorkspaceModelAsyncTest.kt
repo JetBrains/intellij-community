@@ -7,15 +7,19 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.testFramework.workspaceModel.update
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -26,6 +30,8 @@ import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class WorkspaceModelAsyncTest {
   companion object {
@@ -198,5 +204,16 @@ class WorkspaceModelAsyncTest {
     } finally {
       job.cancel()
     }
+  }
+
+  @Test(timeout = 10_000)
+  fun `workspace model update is available right after modification`() = runBlocking {
+    val workspaceModel = projectModel.project.workspaceModel
+
+    assertFalse(workspaceModel.currentSnapshot.contains(ModuleId("ABC")))
+    workspaceModel.update {
+      it addEntity ModuleEntity("ABC", emptyList(), MySource)
+    }
+    assertTrue(workspaceModel.currentSnapshot.contains(ModuleId("ABC")))
   }
 }

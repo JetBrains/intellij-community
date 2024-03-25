@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.lang.java.parser.BasicExpressionParser;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -47,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -60,21 +58,17 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
       CallMatcher.staticCall("org.junit.Assert", "assertEquals").parameterTypes(CommonClassNames.JAVA_LANG_STRING, "long", "long")
     );
 
-  /**
-   */
   @NonNls
-  private static final Set<String> s_typesToCheck = new HashSet<>(4);
-
-  static {
-    s_typesToCheck.add("int");
-    s_typesToCheck.add("short");
-    s_typesToCheck.add("byte");
-    s_typesToCheck.add("char");
-    s_typesToCheck.add(CommonClassNames.JAVA_LANG_INTEGER);
-    s_typesToCheck.add(CommonClassNames.JAVA_LANG_SHORT);
-    s_typesToCheck.add(CommonClassNames.JAVA_LANG_BYTE);
-    s_typesToCheck.add(CommonClassNames.JAVA_LANG_CHARACTER);
-  }
+  private static final Set<String> s_typesToCheck = Set.of(
+    "int",
+    "short",
+    "byte",
+    "char",
+    CommonClassNames.JAVA_LANG_INTEGER,
+    CommonClassNames.JAVA_LANG_SHORT,
+    CommonClassNames.JAVA_LANG_BYTE,
+    CommonClassNames.JAVA_LANG_CHARACTER
+  );
 
   @SuppressWarnings("PublicField")
   public boolean ignoreNonOverflowingCompileTimeConstants = true;
@@ -301,7 +295,8 @@ public final class IntegerMultiplicationImplicitCastToLongInspection extends Bas
             r2 = max << nextMin;
             r3 = min << nextMax;
             r4 = max << nextMax;
-          } else {
+          }
+          else {
             long nextMin = set.min();
             long nextMax = set.max();
             if (intOverflow(nextMin) || intOverflow(nextMax)) return false;

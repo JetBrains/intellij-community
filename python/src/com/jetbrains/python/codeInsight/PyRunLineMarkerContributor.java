@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.execution.lineMarker.ExecutorAction;
@@ -31,9 +31,8 @@ public final class PyRunLineMarkerContributor extends RunLineMarkerContributor i
     }
   }
 
-  @Nullable
   @Override
-  public Info getInfo(@NotNull PsiElement element) {
+  public @Nullable Info getInfo(@NotNull PsiElement element) {
     if (isMainClauseOnTopLevel(element)) {
       AnAction[] actions = ExecutorAction.getActions();
       AnActionEvent event = createActionEvent(element);

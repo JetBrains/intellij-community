@@ -11,7 +11,7 @@ class InferMutabilityOfLocalVariablesConversion(context: NewJ2kConverterContext)
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
         if (element !is JKLocalVariable || element.mutability != UNKNOWN) return recurse(element)
-        val scope = element.parentOfType<JKMethod>() ?: element.parentOfType<JKFile>() ?: return recurse(element)
+        val scope = element.parentOfType<JKMethod>() ?: element.parentOfType<JKFile>() ?: element
         element.mutability = element.inferMutabilityFromWritableUsages(scope, context)
         return recurse(element)
     }

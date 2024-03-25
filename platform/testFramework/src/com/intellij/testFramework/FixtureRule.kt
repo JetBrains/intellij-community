@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE
@@ -34,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
-import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.Dispatchers
@@ -42,7 +41,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
@@ -118,9 +116,11 @@ class ProjectTrackingRule : TestRule {
   }
 }
 
-class ProjectObject(private val runPostStartUpActivities: Boolean = false,
-                    private val preloadServices: Boolean = false,
-                    private val projectDescriptor: LightProjectDescriptor? = null) {
+class ProjectObject(
+  private val runPostStartUpActivities: Boolean = false,
+  private val preloadServices: Boolean = false,
+  private val projectDescriptor: LightProjectDescriptor? = null,
+) {
   private var sharedProject: ProjectEx? = null
   internal var testClassName: String? = null
   private var virtualFilePointerTracker: VirtualFilePointerTracker? = null
@@ -185,9 +185,11 @@ class ProjectObject(private val runPostStartUpActivities: Boolean = false,
     }
 }
 
-class ProjectRule(private val runPostStartUpActivities: Boolean = false,
-                  preloadServices: Boolean = false,
-                  projectDescriptor: LightProjectDescriptor? = null) : ApplicationRule() {
+class ProjectRule(
+  private val runPostStartUpActivities: Boolean = false,
+  preloadServices: Boolean = false,
+  projectDescriptor: LightProjectDescriptor? = null,
+) : ApplicationRule() {
   companion object {
     @JvmStatic
     fun withRunningStartUpActivities(): ProjectRule = ProjectRule(runPostStartUpActivities = true)
@@ -203,7 +205,11 @@ class ProjectRule(private val runPostStartUpActivities: Boolean = false,
     }
   }
 
-  private val projectObject = ProjectObject(runPostStartUpActivities, preloadServices, projectDescriptor)
+  private val projectObject = ProjectObject(
+    runPostStartUpActivities = runPostStartUpActivities,
+    preloadServices = preloadServices,
+    projectDescriptor = projectDescriptor,
+  )
 
   override fun before(description: Description) {
     super.before(description)
@@ -491,10 +497,18 @@ fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirecto
   }
 }
 
-suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory,
-                                                      projectCreator: ((VirtualFile) -> Path)? = null,
-                                                      task: suspend (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
+suspend fun loadAndUseProjectInLoadComponentStateMode(
+  tempDirManager: TemporaryDirectory,
+  projectCreator: ((VirtualFile) -> Path)? = null,
+  task: suspend (Project) -> Unit,
+) {
+  createOrLoadProject(
+    tempDirManager = tempDirManager,
+    projectCreator = projectCreator,
+    task = task,
+    directoryBased = false,
+    loadComponentState = true,
+  )
 }
 
 fun refreshProjectConfigDir(project: Project) {
@@ -513,32 +527,43 @@ fun <T> runNonUndoableWriteAction(file: VirtualFile, runnable: () -> T): T {
   }
 }
 
-suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
-                                projectCreator: ((VirtualFile) -> Path)? = null,
-                                directoryBased: Boolean = true,
-                                loadComponentState: Boolean = false,
-                                useDefaultProjectSettings: Boolean = true,
-                                task: suspend (Project) -> Unit) {
-  var options = createTestOpenProjectOptions().copy(
+suspend fun createOrLoadProject(
+  tempDirManager: TemporaryDirectory,
+  projectCreator: ((VirtualFile) -> Path)? = null,
+  directoryBased: Boolean = true,
+  loadComponentState: Boolean = false,
+  useDefaultProjectSettings: Boolean = true,
+  runPostStartUpActivities: Boolean = false,
+  task: suspend (Project) -> Unit,
+) {
+  var options = createTestOpenProjectOptions(runPostStartUpActivities = runPostStartUpActivities).copy(
     useDefaultProjectAsTemplate = useDefaultProjectSettings,
-    isNewProject = projectCreator == null
+    isNewProject = projectCreator == null,
   )
   if (loadComponentState) {
-    options = options.copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
+    val oldBeforeInit = options.beforeInit
+    options = options.copy(beforeInit = {
+      oldBeforeInit?.invoke(it)
+      it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
+    })
   }
-  createOrLoadProject(tempDirManager = tempDirManager,
-                      projectCreator = projectCreator,
-                      directoryBased = directoryBased,
-                      options = options,
-                      task = task)
+  createOrLoadProject(
+    tempDirManager = tempDirManager,
+    projectCreator = projectCreator,
+    directoryBased = directoryBased,
+    options = options,
+    task = task,
+  )
 }
 
-suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
-                                projectCreator: ((VirtualFile) -> Path)? = null,
-                                directoryBased: Boolean = true,
-                                loadComponentState: Boolean = false,
-                                options: OpenProjectTask,
-                                task: suspend (Project) -> Unit) {
+suspend fun createOrLoadProject(
+  tempDirManager: TemporaryDirectory,
+  projectCreator: ((VirtualFile) -> Path)? = null,
+  directoryBased: Boolean = true,
+  loadComponentState: Boolean = false,
+  options: OpenProjectTask,
+  task: suspend (Project) -> Unit,
+) {
   val file = if (projectCreator == null) {
     tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = false)
   }

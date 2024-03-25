@@ -205,10 +205,11 @@ public final class MethodTags {
       case "apply" -> anyFrom("invoke", "do", "call");
       case "assert" -> anyFrom("expect", "verify", "test", "ensure");
       case "build" -> anyFrom("create", "make", "generate");
-      case "call" -> anyFrom("execute", "run");
+      case "call" -> anyFrom("execute", "run", "compute");
       case "check" -> anyFrom("test", "match");
-      case "count" -> anyFrom("size", "length");
+      case "compute" -> anyFrom("call", "execute");
       case "convert" -> anyFrom("map");
+      case "count" -> anyFrom("size", "length");
       case "create" -> anyFrom("build", "make", "generate");
       case "delete" -> anyFrom("remove");
       case "do" -> anyFrom("run", "execute", "call");

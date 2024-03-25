@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
@@ -8,7 +8,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.StartupUiUtil
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.*
+import com.jetbrains.rd.util.reactive.Property
+import com.jetbrains.rd.util.reactive.Signal
 import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -17,7 +18,10 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
 
-class WizardServiceTest : WizardService {
+class WizardServiceTest : StartupWizardService {
+  override val isActive = true
+  override val shouldClose = Signal<Unit>()
+
   override fun getKeymapService(): KeymapService {
     return TestKeymapService()
   }
@@ -30,7 +34,9 @@ class WizardServiceTest : WizardService {
     return PluginServiceImpl()
   }
 
-
+  override fun onEnter() {}
+  override fun onCancel() {}
+  override fun onExit() {}
 }
 
 class ThemeServiceImpl : ThemeService {
@@ -40,9 +46,9 @@ class ThemeServiceImpl : ThemeService {
   private var IDEA: @NlsSafe String = "IDEA"
 
   private val map = mapOf(
-    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
-    vs to WizardScheme(vs, vs, IconLoader.getIcon("wizardPreviews/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
-    IDEA to WizardScheme(IDEA, IDEA, IconLoader.getIcon("wizardPreviews/ij.png", this.javaClass), JBColor(0xFFFFFF, 0x2B2B2B))
+    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews_stub/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
+    vs to WizardScheme(vs, vs, IconLoader.getIcon("wizardPreviews_stub/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
+    IDEA to WizardScheme(IDEA, IDEA, IconLoader.getIcon("wizardPreviews_stub/ij.png", this.javaClass), JBColor(0xFFFFFF, 0x2B2B2B))
   )
 
   override var currentTheme: ThemeService.Theme
@@ -66,8 +72,7 @@ class ThemeServiceImpl : ThemeService {
 
   override val schemesList: List<WizardScheme> = map.values.toList()
 
-  override fun finish(schemeId: String, theme: ThemeService.Theme) {
-  }
+  override fun onStepEnter(isForwardDirection: Boolean) {}
 
   override fun updateScheme(schemeId: String) {
 
@@ -114,7 +119,9 @@ class PluginServiceImpl : PluginService {
 
   override val plugins: List<WizardPlugin> = listOf
 
-  override fun install(ids: List<String>): PluginImportProgress = TestPluginImportProgress(Lifetime.Eternal)
+  override fun onStepEnter() {}
+
+  override fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress = TestPluginImportProgress(lifetime)
   override fun skipPlugins() {
 
   }
@@ -172,6 +179,8 @@ class TestKeymapService : KeymapService {
   Shortcut(UUID.randomUUID().toString(), "Extend Selection"),
   Shortcut(UUID.randomUUID().toString(), "Build Solution"))
 
+  override fun onStepEnter(isForwardDirection: Boolean) {}
+
   override fun chosen(id: String) {
 
   }
@@ -182,9 +191,7 @@ class TestWizardKeymap(override val id: String,
                        override val description: @Nls String, val ind: Int? = null) : WizardKeymap {
 
   private val shortCuts = listOf("Shift+Shift", "F12", "Alt+Shift+F12", "Alt+Shift+F1", "F1", "Ctrl+Shift+B")
-  override fun getShortcutValue(id_: String): String {
+  override fun getShortcutValue(id: String): String {
     return ind?.let{ shortCuts[it] } ?: shortCuts.random()
   }
-
 }
-

@@ -44,6 +44,11 @@ class ExampleClassWithNoTypos<T> {
 
     /** Currently active change list. */
     class ActiveChangeList {}
+
+    /**
+     * The finally block always executes when the try block exits.
+     */
+    void finallyBlockTest() {}
 }
 
 /**

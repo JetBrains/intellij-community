@@ -30,12 +30,3 @@ Compiling files:
 End of files
 Exit code: OK
 ------------------------------------------
-Cleaning output files:
-  out/production/module/META-INF/module.kotlin_module
-  out/production/module/test/UseDefaultKt.class
-End of files
-Compiling files:
-  src/useDefault.kt
-End of files
-Exit code: OK
-------------------------------------------

@@ -1,38 +1,34 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
-import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.find.EditorSearchSession
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryBundle
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.ReportFeedbackService
-import com.intellij.ide.actions.SendFeedbackAction
-import com.intellij.ide.util.PropertiesComponent
+import com.intellij.history.integration.ui.views.FileHistoryDialog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.IconButton
+import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.changes.DiffPreview
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.lvcs.impl.*
-import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
+import com.intellij.platform.lvcs.impl.ui.SingleFileActivityDiffPreview.Companion.DIFF_PLACE
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
@@ -47,17 +43,14 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.ui.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.event.KeyEvent
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.DocumentEvent
 
-class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope) :
+class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope,
+                   private val isFrameDiffPreview: Boolean = false) :
   JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
 
   private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope()
@@ -67,8 +60,10 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private val activityList = ActivityList { model.activityProvider.getPresentation(it) }.apply {
     updateEmptyText(true)
   }
+  private val searchField = if (model.isScopeFilterSupported || model.isActivityFilterSupported) createSearchField() else null
   private val changesBrowser = createChangesBrowser()
-  private val editorDiffPreview = createDiffPreview(changesBrowser)
+  private val frameDiffPreview = if (isFrameDiffPreview) createFrameDiffPreview(changesBrowser) else null
+  private val editorDiffPreview = if (frameDiffPreview == null) createEditorDiffPreview(changesBrowser) else null
 
   private val changesSplitter: TwoKeySplitter
 
@@ -82,25 +77,21 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     val progressStripe = ProgressStripe(scrollPane, this)
 
     val toolbarComponent = BorderLayoutPanel()
+    frameDiffPreview?.setToolbarVerticalSizeReferent(toolbarComponent)
 
-    val filterProgress = if (model.isScopeFilterSupported || model.isActivityFilterSupported) {
-      val searchField = createSearchField()
-      object : ProgressBarLoadingDecorator(searchField, this@ActivityView, 500) {
+    val filterProgress = searchField?.let { field ->
+      object : ProgressBarLoadingDecorator(field, this@ActivityView, 500) {
         override fun isOnTop() = false
       }.also {
         toolbarComponent.add(it.component, BorderLayout.CENTER)
       }
     }
-    else null
 
     val toolbarGroup = ActionManager.getInstance().getAction("ActivityView.Toolbar") as ActionGroup
     val toolbar = ActionManager.getInstance().createActionToolbar("ActivityView.Toolbar", toolbarGroup, true)
     toolbar.targetComponent = this
     toolbar.setReservePlaceAutoPopupIcon(false)
     toolbarComponent.add(toolbar.component, BorderLayout.EAST)
-
-    val notificationPanel = createNotificationPanel()
-    if (notificationPanel != null) toolbarComponent.add(notificationPanel, BorderLayout.NORTH)
 
     val mainComponent = BorderLayoutPanel()
     mainComponent.add(progressStripe, BorderLayout.CENTER)
@@ -112,20 +103,18 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     changesSplitter.firstComponent = mainComponent
     changesSplitter.secondComponent = changesBrowser
 
-    add(changesSplitter, BorderLayout.CENTER)
+    val diffSplitter = OnePixelSplitter(false, "lvcs.diff.splitter.horizontal", 0.2f)
+    diffSplitter.firstComponent = changesSplitter
+    diffSplitter.secondComponent = frameDiffPreview?.component
+
+    add(diffSplitter, BorderLayout.CENTER)
 
     activityList.addListener(object : ActivityList.Listener {
       override fun onSelectionChanged(selection: ActivitySelection) {
         model.setSelection(selection)
       }
-      override fun onEnter(): Boolean {
-        showDiff()
-        return true
-      }
-      override fun onDoubleClick(): Boolean {
-        showDiff()
-        return true
-      }
+      override fun onEnter(): Boolean = showDiff()
+      override fun onDoubleClick(): Boolean = showDiff()
     }, this)
     model.addListener(object : ActivityModelListener {
       override fun onItemsLoadingStarted() {
@@ -176,26 +165,31 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return changesBrowser
   }
 
-  private fun createDiffPreview(changesBrowser: ActivityChangesBrowser?): DiffPreview {
+  private fun createEditorDiffPreview(changesBrowser: ActivityChangesBrowser?): EditorTabDiffPreview {
     if (changesBrowser != null) {
       val diffPreview = MultiFileActivityDiffPreview(activityScope, changesBrowser.viewer, this@ActivityView)
       changesBrowser.setShowDiffActionPreview(diffPreview)
+      if (model.isActivityFilterSupported) diffPreview.addListener(DiffRequestProcessorListener(::updateDiffEditorSearch), this@ActivityView)
       return diffPreview
     }
 
-    return object : SingleFileActivityDiffPreview(project, activityScope, this@ActivityView) {
-      override val selection: ActivitySelection? get() = model.selection
+    val diffPreview = SingleFileActivityDiffPreview(project, model, this@ActivityView)
+    if (model.isActivityFilterSupported) diffPreview.addListener(DiffRequestProcessorListener(::updateDiffEditorSearch), this@ActivityView)
+    return diffPreview
+  }
 
-      override fun onSelectionChange(disposable: Disposable, runnable: () -> Unit) {
-        model.addListener(object : ActivityModelListener {
-          override fun onSelectionChanged(selection: ActivitySelection?) = runnable()
-        }, disposable)
-      }
-
-      override fun getDiffRequestProducer(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer? {
-        return model.activityProvider.loadSingleDiff(scope, selection)
-      }
+  private fun createFrameDiffPreview(changesBrowser: ActivityChangesBrowser?): DiffEditorViewer {
+    val diffViewer = if (changesBrowser != null) {
+      TreeHandlerEditorDiffPreview.createDefaultViewer(changesBrowser.viewer, ActivityDiffPreviewHandler(), DIFF_PLACE)
     }
+    else {
+      SingleFileActivityDiffPreview.createViewer(project, model)
+    }
+    Disposer.register(this, diffViewer.disposable)
+    if (model.isActivityFilterSupported && diffViewer is DiffRequestProcessor) {
+      diffViewer.addListener(DiffRequestProcessorListener(::updateDiffEditorSearch), this@ActivityView)
+    }
+    return diffViewer
   }
 
   private fun createSearchField(): SearchTextArea {
@@ -207,16 +201,19 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
 
     val searchTextArea = SearchTextArea(textArea, true)
     searchTextArea.setBorder(JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.RIGHT), searchTextArea.border))
-    object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-        IdeFocusManager.getInstance(project).requestFocus(searchTextArea.textArea, true)
-      }
+
+    dumbAwareAction { selectNextOccurence(true) }.registerCustomShortcutSet(Utils.shortcutSetOf(
+      Utils.shortcutsOf(IdeActions.ACTION_FIND_NEXT) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
+    ), searchTextArea)
+    dumbAwareAction { selectNextOccurence(false) }.registerCustomShortcutSet(Utils.shortcutSetOf(
+      Utils.shortcutsOf(IdeActions.ACTION_FIND_PREVIOUS) + Utils.shortcutsOf(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
+    ), searchTextArea)
+    dumbAwareAction {
+      IdeFocusManager.getInstance(project).requestFocus(searchTextArea.textArea, true)
     }.registerCustomShortcutSet(Utils.shortcutSetOf(Utils.shortcutsOf(IdeActions.ACTION_FIND)), activityList)
-    object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-        searchTextArea.textArea.text = ""
-        IdeFocusManager.getInstance(project).requestFocus(activityList, true)
-      }
+    dumbAwareAction {
+      searchTextArea.textArea.text = ""
+      IdeFocusManager.getInstance(project).requestFocus(activityList, true)
     }.registerCustomShortcutSet(CustomShortcutSet(KeyEvent.VK_ESCAPE), searchTextArea.textArea)
     searchTextArea.textArea.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -227,35 +224,31 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return searchTextArea
   }
 
-  private fun createNotificationPanel(): EditorNotificationPanel? {
-    if (PropertiesComponent.getInstance().getBoolean(NOTIFICATION_DISMISSED_KEY)) return null
+  private fun getDiffComponent(): JComponent? {
+    if (editorDiffPreview == null) return frameDiffPreview?.component
+    val previewFile = editorDiffPreview.previewFile
+    val editors = FileEditorManager.getInstance(project).getEditors(previewFile)
+    return editors.firstOrNull()?.component
+  }
 
-    val notificationPanel = EditorNotificationPanel(JBUI.CurrentTheme.Banner.INFO_BACKGROUND)
-    notificationPanel.text = LocalHistoryBundle.message("activity.notification.text")
-    notificationPanel.border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM), notificationPanel.border)
+  private fun updateDiffEditorSearch() {
+    if (searchField == null) return
+    val diffComponent = getDiffComponent() ?: return
+    val editor = FileHistoryDialog.findLeftEditor(diffComponent) ?: return
 
-    notificationPanel.createActionLabel(LocalHistoryBundle.message("activity.notification.feedback.link")) {
-      service<ReportFeedbackService>().coroutineScope.launch {
-        withBackgroundProgress(project, IdeBundle.message("reportProblemAction.progress.title.submitting"), true) {
-          val description = SendFeedbackAction.getDescription(project)
-          BrowserUtil.browse(URL_PREFIX + URLEncoder.encode(description, StandardCharsets.UTF_8), project)
-        }
-      }
+    FileHistoryDialog.updateEditorSearch(project, searchField, editor)
+  }
+
+  private fun selectNextOccurence(forward: Boolean) {
+    val diffComponent = getDiffComponent() ?: return
+    val editor = FileHistoryDialog.findLeftEditor(diffComponent) ?: return
+    val session = EditorSearchSession.get(editor) ?: return
+
+    if (session.hasMatches()) {
+      if (session.isLast(forward)) activityList.moveSelection(forward)
+      else if (forward) session.searchForward()
+      else session.searchBackward()
     }
-    notificationPanel.add(InplaceButton(IconButton(LocalHistoryBundle.message("activity.notification.dismiss.tooltip"),
-                                                   AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
-      PropertiesComponent.getInstance().setValue(NOTIFICATION_DISMISSED_KEY, true)
-      notificationPanel.parent?.remove(notificationPanel)
-    }, BorderLayout.EAST)
-
-    val disableLabel = JLabel(LocalHistoryBundle.message("activity.notification.disable.text",
-                                                         ShowSettingsUtil.getSettingsMenuName(),
-                                                         LocalHistoryBundle.message("activity.configurable.title")))
-    disableLabel.foreground = EditorColorsManager.getInstance().getGlobalScheme().defaultForeground
-    disableLabel.border = JBUI.Borders.emptyTop(2)
-    notificationPanel.add(disableLabel, BorderLayout.SOUTH)
-
-    return notificationPanel
   }
 
   private fun ActivityList.updateEmptyText(isLoading: Boolean) = setEmptyText(getListEmptyText(isLoading))
@@ -284,7 +277,10 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     return LocalHistoryBundle.message("activity.browser.empty.text")
   }
 
-  internal fun showDiff() = editorDiffPreview.performDiffAction()
+  internal fun showDiff(): Boolean {
+    if (editorDiffPreview == null) return false
+    return editorDiffPreview.performDiffAction()
+  }
 
   internal fun setVertical(isVertical: Boolean) {
     changesSplitter.orientation = isVertical
@@ -295,11 +291,8 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   }
 
   companion object {
-    private const val NOTIFICATION_DISMISSED_KEY = "lvcs.experimental.ui.notification.dismissed"
-    private const val URL_PREFIX = "https://youtrack.jetbrains.com/newIssue?project=IDEA&c=Subsystem+Version+Control.+Local+History&c=Type+Support+Request&description="
-
     @JvmStatic
-    fun show(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
+    fun showInToolWindow(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
       LocalHistoryCounter.logLocalHistoryOpened(activityScope)
 
       if (ActivityToolWindow.showTab(project) { content -> (content.component as? ActivityView)?.activityScope == activityScope }) {
@@ -325,7 +318,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     private fun ActivityView.openDiffWhenLoaded() {
-      if (changesBrowser != null) return
+      if (changesBrowser != null || isFrameDiffPreview) return
 
       val disposable = Disposer.newDisposable()
       Disposer.register(this, disposable)
@@ -338,17 +331,33 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
 
     @JvmStatic
-    fun isViewEnabled(): Boolean {
-      if (!isViewAvailable()) return false
-      return service<ActivityViewApplicationSettings>().isActivityToolWindowEnabled
+    fun showInDialog(project: Project, gateway: IdeaGateway, activityScope: ActivityScope) {
+      LocalHistoryCounter.logLocalHistoryOpened(activityScope)
+
+      val activityView = ActivityView(project, gateway, activityScope, isFrameDiffPreview = true)
+
+      val dialog = FrameWrapper(project,
+                                title = LocalHistoryBundle.message("activity.dialog.title", activityScope.presentableName),
+                                component = activityView,
+                                dimensionKey = "lvcs.dialog.size")
+      dialog.closeOnEsc()
+      Disposer.register(dialog, activityView)
+      dialog.show()
     }
 
     @JvmStatic
-    fun isViewAvailable(): Boolean {
-      return ApplicationInfo.getInstance().isEAP || Registry.`is`("lvcs.show.activity.view")
-    }
+    fun isViewEnabled(): Boolean = isViewAvailable()
+
+    @JvmStatic
+    fun isViewAvailable(): Boolean = Registry.`is`("lvcs.show.activity.view")
   }
 }
 
 @Service(Service.Level.PROJECT)
 class ActivityService(val coroutineScope: CoroutineScope)
+
+private fun dumbAwareAction(runnable: () -> Unit): DumbAwareAction {
+  return object : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) = runnable()
+  }
+}

@@ -1,22 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.testFramework.rules.TempDirectory
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assume.assumeTrue
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileSystems
-import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.jar.Attributes
@@ -24,14 +20,19 @@ import java.util.jar.JarFile
 import java.util.jar.Manifest
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.createSymbolicLinkPointingTo
+import kotlin.io.path.getPosixFilePermissions
+import kotlin.io.path.inputStream
 import kotlin.io.path.name
+import kotlin.io.path.writeText
 
 class CompressorTest {
-  @Rule @JvmField var tempDir: TempDirectory = TempDirectory()
-
-  @Test fun simpleZip() {
-    val zip = tempDir.newFile("test.zip")
-    val data = tempDir.newFile("file.txt", "789".toByteArray())
+  @Test fun simpleZip(@TempDir tempDir: Path) {
+    val zip = tempDir.resolve("test.zip")
+    val data = tempDir.resolve("file.txt").apply { writeText("789") }
     Compressor.Zip(zip).use {
       it.addFile("empty.txt", byteArrayOf())
       it.addFile("file1.txt", "123".toByteArray())
@@ -41,9 +42,9 @@ class CompressorTest {
     assertZip(zip, "empty.txt" to "", "file1.txt" to "123", "file2.txt" to "456", "file3.txt" to "789")
   }
 
-  @Test fun simpleTar() {
-    val tar = tempDir.newFile("test.tar")
-    val data = tempDir.newFile("file.txt", "789".toByteArray())
+  @Test fun simpleTar(@TempDir tempDir: Path) {
+    val tar = tempDir.resolve("test.tar")
+    val data = tempDir.resolve("file.txt").apply { writeText("789") }
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use {
       it.addFile("empty.txt", byteArrayOf())
       it.addFile("file1.txt", "123".toByteArray())
@@ -53,8 +54,8 @@ class CompressorTest {
     assertTar(tar, "empty.txt" to "", "file1.txt" to "123", "file2.txt" to "456", "file3.txt" to "789")
   }
 
-  @Test fun simpleZipWithFilters() {
-    val zip = tempDir.newFile("test.zip")
+  @Test fun simpleZipWithFilters(@TempDir tempDir: Path) {
+    val zip = tempDir.resolve("test.zip")
     val set = mutableSetOf<String>()
     Compressor.Zip(zip).filter { entryName, _ -> set.add(entryName) && !entryName.startsWith("d1/") }.use {
       it.addFile("file1.txt", "123".toByteArray())
@@ -66,9 +67,9 @@ class CompressorTest {
     assertZip(zip, "file1.txt" to "123", "file2.txt" to "456")
   }
 
-  @Test fun streamZip() {
-    val zip = tempDir.newFile("test.zip")
-    FileOutputStream(zip).use { os ->
+  @Test fun streamZip(@TempDir tempDir: Path) {
+    val zip = tempDir.resolve("test.zip")
+    zip.outputStream().use { os ->
       Compressor.Zip(os).withLevel(ZipEntry.STORED).use {
         it.addFile("file.txt", "123".toByteArray())
       }
@@ -76,18 +77,18 @@ class CompressorTest {
     assertZip(zip, "file.txt" to "123")
   }
 
-  @Test fun recursiveZip() {
-    val dir = tempDir.newDirectory("dir")
-    tempDir.newFile("dir/f1").writeText("1")
-    tempDir.newFile("dir/f2").writeText("2")
-    tempDir.newFile("dir/d1/f11").writeText("11")
-    tempDir.newFile("dir/d1/f12").writeText("12")
-    tempDir.newFile("dir/d1/d11/f111").writeText("111")
-    tempDir.newFile("dir/d1/d11/f112").writeText("112")
-    tempDir.newFile("dir/d2/f21").writeText("21")
-    tempDir.newFile("dir/d2/f22").writeText("22")
+  @Test fun recursiveZip(@TempDir tempDir: Path) {
+    val dir = tempDir.resolve("dir")
+    tempDir.resolve("dir/f1").createParentDirectories().writeText("1")
+    tempDir.resolve("dir/f2").createParentDirectories().writeText("2")
+    tempDir.resolve("dir/d1/f11").createParentDirectories().writeText("11")
+    tempDir.resolve("dir/d1/f12").createParentDirectories().writeText("12")
+    tempDir.resolve("dir/d1/d11/f111").createParentDirectories().writeText("111")
+    tempDir.resolve("dir/d1/d11/f112").createParentDirectories().writeText("112")
+    tempDir.resolve("dir/d2/f21").createParentDirectories().writeText("21")
+    tempDir.resolve("dir/d2/f22").createParentDirectories().writeText("22")
 
-    val zip = tempDir.newFile("test.zip")
+    val zip = tempDir.resolve("test.zip")
     Compressor.Zip(zip).filter { entryName, _ -> entryName != "d1/d11" }.use { it.addDirectory(dir) }
     assertZip(
       zip,
@@ -97,18 +98,18 @@ class CompressorTest {
       "d2/f21" to "21", "d2/f22" to "22")
   }
 
-  @Test fun recursiveTarWithPrefix() {
-    val dir = tempDir.newDirectory("dir")
-    tempDir.newFile("dir/f1").writeText("1")
-    tempDir.newFile("dir/f2").writeText("2")
-    tempDir.newFile("dir/d1/f11").writeText("11")
-    tempDir.newFile("dir/d1/f12").writeText("12")
-    tempDir.newFile("dir/d1/d11/f111").writeText("111")
-    tempDir.newFile("dir/d1/d11/f112").writeText("112")
-    tempDir.newFile("dir/d2/f21").writeText("21")
-    tempDir.newFile("dir/d2/f22").writeText("22")
+  @Test fun recursiveTarWithPrefix(@TempDir tempDir: Path) {
+    val dir = tempDir.resolve("dir")
+    tempDir.resolve("dir/f1").createParentDirectories().writeText("1")
+    tempDir.resolve("dir/f2").createParentDirectories().writeText("2")
+    tempDir.resolve("dir/d1/f11").createParentDirectories().writeText("11")
+    tempDir.resolve("dir/d1/f12").createParentDirectories().writeText("12")
+    tempDir.resolve("dir/d1/d11/f111").createParentDirectories().writeText("111")
+    tempDir.resolve("dir/d1/d11/f112").createParentDirectories().writeText("112")
+    tempDir.resolve("dir/d2/f21").createParentDirectories().writeText("21")
+    tempDir.resolve("dir/d2/f22").createParentDirectories().writeText("22")
 
-    val tar = tempDir.newFile("test.tgz")
+    val tar = tempDir.resolve("test.tgz")
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("tar/", dir) }
     assertTar(
       tar,
@@ -119,69 +120,71 @@ class CompressorTest {
       "tar/d2/f21" to "21", "tar/d2/f22" to "22")
   }
 
-  @Test fun tarWithEmptyPrefix() {
-    val file = tempDir.newFile("dir/file").toPath()
-    val tar = tempDir.newFile("test.tgz")
+  @Test fun tarWithEmptyPrefix(@TempDir tempDir: Path) {
+    val file = tempDir.resolve("dir/file").createParentDirectories().createFile()
+    val tar = tempDir.resolve("test.tgz")
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory("", file.parent) }
     assertTar(tar, file.name to "")
   }
 
-  @Test fun tarWithExecutableFiles() {
+  @Test fun tarWithExecutableFiles(@TempDir tempDir: Path) {
     assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"))
 
-    val dir = tempDir.newDirectory("dir").toPath()
-    val regular = Files.createFile(dir.resolve("regular"))
-    val executable = Files.createFile(dir.resolve("executable"), PosixFilePermissions.asFileAttribute(PosixFilePermission.values().toSet()))
+    val dir = tempDir.resolve("dir").createDirectories()
+    val regular = dir.resolve("regular").createFile()
+    val executable = dir.resolve("executable").createFile(PosixFilePermissions.asFileAttribute(PosixFilePermission.entries.toSet()))
 
-    val tar = tempDir.newFile("test.tgz")
+    val tar = tempDir.resolve("test.tgz")
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory(dir) }
-    val out = tempDir.newDirectory("out").toPath()
+    val out = tempDir.resolve("out")
     Decompressor.Tar(tar).extract(out)
-    assertThat(Files.getPosixFilePermissions(out.resolve(regular.name))).doesNotContain(PosixFilePermission.OWNER_EXECUTE)
-    assertThat(Files.getPosixFilePermissions(out.resolve(executable.name))).contains(PosixFilePermission.OWNER_EXECUTE)
+    assertThat(out.resolve(regular.name).getPosixFilePermissions()).doesNotContain(PosixFilePermission.OWNER_EXECUTE)
+    assertThat(out.resolve(executable.name).getPosixFilePermissions()).contains(PosixFilePermission.OWNER_EXECUTE)
   }
 
-  @Test fun tarWithSymbolicLinks() {
+  @Test fun tarWithSymbolicLinks(@TempDir tempDir: Path) {
     assumeSymLinkCreationIsSupported()
 
-    val dir = tempDir.newDirectory("dir").toPath()
-    val origin = Files.createFile(dir.resolve("origin"))
-    val link = Files.createSymbolicLink(dir.resolve("link"), origin.fileName)
+    val dir = tempDir.resolve("dir").createDirectories()
+    val origin = dir.resolve("origin").createFile()
+    val link = dir.resolve("link").createSymbolicLinkPointingTo(origin.fileName)
 
-    val tar = tempDir.newFile("test.tgz")
+    val tar = tempDir.resolve("test.tgz")
     Compressor.Tar(tar, Compressor.Tar.Compression.GZIP).use { it.addDirectory(dir) }
     NioFiles.deleteRecursively(dir)
 
-    val out = tempDir.newDirectory("out").toPath()
+    val out = tempDir.resolve("out")
     Decompressor.Tar(tar).extract(out)
     assertThat(out.resolve(link.name)).isSymbolicLink.hasSameBinaryContentAs(out.resolve(origin.name))
   }
 
-  @Test fun entryNameTrimming() {
-    val zip = tempDir.newFile("test.zip")
+  @Test fun entryNameTrimming(@TempDir tempDir: Path) {
+    val zip = tempDir.resolve("test.zip")
     Compressor.Zip(zip).use { it.addFile("//file.txt//", "123".toByteArray()) }
     assertZip(zip, "file.txt" to "123")
   }
 
-  @Test fun jarWithManifest() {
-    val jar = tempDir.newFile("test.jar")
+  @Test fun jarWithManifest(@TempDir tempDir: Path) {
+    val jar = tempDir.resolve("test.jar")
     val mf = Manifest()
     mf.mainAttributes[Attributes.Name.MANIFEST_VERSION] = "9.75"
     Compressor.Jar(jar).use { it.addManifest(mf) }
     assertZip(jar, JarFile.MANIFEST_NAME to "Manifest-Version: 9.75")
   }
 
-  private fun assertZip(zip: File, vararg expected: Pair<String, String>) {
-    val actual = ZipInputStream(FileInputStream(zip)).use {
+  //<editor-fold desc="Helpers.">
+  private fun assertZip(zip: Path, vararg expected: Pair<String, String>) {
+    val actual = ZipInputStream(zip.inputStream()).use {
       generateSequence(it::getNextEntry).map { entry -> entry.name to it.readBytes().toString(StandardCharsets.UTF_8).trim() }.toList()
     }
     assertThat(actual).containsExactlyInAnyOrder(*expected)
   }
 
-  private fun assertTar(tar: File, vararg expected: Pair<String, String>) {
-    val actual = TarArchiveInputStream(GzipCompressorInputStream(FileInputStream(tar))).use {
-      generateSequence(it::getNextTarEntry).map { entry -> entry.name to it.readBytes().toString(StandardCharsets.UTF_8).trim() }.toList()
+  private fun assertTar(tar: Path, vararg expected: Pair<String, String>) {
+    val actual = TarArchiveInputStream(GzipCompressorInputStream(tar.inputStream())).use {
+      generateSequence(it::getNextEntry).map { entry -> entry.name to it.readBytes().toString(StandardCharsets.UTF_8).trim() }.toList()
     }
     assertThat(actual).containsExactlyInAnyOrder(*expected)
   }
+  //</editor-fold>
 }

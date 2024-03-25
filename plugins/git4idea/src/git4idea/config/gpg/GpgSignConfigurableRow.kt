@@ -3,6 +3,7 @@ package git4idea.config.gpg
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
+import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -38,6 +39,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
 
   private val statusLabel: JLabel = JBLabel().apply {
     foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+    putClientProperty(SearchUtil.SEARCH_SKIP_COMPONENT_KEY, true)
   }
   private val errorLabel: JLabel = JBLabel().apply {
     foreground = NamedColorUtil.getErrorForeground()

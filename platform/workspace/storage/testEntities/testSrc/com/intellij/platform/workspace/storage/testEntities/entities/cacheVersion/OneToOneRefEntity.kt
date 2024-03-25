@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 interface OneToOneRefEntity: WorkspaceEntity {
@@ -22,7 +27,12 @@ interface OneToOneRefEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int, text: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): OneToOneRefEntity {
+    operator fun invoke(
+      version: Int,
+      text: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): OneToOneRefEntity {
       val builder = builder()
       builder.version = version
       builder.text = text
@@ -35,9 +45,12 @@ interface OneToOneRefEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: OneToOneRefEntity,
-                                      modification: OneToOneRefEntity.Builder.() -> Unit): OneToOneRefEntity = modifyEntity(
-  OneToOneRefEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: OneToOneRefEntity,
+  modification: OneToOneRefEntity.Builder.() -> Unit,
+): OneToOneRefEntity {
+  return modifyEntity(OneToOneRefEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface AnotherOneToOneRefEntity: WorkspaceEntity {
@@ -58,10 +71,12 @@ interface AnotherOneToOneRefEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(someString: String,
-                        boolean: Boolean,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): AnotherOneToOneRefEntity {
+    operator fun invoke(
+      someString: String,
+      boolean: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): AnotherOneToOneRefEntity {
       val builder = builder()
       builder.someString = someString
       builder.boolean = boolean
@@ -74,7 +89,10 @@ interface AnotherOneToOneRefEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: AnotherOneToOneRefEntity,
-                                      modification: AnotherOneToOneRefEntity.Builder.() -> Unit): AnotherOneToOneRefEntity = modifyEntity(
-  AnotherOneToOneRefEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: AnotherOneToOneRefEntity,
+  modification: AnotherOneToOneRefEntity.Builder.() -> Unit,
+): AnotherOneToOneRefEntity {
+  return modifyEntity(AnotherOneToOneRefEntity.Builder::class.java, entity, modification)
+}
 //endregion

@@ -35,7 +35,8 @@ import org.jetbrains.annotations.NonNls
 open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : LibraryEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val EXCLUDEDROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(LibraryEntity::class.java, ExcludeUrlEntity::class.java,
+                                                                                 ConnectionId.ConnectionType.ONE_TO_MANY, true)
 
     private val connections = listOf<ConnectionId>(
       EXCLUDEDROOTS_CONNECTION_ID,
@@ -53,6 +54,12 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
     get() {
       readField("tableId")
       return dataSource.tableId
+    }
+
+  override val typeId: LibraryTypeId?
+    get() {
+      readField("typeId")
+      return dataSource.typeId
     }
 
   override val roots: List<LibraryRoot>
@@ -75,7 +82,8 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
   }
 
 
-  class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(result), LibraryEntity.Builder {
+  class Builder(result: LibraryEntityData?) : ModifiableWorkspaceEntityBase<LibraryEntity, LibraryEntityData>(
+    result), LibraryEntity.Builder {
     constructor() : this(LibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -147,6 +155,7 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.tableId != dataSource.tableId) this.tableId = dataSource.tableId
+      if (this.typeId != dataSource?.typeId) this.typeId = dataSource.typeId
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       updateChildToParentReferences(parents)
     }
@@ -190,6 +199,15 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
 
       }
 
+    override var typeId: LibraryTypeId?
+      get() = getEntityData().typeId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).typeId = value
+        changedProperty.add("typeId")
+
+      }
+
     private val rootsUpdater: (value: List<LibraryRoot>) -> Unit = { value ->
 
       val _diff = diff
@@ -224,8 +242,8 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
-          _diff.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity>
-                                                                                                            ?: emptyList())
+          _diff.extractOneToManyChildren<ExcludeUrlEntity>(EXCLUDEDROOTS_CONNECTION_ID, this)!!.toList() + (this.entityLinks[EntityLink(
+            true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity> ?: emptyList())
         }
         else {
           this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity> ?: emptyList()
@@ -244,7 +262,7 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(EXCLUDEDROOTS_CONNECTION_ID, this, value)
@@ -269,6 +287,7 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
 class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var tableId: LibraryTableId
+  var typeId: LibraryTypeId? = null
   lateinit var roots: MutableList<LibraryRoot>
 
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
@@ -407,6 +426,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return LibraryEntity(name, tableId, roots, entitySource) {
+      this.typeId = this@LibraryEntityData.typeId
     }
   }
 
@@ -424,6 +444,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     if (this.entitySource != other.entitySource) return false
     if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
+    if (this.typeId != other.typeId) return false
     if (this.roots != other.roots) return false
     return true
   }
@@ -436,6 +457,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
 
     if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
+    if (this.typeId != other.typeId) return false
     if (this.roots != other.roots) return false
     return true
   }
@@ -444,6 +466,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     var result = entitySource.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + tableId.hashCode()
+    result = 31 * result + typeId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
   }
@@ -452,6 +475,7 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     var result = javaClass.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + tableId.hashCode()
+    result = 31 * result + typeId.hashCode()
     result = 31 * result + roots.hashCode()
     return result
   }

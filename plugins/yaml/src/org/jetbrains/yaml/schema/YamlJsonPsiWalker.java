@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.application.options.CodeStyle;
@@ -101,9 +101,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return false;
   }
 
-  @Nullable
   @Override
-  public JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
+  public @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
     return element instanceof YAMLValue ? YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element)
                                         : (element instanceof YAMLDocument ? new YamlEmptyObjectAdapter(element) : null);
   }
@@ -118,9 +117,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return false;
   }
 
-  @Nullable
   @Override
-  public JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
+  public @Nullable JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element) {
     YAMLMapping mapping = PsiTreeUtil.getParentOfType(element, YAMLMapping.class, true, YAMLKeyValue.class);
     if (mapping != null && (element instanceof YAMLScalar || element.getParent() instanceof YAMLScalar)) {
       // if we reach a mapping without reaching any key-value, this is a case like:
@@ -168,9 +166,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return CodeStyle.getSettings(file.getProject(), file.getVirtualFile()).getIndentOptionsByFile(file).INDENT_SIZE;
   }
 
-  @Nullable
   @Override
-  public JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
+  public @Nullable JsonPointerPosition findPosition(@NotNull PsiElement element, boolean forceLastTransition) {
     JsonPointerPosition pos = new JsonPointerPosition();
     PsiElement current = element;
     while (!breakCondition(current)) {
@@ -282,18 +279,16 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return new JsonLikeSyntaxAdapter() {
       private final YAMLElementGenerator myGenerator = YAMLElementGenerator.getInstance(project);
 
-      @Nullable
       @Override
-      public PsiElement getPropertyValue(PsiElement property) {
+      public @Nullable PsiElement getPropertyValue(PsiElement property) {
         assert property instanceof YAMLKeyValue;
         YAMLValue value = ((YAMLKeyValue)property).getValue();
         if (value == null) return null;
         return adjustValue(value);
       }
 
-      @NotNull
       @Override
-      public PsiElement adjustValue(@NotNull PsiElement value) {
+      public @NotNull PsiElement adjustValue(@NotNull PsiElement value) {
         if (!(value instanceof YAMLValue)) return value;
         YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(value, YAMLAnchor.class);
         if (anchors == null || anchors.length == 0) return value;
@@ -301,16 +296,14 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return next == null ? value : next;
       }
 
-      @Nullable
       @Override
-      public String getPropertyName(PsiElement property) {
+      public @Nullable String getPropertyName(PsiElement property) {
         assert property instanceof YAMLKeyValue;
         return ((YAMLKeyValue)property).getName();
       }
 
-      @Nullable
       @Override
-      public PsiElement getPropertyNameElement(PsiElement property) {
+      public @Nullable PsiElement getPropertyNameElement(PsiElement property) {
         assert property instanceof YAMLKeyValue;
         return ((YAMLKeyValue)property).getKey();
       }
@@ -326,9 +319,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return null;
       }
 
-      @NotNull
       @Override
-      public PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
+      public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
         YAMLKeyValue keyValue = myGenerator.createYamlKeyValue(name, StringUtil.unquoteString(value));
         return element instanceof YAMLDocument || findPrecedingKeyValueWithNoValue(element) != null
                ? myGenerator.createDummyYamlWithText(keyValue.getText()).getDocuments().get(0).getFirstChild()
@@ -360,9 +352,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return initialElement instanceof YAMLValue && initialElement != element;
       }
 
-      @NotNull
       @Override
-      public String getDefaultValueFromType(@Nullable JsonSchemaType type) {
+      public @NotNull String getDefaultValueFromType(@Nullable JsonSchemaType type) {
         if (type == null) return "";
         if (type == JsonSchemaType._object) return " ";
         if (type == JsonSchemaType._array) return " - ";
@@ -393,8 +384,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return keyValue;
       }
 
-      @Nullable
-      private static PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
+      private static @Nullable PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
         PsiElement sibling = keyValue.getNextSibling();
         while (sibling instanceof PsiWhiteSpace && !sibling.getText().contains("\n")) {
           sibling = sibling.getNextSibling();
@@ -410,9 +400,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
                                        YAMLMapping.class, YAMLSequence.class);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiElement> getRoots(@NotNull PsiFile file) {
+  public @NotNull Collection<PsiElement> getRoots(@NotNull PsiFile file) {
     if (!(file instanceof YAMLFile)) return ContainerUtil.emptyList();
     Collection<PsiElement> roots = new HashSet<>();
     for (YAMLDocument document : ((YAMLFile)file).getDocuments()) {
@@ -428,9 +417,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getPropertyNameElement(PsiElement property) {
+  public @Nullable PsiElement getPropertyNameElement(PsiElement property) {
     return property instanceof YAMLKeyValue ? ((YAMLKeyValue)property).getKey() : null;
   }
 }

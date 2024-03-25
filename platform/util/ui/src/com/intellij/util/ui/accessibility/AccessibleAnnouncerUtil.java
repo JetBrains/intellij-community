@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.accessibility;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.AccessibleAnnouncer;
 import com.jetbrains.JBR;
@@ -41,11 +40,5 @@ public final class AccessibleAnnouncerUtil {
     return ScreenReader.isActive()
            && JBR.isAccessibleAnnouncerSupported()
            && Registry.is("ide.accessibility.announcing.notifications.available", false);
-  }
-
-  public static boolean isSafeAnnouncingAvailable() {
-    // For now announcement is considered safe only on Mac due to freezes and crashes with JAWS announcements (IDEA-321176).
-    // On Windows we can't announce in NVDA and not in JAWS, because there is currently no way to determine which screen reader is running.
-    return SystemInfo.isMac && isAnnouncingAvailable();
   }
 }

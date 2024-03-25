@@ -14,6 +14,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -1486,8 +1487,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
       if (myMultiTabs) {
         boolean bundled = myPlugin.isBundled();
+        boolean isEssential = ApplicationInfo.getInstance().isEssentialPlugin(myPlugin.getPluginId());
         myGearButton.setVisible(!uninstalled && !bundled);
         myEnableDisableButton.setVisible(bundled);
+        myEnableDisableButton.setEnabled(!isEssential);
       }
       else {
         myGearButton.setVisible(!uninstalled);

@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -266,13 +267,13 @@ public final class DarculaUIUtil {
   }
 
   public static boolean isTableCellEditor(Component c) {
-    return Boolean.TRUE.equals(((JComponent)c).getClientProperty("JComboBox.isTableCellEditor")) ||
+    return Boolean.TRUE.equals(((JComponent)c).getClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY)) ||
            ComponentUtil.findParentByCondition(c, p -> p instanceof JBTableRowEditor) == null &&
            ComponentUtil.findParentByCondition(c, p -> p instanceof JTable) != null;
   }
 
   public static boolean isBorderless(Component c) {
-    return ((JComponent)c).getClientProperty("JComboBox.isBorderless") == Boolean.TRUE;
+    return ((JComponent)c).getClientProperty(ComboBox.IS_BORDERLESS_PROPERTY) == Boolean.TRUE;
   }
 
   /**

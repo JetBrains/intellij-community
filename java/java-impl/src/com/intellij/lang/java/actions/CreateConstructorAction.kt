@@ -70,6 +70,7 @@ private class JavaConstructorRenderer(
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
 
     val builder = TemplateBuilderImpl(constructor)
+    builder.setScrollToTemplate(request.isStartTemplate)
     createTemplateContext(builder).setupParameters(constructor, parameters)
     val superConstructor = setupSuperCall(targetClass, constructor, builder)
 

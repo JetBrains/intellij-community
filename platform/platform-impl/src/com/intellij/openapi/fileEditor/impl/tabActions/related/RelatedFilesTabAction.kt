@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.tabActions.related
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -34,7 +34,7 @@ class RelatedFilesTabAction(val index: Int,  provider: EditorTabDataProvider<Fil
         val editorManager = FileEditorManager.getInstance(project)
         e.getData(PlatformDataKeys.VIRTUAL_FILE)?.let { file ->
 
-          e.presentation.icon = editorManager?.getEditors(file)?.getOrNull(index)?.let { editor ->
+          e.presentation.icon = editorManager?.getEditorList(file)?.getOrNull(index)?.let { editor ->
              TextIcon(". ${editor.name} .", UIUtil.getLabelForeground(), Gray.TRANSPARENT, 0).apply {
                  val font = JBFont.label().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.MINI) - 1)
                  setFont(if(editor == editorManager.getSelectedEditor(file)) font.asBold() else font)

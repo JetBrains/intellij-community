@@ -26,12 +26,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -54,16 +49,12 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.runners.Parameterized;
 
-import javax.swing.JComponent;
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Provides a framework for testing the behavior of the editor.
@@ -328,15 +319,18 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @Override
   protected void tearDown() throws Exception {
     try {
-      Project project = getProject();
-      if (myIndexingMode != null && project != null) {
+      if (myIndexingMode != null) {
+        @Nullable Project project = getProject();
         if (indexingModeShutdownToken != null) {
           myIndexingMode.tearDownTest(project, indexingModeShutdownToken);
+          indexingModeShutdownToken = null;
         }
 
-        FileEditorManager editorManager = FileEditorManager.getInstance(project);
-        for (VirtualFile openFile : editorManager.getOpenFiles()) {
-          editorManager.closeFile(openFile);
+        if (project != null) {
+          FileEditorManager editorManager = FileEditorManager.getInstance(project);
+          for (VirtualFile openFile : editorManager.getOpenFiles()) {
+            editorManager.closeFile(openFile);
+          }
         }
       }
       deleteVFile();

@@ -20,9 +20,8 @@ object PythonCommunityPluginModules {
     "intellij.python.community.core.impl",
     "intellij.python.pydev",
     "intellij.python.community.impl",
-    "intellij.python.community.impl.poetry",
     "intellij.python.community.impl.huggingFace",
-    "intellij.python.community.impl.community_only",
+    "intellij.python.community.communityOnly",
     "intellij.python.langInjection",
     "intellij.python.copyright",
     "intellij.python.terminal",
@@ -34,7 +33,8 @@ object PythonCommunityPluginModules {
     "intellij.python.featuresTrainer",
     "intellij.jupyter.core",
     "intellij.python.syntax",
-    "intellij.python.syntax.core"
+    "intellij.python.syntax.core",
+    "intellij.python.community.deprecated.extensions"
   )
 
   const val pythonCommunityName: String = "python-ce"
@@ -42,7 +42,7 @@ object PythonCommunityPluginModules {
   fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     val communityOnlyModules = persistentListOf(
       "intellij.python.community.plugin.minor",
-      "intellij.python.community.plugin.minor.rider",
+      "intellij.python.community.plugin.minorRider",
     )
     return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
       body?.invoke(spec)

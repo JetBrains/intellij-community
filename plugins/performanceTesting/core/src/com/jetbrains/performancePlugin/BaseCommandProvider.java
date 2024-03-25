@@ -108,7 +108,12 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(AssertModuleJdkVersionCommand.PREFIX, AssertModuleJdkVersionCommand::new),
       Map.entry(WaitForEDTQueueUnstuckCommand.PREFIX, WaitForEDTQueueUnstuckCommand::new),
       Map.entry(CreateScratchFile.PREFIX, CreateScratchFile::new),
-      Map.entry(StoreHighlightingResultsCommand.PREFIX, StoreHighlightingResultsCommand::new)
+      Map.entry(StoreHighlightingResultsCommand.PREFIX, StoreHighlightingResultsCommand::new),
+      Map.entry(AddContentRootToModule.PREFIX, AddContentRootToModule::new),
+      Map.entry(DisableKotlinNotificationCommand.PREFIX, DisableKotlinNotificationCommand::new),
+      Map.entry(RequestHeavyScanningOnNextStartCommand.PREFIX, RequestHeavyScanningOnNextStartCommand::new),
+      Map.entry(AssertCaretPositionCommand.PREFIX, AssertCaretPositionCommand::new),
+      Map.entry(AssertCurrentFileCommand.PREFIX, AssertCurrentFileCommand::new)
     );
   }
 }

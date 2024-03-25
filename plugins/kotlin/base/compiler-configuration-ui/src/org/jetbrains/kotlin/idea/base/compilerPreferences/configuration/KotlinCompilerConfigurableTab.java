@@ -152,8 +152,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         warningLabel.setIcon(AllIcons.General.WarningDialog);
 
         additionalArgsOptionsField.attachLabel(additionalArgsLabel);
-        kotlinJpsPluginVersionComboBox.addActionListener(
-                e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
+        if (isJpsCompilerVisible()) {
+            kotlinJpsPluginVersionComboBox.addActionListener(
+                    e -> onLanguageLevelChanged(getSelectedKotlinJpsPluginVersionView()));
+        }
 
         fillVersions();
 
@@ -373,14 +375,18 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         }
 
         apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
-        languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+        if (isJpsCompilerVisible()) {
+            languageVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
+        }
 
         VersionView selectedItem =
                 VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
                 ? selectedAPIView
                 : upperBoundView;
         apiVersionComboBox.setSelectedItem(selectedItem);
-        languageVersionComboBox.setSelectedItem(selectedItem);
+        if (isJpsCompilerVisible()) {
+            languageVersionComboBox.setSelectedItem(selectedItem);
+        }
     }
 
     private void fillJvmVersionList() {
@@ -432,8 +438,12 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
                 });
     }
 
+    private boolean isJpsCompilerVisible() {
+        return isProjectSettings && jpsPluginSettings != null;
+    }
+
     private void fillVersions() {
-        if (isProjectSettings && jpsPluginSettings != null) {
+        if (isJpsCompilerVisible()) {
             defaultJpsVersionItem = JpsVersionItem.createFromRawVersion(
                     KotlinJpsPluginSettingsKt.getVersionWithFallback(jpsPluginSettings)
             );
@@ -703,7 +713,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
         if (compilerWorkspaceSettings != null) {
             compilerWorkspaceSettings.setPreciseIncrementalEnabled(enableIncrementalCompilationForJvmCheckBox.isSelected());
             compilerWorkspaceSettings.setIncrementalCompilationForJsEnabled(enableIncrementalCompilationForJsCheckBox.isSelected());
-            extractAndRegisterDaemonVmOptions();
+            compilerWorkspaceSettings.setDaemonVmOptions(extractDaemonVmOptions());
 
             boolean oldEnableDaemon = compilerWorkspaceSettings.getEnableDaemon();
             compilerWorkspaceSettings.setEnableDaemon(keepAliveCheckBox.isSelected());
@@ -954,11 +964,11 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
     }
 
     // Expected format is
-    // -XdaemonVmOptions=-Xmx2288m for one argument
+    // -XdaemonVmOptions=-Xmx6000m for one argument
     // and
-    // -XdaemonVmOptions=\"-Xmx2288m -XX:HeapDumpPath=kotlin-build-process-heap-dump.hprof -XX:+HeapDumpOnOutOfMemoryError\"
+    // -XdaemonVmOptions=\"-Xmx6000m -XX:HeapDumpPath=kotlin-build-process-heap-dump.hprof -XX:+HeapDumpOnOutOfMemoryError\"
     // for multiple
-    private void extractAndRegisterDaemonVmOptions() {
+    private @NotNull String extractDaemonVmOptions() {
         String additionalOptions = getAdditionalArgsOptionsField().getText();
         if (additionalOptions.contains("-XdaemonVmOptions")) {
             Pattern pattern = Pattern.compile("-XdaemonVmOptions=(?:\"([^\"]*)\"|([^\\s]*))");
@@ -967,11 +977,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable {
             if (matcher.find()) {
                 String daemonArguments = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
                 if (daemonArguments != null) {
-                    if (compilerWorkspaceSettings != null) {
-                        compilerWorkspaceSettings.setDaemonVmOptions(daemonArguments);
-                    }
+                    return daemonArguments;
                 }
             }
         }
+        return "";
     }
 }

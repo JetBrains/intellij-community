@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
@@ -72,7 +72,6 @@ public final class UnnecessaryCallToStringValueOfInspection extends BaseInspecti
   }
 
   @Override
-  @Nullable
   protected LocalQuickFix buildFix(Object... infos) {
     final String text = (String)infos[0];
     final Boolean useEmptyString = (Boolean)infos[1];
@@ -172,8 +171,7 @@ public final class UnnecessaryCallToStringValueOfInspection extends BaseInspecti
     return PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]);
   }
 
-  private static boolean couldBeUnwrappedRedundantConversion(@NotNull PsiExpression argument,
-                                                             @NotNull PsiMethodCallExpression call) {
+  private static boolean couldBeUnwrappedRedundantConversion(@NotNull PsiExpression argument, @NotNull PsiMethodCallExpression call) {
     PsiType argumentType = argument.getType();
     if (argumentType instanceof PsiPrimitiveType) {
       PsiMethod method = call.resolveMethod();
@@ -183,9 +181,8 @@ public final class UnnecessaryCallToStringValueOfInspection extends BaseInspecti
       }
     }
     final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, JAVA_LANG_THROWABLE);
-    if (ExpressionUtils.isConversionToStringNecessary(call, throwable)) {
-      if (!TypeUtils.isJavaLangString(argumentType) ||
-          NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
+    if (ExpressionUtils.isConversionToStringNecessary(call, throwable, argumentType)) {
+      if (!TypeUtils.isJavaLangString(argumentType) || NullabilityUtil.getExpressionNullability(argument, true) != Nullability.NOT_NULL) {
         return false;
       }
     }

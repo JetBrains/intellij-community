@@ -4,6 +4,7 @@ package com.intellij.refactoring.util.occurrences;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -88,8 +89,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     }
 
     for (PsiExpression occurrence : occurrences) {
-      PsiElement parent = occurrence.getUserData(ElementToWorkOn.PARENT);
-      if (parent == null) parent = occurrence;
+      PsiElement parent = BaseExpressionToFieldHandler.getPhysicalElement(occurrence);
       while (parent != null && !parent.equals(scopeToDeclare)) {
         parent = parent.getParent();
         if (parent instanceof PsiClass) {

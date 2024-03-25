@@ -7,6 +7,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.progress.coroutineSuspender
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.descendants
@@ -16,6 +18,7 @@ import java.util.function.Consumer
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PsiViewerPropertiesTabViewModel(
+  project: Project,
   _scope: CoroutineScope,
   settings: PsiViewerSettings,
   private val psiElementInMainTreeSelector: Consumer<PsiElement>
@@ -26,7 +29,7 @@ class PsiViewerPropertiesTabViewModel(
 
   private class ContextHolder(val context: PsiViewerPropertyNode.Context)
 
-  private val currentContext = MutableStateFlow(ContextHolder(PsiViewerPropertyNode.Context(settings.showEmptyProperties, this::getPsiSelectorInMainTree)))
+  private val currentContext = MutableStateFlow(ContextHolder(PsiViewerPropertyNode.Context(project, settings.showEmptyProperties, this::getPsiSelectorInMainTree)))
 
   private val selectedPsiElement = MutableStateFlow<PsiElement?>(null)
 

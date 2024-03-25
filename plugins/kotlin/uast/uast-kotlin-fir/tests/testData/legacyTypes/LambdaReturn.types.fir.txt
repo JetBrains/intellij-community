@@ -54,7 +54,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                         ULambdaExpression [fun (@org.jetbrains.annotations.NotNull var a: int) {...}] : PsiType:Function1<? super Integer, ? extends String>
                             UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: int]
                                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                            UBlockExpression [{...}] : PsiType:Void
+                            UBlockExpression [{...}] : PsiType:String
                                 UIfExpression [if (a < 5) return "5"] : PsiType:Unit
                                     UBinaryExpression (operator = <) [a < 5] : PsiType:boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
@@ -62,7 +62,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     UReturnExpression [return "5"] : PsiType:Void
                                         UPolyadicExpression (operator = +) ["5"] : PsiType:String
                                             ULiteralExpression (value = "5") ["5"] : PsiType:String
-                                UIfExpression [if (a > 0) return "1" else return "2"] : PsiType:Void
+                                UIfExpression [if (a > 0) return "1" else return "2"] : PsiType:String
                                     UBinaryExpression (operator = >) [a > 0] : PsiType:boolean
                                         USimpleNameReferenceExpression (identifier = a) [a] : PsiType:int
                                         ULiteralExpression (value = 0) [0] : PsiType:int

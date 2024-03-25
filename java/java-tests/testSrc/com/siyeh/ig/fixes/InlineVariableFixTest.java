@@ -19,6 +19,6 @@ public class InlineVariableFixTest extends IGQuickFixesTestCase {
   public void testSingleResourceVar() { doTest(); }
   public void testCastNeeded() { doTest(); }
   public void testArrayInitializer() { doTest(); }
-  public void testCastForOverloads() { doTest(); }
+  public void testCastForOverloads() { assertQuickfixNotAvailable(); }
   public void testComment() { doTest(); }
 }

@@ -822,8 +822,9 @@ public final class GitUtil {
     return getRepositoryManager(project).getRepositories();
   }
 
-  public static @NotNull Collection<GitRepository> getRepositoriesInState(@NotNull Project project, @NotNull Repository.State state) {
-    return ContainerUtil.filter(getRepositories(project), repository -> repository.getState() == state);
+  public static @NotNull Collection<GitRepository> getRepositoriesInStates(@NotNull Project project, Repository.State @NotNull ... states) {
+    Set<Repository.State> stateSet = ContainerUtil.newHashSet(states);
+    return ContainerUtil.filter(getRepositories(project), repository -> stateSet.contains(repository.getState()));
   }
 
   /**

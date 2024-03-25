@@ -6,8 +6,7 @@ import com.intellij.platform.ml.*
 import com.intellij.platform.ml.ScopeEnvironment.Companion.restrictedBy
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
-import com.intellij.platform.ml.impl.session.AdditionalTierScheme
-import com.intellij.platform.ml.impl.session.MainTierScheme
+import com.intellij.platform.ml.impl.session.DescribedTierScheme
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -28,14 +27,14 @@ import org.jetbrains.annotations.ApiStatus
  *  - The prediction [com.intellij.platform.ml.impl.model.MLModel.predict]
  *  - During the analysis, the call parameters are saved in the session tree, see [com.intellij.platform.ml.impl.session.LevelData].
  * @param predictionClass The class of an object, that will serve as "prediction"
- * @param T The type of prediction
+ * @param P The type of prediction
  */
 @ApiStatus.Internal
-abstract class MLTask<T : Any> protected constructor(
+abstract class MLTask<P : Any> protected constructor(
   val name: String,
   val levels: List<Set<Tier<*>>>,
   val callParameters: List<Set<Tier<*>>>,
-  val predictionClass: Class<T>
+  val predictionClass: Class<P>
 ) {
   init {
     require(levels.isNotEmpty()) {
@@ -86,11 +85,6 @@ interface MLTaskApproach<P : Any> {
    * which contains the started session otherwise.
    */
   suspend fun startSession(callParameters: Environment, permanentSessionEnvironment: Environment): Session.StartOutcome<P>
-
-  data class SessionDeclaration(
-    val sessionFeatures: Map<String, Set<FeatureDeclaration<*>>>,
-    val levelsScheme: List<LevelScheme>
-  )
 
   companion object {
     fun <P : Any> findMlTaskApproach(task: MLTask<P>, apiPlatform: MLApiPlatform): MLTaskApproachBuilder<P> {
@@ -161,9 +155,8 @@ interface MLTaskApproachBuilder<P : Any> {
 
   /**
    * Builds a scheme for the finished event.
-   * Such events are registered with [com.intellij.platform.ml.impl.logs.events.MLSessionFinishedLogger]
    */
-  fun buildApproachSessionDeclaration(apiPlatform: MLApiPlatform): MLTaskApproach.SessionDeclaration
+  fun buildApproachSessionDeclaration(apiPlatform: MLApiPlatform): List<DescribedLevelScheme>
 
   companion object {
     val EP_NAME = ExtensionPointName<MLTaskApproachBuilder<*>>("com.intellij.platform.ml.impl.approach")
@@ -176,6 +169,6 @@ data class LevelSignature<M, A>(
   val additional: A
 )
 
-typealias LevelScheme = LevelSignature<PerTier<MainTierScheme>, PerTier<AdditionalTierScheme>>
+typealias DescribedLevelScheme = LevelSignature<PerTier<DescribedTierScheme>, PerTier<DescribedTierScheme>>
 
 typealias LevelTiers = LevelSignature<Set<Tier<*>>, Set<Tier<*>>>

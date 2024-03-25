@@ -5,6 +5,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.mock.MockProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
@@ -25,11 +26,15 @@ internal abstract class SearchEverywhereRankingModelTest
 
   protected fun performSearchFor(searchQuery: String, featuresProviderCache: FeaturesProviderCache? = null): RankingAssertion {
     VfsTestUtil.syncRefresh()
-    val rankedElements: List<FoundItemDescriptor<*>> = filterElements(searchQuery)
-      .associateWith { getMlWeight(it, searchQuery, featuresProviderCache) }
-      .entries
-      .sortedByDescending { it.value }
-      .map { it.key }
+
+    lateinit var rankedElements: List<FoundItemDescriptor<*>>
+    ProgressManager.getInstance().executeNonCancelableSection {
+      rankedElements = filterElements(searchQuery)
+        .associateWith { getMlWeight(it, searchQuery, featuresProviderCache) }
+        .entries
+        .sortedByDescending { it.value }
+        .map { it.key }
+    }
 
     assert(rankedElements.size > 1) { "Found ${rankedElements.size} which is unsuitable for ranking assertions" }
 

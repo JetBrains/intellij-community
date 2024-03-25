@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.net.HostAndPort;
@@ -38,11 +38,10 @@ public final class PyRemoteProcessStarter {
   private PyRemoteProcessStarter() {
 
   }
-  @NotNull
-  public static ProcessHandler startLegacyRemoteProcess(@NotNull PyRemoteSdkAdditionalData legacyAdditionalData,
-                                                        @NotNull GeneralCommandLine commandLine,
-                                                        @Nullable Project project,
-                                                        @Nullable PyRemotePathMapper pathMapper)
+  public static @NotNull ProcessHandler startLegacyRemoteProcess(@NotNull PyRemoteSdkAdditionalData legacyAdditionalData,
+                                                                 @NotNull GeneralCommandLine commandLine,
+                                                                 @Nullable Project project,
+                                                                 @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
     ProcessHandler processHandler;
 
@@ -76,10 +75,9 @@ public final class PyRemoteProcessStarter {
    * @throws UnsupportedPythonSdkTypeException if support cannot be found for
    *                                           the type of the provided sdk
    */
-  @NotNull
-  private static ProcessHandler doStartLegacyRemoteProcess(@NotNull PyRemoteSdkAdditionalData legacyAdditionalData,
-                                                           @NotNull final GeneralCommandLine commandLine,
-                                                           @Nullable final Project project,
+  private static @NotNull ProcessHandler doStartLegacyRemoteProcess(@NotNull PyRemoteSdkAdditionalData legacyAdditionalData,
+                                                           final @NotNull GeneralCommandLine commandLine,
+                                                           final @Nullable Project project,
                                                            @Nullable PyRemotePathMapper pathMapper)
     throws ExecutionException {
     final PyRemotePathMapper extendedPathMapper =

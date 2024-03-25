@@ -27,9 +27,6 @@ import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
-import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.toPersistentMap
-import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -112,7 +109,7 @@ object PluginManagerCore {
    * Bundled plugins that were updated.
    * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
    */
-  private var shadowedBundledPlugins: Set<PluginId> = persistentSetOf()
+  private var shadowedBundledPlugins: Set<PluginId> = Collections.emptySet()
 
   private var isRunningFromSources: Boolean? = null
 
@@ -292,7 +289,7 @@ object PluginManagerCore {
       future.cancel(CancellationException("invalidatePlugins"))
     }
     invalidate()
-    shadowedBundledPlugins = persistentSetOf()
+    shadowedBundledPlugins = Collections.emptySet()
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "Collectors.toUnmodifiableList()")
@@ -575,6 +572,7 @@ object PluginManagerCore {
 
   @Internal
   var pluginDescriptorDebugData: PluginDescriptorsDebugData? = null
+
   fun initializePlugins(context: DescriptorListLoadingContext,
                         loadingResult: PluginLoadingResult,
                         coreLoader: ClassLoader,
@@ -625,7 +623,7 @@ object PluginManagerCore {
     }
 
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
-    pluginLoadingErrors = pluginErrorsById.toPersistentMap()
+    pluginLoadingErrors = pluginErrorsById
 
     val errorList = preparePluginErrors(globalErrors)
     if (!errorList.isEmpty()) {
@@ -829,7 +827,7 @@ object PluginManagerCore {
                                          parentActivity = tracerShim.getTraceActivity())
       pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
       pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
-      shadowedBundledPlugins = loadingResult.shadowedBundledIds.toPersistentSet()
+      shadowedBundledPlugins = loadingResult.shadowedBundledIds
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
       nullablePluginSet = initResult.pluginSet
       initResult.pluginSet
@@ -981,7 +979,7 @@ private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String
   Supplier { CoreBundle.message(key!!, *params) }
 
 @Synchronized
-@ApiStatus.Internal
+@Internal
 fun tryReadPluginIdsFromFile(path: Path, log: Logger): Set<PluginId> {
   try {
     return readPluginIdsFromFile(path)

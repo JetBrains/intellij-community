@@ -13,6 +13,7 @@ import com.intellij.vcs.commit.ChangeListCommitState
 import com.intellij.vcs.commit.LocalChangesCommitter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.data.SmallDataPack
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import git4idea.GitContentRevision
@@ -60,7 +61,7 @@ class GitCommitCommand(text: String, line: Int) : PerformanceCommandCoroutineAda
       suspendCancellableCoroutine { continuation ->
         val dataPackListener = object : DataPackChangeListener {
           override fun onDataPackChange(newDataPack: DataPack) {
-            if (newDataPack is DataPack.SmallDataPack) return
+            if (newDataPack is SmallDataPack) return
             if (logManager.isLogUpToDate) {
               logManager.dataManager.removeDataPackChangeListener(this)
               continuation.resumeWith(Result.success(Unit))

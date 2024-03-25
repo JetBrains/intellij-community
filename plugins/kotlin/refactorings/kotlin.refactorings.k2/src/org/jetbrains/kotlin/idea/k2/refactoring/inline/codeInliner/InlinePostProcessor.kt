@@ -69,7 +69,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
 
     override fun simplifySpreadArrayOfArguments(pointer: SmartPsiElementPointer<KtElement>) {
         val result = pointer.element ?: return
-        val argumentsToExpand = ArrayList<Pair<KtValueArgument, Collection<KtValueArgument>>>()
+        val argumentsToExpand = ArrayList<Pair<KtValueArgument, KtCallExpression>>()
 
         result.forEachDescendantOfType<KtValueArgument>(canGoInside = { it.getCopyableUserData(USER_CODE_KEY) == null }) { argument ->
             if (argument.getSpreadElement() != null && !argument.isNamed()) {
@@ -80,7 +80,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                 val resolved =
                   callExpression.referenceExpression()?.mainReference?.resolve() as? KtNamedDeclaration ?: return@forEachDescendantOfType
                 if (ARRAY_CALL_FQ_NAMES.contains(resolved.fqName)) {
-                    argumentsToExpand.add(argument to callExpression.valueArgumentList?.arguments.orEmpty())
+                    argumentsToExpand.add(argument to callExpression)
                 }
             }
         }
@@ -91,8 +91,9 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
     }
 
 
-    private fun KtValueArgument.replaceByMultiple(arguments: Collection<KtValueArgument>) {
+    private fun KtValueArgument.replaceByMultiple(expr: KtCallExpression) {
         val list = parent as KtValueArgumentList
+        val arguments = expr.valueArgumentList?.arguments.orEmpty()
         if (arguments.isEmpty()) {
             list.removeArgument(this)
         } else {

@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileCustomDataProvider
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiJavaFile
-import com.intellij.psi.PsiManager
 import com.intellij.util.messages.impl.subscribeAsFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -41,7 +40,7 @@ class JavaLangLevelVirtualFileCustomDataProvider : VirtualFileCustomDataProvider
   }
 
   private suspend fun getFileJavaLanguageLevel(virtualFile: VirtualFile, project: Project) = readAction {
-    val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
+    val psiFile = VirtualFileCustomDataProvider.getPsiFileSafe(virtualFile, project)
     if (psiFile !is PsiJavaFile) return@readAction null
     return@readAction psiFile.languageLevel
   }

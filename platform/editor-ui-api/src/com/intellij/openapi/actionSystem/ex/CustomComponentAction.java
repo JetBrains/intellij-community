@@ -49,7 +49,7 @@ public interface CustomComponentAction {
   }
 
   /** @deprecated Use {@link CustomComponentAction#createCustomComponent(Presentation, String)} */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @NotNull JComponent createCustomComponent(@NotNull Presentation presentation) {
     throw new AssertionError();
   }

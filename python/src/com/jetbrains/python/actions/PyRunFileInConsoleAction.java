@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions;
 
 import com.intellij.execution.ExecutionManager;
@@ -76,7 +76,7 @@ public class PyRunFileInConsoleAction extends AnAction implements DumbAware {
   /*
     Restore the option which was changed for the action execution
    */
-  synchronized public static void configExecuted(PythonRunConfiguration configuration) {
+  public static synchronized void configExecuted(PythonRunConfiguration configuration) {
     if (waitingForExecution.containsKey(configuration)) {
       Boolean oldValue = waitingForExecution.remove(configuration);
       configuration.setShowCommandLineAfterwards(oldValue);

@@ -90,9 +90,11 @@ internal class CommitMessageCellEditor(
     editor.contentComponent.actionMap.put(key, closeEditorAction)
   }
 
-  override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
+  override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component? {
     val model = this.table.model
-    val commitMessageField = commitMessageForEntry.getOrPut(model.getEntry(row)) { createCommitMessage() }
+    val rebaseEntry = model.getEntry(row)
+    if (rebaseEntry !is GitRebaseEntryWithDetails) return null
+    val commitMessageField = commitMessageForEntry.getOrPut(rebaseEntry) { createCommitMessage() }
     lastUsedCommitMessageField = commitMessageField
     commitMessageField.text = model.getCommitMessage(row)
     table.setRowHeight(row, savedHeight)

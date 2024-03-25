@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -9,7 +9,6 @@ import org.jetbrains.annotations.VisibleForTesting
 @VisibleForTesting
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 class Java11ShimImpl : Java11Shim() {
-
   private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
 
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
@@ -17,6 +16,8 @@ class Java11ShimImpl : Java11Shim() {
   override fun <K : Any, V> mapOf(k: K, v: V): Map<K, V> = java.util.Map.of(k, v)
 
   override fun <E> copyOf(collection: Collection<E>): Set<E> = java.util.Set.copyOf(collection)
+
+  override fun <E> copyOfList(collection: Collection<E>): List<E> = java.util.List.copyOf(collection)
 
   override fun <K : Any, V> mapOf(): Map<K, V> = java.util.Map.of()
 
@@ -45,8 +46,7 @@ class Java11ShimImpl : Java11Shim() {
       9 -> java.util.List.of(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8])
       10 -> java.util.List.of(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9])
       11 -> java.util.List.of(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9], array[10])
-      12 -> java.util.List.of(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9], array[10],
-                              array[11])
+      12 -> java.util.List.of(array[0], array[1], array[2], array[3], array[4], array[5], array[6], array[7], array[8], array[9], array[10], array[11])
       else -> {
         if (array.size == size) {
           java.util.List.of(*array)

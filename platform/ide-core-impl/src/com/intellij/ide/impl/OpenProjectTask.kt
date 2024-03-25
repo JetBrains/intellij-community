@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.module.Module
@@ -14,10 +14,10 @@ data class OpenProjectTask internal constructor(
   val isNewProject: Boolean = false,
   /** Ignored if [isNewProject] is set to false. */
   val useDefaultProjectAsTemplate: Boolean = isNewProject,
-  /** When you just need to open an already created and prepared project; used e.g. by the "new project" action. */
+  /** When you just need to open an already created and prepared project; used e.g., by the "new project" action. */
   val project: Project?,
   val projectName: String?,
-  /** Whether to show welcome screen if failed to open project. */
+  /** Whether to show welcome screen if failed to open a project. */
   val showWelcomeScreen: Boolean,
   val callback: ProjectOpenedCallback?,
   val line: Int,
@@ -26,7 +26,7 @@ data class OpenProjectTask internal constructor(
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
    *
-   *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+   *  **NB**: if a project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
    *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */
@@ -37,7 +37,7 @@ data class OpenProjectTask internal constructor(
   @TestOnly
   val preloadServices: Boolean,
   val beforeInit: ((Project) -> Unit)?,
-  /** Ignored if project is explicitly set. */
+  /** Ignored if a project is explicitly set. */
   val beforeOpen: (suspend (Project) -> Boolean)?,
   val preparedToOpen: (suspend (Module) -> Unit)?,
   val preventIprLookup: Boolean,
@@ -103,7 +103,7 @@ class OpenProjectTaskBuilder internal constructor() {
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
    *
-   *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+   *  **NB**: if a project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
    *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */

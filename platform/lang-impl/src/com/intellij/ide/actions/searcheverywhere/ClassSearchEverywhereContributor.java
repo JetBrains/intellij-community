@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -176,12 +176,12 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   public static @Nullable Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
-    final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
-    if (builder == null || editors.length == 0) {
+    List<FileEditor> editors = FileEditorManager.getInstance(psiElement.getProject()).getEditorList(file);
+    if (builder == null || editors.isEmpty()) {
       return null;
     }
 
-    final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
+    final StructureView view = builder.createStructureView(editors.get(0), psiElement.getProject());
     try {
       final StructureViewTreeElement element = findElement(view.getTreeModel().getRoot(), psiElement, 4);
       if (element == null) {

@@ -262,8 +262,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                        canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     synchronized(context.paths.projectHome.toString().intern()) {
       withJpsLogging(context) { messageHandler ->
-        val forceBuild = !context.options.incrementalCompilation ||
-                         !context.compilationData.isIncrementalCompilationDataAvailable()
+        val forceBuild = !context.options.incrementalCompilation || !context.compilationData.isIncrementalCompilationDataAvailable()
         val scopes = ArrayList<TargetTypeBuildScope>()
         for (type in JavaModuleBuildTargetType.ALL_TYPES) {
           if (includeTests || !type.isTests) {
@@ -326,7 +325,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           }
           throw RuntimeException("Compilation failed")
         }
-        else if (!compilationData.statisticsReported) {
+        else if (!compilationData.statisticsReported && context.options.compilationLogEnabled) {
           messageHandler.printPerModuleCompilationStatistics(compilationStart)
           context.messages.reportStatisticValue("Compilation time, ms",
                                                 TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - compilationStart).toString())

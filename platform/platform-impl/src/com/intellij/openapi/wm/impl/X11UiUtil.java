@@ -2,10 +2,14 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -17,11 +21,17 @@ import sun.misc.Unsafe;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.peer.ComponentPeer;
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -38,6 +48,8 @@ public final class X11UiUtil {
   private static final long NET_WM_STATE_REMOVE = 0;
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
+
+  public static final String KDE_LAF_PROPERTY = "LookAndFeelPackage=";
 
   /**
    * List of all known tile WM in lower case, can be updated later
@@ -317,6 +329,38 @@ public final class X11UiUtil {
     return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop == null;
   }
 
+  @RequiresBackgroundThread
+  public static @Nullable String getTheme() {
+    ThreadingAssertions.assertBackgroundThread();
+    if (SystemInfo.isGNOME) {
+      String result = exec("Cannot get gnome theme", "gsettings", "get", "org.gnome.desktop.interface", "gtk-theme");
+
+      if (result == null || !result.startsWith("'") || !result.endsWith("'")) {
+        return result;
+      }
+
+      return result.substring(1, result.length() - 1);
+    }
+
+    if (SystemInfo.isKDE) {
+      // https://github.com/shalva97/kde-configuration-files
+      Path home = Path.of(System.getenv("HOME"), ".config/kdeglobals");
+      List<String> matches = grepFile("Cannot get KDE theme", home,
+                                      Pattern.compile("\\s*" + KDE_LAF_PROPERTY + ".*"));
+      if (matches.size() != 1) {
+        return null;
+      }
+
+      String result = matches.get(0).trim();
+      if (result.startsWith(KDE_LAF_PROPERTY)) {
+        return result.substring(KDE_LAF_PROPERTY.length()).trim();
+      }
+      return null;
+    }
+
+    return null;
+  }
+
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
     if (X11 == null) return false;
     try {
@@ -403,5 +447,45 @@ public final class X11UiUtil {
     Field field = aClass.getDeclaredField(name);
     field.setAccessible(true);
     return field;
+  }
+
+  private static @Nullable String exec(String errorMessage, String... command) {
+    try {
+      Process process = new ProcessBuilder(command).start();
+      if (!process.waitFor(5, TimeUnit.SECONDS)) {
+        LOG.info(errorMessage + ": timeout");
+        process.destroyForcibly();
+        return null;
+      }
+
+      if (process.exitValue() != 0) {
+        LOG.info(errorMessage + ": exit code " + process.exitValue());
+        return null;
+      }
+
+      return FileUtil.loadTextAndClose(process.getInputStream()).trim();
+    }
+    catch (Exception e) {
+      LOG.info(errorMessage, e);
+      return null;
+    }
+  }
+
+  private static List<String> grepFile(String errorMessage, Path file, Pattern pattern) {
+    List<String> result = new ArrayList<>();
+    try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+      String line;
+
+      while ((line = reader.readLine()) != null) {
+        if (pattern.matcher(line).matches()) {
+          result.add(line);
+        }
+      }
+      return result;
+    }
+    catch (IOException e) {
+      LOG.info(errorMessage, e);
+      return Collections.emptyList();
+    }
   }
 }

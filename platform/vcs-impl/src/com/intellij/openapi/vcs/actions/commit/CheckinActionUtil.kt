@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions.commit
 
-import com.intellij.CommonBundle
 import com.intellij.configurationStore.saveSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -88,7 +88,7 @@ object CheckinActionUtil {
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
     FileDocumentManager.getInstance().saveAllDocuments()
-    runWithModalProgressBlocking(project, CommonBundle.message("title.save.project")) {
+    runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
       saveSettings(project)
     }
 

@@ -161,17 +161,17 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   private static @NotNull Double2ObjectMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
                                                                                                     @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
     Double2ObjectOpenHashMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
-    for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
-      PsiReference[] refs = getReferences(context, trinity);
+    for (ProviderBinding.ProviderInfo<ProcessingContext> info : providers) {
+      PsiReference[] refs = getReferences(context, info);
       if (refs.length > 0) {
-        List<PsiReference[]> list = map.get(trinity.priority);
+        List<PsiReference[]> list = map.get(info.priority);
         if (list == null) {
           list = new SmartList<>();
-          map.put(trinity.priority, list);
+          map.put(info.priority, list);
         }
         list.add(refs);
         if (IdempotenceChecker.isLoggingEnabled()) {
-          IdempotenceChecker.logTrace(trinity.provider + " returned " + Arrays.toString(refs));
+          IdempotenceChecker.logTrace(info.provider + " returned " + Arrays.toString(refs));
         }
       }
     }

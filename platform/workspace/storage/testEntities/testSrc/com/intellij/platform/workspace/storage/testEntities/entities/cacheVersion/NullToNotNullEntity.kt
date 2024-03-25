@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface NullToNotNullEntity: WorkspaceEntity {
   val nullString: String?
@@ -21,10 +26,12 @@ interface NullToNotNullEntity: WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(notNullBoolean: Boolean,
-                        notNullInt: Int,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): NullToNotNullEntity {
+    operator fun invoke(
+      notNullBoolean: Boolean,
+      notNullInt: Int,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): NullToNotNullEntity {
       val builder = builder()
       builder.notNullBoolean = notNullBoolean
       builder.notNullInt = notNullInt
@@ -37,7 +44,10 @@ interface NullToNotNullEntity: WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: NullToNotNullEntity,
-                                      modification: NullToNotNullEntity.Builder.() -> Unit): NullToNotNullEntity = modifyEntity(
-  NullToNotNullEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: NullToNotNullEntity,
+  modification: NullToNotNullEntity.Builder.() -> Unit,
+): NullToNotNullEntity {
+  return modifyEntity(NullToNotNullEntity.Builder::class.java, entity, modification)
+}
 //endregion

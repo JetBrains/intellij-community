@@ -2,13 +2,15 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReferenceService
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parents
@@ -22,9 +24,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
@@ -36,13 +37,14 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-class JoinDeclarationAndAssignmentInspection :
-    AbstractKotlinApplicableInspectionWithContext<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
+internal class JoinDeclarationAndAssignmentInspection :
+    KotlinApplicableInspectionBase.Simple<KtProperty, JoinDeclarationAndAssignmentInspection.Context>() {
+
     data class Context(
         val assignment: KtBinaryExpression,
         val canEraseDeclaredType: Boolean,
         val canOmitDeclaredType: Boolean,
-        val movePropertyToConstructorInfo: MovePropertyToConstructorInfo?
+        val movePropertyToConstructorInfo: MovePropertyToConstructorInfo?,
     )
 
     @JvmField
@@ -55,19 +57,17 @@ class JoinDeclarationAndAssignmentInspection :
         )
     )
 
-    override fun getActionFamilyName() = KotlinBundle.message("join.declaration.and.assignment")
-
     override fun getProblemDescription(element: KtProperty, context: Context) = KotlinBundle.message("can.be.joined.with.assignment")
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitProperty(property: KtProperty) {
-                visitTargetElement(property, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitProperty(property: KtProperty) {
+            visitTargetElement(property, holder, isOnTheFly)
         }
     }
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = ApplicabilityRanges.SELF
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtProperty): Context? {
@@ -134,44 +134,57 @@ class JoinDeclarationAndAssignmentInspection :
                 && element.receiverTypeReference == null
                 && element.name != null
 
-    override fun apply(element: KtProperty, context: Context, project: Project, updater: ModPsiUpdater) {
-        if (element.typeReference == null) return
+    override fun createQuickFix(
+        element: KtProperty,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtProperty>() {
 
-        val assignment = updater.getWritable(context.assignment)
-        val movePropertyToConstructorInfo = context.movePropertyToConstructorInfo?.toWritable(updater)
-        val initializer = assignment.right ?: return
+        override fun getFamilyName(): String =
+            KotlinBundle.message("join.declaration.and.assignment")
 
-        element.initializer = initializer
-        if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+        override fun applyFix(
+            project: Project,
+            element: KtProperty,
+            updater: ModPsiUpdater,
+        ) {
+            if (element.typeReference == null) return
 
-        val grandParent = (assignment.parent as? KtBlockExpression)?.parent
-        val initializerBlock = grandParent as? KtAnonymousInitializer
-        val secondaryConstructor = grandParent as? KtSecondaryConstructor
+            val assignment = updater.getWritable(context.assignment)
+            val movePropertyToConstructorInfo = context.movePropertyToConstructorInfo?.toWritable(updater)
+            val initializer = assignment.right ?: return
 
-        val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
-            moveComments(from = assignment, to = element)
-            assignment.deleteWithPreviousWhitespace()
-            if ((initializerBlock?.body as? KtBlockExpression)?.contentRange()?.isEmpty == true) initializerBlock.deleteWithPreviousWhitespace()
-            val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
-            if (secondaryConstructorBlock?.contentRange()?.isEmpty == true) secondaryConstructorBlock.deleteWithPreviousWhitespace()
-            element
-        } else {
-            moveComments(from = element, to = assignment)
-            assignment.replaced(element).also {
-                element.deleteWithPreviousWhitespace()
+            element.initializer = initializer
+            if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
+
+            val grandParent = (assignment.parent as? KtBlockExpression)?.parent
+            val initializerBlock = grandParent as? KtAnonymousInitializer
+            val secondaryConstructor = grandParent as? KtSecondaryConstructor
+
+            val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
+                moveComments(from = assignment, to = element)
+                assignment.deleteWithPreviousWhitespace()
+                if ((initializerBlock?.body as? KtBlockExpression)?.contentRange()?.isEmpty == true) initializerBlock.deleteWithPreviousWhitespace()
+                val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
+                if (secondaryConstructorBlock?.contentRange()?.isEmpty == true) secondaryConstructorBlock.deleteWithPreviousWhitespace()
+                element
+            } else {
+                moveComments(from = element, to = assignment)
+                assignment.replaced(element).also {
+                    element.deleteWithPreviousWhitespace()
+                }
             }
-        }
 
-        if (movePropertyToConstructorInfo != null) {
-            newProperty.moveToConstructor(movePropertyToConstructorInfo)
-            return
-        }
+            if (movePropertyToConstructorInfo != null) {
+                newProperty.moveToConstructor(movePropertyToConstructorInfo)
+                return
+            }
 
-        if (context.canEraseDeclaredType) {
-            newProperty.typeReference = null
-            updater.update(newProperty, false)
-        } else {
-            updater.update(newProperty, context.canOmitDeclaredType)
+            if (context.canEraseDeclaredType) {
+                newProperty.typeReference = null
+                updater.update(newProperty, false)
+            } else {
+                updater.update(newProperty, context.canOmitDeclaredType)
+            }
         }
     }
 

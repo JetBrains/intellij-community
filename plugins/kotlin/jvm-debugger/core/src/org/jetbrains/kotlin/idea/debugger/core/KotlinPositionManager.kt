@@ -40,7 +40,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -67,7 +66,6 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -689,46 +687,21 @@ internal fun Method.isGeneratedErasedLambdaMethod(): Boolean {
 private fun Location.getZeroBasedLineNumber(): Int =
     DebuggerUtilsEx.getLineNumber(this, true)
 
-private fun Location.hasVisibleInlineLambdasOnLines(lines: IntRange): Boolean {
-    val method = safeMethod() ?: return false
-    return method.getInlineFunctionAndArgumentVariablesToBordersMap()
-        .asSequence()
-        .filter { (variable, _) ->
-            variable is LocalVariableImpl &&
-            variable.isVisible(this) &&
-            variable.name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)
-        }
-        .any { (_, borders) ->
-            borders.start.getZeroBasedLineNumber() in lines &&
-            borders.endInclusive.getZeroBasedLineNumber() in lines
-        }
-}
-
-// Copied from com.jetbrains.jdi.LocalVariableImpl.isVisible
-private fun LocalVariableImpl.isVisible(location: Location): Boolean =
-    scopeStart <= location && scopeEnd >= location
-
 fun Location.getClassName(): String? {
     val currentLocationFqName = declaringType().name() ?: return null
     return JvmClassName.byFqNameWithoutInnerClasses(FqName(currentLocationFqName)).internalName.internalNameToFqn()
 }
 
 private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: Int): List<ReferenceType> {
-    val vmProxy = virtualMachineProxy
+    val targetClasses = ArrayList<ReferenceType>(1)
 
     try {
         if (!outerClass.isPrepared) {
             return emptyList()
         }
-    } catch (e: ObjectCollectedException) {
-        return emptyList()
-    }
 
-    val targetClasses = ArrayList<ReferenceType>(1)
-
-    try {
         for (location in outerClass.safeAllLineLocations()) {
-            val locationLine = location.lineNumber() - 1
+            val locationLine = location.getZeroBasedLineNumber()
             if (locationLine < 0) {
                 // such locations do not correspond to real lines in code
                 continue
@@ -753,11 +726,13 @@ private fun DebugProcess.findTargetClasses(outerClass: ReferenceType, lineAt: In
         //             val a = Foo() /* line 3 */
         //          }
         //     }
-        val nestedTypes = vmProxy.nestedTypes(outerClass)
+        val nestedTypes = virtualMachineProxy.nestedTypes(outerClass)
         for (nested in nestedTypes) {
             targetClasses += findTargetClasses(nested, lineAt)
         }
     } catch (_: AbsentInformationException) {
+    } catch (_: ObjectCollectedException) {
+        return emptyList()
     }
 
     return targetClasses

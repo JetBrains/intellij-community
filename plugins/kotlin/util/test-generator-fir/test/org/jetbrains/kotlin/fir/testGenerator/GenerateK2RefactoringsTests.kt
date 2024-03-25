@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToElementTest
+import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFqnTest
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
+import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2ChangePackageTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
@@ -42,7 +44,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
 
         testClass<AbstractK2BindToElementTest> {
+            model("refactoring/bindToFqn")
             model("refactoring/bindToElement")
+        }
+        testClass<AbstractK2BindToFqnTest> {
+            model("refactoring/bindToFqn")
         }
         testClass<AbstractKotlinFirInlineTest> {
             model("refactoring/inline/inlineVariableOrProperty", isRecursive = false, pattern = Patterns.KT_WITHOUT_DOTS)
@@ -61,8 +67,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     }
 
     testGroup("refactorings/kotlin.refactorings.move.k2", testDataPath = "../../idea/tests/testData") {
+        testClass<AbstractK2ChangePackageTest> {
+            model("refactoring/changePackage", pattern = TEST, flatten = true)
+        }
         testClass<AbstractK2MoveTest> {
-            model("refactoring/move", pattern = Patterns.TEST, flatten = true)
+            model("refactoring/move", pattern = TEST, flatten = true)
         }
     }
 

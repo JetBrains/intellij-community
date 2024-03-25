@@ -9,10 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginContentDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +19,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
+import java.util.function.Function;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
 import io.opentelemetry.context.Context;
@@ -30,6 +28,7 @@ import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -39,10 +38,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.driver.model.transport.RemoteCall.isPassByValue;
 import static java.util.Objects.requireNonNull;
@@ -59,13 +56,13 @@ public class Invoker implements InvokerMBean {
   private final Map<String, WeakReference<Object>> adhocReferenceMap = new ConcurrentHashMap<>();
 
   private final ClearableLazyValue<IJTracer> tracer;
-  private final Consumer<String> screenshotAction;
+  private final Function<String, String> screenshotAction;
   private final String refIdPrefix;
   private final Supplier<? extends Context> timedContextSupplier;
 
   public Invoker(@NotNull String refIdPrefix, @NotNull Supplier<? extends IJTracer> tracerSupplier,
                  @NotNull Supplier<? extends Context> timedContextSupplier,
-                 @NotNull Consumer<String> screenshotAction) {
+                 @NotNull Function<String, String> screenshotAction) {
     this.refIdPrefix = refIdPrefix;
     this.timedContextSupplier = timedContextSupplier;
     this.tracer = new ClearableLazyValue<>() {
@@ -98,7 +95,10 @@ public class Invoker implements InvokerMBean {
 
   @Override
   public void exit() {
-    ApplicationManager.getApplication().exit(true, true, false);
+    SwingUtilities.invokeLater(() -> {
+      var app = ApplicationManager.getApplication();
+      app.invokeLater(() -> app.exit(true, true, false), ModalityState.current());
+    });
   }
 
   @Override
@@ -518,10 +518,10 @@ public class Invoker implements InvokerMBean {
 
     Ref ref = putAdhocReference(result, session);
 
-    Stream<Object> stream =
-      result instanceof Collection<?> collection ? (Stream<Object>)collection.stream()
-                                                 : result.getClass().isArray() ? Arrays.stream((Object[])result)
-                                                                               : null;
+    var stream =
+      result instanceof Collection<?> collection ? collection.stream() :
+      result.getClass().isArray() ? Arrays.stream((Object[])result) :
+      null;
 
     if (stream == null) {
       return new RemoteCallResult(ref);
@@ -557,8 +557,8 @@ public class Invoker implements InvokerMBean {
   }
 
   @Override
-  public void takeScreenshot(@Nullable String outFolder) {
-    this.screenshotAction.accept(outFolder);
+  public String takeScreenshot(@Nullable String outFolder) {
+    return this.screenshotAction.apply(outFolder);
   }
 
   interface Session {

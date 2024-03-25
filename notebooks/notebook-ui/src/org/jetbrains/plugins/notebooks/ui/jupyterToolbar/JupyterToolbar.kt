@@ -3,54 +3,66 @@ package org.jetbrains.plugins.notebooks.ui.jupyterToolbar
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
+import com.intellij.util.ui.StartupUiUtil
+import java.awt.AlphaComposite
 import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Graphics2D
-import java.awt.event.MouseEvent
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.BorderFactory
 
 /**
  * @See com.intellij.bigdatatools.visualization.inlays.components.FadingToolbar
  * PY-66455
  */
-class JupyterToolbarImpl(
-  actionGroup: ActionGroup
+class JupyterToolbar(actionGroup: ActionGroup,
+                     firstLine: Int = 0
 ) : ActionToolbarImpl(ActionPlaces.EDITOR_INLAY, actionGroup, true) {
+  var alpha = 1.0f
+
   init {
-    setSkipWindowAdjustments(false)
-    isReservePlaceAutoPopupIcon = true
+    val borderColor = if (NewUiValue.isEnabled()) {
+      JBColor.LIGHT_GRAY
+    } else {
+      JBColor.DARK_GRAY
+    }
+
+    border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, TOOLBAR_ARC_SIZE, TOOLBAR_BORDER_THICKNESS),
+                                                BorderFactory.createEmptyBorder(OUTER_PADDING, OUTER_PADDING, OUTER_PADDING, OUTER_PADDING))
     isOpaque = false
-    println("JupyterToolbarImpl: $preferredSize")
-  }
-}
-
-class JupyterToolbar(actionGroup: ActionGroup, targetComponent: JComponent) : JPanel() {
-  private var actionToolbar: JupyterToolbarImpl = JupyterToolbarImpl(actionGroup)
-
-  init {
-    layout = BorderLayout()
-
-    actionToolbar.targetComponent = targetComponent
-    add(actionToolbar.component, BorderLayout.CENTER)
-
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK or MouseEvent.MOUSE_MOTION_EVENT_MASK)
-
-    border = RoundedLineBorder(JBColor.LIGHT_GRAY, JBUI.scale(14), JBUI.scale(1))
-    background = JBColor.WHITE
-    isOpaque = false
-    println("JupyterToolbar: $preferredSize")
+    // todo: it would be preferable to store the cell number right here instead of the first line number
+    putClientProperty(JUPYTER_TOOLBAR_LINE_POSITION_KEY, firstLine)
+    setSkipWindowAdjustments(false)
   }
 
   override fun paintComponent(g: Graphics) {
     val g2 = g.create() as Graphics2D
-    g2.color = this.background
-    g2.fillRoundRect(0, 0, width, height, JBUI.scale(14), JBUI.scale(14))
-    g2.dispose()
+    try {
+      g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha)
+      g2.color = this.background
+      g2.fillRoundRect(0, 0, width, height, TOOLBAR_ARC_SIZE, TOOLBAR_ARC_SIZE)
+    }
+    finally {
+      g2.dispose()
+    }
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    if (!StartupUiUtil.isDarkTheme) {
+      background = JBColor.WHITE
+    }
+  }
+
+  companion object {
+    private val TOOLBAR_ARC_SIZE = JBUI.scale(14)
+    private val TOOLBAR_BORDER_THICKNESS = JBUI.scale(1)
+    private val OUTER_PADDING = JBUI.scale(3)
+    val JUPYTER_TOOLBAR_LINE_POSITION_KEY = Key.create<Int>("JUPYTER_TOOLBAR_LINE_POSITION_KEY")
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -30,7 +30,7 @@ import java.util.List;
  * </ul>
  */
 public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
-  private final static Joiner[] JOINERS = {
+  private static final Joiner[] JOINERS = {
     new OpenBracketJoiner(),
     new CloseBracketJoiner(),
     new StringLiteralJoiner(),
@@ -232,11 +232,10 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     }
 
 
-    @Nullable
-    private static Result processStringsWithDifferentQuotes(@NotNull final Request req,
-                                                            @NotNull final PyStringElement leftElem,
-                                                            @NotNull final PyStringElement rightElem,
-                                                            @NotNull final String replacement) {
+    private static @Nullable Result processStringsWithDifferentQuotes(final @NotNull Request req,
+                                                                      final @NotNull PyStringElement leftElem,
+                                                                      final @NotNull PyStringElement rightElem,
+                                                                      final @NotNull String replacement) {
       if (!leftElem.isTripleQuoted() && !rightElem.isTripleQuoted()) {
         if (!rightElem.getContent().contains(leftElem.getQuote())) {
           final int quotePos = rightElem.getTextOffset() + rightElem.getContentRange().getEndOffset();
@@ -254,12 +253,11 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
       return null;
     }
 
-    @NotNull
-    private static Result getResultAndSplitStringIfTooLong(@NotNull final Request req,
-                                                           @NotNull final PyStringElement leftElem,
-                                                           @NotNull final PyStringElement rightElem,
-                                                           @NotNull final String replacement,
-                                                           @NotNull final String quote) {
+    private static @NotNull Result getResultAndSplitStringIfTooLong(final @NotNull Request req,
+                                                                    final @NotNull PyStringElement leftElem,
+                                                                    final @NotNull PyStringElement rightElem,
+                                                                    final @NotNull String replacement,
+                                                                    final @NotNull String quote) {
       int cutIntoRight = rightElem.getContentRange().getStartOffset();
       String lineEnd = "";
       if (!replacement.isEmpty()) {
@@ -312,9 +310,8 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static class StripBackslashJoiner implements Joiner {
     static final TokenSet SINGLE_QUOTED_STRINGS = TokenSet.create(PyTokenTypes.SINGLE_QUOTED_STRING, PyTokenTypes.SINGLE_QUOTED_UNICODE);
 
-    @Nullable
     @Override
-    public Result join(@NotNull Request req) {
+    public @Nullable Result join(@NotNull Request req) {
       final String gap = req.document.getText(new TextRange(req.firstLineEndOffset + 1, req.secondLineStartOffset));
       final int index = gap.indexOf('\\');
       if (index >= 0) {

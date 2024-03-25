@@ -77,6 +77,7 @@
                         serviceImplementation="org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager"/>
     <!--suppress PluginXmlValidity -->
     <inline.completion.provider implementation="org.jetbrains.plugins.terminal.exp.TerminalInlineCompletionProvider"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.exp.feedback.BlockTerminalFeedbackSurvey"/>
 
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"

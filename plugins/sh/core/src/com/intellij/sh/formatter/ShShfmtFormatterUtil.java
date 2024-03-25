@@ -8,7 +8,6 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -45,7 +44,7 @@ import java.util.Locale;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
-import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
+import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_FORMATTER_DOWNLOADED_EVENT_ID;
 
 public final class ShShfmtFormatterUtil {
@@ -204,21 +203,19 @@ public final class ShShfmtFormatterUtil {
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
-                 () -> Notifications.Bus
-                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.success.update"),
-                                            NotificationType.INFORMATION)
-                             .setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER_SUCCESS)),
-                 () -> Notifications.Bus
-                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.cannot.update"),
-                                            NotificationType.ERROR)
-                             .setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER_ERROR)),
+                 () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.success.update"),
+                                                             NotificationType.INFORMATION)
+                   .setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER_SUCCESS).notify(project),
+                 () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.cannot.update"),
+                                                             NotificationType.ERROR)
+                   .setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER_ERROR).notify(project),
                  true);
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
       notification.expire();
       ShSettings.setSkippedShfmtVersion(SHFMT_VERSION);
     }));
-    Notifications.Bus.notify(notification, project);
+    notification.notify(project);
   }
 
   /**
@@ -246,7 +243,7 @@ public final class ShShfmtFormatterUtil {
         return Pair.create(current, updateVersion);
       }
       SemVer currentVersion = SemVer.parseFromText(current);
-      if (currentVersion == null || updateVersionVer.isGreaterOrEqualThan(currentVersion)) {
+      if (currentVersion == null || updateVersionVer.isGreaterThan(currentVersion)) {
         return Pair.create(current, updateVersion);
       }
       return null;

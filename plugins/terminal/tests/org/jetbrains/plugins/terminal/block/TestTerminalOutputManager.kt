@@ -37,6 +37,7 @@ class TestTerminalOutputManager(project: Project, parentDisposable: Disposable) 
     outputModel.putHighlightings(block, updatedHighlightings)
     editor.document.replaceString(block.startOffset, block.endOffset, output.text)
     outputModel.trimOutput()
+    outputModel.finalizeBlock(block)
     return block to TestCommandOutput(output.text, updatedHighlightings)
   }
 

@@ -146,7 +146,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
             if (_isSelectionClick(e)) {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
-              myTabs.select(info, true);
+              tabs.select(info, true);
               JBPopup container = PopupUtil.getPopupContainerFor(label);
               if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
                 container.cancel();
@@ -180,33 +180,33 @@ public final class WindowTabsComponent extends JBTabsImpl {
       @Override
       public void setTabActions(ActionGroup group) {
         super.setTabActions(group);
-        if (myActionPanel != null) {
-          Container parent = myActionPanel.getParent();
-          parent.remove(myActionPanel);
-          parent.add(new Wrapper(myActionPanel) {
+        if (actionPanel != null) {
+          Container parent = actionPanel.getParent();
+          parent.remove(actionPanel);
+          parent.add(new Wrapper(actionPanel) {
             @Override
             public Dimension getPreferredSize() {
-              return myActionPanel.getPreferredSize();
+              return actionPanel.getPreferredSize();
             }
           }, BorderLayout.WEST);
 
-          myActionPanel.setBorder(JBUI.Borders.emptyLeft(6));
-          myActionPanel.setVisible(!showCloseActionOnHover());
+          actionPanel.setBorder(JBUI.Borders.emptyLeft(6));
+          actionPanel.setVisible(!showCloseActionOnHover());
         }
       }
 
       @Override
       protected void setHovered(boolean value) {
         super.setHovered(value);
-        if (myActionPanel != null) {
-          myActionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == myTabs.getPopupInfo());
+        if (actionPanel != null) {
+          actionPanel.setVisible(!showCloseActionOnHover() || value || getInfo() == tabs.getPopupInfo());
         }
       }
 
       @Override
       protected void handlePopup(MouseEvent e) {
         super.handlePopup(e);
-        JPopupMenu popup = myTabs.getActivePopup();
+        JPopupMenu popup = tabs.getActivePopup();
         if (popup != null) {
           popup.addPopupMenuListener(new PopupMenuListenerAdapter() {
             @Override
@@ -221,7 +221,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
 
             private void handle() {
               popup.removePopupMenuListener(this);
-              myActionPanel.setVisible(!showCloseActionOnHover() || isHovered());
+              actionPanel.setVisible(!showCloseActionOnHover() || isHovered());
             }
           });
         }

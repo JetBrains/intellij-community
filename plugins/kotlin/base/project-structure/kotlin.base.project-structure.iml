@@ -48,5 +48,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
   </component>
 </module>

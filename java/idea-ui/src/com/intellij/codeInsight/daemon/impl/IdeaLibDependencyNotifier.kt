@@ -144,7 +144,8 @@ private fun convertToRepositoryLibraryAction(
         newLibraryConfig?.addRoots(libraryEditor)
 
         val newLibrary = LibraryEntity(library.name, library.tableId, java.util.List.of(), library.entitySource) {
-          libraryProperties = LibraryPropertiesEntity("repository", library.entitySource) {
+          typeId = LibraryTypeId("repository")
+          libraryProperties = LibraryPropertiesEntity(library.entitySource) {
             propertiesXmlTag = """<properties maven-id="${artifact.mavenId}" />"""
           }
 

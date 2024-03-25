@@ -5,20 +5,17 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
 
 internal class RemoveExplicitTypeArgumentsIntention :
-    AbstractKotlinApplicableModCommandIntention<KtTypeArgumentList>(KtTypeArgumentList::class) {
+    KotlinApplicableModCommandAction<KtTypeArgumentList, Unit>(KtTypeArgumentList::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.arguments")
-
-    override fun getActionName(element: KtTypeArgumentList): String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtTypeArgumentList> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtTypeArgumentList): Boolean {
         val callExpression = element.parent as? KtCallExpression ?: return false
@@ -26,11 +23,15 @@ internal class RemoveExplicitTypeArgumentsIntention :
     }
 
     context(KtAnalysisSession)
-    override fun isApplicableByAnalyze(element: KtTypeArgumentList): Boolean {
-        return areTypeArgumentsRedundant(element)
-    }
+    override fun prepareContext(element: KtTypeArgumentList): Unit? =
+        areTypeArgumentsRedundant(element).asUnit
 
-    override fun apply(element: KtTypeArgumentList, context: ActionContext, updater: ModPsiUpdater) {
+    override fun invoke(
+        context: ActionContext,
+        element: KtTypeArgumentList,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         RemoveExplicitTypeArgumentsUtils.applyTo(element)
     }
 }

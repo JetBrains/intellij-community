@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.signatureverifier.ILogger
 import com.jetbrains.signatureverifier.InvalidDataException
 import com.jetbrains.signatureverifier.crypt.SignatureVerificationParams
@@ -123,17 +123,17 @@ private fun copyZipReplacing(origin: Path, entries: Map<String, Path>, context: 
     .setAttribute(AttributeKey.stringArrayKey("unsigned"), entries.keys.toList())
     .use {
       transformZipUsingTempFile(origin) { zipWriter ->
-        val index = PackageIndexBuilder()
+        val packageIndexBuilder = PackageIndexBuilder()
         readZipFile(origin) { name, dataSupplier ->
-          index.addFile(name)
+          packageIndexBuilder.addFile(name)
           if (entries.containsKey(name)) {
-            zipWriter.file(name, entries.getValue(name))
+            zipWriter.file(name, entries.getValue(name), packageIndexBuilder.indexWriter)
           }
           else {
-            zipWriter.uncompressedData(name, dataSupplier())
+            zipWriter.uncompressedData(name, dataSupplier(), packageIndexBuilder.indexWriter)
           }
         }
-        index.writePackageIndex(zipWriter)
+        packageIndexBuilder.writePackageIndex(zipWriter)
       }
       Files.setLastModifiedTime(origin, FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))
     }

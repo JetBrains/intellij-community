@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -47,41 +47,46 @@ interface KotlinScriptLibraryEntity : WorkspaceEntityWithSymbolicId {
     override val symbolicId: KotlinScriptLibraryId
         get() = KotlinScriptLibraryId(name)
 
-    //region generated code
-    @GeneratedCodeApiVersion(2)
-    interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
-        override var entitySource: EntitySource
-        override var name: String
-        override var roots: MutableList<KotlinScriptLibraryRoot>
-        override var indexSourceRoots: Boolean
-        override var usedInScripts: MutableSet<KotlinScriptId>
-    }
+  //region generated code
+  @GeneratedCodeApiVersion(2)
+  interface Builder : KotlinScriptLibraryEntity, WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
+    override var entitySource: EntitySource
+    override var name: String
+    override var roots: MutableList<KotlinScriptLibraryRoot>
+    override var indexSourceRoots: Boolean
+    override var usedInScripts: MutableSet<KotlinScriptId>
+  }
 
-    companion object : EntityType<KotlinScriptLibraryEntity, Builder>() {
-        @JvmOverloads
-        @JvmStatic
-        @JvmName("create")
-        operator fun invoke(name: String,
-                            roots: List<KotlinScriptLibraryRoot>,
-                            indexSourceRoots: Boolean,
-                            usedInScripts: Set<KotlinScriptId>,
-                            entitySource: EntitySource,
-                            init: (Builder.() -> Unit)? = null): KotlinScriptLibraryEntity {
-            val builder = builder()
-            builder.name = name
-            builder.roots = roots.toMutableWorkspaceList()
-            builder.indexSourceRoots = indexSourceRoots
-            builder.usedInScripts = usedInScripts.toMutableWorkspaceSet()
-            builder.entitySource = entitySource
-            init?.invoke(builder)
-            return builder
-        }
+  companion object : EntityType<KotlinScriptLibraryEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      name: String,
+      roots: List<KotlinScriptLibraryRoot>,
+      indexSourceRoots: Boolean,
+      usedInScripts: Set<KotlinScriptId>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): KotlinScriptLibraryEntity {
+      val builder = builder()
+      builder.name = name
+      builder.roots = roots.toMutableWorkspaceList()
+      builder.indexSourceRoots = indexSourceRoots
+      builder.usedInScripts = usedInScripts.toMutableWorkspaceSet()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
     }
-    //endregion
+  }
+  //endregion
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinScriptLibraryEntity,
-                                      modification: KotlinScriptLibraryEntity.Builder.() -> Unit): KotlinScriptLibraryEntity = modifyEntity(
-    KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: KotlinScriptLibraryEntity,
+  modification: KotlinScriptLibraryEntity.Builder.() -> Unit,
+): KotlinScriptLibraryEntity {
+  return modifyEntity(KotlinScriptLibraryEntity.Builder::class.java, entity, modification)
+}
 //endregion

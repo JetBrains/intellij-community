@@ -1,2 +1,1 @@
-//class
 public interface Test {}

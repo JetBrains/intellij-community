@@ -1,0 +1,7 @@
+// FIX: Use property access syntax
+// LANGUAGE_VERSION: 2.1
+
+fun main() {
+    val j = J()
+    j.setX(j::x)
+}

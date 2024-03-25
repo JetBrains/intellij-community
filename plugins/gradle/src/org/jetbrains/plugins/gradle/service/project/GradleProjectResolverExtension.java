@@ -25,10 +25,6 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
-import org.gradle.tooling.GradleConnectionException;
-import org.gradle.tooling.IntermediateResultHandler;
-import org.gradle.tooling.model.BuildModel;
-import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
@@ -36,8 +32,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
-import com.intellij.gradle.toolingExtension.impl.modelAction.ModelsHolder;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener;
 
 import java.util.*;
 
@@ -149,28 +145,9 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    */
   void preImportCheck();
 
-  /**
-   * Called once Gradle has loaded projects but before any tasks execution.
-   * These models do not contain those models which is created when build finished.
-   * <p>
-   * Note: This method is called from a Gradle connection thread, within the {@link IntermediateResultHandler} passed to the
-   * tooling api.
-   *
-   * @param models obtained after projects loaded phase
-   * @see #getProjectsLoadedModelProviders()
-   */
-  default void projectsLoaded(@Nullable ModelsHolder<BuildModel, ProjectModel> models) {}
-
-  /**
-   * Called once Gradle has finished executing everything, including any tasks that might need to be run. The models are obtained
-   * separately and in some cases before this method is called.
-   *
-   * @param exception the exception thrown by Gradle, if everything completes successfully then this will be null.
-   *
-   * Note: This method is called from a Gradle connection thread, within the {@link org.gradle.tooling.ResultHandler} passed to the
-   * tooling api.
-   */
-  default void buildFinished(@Nullable GradleConnectionException exception) { }
+  default @Nullable GradleBuildActionListener createBuildListener() {
+    return null;
+  }
 
   /**
    * Allows extension to contribute to init script

@@ -16,7 +16,7 @@ All the child spans under your provided span will be collected too.
 To visualize spans you can use [Jaeger](https://www.jaegertracing.io/).
 
 - Meters:
-To get reported meters use `com.intellij.tools.ide.metrics.collector.OpenTelemetryMeterCollector`.  
+To get reported meters use `com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector`.  
 You can provide filter for metrics to narrow down scope of collected metrics.  
 Also, you should provide metrics selection strategy (SUM, LATEST, etc.), since OpenTelemetry reports, for example, counters and gauges in different manner.
 

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -43,6 +45,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -212,12 +215,29 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 target.nameAsSafeName
             }
             expression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, getParameterName())
+        } else if (target is KtTypeParameter) {
+            expression.putCopyableUserData(CodeToInline.TYPE_PARAMETER_USAGE_KEY, target.nameAsName)
         } else if (resolve == (originalDeclaration as? KtNamedFunction)?.receiverTypeReference && isAnonymousFunctionWithReceiver && expression.getReceiverExpression() == null) {
             expression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
         }
 
+        fun isImportable(t: KtNamedDeclaration): Boolean {
+            analyze(t) {
+                val resolvedSymbol = t.getSymbol()
+                val containingSymbol = resolvedSymbol.getContainingSymbol() ?: return true
+                if (containingSymbol is KtSymbolWithMembers) {
+                    val staticScope = containingSymbol.getStaticMemberScope()
+                    return resolvedSymbol in staticScope.getAllSymbols()
+                }
+                return false
+            }
+        }
+
         val targetParent = target?.parent
-        if (targetParent is KtFile) {
+        if (targetParent is KtFile ||
+            (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
+            target != null && isImportable(target)
+        ) {
             val importableFqName = target.fqName ?: return@forEachDescendantOfType
             val shortName = importableFqName.shortName()
             val ktFile = expression.containingKtFile

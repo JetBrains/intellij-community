@@ -1,2 +1,1 @@
-//class
 interface A {}

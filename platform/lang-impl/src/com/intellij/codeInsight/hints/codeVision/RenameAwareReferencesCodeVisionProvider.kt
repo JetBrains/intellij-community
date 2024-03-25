@@ -66,11 +66,9 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     val virtualFile = file.viewProvider.virtualFile
     if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return CodeVisionState.READY_EMPTY
 
-    val renamedElementToSkip = file.getUserData(REFACTORING_DATA_KEY)?.let {
-      when (it) {
-        is SuggestedRenameData -> it.declaration
-        else -> null
-      }
+    val renamedElementToSkip = when (val refactoringData = file.getUserData(REFACTORING_DATA_KEY)) {
+      is SuggestedRenameData -> refactoringData.declaration
+      else -> null
     }
 
     val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
@@ -88,8 +86,8 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
       }))
     }
 
-    stamp?.let {
-      cacheService.storeVisionDataForEditor(editor, id, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(lenses, it))
+    if (stamp != null) {
+      cacheService.storeVisionDataForEditor(editor, id, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(lenses, stamp))
     }
     return CodeVisionState.Ready(lenses)
   }

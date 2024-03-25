@@ -11,9 +11,9 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.BlockTerminalColors
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ui.JBUI
+import org.jetbrains.plugins.terminal.exp.TerminalUi.useTerminalDefaultBackground
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -46,7 +46,7 @@ class SimpleTerminalView(
   init {
     editor = createEditor()
     controller = SimpleTerminalController(settings, session, editor)
-    component = SimpleTerminalPanel(editor, this)
+    component = SimpleTerminalPanel(editor)
     editor.addFocusListener(object : FocusChangeListener {
       override fun focusGained(editor: Editor) {
         controller.isFocused = true
@@ -61,9 +61,7 @@ class SimpleTerminalView(
   private fun createEditor(): EditorImpl {
     val document = DocumentImpl("", true)
     val editor = TerminalUiUtils.createOutputEditor(document, project, settings)
-    bindColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, this, editor) {
-      editor.setBackgroundColor(it)
-    }
+    editor.useTerminalDefaultBackground(this)
     editor.settings.isLineMarkerAreaShown = false
     editor.scrollPane.verticalScrollBarPolicy = if (withVerticalScroll) {
       JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
@@ -83,9 +81,9 @@ class SimpleTerminalView(
    * This wrapper is needed to provide the editor to the DataContext.
    * Editor is not proving it itself, because renderer mode is enabled ([EditorImpl.isRendererMode]).
    */
-  private inner class SimpleTerminalPanel(editor: Editor, parentDisposable: Disposable) : JPanel(), DataProvider {
+  private inner class SimpleTerminalPanel(editor: Editor) : JPanel(), DataProvider {
     init {
-      bindBackgroundToColorKey(BlockTerminalColors.DEFAULT_BACKGROUND, parentDisposable, editor)
+      background = TerminalUi.defaultBackground(editor)
       border = JBUI.Borders.emptyLeft(TerminalUi.alternateBufferLeftInset)
       layout = BorderLayout()
       add(editor.component, BorderLayout.CENTER)

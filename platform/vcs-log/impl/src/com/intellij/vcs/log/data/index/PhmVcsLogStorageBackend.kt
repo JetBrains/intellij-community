@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
@@ -118,8 +116,8 @@ internal class PhmVcsLogStorageBackend(
                                   /* lockContext = */ storageLockContext)
       Disposer.register(this, Disposable { catchAndWarn(renames::close) })
 
-      paths = VcsLogPathsIndex(storageId, storage, roots, storageLockContext, errorHandler, renames, useDurableEnumerator, this)
-      users = VcsLogUserIndex(storageId, storageLockContext, userRegistry, errorHandler, this)
+      paths = VcsLogPathsIndex.create(storageId, storageLockContext, storage, roots, renames, useDurableEnumerator, errorHandler, this)
+      users = VcsLogUserIndex.create(storageId, storageLockContext, userRegistry, errorHandler, this)
       trigrams = VcsLogMessagesTrigramIndex(storageId, storageLockContext, errorHandler, this)
 
       reportEmpty()

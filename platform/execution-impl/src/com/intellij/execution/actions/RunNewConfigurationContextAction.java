@@ -13,12 +13,12 @@ public final class RunNewConfigurationContextAction extends RunContextAction {
   }
 
   @Override
-  protected @Nullable RunnerAndConfigurationSettings findExisting(ConfigurationContext context) {
+  protected @Nullable RunnerAndConfigurationSettings findExisting(@NotNull ConfigurationContext context) {
     return null;
   }
 
   @Override
-  protected boolean isEnabledFor(RunConfiguration configuration, ConfigurationContext context) {
+  protected boolean isEnabledFor(@NotNull RunConfiguration configuration, @NotNull ConfigurationContext context) {
     return super.isEnabledFor(configuration) && isNewConfiguration(configuration, context);
   }
 

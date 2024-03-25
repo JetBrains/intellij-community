@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.nj2k.getOrCreateCompanionObject
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.COMPANION
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.OBJECT
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 
 class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
@@ -36,6 +37,9 @@ class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : Rec
         for (declaration in declarations) {
             if (declaration is JKOtherModifiersOwner) {
                 declaration.otherModifierElements -= declaration.elementByModifier(OtherModifier.STATIC)!!
+            }
+            if (declaration is JKModalityOwner) {
+                declaration.modality = FINAL
             }
             context.externalCodeProcessor.getMember(declaration)?.let {
                 it.isStatic = true

@@ -6,8 +6,10 @@ import com.intellij.platform.ml.*
 
 internal class TypingFeatures : TierDescriptor.Default(TierTyping) {
   companion object {
-    val TIME_SINCE_LAST_TYPING = FeatureDeclaration.long("time_since_last_typing")
+    val TIME_SINCE_LAST_TYPING = FeatureDeclaration.long("time_since_last_typing").nullable()
   }
+
+  override val descriptionPolicy: DescriptionPolicy = DescriptionPolicy(false, true)
 
   override val descriptionDeclaration: Set<FeatureDeclaration<*>> = TypingSpeedTracker.getFeatures() + TIME_SINCE_LAST_TYPING
 

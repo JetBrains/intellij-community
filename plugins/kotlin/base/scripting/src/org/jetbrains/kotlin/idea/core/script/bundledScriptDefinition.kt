@@ -22,7 +22,6 @@ import kotlin.script.experimental.dependencies.DependenciesResolver
 import kotlin.script.experimental.dependencies.ScriptDependencies
 import kotlin.script.experimental.dependencies.asSuccess
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
-import kotlin.script.experimental.location.ScriptExpectedLocation
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 
@@ -39,11 +38,6 @@ class BundledScriptDefinitionContributor(val project: Project) : ScriptDefinitio
 
 class BundledIdeScriptDefinition internal constructor(project: Project) : KotlinScriptDefinition(ScriptTemplateWithArgs::class) {
     override val dependencyResolver = BundledKotlinScriptDependenciesResolver(project)
-
-    // Since the definition is used for basic .kts files, its "expected-locations" must be consistent with the "isStandalone" flag.
-    // Basic .kts files are standalone => expected to be under a project root. See KT-65674.
-    override val scriptExpectedLocations: List<ScriptExpectedLocation>
-        get() = listOf(ScriptExpectedLocation.Project)
 }
 
 

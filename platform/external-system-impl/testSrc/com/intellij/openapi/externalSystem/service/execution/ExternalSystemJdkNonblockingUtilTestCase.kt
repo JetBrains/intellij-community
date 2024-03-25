@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
@@ -18,8 +19,10 @@ abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilT
     sdkLookupProvider = SdkLookupProviderImpl()
   }
 
-  open fun nonblockingResolveJdkInfo(jdkReference: String?) =
-    sdkLookupProvider.nonblockingResolveJdkInfo(projectSdk, jdkReference)
+  open fun nonblockingResolveJdkInfo(jdkReference: String?): SdkInfo {
+    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+    return sdkLookupProvider.nonblockingResolveJdkInfo(projectSdk, jdkReference)
+  }
 
   fun assertSdkInfo(versionString: String, homePath: String, actualJdkReference: String?) {
     val actualSdkInfo = nonblockingResolveJdkInfo(actualJdkReference)

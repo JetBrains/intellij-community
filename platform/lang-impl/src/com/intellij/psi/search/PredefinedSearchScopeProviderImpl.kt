@@ -56,8 +56,10 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
                                    currentSelection: Boolean,
                                    usageView: Boolean,
                                    showEmptyScopes: Boolean): List<SearchScope> {
-    val context = ScopeCollectionContext.collectContext(
-      project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    val context = SlowOperations.knownIssue("IDEA-349676, EA-696744").use {
+      ScopeCollectionContext.collectContext(
+        project, dataContext, suggestSearchInLibs, prevSearchFiles, usageView, showEmptyScopes)
+    }
     val result = context.result
     result.addAll(context.collectRestScopes(project, currentSelection, usageView, showEmptyScopes))
     return ArrayList(result)

@@ -64,6 +64,7 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
+    <!--suppress LightServiceMigrationXML -->
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.ShortNamesCacheService"/>
 
     <lang.importOptimizer

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
@@ -162,8 +162,8 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
     for (RefParameter parameter : result) {
       if (parameter != null && !PsiUtil.isIgnoredName(parameter.getName()) &&
-          !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspectionBase.UNUSED_PARAMETERS_SHORT_NAME,
-                                                    UnusedSymbolLocalInspectionBase.UNUSED_ID)) {
+          !((RefElementImpl)parameter).isSuppressed(UnusedSymbolLocalInspection.UNUSED_PARAMETERS_SHORT_NAME,
+                                                    UnusedSymbolLocalInspection.UNUSED_ID)) {
         res.add(parameter);
       }
     }

@@ -261,10 +261,13 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
+  /**
+   * No-op if [path] is already present in recent projects
+   */
   fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
     synchronized(stateLock) {
-      state.additionalInfo.put(path, info)
-      modCounter.increment()
+      val presentInfo = state.additionalInfo.putIfAbsent(path, info)
+      if (presentInfo == null) modCounter.increment()
     }
   }
 
@@ -421,6 +424,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   fun getDisplayName(path: String): String? {
     synchronized(stateLock) {
       return state.additionalInfo.get(path)?.displayName
+    }
+  }
+
+  fun getCurrentBranchName(path: String): String? {
+    synchronized(stateLock) {
+      return state.additionalInfo.get(path)?.currentBranch
     }
   }
 

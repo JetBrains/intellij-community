@@ -1,4 +1,6 @@
 {
+    "is_disabled": "true",
+    "is_disabled_reason": "KT-66248",
     "modules": [
         { "name": "common", "platform": "common" },
         { "name": "intermediate", "platform": "common", "refinement_dependencies": ["common"] },

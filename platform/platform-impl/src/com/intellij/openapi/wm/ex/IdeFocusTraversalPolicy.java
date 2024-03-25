@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex;
 
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -52,7 +52,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
     }
 
     if (siblingComponent instanceof EditorsSplitters) {
-      Component defaultFocusableComponent = EditorsSplitters.findDefaultComponentInSplitters(getProject());
+      Component defaultFocusableComponent = EditorsSplitters.Companion.findDefaultComponentInSplitters(getProject());
       if (defaultFocusableComponent != null) {
         return defaultFocusableComponent;
       }
@@ -164,7 +164,7 @@ public class IdeFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
            component instanceof JComboBox;
   }
 
-  // Create our own subclass and change accept to public so that we can call accept.
+  // Create our own subclass and change accepts to public so that we can call accept.
   private static final class SwingDefaultFocusTraversalPolicy extends DefaultFocusTraversalPolicy {
     @Override
     public boolean accept(Component aComponent) {

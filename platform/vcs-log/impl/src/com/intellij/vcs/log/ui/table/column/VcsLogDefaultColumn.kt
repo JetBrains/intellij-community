@@ -13,7 +13,6 @@ import com.intellij.vcs.log.graph.DefaultColorGenerator
 import com.intellij.vcs.log.history.FileHistoryPaths.filePathOrDefault
 import com.intellij.vcs.log.history.FileHistoryPaths.hasPathsInformation
 import com.intellij.vcs.log.impl.CommonUiProperties
-import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.onPropertyChange
 import com.intellij.vcs.log.paint.GraphCellPainter
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter

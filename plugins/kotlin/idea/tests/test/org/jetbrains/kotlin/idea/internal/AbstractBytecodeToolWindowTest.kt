@@ -7,17 +7,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.actions.bytecode.BytecodeGenerationResult
+import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.idea.actions.bytecode.BytecodeGenerationResult
-import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 
 abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -43,7 +43,7 @@ abstract class AbstractBytecodeToolWindowTest : KotlinLightCodeInsightFixtureTes
 
         val bytecode = runBlocking(Dispatchers.Default) {
             readAction {
-                KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration)
+                KotlinBytecodeToolWindow.getBytecodeForFile(file, configuration, false)
             }
         }
 

@@ -3,6 +3,7 @@ package com.intellij.packaging.elements;
 
 import com.intellij.java.workspace.entities.CompositePackagingElementEntity;
 import com.intellij.java.workspace.entities.PackagingElementEntity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.platform.workspace.storage.ExternalEntityMapping;
 import com.intellij.platform.workspace.storage.MutableExternalEntityMapping;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 public abstract class CompositePackagingElement<S> extends PackagingElement<S> implements RenameablePackagingElement {
+  private final static Logger LOG = Logger.getInstance(CompositePackagingElement.class);
   private final List<PackagingElement<?>> myChildren = new ArrayList<>();
   private List<PackagingElement<?>> myUnmodifiableChildren;
 
@@ -217,8 +219,8 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
       ExternalEntityMapping<PackagingElement<?>> mapping = myStorage.getBase().getExternalMapping(PackagingExternalMapping.key);
       PackagingElementEntity packagingElementEntity = (PackagingElementEntity)mapping.getFirstEntity(this);
       if (packagingElementEntity == null) {
-        throw new RuntimeException(
-          this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
+        LOG.error(this.getClass().getName() + " - " + myStorage.getBase().getClass().getName() + " - " + myStorage.getClass().getName());
+        return Collections.emptyList();
       }
       if (packagingElementEntity instanceof CompositePackagingElementEntity entity) {
         return ContainerUtil.map(entity.getChildren().iterator(), o -> {
@@ -231,7 +233,8 @@ public abstract class CompositePackagingElement<S> extends PackagingElement<S> i
         });
       }
       else {
-        throw new RuntimeException("Expected composite element here");
+        LOG.error("Expected composite element here");
+        return Collections.emptyList();
       }
     }
   }

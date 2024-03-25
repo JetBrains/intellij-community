@@ -5,6 +5,12 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * </p>
+ */
 public class DumbProgressIndicator implements StandardProgressIndicator {
 
   @Obsolete

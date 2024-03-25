@@ -16,8 +16,11 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.util.*
 
+@Suppress("ObjectPropertyName")
 @OptIn(ExperimentalSerializationApi::class)
-private val json = Json {
+@SettingsInternalApi
+@Internal
+val __json: Json = Json {
   prettyPrint = true
   prettyPrintIndent = "  "
   ignoreUnknownKeys = true
@@ -26,6 +29,7 @@ private val json = Json {
 private val lookup = MethodHandles.lookup()
 private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
 
+@SettingsInternalApi
 @Internal
 class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
   @JvmField
@@ -39,11 +43,11 @@ class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
   }
 
   override fun toJson(bean: Any, filter: SerializationFilter?): JsonElement {
-    return json.encodeToJsonElement(serializer, bean)
+    return __json.encodeToJsonElement(serializer, bean)
   }
 
   override fun fromJson(currentValue: Any?, element: JsonElement): Any? {
-    return if (element == JsonNull) null else json.decodeFromJsonElement(serializer, element)
+    return if (element == JsonNull) null else __json.decodeFromJsonElement(serializer, element)
   }
 
   override fun serialize(bean: Any, parent: Element, filter: SerializationFilter?) {
@@ -62,9 +66,9 @@ class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
     return element
   }
 
-  private fun encodeToJson(o: Any): String = json.encodeToString(serializer, o)
+  private fun encodeToJson(o: Any): String = __json.encodeToString(serializer, o)
 
-  private fun decodeFromJson(data: String): Any = json.decodeFromString(serializer, data)
+  private fun decodeFromJson(data: String): Any = __json.decodeFromString(serializer, data)
 
   override fun <T : Any> isBoundTo(element: T, adapter: DomAdapter<T>): Boolean {
     throw UnsupportedOperationException("Only root object is supported")
@@ -72,11 +76,11 @@ class KotlinxSerializationBinding(aClass: Class<*>) : Binding, RootBinding {
 
   override fun deserializeToJson(element: Element): JsonElement {
     val cdata = (element.content.firstOrNull() as? Text)?.value ?: return JsonObject(Collections.emptyMap())
-    return json.parseToJsonElement(cdata)
+    return __json.parseToJsonElement(cdata)
   }
 
   override fun <T : Any> deserialize(context: Any?, element: T, adapter: DomAdapter<T>): Any {
-    val cdata = (if (element is Element) (element.content.firstOrNull() as? Text)?.text else (element as XmlElement).content) ?: return json.decodeFromString(serializer, "{}")
+    val cdata = (if (element is Element) (element.content.firstOrNull() as? Text)?.text else (element as XmlElement).content) ?: return __json.decodeFromString(serializer, "{}")
     return decodeFromJson(cdata)
   }
 }

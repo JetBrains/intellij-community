@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LeakingThis")
 
 package com.intellij.ui.tabs.impl
@@ -89,10 +89,12 @@ private const val ADJUST_BORDERS = true
 private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 
 @DirtyUI
-open class JBTabsImpl(private var project: Project?,
-                      parentDisposable: Disposable) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
-                                                      PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
-                                                      QuickActionProvider, MorePopupAware, Accessible {
+open class JBTabsImpl(
+  private var project: Project?,
+  parentDisposable: Disposable,
+) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
+    PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
+    QuickActionProvider, MorePopupAware, Accessible {
   companion object {
     @JvmField
     val PINNED: Key<Boolean> = Key.create("pinned")
@@ -1616,16 +1618,18 @@ open class JBTabsImpl(private var project: Project?,
   }
 
   private fun updateSideComponent(tabInfo: TabInfo) {
-    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar)
-    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar)
+    updateToolbar(tabInfo, tabInfo.foreSideComponent, infoToForeToolbar, null)
+    updateToolbar(tabInfo, tabInfo.sideComponent, infoToToolbar, tabInfo.group)
   }
 
-  private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>) {
+  private fun updateToolbar(tabInfo: TabInfo, side: JComponent?, toolbars: MutableMap<TabInfo, Toolbar>, group: ActionGroup?) {
     val old = toolbars.get(tabInfo)
     old?.let { remove(it) }
-    val toolbar = Toolbar(this, tabInfo, side)
-    toolbars.put(tabInfo, toolbar)
-    add(toolbar)
+    if (side != null || group != null) {
+      val toolbar = Toolbar(this, tabInfo, side, group)
+      toolbars.put(tabInfo, toolbar)
+      add(toolbar)
+    }
   }
 
   private fun updateTabActions(info: TabInfo) {
@@ -1771,10 +1775,9 @@ open class JBTabsImpl(private var project: Project?,
 
   override fun getJBTabs(): JBTabs = this
 
-  class Toolbar(private val tabs: JBTabsImpl, private val info: TabInfo, side: Component?) : JPanel(BorderLayout()) {
+  class Toolbar(private val tabs: JBTabsImpl, private val info: TabInfo, side: Component?, group: ActionGroup?) : JPanel(BorderLayout()) {
     init {
       isOpaque = false
-      val group = info.group
       if (group != null) {
         val place = info.place
         val toolbar = ActionManager.getInstance()

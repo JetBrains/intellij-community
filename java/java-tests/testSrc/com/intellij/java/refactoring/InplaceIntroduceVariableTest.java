@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -240,6 +240,17 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
   public void testSelectLValueThenFilterItFinal() {
     doTest(null);
+  }
+
+  public void testSuperExpression() {
+    try {
+      doTest(null);
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Selected expression cannot be extracted", e.getMessage());
+    }
   }
 
   public void testHeavilyBrokenFile() {

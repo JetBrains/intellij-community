@@ -20,6 +20,9 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val document: Document by lazy { editor.getDocument() }
 
+  private val caretPosition
+    get() = editor.getCaretModel().getLogicalPosition()
+
   var text: String
     get() = document.getText()
     set(value) {
@@ -28,8 +31,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
       }
     }
 
-  val getCaretPosition
-    get() = editor.getCaretModel().getLogicalPosition()
+  fun getCaretLine() = caretPosition.getLine() + 1
 
   fun setCaretPosition(line: Int, column: Int) {
     setFocus()
@@ -70,7 +72,7 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     get() = gutter.getIconAreaOffset()
 
   fun getIcon(line: Int) =
-    icons.first { it.line == line - 1 }.mark.getIcon().toString().substringAfterLast("/")
+    icons.firstOrNull { it.line == line - 1 }?.mark?.getIcon().toString().substringAfterLast("/")
 
   inner class GutterIcon(private val data: GutterIconWithLocation) {
     val line: Int

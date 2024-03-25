@@ -84,5 +84,3 @@ public interface WorkspaceModelInternal: WorkspaceModel {
   public suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>>
 }
 
-@get:ApiStatus.Internal
-public val WorkspaceModel.internal: WorkspaceModelInternal get() = this as WorkspaceModelInternal

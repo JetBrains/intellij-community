@@ -352,4 +352,52 @@ public class JavaFormatterNewLineTest extends AbstractJavaFormatterTest {
                    """);
   }
 
+  public void testMoveSimpleLambdaOnNewLineWhenPresent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    doMethodTest("""
+                   Runnable r = () -> { return; };
+                   """,
+                 """
+                   Runnable r = () -> {
+                       return;
+                   };
+                   """);
+  }
+
+  public void testDoNotMoveSimpleLambdaOnNewLineWhenAbsent() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Runnable r = () -> {};
+                   """,
+                 """
+                   Runnable r = () -> { };
+                   """);
+  }
+
+  public void testDoNotMoveSimpleLambdaOnNewLineWhenPresentAndSettingsDisabled() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = false;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Runnable r = () -> { return; };
+                   """,
+                 """
+                   Runnable r = () -> { return; };
+                   """);
+  }
+
+  public void testDoNotMoveSimpleLambdaOnNewLineWithoutCodeBlock() {
+    getJavaSettings().NEW_LINE_WHEN_BODY_IS_PRESENTED = true;
+    getSettings().KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = true;
+    getSettings().SPACE_WITHIN_BRACES = true;
+    doMethodTest("""
+                   Runnable r = () -> foo();
+                   """,
+                 """
+                   Runnable r = () -> foo();
+                   """);
+  }
 }

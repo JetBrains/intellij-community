@@ -2,7 +2,10 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
-import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.DaemonBundle
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.NavigateAction
 import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoTargetHandler

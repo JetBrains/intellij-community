@@ -9,7 +9,7 @@ val ExtProperty<*, *>.wsCode: String
     val isChild = valueType.getRefType().child
     val annotation = if (isChild) "@${Child} " else ""
     val generic = if (receiver.builderWithTypeParameter) "<out ${receiver.javaFullName}>" else ""
-    sectionNoBrackets("$generatedCodeVisibilityModifier var ${receiver.javaBuilderName}$generic.$name: $annotation${valueType.javaType}") {
-      line("by WorkspaceEntity.extension()")
+    sectionNoBrackets("$generatedCodeVisibilityModifier var ${receiver.javaBuilderName}$generic.$name: $annotation${valueType.javaBuilderTypeWithGeneric}") {
+      line("by WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
     }
   }

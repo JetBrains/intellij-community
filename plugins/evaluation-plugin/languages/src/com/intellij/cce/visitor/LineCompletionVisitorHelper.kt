@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.CodeFragment
@@ -17,6 +17,7 @@ class LineCompletionVisitorHelper {
   fun getFile(): CodeFragment {
     codeFragment?.let { file ->
       lines.filter { it.getChildren().isNotEmpty() }.forEach { file.addChild(it) }
+      file.validateCorrectness()
       return file
     }
     throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
@@ -38,6 +39,18 @@ class LineCompletionVisitorHelper {
       lines.find { it.offset <= element.startOffset && it.offset + it.text.length > element.startOffset }
         ?.takeIf { it.getChildren().all { it.offset != element.startOffset } }
         ?.addChild(CodeToken(text, element.startOffset))
+    }
+  }
+
+  private fun CodeFragment.validateCorrectness() {
+    var lastEndOffset = 0
+    for (line in getChildren()) {
+      assert(line is CodeLine) { "Code fragment should only contain code lines" }
+      val tokens = (line as CodeLine).getChildren()
+      for (token in tokens) {
+        assert(lastEndOffset <= token.offset) { "Code tokens shouldn't overlap" }
+        lastEndOffset = token.offset + token.text.length
+      }
     }
   }
 }

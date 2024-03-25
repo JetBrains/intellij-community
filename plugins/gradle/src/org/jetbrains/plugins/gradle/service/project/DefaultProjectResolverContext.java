@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.project;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.issue.BuildIssue;
-import com.intellij.gradle.toolingExtension.impl.modelAction.AllModels;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
@@ -14,20 +13,25 @@ import com.intellij.util.containers.CollectionFactory;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.gradle.tooling.model.BuildModel;
+import org.gradle.tooling.model.ProjectModel;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
+import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
+import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class DefaultProjectResolverContext extends UserDataHolderBase implements ProjectResolverContext {
   @NotNull private final ExternalSystemTaskId myExternalSystemTaskId;
   @NotNull private final String myProjectPath;
@@ -35,8 +39,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
-  @NotNull
-  private AllModels myModels;
+  @Nullable private GradleIdeaModelHolder myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
   @Nullable private String myBuildSrcGroup;
@@ -50,20 +53,10 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
                                        @Nullable final GradleExecutionSettings settings,
                                        @NotNull final ExternalSystemTaskNotificationListener listener,
                                        @Nullable GradlePartialResolverPolicy resolverPolicy) {
-    this(externalSystemTaskId, projectPath, settings, null, listener, resolverPolicy);
-  }
-
-
-  public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
-                                       @NotNull final String projectPath,
-                                       @Nullable final GradleExecutionSettings settings,
-                                       final ProjectConnection connection,
-                                       @NotNull final ExternalSystemTaskNotificationListener listener,
-                                       @Nullable GradlePartialResolverPolicy resolverPolicy) {
     myExternalSystemTaskId = externalSystemTaskId;
     myProjectPath = projectPath;
     mySettings = settings;
-    myConnection = connection;
+    myConnection = null;
     myListener = listener;
     myPolicy = resolverPolicy;
     myCancellationTokenSource = GradleConnector.newCancellationTokenSource();
@@ -109,6 +102,23 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myCancellationTokenSource;
   }
 
+  @Override
+  public boolean isCancellationRequested() {
+    return myCancellationTokenSource.token().isCancellationRequested();
+  }
+
+  @Override
+  public void cancel() {
+    myCancellationTokenSource.cancel();
+  }
+
+  @Override
+  public void checkCancelled() {
+    if (isCancellationRequested()) {
+      throw new ProcessCanceledException();
+    }
+  }
+
   @NotNull
   @Override
   public ExternalSystemTaskNotificationListener getListener() {
@@ -138,49 +148,56 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     return myGradleUserHome;
   }
 
-  @NotNull
-  @Override
-  public AllModels getModels() {
+  public @NotNull GradleIdeaModelHolder getModels() {
+    assert myModels != null;
     return myModels;
   }
 
-  @Override
-  public void setModels(@NotNull AllModels models) {
+  public void setModels(@NotNull GradleIdeaModelHolder models) {
     myModels = models;
   }
 
-  @Nullable
   @Override
-  public <T> T getExtraProject(Class<T> modelClazz) {
-    return myModels.getModel(modelClazz);
-  }
-
-  @Nullable
-  @Override
-  public <T> T getExtraProject(@Nullable IdeaModule module, Class<T> modelClazz) {
-    return module == null ? myModels.getModel(modelClazz) : myModels.getModel(module, modelClazz);
+  public @NotNull Build getRootBuild() {
+    return getModels().getRootBuild();
   }
 
   @Override
-  public boolean hasModulesWithModel(@NotNull Class modelClazz) {
-    return myModels.hasModulesWithModel(modelClazz);
+  public @NotNull Collection<? extends Build> getNestedBuilds() {
+    return getModels().getNestedBuilds();
   }
 
   @Override
-  public void checkCancelled() {
-    if (myCancellationTokenSource.token().isCancellationRequested()) {
-      throw new ProcessCanceledException();
-    }
+  public @NotNull Collection<? extends Build> getAllBuilds() {
+    return getModels().getAllBuilds();
+  }
+
+  @Override
+  public <T> @Nullable T getRootModel(@NotNull Class<T> modelClass) {
+    return getModels().getRootModel(modelClass);
+  }
+
+  @Override
+  public <T> @Nullable T getBuildModel(@NotNull BuildModel buildModel, @NotNull Class<T> modelClass) {
+    return getModels().getBuildModel(buildModel, modelClass);
+  }
+
+  @Override
+  public <T> @Nullable T getProjectModel(@NotNull ProjectModel projectModel, @NotNull Class<T> modelClass) {
+    return getModels().getProjectModel(projectModel, modelClass);
+  }
+
+  @Override
+  public boolean hasModulesWithModel(@NotNull Class<?> modelClass) {
+    return getModels().hasModulesWithModel(modelClass);
   }
 
   @Override
   public String getProjectGradleVersion() {
     if (myProjectGradleVersion == null) {
-      if (myBuildEnvironment == null) {
-        myBuildEnvironment = getModels().getBuildEnvironment();
-      }
-      if (myBuildEnvironment != null) {
-        myProjectGradleVersion = myBuildEnvironment.getGradle().getGradleVersion();
+      var buildEnvironment = getBuildEnvironment();
+      if (buildEnvironment != null) {
+        myProjectGradleVersion = buildEnvironment.getGradle().getGradleVersion();
       }
     }
     return myProjectGradleVersion;
@@ -203,7 +220,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       return myBuildSrcGroup;
     }
     String parentRootDir = module.getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir().getParent();
-    return getModels().getAllBuilds().stream()
+    return getAllBuilds().stream()
       .filter(b -> b.getBuildIdentifier().getRootDir().toString().equals(parentRootDir))
       .findFirst()
       .map(Build::getName)
@@ -220,14 +237,16 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myBuildEnvironment = buildEnvironment;
   }
 
-  @Nullable
-  public BuildEnvironment getBuildEnvironment() {
+  @Override
+  public @Nullable BuildEnvironment getBuildEnvironment() {
+    if (myBuildEnvironment == null && myModels != null) {
+      myBuildEnvironment = myModels.getBuildEnvironment();
+    }
     return myBuildEnvironment;
   }
 
-  @Nullable
-  @ApiStatus.Experimental
-  public GradlePartialResolverPolicy getPolicy() {
+  @Override
+  public @Nullable GradlePartialResolverPolicy getPolicy() {
     return myPolicy;
   }
 

@@ -36,7 +36,7 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         ServiceWithImplementation(ScriptDependenciesModificationTracker::class.java) { ScriptDependenciesModificationTracker() },
         ServiceWithImplementation(KotlinCacheService::class.java, ::KotlinCacheServiceImpl),
         ServiceWithImplementation(ResolutionAnchorProvider::class.java) { DummyResolutionAnchorProvider() },
-        ServiceWithImplementation(CodeAnalyzerInitializer::class.java) { DummyCodeAnalyzerInitializer() },
+        ServiceWithImplementation(CodeAnalyzerInitializer::class.java) { DummyCodeAnalyzerInitializer(project) },
         ServiceWithImplementation(ModuleAnnotationsResolver::class.java, ::IdeModuleAnnotationsResolver),
         ServiceWithImplementation(DeclarationProviderFactoryService::class.java) { PluginDeclarationProviderFactoryService() }
 

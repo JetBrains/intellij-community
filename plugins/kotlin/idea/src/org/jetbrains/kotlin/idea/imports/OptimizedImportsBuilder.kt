@@ -229,7 +229,7 @@ class OptimizedImportsBuilder(
                         expressionToAnalyze,
                         bindingContext,
                         newScope,
-                        trace = BindingTraceContext()
+                        trace = BindingTraceContext(bindingContext.project)
                     )
 
                     testLog?.append("Additional checking of reference $ref\n")

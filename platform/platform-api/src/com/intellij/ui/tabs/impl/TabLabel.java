@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -42,28 +42,28 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   private static final int MIN_WIDTH_TO_CROP_ICON = 39;
 
   // If this System property is set to true 'close' button would be shown on the left of text (it's on the right by default)
-  protected final SimpleColoredComponent myLabel;
+  protected final SimpleColoredComponent label;
 
-  private final LayeredIcon myIcon;
-  private Icon myOverlayedIcon;
+  private final LayeredIcon icon;
+  private Icon overlayedIcon;
 
-  private final TabInfo myInfo;
-  protected ActionPanel myActionPanel;
-  private boolean myCentered;
+  private final TabInfo info;
+  protected ActionPanel actionPanel;
+  private boolean isCentered;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean isCompressionEnabled;
   private boolean forcePaintBorders;
 
-  private final Wrapper myLabelPlaceholder = new Wrapper(false);
-  protected final JBTabsImpl myTabs;
+  private final Wrapper labelPlaceholder = new Wrapper(false);
+  protected final JBTabsImpl tabs;
 
   public TabLabel(JBTabsImpl tabs, final TabInfo info) {
     super(false);
 
-    myTabs = tabs;
-    myInfo = info;
+    this.tabs = tabs;
+    this.info = info;
 
-    myLabel = createLabel();
+    label = createLabel();
 
     // Allow focus so that user can TAB into the selected TabLabel and then
     // navigate through the other tabs using the LEFT/RIGHT keys.
@@ -71,14 +71,14 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     setOpaque(false);
     setLayout(new TabLabelLayout());
 
-    myLabelPlaceholder.setOpaque(false);
-    myLabelPlaceholder.setFocusable(false);
-    myLabel.setFocusable(false);
-    add(myLabelPlaceholder, BorderLayout.CENTER);
+    labelPlaceholder.setOpaque(false);
+    labelPlaceholder.setFocusable(false);
+    label.setFocusable(false);
+    add(labelPlaceholder, BorderLayout.CENTER);
 
     setAlignmentToCenter(true);
 
-    myIcon = createLayeredIcon();
+    icon = createLayeredIcon();
 
     addMouseListener(new MouseAdapter() {
       @Override
@@ -86,16 +86,16 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
           return;
         }
-        if (JBTabsImpl.isSelectionClick(e) && myInfo.isEnabled()) {
-          TabInfo selectedInfo = myTabs.getSelectedInfo();
-          if (selectedInfo != myInfo) {
-            myInfo.setPreviousSelection(selectedInfo);
+        if (JBTabsImpl.isSelectionClick(e) && TabLabel.this.info.isEnabled()) {
+          TabInfo selectedInfo = TabLabel.this.tabs.getSelectedInfo();
+          if (selectedInfo != TabLabel.this.info) {
+            TabLabel.this.info.setPreviousSelection(selectedInfo);
           }
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) {
             return;
           }
-          myTabs.select(info, true);
+          TabLabel.this.tabs.select(info, true);
           JBPopup container = PopupUtil.getPopupContainerFor(TabLabel.this);
           if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
             container.cancel();
@@ -113,7 +113,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
       @Override
       public void mouseReleased(final MouseEvent e) {
-        myInfo.setPreviousSelection(null);
+        TabLabel.this.info.setPreviousSelection(null);
         handlePopup(e);
       }
 
@@ -134,25 +134,25 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         @Override
         public void keyPressed(KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-            int index = myTabs.getIndexOf(myInfo);
+            int index = TabLabel.this.tabs.getIndexOf(TabLabel.this.info);
             if (index >= 0) {
               e.consume();
               // Select the previous tab, then set the focus its TabLabel.
-              TabInfo previous = myTabs.findEnabledBackward(index, true);
+              TabInfo previous = TabLabel.this.tabs.findEnabledBackward(index, true);
               if (previous != null) {
-                myTabs.select(previous, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+                TabLabel.this.tabs.select(previous, false).doWhenDone(() -> TabLabel.this.tabs.getSelectedLabel().requestFocusInWindow());
               }
             }
           }
           else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-            int index = myTabs.getIndexOf(myInfo);
+            int index = TabLabel.this.tabs.getIndexOf(TabLabel.this.info);
             if (index >= 0) {
               e.consume();
               // Select the previous tab, then set the focus its TabLabel.
-              TabInfo next = myTabs.findEnabledForward(index, true);
+              TabInfo next = TabLabel.this.tabs.findEnabledForward(index, true);
               if (next != null) {
                 // Select the next tab, then set the focus its TabLabel.
-                myTabs.select(next, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+                TabLabel.this.tabs.select(next, false).doWhenDone(() -> TabLabel.this.tabs.getSelectedLabel().requestFocusInWindow());
               }
             }
           }
@@ -177,25 +177,25 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   protected void setHovered(boolean value) {
     if (isHovered() == value) return;
     if (value) {
-      myTabs.setHovered(this);
+      tabs.setHovered(this);
     }
     else {
-      myTabs.unHover(this);
+      tabs.unHover(this);
     }
   }
 
   public boolean isHovered() {
-    return myTabs.isHoveredTab(this);
+    return tabs.isHoveredTab(this);
   }
 
   private boolean isSelected() {
-    return myTabs.getSelectedLabel() == this;
+    return tabs.getSelectedLabel() == this;
   }
 
   @Override
   public boolean isFocusable() {
     // we don't want the focus unless we are the selected tab
-    return myTabs.getSelectedLabel() == this && super.isFocusable();
+    return tabs.getSelectedLabel() == this && super.isFocusable();
   }
 
   private SimpleColoredComponent createLabel() {
@@ -204,17 +204,17 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       public Font getFont() {
         Font font = super.getFont();
 
-        return (isFontSet() || !myTabs.useSmallLabels()) ? font :
+        return (isFontSet() || !tabs.useSmallLabels()) ? font :
                RelativeFont.NORMAL.fromResource("EditorTabs.fontSizeOffset", -2, JBUIScale.scale(11f)).derive(StartupUiUtil.getLabelFont());
       }
 
       @Override
       protected Color getActiveTextColor(Color attributesColor) {
-        TabPainterAdapter painterAdapter = myTabs.tabPainterAdapter;
+        TabPainterAdapter painterAdapter = tabs.tabPainterAdapter;
         TabTheme theme = painterAdapter.getTabTheme();
         Color foreground;
-        if (myTabs.getSelectedInfo() == myInfo && (attributesColor == null || UIUtil.getLabelForeground().equals(attributesColor))) {
-          foreground = myTabs.isActiveTabs(myInfo) ? theme.getUnderlinedTabForeground() : theme.getUnderlinedTabInactiveForeground();
+        if (tabs.getSelectedInfo() == info && (attributesColor == null || UIUtil.getLabelForeground().equals(attributesColor))) {
+          foreground = tabs.isActiveTabs(info) ? theme.getUnderlinedTabForeground() : theme.getUnderlinedTabInactiveForeground();
         }
         else {
           foreground = super.getActiveTextColor(attributesColor);
@@ -247,7 +247,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public boolean isPinned() {
-    return myInfo != null && myInfo.isPinned();
+    return info != null && info.isPinned();
   }
 
   @Override
@@ -264,18 +264,18 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public void setAlignmentToCenter(boolean toCenter) {
-    if (myCentered == toCenter && getLabelComponent().getParent() != null) return;
+    if (isCentered == toCenter && getLabelComponent().getParent() != null) return;
 
     setPlaceholderContent(toCenter, getLabelComponent());
   }
 
   protected void setPlaceholderContent(boolean toCenter, JComponent component) {
-    myLabelPlaceholder.removeAll();
+    labelPlaceholder.removeAll();
 
     JComponent content = toCenter ? new Centerizer(component, Centerizer.TYPE.BOTH) : new Centerizer(component, Centerizer.TYPE.VERTICAL);
-    myLabelPlaceholder.setContent(content);
+    labelPlaceholder.setContent(content);
 
-    myCentered = toCenter;
+    isCentered = toCenter;
   }
 
   public void paintOffscreen(Graphics g) {
@@ -287,8 +287,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   @Override
   public void paint(final Graphics g) {
-    if (myTabs.isDropTarget(myInfo)) {
-      if (myTabs.getDropSide() == -1) {
+    if (tabs.isDropTarget(info)) {
+      if (tabs.getDropSide() == -1) {
         g.setColor(JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND);
         g.fillRect(0, 0, getWidth(), getHeight());
       }
@@ -301,7 +301,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   protected boolean shouldPaintFadeout() {
-    return !Registry.is("ui.no.bangs.and.whistles", false) && myTabs.isSingleRow();
+    return !Registry.is("ui.no.bangs.and.whistles", false) && tabs.isSingleRow();
   }
 
   protected void paintFadeout(final Graphics g) {
@@ -309,27 +309,27 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     try {
       Color tabBg = getEffectiveBackground();
       Color transparent = ColorUtil.withAlpha(tabBg, 0);
-      int borderThickness = myTabs.getBorderThickness();
+      int borderThickness = tabs.getBorderThickness();
       int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
 
       Rectangle myRect = getBounds();
-      myRect.height -= borderThickness + (isSelected() ? myTabs.getTabPainter().getTabTheme().getUnderlineHeight() : borderThickness);
+      myRect.height -= borderThickness + (isSelected() ? tabs.getTabPainter().getTabTheme().getUnderlineHeight() : borderThickness);
       // Fadeout for left part (needed only in top and bottom placements)
       if (myRect.x < 0) {
         Rectangle leftRect = new Rectangle(-myRect.x, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, leftRect, tabBg, transparent);
       }
 
-      Rectangle contentRect = myLabelPlaceholder.getBounds();
+      Rectangle contentRect = labelPlaceholder.getBounds();
       // Fadeout for right side before pin/close button (needed only in side placements and in squeezing layout)
-      if (contentRect.width < myLabelPlaceholder.getPreferredSize().width + myTabs.getTabHGap()) {
+      if (contentRect.width < labelPlaceholder.getPreferredSize().width + tabs.getTabHGap()) {
         Rectangle rightRect =
           new Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
       // Fadeout for right side
-      else if (myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
-               myRect.width < getPreferredSize().width + myTabs.getTabHGap()) {
+      else if (tabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
+               myRect.width < getPreferredSize().width + tabs.getTabHGap()) {
         Rectangle rightRect = new Rectangle(myRect.width - width, borderThickness, width, myRect.height - 2 * borderThickness);
         paintGradientRect(g2d, rightRect, transparent, tabBg);
       }
@@ -349,14 +349,14 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public boolean isLastPinned() {
-    if (myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
-      @NotNull List<TabInfo> tabs = myTabs.getTabs();
+    if (info.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+      @NotNull List<TabInfo> tabs = this.tabs.getTabs();
       for (int i = 0; i < tabs.size(); i++) {
         TabInfo cur = tabs.get(i);
-        if (cur == myInfo && i < tabs.size() - 1) {
+        if (cur == info && i < tabs.size() - 1) {
           TabInfo next = tabs.get(i + 1);
           return !next.isPinned()
-                 && myTabs.getTabLabel(next).getY() == this.getY(); // check that cur and next are in the same row
+                 && this.tabs.getTabLabel(next).getY() == this.getY(); // check that cur and next are in the same row
         }
       }
     }
@@ -364,11 +364,11 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public boolean isNextToLastPinned() {
-    if (!myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
-      @NotNull List<TabInfo> tabs = myTabs.getVisibleInfos();
+    if (!info.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
+      @NotNull List<TabInfo> tabs = this.tabs.getVisibleInfos();
       boolean wasPinned = false;
       for (TabInfo info : tabs) {
-        if (wasPinned && info == myInfo) return true;
+        if (wasPinned && info == this.info) return true;
         wasPinned = info.isPinned();
       }
     }
@@ -376,16 +376,16 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public boolean isLastInRow() {
-    List<TabInfo> infos = myTabs.getVisibleInfos();
+    List<TabInfo> infos = tabs.getVisibleInfos();
     for (int ind = 0; ind < infos.size() - 1; ind++) {
-      TabLabel cur = myTabs.getInfoToLabel().get(infos.get(ind));
+      TabLabel cur = tabs.getInfoToLabel().get(infos.get(ind));
       if (cur == this) {
-        TabLabel next = myTabs.getInfoToLabel().get(infos.get(ind + 1));
+        TabLabel next = tabs.getInfoToLabel().get(infos.get(ind + 1));
         return cur.getY() != next.getY();
       }
     }
     // can be empty in case of dragging tab label
-    return !infos.isEmpty() && infos.get(infos.size() - 1) == myInfo;
+    return !infos.isEmpty() && infos.get(infos.size() - 1) == info;
   }
 
   protected void handlePopup(final MouseEvent e) {
@@ -393,38 +393,38 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     if (e.getX() < 0 || e.getX() >= e.getComponent().getWidth() || e.getY() < 0 || e.getY() >= e.getComponent().getHeight()) return;
 
-    String place = myTabs.getPopupPlace();
+    String place = tabs.getPopupPlace();
     place = place != null ? place : ActionPlaces.UNKNOWN;
-    myTabs.setPopupInfo(myInfo);
+    tabs.setPopupInfo(info);
 
     final DefaultActionGroup toShow = new DefaultActionGroup();
-    if (myTabs.getPopupGroup() != null) {
-      toShow.addAll(myTabs.getPopupGroup());
+    if (tabs.getPopupGroup() != null) {
+      toShow.addAll(tabs.getPopupGroup());
       toShow.addSeparator();
     }
 
     JBTabsImpl tabs =
       (JBTabsImpl)JBTabsEx.NAVIGATION_ACTIONS_KEY.getData(DataManager.getInstance().getDataContext(e.getComponent(), e.getX(), e.getY()));
-    if (tabs == myTabs && myTabs.getAddNavigationGroup()) {
-      toShow.addAll(myTabs.getNavigationActions());
+    if (tabs == this.tabs && this.tabs.getAddNavigationGroup()) {
+      toShow.addAll(this.tabs.getNavigationActions());
     }
 
     if (toShow.getChildrenCount() == 0) return;
 
-    myTabs.setActivePopup(ActionManager.getInstance().createActionPopupMenu(place, toShow).getComponent());
-    myTabs.getActivePopup().addPopupMenuListener(myTabs.getPopupListener());
+    this.tabs.setActivePopup(ActionManager.getInstance().createActionPopupMenu(place, toShow).getComponent());
+    this.tabs.getActivePopup().addPopupMenuListener(this.tabs.getPopupListener());
 
-    myTabs.getActivePopup().addPopupMenuListener(myTabs);
-    JBPopupMenu.showByEvent(e, myTabs.getActivePopup());
+    this.tabs.getActivePopup().addPopupMenuListener(this.tabs);
+    JBPopupMenu.showByEvent(e, this.tabs.getActivePopup());
   }
 
   public void setText(final SimpleColoredText text) {
-    myLabel.change(() -> {
-      myLabel.clear();
-      myLabel.setIcon(hasIcons() ? myIcon : null);
+    label.change(() -> {
+      label.clear();
+      label.setIcon(hasIcons() ? icon : null);
 
       if (text != null) {
-        text.appendToComponent(myLabel);
+        text.appendToComponent(label);
       }
     }, false);
 
@@ -442,11 +442,11 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     getLabelComponent().invalidate();
 
-    if (myActionPanel != null) {
-      myActionPanel.invalidate();
+    if (actionPanel != null) {
+      actionPanel.invalidate();
     }
 
-    myTabs.revalidateAndRepaint(false);
+    tabs.revalidateAndRepaint(false);
   }
 
   public void setIcon(@Nullable Icon icon) {
@@ -466,10 +466,10 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     LayeredIcon layeredIcon = getLayeredIcon();
     layeredIcon.setIcon(icon, layer);
     if (hasIcons()) {
-      myLabel.setIcon(layeredIcon);
+      label.setIcon(layeredIcon);
     }
     else {
-      myLabel.setIcon(null);
+      label.setIcon(null);
     }
 
     invalidateIfNeeded();
@@ -504,11 +504,11 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   private LayeredIcon getLayeredIcon() {
-    return myIcon;
+    return icon;
   }
 
   public TabInfo getInfo() {
-    return myInfo;
+    return info;
   }
 
   public final void apply(@NotNull UiDecorator.UiDecoration decoration) {
@@ -519,10 +519,10 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     MergedUiDecoration resultDec = mergeUiDecorations(decoration, JBTabsImpl.defaultDecorator.getDecoration());
     setBorder(new EmptyBorder(resultDec.labelInsets()));
-    myLabel.setIconTextGap(resultDec.iconTextGap());
+    label.setIconTextGap(resultDec.iconTextGap());
 
     Insets contentInsets = resultDec.contentInsetsSupplier().apply(getActionsPosition());
-    myLabelPlaceholder.setBorder(new EmptyBorder(contentInsets));
+    labelPlaceholder.setBorder(new EmptyBorder(contentInsets));
   }
 
   public static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
@@ -557,13 +557,13 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     removeOldActionPanel();
     if (group == null) return;
 
-    myActionPanel = new ActionPanel(myTabs, myInfo,
+    actionPanel = new ActionPanel(tabs, info,
                                     e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
     toggleShowActions(false);
-    add(myActionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+    add(actionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
 
-    myTabs.revalidateAndRepaint(false);
+    tabs.revalidateAndRepaint(false);
   }
 
   /**
@@ -583,7 +583,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public @NotNull ActionsPosition getActionsPosition() {
-    return isShowTabActions() && myActionPanel != null
+    return isShowTabActions() && actionPanel != null
            ? isTabActionsOnTheRight() ? ActionsPosition.RIGHT : ActionsPosition.LEFT
            : ActionsPosition.NONE;
   }
@@ -593,29 +593,29 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   private void removeOldActionPanel() {
-    if (myActionPanel != null) {
-      myActionPanel.getParent().remove(myActionPanel);
-      myActionPanel = null;
+    if (actionPanel != null) {
+      actionPanel.getParent().remove(actionPanel);
+      actionPanel = null;
     }
   }
 
   public boolean updateTabActions() {
-    return myActionPanel != null && myActionPanel.update();
+    return actionPanel != null && actionPanel.update();
   }
 
   private void setAttractionIcon(@Nullable Icon icon) {
-    if (myIcon.getIcon(0) == null) {
+    if (this.icon.getIcon(0) == null) {
       setIcon(null, 1);
-      myOverlayedIcon = icon;
+      overlayedIcon = icon;
     }
     else {
       setIcon(icon, 1);
-      myOverlayedIcon = null;
+      overlayedIcon = null;
     }
   }
 
   public boolean repaintAttraction() {
-    if (!myTabs.attractions.contains(myInfo)) {
+    if (!tabs.attractions.contains(info)) {
       if (getLayeredIcon().isLayerEnabled(1)) {
         getLayeredIcon().setLayerEnabled(1, false);
         setAttractionIcon(null);
@@ -627,34 +627,34 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     boolean needsUpdate = false;
 
-    if (getLayeredIcon().getIcon(1) != myInfo.getAlertIcon()) {
-      setAttractionIcon(myInfo.getAlertIcon());
+    if (getLayeredIcon().getIcon(1) != info.getAlertIcon()) {
+      setAttractionIcon(info.getAlertIcon());
       needsUpdate = true;
     }
 
     int maxInitialBlinkCount = 5;
     int maxRefireBlinkCount = maxInitialBlinkCount + 2;
-    if (myInfo.getBlinkCount() < maxInitialBlinkCount && myInfo.isAlertRequested()) {
+    if (info.getBlinkCount() < maxInitialBlinkCount && info.isAlertRequested()) {
       getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
-      if (myInfo.getBlinkCount() == 0) {
+      if (info.getBlinkCount() == 0) {
         needsUpdate = true;
       }
-      myInfo.setBlinkCount(myInfo.getBlinkCount() + 1);
+      info.setBlinkCount(info.getBlinkCount() + 1);
 
-      if (myInfo.getBlinkCount() == maxInitialBlinkCount) {
-        myInfo.resetAlertRequest();
+      if (info.getBlinkCount() == maxInitialBlinkCount) {
+        info.resetAlertRequest();
       }
 
       repaint();
     }
     else {
-      if (myInfo.getBlinkCount() < maxRefireBlinkCount && myInfo.isAlertRequested()) {
+      if (info.getBlinkCount() < maxRefireBlinkCount && info.isAlertRequested()) {
         getLayeredIcon().setLayerEnabled(1, !getLayeredIcon().isLayerEnabled(1));
-        myInfo.setBlinkCount(myInfo.getBlinkCount() + 1);
+        info.setBlinkCount(info.getBlinkCount() + 1);
 
-        if (myInfo.getBlinkCount() == maxRefireBlinkCount) {
-          myInfo.setBlinkCount(maxInitialBlinkCount);
-          myInfo.resetAlertRequest();
+        if (info.getBlinkCount() == maxRefireBlinkCount) {
+          info.setBlinkCount(maxInitialBlinkCount);
+          info.resetAlertRequest();
         }
 
         repaint();
@@ -678,13 +678,13 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   private void paintBackground(Graphics g) {
-    myTabs.tabPainterAdapter.paintBackground(this, g, myTabs);
+    tabs.tabPainterAdapter.paintBackground(this, g, tabs);
   }
 
   protected @NotNull Color getEffectiveBackground() {
-    Color bg = myTabs.getTabPainter().getBackgroundColor();
-    Color customBg = myTabs.getTabPainter().getCustomBackground(getInfo().getTabColor(), isSelected(),
-                                                                myTabs.isActiveTabs(getInfo()), isHovered());
+    Color bg = tabs.getTabPainter().getBackgroundColor();
+    Color customBg = tabs.getTabPainter().getCustomBackground(getInfo().getTabColor(), isSelected(),
+                                                              tabs.isActiveTabs(getInfo()), isHovered());
     return customBg != null ? ColorUtil.alphaBlending(customBg, bg) : bg;
   }
 
@@ -703,29 +703,29 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       UIUtil.drawDottedRectangle(g, textBounds.x, textBounds.y, textBounds.x + textBounds.width - 1, textBounds.y + textBounds.height - 1);
     }
 
-    if (myOverlayedIcon == null) {
+    if (overlayedIcon == null) {
       return;
     }
 
     if (getLayeredIcon().isLayerEnabled(1)) {
 
-      final int top = (getSize().height - myOverlayedIcon.getIconHeight()) / 2;
+      final int top = (getSize().height - overlayedIcon.getIconHeight()) / 2;
 
-      myOverlayedIcon.paintIcon(this, g, textBounds.x - myOverlayedIcon.getIconWidth() / 2, top);
+      overlayedIcon.paintIcon(this, g, textBounds.x - overlayedIcon.getIconWidth() / 2, top);
     }
   }
 
   public void setTabActionsAutoHide(final boolean autoHide) {
-    if (myActionPanel == null || myActionPanel.isAutoHide() == autoHide) {
+    if (actionPanel == null || actionPanel.isAutoHide() == autoHide) {
       return;
     }
 
-    myActionPanel.setAutoHide(autoHide);
+    actionPanel.setAutoHide(autoHide);
   }
 
   public void toggleShowActions(boolean show) {
-    if (myActionPanel != null) {
-      myActionPanel.toggleShowActions(show);
+    if (actionPanel != null) {
+      actionPanel.toggleShowActions(show);
     }
   }
 
@@ -739,7 +739,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   @Override
   public String toString() {
-    return myInfo.getText();
+    return info.getText();
   }
 
   public void setTabEnabled(boolean enabled) {
@@ -747,17 +747,17 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
   }
 
   public JComponent getLabelComponent() {
-    return myLabel;
+    return label;
   }
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    Point pointInLabel = new RelativePoint(event).getPoint(myLabel);
-    Icon icon = myLabel.getIcon();
+    Point pointInLabel = new RelativePoint(event).getPoint(label);
+    Icon icon = label.getIcon();
     int iconWidth = (icon != null ? icon.getIconWidth() : JBUI.scale(16));
-    if ((myLabel.getVisibleRect().width >= iconWidth * 2 || !UISettings.getInstance().getShowTabsTooltips())
-        && myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
-      String toolTip = myIcon.getToolTip(false);
+    if ((label.getVisibleRect().width >= iconWidth * 2 || !UISettings.getInstance().getShowTabsTooltips())
+        && label.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
+      String toolTip = this.icon.getToolTip(false);
       if (toolTip != null) {
         return Strings.capitalize(toolTip);
       }
@@ -767,7 +767,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (myInfo.getComponent() instanceof DataProvider provider) {
+    if (info.getComponent() instanceof DataProvider provider) {
       return provider.getData(dataId);
     }
     return null;
@@ -794,8 +794,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     @Override
     public String getAccessibleName() {
       String name = super.getAccessibleName();
-      if (name == null && myLabel != null) {
-        name = myLabel.getAccessibleContext().getAccessibleName();
+      if (name == null && label != null) {
+        name = label.getAccessibleContext().getAccessibleName();
       }
       return name;
     }
@@ -803,8 +803,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     @Override
     public String getAccessibleDescription() {
       String description = super.getAccessibleDescription();
-      if (description == null && myLabel != null) {
-        description = myLabel.getAccessibleContext().getAccessibleDescription();
+      if (description == null && label != null) {
+        description = label.getAccessibleContext().getAccessibleDescription();
       }
       return description;
     }
@@ -838,14 +838,14 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     public void layoutContainer(Container parent) {
       int prefWidth = parent.getPreferredSize().width;
       synchronized (parent.getTreeLock()) {
-        if (!myInfo.isPinned() && myTabs != null &&
-            myTabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
-            (ExperimentalUI.isNewUI() && !isHovered() || myTabs.isHorizontalTabs()) &&
+        if (!info.isPinned() && tabs != null &&
+            tabs.getEffectiveLayout$intellij_platform_ide().isScrollable() &&
+            (ExperimentalUI.isNewUI() && !isHovered() || tabs.isHorizontalTabs()) &&
             isShowTabActions() && isTabActionsOnTheRight() &&
             parent.getWidth() < prefWidth) {
           layoutScrollable(parent);
         }
-        else if (!myInfo.isPinned() && isCompressionEnabled &&
+        else if (!info.isPinned() && isCompressionEnabled &&
                  !isHovered() && !isSelected() &&
                  parent.getWidth() < prefWidth) {
           layoutCompressible(parent);

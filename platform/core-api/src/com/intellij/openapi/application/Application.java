@@ -613,6 +613,9 @@ public interface Application extends ComponentManager {
     return false;
   }
 
+  @ApiStatus.Internal
+  boolean isSaveAllowed();
+
   //<editor-fold desc="Deprecated stuff">
 
   /** @deprecated Use {@link #addApplicationListener(ApplicationListener, Disposable)} instead */

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.application.readActionBlocking
@@ -16,15 +16,14 @@ private class HighlighterTextEditorInitializer : TextEditorInitializer {
                                         document: Document,
                                         editorSupplier: suspend () -> EditorEx,
                                         highlighterReady: suspend () -> Unit) {
-    if (!HighlightingMarkupGrave.isEnabled()
-        || file !is VirtualFileWithId) {
+    if (!HighlightingMarkupGrave.isEnabled() || file !is VirtualFileWithId) {
       return
     }
 
     val markupGrave = project.serviceAsync<HighlightingMarkupGrave>()
 
     // we have to make sure that editor highlighter is created before we start raising zombies
-    // because creation of highlighter has side effect that TextAttributesKey.ourRegistry is filled with corresponding keys
+    // because creation of highlighter has a side effect that TextAttributesKey.ourRegistry is filled with corresponding keys
     // (e.g. class loading of org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors)
     // without such guarantee there is a risk to get uninitialized fallbackKey in TextAttributesKey.find(externalName)
     // it may lead to incorrect color of highlighters on startup

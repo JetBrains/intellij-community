@@ -112,7 +112,10 @@ private class IdeKotlinDeclarationProvider(
             classId.asStringForIndexes(),
             project,
             scope
-        ) { it.getClassId() == classId }
+        ) {
+            ProgressManager.checkCanceled()
+            it.getClassId() == classId
+        }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
         return listOfNotNull(getTypeAliasByClassId(classId)) //todo
@@ -167,6 +170,7 @@ private class IdeKotlinDeclarationProvider(
                     binaryRoot.name,
                     null,
                     ValueProcessor<String> { _, packageName ->
+                        ProgressManager.checkCanceled()
                         add(packageName)
                         true
                     },
@@ -211,9 +215,11 @@ private class IdeKotlinDeclarationProvider(
 
         return buildSet {
             stubIndex.getContainingFilesIterator(KotlinTopLevelPropertyFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
+                //check canceled is done inside findFile
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
             stubIndex.getContainingFilesIterator(KotlinTopLevelFunctionFqnNameIndex.indexKey, callableIdString, project, scope).forEach { file ->
+                //check canceled is done inside findFile
                 psiManager.findFile(file)?.safeAs<KtFile>()?.let { add(it) }
             }
         }

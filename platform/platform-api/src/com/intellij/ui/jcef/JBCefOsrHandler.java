@@ -5,7 +5,10 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.Gray;
-import com.intellij.util.*;
+import com.intellij.util.Function;
+import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import org.cef.browser.CefBrowser;
@@ -39,14 +42,14 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * @see JBCefOsrComponent
  */
 class JBCefOsrHandler implements CefRenderHandler {
-  private final @NotNull JComponent myComponent;
+  protected final @NotNull JComponent myComponent;
   private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
-  private final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
+  protected final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
-  private volatile @Nullable JBHiDPIScaledImage myImage;
+  protected volatile @Nullable JBHiDPIScaledImage myImage;
 
   private volatile @Nullable JBHiDPIScaledImage myPopupImage;
   private volatile boolean myPopupShown = false;
@@ -54,14 +57,14 @@ class JBCefOsrHandler implements CefRenderHandler {
   private final Object myPopupMutex = new Object();
 
   private volatile @Nullable VolatileImage myVolatileImage;
-  private volatile boolean myContentOutdated = false;
+  protected volatile boolean myContentOutdated = false;
 
   private volatile @Nullable JBCefCaretListener myCaretListener;
 
   JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
     myComponent = component;
     component.setRenderHandler(this);
-    myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.DEFAULT.createScreenBoundsProvider());
+    myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.getInstance().createScreenBoundsProvider());
 
     myComponent.addAncestorListener(new AncestorListenerAdapter() {
       @Override
@@ -257,22 +260,6 @@ class JBCefOsrHandler implements CefRenderHandler {
     return new Point(ROUND.round(pt.x * scale), ROUND.round(pt.y * scale));
   }
 
-  private void drawContent(Graphics2D g) {
-    Image image = myImage;
-    if (image != null) {
-      UIUtil.drawImage(g, image, 0, 0, null);
-    }
-
-    if (myPopupShown) {
-      synchronized (myPopupMutex) {
-        Image popupImage = myPopupImage;
-        if (myPopupShown && popupImage != null) {
-          UIUtil.drawImage(g, popupImage, myPopupBounds.x, myPopupBounds.y, null);
-        }
-      }
-    }
-  }
-
   private static void drawByteBuffer(@NotNull JBHiDPIScaledImage dst, @NotNull ByteBuffer src, Rectangle[] rectangles) {
     BufferedImage image = (BufferedImage)dst.getDelegate();
     assert image != null;
@@ -292,14 +279,29 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
   }
 
-  private void drawVolatileImage(VolatileImage vi) {
+  protected void drawVolatileImage(VolatileImage vi) {
+    JBHiDPIScaledImage image = myImage;
+
+    // Draw buffered image into VolatileImage
     Graphics2D g = (Graphics2D)vi.getGraphics().create();
     try {
       g.setBackground(Gray.TRANSPARENT);
       g.setComposite(AlphaComposite.Src);
       g.clearRect(0, 0, myComponent.getWidth(), myComponent.getHeight());
 
-      drawContent(g);
+      // Draw volatile image from BufferedImage
+      if (image != null) {
+        UIUtil.drawImage(g, image, 0, 0, null);
+      }
+
+      if (myPopupShown) {
+        synchronized (myPopupMutex) {
+          Image popupImage = myPopupImage;
+          if (myPopupShown && popupImage != null) {
+            UIUtil.drawImage(g, popupImage, myPopupBounds.x, myPopupBounds.y, null);
+          }
+        }
+      }
     }
     finally {
       g.dispose();

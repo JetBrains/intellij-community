@@ -5,9 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import kotlinx.metadata.Attributes;
-import kotlinx.metadata.KmDeclarationContainer;
-import kotlinx.metadata.KmFunction;
+import kotlinx.metadata.*;
 import kotlinx.metadata.jvm.JvmExtensionsKt;
 import kotlinx.metadata.jvm.JvmMethodSignature;
 import org.jetbrains.annotations.NotNull;
@@ -433,7 +431,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public static JvmClassNodeBuilder create(String filePath, ClassReader cr, boolean isGenerated) {
     JvmClassNodeBuilder builder = new JvmClassNodeBuilder(filePath, isGenerated);
     try {
-      cr.accept(builder, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+      cr.accept(builder, ClassReader.SKIP_FRAMES);
     }
     catch (RuntimeException e) {
       throw new RuntimeException("Corrupted .class file: " + filePath, e);
@@ -492,6 +490,28 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
         addUsage(usage);
       }
     }
+    
+    // remove own members lookups
+    KmDeclarationContainer container = findKotlinDeclarationContainer();
+    if (container != null) {
+      JvmNodeReferenceID owner = null;
+      if (container instanceof KmPackage) {
+        owner = new JvmNodeReferenceID(JvmClass.getPackageName(myName));
+      }
+      else if (container instanceof KmClass) {
+        owner = new JvmNodeReferenceID(((KmClass)container).getName());
+        String nodeName = owner.getNodeName();
+        String scopeName = JvmClass.getPackageName(nodeName);
+        String symbolName = scopeName.isEmpty()? nodeName : nodeName.substring(scopeName.length() + 1);
+        myUsages.remove(new LookupNameUsage(scopeName, symbolName));
+      }
+      if (owner != null) {
+        for (String name : Iterators.unique(Iterators.flat(Iterators.map(container.getFunctions(), KmFunction::getName), Iterators.map(container.getProperties(), KmProperty::getName)))) {
+          myUsages.remove(new LookupNameUsage(owner, name));
+        }
+      }
+    }
+
     return new JvmClass(flags, mySignature, myName, myFileName, mySuperClass, myOuterClassName.get(), myInterfaces, myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myUsages, myMetadata);
   }
 
@@ -499,6 +519,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public void visit(int version, int access, String name, String sig, String superName, String[] interfaces) {
     myAccess = access;
     myName = name;
+    myUsages.add(new ImportPackageOnDemandUsage(JvmClass.getPackageName(name))); // implicit 'import' of the package to which the node belongs to
     myVersion = String.valueOf(version);
     mySignature = sig;
     mySuperClass = superName;
@@ -574,13 +595,26 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     };
   }
 
-  private KmFunction findKmFunction(String methodName, String methodDescriptor) {
+  private boolean isInlined(String methodName, String methodDescriptor) {
     KmDeclarationContainer container = findKotlinDeclarationContainer();
     if (container != null) {
       JvmMethodSignature sig = new JvmMethodSignature(methodName, methodDescriptor);
-      return Iterators.find(container.getFunctions(), f -> sig.equals(JvmExtensionsKt.getSignature(f)));
+      for (KmFunction f : container.getFunctions()) {
+        if (Attributes.isInline(f) && sig.equals(JvmExtensionsKt.getSignature(f))) {
+          return true;
+        }
+      }
+      for (KmProperty p : container.getProperties()) {
+        if (Attributes.isInline(p.getGetter()) && sig.equals(JvmExtensionsKt.getGetterSignature(p))) {
+          return true;
+        }
+        var setter = p.getSetter();
+        if (setter != null && Attributes.isInline(setter) && sig.equals(JvmExtensionsKt.getSetterSignature(p))) {
+          return true;
+        }
+      }
     }
-    return null;
+    return false;
   }
 
   private KmDeclarationContainer findKotlinDeclarationContainer() {
@@ -595,7 +629,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     final Set<ParamAnnotation> paramAnnotations = new HashSet<>();
     processSignature(signature);
 
-    KmFunction kmFunction = findKmFunction(n, desc);
+    boolean isInlined = isInlined(n, desc);
     Textifier printer = new Textifier();
 
     MethodVisitor visitor = new MethodVisitor(ASM_API_VERSION) {
@@ -603,7 +637,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
       @Override
       public void visitEnd() {
         if ((access & Opcodes.ACC_SYNTHETIC) == 0 || (access & Opcodes.ACC_BRIDGE) > 0) {
-          if (kmFunction != null && Attributes.isInline(kmFunction)) {
+          if (isInlined) {
             // use 'defaultValue' attribute to store the hash of the function body to track changes in inline method implementation
             ContentHashBuilder hashBuilder = ContentHashBuilder.create();
             for (Object o : printer.getText()) {
@@ -699,8 +733,10 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
       @Override
       public void visitLocalVariable(String n, String desc, String signature, Label start, Label end, int index) {
-        processSignature(signature);
-        Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
+        if (!"this".equals(n)) {
+          processSignature(signature);
+          Iterators.collect(TypeRepr.getType(desc).getUsages(), myUsages);
+        }
         super.visitLocalVariable(n, desc, signature, start, end, index);
       }
 
@@ -841,7 +877,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
 
     };
 
-    return kmFunction != null && Attributes.isInline(kmFunction)? new TraceMethodVisitor(visitor, printer) : visitor;
+    return isInlined? new TraceMethodVisitor(visitor, printer) : visitor;
   }
 
   /**

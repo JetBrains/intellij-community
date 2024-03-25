@@ -10,6 +10,9 @@ import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.io.InputStream
+import java.nio.file.Path
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.time.Duration.Companion.seconds
@@ -25,37 +28,40 @@ interface IjentSessionProvider {
    *
    * [ijentCoroutineScope] must be the scope generated inside [IjentSessionRegistry.register]
    */
-  suspend fun IjentSessionMediator.connect(
-    ijentId: IjentId,
-    platform: IjentExecFileProvider.SupportedPlatform,
-  ): IjentApi
-
-  /**
-   * See also [doBootstrapOverShellSession].
-   */
   suspend fun connect(
     ijentId: IjentId,
     platform: IjentExecFileProvider.SupportedPlatform,
-    mediator: IjentSessionMediator,
-  ): IjentApi {
-    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
-    return with(mediator) {
-      connect(ijentId, platform)
-    }
-  }
+    mediator: IjentSessionMediator
+  ): IjentApi
 
   companion object {
     suspend fun instanceAsync(): IjentSessionProvider = serviceAsync()
   }
 }
 
+sealed class IjentStartupError : RuntimeException {
+  constructor(message: String) : super(message)
+  constructor(message: String, cause: Throwable) : super(message, cause)
+
+  class MissingImplPlugin : IjentStartupError("The plugin `intellij.platform.ijent.impl` is not installed")
+
+  sealed class BootstrapOverShell : IjentStartupError {
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
+  }
+
+  class IncompatibleTarget(message: String) : BootstrapOverShell(message)
+  class CommunicationError(cause: Throwable) : BootstrapOverShell(cause.message.orEmpty(), cause)
+}
+
 internal class DefaultIjentSessionProvider : IjentSessionProvider {
-  override suspend fun IjentSessionMediator.connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform): IjentApi {
-    throw UnsupportedOperationException()
+  override suspend fun connect(ijentId: IjentId, platform: IjentExecFileProvider.SupportedPlatform, mediator: IjentSessionMediator): IjentApi {
+    throw IjentStartupError.MissingImplPlugin()
   }
 }
 
 /** A shortcut for terminating an [IjentApi] when the [coroutineScope] completes. */
+@ApiStatus.Experimental
 fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
   coroutineScope.coroutineContext.job.invokeOnCompletion {
     this@bindToScope.close()
@@ -69,9 +75,11 @@ fun IjentApi.bindToScope(coroutineScope: CoroutineScope) {
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  * [bindToScope] may be useful for terminating the IJent process earlier.
  */
+@ApiStatus.Experimental
 suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProvider.SupportedPlatform, process: Process): IjentApi =
   IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(process, ijentId)
+    mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
     IjentSessionProvider.instanceAsync().connect(ijentId, platform, mediator)
   }
 
@@ -98,9 +106,21 @@ suspend fun connectToRunningIjent(ijentName: String, platform: IjentExecFileProv
  *
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  * [bindToScope] may be useful for terminating the IJent process earlier.
+ *
+ * [pathMapper] is a workaround function that allows to upload IJent to the remote target explicitly.
+ * The argument passed to the function is the path to the corresponding IJent binary on the local machine.
+ * The function must return a path on the remote machine.
+ * If the function returns null, the binary is transferred to the server directly via the same shell process,
+ * which turned out to be unreliable unfortunately.
  */
 // TODO Change string paths to IjentPath.Absolute.
-suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process): Pair<String, IjentApi> {
+@ApiStatus.Experimental
+@Throws(IjentStartupError::class)
+suspend fun bootstrapOverShellSession(
+  ijentName: String,
+  shellProcess: Process,
+  pathMapper: suspend (Path) -> String?,
+): Pair<String, IjentApi> {
   val remoteIjentPath: String
   val ijentApi = IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
     val mediator = IjentSessionMediator.create(shellProcess, ijentId)
@@ -109,7 +129,7 @@ suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process):
       try {
         mediator.attachStderrOnError {
           mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ANY
-          doBootstrapOverShellSession(shellProcess)
+          doBootstrapOverShellSession(shellProcess, pathMapper)
         }
       }
       catch (err: Throwable) {
@@ -139,91 +159,220 @@ suspend fun bootstrapOverShellSession(ijentName: String, shellProcess: Process):
   return remoteIjentPath to ijentApi
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 private suspend fun doBootstrapOverShellSession(
   shellProcess: Process,
-): Pair<String, IjentExecFileProvider.SupportedPlatform> = withContext(Dispatchers.IO) {
+  pathMapper: suspend (Path) -> String?,
+): Pair<String, IjentExecFileProvider.SupportedPlatform> = computeDetached {
+  try {
+    @Suppress("NAME_SHADOWING") val shellProcess = ShellProcess(shellProcess)
+
+    // The timeout is taken at random.
+    withTimeout(10.seconds) {
+      shellProcess.write("set -ex")
+      ensureActive()
+
+      filterOutBanners(shellProcess)
+      val commands = getCommandPaths(shellProcess)
+
+      with(commands) {
+        val targetPlatform = getTargetPlatform(shellProcess)
+        val remotePathToIjent = uploadIjentBinary(shellProcess, targetPlatform, pathMapper)
+        execIjent(shellProcess, remotePathToIjent)
+        remotePathToIjent to targetPlatform
+      }
+    }
+  }
+  catch (err: Throwable) {
+    throw when (err) {
+      is TimeoutCancellationException, is IOException -> IjentStartupError.CommunicationError(err)
+      else -> err
+    }
+  }
+}
+
+private suspend fun filterOutBanners(shellProcess: ShellProcess) {
   // The boundary is for skipping various banners, greeting messages, PS1, etc.
   val boundary = (0..31).joinToString("") { "abcdefghijklmnopqrstuvwxyz0123456789".random().toString() }
-
-  // The timeout is taken at random.
-  val arch = withTimeout(10.seconds) {
-    // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
-    // verbose, and that information may be sufficient for choosing the right binary.
-    // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
-    shellProcess.outputStream.write("set -ex; echo $boundary; uname -pm\n".toByteArray())
-    shellProcess.outputStream.flush()
-
-    do {
-      val line = readLineWithoutBuffering(shellProcess)
-      LOG.trace { "Received greeting line from stdout: $line" }
-    }
-    while (line != boundary)
-
-    readLineWithoutBuffering(shellProcess)
+  shellProcess.write("echo $boundary")
+  do {
+    val line = shellProcess.readLineWithoutBuffering()
   }
-    .split(" ")
-    .filterTo(linkedSetOf(), String::isNotEmpty)
+  while (line != boundary)
+}
+
+private class Commands(
+  val chmod: String,
+  val cp: String,
+  val cut: String,
+  val env: String,
+  val getent: String,
+  val head: String,
+  val mktemp: String,
+  val uname: String,
+  val whoami: String,
+)
+
+/**
+ * There are distributions like rancher-desktop-data where /bin/busybox exists, but there are no symlinks to uname, head, etc.
+ *
+ * This tricky function checks if the necessary core utils exist and tries to substitute them with busybox otherwise.
+ */
+private suspend fun getCommandPaths(shellProcess: ShellProcess): Commands {
+  var busybox: String? = null
+
+  // This strange at first glance code helps reduce copy-paste errors.
+  val commands: Set<String> = setOf(
+    "busybox",
+    "chmod",
+    "cp",
+    "cut",
+    "env",
+    "getent",
+    "head",
+    "mktemp",
+    "uname",
+    "whoami",
+  )
+  val outputOfWhich = mutableListOf<String>()
+
+  fun getCommandPath(name: String): String {
+    assert(name in commands)
+    return outputOfWhich.firstOrNull { it.endsWith("/$name") }
+           ?: busybox?.let { "$it $name" }
+           ?: throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
+  }
+
+  val done = "done"
+  val whichCmd = commands.joinToString(" ").let { joined ->
+    "set +e; which $joined || /bin/busybox which $joined || /usr/bin/busybox which $joined; echo $done; set -e"
+  }
+
+  shellProcess.write(whichCmd)
+
+  while (true) {
+    val line = shellProcess.readLineWithoutBuffering()
+    if (line == done) break
+    outputOfWhich += line
+  }
+
+  busybox = getCommandPath("busybox")
+
+  return Commands(
+    chmod = getCommandPath("chmod"),
+    cp = getCommandPath("cp"),
+    cut = getCommandPath("cut"),
+    env = getCommandPath("env"),
+    getent = getCommandPath("getent"),
+    head = getCommandPath("head"),
+    mktemp = getCommandPath("mktemp"),
+    uname = getCommandPath("uname"),
+    whoami = getCommandPath("whoami"),
+  )
+}
+
+private suspend fun Commands.getTargetPlatform(shellProcess: ShellProcess): IjentExecFileProvider.SupportedPlatform {
+  // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
+  // verbose, and that information may be sufficient for choosing the right binary.
+  // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
+  shellProcess.write("$uname -pm")
+
+  val arch = shellProcess.readLineWithoutBuffering().split(" ").filterTo(linkedSetOf(), String::isNotEmpty)
 
   val targetPlatform = when {
-    arch.isEmpty() -> error("Empty output of `uname`")
+    arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
     "x86_64" in arch -> IjentExecFileProvider.SupportedPlatform.X86_64__LINUX
     "aarch64" in arch -> IjentExecFileProvider.SupportedPlatform.AARCH64__LINUX
-    else -> error("No binary for architecture $arch")
+    else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
+  return targetPlatform
+}
 
+private suspend fun Commands.uploadIjentBinary(
+  shellProcess: ShellProcess,
+  targetPlatform: IjentExecFileProvider.SupportedPlatform,
+  pathMapper: suspend (Path) -> String?,
+): String {
   val ijentBinaryOnLocalDisk = IjentExecFileProvider.getInstance().getIjentBinary(targetPlatform)
   // TODO Don't upload a new binary every time if the binary is already on the server. However, hashes must be checked.
   val ijentBinarySize = ijentBinaryOnLocalDisk.fileSize()
 
-  val script =
-    """BINARY="$(mktemp -d)/ijent" """ +
-    """; LC_ALL=C head -c $ijentBinarySize > "${"$"}BINARY" """ +
-    """; chmod 500 "${"$"}BINARY" """ +
-    """; echo "${"$"}BINARY" """ +
-    "\n"
+  val ijentBinaryPreparedOnTarget = pathMapper(ijentBinaryOnLocalDisk)
 
-  LOG.trace { "Executing script inside a shell: ${script.trimEnd()}" }
-  shellProcess.outputStream.write(script.toByteArray())
-  yield()
-  shellProcess.outputStream.flush()
+  val script = run {
+    val ijentPathUploadScript =
+      pathMapper(ijentBinaryOnLocalDisk)
+        ?.let { "$cp ${posixQuote(it)} \$BINARY" }
+      ?: run {
+        "LC_ALL=C $head -c $ijentBinarySize > \$BINARY"
+      }
 
-  LOG.debug { "Sending the IJent binary for $targetPlatform" }
-  ijentBinaryOnLocalDisk.inputStream().copyToAsync(shellProcess.outputStream)
-  shellProcess.outputStream.flush()
-  LOG.debug { "Sent the IJent binary for $targetPlatform" }
+    "BINARY=\"$($mktemp -d)/ijent\" ; $ijentPathUploadScript ; $chmod 500 \"\$BINARY\" ; echo \"\$BINARY\" "
+  }
 
-  val remotePathToBinary = readLineWithoutBuffering(shellProcess)
+  shellProcess.write(script)
 
-  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true).joinToString(" ")
-  val commandLineArgs =
-    """cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))}""" +
-    """; export SHELL="${'$'}(getent passwd "${'$'}(whoami)" | cut -d: -f7)" """ +
-    """; exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}""" +
-    "\n"
-  LOG.trace { "Executing IJent inside a shell: ${commandLineArgs.trimEnd()}" }
+  if (ijentBinaryPreparedOnTarget == null) {
+    LOG.debug { "Writing $ijentBinarySize bytes of IJent binary into the stream" }
+    ijentBinaryOnLocalDisk.inputStream().use { stream ->
+      shellProcess.copyDataFrom(stream)
+    }
+    LOG.debug { "Sent the IJent binary for $targetPlatform" }
+  }
 
-  shellProcess.outputStream.write(commandLineArgs.toByteArray())
-  shellProcess.outputStream.flush()
-
-  remotePathToBinary to targetPlatform
+  return shellProcess.readLineWithoutBuffering()
 }
 
-/** The same stdin and stdout will be used for transferring binary data. Some buffering wrapper may occasionally consume too much data. */
-@OptIn(DelicateCoroutinesApi::class)
-private suspend fun readLineWithoutBuffering(process: Process): String =
-  computeDetached {
-    val buffer = StringBuilder()
-    val stream = process.inputStream
-    while (true) {
+private suspend fun Commands.execIjent(shellProcess: ShellProcess, remotePathToBinary: String) {
+  val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = env).joinToString(" ")
+  val commandLineArgs =
+    """
+    | cd ${posixQuote(remotePathToBinary.substringBeforeLast('/'))};
+    | export SHELL="${'$'}($getent passwd "${'$'}($whoami)" | $cut -d: -f7)";
+    | if [ -z "${'$'}SHELL" ]; then export SHELL='/bin/sh' ; fi;
+    | exec "${'$'}SHELL" -c ${posixQuote(joinedCmd)}
+    """.trimMargin()
+  shellProcess.write(commandLineArgs)
+}
+
+@JvmInline
+private value class ShellProcess(private val process: Process) {
+  suspend fun write(data: String) {
+    @Suppress("NAME_SHADOWING")
+    val data = if (data.endsWith("\n")) data else "$data\n"
+    LOG.debug { "Executing a script inside the shell: $data" }
+    withContext(Dispatchers.IO) {
+      process.outputStream.write(data.toByteArray())
       ensureActive()
-      val c = stream.read()
-      if (c < 0 || c == '\n'.code) {
-        break
-      }
-      buffer.append(c.toChar())
+      process.outputStream.flush()
+      ensureActive()
     }
-    LOG.trace { "Read line from stdout: $buffer" }
-    buffer.toString()
   }
+
+  /** The same stdin and stdout will be used for transferring binary data. Some buffering wrapper may occasionally consume too much data. */
+  suspend fun readLineWithoutBuffering(): String =
+    withContext(Dispatchers.IO) {
+      val buffer = StringBuilder()
+      val stream = process.inputStream
+      while (true) {
+        ensureActive()
+        val c = stream.read()
+        if (c < 0 || c == '\n'.code) {
+          break
+        }
+        buffer.append(c.toChar())
+      }
+      LOG.trace { "Read line from stdout: $buffer" }
+      buffer.toString()
+    }
+
+  suspend fun copyDataFrom(stream: InputStream) {
+    withContext(Dispatchers.IO) {
+      stream.copyToAsync(process.outputStream)
+      ensureActive()
+      process.outputStream.flush()
+    }
+  }
+}
 
 private val LOG = logger<IjentSessionProvider>()

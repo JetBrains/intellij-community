@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.jetbrains.python.testing.doctest;
 
@@ -25,22 +25,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PythonDocTestRunConfiguration> {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return PythonTestConfigurationType.getInstance().getDocTestFactory();
   }
 
   @Override
-  protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
-                                   @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean isTestFunction(final @NotNull PyFunction pyFunction,
+                                   final @Nullable AbstractPythonLegacyTestRunConfiguration configuration) {
     return PythonDocTestUtil.isDocTestFunction(pyFunction);
   }
 
   @Override
   protected boolean isTestClass(@NotNull PyClass pyClass,
-                                @Nullable final AbstractPythonLegacyTestRunConfiguration configuration,
-                                @Nullable final TypeEvalContext context) {
+                                final @Nullable AbstractPythonLegacyTestRunConfiguration configuration,
+                                final @Nullable TypeEvalContext context) {
     return PythonDocTestUtil.isDocTestClass(pyClass);
   }
 
@@ -51,7 +50,7 @@ public final class PythonDocTestConfigurationProducer extends PythonTestLegacyCo
   }
 
   @Override
-  protected boolean isAvailable(@NotNull final Location location) {
+  protected boolean isAvailable(final @NotNull Location location) {
     final Module module = location.getModule();
     if (!isPythonModule(module)) return false;
     final PsiElement element = location.getPsiElement();

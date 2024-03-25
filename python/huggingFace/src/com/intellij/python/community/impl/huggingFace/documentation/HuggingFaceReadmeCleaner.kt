@@ -1,19 +1,13 @@
 package com.intellij.python.community.impl.huggingFace.documentation
 
-import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.net.URL
+import java.util.*
 
-
-private const val HF_MD_HEADER_SEPARATOR = "---\n"
-private const val ERR_PY_CODE_FENCE_HEADER = "```py\n"
-private const val PY_CODE_FENCE_HEADER = "```python\n"
-private const val CODE_FENCE_MARKER = "```"
-private const val MD_IMG_PATTERN = """!\[(.*?)]\((.*?)\)"""
-private const val HTML_IMG_PATTERN = """<img([^>]+)?>"""
-
-
+@ApiStatus.Internal
 class HuggingFaceReadmeCleaner(
   private var markdown: String,
   private val entityId: String,
@@ -22,17 +16,21 @@ class HuggingFaceReadmeCleaner(
   private val cardUrl: URL = HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)
 
   fun doCleanUp(): HuggingFaceReadmeCleaner {
+    // todo: some optimisation is needed:
+    // headers are collected twice - in the increaseHeaderLevels and fixContentTables
     removeMetaData()
     increaseHeaderLevels()
     fixCodeFences()
+    cleanupNotSupportedElements()
     cleanupImages()
-    processMarkdownTables()
+    convertRelativeFileLinksToAbsolute()
+    fixContentTables()
     removeMarkdownSeparators()
-    // trimLongMd()
     return this
   }
 
   private fun removeMetaData() {
+    // README.md files in HF repos have a header with metadata, which we are not going to use here
     val parts = markdown.split(HF_MD_HEADER_SEPARATOR)
     markdown = if (parts.size > 2) {
       parts.drop(2).joinToString(HF_MD_HEADER_SEPARATOR)
@@ -48,22 +46,55 @@ class HuggingFaceReadmeCleaner(
     }
   }
 
-  private fun fixCodeFences() {
-    markdown = markdown.replace(ERR_PY_CODE_FENCE_HEADER, PY_CODE_FENCE_HEADER)
-      .replace("<details>", "")
-      .replace("</details>", "")
-      .replace(Regex("<summary>.*</summary>"), "")
+  private fun fixContentTables() {
+    val internalLinks = INTERNAL_LINK_REGEX.findAll(markdown).map { it.groupValues[2] }.toList()
+    val headers = MARKDOWN_HEADER_REGEX.findAll(markdown).map { it.value.trim() }.toList()
+
+    internalLinks.forEach { link ->
+      val anchor = "<a name=\"$link\"></a>"
+      if (markdown.contains(anchor)) {
+        return@forEach
+      }
+
+      val normalizedLink = link.replace("-", "").lowercase(Locale.getDefault())
+
+      headers.forEach { header ->
+        val normalizedHeader = header
+                .replace(Regex("^#{1,6}\\s"), "")
+                .replace(" ", "").lowercase(Locale.getDefault())
+        if (normalizedLink == normalizedHeader) {
+          // Find the position of the header and insert the anchor above it
+          val headerIndex = markdown.indexOf(header)
+          if (headerIndex != -1) {
+            markdown = markdown.substring(0, headerIndex) + "$anchor\n" + markdown.substring(headerIndex)
+          }
+        }
+      }
+    }
   }
 
-  private fun cleanupImages() {  // See PY-70539
-    // Pattern to match ![alt text](url)
-    val markdownImgPattern = Regex(MD_IMG_PATTERN)
+  private fun fixCodeFences() {
+    markdown = markdown.replace(ERR_PY_CODE_FENCE_HEADER, PY_CODE_FENCE_HEADER)
+  }
+
+  private fun cleanupNotSupportedElements() {
+    markdown = markdown
+      .replace("<details>", "")
+      .replace("</details>", "")
+      .replace(SUMMARY_TAGS_REGEX) { matchResult ->
+        matchResult.groupValues[1]
+      }
+  }
+
+  private fun cleanupImages() {
+    // See PY-70539 -> potentially we could keep svgs
+    val markdownImgPattern = MD_IMG_REGEX
     markdown = markdownImgPattern.replace(markdown) { matchResult ->
       val altText = matchResult.groupValues[1].ifBlank { matchResult.groupValues[2].split("/").last() }
       "\n[Image: $altText]($cardUrl)\n"
     }
 
-    val htmlImgPattern = Regex(HTML_IMG_PATTERN, RegexOption.IGNORE_CASE)
+    val htmlImgPattern = HTML_IMG_REGEX
     markdown = htmlImgPattern.replace(markdown) { matchResult ->
       val imgTag = matchResult.value
       val altPattern = Regex("""\balt=(['"]?)(.*?)\1""", RegexOption.IGNORE_CASE)
@@ -77,50 +108,14 @@ class HuggingFaceReadmeCleaner(
     }
   }
 
-  private fun processMarkdownTables() {
-    val lines = markdown.split("\n")
-    val processedLines = mutableListOf<String>()
-    var isTable = false
-    var table = mutableListOf<String>()
-
-    for (line in lines) {
-      if (line.startsWith("|") && line.endsWith("|")) {
-        isTable = true
-        table.add(line)
-      } else {
-        if (isTable) {
-          processedLines.addAll(truncateTable(table))
-          table = mutableListOf()
-          isTable = false
-        }
-        processedLines.add(line)
-      }
+  private fun convertRelativeFileLinksToAbsolute() {
+    // Catch relative links to files excluding internal markdown links (like in tables of content)
+    val regex = RELATIVE_LINK_REGEX
+    markdown = regex.replace(markdown) { matchResult ->
+      val (linkText, relativePath) = matchResult.destructured
+      val absoluteUrl = HuggingFaceURLProvider.makeAbsoluteFileLink(entityId, relativePath).toString()
+      "[$linkText]($absoluteUrl)"
     }
-
-    if (isTable) {
-      processedLines.addAll(truncateTable(table))
-    }
-    markdown = processedLines.joinToString("\n")
-  }
-
-  private fun truncateTable(table: MutableList<String>): List<String> {
-    val header = table.first()
-    val columnCount = header.split("|").filter { it.isNotBlank() }.size
-
-    if (columnCount <= 3) return table
-
-    val truncatedTable = mutableListOf<String>()
-    truncatedTable.add(header.split("|").take(4).joinToString("|") + "|...|")
-    val separator = table[1].split("|").take(4).joinToString("|") + "|---|"
-    truncatedTable.add(separator)
-    for (row in table.drop(2)) {
-      val cells = row.split("|")
-      if (cells.all { it.isBlank() }) { continue }
-      val modifiedRow = cells.take(4).joinToString("|") + "|...|"
-      truncatedTable.add(modifiedRow)
-    }
-
-    return truncatedTable
   }
 
   private fun removeMarkdownSeparators() {
@@ -130,39 +125,23 @@ class HuggingFaceReadmeCleaner(
       .replace(Regex("\\n[_]{3,}\\n"), "\n")
   }
 
+  @Nls
   fun getMarkdown(): String {
     return markdown.ifEmpty {
       HuggingFaceDocumentationPlaceholdersUtil.noReadmePlaceholder(entityId, entityKind)
     }
   }
 
-  @Suppress("unused")  // may be activated if we decide to trim model cards
-  private fun trimLongMd() {
-    markdown = if (markdown.length < HuggingFaceConstants.MAX_MD_CHAR_NUM) markdown else {
-      var trimmedMd = markdown.substring(0, HuggingFaceConstants.MAX_MD_CHAR_NUM)
-      val numCodeFences = trimmedMd.split(CODE_FENCE_MARKER).size - 1
+  companion object {
+    private const val HF_MD_HEADER_SEPARATOR = "---\n"
+    private const val ERR_PY_CODE_FENCE_HEADER = "```py\n"
+    private const val PY_CODE_FENCE_HEADER = "```python\n"
 
-      // Check for an odd number of code fences
-      if (numCodeFences % 2 != 0) {
-        val lastCodeFenceIndex = trimmedMd.lastIndexOf("```")
-        if (lastCodeFenceIndex != -1) {
-          trimmedMd = trimmedMd.substring(0, lastCodeFenceIndex)
-        }
-      }
-
-      val sentenceBoundary = trimmedMd.lastIndexOf(". ")
-      val imageBoundary = trimmedMd.lastIndexOf("![")
-      val tableBoundary = trimmedMd.lastIndexOf("|")
-      val lastNewLine = trimmedMd.lastIndexOf("\n")
-
-      val maxBoundary = maxOf(sentenceBoundary, imageBoundary, tableBoundary, lastNewLine)
-
-      if (maxBoundary != -1) {
-        trimmedMd = trimmedMd.substring(0, maxBoundary + 1)
-      }
-
-      val placeholder = HuggingFaceDocumentationPlaceholdersUtil.trimmedMdPlaceholder(entityId, entityKind)
-      "${trimmedMd.trimEnd()}\n\n${placeholder}"
-    }
+    private val MD_IMG_REGEX = Regex("""!\[(.*?)]\((.*?)\)""")
+    private val HTML_IMG_REGEX = Regex("""<img([^>]+)?>""", RegexOption.IGNORE_CASE)
+    private val MARKDOWN_HEADER_REGEX = Regex("""(?m)^#{1,6}\s(.*?)$""")
+    private val INTERNAL_LINK_REGEX = Regex("""\[(.*?)\]\(#(.*?)\)""")
+    private val RELATIVE_LINK_REGEX = Regex("""\[(.*?)\]\((?!http|#)(.*?)(?<!\.(jpg|jpeg|png|gif))\)""")
+    private val SUMMARY_TAGS_REGEX = Regex("<summary>(.*?)</summary>")
   }
 }

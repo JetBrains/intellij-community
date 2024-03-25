@@ -264,7 +264,7 @@ public final class SurroundAutoCloseableAction extends PsiUpdateModCommandAction
 
     @Override
     public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(file)) return PsiElement.EMPTY_ARRAY;
+      if (!PsiUtil.isAvailable(JavaFeature.TRY_WITH_RESOURCES, file)) return PsiElement.EMPTY_ARRAY;
       PsiElement element = file.findElementAt(endOffset);
       PsiElement target = findExpression(element);
       if (target == null) {

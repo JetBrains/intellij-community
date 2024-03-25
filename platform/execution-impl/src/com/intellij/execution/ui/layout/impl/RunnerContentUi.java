@@ -264,13 +264,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myTabs = new JBRunnerTabs(myProject, this);
     myTabs.getComponent().setOpaque(false);
     myTabs.setDataProvider(dataId -> {
-      if (ViewContext.CONTENT_KEY.is(dataId)) {
+      if (CONTENT_KEY.is(dataId)) {
         TabInfo info = myTabs.getTargetInfo();
         if (info != null) {
           return getGridFor(info).getData(dataId);
         }
       }
-      else if (ViewContext.CONTEXT_KEY.is(dataId)) {
+      else if (CONTEXT_KEY.is(dataId)) {
         return this;
       }
       return null;
@@ -331,7 +331,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
           if (CloseViewAction.isEnabled(contents)) {
             CloseViewAction.perform(RunnerContentUi.this, contents[0]);
           }
-          else if (MinimizeViewAction.isEnabled(RunnerContentUi.this, contents, ViewContext.TAB_TOOLBAR_PLACE)) {
+          else if (MinimizeViewAction.isEnabled(RunnerContentUi.this, contents, TAB_TOOLBAR_PLACE)) {
             grid.getCellFor(contents[0]).minimize(contents[0]);
           }
         }
@@ -765,7 +765,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return PlaceInGrid.center;
   }
 
-  private @Nullable JBTabs getTabsAt(DockableContent content, RelativePoint point) {
+  private @Nullable JBTabs getTabsAt(DockableContent<?> content, RelativePoint point) {
     if (content instanceof DockableGrid) {
       final Point p = point.getPoint(getComponent());
       Component c = SwingUtilities.getDeepestComponentAt(getComponent(), p.x, p.y);
@@ -964,7 +964,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         if (size.height > 0) {
-          size.height = JBRunnerTabs.getTabLabelPreferredHeight() - ((JBRunnerTabs)myTabs).getBorderThickness();
+          size.height = JBRunnerTabs.getTabLabelPreferredHeight() - myTabs.getBorderThickness();
         }
         return size;
       }
@@ -1600,7 +1600,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       g.fill(myBoundingBox);
     }
 
-    private void processDropOver(RunnerContentUi ui, DockableContent dockable, RelativePoint dropTarget) {
+    private void processDropOver(RunnerContentUi ui, DockableContent<?> dockable, RelativePoint dropTarget) {
       myBoundingBox = null;
       setNeedsRepaint(true);
 
@@ -1678,7 +1678,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     @Override
     public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (QuickActionProvider.KEY.is(dataId)) {
+      if (KEY.is(dataId)) {
         return RunnerContentUi.this;
       }
 
@@ -1955,7 +1955,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   private boolean isUsed(int i) {
-    return myChildren.stream().anyMatch(child -> child.getWindow() == i);
+    return ContainerUtil.exists(myChildren, child -> child.getWindow() == i);
   }
 
   private DockManagerImpl getDockManager() {
@@ -2070,7 +2070,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     private RunnerContentUi myContentUi;
 
-    @SuppressWarnings({"UnusedDeclaration"})
+    @SuppressWarnings("UnusedDeclaration")
     public ShowDebugContentAction() {
     }
 
@@ -2111,7 +2111,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       boolean isSelected = delegate.isSelected(e);
-      return myInverted ? !isSelected : isSelected;
+      return myInverted != isSelected;
     }
 
     @Override
@@ -2121,7 +2121,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      delegate.setSelected(e, myInverted ? !state : state);
+      delegate.setSelected(e, myInverted != state);
     }
   }
 
@@ -2133,7 +2133,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private void fireContentClosed(@Nullable Content content) {
     for (Listener each : myDockingListeners) {
-      // dirty hack to not pass null here, listener implementation do not take this value into account
+      // dirty hack to not pass null here, listener implementations do not take this value into account
       each.contentRemoved(content != null ? content : new Object());
     }
   }

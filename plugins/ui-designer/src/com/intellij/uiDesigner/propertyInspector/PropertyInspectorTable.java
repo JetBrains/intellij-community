@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -1202,7 +1203,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
         //noinspection unchecked
         final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
         if (c instanceof JComboBox) {
-          c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+          c.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.TRUE);
         }
 
         return c;

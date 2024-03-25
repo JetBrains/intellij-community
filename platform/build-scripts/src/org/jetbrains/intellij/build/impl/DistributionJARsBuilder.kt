@@ -40,6 +40,7 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
@@ -395,7 +396,7 @@ suspend fun buildNonBundledPlugins(
       val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
       val pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
       val pluginVersion = if (Files.exists(pluginXmlPath)) {
-        plugin.versionEvaluator.evaluate(pluginXmlPath, context.buildNumber, context)
+        plugin.versionEvaluator.evaluate(pluginXmlPath, context.pluginBuildNumber, context)
       }
       else {
         context.buildNumber
@@ -408,7 +409,7 @@ suspend fun buildNonBundledPlugins(
 
     archivePlugins(items = dirToJar, compress = compressPluginArchive, withBlockMap = compressPluginArchive, context = context)
 
-    val helpPlugin = buildHelpPlugin(pluginVersion = context.buildNumber, context = context)
+    val helpPlugin = buildHelpPlugin(pluginVersion = context.pluginBuildNumber, context = context)
     if (helpPlugin != null) {
       val spec = buildHelpPlugin(
         helpPlugin = helpPlugin,
@@ -566,7 +567,7 @@ private suspend fun buildPlugins(
 
       val directoryName = plugin.directoryName
       val pluginDir = targetDir.resolve(directoryName)
-      val task = async {
+      val task = async(CoroutineName("Build plugin (module=${plugin.mainModule})")) {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope {
           val (entries, file) = layoutDistribution(
             layout = plugin,
@@ -1102,14 +1103,17 @@ fun layoutResourcePaths(layout: BaseLayout, context: BuildContext, targetDirecto
 
 private fun copyIfChanged(targetDir: Path, sourceDir: Path, sourceFile: Path): Boolean {
   val targetFile = targetDir.resolve(sourceDir.relativize(sourceFile))
-  if (Files.exists(targetFile)) {
-    val t = Files.getLastModifiedTime(targetFile).toMillis()
-    val s = Files.getLastModifiedTime(sourceDir).toMillis()
-    if (t == s) {
-      return false
-    }
-    Files.delete(targetFile)
+  val t = try {
+    Files.getLastModifiedTime(targetFile).toMillis()
   }
+  catch (_: NoSuchFileException) {
+    return true
+  }
+  val s = Files.getLastModifiedTime(sourceFile).toMillis()
+  if (t == s) {
+    return false
+  }
+  Files.delete(targetFile)
   return true
 }
 
@@ -1258,15 +1262,15 @@ private fun archivePlugin(optimized: Boolean,
                       source: Path,
                       context: BuildContext) {
   if (optimized) {
-    writeNewZip(target, compress = compress, withOptimizedMetadataEnabled = false) { zipCreator ->
+    writeNewZipWithoutIndex(target, compress = compress) { zipCreator ->
       ZipArchiver(zipCreator).use { archiver ->
         if (Files.isDirectory(source)) {
           archiver.setRootDir(source, source.fileName.toString())
-          archiveDir(startDir = source, archiver = archiver, excludes = null)
+          archiveDir(startDir = source, archiver = archiver, excludes = null, indexWriter = null)
         }
         else {
           archiver.setRootDir(source.parent)
-          archiver.addFile(source)
+          archiver.addFile(source, indexWriter = null)
         }
       }
     }
@@ -1296,7 +1300,7 @@ private fun buildBlockMap(file: Path, json: JSON) {
 
   val fileParent = file.parent
   val fileName = file.fileName.toString()
-  writeNewZip(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
+  writeNewZipWithoutIndex(fileParent.resolve("$fileName.blockmap.zip"), compress = true) {
     it.compressedData("blockmap.json", ByteBuffer.wrap(bytes))
   }
 

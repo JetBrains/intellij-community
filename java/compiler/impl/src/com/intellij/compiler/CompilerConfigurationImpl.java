@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -853,7 +853,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     for (Element pathElement : processing.getChildren("processorPath")) {
       final String path = pathElement.getAttributeValue("value", (String)null);
       if (path != null) {
-        if (processorPath.length() > 0) {
+        if (!processorPath.isEmpty()) {
           processorPath.append(File.pathSeparator);
         }
         processorPath.append(path);
@@ -883,7 +883,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
 
     myDefaultProcessorsProfile.setEnabled(false);
     myDefaultProcessorsProfile.setObtainProcessorsFromClasspath(isUseClasspath);
-    if (processorPath.length() > 0) {
+    if (!processorPath.isEmpty()) {
       myDefaultProcessorsProfile.setProcessorPath(processorPath.toString());
     }
     if (!optionPairs.isEmpty()) {
@@ -985,7 +985,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
               }
             }
 
-            if (malformedPatterns.length() > 0) {
+            if (!malformedPatterns.isEmpty()) {
               Messages.showErrorDialog(JavaCompilerBundle.message("error.bad.resource.patterns", malformedPatterns.toString()),
                                        JavaCompilerBundle.message("bad.resource.patterns.dialog.title"));
               removeWildcardPatterns();

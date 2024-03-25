@@ -1,2 +1,1 @@
-//class
 protected enum Test {}

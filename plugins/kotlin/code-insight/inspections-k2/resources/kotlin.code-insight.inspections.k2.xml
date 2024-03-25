@@ -7,6 +7,10 @@
     <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.core.NotPropertiesService"
+            serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.NotPropertiesServiceImpl"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.RedundantUnitReturnTypeInspection"
             groupPath="Kotlin"
@@ -16,6 +20,15 @@
             level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
             language="kotlin"
             key="inspection.redundant.unit.return.type.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.UseExpressionBodyInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="INFORMATION"
+            language="kotlin"
+            key="inspection.use.expression.body.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RedundantVisibilityModifierInspection"
@@ -337,5 +350,32 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.useless.call.on.collection.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.constant.conditions.display.name" bundle="messages.KotlinBundle"/>
+    <dataflowIRProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinDataFlowIRProvider"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.IntroduceWhenSubjectInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING" key="inspection.introduce.when.subject.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UsePropertyAccessSyntaxInspection"
+                     shortName="UsePropertyAccessSyntax"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     cleanupTool="true"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.use.property.access.syntax.display.name" bundle="messages.KotlinBundle"/>
+
   </extensions>
 </idea-plugin>

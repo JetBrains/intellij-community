@@ -39,7 +39,7 @@ typealias DescriptionPartition = Declaredness<Usage<Set<Feature>>>
  * A main tier has a description (that is used to run the ML model), and it also could contain analysis features
  */
 @ApiStatus.Internal
-data class MainTierScheme(
+data class AnalysedTierScheme(
   val description: Set<FeatureDeclaration<*>>,
   val analysis: Set<FeatureDeclaration<*>>
 )
@@ -48,7 +48,7 @@ data class MainTierScheme(
  * An additional tier is provided occasionally, and it has only description
  */
 @ApiStatus.Internal
-data class AdditionalTierScheme(
+data class DescribedTierScheme(
   val description: Set<FeatureDeclaration<*>>
 )
 
@@ -270,11 +270,9 @@ typealias DescribedChildrenContainer<R, P> = SessionTree.ChildrenContainer<R, De
 
 typealias DescribedRootContainer<R, P> = SessionTree.RootContainer<R, DescribedTierData, P>
 
-typealias SessionAnalysis = Map<String, Set<Feature>>
+typealias AnalysedSessionTree<P> = SessionTree<Unit, AnalysedTierData, P>
 
-typealias AnalysedSessionTree<P> = SessionTree<SessionAnalysis, AnalysedTierData, P>
-
-typealias AnalysedRootContainer<P> = SessionTree.RootContainer<SessionAnalysis, AnalysedTierData, P>
+typealias AnalysedRootContainer<P> = SessionTree.RootContainer<Unit, AnalysedTierData, P>
 
 internal val <R, P> DescribedSessionTree<R, P>.environment: Environment
   get() = Environment.of(this.levelData.mainInstances.keys)

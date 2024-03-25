@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsStatusComponentFactory
+import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.toAnAction
@@ -57,7 +59,12 @@ internal object GHPRStatusChecksComponentFactory {
         },
         reviewerNameProvider = { reviewer -> reviewer.getPresentableName() },
         avatarKeyProvider = { reviewer -> reviewer.avatarUrl },
-        iconProvider = { iconKey, iconSize -> avatarIconsProvider.getIcon(iconKey, iconSize) }
+        iconProvider = { reviewState, iconKey, iconSize ->
+          CodeReviewAvatarUtils.createIconWithOutline(
+            avatarIconsProvider.getIcon(iconKey, iconSize),
+            ReviewDetailsUIUtil.getReviewStateIconBorder(reviewState)
+          )
+        }
       ))
     }
     val scrollableStatusesPanel = ScrollPaneFactory.createScrollPane(statusesPanel, true).apply {

@@ -568,6 +568,7 @@ private class ClassConverter(
             if (realGetter != null) {
                 if (realGetter.function.isAbstract() && !klass.isInterfaceClass()) {
                     ktProperty.addModifier(ABSTRACT_KEYWORD)
+                    ktGetter.removeModifier(ABSTRACT_KEYWORD)
                 }
                 if (ktGetter.isRedundantGetter()) {
                     realGetter.function.deleteExplicitLabelComments()

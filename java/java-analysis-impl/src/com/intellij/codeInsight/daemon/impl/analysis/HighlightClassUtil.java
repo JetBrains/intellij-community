@@ -626,21 +626,19 @@ public final class HighlightClassUtil {
   }
 
   static HighlightInfo.Builder checkClassDoesNotCallSuperConstructorOrHandleExceptions(@NotNull PsiClass aClass,
-                                                                               @Nullable RefCountHolder refCountHolder,
-                                                                               @NotNull PsiResolveHelper resolveHelper) {
+                                                                                       @NotNull PsiResolveHelper resolveHelper) {
     if (aClass.isEnum()) return null;
     // check only no-ctr classes. Problem with specific constructor will be highlighted inside it
     if (aClass.getConstructors().length != 0) return null;
     // find no-args base class ctr
     TextRange textRange = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-    return checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, PsiClassType.EMPTY_ARRAY);
+    return checkBaseClassDefaultConstructorProblem(aClass, resolveHelper, textRange, PsiClassType.EMPTY_ARRAY);
   }
 
   static HighlightInfo.Builder checkBaseClassDefaultConstructorProblem(@NotNull PsiClass aClass,
-                                                               @Nullable RefCountHolder refCountHolder,
-                                                               @NotNull PsiResolveHelper resolveHelper,
-                                                               @NotNull TextRange range,
-                                                               PsiClassType @NotNull [] handledExceptions) {
+                                                                       @NotNull PsiResolveHelper resolveHelper,
+                                                                       @NotNull TextRange range,
+                                                                       PsiClassType @NotNull [] handledExceptions) {
     if (aClass instanceof PsiAnonymousClass) return null;
     PsiClass baseClass = aClass.getSuperClass();
     if (baseClass == null) return null;
@@ -689,9 +687,6 @@ public final class HighlightClassUtil {
         IntentionAction action = QuickFixFactory.getInstance().createCreateConstructorMatchingSuperFix(aClass);
         info.registerFix(action, null, null, null, null);
         return info;
-      }
-      if (refCountHolder != null) {
-        refCountHolder.registerLocallyReferenced(constructor);
       }
       return null;
     }

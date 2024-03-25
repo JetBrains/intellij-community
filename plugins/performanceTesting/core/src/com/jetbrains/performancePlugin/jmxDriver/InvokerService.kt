@@ -34,7 +34,7 @@ class InvokerService {
   @Throws(JMException::class)
   fun register(tracerSupplier: Supplier<out IJTracer?>,
                timedContextSupplier: Supplier<out Context?>,
-               screenshotAction: Consumer<String?>) {
+               screenshotAction: (String) -> String) {
     val objectName = ObjectName("com.intellij.driver:type=Invoker")
     val server = ManagementFactory.getPlatformMBeanServer()
 

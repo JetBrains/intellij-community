@@ -43,7 +43,7 @@ interface MLModel<P : Any> {
    * Selection will be 'complete' if and only if the model could be executed with it.
    *
    * The set of tiers it is aware of could not include some additional tiers, declared
-   * in [com.intellij.platform.ml.impl.approach.LogDrivenModelInference]'s 'not used description'.
+   * in [com.intellij.platform.ml.impl.LogDrivenModelInference]'s 'not used description'.
    * Because old models could be not aware of the newly established tiers.
    */
   val knownFeatures: PerTier<FeatureSelector>

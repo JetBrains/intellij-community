@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -19,8 +19,8 @@ import java.util.Collection;
 import java.util.List;
 
 public final class YamlObjectAdapter implements JsonObjectValueAdapter {
-  @NotNull private final YAMLMapping myObject;
-  @NotNull private final NotNullLazyValue<List<JsonPropertyAdapter>> myChildAdapters = NotNullLazyValue.lazy(this::computeChildAdapters);
+  private final @NotNull YAMLMapping myObject;
+  private final @NotNull NotNullLazyValue<List<JsonPropertyAdapter>> myChildAdapters = NotNullLazyValue.lazy(this::computeChildAdapters);
 
   public YamlObjectAdapter(@NotNull YAMLMapping object) {myObject = object;}
 
@@ -50,9 +50,8 @@ public final class YamlObjectAdapter implements JsonObjectValueAdapter {
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiElement getDelegate() {
+  public @NotNull PsiElement getDelegate() {
     return myObject;
   }
 
@@ -61,20 +60,17 @@ public final class YamlObjectAdapter implements JsonObjectValueAdapter {
     return this;
   }
 
-  @Nullable
   @Override
-  public JsonArrayValueAdapter getAsArray() {
+  public @Nullable JsonArrayValueAdapter getAsArray() {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<JsonPropertyAdapter> getPropertyList() {
+  public @NotNull List<JsonPropertyAdapter> getPropertyList() {
     return myChildAdapters.getValue();
   }
 
-  @NotNull
-  private List<JsonPropertyAdapter> computeChildAdapters() {
+  private @NotNull List<JsonPropertyAdapter> computeChildAdapters() {
     Collection<YAMLKeyValue> keyValues = myObject.getKeyValues();
     List<JsonPropertyAdapter> adapters = new ArrayList<>(keyValues.size());
     for (YAMLKeyValue value : keyValues) {
@@ -107,8 +103,7 @@ public final class YamlObjectAdapter implements JsonObjectValueAdapter {
     return false;
   }
 
-  @Nullable
-  static PsiElement resolveYamlAlias(YAMLValue yamlValue) {
+  static @Nullable PsiElement resolveYamlAlias(YAMLValue yamlValue) {
     PsiReference reference = yamlValue instanceof YAMLAlias ? yamlValue.getReference() : null;
     PsiElement resolved = reference == null ? null : reference.resolve();
     resolved = resolved == null ? null : resolved.getParent();

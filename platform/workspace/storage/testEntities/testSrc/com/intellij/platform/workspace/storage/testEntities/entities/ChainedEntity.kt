@@ -1,7 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 
 
@@ -19,7 +24,10 @@ interface ChainedParentEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChainedParentEntity {
+    operator fun invoke(
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChainedParentEntity {
       val builder = builder()
       builder.entitySource = entitySource
       init?.invoke(builder)
@@ -30,9 +38,12 @@ interface ChainedParentEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChainedParentEntity,
-                                      modification: ChainedParentEntity.Builder.() -> Unit): ChainedParentEntity = modifyEntity(
-  ChainedParentEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChainedParentEntity,
+  modification: ChainedParentEntity.Builder.() -> Unit,
+): ChainedParentEntity {
+  return modifyEntity(ChainedParentEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 interface ChainedEntity : WorkspaceEntity {
@@ -55,7 +66,11 @@ interface ChainedEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChainedEntity {
+    operator fun invoke(
+      data: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): ChainedEntity {
       val builder = builder()
       builder.data = data
       builder.entitySource = entitySource
@@ -67,6 +82,10 @@ interface ChainedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChainedEntity, modification: ChainedEntity.Builder.() -> Unit): ChainedEntity = modifyEntity(
-  ChainedEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: ChainedEntity,
+  modification: ChainedEntity.Builder.() -> Unit,
+): ChainedEntity {
+  return modifyEntity(ChainedEntity.Builder::class.java, entity, modification)
+}
 //endregion

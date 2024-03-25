@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -48,7 +49,7 @@ public final class DiffDividerDrawUtil {
                                      @NotNull Editor editor2,
                                      @NotNull DividerSeparatorPaintable paintable) {
     ReadAction.run(() -> {
-      List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
+      List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable, gg.getClipBounds());
 
       GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
       for (DividerSeparator polygon : polygons) {
@@ -73,7 +74,7 @@ public final class DiffDividerDrawUtil {
                                    @NotNull Editor editor2,
                                    @NotNull DividerPaintable paintable) {
     ReadAction.run(() -> {
-      List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
+      List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable, gg.getClipBounds());
 
       GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
       for (DividerPolygon polygon : polygons) {
@@ -84,12 +85,14 @@ public final class DiffDividerDrawUtil {
   }
 
   @NotNull
-  public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
-                                                           @NotNull Editor editor2,
-                                                           @NotNull DividerPaintable paintable) {
+  private static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
+                                                            @NotNull Editor editor2,
+                                                            @NotNull DividerPaintable paintable,
+                                                            @NotNull Rectangle paintedArea) {
     if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
 
-    DividerPaintableHandlerImpl handler = new DividerPaintableHandlerImpl(editor1, editor2);
+    IntPair yRange = new IntPair(paintedArea.y, paintedArea.y + paintedArea.height);
+    DividerPaintableHandlerImpl handler = new DividerPaintableHandlerImpl(editor1, editor2, yRange);
     paintable.process(handler);
     return handler.getPolygons();
   }
@@ -101,15 +104,17 @@ public final class DiffDividerDrawUtil {
   }
 
   @NotNull
-  public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
-                                                               @NotNull Editor editor2,
-                                                               @NotNull DividerSeparatorPaintable paintable) {
+  private static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
+                                                                @NotNull Editor editor2,
+                                                                @NotNull DividerSeparatorPaintable paintable,
+                                                                @NotNull Rectangle paintedArea) {
     if (editor1.isDisposed() || editor2.isDisposed()) return Collections.emptyList();
 
     final List<DividerSeparator> separators = new ArrayList<>();
 
-    final LineRange leftInterval = getVisibleInterval(editor1);
-    final LineRange rightInterval = getVisibleInterval(editor2);
+    IntPair yRange = new IntPair(paintedArea.y, paintedArea.y + paintedArea.height);
+    final LineRange leftInterval = getPaintedInterval(editor1, yRange);
+    final LineRange rightInterval = getPaintedInterval(editor2, yRange);
 
     final int height1 = editor1.getLineHeight();
     final int height2 = editor2.getLineHeight();
@@ -159,14 +164,24 @@ public final class DiffDividerDrawUtil {
     return new DividerSeparator(start1, start2, start1 + height1, start2 + height2, isHovered, scheme);
   }
 
+  /**
+   * Get an interval of lines to be painted on the divider
+   * The lines are included if they lay inside {@code yRange}
+   *
+   * @param editor editor which supplies the line numbers
+   * @param yRange a closed interval of editor y-axis coordinates to be painted
+   */
   @NotNull
   @ApiStatus.Internal
-  public static LineRange getVisibleInterval(Editor editor) {
+  public static LineRange getPaintedInterval(@NotNull Editor editor, @NotNull IntPair yRange) {
+    int visibleAreaYOffset = editor.getScrollingModel().getVerticalScrollOffset();
+    // convert editor coordinates to editor component coordinates
+    int yStart = visibleAreaYOffset + yRange.first;
+    int yEnd = visibleAreaYOffset + yRange.second;
+    if (yStart >= yEnd) return new LineRange(0, 0);
     return ReadAction.compute(() -> {
-      Rectangle area = editor.getScrollingModel().getVisibleArea();
-      if (area.height < 0) return new LineRange(0, 0);
-      LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
-      LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
+      LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, yStart));
+      LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, yEnd));
       return new LineRange(position1.line, position2.line);
     });
   }
@@ -200,11 +215,12 @@ public final class DiffDividerDrawUtil {
 
     @ApiStatus.Internal
     public DividerPaintableHandlerImpl(@NotNull Editor editor1,
-                                        @NotNull Editor editor2) {
+                                       @NotNull Editor editor2,
+                                       @NotNull IntPair yRange) {
       myEditor1 = editor1;
       myEditor2 = editor2;
-      myLeftInterval = getVisibleInterval(editor1);
-      myRightInterval = getVisibleInterval(editor2);
+      myLeftInterval = getPaintedInterval(editor1, yRange);
+      myRightInterval = getPaintedInterval(editor2, yRange);
     }
 
     @NotNull

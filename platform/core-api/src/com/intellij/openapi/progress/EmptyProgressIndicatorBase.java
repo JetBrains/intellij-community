@@ -6,6 +6,20 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link ProgressIndicator} notice.
+ * <br/>
+ * In coroutines, cancellation is handled by {@link kotlinx.coroutines.Job Job} lifecycle.
+ * In coroutines, modality state is passed through the coroutine context.
+ * {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking} and
+ * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress} install the modality into context of the action.
+ * If it's necessary to install {@link ModalityState#current the current modality},
+ * it should be added to the coroutine context of a newly launched coroutine,
+ * see {@link com.intellij.openapi.application.ModalityKt#asContextElement}.
+ * </p>
+ */
 public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
   private final @NotNull ModalityState myModalityState;
   private volatile @NotNull RunState myRunState = RunState.VIRGIN;

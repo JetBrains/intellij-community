@@ -27,6 +27,7 @@ public abstract class Template implements PresentableLookupValue {
   public static final @NonNls String SELECTION = "SELECTION";
 
   private boolean myUseStaticImport;
+  private boolean scrollToTemplate = true;
 
   public abstract void addTextSegment(@NotNull String text);
 
@@ -117,5 +118,19 @@ public abstract class Template implements PresentableLookupValue {
   @Override
   public @NlsSafe String getPresentation() {
     return getKey();
+  }
+
+  /**
+   * @return if editor should scroll to template, true by default
+   */
+  public boolean isScrollToTemplate() {
+    return scrollToTemplate;
+  }
+
+  /**
+   * override scroll template policy
+   */
+  public void setScrollToTemplate(boolean scrollToTemplate) {
+    this.scrollToTemplate = scrollToTemplate;
   }
 }

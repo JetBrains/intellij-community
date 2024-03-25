@@ -17,9 +17,9 @@ import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
     OPEN_KEYWORD, FINAL_KEYWORD, OVERRIDE_KEYWORD,
@@ -87,7 +87,7 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
             val restrictedScope = if (useScope is GlobalSearchScope) {
                 val psiSearchHelper = PsiSearchHelper.getInstance(parameter.project)
                 for (accessorName in parameter.getAccessorNames()) {
-                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(accessorName, useScope, null, null)) {
+                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(accessorName, useScope, null)) {
                         ZERO_OCCURRENCES -> {
                         } // go on
                         else -> return         // accessor in use: should remain a property
@@ -95,7 +95,7 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
                 }
                 // TOO_MANY_OCCURRENCES: too expensive
                 // ZERO_OCCURRENCES: unused at all, reported elsewhere
-                if (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null) != FEW_OCCURRENCES) return
+                if (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null) != FEW_OCCURRENCES) return
                 KotlinSourceFilterScope.projectSources(useScope, parameter.project)
             } else useScope
             // Find all references and check them

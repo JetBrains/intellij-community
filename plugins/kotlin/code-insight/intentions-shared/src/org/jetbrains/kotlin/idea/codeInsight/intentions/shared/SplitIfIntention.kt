@@ -6,10 +6,11 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableModCommandIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -17,10 +18,19 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.util.match
 
-class SplitIfIntention : AbstractKotlinApplicableModCommandIntention<KtExpression>(KtExpression::class) {
-    override fun getActionName(element: KtExpression): String = familyName
+internal class SplitIfIntention :
+    KotlinApplicableModCommandAction<KtExpression, Unit>(KtExpression::class) {
 
-    override fun apply(element: KtExpression, context: ActionContext, updater: ModPsiUpdater) {
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtExpression) {
+    }
+
+    override fun invoke(
+        context: ActionContext,
+        element: KtExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val operator = when (element) {
             is KtIfExpression -> getFirstValidOperator(element)!!
             else -> element as KtOperationReferenceExpression
@@ -67,8 +77,9 @@ class SplitIfIntention : AbstractKotlinApplicableModCommandIntention<KtExpressio
 
     override fun getFamilyName(): String = KotlinBundle.message("split.if.into.two")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTarget {
-        if (it is KtIfExpression) it.ifKeyword else it
+    override fun getApplicableRanges(element: KtExpression): List<TextRange> = when (element) {
+        is KtIfExpression -> ApplicabilityRanges.ifKeyword(element)
+        else -> ApplicabilityRange.self(element)
     }
 
     override fun isApplicableByPsi(element: KtExpression): Boolean = when (element) {

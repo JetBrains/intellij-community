@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.Comparing
+import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
@@ -57,6 +58,7 @@ class VcsLogProjectTabsProperties : PersistentStateComponent<VcsLogProjectTabsPr
     var tabStates: MutableMap<String, MyState> = TreeMap()
 
     @get:OptionTag("OPEN_GENERIC_TABS")
+    @get:MapAnnotation(sortBeforeSave = false)
     var openTabs = LinkedHashMap<String, VcsLogTabLocation>()
 
     @get:OptionTag("RECENT_FILTERS")

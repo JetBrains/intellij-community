@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -86,7 +87,7 @@ public final class ObjectsRequireNonNullIntention extends MCIntention {
 
     @Override
     public boolean satisfiedBy(PsiElement element) {
-      if (!PsiUtil.isLanguageLevel7OrHigher(element)) {
+      if (!PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, element)) {
         return false;
       }
       if (!(element instanceof PsiReferenceExpression referenceExpression)) {

@@ -113,6 +113,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testSuspiciousLabelElementsJava20() {
     doTest();
   }
+  public void testReadResolve() { doTest(); }
+  public void testDifferentTypesButNullable() { doTest(); }
 
   public void testForEachPattern() {
     myFixture.addClass("""

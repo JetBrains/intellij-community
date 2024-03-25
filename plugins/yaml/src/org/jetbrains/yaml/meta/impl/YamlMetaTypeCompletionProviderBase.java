@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -34,8 +32,7 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvider<CompletionParameters> {
   protected static final Logger LOG = Logger.getInstance(YamlMetaTypeCompletionProviderBase.class);
 
-  @Nullable
-  protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull CompletionParameters params);
+  protected abstract @Nullable YamlMetaTypeProvider getMetaTypeProvider(@NotNull CompletionParameters params);
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters params,
@@ -226,16 +223,15 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
   }
 
-  @NotNull
-  private static Collection<List<Field>> collectPaths(@NotNull final Collection<? extends Field> fields, final int deepness) {
+  private static @NotNull Collection<List<Field>> collectPaths(final @NotNull Collection<? extends Field> fields, final int deepness) {
     Collection<List<Field>> result = new ArrayList<>();
     doCollectPathsRec(fields, Collections.emptyList(), result, deepness);
     return result;
   }
 
-  private static void doCollectPathsRec(@NotNull final Collection<? extends Field> fields,
-                                        @NotNull final List<? extends Field> currentPath,
-                                        @NotNull final Collection<? super List<Field>> result, final int deepness) {
+  private static void doCollectPathsRec(final @NotNull Collection<? extends Field> fields,
+                                        final @NotNull List<? extends Field> currentPath,
+                                        final @NotNull Collection<? super List<Field>> result, final int deepness) {
     if (currentPath.size() >= deepness) {
       return;
     }
@@ -289,9 +285,8 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       myCompletionResultSet = completionResultSet;
     }
 
-    @NotNull
     @Override
-    public CompletionType getCompletionType() {
+    public @NotNull CompletionType getCompletionType() {
       return myType;
     }
 
@@ -305,14 +300,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return myCompletionResultSet;
     }
 
-    @NotNull
     @Override
-    public String getCompletionPrefix() {
+    public @NotNull String getCompletionPrefix() {
       return myPrefix;
     }
 
-    @NotNull
-    private static String computeCompletionPrefix(CompletionParameters parameters) {
+    private static @NotNull String computeCompletionPrefix(CompletionParameters parameters) {
       PsiElement position = parameters.getPosition();
       String textWithInsertedPart = parameters.getPosition().getText();
       int positionInRange = parameters.getOffset() - position.getTextRange().getStartOffset();

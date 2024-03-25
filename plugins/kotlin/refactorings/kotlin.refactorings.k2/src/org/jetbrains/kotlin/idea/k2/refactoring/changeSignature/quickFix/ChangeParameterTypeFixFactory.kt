@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 
 import com.intellij.openapi.editor.Editor
@@ -15,25 +15,23 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.KtCallElement
-import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.types.Variance
 
-
 object ChangeParameterTypeFixFactory {
-    val typeMismatchFactory = diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
+
+    val typeMismatchFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ArgumentTypeMismatch ->
         val psi = diagnostic.psi
         val targetType = diagnostic.actualType
         createTypeMismatchFixes(psi, targetType)
     }
 
-    val nullForNotNullTypeFactory = diagnosticFixFactory(KtFirDiagnostic.NullForNonnullType::class) { diagnostic ->
+    val nullForNotNullTypeFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.NullForNonnullType ->
        createTypeMismatchFixes(diagnostic.psi, diagnostic.expectedType.withNullability(KtTypeNullability.NULLABLE))
     }
 

@@ -32,7 +32,7 @@ class SwitchToWhenConversion(context: NewJ2kConverterContext) : RecursiveConvers
             else -> error("Unexpected class ${element::class.simpleName}")
         }
 
-        return recurse(whenBlock)
+        return recurse(whenBlock.withFormattingFrom(element))
     }
 
     private fun List<JKKtWhenCase>.moveElseCaseToTheEnd(): List<JKKtWhenCase> =

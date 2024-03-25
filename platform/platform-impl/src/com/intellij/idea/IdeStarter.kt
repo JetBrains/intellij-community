@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.ui.IconDbMaintainer
 import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -66,8 +68,19 @@ open class IdeStarter : ModernApplicationStarter() {
   override val commandName: String?
     get() = null
 
+  @OptIn(IntellijInternalApi::class)
   override suspend fun start(args: List<String>) {
     coroutineScope {
+      if (ApplicationManager.getApplication().isInternal) {
+        launch {
+          if (serviceAsync<RegistryManager>().`is`("ui.inspector.save.stacktraces")) {
+            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              UiInspectorAction.initStacktracesSaving()
+            }
+          }
+        }
+      }
+
       val app = ApplicationManager.getApplication()
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
 
@@ -248,14 +261,7 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   return result.project
 }
 
-@OptIn(IntellijInternalApi::class)
 private fun CoroutineScope.postOpenUiTasks() {
-  if (ApplicationManager.getApplication().isInternal) {
-    launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      UiInspectorAction.initStacktracesSaving()
-    }
-  }
-
   if (PluginManagerCore.isRunningFromSources()) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
@@ -277,6 +283,10 @@ private fun CoroutineScope.postOpenUiTasks() {
 
   launch {
     FUSProjectHotStartUpMeasurer.startWritingStatistics()
+  }
+
+  launch {
+    serviceAsync<IconDbMaintainer>()
   }
 }
 

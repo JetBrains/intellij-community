@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.process.LocalPtyOptions;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,11 +24,11 @@ import java.util.Map;
 /**
  * A flavor of GeneralCommandLine to start processes with Pseudo-Terminal (PTY).
  * <p>
- * Warning: PtyCommandLine works with ProcessHandler only in blocking read mode.
- * Please make sure that you use appropriate ProcessHandler implementation.
+ * Warning: PtyCommandLine works with {@link com.intellij.execution.process.ProcessHandler} only in blocking read mode.
+ * Please make sure that you use an appropriate {@code ProcessHandler} implementation.
  * <p>
  * Works for Linux, macOS, and Windows.
- * On Windows, PTY is emulated by creating an invisible console window (see Pty4j and WinPty implementation).
+ * On Windows, PTY is emulated by creating an invisible console window (see Pty4J and WinPty implementation).
  */
 public class PtyCommandLine extends GeneralCommandLine {
   private static final Logger LOG = Logger.getInstance(PtyCommandLine.class);
@@ -41,9 +42,20 @@ public class PtyCommandLine extends GeneralCommandLine {
 
   private final LocalPtyOptions.Builder myOptionsBuilder = getDefaultPtyOptions().builder();
   private boolean myWindowsAnsiColorEnabled = !Boolean.getBoolean("pty4j.win.disable.ansi.in.console.mode");
-  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = true;
+  private boolean myUnixOpenTtyToPreserveOutputAfterTermination = SystemProperties.getBooleanProperty("pty4j.open.child.tty", SystemInfo.isMac);
 
   public PtyCommandLine() { }
+
+  public PtyCommandLine(@NotNull List<String> command) {
+    super(command);
+  }
+
+  public PtyCommandLine(@NotNull GeneralCommandLine original) {
+    super(original);
+    if (original instanceof PtyCommandLine) {
+      myOptionsBuilder.set(((PtyCommandLine)original).myOptionsBuilder.build());
+    }
+  }
 
   public PtyCommandLine withUseCygwinLaunch(boolean useCygwinLaunch) {
     myOptionsBuilder.useCygwinLaunch(useCygwinLaunch);
@@ -53,10 +65,6 @@ public class PtyCommandLine extends GeneralCommandLine {
   public PtyCommandLine withConsoleMode(boolean consoleMode) {
     myOptionsBuilder.consoleMode(consoleMode);
     return this;
-  }
-
-  public boolean isConsoleMode() {
-    return myOptionsBuilder.consoleMode();
   }
 
   public PtyCommandLine withInitialColumns(int initialColumns) {
@@ -74,17 +82,6 @@ public class PtyCommandLine extends GeneralCommandLine {
     return this;
   }
 
-  public PtyCommandLine(@NotNull List<String> command) {
-    super(command);
-  }
-
-  public PtyCommandLine(@NotNull GeneralCommandLine original) {
-    super(original);
-    if (original instanceof PtyCommandLine) {
-      myOptionsBuilder.set(((PtyCommandLine)original).myOptionsBuilder.build());
-    }
-  }
-
   @NotNull
   PtyCommandLine withWindowsAnsiColorDisabled() {
     myWindowsAnsiColorEnabled = false;
@@ -92,8 +89,8 @@ public class PtyCommandLine extends GeneralCommandLine {
   }
 
   /**
-   * Allow to preserve the subprocess output after its termination on certain *nix OSes (notably, macOS).
-   * Side effect is that the subprocess won't terminate until all the output has been read from it.
+   * Allow preserving the subprocess output after its termination on certain *nix OSes (notably, macOS).
+   * One side effect is that the subprocess won't terminate until all the output has been read from it.
    *
    * @see com.pty4j.PtyProcessBuilder#setUnixOpenTtyToPreserveOutputAfterTermination(boolean)
    */
@@ -153,7 +150,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     Map<String, String> env = new HashMap<>();
     setupEnvironment(env);
     if (!SystemInfo.isWindows) {
-      // Let programs know about the emulator's capabilities to allow them produce appropriate escape sequences.
+      // Let programs know about the emulator's capabilities to allow them to produce appropriate escape sequences.
       // https://www.gnu.org/software/gettext/manual/html_node/The-TERM-variable.html
       // Moreover, some programs require TERM set, e.g. `/usr/bin/clear` or Python code `os.system("clear")`.
       // The following error will be reported if TERM is missing: "TERM environment variable set not set."

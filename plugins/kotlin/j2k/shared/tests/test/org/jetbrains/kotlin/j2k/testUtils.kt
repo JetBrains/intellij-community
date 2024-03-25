@@ -2,55 +2,25 @@
 
 package org.jetbrains.kotlin.j2k
 
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
-import com.intellij.openapi.roots.LanguageLevelModuleExtension
-import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import java.io.File
 
-fun descriptorByFileDirective(testDataFile: File, languageLevel: LanguageLevel = LanguageLevel.JDK_1_8): LightProjectDescriptor {
-    val fileText = FileUtil.loadFile(testDataFile, true)
-    val descriptor = when {
-        InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_FULL_JDK") ->
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-
-        InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME_WITH_STDLIB_JDK8") ->
-            KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceWithStdlibJdk8()
-
-        else -> KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+val J2K_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
+    object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
+        override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk21()
     }
 
-    return object : KotlinWithJdkAndRuntimeLightProjectDescriptor(descriptor.libraryFiles, descriptor.librarySourceFiles) {
-        override fun getSdk(): Sdk? {
-            val sdk = descriptor.sdk ?: return null
-            runWriteAction {
-                val modificator: SdkModificator = sdk.clone().sdkModificator
-                JavaSdkImpl.attachJdkAnnotations(modificator)
-                modificator.commitChanges()
-            }
-            return sdk
-        }
+internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
+    KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
-        override fun configureModule(module: Module, model: ModifiableRootModel) {
-            super.configureModule(module, model)
-            model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = languageLevel
-        }
-    }
-}
+internal const val ERROR_HEADER: String = "// ERROR"
 
 // TODO: adapted from `org.jetbrains.kotlin.idea.test.TestUtilsKt.dumpTextWithErrors`
 @OptIn(KtAllowAnalysisOnEdt::class)

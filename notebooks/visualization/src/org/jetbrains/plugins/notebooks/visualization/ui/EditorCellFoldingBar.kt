@@ -1,38 +1,74 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.RectanglePainter2D
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
-import java.awt.Cursor
-import java.awt.Dimension
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JPanel
+import javax.swing.JComponent
 
 internal class EditorCellFoldingBar(
   private val editor: EditorEx,
   private val toggleListener: () -> Unit
 ) {
 
-  val panel = JPanel().also {
+  val panel = object : JComponent() {
 
-    val appearance = editor.notebookAppearance
+    private var mouseOver = false
 
-    it.background = appearance.getCellStripeColor(editor)
-    it.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-    it.addMouseListener(object : MouseAdapter() {
-      override fun mouseEntered(e: MouseEvent) {
-        it.background = appearance.getCellStripeHoverColor(editor)
+    init {
+      addMouseListener(object : MouseAdapter() {
+        override fun mouseEntered(e: MouseEvent) {
+          mouseOver = true
+          repaint()
+        }
+
+        override fun mouseExited(e: MouseEvent) {
+          mouseOver = false
+          repaint()
+        }
+
+        override fun mouseClicked(e: MouseEvent) {
+          toggleListener.invoke()
+        }
+      })
+      cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    }
+
+    override fun paint(g: Graphics) {
+      val appearance = editor.notebookAppearance
+      val color = if (mouseOver) {
+        appearance.getCellStripeHoverColor(editor)
       }
-
-      override fun mouseExited(e: MouseEvent) {
-        it.background = appearance.getCellStripeColor(editor)
+      else {
+        appearance.getCellStripeColor(editor)
       }
-
-      override fun mouseClicked(e: MouseEvent) {
-        toggleListener.invoke()
+      val rect = rect()
+      val arc = if (ExperimentalUI.isNewUI()) {
+        rect.width.toDouble()
       }
-    })
+      else {
+        null
+      }
+      val graphics2D = g as Graphics2D
+      graphics2D.color = color
+      RectanglePainter2D.FILL.paint(graphics2D, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_DEFAULT)
+    }
+
+    private fun rect(): Rectangle {
+      val size = size
+      val width = size.width
+      val height = size.height
+      return if (mouseOver) {
+        Rectangle(0, 0, width, height)
+      }
+      else {
+        Rectangle(1, 1, width - 2, height - 2)
+      }
+    }
   }
 
   init {
@@ -44,7 +80,7 @@ internal class EditorCellFoldingBar(
   }
 
   fun setLocation(y: Int, height: Int) {
-    panel.location = Point(editor.gutterComponentEx.extraLineMarkerFreePaintersAreaOffset, y)
-    panel.size = Dimension(8, height)
+    panel.location = Point(editor.gutterComponentEx.extraLineMarkerFreePaintersAreaOffset + 1, y)
+    panel.size = Dimension(6, height)
   }
 }

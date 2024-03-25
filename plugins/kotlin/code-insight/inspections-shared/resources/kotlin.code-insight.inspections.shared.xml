@@ -97,6 +97,14 @@
                      language="kotlin"
                      key="inspection.redundant.setter.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantSuspendModifierInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.redundant.suspend.modifier.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyNegatedBinaryExpressionInspection"
             groupPath="Kotlin"
@@ -305,7 +313,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.other.problems"
                      level="WARNING"
                      language="kotlin"
-                     key="print.should.be.replaced.with.logging" bundle="messages.KotlinBundle"/>
+                     key="print.should.be.replaced.with.logging.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ControlFlowWithEmptyBodyInspection"
                      groupPath="Kotlin"
@@ -314,6 +322,22 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.control.flow.with.empty.body.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantLabeledReturnOnLastExpressionInLambdaInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="inspection.redundant.labeled.return.on.last.expression.in.lambda.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.InfixCallToOrdinaryInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.code.migration"
+                     enabledByDefault="true"
+                     level="INFORMATION"
+                     language="kotlin"
+                     key="infix.call.may.be.dot.call" bundle="messages.KotlinBundle"/>
 
   </extensions>
 </idea-plugin>

@@ -1,23 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes;
 
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.DictionaryLayer;
 import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +47,7 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     myWord = word;
   }
 
-  public SaveTo(String word, @NotNull DictionaryLayer layer) {
+  public SaveTo(String word, @Nullable DictionaryLayer layer) {
     myWord = word;
     myLayer = layer;
   }
@@ -101,8 +109,31 @@ public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     SpellCheckerManager.getInstance(project).acceptWordAsCorrect$intellij_spellchecker(word, file.getViewProvider().getVirtualFile(), project, layer);
 
     TextRange range = descriptor.getTextRangeInElement().shiftRight(psi.getTextRange().getStartOffset());
-    UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range);
+    removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range, SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
   }
+
+  /**
+   * Remove all highlighters with exactly the given range from {@link DocumentMarkupModel} produced by given inspection.
+   * This might be useful in quick fixes and intention actions to provide immediate feedback.
+   * This method currently works in O(total highlighter count in file) time.
+   */
+  public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range, @NotNull String inspectionToolId) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
+    ThreadingAssertions.assertEventDispatchThread();
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
+    if (model == null) return;
+
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      if (TextRange.areSegmentsEqual(range, highlighter)) {
+        var highlightInfo = HighlightInfo.fromRangeHighlighter(highlighter);
+        if(highlightInfo == null || !inspectionToolId.equals(highlightInfo.getInspectionToolId())) {
+          continue;
+        }
+        model.removeHighlighter(highlighter);
+      }
+    }
+  }
+
 
   @Override
   public Icon getIcon(int flags) {

@@ -1,5 +1,6 @@
 import javax.persistence.Column
 
+// !ADD_JPA_ANNOTATIONS
 class J {
     @Column
     private var title: String? = null

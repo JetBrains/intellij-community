@@ -10,6 +10,7 @@ import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
+import com.intellij.codeInsight.util.GlobalInspectionScopeKt;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
@@ -92,13 +93,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-
-import static com.intellij.codeInsight.util.GlobalInspectionScopeKt.GlobalInspectionScope;
-import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.logPerformance;
-import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
-import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
-import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenActivityFinished;
-import static com.intellij.codeInspection.ex.InspectionEventsKt.reportWhenInspectionFinished;
 
 /**
  * To create an instance, see {@link InspectionManager#createNewGlobalContext()}
@@ -284,7 +278,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   @Override
   protected void runTools(@NotNull AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
-    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScope);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScopeKt.GlobalInspectionScope);
     runToolsSpan = tracer.spanBuilder("globalInspections").setNoParent().startSpan();
     myInspectionStartedTimestamp = System.currentTimeMillis();
     ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
@@ -568,10 +562,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
             ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
             ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
-            reportWhenInspectionFinished(
+            InspectionEventsKt.reportToQodanaWhenInspectionFinished(
               getInspectionEventPublisher(),
               toolWrapper,
-              GLOBAL_SIMPLE,
+              true,
               file,
               getProject(),
               () -> {
@@ -697,7 +691,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {
       return;
     }
-    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScope);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScopeKt.GlobalInspectionScope);
     long refGraphTimestamp = System.currentTimeMillis();
     TraceUtil.runWithSpanThrows(tracer, "refGraphBuilding", (__) -> {
       buildRefGraphIfNeeded(globalTools);
@@ -724,10 +718,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
           try {
             ThrowableRunnable<RuntimeException> runnable = () -> {
-              reportWhenInspectionFinished(
+              InspectionEventsKt.reportToQodanaWhenInspectionFinished(
                 getInspectionEventPublisher(),
                 toolWrapper,
-                GLOBAL,
+                false,
                 null,
                 getProject(),
                 () -> {
@@ -757,13 +751,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
     });
-    reportWhenActivityFinished(
+    InspectionEventsKt.reportToQodanaWhenActivityFinished(
       getInspectionEventPublisher(),
-      InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
+      "GLOBAL_POST_RUN_ACTIVITIES",
       getProject(),
       () -> processPostRunActivities(needRepeatSearchRequest));
     addProblemsToView(globalTools);
-    logPerformance(refGraphDuration, System.currentTimeMillis() - timestamp, scope.getFileCount(), globalTools.size());
+    InspectionPerformanceCollector.logPerformance(refGraphDuration, System.currentTimeMillis() - timestamp, scope.getFileCount(), globalTools.size());
   }
 
   private void buildRefGraphIfNeeded(List<? extends Tools> globalTools) {
@@ -777,9 +771,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
         if (tool.isGraphNeeded()) {
           try {
-            reportWhenActivityFinished(
+            InspectionEventsKt.reportToQodanaWhenActivityFinished(
               getInspectionEventPublisher(),
-              InspectListener.ActivityKind.REFERENCE_SEARCH,
+              "REFERENCE_SEARCH",
               getProject(),
               () -> ((RefManagerImpl)getRefManager()).findAllDeclarations());
           }

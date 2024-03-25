@@ -450,7 +450,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun setInfo(s: @Nls String?, requestor: String?) {
-    UIUtil.invokeLaterIfNeeded {
+    EdtInvocationManager.invokeLaterIfNeeded {
       info = createInfoAndProgressPanel().setText(s, requestor)
     }
   }

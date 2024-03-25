@@ -4,6 +4,7 @@ package com.intellij.application.options.colors;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -35,11 +36,14 @@ public final class RainbowColorsInSchemeState {
           scheme.setAttributes(key, RainbowHighlighter.createRainbowAttribute(color));
         }
       }
-      updateRainbowMarkup();
+      updateRainbowMarkup(scheme);
     }
   }
 
-  private static void updateRainbowMarkup() {
+  private static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
+    RainbowHighlighter.resetRainbowGeneratedColors(scheme);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RainbowStateChangeListener.getTOPIC()).onRainbowStateChanged(scheme);
+
     Editor[] allEditors = EditorFactory.getInstance().getAllEditors();
     for (Editor editor : allEditors) {
       final Project project = editor.getProject();

@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.core.script.ucache.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import java.nio.file.Path
 
 /**
  * The [CompositeScriptConfigurationManager] will provide redirection of [ScriptConfigurationManager] calls to the
@@ -182,6 +183,15 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
 
     override fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile> =
         classpathRoots.sdks.nonIndexedSourceRoots
+
+    override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? =
+        classpathRoots.scriptsPaths().firstNotNullOfOrNull { scriptPath ->
+            VfsUtil.findFile(Path.of(scriptPath), true)?.takeIf { scriptVirtualFile ->
+                getScriptDependenciesClassFiles(scriptVirtualFile).any { scriptDependency ->
+                    dependencies.contains(scriptDependency.presentableUrl)
+                }
+            }
+        }
 
     override fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile> =
         classpathRoots.getScriptDependenciesClassFiles(file)

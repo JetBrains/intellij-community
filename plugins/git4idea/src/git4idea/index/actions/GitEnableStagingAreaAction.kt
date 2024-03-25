@@ -3,18 +3,12 @@ package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
-import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
-import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import git4idea.GitVcs
 import git4idea.config.GitVcsApplicationSettings
-import git4idea.i18n.GitBundle
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
-import git4idea.index.ui.GitStagePanel
-import javax.swing.JComponent
 
 abstract class GitToggleStagingAreaAction(private val enable: Boolean) : DumbAwareToggleAction() {
   override fun update(e: AnActionEvent) {

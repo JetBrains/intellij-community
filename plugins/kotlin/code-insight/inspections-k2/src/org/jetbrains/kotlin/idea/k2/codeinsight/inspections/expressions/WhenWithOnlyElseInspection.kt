@@ -1,13 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.suggested.startOffset
@@ -15,9 +13,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
@@ -43,22 +40,25 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
  * contingent on a few complications. See Steps 3.1 and 3.2 below.
  */
 internal class WhenWithOnlyElseInspection
-    : AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
+    : KotlinApplicableInspectionBase.Simple<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : KtVisitorVoid() {
-            override fun visitWhenExpression(expression: KtWhenExpression) {
-                visitTargetElement(expression, holder, isOnTheFly)
-            }
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitWhenExpression(expression: KtWhenExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
         }
     }
+
     data class WhenSubjectVariableInfo(
         val subjectVariable: SmartPsiElementPointer<KtProperty>,
         val initializer: SmartPsiElementPointer<KtExpression>?,
         val isInitializerPure: Boolean
     )
 
-    class Context(
+    data class Context(
         val isWhenUsedAsExpression: Boolean,
         val elseExpression: SmartPsiElementPointer<KtExpression>,
         val subjectVariableInfo: WhenSubjectVariableInfo?
@@ -66,10 +66,6 @@ internal class WhenWithOnlyElseInspection
 
     override fun getProblemDescription(element: KtWhenExpression, context: Context): String =
         KotlinBundle.message("inspection.when.with.only.else.display.name")
-
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.when.with.only.else.action.name")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
     /**
      * STEP 1:
@@ -103,15 +99,28 @@ internal class WhenWithOnlyElseInspection
         return Context(isWhenUsedAsExpression, elseExpression.createSmartPointer(), subjectVariableInfo)
     }
 
-    override fun apply(element: KtWhenExpression, context: Context, project: Project, updater: ModPsiUpdater) {
-        val factory = KtPsiFactory(project)
-        val newCaretPosition = element.startOffset
-        val elseExpression: KtExpression = context.elseExpression.dereference()?.let(updater::getWritable) ?: return
+    override fun createQuickFix(
+        element: KtWhenExpression,
+        context: Context,
+    ) = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
-        val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, elseExpression, factory, updater) ?: return
-        element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.when.with.only.else.action.name")
 
-        updater.moveCaretTo(newCaretPosition)
+        override fun applyFix(
+            project: Project,
+            element: KtWhenExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val factory = KtPsiFactory(project)
+            val newCaretPosition = element.startOffset
+            val elseExpression: KtExpression = context.elseExpression.dereference()?.let(updater::getWritable) ?: return
+
+            val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, elseExpression, factory, updater) ?: return
+            element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
+
+            updater.moveCaretTo(newCaretPosition)
+        }
     }
 
     /**
@@ -125,7 +134,12 @@ internal class WhenWithOnlyElseInspection
      *  Additionally, track if _we_ inserted a call to `kotlin.run`. In that case, we will attempt to shorten the reference to `run`,
      *  once we have done the actual transformation in Step 3.2 below. This preserves explicit, user-supplied calls to `kotlin.run`.
      */
-    private fun rewriteElseBranch(context: Context, elseExpression: KtExpression, factory: KtPsiFactory, updater: ModPsiUpdater): Pair<KtExpression, Boolean>? {
+    private fun rewriteElseBranch(
+        context: Context,
+        elseExpression: KtExpression,
+        factory: KtPsiFactory,
+        updater: ModPsiUpdater
+    ): Pair<KtExpression, Boolean>? {
         val info = context.subjectVariableInfo
 
         if (info?.initializer == null) {

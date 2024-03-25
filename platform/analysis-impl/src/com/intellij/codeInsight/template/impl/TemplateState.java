@@ -521,8 +521,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     final int start = getSegments().getSegmentStart(currentSegmentNumber);
     final int end = getSegments().getSegmentEnd(currentSegmentNumber);
     if (end >= 0 && getEditor() != null) {
-      getEditor().getCaretModel().moveToOffset(end);
-      getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      if (getTemplate().isScrollToTemplate()) {
+        getEditor().getCaretModel().moveToOffset(end);
+        getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       getEditor().getSelectionModel().removeSelection();
       getEditor().getSelectionModel().setSelection(start, end);
     }
@@ -997,7 +999,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       offset = -1; //do not move caret in multicaret mode if at least one tab had been made already
     }
 
-    if (offset >= 0) {
+    if (offset >= 0 && getTemplate().isScrollToTemplate()) {
       getEditor().getCaretModel().moveToOffset(offset);
       getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }

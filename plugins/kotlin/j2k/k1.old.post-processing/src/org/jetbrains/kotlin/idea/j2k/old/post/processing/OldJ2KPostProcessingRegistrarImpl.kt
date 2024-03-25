@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
@@ -286,7 +287,7 @@ internal class OldJ2KPostProcessingRegistrarImpl : OldJ2KPostProcessingRegistrar
 
             return {
                 RedundantSamConstructorInspection.Util.samConstructorCallsToBeConverted(element)
-                    .forEach { RedundantSamConstructorInspection.Util.replaceSamConstructorCall(it) }
+                    .forEach { replaceSamConstructorCall(it) }
             }
         }
     }

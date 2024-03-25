@@ -65,7 +65,14 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     @VisibleForTesting
     fun getRootFrontendModuleForIde(platformPrefix: String): RuntimeModuleId = when (platformPrefix) {
       PlatformUtils.IDEA_PREFIX, PlatformUtils.IDEA_CE_PREFIX -> RuntimeModuleId.module("intellij.idea.frontend")
+      PlatformUtils.PYCHARM_PREFIX, PlatformUtils.PYCHARM_CE_PREFIX -> RuntimeModuleId.module("intellij.pycharm.frontend")
       PlatformUtils.RIDER_PREFIX -> RuntimeModuleId.module("intellij.rider.frontend")
+      PlatformUtils.GOIDE_PREFIX -> RuntimeModuleId.module("intellij.goland.frontend")
+      PlatformUtils.CLION_PREFIX -> RuntimeModuleId.module("intellij.clion.ide.frontend")
+      PlatformUtils.PHP_PREFIX -> RuntimeModuleId.module("intellij.phpstorm.frontend")
+      PlatformUtils.WEB_PREFIX -> RuntimeModuleId.module("intellij.webstorm.frontend")
+      PlatformUtils.RUBY_PREFIX -> RuntimeModuleId.module("intellij.rubymine.frontend")
+      PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend")
       else -> RuntimeModuleId.module("intellij.cwm.guest")
     }
   }

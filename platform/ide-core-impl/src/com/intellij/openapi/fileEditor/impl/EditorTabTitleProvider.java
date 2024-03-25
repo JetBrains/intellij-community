@@ -2,7 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.PossiblyDumbAware;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,10 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * <p>Provides custom name/tooltip for editor tab instead of filename/path.</p>
- *
- * <p>Implement {@link com.intellij.openapi.project.DumbAware} to be active during indexing.</p>
  */
-public interface EditorTabTitleProvider extends PossiblyDumbAware {
+public interface EditorTabTitleProvider extends DumbAware {
   ExtensionPointName<EditorTabTitleProvider> EP_NAME = new ExtensionPointName<>("com.intellij.editorTabTitleProvider");
 
   @NlsContexts.TabTitle @Nullable String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file);

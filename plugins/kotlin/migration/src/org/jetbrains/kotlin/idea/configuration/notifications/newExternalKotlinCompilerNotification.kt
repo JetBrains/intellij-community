@@ -40,7 +40,7 @@ fun showNewKotlinCompilerAvailableNotificationIfNeeded(project: Project) {
     // TODO (IDEA-347617): workaround for the fact that ReadAction.nonBlocking doesn't wait for scanning
     if (application.isUnitTestMode) {
         Class.forName("com.intellij.testFramework.IndexingTestUtil")
-            .getMethod("waitUntilIndexesAreReady", Project::class.java)
+            .getMethod("workaroundForEverSmartIdeInUnitTestsIDEA347619", Project::class.java)
             .invoke(null, project)
     }
 

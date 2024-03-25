@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.actions;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.actions.CreateDirectoryOrPackageHandler;
@@ -16,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -88,8 +88,7 @@ public final class CreatePackageAction extends DumbAwareAction {
                    }
 
                    @Override
-                   @NotNull
-                   public String getActionName(@NotNull String name, @NotNull String templateName) {
+                   public @NotNull String getActionName(@NotNull String name, @NotNull String templateName) {
                      return PyBundle.message("command.name.create.new.package", name);
                    }
                  }, EmptyConsumer.getInstance());

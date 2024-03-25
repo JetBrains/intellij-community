@@ -38,7 +38,6 @@ internal fun MutableTWorkspace.generateK2Fe10BindingsTests() {
             model("testData/inspectionsLocal/mapGetWithNotNullAssertionOperator", pattern = pattern)
             model("testData/inspectionsLocal/memberVisibilityCanBePrivate", pattern = pattern)
             model("testData/inspectionsLocal/redundantObjectTypeCheck", pattern = pattern)
-            model("testData/inspectionsLocal/redundantSuspend", pattern = pattern)
             model("testData/inspectionsLocal/redundantExplicitType", pattern = pattern)
             model("testData/inspectionsLocal/replaceArrayEqualityOpWithArraysEquals", pattern = pattern)
             model("testData/inspectionsLocal/replaceAssociateFunction", pattern = pattern)

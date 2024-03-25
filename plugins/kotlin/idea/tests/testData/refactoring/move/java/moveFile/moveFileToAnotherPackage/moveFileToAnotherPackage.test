@@ -3,5 +3,5 @@
   "type": "MOVE_FILES",
   "targetPackage": "b",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

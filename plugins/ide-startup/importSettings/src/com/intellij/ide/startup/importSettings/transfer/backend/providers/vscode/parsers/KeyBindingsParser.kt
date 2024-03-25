@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.KeyBinding
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.Settings
-import com.intellij.ide.startup.importSettings.providers.vscode.mappings.KeyBindingsMappings
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.KeyBindingsMappings
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.diagnostic.logger
 import java.io.File

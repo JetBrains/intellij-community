@@ -278,7 +278,7 @@ sealed class CreateCallableFromCallActionFactory<E : KtExpression>(
             } else {
                 TypeInfo(fullCallExpression, Variance.OUT_VARIANCE)
             }
-            val modifierList = org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil.computeVisibilityModifier(expression)?.let { KtPsiFactory(expression.project).createModifierList(it) }
+            val modifierList = org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil.patchVisibilityForInlineFunction(expression)?.let { KtPsiFactory(expression.project).createModifierList(it) }
             return FunctionInfo(name, receiverType, returnType, possibleContainers, parameters, typeParameters, modifierList = modifierList)
         }
 

@@ -1210,6 +1210,11 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
             runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunction1.kt");
         }
 
+        @TestMetadata("skipNestedClosureForFunctionalLiteral.kt")
+        public void testSkipNestedClosureForFunctionalLiteral() throws Exception {
+            runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForFunctionalLiteral.kt");
+        }
+
         @TestMetadata("skipNestedClosureForProperty.kt")
         public void testSkipNestedClosureForProperty() throws Exception {
             runTest("testData/codeInsight/moveUpDown/expressions/skipNestedClosureForProperty.kt");

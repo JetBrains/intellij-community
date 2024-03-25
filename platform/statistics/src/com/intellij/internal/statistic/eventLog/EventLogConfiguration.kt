@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -25,6 +25,8 @@ import com.intellij.util.MathUtil
 import com.intellij.util.applyIf
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.bytesToHex
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
@@ -266,7 +268,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 }
 
 private class AnonymizedIdsCache {
-  private val cache: Cache<String, String> = Caffeine.newBuilder().maximumSize(200).build()
+  private val cache: Cache<String, String> = Caffeine.newBuilder().maximumSize(200).executor(Dispatchers.Default.asExecutor()).build()
 
   fun computeIfAbsent(data: String, mappingFunction: (String) -> String): String {
     return cache.get(data, mappingFunction)

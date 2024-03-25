@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -117,10 +117,9 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
                                      @NotNull PsiVariable var,
                                      @Nullable PsiReferenceExpression refExpr,
                                      @NotNull InlineMode mode) {
-    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     List<PsiReferenceExpression> allRefs =
-      refExpr != null && (mode == InlineMode.INLINE_ONE || block == null) ? List.of(refExpr) :
-      VariableAccessUtils.getVariableReferences(var, block);
+      refExpr != null && mode == InlineMode.INLINE_ONE ? List.of(refExpr) :
+      VariableAccessUtils.getVariableReferences(var);
     if (allRefs.isEmpty()) {
       return ModCommand.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
     }
@@ -216,7 +215,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       if (defToInline == local.getInitializer()) {
         // Do not rely on ref-def analysis in a simple case when we inline an initializer and there are no subsequent writes.
         // This allows inlining in the presense of syntax errors.
-        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, containerBlock);
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local);
         if (!ContainerUtil.exists(refs, ref -> PsiUtil.isAccessedForWriting(ref))) {
           simpleInlining = true;
           refsToInlineList.addAll(refs);
@@ -249,7 +248,7 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
 
-    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 &&
+    if (mode == InlineMode.ASK && refExpr != null && refsToInlineList.size() > 1 && refsToInlineList.contains(refExpr) &&
         EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog()) {
       return createChooser(local, refExpr, refsToInlineList);
     }

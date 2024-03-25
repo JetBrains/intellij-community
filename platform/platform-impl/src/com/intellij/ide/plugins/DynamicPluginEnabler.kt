@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.jetbrains.rd.util.CopyOnWriteArrayList
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
 private val LOG

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java.generate
 
 import com.intellij.codeInsight.BlockUtils
@@ -71,7 +71,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     adjustChainStyleToMethodCalls(oldPsi, newPsi)
     val factory = JavaPsiFacade.getElementFactory(oldPsi.project)
     val updOldPsi = when {
-      (newPsi is PsiBlockStatement || newPsi is PsiCodeBlock) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
+      (newPsi is PsiCodeBlock || newPsi is PsiStatement) && oldPsi.parent is PsiExpressionStatement -> oldPsi.parent
       else -> oldPsi
     }
     val updNewPsi = when {

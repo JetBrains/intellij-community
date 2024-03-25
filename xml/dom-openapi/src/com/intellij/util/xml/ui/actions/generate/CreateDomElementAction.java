@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui.actions.generate;
 
 import com.intellij.codeInsight.actions.SimpleCodeInsightAction;
@@ -38,8 +38,7 @@ public abstract class CreateDomElementAction<T extends DomElement> extends Simpl
     return getContextElement(editor) != null;
   }
 
-  @Nullable
-  protected T getContextElement(Editor editor) {
+  protected @Nullable T getContextElement(Editor editor) {
     return DomUtil.getContextElement(editor, myContextClass);
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.breadcrumbs;
 
 import com.intellij.lang.Language;
@@ -34,9 +20,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class YAMLBreadcrumbsInfoProvider implements BreadcrumbsProvider {
-  private final static Language[] LANGUAGES = new Language[]{YAMLLanguage.INSTANCE};
+  private static final Language[] LANGUAGES = new Language[]{YAMLLanguage.INSTANCE};
   
-  private final static int SCALAR_MAX_LENGTH = 20;
+  private static final int SCALAR_MAX_LENGTH = 20;
 
   @Override
   public Language[] getLanguages() {
@@ -54,9 +40,8 @@ public class YAMLBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     return acceptElement(e) && !(e instanceof YAMLDocument);
   }
 
-  @NotNull
   @Override
-  public String getElementInfo(@NotNull PsiElement e) {
+  public @NotNull String getElementInfo(@NotNull PsiElement e) {
     if (e instanceof YAMLDocument) {
       final YAMLFile file = (YAMLFile)e.getContainingFile();
       if (file == null) {
@@ -82,15 +67,13 @@ public class YAMLBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     throw new IllegalArgumentException("This element should not pass #acceptElement");
   }
 
-  @Nullable
   @Override
-  public String getElementTooltip(@NotNull PsiElement e) {
+  public @Nullable String getElementTooltip(@NotNull PsiElement e) {
     return null;
   }
   
-  @NotNull
   @Override
-  public List<? extends Action> getContextActions(@NotNull PsiElement element) {
+  public @NotNull List<? extends Action> getContextActions(@NotNull PsiElement element) {
     if (!(element instanceof YAMLKeyValue || element instanceof YAMLSequenceItem)) {
       return Collections.emptyList();
     }
@@ -106,8 +89,7 @@ public class YAMLBreadcrumbsInfoProvider implements BreadcrumbsProvider {
     });
   }
 
-  @NotNull
-  private static String getIndexOf(@NotNull List<?> list, Object o) {
+  private static @NotNull String getIndexOf(@NotNull List<?> list, Object o) {
     return String.valueOf(1 + list.indexOf(o)) + '/' + list.size();
   }
 }

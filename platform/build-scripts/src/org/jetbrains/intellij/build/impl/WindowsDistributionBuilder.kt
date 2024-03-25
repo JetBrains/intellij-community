@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
@@ -19,9 +20,7 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -310,22 +309,15 @@ internal class WindowsDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean {
     return !file.name.contains(customizer.zipArchiveWithoutBundledJreSuffix)
   }
-}
 
-private fun computeIcoPath(context: BuildContext): Path? {
-  val customizer = context.windowsDistributionCustomizer
-  val icoPath = (if (context.applicationInfo.isEAP) customizer?.icoPathForEAP else null) ?: customizer?.icoPath
-  return icoPath?.let { Path.of(icoPath) }
-}
-
-private suspend fun buildWinLauncher(winDistPath: Path,
-                                     arch: JvmArchitecture,
-                                     additionalNonCustomizableJvmArgs: List<String>,
-                                     context: BuildContext) {
-  spanBuilder("build Windows executable").useWithScope {
-    val executableBaseName = "${context.productProperties.baseFileName}64"
-    val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
-    val icoFile = computeIcoPath(context)
+  private suspend fun buildWinLauncher(winDistPath: Path,
+                                       arch: JvmArchitecture,
+                                       additionalNonCustomizableJvmArgs: List<String>,
+                                       context: BuildContext) {
+    spanBuilder("build Windows executable").useWithScope {
+      val executableBaseName = "${context.productProperties.baseFileName}64"
+      val launcherPropertiesPath = context.paths.tempDir.resolve("launcher-${arch.dirName}.properties")
+      val icoFile = computeIcoPath(context)
 
     @Suppress("SpellCheckingInspection")
     val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch) + listOf("-Dide.native.launcher=true") + 
@@ -357,42 +349,74 @@ private suspend fun buildWinLauncher(winDistPath: Path,
         IDS_MAIN_CLASS=${context.ideMainClassName.replace('.', '/')}
         """.trimIndent().trim())
 
-    val communityHome = context.paths.communityHomeDir
-    val inputPath = communityHome.resolve("platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe")
-    val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
-    val classpath = ArrayList<String>()
+      val communityHome = context.paths.communityHomeDir
+      val inputPath = if (customizer.useXPlatLauncher) {
+        val (execPath, licensePath) = NativeLauncherDownloader.findLocalLauncher(context, OsFamily.WINDOWS, arch)
+                                      ?: NativeLauncherDownloader.downloadLauncher(context, OsFamily.WINDOWS, arch)
+        val licenses = winDistPath.resolve("license/launcher-third-party-libraries.html")
+        if (!licenses.exists()) {
+          copyFile(licensePath, licenses)
+        } else {
+          require(licenses.isRegularFile()) { "$licenses already exists, but is not a file." }
+        }
 
-    val generatorClasspath = context.getModuleRuntimeClasspath(
-      module = context.findRequiredModule("intellij.tools.launcherGenerator"),
-      forTests = false)
-    classpath.addAll(generatorClasspath)
-
-    sequenceOf(context.findApplicationInfoModule(), context.findRequiredModule("intellij.platform.icons"))
-      .flatMap { it.sourceRoots }
-      .forEach { root ->
-        classpath.add(root.file.absolutePath)
+        execPath
+      }
+      else {
+        communityHome.resolve("platform/build-scripts/resources/win/launcher/${arch.dirName}/WinLauncher.exe")
       }
 
-    for (p in context.productProperties.brandingResourcePaths) {
-      classpath.add(p.toString())
-    }
-    classpath.add(icoFilesDirectory.toString())
+      val outputPath = winDistPath.resolve("bin/${executableBaseName}.exe")
+      val classpath = ArrayList<String>()
 
-    runIdea(
-      context = context,
-      mainClass = "com.pme.launcher.LauncherGeneratorMain",
-      args = listOf(
-        inputPath.toString(),
-        appInfoForLauncher.toString(),
-        "$communityHome/native/WinLauncher/resource.h",
-        launcherPropertiesPath.toString(),
-        icoFile?.fileName?.toString() ?: " ",
-        outputPath.toString(),
-      ),
-      jvmArgs = listOf("-Djava.awt.headless=true"),
-      classPath = classpath
-    )
+      val generatorClasspath = context.getModuleRuntimeClasspath(
+        module = context.findRequiredModule("intellij.tools.launcherGenerator"),
+        forTests = false)
+      classpath.addAll(generatorClasspath)
+
+      sequenceOf(context.findApplicationInfoModule(), context.findRequiredModule("intellij.platform.icons"))
+        .flatMap { it.sourceRoots }
+        .forEach { root ->
+          classpath.add(root.file.absolutePath)
+        }
+
+      for (p in context.productProperties.brandingResourcePaths) {
+        classpath.add(p.toString())
+      }
+      classpath.add(icoFilesDirectory.toString())
+
+      try {
+        runIdea(
+          context = context,
+          mainClass = "com.pme.launcher.LauncherGeneratorMain",
+          args = listOf(
+            inputPath.absolutePathString(),
+            appInfoForLauncher.absolutePathString(),
+            "$communityHome/native/WinLauncher/resource.h",
+            launcherPropertiesPath.absolutePathString(),
+            icoFile?.fileName?.toString() ?: " ",
+            outputPath.absolutePathString(),
+          ),
+          jvmArgs = listOf("-Djava.awt.headless=true"),
+          classPath = classpath
+        )
+      } catch (e: Throwable) {
+        if (!customizer.useXPlatLauncher) throw e
+
+        throw IllegalStateException(
+          "Failed to patch resources in the new launcher." +
+          " Most likely `XPLAT_LAUNCHER_EMBED_RESOURCES_AND_MANIFEST` env var was not set to `1` during the cargo build.",
+          e
+        )
+      }
+    }
   }
+}
+
+private fun computeIcoPath(context: BuildContext): Path? {
+  val customizer = context.windowsDistributionCustomizer
+  val icoPath = (if (context.applicationInfo.isEAP) customizer?.icoPathForEAP else null) ?: customizer?.icoPath
+  return icoPath?.let { Path.of(icoPath) }
 }
 
 /**

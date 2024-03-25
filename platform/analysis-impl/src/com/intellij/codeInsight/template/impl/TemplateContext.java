@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContext;
@@ -6,8 +6,6 @@ import com.intellij.codeInsight.template.LiveTemplateContextService;
 import com.intellij.codeInsight.template.LiveTemplateContextsSnapshot;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.util.JdomKt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.jvm.functions.Function0;
@@ -37,8 +35,12 @@ public final class TemplateContext {
   static @Nullable LiveTemplateContext getDifference(@NotNull LiveTemplateContextsSnapshot allContexts,
                                                      @NotNull TemplateContext thisContext,
                                                      @NotNull TemplateContext defaultContext) {
-    return ContainerUtil.find(allContexts.getLiveTemplateContexts(),
-                              type -> isEnabled(allContexts, thisContext, type) != isEnabled(allContexts, defaultContext, type));
+    for (LiveTemplateContext value : allContexts.getLiveTemplateContexts()) {
+      if (isEnabled(allContexts, thisContext, value) != isEnabled(allContexts, defaultContext, value)) {
+        return value;
+      }
+    }
+    return null;
   }
 
   static @Nullable TemplateContextType getDifferenceType(@NotNull LiveTemplateContextsSnapshot allContexts,
@@ -142,10 +144,16 @@ public final class TemplateContext {
   }
 
   private boolean isDisabledByInheritance(TemplateContext thisContext, LiveTemplateContextsSnapshot allContexts, LiveTemplateContext type) {
-    return !thisContext.hasOwnValue(type) &&
-           !isEnabled(allContexts, thisContext, type) &&
-           JBIterable.generate(type, context -> allContexts.getLiveTemplateContext(context.getBaseContextId())).filter(this::hasOwnValue)
-             .first() != null;
+    if (!thisContext.hasOwnValue(type) && !isEnabled(allContexts, thisContext, type)) {
+      LiveTemplateContext context = type;
+      while (context != null) {
+        if (hasOwnValue(context)) {
+          return true;
+        }
+        context = allContexts.getLiveTemplateContext(context.getBaseContextId());
+      }
+    }
+    return false;
   }
 
   private boolean hasOwnValue(LiveTemplateContext t) {
@@ -199,10 +207,10 @@ public final class TemplateContext {
   }
 
   /**
-   * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
+   * The default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
    * Base value is `false`.
    * <p>
-   * If default value is defined (as in our example)  we must not take base value in account.
+   * If the default value is defined (as in our example), we must not take base value in an account.
    * Because on init `setDefaultContext` will be called, and we will have own value.
    * Otherwise, it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
    * See TemplateSchemeTest.

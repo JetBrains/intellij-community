@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.highlighting;
 
@@ -64,30 +50,27 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return XmlDomBundle.message("dom.quickfix.create.new.element.name", myTypeName, myNewName);
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlDomBundle.message("dom.quickfix.create.new.element.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     return true;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     applyFix();
   }
 
@@ -97,7 +80,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     applyFix();
   }
 
@@ -132,16 +115,14 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
         }
 
         @Override
-        @NotNull
-        public String getTextFor(final DomElement value) {
+        public @NotNull String getTextFor(final DomElement value) {
           return DomUtil.getFile(value).getName();
         }
       }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
   }
 
-  @Nullable
-  public static <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<? extends DomElement> contexts, Class<T> clazz) {
+  public static @Nullable <T extends DomElement> DomCollectionChildDescription getChildDescription(final List<? extends DomElement> contexts, Class<T> clazz) {
 
     if (contexts.size() == 0) {
         return null;
@@ -158,14 +139,12 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
     return null;
   }
 
-  @Nullable
-  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final DomElement scope) {
+  public static @Nullable ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final DomElement scope) {
     final List<DomElement> parents = ModelMergerUtil.getImplementations(scope);
     return createFix(newName, clazz, parents);
   }
 
-  @Nullable
-  public static ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<? extends DomElement> parents) {
+  public static @Nullable ResolvingElementQuickFix createFix(final String newName, final Class<? extends DomElement> clazz, final List<? extends DomElement> parents) {
     final DomCollectionChildDescription childDescription = getChildDescription(parents, clazz);
     if (newName.length() > 0 && childDescription != null) {
       return new ResolvingElementQuickFix(clazz, newName, parents, childDescription);

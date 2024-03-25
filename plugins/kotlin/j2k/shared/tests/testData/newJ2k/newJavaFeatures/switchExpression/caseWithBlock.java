@@ -1,6 +1,6 @@
 //method
 int foo(int a) {
-  return switch(a) {
+  return /* comment 1 */ switch(a) {
     case 1: {
       int x = 1;
       System.out.println(x);

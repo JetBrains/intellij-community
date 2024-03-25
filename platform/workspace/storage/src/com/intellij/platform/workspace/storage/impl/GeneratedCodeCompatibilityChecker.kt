@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.CodeGeneratorVersions
@@ -36,7 +36,7 @@ internal object GeneratedCodeCompatibilityChecker {
       assert(entityImplApiVersion == CodeGeneratorVersions.API_VERSION) {
         """
           Current API version of the generator is '${CodeGeneratorVersions.API_VERSION}',
-          but the generated code is marked as version '$entityImplApiVersion'.
+          but the generated implementation code is marked as version '$entityImplApiVersion'.
           Please, regenerate your entities.
           
           Checked entity: $implClass

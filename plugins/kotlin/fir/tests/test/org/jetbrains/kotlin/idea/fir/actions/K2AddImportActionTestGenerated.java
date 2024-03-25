@@ -18,183 +18,215 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/idea/actions/kotlinAddImportAction")
-public class K2AddImportActionTestGenerated extends AbstractK2AddImportActionTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class K2AddImportActionTestGenerated extends AbstractK2AddImportActionTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/idea/actions/kotlinAddImportAction/extensions")
+    public static class Extensions extends AbstractK2AddImportActionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("BothAnnotated.kt")
+        public void testBothAnnotated() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/extensions/BothAnnotated.kt");
+        }
+
+        @TestMetadata("NoExtension.kt")
+        public void testNoExtension() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/extensions/NoExtension.kt");
+        }
+
+        @TestMetadata("NotAnnotatedCall.kt")
+        public void testNotAnnotatedCall() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/extensions/NotAnnotatedCall.kt");
+        }
+
+        @TestMetadata("NotAnnotatedContainer.kt")
+        public void testNotAnnotatedContainer() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/extensions/NotAnnotatedContainer.kt");
+        }
     }
 
-    @TestMetadata("Class1.kt")
-    public void testClass1() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Class1.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/idea/actions/kotlinAddImportAction")
+    public static class Uncategorized extends AbstractK2AddImportActionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("Class2.kt")
-    public void testClass2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Class2.kt");
-    }
+        @TestMetadata("Class1.kt")
+        public void testClass1() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Class1.kt");
+        }
 
-    @TestMetadata("ClassWhenExtIsImported.kt")
-    public void testClassWhenExtIsImported() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ClassWhenExtIsImported.kt");
-    }
+        @TestMetadata("Class2.kt")
+        public void testClass2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Class2.kt");
+        }
 
-    @TestMetadata("ConstructorOverloadsPresent.kt")
-    public void testConstructorOverloadsPresent() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ConstructorOverloadsPresent.kt");
-    }
+        @TestMetadata("ClassWhenExtIsImported.kt")
+        public void testClassWhenExtIsImported() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ClassWhenExtIsImported.kt");
+        }
 
-    @TestMetadata("ExtReceiver.kt")
-    public void testExtReceiver() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver.kt");
-    }
+        @TestMetadata("ConstructorOverloadsPresent.kt")
+        public void testConstructorOverloadsPresent() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ConstructorOverloadsPresent.kt");
+        }
 
-    @TestMetadata("ExtReceiver2.kt")
-    public void testExtReceiver2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver2.kt");
-    }
+        @TestMetadata("ExtReceiver.kt")
+        public void testExtReceiver() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver.kt");
+        }
 
-    @TestMetadata("ExtReceiver3.kt")
-    public void testExtReceiver3() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver3.kt");
-    }
+        @TestMetadata("ExtReceiver2.kt")
+        public void testExtReceiver2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver2.kt");
+        }
 
-    @TestMetadata("ExtReceiver4.kt")
-    public void testExtReceiver4() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver4.kt");
-    }
+        @TestMetadata("ExtReceiver3.kt")
+        public void testExtReceiver3() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver3.kt");
+        }
 
-    @TestMetadata("ExtendingClass1.kt")
-    public void testExtendingClass1() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtendingClass1.kt");
-    }
+        @TestMetadata("ExtReceiver4.kt")
+        public void testExtReceiver4() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtReceiver4.kt");
+        }
 
-    @TestMetadata("ExtendingClass2.kt")
-    public void testExtendingClass2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtendingClass2.kt");
-    }
+        @TestMetadata("ExtendingClass1.kt")
+        public void testExtendingClass1() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtendingClass1.kt");
+        }
 
-    @TestMetadata("Flexible.kt")
-    public void testFlexible() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Flexible.kt");
-    }
+        @TestMetadata("ExtendingClass2.kt")
+        public void testExtendingClass2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/ExtendingClass2.kt");
+        }
 
-    @TestMetadata("KotlinDurations.kt")
-    public void testKotlinDurations() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinDurations.kt");
-    }
+        @TestMetadata("Flexible.kt")
+        public void testFlexible() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Flexible.kt");
+        }
 
-    @TestMetadata("KotlinDurations2.kt")
-    public void testKotlinDurations2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinDurations2.kt");
-    }
+        @TestMetadata("KotlinDurations.kt")
+        public void testKotlinDurations() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinDurations.kt");
+        }
 
-    @TestMetadata("KotlinMinCollections.kt")
-    public void testKotlinMinCollections() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinMinCollections.kt");
-    }
+        @TestMetadata("KotlinDurations2.kt")
+        public void testKotlinDurations2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinDurations2.kt");
+        }
 
-    @TestMetadata("KotlinMinInt.kt")
-    public void testKotlinMinInt() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinMinInt.kt");
-    }
+        @TestMetadata("KotlinMinCollections.kt")
+        public void testKotlinMinCollections() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinMinCollections.kt");
+        }
 
-    @TestMetadata("MultipleMethodsAvailable.kt")
-    public void testMultipleMethodsAvailable() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable.kt");
-    }
+        @TestMetadata("KotlinMinInt.kt")
+        public void testKotlinMinInt() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/KotlinMinInt.kt");
+        }
 
-    @TestMetadata("MultipleMethodsAvailable2.kt")
-    public void testMultipleMethodsAvailable2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable2.kt");
-    }
+        @TestMetadata("MultipleMethodsAvailable.kt")
+        public void testMultipleMethodsAvailable() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable.kt");
+        }
 
-    @TestMetadata("Nullable1.kt")
-    public void testNullable1() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable1.kt");
-    }
+        @TestMetadata("MultipleMethodsAvailable2.kt")
+        public void testMultipleMethodsAvailable2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/MultipleMethodsAvailable2.kt");
+        }
 
-    @TestMetadata("Nullable2.kt")
-    public void testNullable2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable2.kt");
-    }
+        @TestMetadata("Nullable1.kt")
+        public void testNullable1() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable1.kt");
+        }
 
-    @TestMetadata("Nullable3.kt")
-    public void testNullable3() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable3.kt");
-    }
+        @TestMetadata("Nullable2.kt")
+        public void testNullable2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable2.kt");
+        }
 
-    @TestMetadata("OverloadsPresent.kt")
-    public void testOverloadsPresent() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/OverloadsPresent.kt");
-    }
+        @TestMetadata("Nullable3.kt")
+        public void testNullable3() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Nullable3.kt");
+        }
 
-    @TestMetadata("PlusAssignOperator.kt")
-    public void testPlusAssignOperator() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperator.kt");
-    }
+        @TestMetadata("OverloadsPresent.kt")
+        public void testOverloadsPresent() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/OverloadsPresent.kt");
+        }
 
-    @TestMetadata("PlusAssignOperator2.kt")
-    public void testPlusAssignOperator2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperator2.kt");
-    }
+        @TestMetadata("PlusAssignOperator.kt")
+        public void testPlusAssignOperator() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperator.kt");
+        }
 
-    @TestMetadata("PlusAssignOperatorCall.kt")
-    public void testPlusAssignOperatorCall() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperatorCall.kt");
-    }
+        @TestMetadata("PlusAssignOperator2.kt")
+        public void testPlusAssignOperator2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperator2.kt");
+        }
 
-    @TestMetadata("PlusAssignOperatorCall2.kt")
-    public void testPlusAssignOperatorCall2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperatorCall2.kt");
-    }
+        @TestMetadata("PlusAssignOperatorCall.kt")
+        public void testPlusAssignOperatorCall() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperatorCall.kt");
+        }
 
-    @TestMetadata("PlusOperator.kt")
-    public void testPlusOperator() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusOperator.kt");
-    }
+        @TestMetadata("PlusAssignOperatorCall2.kt")
+        public void testPlusAssignOperatorCall2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusAssignOperatorCall2.kt");
+        }
 
-    @TestMetadata("PlusOperator1.kt")
-    public void testPlusOperator1() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusOperator1.kt");
-    }
+        @TestMetadata("PlusOperator.kt")
+        public void testPlusOperator() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusOperator.kt");
+        }
 
-    @TestMetadata("PlusOperatorCall1.kt")
-    public void testPlusOperatorCall1() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusOperatorCall1.kt");
-    }
+        @TestMetadata("PlusOperator1.kt")
+        public void testPlusOperator1() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusOperator1.kt");
+        }
 
-    @TestMetadata("SingleMethodAvailable.kt")
-    public void testSingleMethodAvailable() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/SingleMethodAvailable.kt");
-    }
+        @TestMetadata("PlusOperatorCall1.kt")
+        public void testPlusOperatorCall1() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/PlusOperatorCall1.kt");
+        }
 
-    @TestMetadata("TypeAlias.kt")
-    public void testTypeAlias() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/TypeAlias.kt");
-    }
+        @TestMetadata("SingleMethodAvailable.kt")
+        public void testSingleMethodAvailable() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/SingleMethodAvailable.kt");
+        }
 
-    @TestMetadata("VarargSpreadOperator.kt")
-    public void testVarargSpreadOperator() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/VarargSpreadOperator.kt");
-    }
+        @TestMetadata("TypeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/TypeAlias.kt");
+        }
 
-    @TestMetadata("Varargs.kt")
-    public void testVarargs() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Varargs.kt");
-    }
+        @TestMetadata("VarargSpreadOperator.kt")
+        public void testVarargSpreadOperator() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/VarargSpreadOperator.kt");
+        }
 
-    @TestMetadata("Varargs2.kt")
-    public void testVarargs2() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Varargs2.kt");
-    }
+        @TestMetadata("Varargs.kt")
+        public void testVarargs() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Varargs.kt");
+        }
 
-    @TestMetadata("Varargs3.kt")
-    public void testVarargs3() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Varargs3.kt");
-    }
+        @TestMetadata("Varargs2.kt")
+        public void testVarargs2() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Varargs2.kt");
+        }
 
-    @TestMetadata("WithStatisticsInfo.kt")
-    public void testWithStatisticsInfo() throws Exception {
-        runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/WithStatisticsInfo.kt");
+        @TestMetadata("Varargs3.kt")
+        public void testVarargs3() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/Varargs3.kt");
+        }
+
+        @TestMetadata("WithStatisticsInfo.kt")
+        public void testWithStatisticsInfo() throws Exception {
+            runTest("../../idea/tests/testData/idea/actions/kotlinAddImportAction/WithStatisticsInfo.kt");
+        }
     }
 }

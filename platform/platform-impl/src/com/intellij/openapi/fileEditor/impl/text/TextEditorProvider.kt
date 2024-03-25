@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.fileEditor.impl.text
@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import com.intellij.openapi.fileEditor.impl.DefaultPlatformFileEditorProvider
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl.Companion.createTextEditor
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -86,10 +85,16 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     return isTextFile(file) && !SingleRootFileViewProvider.isTooLargeForContentLoading(file)
   }
 
-  override fun acceptRequiresReadAction() = false
+  final override fun acceptRequiresReadAction() = false
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
-    return TextEditorImpl(project, file, this, createTextEditor(project, file))
+    val asyncLoader = createAsyncEditorLoader(this, project, file)
+    val editor = createEditorImpl(project = project, file = file, asyncLoader = asyncLoader).first
+    return TextEditorImpl(
+      project = project,
+      file = file,
+      componentAndLoader = TextEditorComponent(file = file, editorImpl = editor) to asyncLoader,
+    )
   }
 
   override fun readState(element: Element, project: Project, file: VirtualFile): FileEditorState {
@@ -268,14 +273,15 @@ private fun getLine(position: LogicalPosition?): Int = position?.line ?: 0
 private fun getColumn(position: LogicalPosition?): Int = position?.column ?: 0
 
 internal fun scrollToCaret(editor: Editor, exactState: Boolean, relativeCaretPosition: Int) {
-  editor.scrollingModel.disableAnimation()
+  val scrollingModel = editor.scrollingModel
+  scrollingModel.disableAnimation()
   if (relativeCaretPosition != Int.MAX_VALUE) {
     EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition)
   }
   if (!exactState) {
-    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    scrollingModel.scrollToCaret(ScrollType.RELATIVE)
   }
-  editor.scrollingModel.enableAnimation()
+  scrollingModel.enableAnimation()
 }
 
 private fun readCaretInfo(element: Element): TextEditorState.CaretState {

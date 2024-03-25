@@ -7,17 +7,16 @@ import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel.ListDataUpdate
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
@@ -98,7 +97,10 @@ internal class GitLabMergeRequestsListViewModelImpl(
     }
   }
 
-  private class Loader(private val cs: CoroutineScope, private val loader: SequentialListLoader<GitLabMergeRequestDetails>) {
+  private class Loader(parentCs: CoroutineScope, private val loader: SequentialListLoader<GitLabMergeRequestDetails>) {
+    private val cs = parentCs.childScope()
+
+    private val lock = ReentrantLock()
     private val listState = CopyOnWriteArrayList<GitLabMergeRequestDetails>()
 
     val listDataFlow: MutableSharedFlow<ListDataUpdate> = MutableSharedFlow(1)
@@ -108,25 +110,34 @@ internal class GitLabMergeRequestsListViewModelImpl(
     @Volatile
     private var hasMoreBatches = true
 
-    fun requestMore() {
-      if (loadingState.value || errorState.value != null || !hasMoreBatches) return
-      loadingState.value = true
-      cs.launch {
-        try {
-          val (data, hasMore) = loader.loadNext()
-          listState.addAll(data)
-          hasMoreBatches = hasMore
+    init {
+      // Hack to make sure the loader scope is alive
+      cs.launchNow { awaitCancellation() }
+    }
 
-          listDataFlow.emit(ListDataUpdate.NewBatch(listState.toList(), data))
-        }
-        catch (ce: CancellationException) {
-          throw ce
-        }
-        catch (e: Throwable) {
-          errorState.value = e
-        }
-        finally {
-          loadingState.value = false
+    fun requestMore() {
+      lock.withLock {
+        if (loadingState.value || errorState.value != null || !hasMoreBatches) return
+        loadingState.value = true
+
+        // Make sure the try-catch-finally is entered by launching now
+        cs.launch {
+          try {
+            val (data, hasMore) = loader.loadNext()
+            listState.addAll(data)
+            hasMoreBatches = hasMore
+
+            listDataFlow.emit(ListDataUpdate.NewBatch(listState.toList(), data))
+          }
+          catch (ce: CancellationException) {
+            throw ce
+          }
+          catch (e: Throwable) {
+            errorState.value = e
+          }
+          finally {
+            loadingState.value = false
+          }
         }
       }
     }

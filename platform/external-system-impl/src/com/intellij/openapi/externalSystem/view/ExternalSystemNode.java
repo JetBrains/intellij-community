@@ -199,12 +199,8 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   public final ExternalSystemNode<?> @NotNull [] getChildren() {
     if (myChildren == null) {
       myChildren = buildChildren();
-      onChildrenBuilt();
     }
     return myChildren;
-  }
-
-  private void onChildrenBuilt() {
   }
 
   private ExternalSystemNode<?> @NotNull [] buildChildren() {
@@ -428,7 +424,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return StringUtil.compare(this.getName(), node.getName(), true);
   }
 
-  public void mergeWith(ExternalSystemNode<T> node) {
-    setDataNode(node.myDataNode);
+  public void mergeWith(@NotNull ExternalSystemNode<T> newNode) {
+    setDataNode(newNode.myDataNode);
   }
 }

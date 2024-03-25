@@ -8,5 +8,3 @@ object Test {
         val ss = bar(emptyList<String>())
     }
 }
-
-// IGNORE_K2

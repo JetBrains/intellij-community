@@ -10,12 +10,14 @@ import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
 import com.intellij.platform.testFramework.diagnostic.TelemetryMeterCollector
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.tools.ide.metrics.collector.OpenTelemetryMeterCollector
+import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
+import com.intellij.tools.ide.util.common.withRetry
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,6 +25,8 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.io.path.Path
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Metrics will be stored as TeamCity artifacts and later will be collected by IJ Perf collector (~ once/twice per hour).
@@ -41,7 +45,9 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
 
         buildProperties.forEach { this.setProperty(it.first, it.second) }
 
-        store(tempPropertiesFile.outputStream(), "")
+        tempPropertiesFile.outputStream().use {
+          store(it, "")
+        }
       }
 
       return tempPropertiesFile.toPath()
@@ -56,9 +62,12 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
 
     private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMeterCollector): PerformanceMetricsDto {
       val metrics: List<PerformanceMetrics.Metric> = SpanMetricsExtractor().waitTillMetricsExported(uniqueTestIdentifier)
-      val additionalMetrics: List<PerformanceMetrics.Metric> = metricsCollectors.flatMap {
-        it.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
-      }
+      val additionalMetrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry meters should be exported",
+                                                                         retries = 5, delay = 300.milliseconds) {
+        metricsCollectors.flatMap {
+          it.convertToCompleteMetricsCollector().collect(PathManager.getLogDir())
+        }
+      }!!
 
       val mergedMetrics = metrics.plus(additionalMetrics)
 
@@ -91,6 +100,8 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
   }
 
   override suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMeterCollector) {
+    delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
+
     val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
 
     withContext(Dispatchers.IO) {
@@ -114,21 +125,14 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
   }
 }
 
-internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTelemetryMeterCollector {
+internal fun TelemetryMeterCollector.convertToCompleteMetricsCollector(): OpenTelemetryJsonMeterCollector {
   val metricsSelectionStrategy = when (this.metricsAggregation) {
     MetricsAggregation.EARLIEST -> MetricsSelectionStrategy.EARLIEST
     MetricsAggregation.LATEST -> MetricsSelectionStrategy.LATEST
     MetricsAggregation.MINIMUM -> MetricsSelectionStrategy.MINIMUM
     MetricsAggregation.MAXIMUM -> MetricsSelectionStrategy.MAXIMUM
     MetricsAggregation.SUM -> MetricsSelectionStrategy.SUM
-    MetricsAggregation.AVERAGE -> MetricsSelectionStrategy.AVERAGE
   }
 
-  return OpenTelemetryMeterCollector(metricsSelectionStrategy) { meter ->
-    this.metersFilter(
-      object : Map.Entry<String, List<Long>> {
-        override val key: String = meter.key
-        override val value: List<Long> = meter.value.map { it.value }
-      })
-  }
+  return OpenTelemetryJsonMeterCollector(metricsSelectionStrategy) { meter -> this.metersFilter(meter.name) }
 }

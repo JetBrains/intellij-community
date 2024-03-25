@@ -7,7 +7,9 @@ import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextParser
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot
 import com.jetbrains.performancePlugin.remotedriver.xpath.XpathSearcher
+import com.jetbrains.performancePlugin.remotedriver.xpath.convertToHtml
 import java.awt.Component
+import java.nio.file.*
 
 @Suppress("unused")
 @Service(Service.Level.APP)
@@ -28,4 +30,23 @@ internal class RobotService {
   fun findAllText(component: Component): TextDataList {
     return TextParser.parseComponent(component, TextToKeyCache).let { TextDataList().apply { addAll(it) } }
   }
+
+  fun saveHierarchy(path: String) {
+    val html = xpathSearcher.modelCreator.create(null).convertToHtml()
+    Paths.get(path).resolve("ui.html").toFile().writeText(html)
+
+    staticFiles.forEach { staticFilePath ->
+      this::class.java.classLoader.getResource(staticFilePath)?.let { resource ->
+        Paths.get(path).resolve(staticFilePath).toFile().apply { resolve("..").mkdirs() }.writeBytes(resource.readBytes())
+      }
+    }
+  }
+  private val staticFiles = listOf(
+    "static/scripts.js",
+    "static/styles.css",
+    "static/updateButton.js",
+    "static/xpathEditor.js",
+    "static/img/show.png",
+    "static/img/locator.png",
+  )
 }

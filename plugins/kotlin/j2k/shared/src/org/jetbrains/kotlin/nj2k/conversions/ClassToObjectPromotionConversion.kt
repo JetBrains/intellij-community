@@ -6,52 +6,52 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.CLASS
 
 class ClassToObjectPromotionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element is JKClass && element.classKind == JKClass.ClassKind.CLASS) {
-            val companion = element.getCompanion() ?: return recurse(element)
+        if (element !is JKClass || element.classKind != CLASS) return recurse(element)
+        val companion = element.getCompanion() ?: return recurse(element)
 
-            val allDeclarationsMatches = element.declarationList.all {
-                when (it) {
-                    is JKKtPrimaryConstructor -> it.parameters.isEmpty() && it.block.statements.isEmpty()
-                    is JKKtInitDeclaration ->
-                        it.block.statements.all { statement ->
-                            when (statement) {
-                                is JKDeclarationStatement -> statement.declaredStatements.isEmpty()
-                                else -> false
-                            }
+        val allDeclarationsMatch = element.declarationList.all {
+            when (it) {
+                is JKKtPrimaryConstructor -> it.parameters.isEmpty() && it.block.statements.isEmpty()
+                is JKKtInitDeclaration ->
+                    it.block.statements.all { statement ->
+                        when (statement) {
+                            is JKDeclarationStatement -> statement.declaredStatements.isEmpty()
+                            else -> false
                         }
+                    }
 
-                    is JKClass -> true
-                    else -> false
-                }
+                is JKClass -> true
+                else -> false
             }
+        }
 
-            if (allDeclarationsMatches && !element.hasInheritors()) {
-                companion.invalidate()
-                element.invalidate()
-                return recurse(
-                    JKClass(
-                        element.name,
-                        element.inheritance,
-                        JKClass.ClassKind.OBJECT,
-                        element.typeParameterList,
-                        companion.classBody.also { body ->
-                            body.handleDeclarationsModifiers()
-                            body.declarations += element.classBody.declarations.filter {
-                                //TODO preserve order
-                                it is JKClass && it.classKind != JKClass.ClassKind.COMPANION
-                            }.map { it.detached(element.classBody) }
-                        },
-                        element.annotationList,
-                        element.otherModifierElements,
-                        element.visibilityElement,
-                        JKModalityModifierElement(Modality.FINAL)
-                    ).withFormattingFrom(element)
-                )
-            }
+        if (allDeclarationsMatch && !element.hasInheritors()) {
+            companion.invalidate()
+            element.invalidate()
+            return recurse(
+                JKClass(
+                    element.name,
+                    element.inheritance,
+                    JKClass.ClassKind.OBJECT,
+                    element.typeParameterList,
+                    companion.classBody.also { body ->
+                        body.handleDeclarationsModifiers()
+                        body.declarations += element.classBody.declarations.filter {
+                            //TODO preserve order
+                            it is JKClass && it.classKind != JKClass.ClassKind.COMPANION
+                        }.map { it.detached(element.classBody) }
+                    },
+                    element.annotationList,
+                    element.otherModifierElements,
+                    element.visibilityElement,
+                    JKModalityModifierElement(Modality.FINAL)
+                ).withFormattingFrom(element)
+            )
         }
 
         return recurse(element)

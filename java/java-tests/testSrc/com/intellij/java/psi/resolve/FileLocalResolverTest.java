@@ -6,6 +6,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -16,7 +17,6 @@ import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import groovy.lang.Reference;
 import org.jetbrains.annotations.NotNull;
 
 public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
@@ -244,7 +244,7 @@ public class FileLocalResolverTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private LighterASTNode findEquivalentNode(final LighterAST fctsTree, final LighterASTNode target) {
-    final Reference<LighterASTNode> fctsRef = new Reference<LighterASTNode>(null);
+    final Ref<LighterASTNode> fctsRef = Ref.create();
     new RecursiveLighterASTNodeWalkingVisitor(fctsTree) {
       @Override
       public void visitNode(@NotNull LighterASTNode element) {

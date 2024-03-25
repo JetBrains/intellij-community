@@ -30,7 +30,7 @@ import com.intellij.packaging.impl.artifacts.workspacemodel.forThisAndFullTree
 import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.*
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.impl.internal
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -558,7 +558,7 @@ class ArtifactTest : ArtifactsTestCase() {
       }
       val threads = List(10) {
         Callable {
-          rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).internal.entityStorage)
+          rootEntity!!.toElement(project, (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage)
         }
       }
 
@@ -581,7 +581,7 @@ class ArtifactTest : ArtifactsTestCase() {
       }
       ArtifactsTestingState.testLevel = it + 1
       try {
-        rootEntity!!.toElement(project, WorkspaceModel.getInstance(project).internal.entityStorage)
+        rootEntity!!.toElement(project, (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage)
       } catch (e: IllegalStateException) {
         if (e.message?.contains("Exception on level") != true) {
           error("Unexpected exception")

@@ -183,6 +183,7 @@ class NotebookCellInlayManager private constructor(
             it.show()
           }
         }
+        putHighlighters()
       }
     }, editor.disposable)
   }
@@ -261,9 +262,13 @@ class NotebookCellInlayManager private constructor(
       _cells[interval.ordinal].update()
     }
 
-    NotebookGutterLineMarkerManager().putHighlighters(editor)
+    putHighlighters()
 
     inlaysChanged()
+  }
+
+  private fun putHighlighters() {
+    NotebookGutterLineMarkerManager().putHighlighters(editor)
   }
 
   private fun getMatchingHighlightersForLines(lines: IntRange): List<RangeHighlighterEx> =

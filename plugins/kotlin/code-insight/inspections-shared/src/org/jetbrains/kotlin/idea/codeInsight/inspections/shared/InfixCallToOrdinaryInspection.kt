@@ -1,0 +1,73 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
+
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
+
+internal class InfixCallToOrdinaryInspection : KotlinApplicableInspectionBase.Simple<KtBinaryExpression, Unit>() {
+
+    override fun getProblemDescription(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = KotlinBundle.message("replace.infix.call.with.ordinary.call")
+
+    override fun createQuickFix(
+        element: KtBinaryExpression,
+        context: Unit,
+    ) = object : KotlinModCommandQuickFix<KtBinaryExpression>() {
+
+        override fun applyFix(
+            project: Project,
+            element: KtBinaryExpression,
+            updater: ModPsiUpdater,
+        ) {
+            convertInfixCallToOrdinary(element)
+        }
+
+        override fun getFamilyName(): String =
+            KotlinBundle.message("replace.infix.call.with.ordinary.call")
+    }
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = binaryExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
+    }
+
+    override fun getApplicableRanges(element: KtBinaryExpression): List<TextRange> =
+        listOf(element.operationReference.textRangeInParent)
+
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
+        return !(element.operationToken != KtTokens.IDENTIFIER || element.left == null || element.right == null)
+    }
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtBinaryExpression) {
+    }
+}
+
+fun convertInfixCallToOrdinary(element: KtBinaryExpression): KtExpression {
+    val argument = KtPsiUtil.safeDeparenthesize(element.right!!)
+    val pattern = "$0.$1" + when (argument) {
+        is KtLambdaExpression -> " $2:'{}'"
+        else -> "($2)"
+    }
+
+    val replacement = KtPsiFactory(element.project).createExpressionByPattern(
+        pattern,
+        element.left!!,
+        element.operationReference,
+        argument
+    )
+
+    return element.replace(replacement) as KtExpression
+}

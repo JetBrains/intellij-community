@@ -833,6 +833,13 @@ class ExpressionsOfTypeProcessor(
                         break@ParentsLoop
                     }
                 }
+
+                is KtPropertyDelegate -> {
+                    (parent.parent as? KtProperty)?.let {
+                        addCallableDeclarationOfOurType(it)
+                    }
+                    break@ParentsLoop
+                }
             }
 
             if (!element.mayTypeAffectAncestors()) break

@@ -38,10 +38,10 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFE
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
- * Scala code (same algorithm, but easier to read): https://github.com/ilya-klyuchnikov/faba
- *
- * Based on "Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values" by Ilya Klyuchnikov
- *     (http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf)
+ * Here's <a href="https://github.com/ilya-klyuchnikov/faba">Scala code</a> (same algorithm, but easier to read).
+ * <p>
+ * Based on <a href="http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf">"Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values"</a> 
+ * by Ilya Klyuchnikov.
  */
 public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
@@ -326,6 +326,15 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     protected MethodVisitor visitMethod(final MethodNode node, Member method, final EKey key) {
       return new MethodVisitor(Opcodes.API_VERSION, node) {
         private boolean jsr;
+        private boolean skip;
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+          if (descriptor.equals("Lio/quarkus/panache/common/impl/GenerateBridge;")) {
+            skip = true;
+          }
+          return super.visitAnnotation(descriptor, visible);
+        }
 
         @Override
         public void visitJumpInsn(int opcode, Label label) {
@@ -338,7 +347,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         @Override
         public void visitEnd() {
           super.visitEnd();
-          myEquations.put(key, convertEquations(key, processMethod(node, jsr, method, key.stable)));
+          if (!skip) {
+            myEquations.put(key, convertEquations(key, processMethod(node, jsr, method, key.stable)));
+          }
         }
       };
     }

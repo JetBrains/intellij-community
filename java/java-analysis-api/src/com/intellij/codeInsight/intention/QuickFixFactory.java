@@ -405,6 +405,12 @@ public abstract class QuickFixFactory {
   @NotNull
   public abstract IntentionAction createSafeDeleteFix(@NotNull PsiElement element);
 
+  /**
+   * @param method method to delete
+   * @return a fix to remove private method, possibly along with called methods unused elsewhere
+   */
+  public abstract @NotNull ModCommandAction createDeletePrivateMethodFix(@NotNull PsiMethod method);
+
   public abstract @NotNull List<@NotNull LocalQuickFix> registerOrderEntryFixes(@NotNull PsiReference reference,
                                                                                 @NotNull List<? super IntentionAction> registrar);
 
@@ -486,9 +492,9 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass record);
 
   @NotNull
-  public abstract IntentionAction createCreateFieldFromParameterFix();
+  public abstract IntentionAction createCreateFieldFromParameterFix(@NotNull PsiParameter parameter);
   @NotNull
-  public abstract IntentionAction createAssignFieldFromParameterFix();
+  public abstract IntentionAction createAssignFieldFromParameterFix(@NotNull PsiParameter parameter);
 
   @NotNull
   public abstract IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier);

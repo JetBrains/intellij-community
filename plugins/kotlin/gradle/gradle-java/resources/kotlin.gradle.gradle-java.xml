@@ -142,8 +142,10 @@
     <serialization.IdeaKotlinSerializationContext implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.IntellijIdeaKotlinSerializationContext"/>
   </extensions>
 
-  <actions>
-    <action id="LoadConfigurationAction" class="org.jetbrains.kotlin.idea.gradleJava.scripting.LoadConfigurationAction">
+  <actions resource-bundle="messages.KotlinIdeaGradleBundle">
+    <action id="LoadKtGradleConfiguration"
+            class="org.jetbrains.kotlin.idea.gradleJava.scripting.LoadKtGradleConfigurationAction"
+            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
     </action>
   </actions>

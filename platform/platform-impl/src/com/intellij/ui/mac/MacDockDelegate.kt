@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.wm.impl.SystemDock
 import java.awt.*
 
@@ -18,6 +19,11 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
       val recentProjectsMenu = Menu("Recent Projects")
       try {
         dockMenu.add(recentProjectsMenu)
+        ExtensionPointName.create<MacDockMenuActions>("com.intellij.mac.dockMenuActions").forEachExtensionSafe { actions ->
+          actions.createMenuItem()?.let {  
+            dockMenu.add(it)
+          }
+        }
         if (Taskbar.isTaskbarSupported() /* not supported in CWM/Projector environment */) {
           Taskbar.getTaskbar().menu = dockMenu
         }

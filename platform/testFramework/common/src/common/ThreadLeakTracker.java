@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
+import com.intellij.diagnostic.JVMResponsivenessMonitor;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
@@ -85,6 +86,7 @@ public final class ThreadLeakTracker {
       "JNA Cleaner",
       "JobScheduler FJ pool ",
       "JPS thread pool",
+      JVMResponsivenessMonitor.MONITOR_THREAD_NAME,
       "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
       "Keep-Alive-Timer",
       "main",
@@ -148,7 +150,10 @@ public final class ThreadLeakTracker {
     }
   }
 
-  private static void waitForThread(Thread thread, Map<Thread, StackTraceElement[]> stackTraces, Map<String, Thread> all, Map<String, Thread> after) {
+  private static void waitForThread(Thread thread,
+                                    Map<Thread, StackTraceElement[]> stackTraces,
+                                    Map<String, Thread> all,
+                                    Map<String, Thread> after) {
     if (!shouldWaitForThread(thread)) {
       return;
     }
@@ -233,12 +238,12 @@ public final class ThreadLeakTracker {
   // true, if somebody started a new thread via "executeInPooledThread()" and then the thread is waiting for the next task
   private static boolean isIdleApplicationPoolThread(StackTraceElement[] stackTrace) {
     return ContainerUtil.exists(stackTrace, element -> element.getMethodName().equals("getTask")
-                                                     && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
+                                                       && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
   }
 
   private static boolean isKotlinCIOSelector(StackTraceElement[] stackTrace) {
     return ContainerUtil.exists(stackTrace, element -> element.getMethodName().equals("select")
-                                                     && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager"));
+                                                       && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager"));
   }
 
   private static boolean isIdleCommonPoolThread(Thread thread, StackTraceElement[] stackTrace) {
@@ -356,7 +361,8 @@ public final class ThreadLeakTracker {
     StringBuilder f = new StringBuilder();
     for (Map.Entry<String, Thread> entry : after.entrySet()) {
       Thread t = entry.getValue();
-      f.append('"').append(entry.getKey()).append("\" (").append(t.isAlive() ? "alive" : "dead").append(") ").append(t.getState()).append('\n');
+      f.append('"').append(entry.getKey()).append("\" (").append(t.isAlive() ? "alive" : "dead").append(") ").append(t.getState())
+        .append('\n');
       for (StackTraceElement element : stackTraces.get(t)) {
         f.append("\tat ").append(element).append('\n');
       }

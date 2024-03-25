@@ -9,10 +9,12 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
@@ -35,6 +37,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -42,7 +45,9 @@ import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
+import java.util.function.BooleanSupplier
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -51,8 +56,53 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
                                                                          private val scope: CoroutineScope) : DumbService(), Disposable, ModificationTracker, DumbServiceBalloon.Service {
   private val myState: MutableStateFlow<DumbState> = MutableStateFlow(DumbState(!myProject.isDefault, 0L, 0))
 
+  private val initialDumbTaskRequiredForSmartModeSubmitted = AtomicBoolean(false)
+
   // should only be accessed from EDT. This is to order synchronous and asynchronous publishing
   private var lastPublishedState: DumbState = myState.value
+
+  // Not thread safe. Should only be accessed from EDT. Launches myGuiDumbTaskRunner at most once.
+  // DumbService can invoke `launch` from completeJustSubmittedTasks or from queueTaskOnEdt
+  private inner class DumbTaskLauncher(private val modality: ModalityState) {
+    private var launched = false
+
+    fun cancel() {
+      // only not launched tasks can be canceled
+      if (!launched) {
+        launched = true
+        close()
+      }
+    }
+
+    private fun close() {
+      if (application.isDispatchThread) {
+        dumbTaskLaunchers.remove(this)
+        // without redispatching, because it can be invoked from completeJustSubmittedTasks
+        decrementDumbCounter()
+      }
+      else {
+        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+          blockingContext {
+            dumbTaskLaunchers.remove(this@DumbTaskLauncher)
+            decrementDumbCounter()
+          }
+        }
+      }
+    }
+
+    fun launch() {
+      if (!launched) {
+        launched = true;
+        myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
+          close()
+        })
+      }
+    }
+  }
+
+  // should only be accessed from EDT. We need to track FutureDumbTasks because completeJustSubmittedTasks should
+  // not only complete all the dumb tasks, but also should finish dumb mode.
+  private val dumbTaskLaunchers: MutableList<DumbTaskLauncher> = ArrayList()
 
   override val project: Project = myProject
   override var isAlternativeResolveEnabled: Boolean
@@ -116,15 +166,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     // we assume that queueStartupActivitiesRequiredForSmartMode will be invoked to advance DUMB > SMART
   }
 
-  fun queueStartupActivitiesRequiredForSmartMode() {
-    queueTask(InitialDumbTaskRequiredForSmartMode(project))
-    if (isSynchronousTaskExecution) {
-      // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously, because
-      // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g. in unit tests):
+  internal suspend fun queueStartupActivitiesRequiredForSmartMode() {
+    if (!initialDumbTaskRequiredForSmartModeSubmitted.compareAndSet(false, true)) {
+      return
+    }
+
+    val task = InitialDumbTaskRequiredForSmartMode(project)
+    blockingContext {
+      queueTask(task)
+    }
+    if (useSynchronousTaskQueue) {
+      // This is the same side effects as produced by enterSmartModeIfDumb (except updating icons). We apply them synchronously because
+      // invokeLaterWithDumbStartModality(this::enterSmartModeIfDumb) does not work well in synchronous environments (e.g., in unit tests):
       // code continues to execute without waiting for smart mode to start because of invoke*Later*. See, for example, DbSrcFileDialectTest
-      application.invokeAndWait {
-        myState.update { it.incrementDumbCounter().decrementDumbCounter() }
-        publishDumbModeChangedEvent()
+      blockingContext {
+        ApplicationManager.getApplication().invokeAndWait {
+          myState.update { it.incrementDumbCounter().decrementDumbCounter() }
+          publishDumbModeChangedEvent()
+        }
       }
     }
   }
@@ -180,13 +239,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   @Internal
   suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T {
     LOG.info("[$project]: running dumb task without visible indicator: $debugReason")
-    blockingContext { // because we need correct modality
-      application.invokeAndWait {
+
+    suspend fun incrementCounter() {
+      blockingContext { // because we need correct modality
         // Because we need to avoid additional dispatch. UNDISPATCHED coroutine is not a solution, because
         // multiple UNDISPATCHED coroutines in the same (EDT) thread ends up in some strange state (as revealed by unit tests)
         incrementDumbCounter(trace = Throwable())
       }
     }
+
+    if (EDT.isCurrentThreadEdt()) {
+      incrementCounter()
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        incrementCounter()
+      }
+    }
+
     try {
       return block()
     }
@@ -215,9 +285,18 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       if (enteredDumb) {
         LOG.info("enter dumb mode [${project.name}]")
         dumbModeStartTrace = trace
-        publishDumbModeChangedEvent()
+        try {
+          publishDumbModeChangedEvent()
+        }
+        catch (t: Throwable) {
+          // in unit tests we may get here because of exception thrown from Log.error from catch block inside runCatchingIgnorePCE
+          decrementDumbCounter()
+          throw t
+        }
       }
     }
+
+    LOG.assertTrue(myState.value.isDumb, "Should be dumb")
   }
 
   // this method is not suspend for the sake of symmetry: incrementDumbCounter is not suspend as of now
@@ -266,6 +345,14 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     myProject.getService(SmartModeScheduler::class.java).runWhenSmart(runnable)
   }
 
+  internal val runWhenSmartCondition: BooleanSupplier
+    get() = if (useSynchronousTaskQueue) {
+      BooleanSupplier { !isDumb }
+    }
+    else {
+      myProject.getService(SmartModeScheduler::class.java).runWhenSmartCondition
+    }
+
   override fun unsafeRunWhenSmart(@Async.Schedule runnable: Runnable) {
     // we probably don't need unsafeRunWhenSmart anymore
     runWhenSmart(runnable)
@@ -273,13 +360,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun queueTask(task: DumbModeTask) {
-    if (LOG.isDebugEnabled) {
-      LOG.debug("Scheduling task $task")
-    }
+    LOG.debug { "Scheduling task $task" }
     if (myProject.isDefault) {
       LOG.error("No indexing tasks should be created for default project: $task")
     }
-    if (isSynchronousTaskExecution) {
+    if (useSynchronousTaskQueue) {
       mySyncDumbTaskRunner.runTaskSynchronously(task)
       return
     }
@@ -308,27 +393,26 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   private fun queueTaskOnEdt(task: DumbModeTask, modality: ModalityState, trace: Throwable) {
+    // first, increment dumb mode, then add the task. If increment failed, task execution will not be scheduled, and we will stuck in
+    // dumb mode. In unit tests, much safer behavior is to ignore the task. In prod both behaviors are bad.
+    incrementDumbCounter(trace)
+
     ThreadingAssertions.assertEventDispatchThread()
     myLatestReceipt = myTaskQueue.addTask(task)
-    incrementDumbCounter(trace)
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
     var dumbModeCounterWillBeDecrementedFromOnFinish = false
+    val launcher = DumbTaskLauncher(modality)
+    dumbTaskLaunchers.add(launcher)
     invokeLaterOnEdtInScheduledTasksScope {
       dumbModeCounterWillBeDecrementedFromOnFinish = true
-      myGuiDumbTaskRunner.startBackgroundProcess(onFinish = {
-        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
-          blockingContext {
-            decrementDumbCounter()
-          }
-        }
-      })
+      launcher.launch()
     }.invokeOnCompletion {
       if (!dumbModeCounterWillBeDecrementedFromOnFinish) {
         scope.launch(modality.asContextElement() + Dispatchers.EDT) {
           blockingContext {
-            decrementDumbCounter()
+            launcher.cancel()
           }
         }
       }
@@ -488,11 +572,12 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
 
   override fun smartInvokeLater(runnable: Runnable, modalityState: ModalityState) {
     ApplicationManager.getApplication().invokeLater({
-                                                      if (isDumb) {
-                                                        runWhenSmart { smartInvokeLater(runnable, modalityState) }
+                                                      if (runWhenSmartCondition.asBoolean) {
+                                                        runnable.run()
                                                       }
                                                       else {
-                                                        runnable.run()
+                                                        LOG.debug("smartInvokeLater dispatched")
+                                                        runWhenSmart { smartInvokeLater(runnable, modalityState) }
                                                       }
                                                     }, modalityState, myProject.disposed)
   }
@@ -500,20 +585,37 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   override fun completeJustSubmittedTasks() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired()
     LOG.assertTrue(myProject.isInitialized, "Project should have been initialized")
-    while (myState.value.isDumb && !myTaskQueue.isEmpty) {
-      val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
-      if (!queueProcessedUnderModalProgress) {
-        // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
-        break
+
+    // there is no race: myTaskQueue is only updated from EDT
+    if (!myTaskQueue.isEmpty) {
+      incrementDumbCounter(Throwable())
+      try {
+        while (!myTaskQueue.isEmpty) {
+          val queueProcessedUnderModalProgress = processQueueUnderModalProgress()
+          if (!queueProcessedUnderModalProgress) {
+            if (application.isUnitTestMode) {
+              LOG.assertTrue(myTaskQueue.isEmpty, "This behavior is valid, but most likely not expected in tests: " +
+                                                  "completeJustSubmittedTasks does nothing because the queue is already " +
+                                                  "being processed in the background thread.")
+            }
+            // processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
+            break
+          }
+        }
+      }
+      finally {
+        decrementDumbCounter()
       }
     }
-    if (myState.value.isSmart) { // we can reach this statement in dumb mode if queue is processed in background
-      // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
-      // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
-      // it, because it has been working like this for years already.
-      // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
-      LOG.assertTrue(isSynchronousTaskExecution || myTaskQueue.isEmpty, "Task queue is not empty. Current state is " + myState.value)
-    }
+
+    // there is no race: dumbTaskLaunchers is only updated from EDT
+    // the myTaskQueue is empty, we expect that DumbTaskLauncher::launch will do nothing other than finishing dumb mode
+    ArrayList(dumbTaskLaunchers).forEach(DumbTaskLauncher::launch) // we need a copy, because the task will remove itself from the list
+
+    // it is still possible that the IDE is dumb at this point. This may happen if dumb queue is actually processed
+    // in the background, and the background thread is processing the last task from the queue.
+    // This will happen, for example, in unit tests in DUMB_EMPTY_INDEX indexing mode: background thread will be processing
+    // the eternal task.
   }
 
   private fun processQueueUnderModalProgress(): Boolean {
@@ -574,14 +676,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   @TestOnly
-  suspend fun waitUntilFinished() {
-    myGuiDumbTaskRunner.waitUntilFinished()
-    mySyncDumbTaskRunner.isRunning.first { !it }
+  fun ensureInitialDumbTaskRequiredForSmartModeSubmitted() {
+    if (!initialDumbTaskRequiredForSmartModeSubmitted.get()) {
+      runBlockingMaybeCancellable {
+        queueStartupActivitiesRequiredForSmartMode()
+      }
+    }
   }
 
   @TestOnly
   fun isRunning(): Boolean {
     return myGuiDumbTaskRunner.isRunning.value || mySyncDumbTaskRunner.isRunning.value
+  }
+
+  @TestOnly
+  fun hasScheduledTasks(): Boolean {
+    // when queued on EDT, dumb mode starts immediately, but executor does not start immediately - it schedules start to the end of the EDT
+    // queue to give a chance to invoke completeJustSubmittedTasks and index files under modal progress.
+    return scheduledTasksScope.coroutineContext.job.children.firstOrNull() != null
   }
 
   companion object {
@@ -609,6 +721,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
         LOG.error(t)
       }
     }
+
+    // TODO IJPL-578 - behavior should be the same in tests and prod. Temporary flag to ease tests migration.
+    private val IS_UNDER_TEAMCITY: Boolean = System.getenv("TEAMCITY_VERSION") != null
+
+    val useSynchronousTaskQueue: Boolean
+      @VisibleForTesting
+      get() = SystemProperties.getBooleanProperty("unittest.synchronous.dumb.queue", IS_UNDER_TEAMCITY && isSynchronousTaskExecution)
 
     @JvmStatic
     val isSynchronousTaskExecution: Boolean

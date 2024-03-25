@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide.ui
@@ -12,14 +12,13 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import java.awt.Color
 import java.util.function.Supplier
 
-sealed interface UiThemePaletteScope {
-
+internal sealed interface UiThemePaletteScope {
   val svgColorIconPatcher: SvgAttributePatcher?
+
   fun updateHash(insecureHashBuilder: InsecureHashBuilder)
 }
 
 private class UiThemePaletteScopeImpl : UiThemePaletteScope {
-
   val newPalette: MutableMap<String, String> = HashMap()
 
   // 0-255

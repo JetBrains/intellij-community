@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
@@ -187,7 +187,7 @@ open class XChildEntityImpl(private val dataSource: XChildEntityData) : XChildEn
             value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
@@ -233,7 +233,7 @@ open class XChildEntityImpl(private val dataSource: XChildEntityData) : XChildEn
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CHILDCHILD_CONNECTION_ID, this, value)

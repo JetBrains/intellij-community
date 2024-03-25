@@ -64,7 +64,7 @@ class SmartStepTargetVisitor(
             }
             if (symbol is KtFunctionSymbol) {
                 val declaration = symbol.psi ?: return false
-                if (symbol.origin == KtSymbolOrigin.JAVA && declaration is PsiMethod) {
+                if (declaration is PsiMethod) {
                     append(MethodSmartStepTarget(declaration, null, expression, true, lines))
                     return true
                 } else if (declaration is KtNamedFunction) {
@@ -202,37 +202,61 @@ class SmartStepTargetVisitor(
     private fun recordFunction(function: KtFunction): Boolean {
         analyze(function) {
             val (methodSymbol, argumentSymbol) = getCallExpressionSymbol(function) ?: return false
-            val declaration = methodSymbol.psi as? KtDeclaration ?: return false
-            val callerMethodOrdinal = countExistingMethodCalls(declaration)
-            val lambdaInfo = if (argumentSymbol.returnType.isFunctionalInterfaceType) {
-                val samClassSymbol = argumentSymbol.returnType.expandedClassSymbol ?: return false
-                val scope = samClassSymbol.getMemberScope()
-                val funMethodSymbol = scope.getCallableSymbols()
-                    .filterIsInstance<KtFunctionSymbol>()
-                    .singleOrNull { it.modality == Modality.ABSTRACT }
-                    ?: return false
-                KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal,
-                                 isNameMangledInBytecode = funMethodSymbol.containsInlineClassInValueArguments(),
-                                 isSam = true, isSamSuspendMethod = funMethodSymbol.isSuspend, methodName = funMethodSymbol.name.asString())
-            } else {
-                val isNameMangledInBytecode = (argumentSymbol.returnType as? KtFunctionalType)?.parameterTypes
-                    ?.any { it.expandedClassSymbol?.isInlineClass() == true } == true
-                KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal,
-                                 isNameMangledInBytecode = isNameMangledInBytecode)
-            }
+            val declaration = methodSymbol.psi
+            val lambdaInfo = when (declaration) {
+                is PsiMethod -> createJavaLambdaInfo(declaration, methodSymbol, argumentSymbol)
+                is KtDeclaration -> createKotlinLambdaInfo(declaration, methodSymbol, argumentSymbol)
+                else -> return false
+            } ?: return false
             append(KotlinLambdaSmartStepTarget(function, declaration, lines, lambdaInfo))
             return true
         }
     }
 
-    private fun countExistingMethodCalls(declaration: KtDeclaration): Int {
-        return consumer
-            .filterIsInstance<KotlinMethodSmartStepTarget>()
-            .count {
-                val targetDeclaration = it.getDeclaration()
-                targetDeclaration != null && targetDeclaration === declaration
-            }
+    context(KtAnalysisSession)
+    private fun createJavaLambdaInfo(
+        declaration: PsiMethod,
+        methodSymbol: KtFunctionLikeSymbol,
+        argumentSymbol: KtValueParameterSymbol,
+    ): KotlinLambdaInfo {
+        val callerMethodOrdinal = countExistingMethodCalls(declaration)
+        return KotlinLambdaInfo(methodSymbol, argumentSymbol, callerMethodOrdinal, isNameMangledInBytecode = false)
     }
+
+    context(KtAnalysisSession)
+    private fun createKotlinLambdaInfo(
+        declaration: KtDeclaration,
+        methodSymbol: KtFunctionLikeSymbol,
+        argumentSymbol: KtValueParameterSymbol,
+    ): KotlinLambdaInfo? {
+        val callerMethodOrdinal = countExistingMethodCalls(declaration)
+        return if (argumentSymbol.returnType.isFunctionalInterfaceType) {
+            val samClassSymbol = argumentSymbol.returnType.expandedClassSymbol ?: return null
+            val scope = samClassSymbol.getMemberScope()
+            val funMethodSymbol = scope.getCallableSymbols()
+                .filterIsInstance<KtFunctionSymbol>()
+                .singleOrNull { it.modality == Modality.ABSTRACT }
+                ?: return null
+            KotlinLambdaInfo(
+                methodSymbol, argumentSymbol, callerMethodOrdinal,
+                isNameMangledInBytecode = funMethodSymbol.containsInlineClassInValueArguments(),
+                isSam = true, isSamSuspendMethod = funMethodSymbol.isSuspend, methodName = funMethodSymbol.name.asString()
+            )
+        } else {
+            val isNameMangledInBytecode = (argumentSymbol.returnType as? KtFunctionalType)?.parameterTypes
+                ?.any { it.expandedClassSymbol?.isInlineClass() == true } == true
+            KotlinLambdaInfo(
+                methodSymbol, argumentSymbol, callerMethodOrdinal,
+                isNameMangledInBytecode = isNameMangledInBytecode
+            )
+        }
+    }
+
+    private fun countExistingMethodCalls(declaration: KtDeclaration): Int =
+        consumer.filterIsInstance<KotlinMethodSmartStepTarget>().count { declaration === it.getDeclaration() }
+
+    private fun countExistingMethodCalls(psiMethod: PsiMethod): Int =
+        consumer.filterIsInstance<MethodSmartStepTarget>().count { psiMethod === it.method }
 
     override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression) {
         // Skip calls in object declarations
@@ -308,10 +332,8 @@ class SmartStepTargetVisitor(
             }
 
             val declaration = getFunctionDeclaration(symbol)
-            if (symbol.origin == KtSymbolOrigin.JAVA) {
-                if (declaration is PsiMethod) {
-                    append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
-                }
+            if (declaration is PsiMethod) {
+                append(MethodSmartStepTarget(declaration, null, highlightExpression, false, lines))
                 return
             }
 

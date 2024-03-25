@@ -4,13 +4,17 @@ package com.intellij.python.community.impl.huggingFace.api
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
+import org.jetbrains.annotations.ApiStatus
 import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
+@ApiStatus.Internal
 object HuggingFaceURLProvider {
-
+  // todo: there must be already existing solutions for URL building in the platform, find and apply them
   private val baseURL = PyHuggingFaceBundle.message("python.hugging.face.base.url")
-  private val models_expand_parameters = listOf("gated", "downloads", "likes", "lastModified", "pipeline_tag")
-  private val datasets_expand_parameters = listOf("gated", "downloads", "likes", "lastModified")
+  private val modelsExpandParameters = listOf("gated", "downloads", "likes", "lastModified", "pipeline_tag", "library_name")
+  private val datasetsExpandParameters = listOf("gated", "downloads", "likes", "lastModified")
 
   fun getEntityMarkdownURL(entityId: String, entityKind: HuggingFaceEntityKind): URL {
     return when(entityKind) {
@@ -30,49 +34,68 @@ object HuggingFaceURLProvider {
 
   fun getDatasetCardLink(datasetId: String): URL = URL("$baseURL/datasets/$datasetId")
 
-  fun getModelApiLink(modelId: String): URL = URL("$baseURL/api/models/$modelId")
-
-  fun getModelSearchQuery(query: String, tags: String? = null, sort: String = "downloads", limit: Int = 20): URL {
-    return URL("$baseURL/api/models?search=$query&sort=$sort&limit=$limit&direction=-1"
-    ).let { url ->
-      tags?.let { URL("${url}&filter=${tags}") } ?: url
+  private fun createCommonParametersString(commonParameters: Map<String, String>): String {
+    return commonParameters.entries.joinToString("&") {
+      val key = URLEncoder.encode(it.key, StandardCharsets.UTF_8)
+      val value = URLEncoder.encode(it.value, StandardCharsets.UTF_8)
+      "$key=$value"
     }
   }
 
-  // Will be necessary to fetch detailed information for dataset
-  // fun getDatasetApiLink(datasetId: String): URL = URL("$baseURL/api/models/$datasetId")
-  // may be needed for dataset viewer button:
-  // fun getDatasetViewerLink(datasetName: String): URL = URL("$baseURL/datasets/$datasetName/viewer")
+  private fun createExpandParametersString(expandParameters: List<String>): String {
+    return expandParameters.joinToString("&") {
+      val key = URLEncoder.encode("expand[]", StandardCharsets.UTF_8)
+      val value = URLEncoder.encode(it, StandardCharsets.UTF_8)
+      "$key=$value"
+    }
+  }
+  fun getModelSearchQuery(
+    query: String,
+    tags: String? = null,
+    sortKey: HuggingFaceModelSortKey = HuggingFaceModelSortKey.DOWNLOADS,
+    limit: Int = 20
+  ): URL {
+    val commonParameters = mapOf(
+      "search" to query,
+      "sort" to sortKey.value,
+      "limit" to limit.toString(),
+      "direction" to "-1"
+    )
+    val expandParameters = modelsExpandParameters
+
+    val encodedCommonParameters = createCommonParametersString(commonParameters)
+    val encodedExpandParameters = createExpandParametersString(expandParameters)
+
+    val filterParameter = if (tags.isNullOrBlank()) "" else "&filter=${URLEncoder.encode(tags, StandardCharsets.UTF_8)}"
+    val allParameters = "$encodedCommonParameters&$encodedExpandParameters$filterParameter"
+
+    return URL("$baseURL/api/models?$allParameters")
+  }
 
   fun fetchApiDataUrl(
     entityKind: HuggingFaceEntityKind,
     limit: Int = HuggingFaceConstants.HF_API_FETCH_PAGE_SIZE,
     sort: String = HuggingFaceConstants.API_FETCH_SORT_KEY
   ): URL {
-    val expand = if (entityKind == HuggingFaceEntityKind.MODEL) {
-      models_expand_parameters
-    } else {
-      datasets_expand_parameters
-    }
-
-    val parameters = mapOf(
+    val commonParameters = mapOf(
       "limit" to limit.toString(),
       "sort" to sort,
-      "direction" to "-1",
-      "expand[]" to expand
+      "direction" to "-1"
     )
 
-    val query = parameters.map { (key, value) ->
-      when(value) {
-        is List<*> -> value.joinToString("&") { "$key=$it" }
-        else -> "$key=$value"
-      }
-    }.joinToString("&")
+    val expandParameters = when(entityKind) {
+      HuggingFaceEntityKind.MODEL -> modelsExpandParameters
+      HuggingFaceEntityKind.DATASET -> datasetsExpandParameters
+    }
 
-    val url = URL("$baseURL/api/${entityKind.urlFragment}?$query")
-    return url
+    val encodedCommonParameters = createCommonParametersString(commonParameters)
+    val encodedExpandParameters = createExpandParametersString(expandParameters)
+
+    val allParameters = "$encodedCommonParameters&$encodedExpandParameters"
+
+    return URL("$baseURL/api/${entityKind.urlFragment}?$allParameters")
   }
 
-  //fun makeAbsoluteImageLink(modelName: String, relativeImagePath: String): URL =
-  //  URL("$baseURL/$modelName/resolve/main/$relativeImagePath")
+  fun makeAbsoluteFileLink(entityId: String, relativeFilePath: String): URL =
+    URL("$baseURL/$entityId/blob/main/$relativeFilePath")
 }

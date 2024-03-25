@@ -28,10 +28,14 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.api.JavaVersion;
@@ -50,6 +54,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -93,7 +98,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       final AnnotationProcessingData apData = getMergedAnnotationProcessingData(apModel);
       DataNode<AnnotationProcessingData> dataNode = ideModule.createChild(AnnotationProcessingData.KEY, apData);
       populateAnnotationProcessingOutput(dataNode, apModel);
-    } else {
+    }
+    else {
       Collection<DataNode<GradleSourceSetData>> all = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY);
       for (DataNode<GradleSourceSetData> node : all) {
         final AnnotationProcessingData apData = getAnnotationProcessingData(apModel, node.getData().getModuleName());
@@ -136,7 +142,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     final List<String> apArguments = new ArrayList<>();
     final AnnotationProcessingConfig mainConfig = apModel.bySourceSetName("main");
     if (mainConfig != null) {
-       apArguments.addAll(mainConfig.getAnnotationProcessorArguments());
+      apArguments.addAll(mainConfig.getAnnotationProcessorArguments());
     }
 
     return AnnotationProcessingData.create(mergedAnnotationProcessorPath, apArguments);
@@ -148,7 +154,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     AnnotationProcessingConfig config = apModel.bySourceSetName(sourceSetName);
     if (config == null) {
       return null;
-    } else {
+    }
+    else {
       return AnnotationProcessingData.create(config.getAnnotationProcessorPath(),
                                              config.getAnnotationProcessorArguments());
     }
@@ -188,7 +195,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
 
     var isRunAsTest = Boolean.parseBoolean(parameters.get(IS_RUN_AS_TEST_KEY));
     var isBuiltInTestEventsUsed = Boolean.parseBoolean(parameters.get(IS_BUILT_IN_TEST_EVENTS_USED_KEY));
-    var jvmParametersSetup = parameters.get(GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY);
+    var jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
     if (isRunAsTest) {
       var initScript = isBuiltInTestEventsUsed
                        ? GradleInitScriptUtil.loadFileComparisonTestLoggerInitScript()
@@ -386,7 +393,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     final Collection<? extends ExternalSourceSet> values = externalProject.getSourceSets().values();
     if (values.isEmpty()) {
       return false;
-    } else {
+    }
+    else {
       return ContainerUtil.and(values, it -> it.isPreview());
     }
   }
@@ -424,8 +432,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   private void populateProjectSdkModel(@NotNull IdeaProject ideaProject, @NotNull DataNode<? extends ProjectData> projectNode) {
-    String jdkName = ideaProject.getJdkName();
-    String sdkName = resolveSdkName(jdkName);
+    Sdk sdk = lookupProjectSdk(ideaProject);
+    String sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
     ProjectSdkData projectSdkData = new ProjectSdkData(sdkName);
     projectNode.createChild(ProjectSdkData.KEY, projectSdkData);
   }
@@ -433,13 +441,8 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   private void populateModuleSdkModel(@NotNull IdeaModule ideaModule, @NotNull DataNode<? extends ModuleData> moduleNode,
                                       @Nullable ExternalSourceSet sourceSet) {
     try {
-      String jdkName = ideaModule.getJdkName();
-      String sdkName;
-      if (jdkName != null || sourceSet == null || sourceSet.getJdkInstallationPath() == null) {
-        sdkName = resolveSdkName(jdkName);
-      } else {
-        sdkName = lookupSdkByPath(sourceSet.getJdkInstallationPath());
-      }
+      Sdk sdk = lookupModuleSdk(ideaModule, sourceSet);
+      String sdkName = ObjectUtils.doIfNotNull(sdk, it -> it.getName());
       ModuleSdkData moduleSdkData = new ModuleSdkData(sdkName);
       moduleNode.createChild(ModuleSdkData.KEY, moduleSdkData);
     }
@@ -448,63 +451,81 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     }
   }
 
-  private @Nullable String resolveSdkName(@Nullable String sdkName) {
+  private @Nullable Sdk lookupProjectSdk(@NotNull IdeaProject ideaProject) {
+    String sdkName = ideaProject.getJdkName();
+    if (sdkName != null) {
+      return resolveSdkByName(sdkName);
+    }
+    return null;
+  }
+
+  private @Nullable Sdk lookupModuleSdk(@NotNull IdeaModule ideaModule, @Nullable ExternalSourceSet sourceSet) {
+    String sdkName = ideaModule.getJdkName();
+    if (sdkName != null) {
+      return resolveSdkByName(sdkName);
+    }
+    File javaToolchainHome = ObjectUtils.doIfNotNull(sourceSet, it -> it.getJavaToolchainHome());
+    if (javaToolchainHome != null) {
+      return lookupJdkByPath(NioPathUtil.toCanonicalPath(javaToolchainHome.toPath()));
+    }
+    return null;
+  }
+
+  private @Nullable Sdk resolveSdkByName(@NotNull String sdkName) {
     var gradleJvm = lookupGradleJvm(sdkName);
     if (gradleJvm != null) {
       return gradleJvm;
     }
-    return lookupSdk(sdkName);
+    return lookupSdkByName(sdkName);
   }
 
-  private @Nullable String lookupGradleJvm(@Nullable String sdkName) {
-    var version = com.intellij.util.lang.JavaVersion.tryParse(sdkName);
-    if (version != null) {
-      var gradleJvm = getGradleJvm();
-      if (gradleJvm != null) {
-        var table = ProjectJdkTable.getInstance();
-        var sdk = ReadAction.compute(() -> table.findJdk(gradleJvm));
-        if (sdk != null) {
-          var sdkVersion = com.intellij.util.lang.JavaVersion.tryParse(sdk.getVersionString());
-          if (sdkVersion != null && sdkVersion.feature == version.feature) {
-            return sdk.getName();
-          }
-        }
-      }
+  private @Nullable Sdk lookupGradleJvm(@NotNull String sdkName) {
+    var expectedSdkVersion = com.intellij.util.lang.JavaVersion.tryParse(sdkName);
+    if (expectedSdkVersion == null) {
+      return null;
     }
-    return null;
-  }
-
-  private static @Nullable String lookupSdk(@Nullable String sdkName) {
-    if (sdkName != null) {
-      var sdk = SdkLookupUtil.lookupSdk(builder -> builder
-        .withSdkName(sdkName)
-        .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
-        .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
-      );
-      return sdk == null ? null : sdk.getName();
+    var projectSettings = getProjectSettings();
+    if (projectSettings == null) {
+      return null;
     }
-    return null;
+    var gradleJvm = projectSettings.getGradleJvm();
+    if (gradleJvm == null) {
+      return null;
+    }
+    var sdk = ReadAction.compute(() -> findSdkInSdkTable(gradleJvm));
+    if (sdk == null) {
+      return null;
+    }
+    var actualSdkVersion = com.intellij.util.lang.JavaVersion.tryParse(sdk.getVersionString());
+    if (actualSdkVersion == null) {
+      return null;
+    }
+    if (actualSdkVersion.feature != expectedSdkVersion.feature) {
+      return null;
+    }
+    return sdk;
   }
 
-  private static @NotNull String lookupSdkByPath(@NotNull String jdkInstallationPath) {
-    String sdkName = ExternalSystemJdkProvider.getInstance().getJavaSdkType().suggestSdkName(null, jdkInstallationPath);
-    ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-    Sdk sdk = ReadAction.compute(() -> ContainerUtil.find(jdkTable.getAllJdks(),
-                                                          candidate -> jdkInstallationPath.equals(candidate.getHomePath()) ||
-                                                                       sdkName.equals(candidate.getName())));
+  private static @Nullable Sdk lookupSdkByName(@NotNull String sdkName) {
+    return SdkLookupUtil.lookupSdk(builder -> builder
+      .withSdkName(sdkName)
+      .withSdkType(ExternalSystemJdkUtil.getJavaSdkType())
+      .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
+    );
+  }
+
+  private static @NotNull Sdk lookupJdkByPath(@NotNull String sdkHome) {
+    var sdkType = ExternalSystemJdkProvider.getInstance().getJavaSdkType();
+    var sdkName = sdkType.suggestSdkName(null, sdkHome);
+    var sdk = ReadAction.compute(() -> findSdkInSdkTable(sdkName, sdkHome));
     if (sdk != null) {
-      return sdk.getName();
+      return sdk;
     }
-
-    final Sdk effectiveSdk = ExternalSystemJdkProvider.getInstance().createJdk(sdkName, jdkInstallationPath);
-    ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(effectiveSdk));
-    return effectiveSdk.getName();
-  }
-
-
-  private @Nullable String getGradleJvm() {
-    var settings = getProjectSettings();
-    return settings == null ? null : settings.getGradleJvm();
+    var effectiveSdk = ExternalSystemJdkProvider.getInstance().createJdk(sdkName, sdkHome);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      SdkConfigurationUtil.addSdk(effectiveSdk);
+    });
+    return effectiveSdk;
   }
 
   private @Nullable GradleProjectSettings getProjectSettings() {
@@ -517,4 +538,20 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
     return null;
   }
 
+  @RequiresReadLock
+  private static @Nullable Sdk findSdkInSdkTable(@NotNull String sdkName) {
+    return ProjectJdkTable.getInstance().findJdk(sdkName);
+  }
+
+  @RequiresReadLock
+  private static @Nullable Sdk findSdkInSdkTable(@NotNull String sdkName, @NotNull String sdkHome) {
+    var sdk = findSdkInSdkTable(sdkName);
+    if (sdk == null) {
+      return null;
+    }
+    if (!FileUtil.pathsEqual(sdkHome, sdk.getHomePath())) {
+      return null;
+    }
+    return sdk;
+  }
 }

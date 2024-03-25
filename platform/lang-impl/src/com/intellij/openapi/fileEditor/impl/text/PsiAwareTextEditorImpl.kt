@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
@@ -13,12 +13,10 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.Deferred
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.util.concurrent.CancellationException
@@ -28,39 +26,32 @@ private val LOG = logger<PsiAwareTextEditorImpl>()
 open class PsiAwareTextEditorImpl : TextEditorImpl {
   private var backgroundHighlighter: TextEditorBackgroundHighlighter? = null
 
-  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(project = project,
-                                                                                         file = file,
-                                                                                         provider = provider,
-                                                                                         editor = createTextEditor(project, file))
+  // for backward-compatibility only
+  constructor(project: Project, file: VirtualFile, provider: TextEditorProvider) : super(
+    project = project,
+    file = file,
+    componentAndLoader = createPsiAwareTextEditorComponent(
+      file = file,
+      editorAndLoader = createEditorImpl(project, file, createAsyncEditorLoader(provider, project, file)),
+    ),
+  )
 
-  protected constructor(project: Project,
-                        file: VirtualFile,
-                        provider: TextEditorProvider,
-                        editor: EditorImpl) : super(project = project, file = file, provider = provider, editor = editor)
+  internal constructor(project: Project, file: VirtualFile, component: TextEditorComponent, asyncLoader: AsyncEditorLoader) : super(
+    project = project,
+    file = file,
+    component = component,
+    asyncLoader = asyncLoader,
+    startLoading = false,
+  )
 
-  internal constructor(project: Project,
-                       file: VirtualFile,
-                       provider: TextEditorProvider,
-                       editor: EditorImpl,
-                       task: Deferred<Unit>) : super(project = project, file = file, editor = editor, provider = provider, asyncLoader = createAsyncEditorLoader(provider, project, editor, file, task))
-
-  override fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {
-    val component = PsiAwareTextEditorComponent(project = project, file = file, textEditor = this, editor = editor)
-
-    component.addComponentListener(object: ComponentAdapter() {
-      override fun componentShown(e: ComponentEvent?) {
-        editor.component.isVisible = true
-      }
-      override fun componentHidden(e: ComponentEvent?) {
-        editor.component.isVisible = false
-      }
-    })
-
-    return component
-  }
+  protected constructor(project: Project, file: VirtualFile, provider: TextEditorProvider, editor: EditorImpl) : super(
+    project = project,
+    file = file,
+    componentAndLoader = createPsiAwareTextEditorComponent(file, editor to createAsyncEditorLoader(provider, project, file)),
+  )
 
   override fun getBackgroundHighlighter(): BackgroundEditorHighlighter? {
-    if (!isEditorLoaded(editor)) {
+    if (!asyncLoader.isLoaded()) {
       return null
     }
 
@@ -73,16 +64,29 @@ open class PsiAwareTextEditorImpl : TextEditorImpl {
   }
 }
 
-private class PsiAwareTextEditorComponent(private val project: Project,
-                                          file: VirtualFile,
-                                          textEditor: TextEditorImpl,
-                                          editor: EditorImpl) : TextEditorComponent(project = project,
-                                                                                    file = file,
-                                                                                    textEditor = textEditor,
-                                                                                    editorImpl = editor) {
+internal fun createPsiAwareTextEditorComponent(
+  file: VirtualFile,
+  editorAndLoader: Pair<EditorImpl, AsyncEditorLoader>,
+): Pair<TextEditorComponent, AsyncEditorLoader> {
+  val editor = editorAndLoader.first
+  val component = PsiAwareTextEditorComponent(file = file, editor = editor)
+  component.addComponentListener(object : ComponentAdapter() {
+    override fun componentShown(e: ComponentEvent?) {
+      editor.component.isVisible = true
+    }
+
+    override fun componentHidden(e: ComponentEvent?) {
+      editor.component.isVisible = false
+    }
+  })
+  return component to editorAndLoader.second
+}
+
+private class PsiAwareTextEditorComponent(file: VirtualFile, editor: EditorImpl) : TextEditorComponent(file = file, editorImpl = editor) {
   override fun dispose() {
+    val project = editor.project
     super.dispose()
-    project.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
+    project?.serviceIfCreated<CodeFoldingManager>()?.releaseFoldings(editor)
   }
 
   override fun createBackgroundDataProvider(): DataProvider? {
@@ -90,7 +94,8 @@ private class PsiAwareTextEditorComponent(private val project: Project,
     return CompositeDataProvider.compose(
       { dataId ->
         if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.`is`(dataId)) {
-          (LookupManager.getInstance(project).activeLookup as LookupImpl?)?.takeIf { it.isVisible }?.bounds
+          val project = editor.project
+          project?.let { (LookupManager.getInstance(project).activeLookup as LookupImpl?)?.takeIf { it.isVisible }?.bounds }
         }
         else {
           null

@@ -2,24 +2,19 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-internal class AddWhenRemainingBranchesIntention
-    : AbstractKotlinModCommandWithContext<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
+internal class AddWhenRemainingBranchesIntention :
+    KotlinApplicableModCommandAction<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
 
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
-    override fun getActionName(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context): String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 
@@ -31,11 +26,12 @@ internal class AddWhenRemainingBranchesIntention
         return AddRemainingWhenBranchesUtils.Context(whenMissingCases, enumToStarImport = null)
     }
 
-    override fun apply(
+    override fun invoke(
+        context: ActionContext,
         element: KtWhenExpression,
-        context: AnalysisActionContext<AddRemainingWhenBranchesUtils.Context>,
-        updater: ModPsiUpdater
+        elementContext: AddRemainingWhenBranchesUtils.Context,
+        updater: ModPsiUpdater,
     ) {
-        addRemainingWhenBranches(element, context.analyzeContext)
+        addRemainingWhenBranches(element, elementContext)
     }
 }

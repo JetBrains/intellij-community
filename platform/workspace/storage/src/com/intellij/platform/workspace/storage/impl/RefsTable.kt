@@ -626,21 +626,21 @@ internal sealed class AbstractRefsTable {
     return map?.get(childId)
   }
 
-  fun <Child : WorkspaceEntity> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: IntFunction<Child?>): Child? {
+  fun <Child> getOneToOneChild(connectionId: ConnectionId, parentId: Int, transformer: IntFunction<Child?>): Child? {
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsValue(parentId)) return null
 
     return transformer.apply(bimap.getKey(parentId))
   }
 
-  fun <Parent : WorkspaceEntity> getOneToOneParent(connectionId: ConnectionId, childId: Int, transformer: IntFunction<Parent?>): Parent? {
+  fun <Parent> getOneToOneParent(connectionId: ConnectionId, childId: Int, transformer: IntFunction<Parent?>): Parent? {
     val bimap = oneToOneContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 
     return transformer.apply(bimap.get(childId))
   }
 
-  fun <Parent : WorkspaceEntity> getOneToManyParent(connectionId: ConnectionId, childId: Int, transformer: IntFunction<Parent?>): Parent? {
+  fun <Parent> getOneToManyParent(connectionId: ConnectionId, childId: Int, transformer: IntFunction<Parent?>): Parent? {
     val bimap = oneToManyContainer[connectionId] ?: return null
     if (!bimap.containsKey(childId)) return null
 

@@ -34,7 +34,6 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Dimension
-import java.awt.event.ActionEvent
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -131,23 +130,22 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
 
   @RequiresEdt
   override fun getFilters(): VcsLogFilterCollection {
-    return VcsLogFilterObject.collection(branchFilterModel.branchFilter, branchFilterModel.revisionFilter,
-                                         branchFilterModel.rangeFilter,
-                                         textFilterModel.filter1, textFilterModel.filter2,
-                                         structureFilterModel.filter1, structureFilterModel.filter2,
-                                         dateFilterModel.getFilter(), userFilterModel.getFilter())
+    val filters = buildList {
+      addAll(branchFilterModel.filtersList)
+      addAll(textFilterModel.filtersList)
+      addAll(structureFilterModel.filtersList)
+      add(dateFilterModel.getFilter())
+      add(userFilterModel.getFilter())
+    }.filterNotNull()
+    return VcsLogFilterObject.collection(*filters.toTypedArray())
   }
 
   @RequiresEdt
   override fun setFilters(collection: VcsLogFilterCollection) {
-    branchFilterModel.setFilter(BranchFilters(collection.get(VcsLogFilterCollection.BRANCH_FILTER),
-                                              collection.get(VcsLogFilterCollection.REVISION_FILTER),
-                                              collection.get(VcsLogFilterCollection.RANGE_FILTER)))
-    structureFilterModel.setFilter(FilterPair(collection.get(VcsLogFilterCollection.STRUCTURE_FILTER),
-                                              collection.get(VcsLogFilterCollection.ROOT_FILTER)))
+    branchFilterModel.setFilter(collection)
+    structureFilterModel.setFilter(collection)
+    textFilterModel.setFilter(collection)
     dateFilterModel.setFilter(collection.get(VcsLogFilterCollection.DATE_FILTER))
-    textFilterModel.setFilter(FilterPair(collection.get(VcsLogFilterCollection.TEXT_FILTER),
-                                         collection.get(VcsLogFilterCollection.HASH_FILTER)))
     userFilterModel.setFilter(collection.get(VcsLogFilterCollection.USER_FILTER))
   }
 
@@ -198,8 +196,8 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
     init {
       text = textFilterModel.text
       textEditor.emptyText.setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"))
-      TextComponentEmptyText.setupPlaceholderVisibility(textEditor);
-      textEditor.addActionListener { e: ActionEvent? -> applyFilter(true) }
+      TextComponentEmptyText.setupPlaceholderVisibility(textEditor)
+      textEditor.addActionListener { applyFilter(true) }
       addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
           if (isFilterOnTheFlyEnabled) applyFilter(false)
@@ -276,7 +274,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       }
 
       toolbar.setCustomButtonLook(FieldInplaceActionButtonLook())
-      toolbar.setReservePlaceAutoPopupIcon(false)
+      toolbar.isReservePlaceAutoPopupIcon = false
       toolbar.targetComponent = editor
       toolbar.updateActionsImmediately()
       return toolbar

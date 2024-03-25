@@ -430,7 +430,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           }
           fireModificationCountChanged();
           try {
-            Heartbeat heartbeat = new Heartbeat(result.host, result.port);
+            Heartbeat heartbeat = new Heartbeat(result.host, result.port, getClientSocketFactory());
             heartbeat.startBeat();
             myHeartbeatRef.set(heartbeat);
           }
@@ -585,8 +585,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     private boolean live = true;
     private ScheduledFuture<?> myFuture = null;
 
-    Heartbeat(String host, int port) throws RemoteException {
-      myRegistry = LocateRegistry.getRegistry(host, port);
+    Heartbeat(String host, int port, RMIClientSocketFactory clientSocketFactory) throws RemoteException {
+      myRegistry = LocateRegistry.getRegistry(host, port, clientSocketFactory);
     }
 
     void stopBeat() {

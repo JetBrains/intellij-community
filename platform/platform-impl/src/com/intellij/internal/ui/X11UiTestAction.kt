@@ -5,20 +5,26 @@ package com.intellij.internal.ui
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.X11UiUtil
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.Alarm
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
+import kotlinx.coroutines.*
 import java.awt.Frame
 import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.reflect.KProperty0
+import kotlin.time.Duration.Companion.milliseconds
 
 internal class X11UiTestAction : DumbAwareAction() {
 
@@ -33,30 +39,31 @@ internal class X11UiTestAction : DumbAwareAction() {
   }
 }
 
-private const val UPDATE_INTERVAL = 500
+private val UPDATE_INTERVAL = 500.milliseconds
 
 private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
-  private val alarm = Alarm(disposable)
-  private lateinit var update: Runnable
   private lateinit var lbIsInFullScreenMode: JLabel
   private lateinit var lbIsMaximizedVert: JLabel
   private lateinit var lbIsMaximizedHorz: JLabel
   private lateinit var lbIdeFrameInFullScreen: JLabel
   private lateinit var lbFrameExtendedState: JLabel
+  private var scope = GlobalScope.namedChildScope("X11UiTestAction")
 
   init {
     title = dialogTitle
+    disposable.whenDisposed { scope.cancel() }
     init()
   }
 
   override fun createCenterPanel(): JComponent {
-    update = Runnable {
-      timerUpdate()
-      alarm.addRequest(update, UPDATE_INTERVAL)
+    scope.launch(Dispatchers.EDT) {
+      while (isActive) {
+        delay(UPDATE_INTERVAL)
+        timerUpdate()
+      }
     }
-    alarm.addRequest(update, UPDATE_INTERVAL)
 
     return panel {
       group("X11UiUtil Values") {
@@ -136,11 +143,23 @@ private class FullScreenTestDialog(val project: Project?, dialogTitle: String) :
           label(System.getenv("XDG_CURRENT_DESKTOP") ?: "")
             .comment("Used XDG_CURRENT_DESKTOP env variable")
         }
+        row("Theme:") {
+          val label = label("").component
+          scope.launch {
+            val theme = X11UiUtil.getTheme()
+            withContext(Dispatchers.EDT) {
+              label.text = theme
+            }
+          }
+        }
       }
     }
   }
 
+  @RequiresEdt
   private fun timerUpdate() {
+    ThreadingAssertions.assertEventDispatchThread()
+
     val frame = getFrame()
     lbIsInFullScreenMode.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isInFullScreenMode(frame).toString()
     lbIsMaximizedVert.text = if (frame == null) "IdeFrame not found" else X11UiUtil.isMaximizedVert(frame).toString()

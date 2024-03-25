@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade.bek;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
@@ -12,14 +13,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public final class BekSorter {
+  private final static Logger LOG = Logger.getInstance(BekSorter.class);
+
   @NotNull
   public static BekIntMap createBekMap(@NotNull LinearGraph permanentGraph,
                                        @NotNull GraphLayoutImpl graphLayout,
                                        @NotNull TimestampGetter timestampGetter) {
-    BekSorter bekSorter = new BekSorter(permanentGraph, graphLayout, timestampGetter);
+    BekBranchCreator bekBranchCreator = new BekBranchCreator(permanentGraph, graphLayout);
+    Pair<List<BekBranch>, BekEdgeRestrictions> branches = bekBranchCreator.getResult();
 
-    List<Integer> result = bekSorter.getResult();
-    assert result.size() == permanentGraph.nodesCount();
+    BekBranchMerger bekBranchMerger = new BekBranchMerger(branches.first, branches.second, timestampGetter);
+    List<Integer> result = bekBranchMerger.getResult();
+
+    LOG.assertTrue(result.size() == permanentGraph.nodesCount());
     return createBekIntMap(result);
   }
 
@@ -59,25 +65,5 @@ public final class BekSorter {
         return compressedBekMap.get(bekIndex);
       }
     };
-  }
-
-  @NotNull private final LinearGraph myPermanentGraph;
-
-  @NotNull private final GraphLayoutImpl myGraphLayout;
-
-  @NotNull private final TimestampGetter myTimestampGetter;
-
-  private BekSorter(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout, @NotNull TimestampGetter timestampGetter) {
-    myPermanentGraph = permanentGraph;
-    myGraphLayout = graphLayout;
-    myTimestampGetter = timestampGetter;
-  }
-
-  public List<Integer> getResult() {
-    BekBranchCreator bekBranchCreator = new BekBranchCreator(myPermanentGraph, myGraphLayout);
-    Pair<List<BekBranch>, BekEdgeRestrictions> branches = bekBranchCreator.getResult();
-
-    BekBranchMerger bekBranchMerger = new BekBranchMerger(branches.first, branches.second, myTimestampGetter);
-    return bekBranchMerger.getResult();
   }
 }

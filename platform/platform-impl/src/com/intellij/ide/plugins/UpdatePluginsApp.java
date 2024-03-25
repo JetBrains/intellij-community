@@ -1,22 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.components.impl.stores.ComponentStorageUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
-import com.intellij.openapi.updateSettings.impl.UpdateOptions;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,6 +26,7 @@ import java.util.Set;
  * @see com.intellij.idea.Main#installPluginUpdates
  */
 final class UpdatePluginsApp implements ApplicationStarter {
+  private static final Logger LOG = Logger.getInstance(UpdatePluginsApp.class);
   private static final String OLD_CONFIG_DIR_PROPERTY = "idea.plugin.migration.config.dir";
 
   @Override
@@ -46,14 +41,14 @@ final class UpdatePluginsApp implements ApplicationStarter {
 
     var oldConfig = System.getProperty(OLD_CONFIG_DIR_PROPERTY);
     if (oldConfig != null) {
-      RepositoryHelper.updatePluginHostsFromConfigDir(Path.of(oldConfig), s -> log(s));
+      RepositoryHelper.updatePluginHostsFromConfigDir(Path.of(oldConfig), LOG);
     }
   }
 
   @Override
   public void main(@NotNull List<String> args) {
     if (Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
-      log("Updates applied.");
+      LOG.info("updates applied");
       System.exit(0);
     }
 
@@ -61,7 +56,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
       .getPluginUpdates()
       .getAllEnabled();
     if (availableUpdates.isEmpty()) {
-      log("All plugins up to date.");
+      LOG.info("all plugins up to date");
       System.exit(0);
       return;
     }
@@ -77,11 +72,11 @@ final class UpdatePluginsApp implements ApplicationStarter {
       pluginsToUpdate = availableUpdates;
     }
 
-    log("Plugins to update:");
-    pluginsToUpdate.forEach(d -> log("\t" + d.getPluginName()));
+    LOG.info("Plugins to update: " + pluginsToUpdate);
 
     Ref<Boolean> installed = Ref.create();
     PluginDownloader.runSynchronouslyInBackground(() -> {
+      //noinspection UsagesOfObsoleteApi
       installed.set(UpdateInstaller.installPluginUpdates(pluginsToUpdate, new EmptyProgressIndicator()));
     });
 
@@ -89,13 +84,8 @@ final class UpdatePluginsApp implements ApplicationStarter {
       System.exit(0);
     }
     else {
-      log("Update failed");
+      LOG.warn("Update failed");
       System.exit(1);
     }
-  }
-
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void log(String msg) {
-    System.out.println(msg);
   }
 }

@@ -1395,12 +1395,8 @@
                      implementationClass="com.siyeh.ig.logging.ClassWithoutLoggerInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LoggerInitializedWithForeignClass" bundle="messages.InspectionGadgetsBundle"
                      key="logger.initialized.with.foreign.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="LogStatementGuardedByLogCondition" bundle="messages.InspectionGadgetsBundle"
-                     key="log.statement.guarded.by.log.condition.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.LogStatementGuardedByLogConditionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonConstantLogger" shortName="NonStaticFinalLogger" bundle="messages.InspectionGadgetsBundle"
                      key="non.constant.logger.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.logging.issues"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.logging.NonStaticFinalLoggerInspection"/>
@@ -1410,8 +1406,8 @@
                      implementationClass="com.siyeh.ig.logging.PublicMethodWithoutLoggingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringConcatenationArgumentToLogCall" bundle="messages.InspectionGadgetsBundle"
                      key="string.concatenation.argument.to.log.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection" cleanupTool="true"/>
+                     groupKey="group.names.logging.issues" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection"/>
 
     <!--group.names.code.maturity.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="UseOfSystemOutOrSystemErr" shortName="SystemOutErr" bundle="messages.InspectionGadgetsBundle"
@@ -1887,10 +1883,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="string.buffer.must.have.initial.capacity.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringBufferMustHaveInitialCapacityInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StringBufferToStringInConcatenation" bundle="messages.InspectionGadgetsBundle"
-                     key="string.buffer.to.string.in.concatenation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.StringBufferToStringInConcatenationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="StringConcatenationInLoop" alternativeId="StringContatenationInLoop" shortName="StringConcatenationInLoops"
                      bundle="messages.InspectionGadgetsBundle" key="string.concatenation.in.loops.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"

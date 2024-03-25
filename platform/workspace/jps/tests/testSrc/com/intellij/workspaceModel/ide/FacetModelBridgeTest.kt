@@ -13,6 +13,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
 import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -37,6 +38,8 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+
+internal val MOCK_FACET_TYPE_ID = FacetEntityTypeId("MockFacetId")
 
 class FacetModelBridgeTest {
   companion object {
@@ -101,7 +104,7 @@ class FacetModelBridgeTest {
 
     val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
-    builder addEntity FacetEntity("MyFacet", moduleEntity.symbolicId, "MockFacetId", source) {
+    builder addEntity FacetEntity("MyFacet", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, source) {
       configurationXmlTag = """<configuration data="foo" />"""
       module = moduleEntity
     }
@@ -132,7 +135,7 @@ class FacetModelBridgeTest {
 
     val moduleEntity = builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
-    builder addEntity FacetEntity("AnotherMockFacet", moduleEntity.symbolicId, "AnotherMockFacetId", source) {
+    builder addEntity FacetEntity("AnotherMockFacet", moduleEntity.symbolicId, FacetEntityTypeId("AnotherMockFacetId"), source) {
       configurationXmlTag = """
         <AnotherFacetConfigProperties>
           <firstElement>
@@ -200,9 +203,9 @@ class FacetModelBridgeTest {
     runWriteActionAndWait {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val moduleEntity = builder.entities<ModuleEntity>().first()
-        builder addEntity FacetEntity("myName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
+        builder addEntity FacetEntity("myName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
           this.module = moduleEntity
-          underlyingFacet = FacetEntity("anotherName", moduleEntity.symbolicId, "MockFacetId", moduleEntity.entitySource) {
+          underlyingFacet = FacetEntity("anotherName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
             this.module = moduleEntity
           }
         }

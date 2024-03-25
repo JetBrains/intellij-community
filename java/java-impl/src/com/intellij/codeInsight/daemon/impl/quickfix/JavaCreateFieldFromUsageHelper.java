@@ -27,12 +27,14 @@ public final class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHe
                                     Editor editor,
                                     PsiElement context,
                                     boolean createConstantField,
+                                    boolean isScrollToTemplate,
                                     @NotNull PsiSubstitutor substitutor) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
+    builder.setScrollToTemplate(isScrollToTemplate);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
@@ -162,7 +162,7 @@ open class ParentWithNullsMultipleImpl(private val dataSource: ParentWithNullsMu
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(CHILDREN_CONNECTION_ID, this, value)

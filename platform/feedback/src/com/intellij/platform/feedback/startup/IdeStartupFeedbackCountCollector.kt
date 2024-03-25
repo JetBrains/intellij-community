@@ -7,16 +7,15 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog.Companion.COLLECTOR_THIRD_QUESTION_OPTIONS
 import com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog.Companion.FIRST_QUESTION_OPTIONS
 import com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog.Companion.FORTH_QUESTION_OPTIONS_PLUS_NONE
-import com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog.Companion.SECOND_QUESTION_OPTIONS
 
 internal object IdeStartupFeedbackCountCollector : CounterUsagesCollector() {
-  internal val GROUP = EventLogGroup("feedback.in.ide.startup.feedback", 1)
+  internal val GROUP = EventLogGroup("feedback.in.ide.startup.feedback", 2)
 
   private val FEEDBACK_ANSWER_FIRST_QUESTION = GROUP.registerEvent("first.question",
                                                                    EventFields.String("answer", FIRST_QUESTION_OPTIONS))
 
   private val FEEDBACK_ANSWER_SECOND_QUESTION = GROUP.registerEvent("second.question",
-                                                                    EventFields.String("answer", SECOND_QUESTION_OPTIONS))
+                                                                    EventFields.Int("answer"))
 
   private val FEEDBACK_ANSWER_THIRD_QUESTION = GROUP.registerEvent("third.question",
                                                                    EventFields.String("answer", COLLECTOR_THIRD_QUESTION_OPTIONS))
@@ -28,7 +27,7 @@ internal object IdeStartupFeedbackCountCollector : CounterUsagesCollector() {
     FEEDBACK_ANSWER_FIRST_QUESTION.log(value)
   }
 
-  internal fun logFeedbackSecondQuestionAnswer(value: String) {
+  internal fun logFeedbackSecondQuestionAnswer(value: Int) {
     FEEDBACK_ANSWER_SECOND_QUESTION.log(value)
   }
 

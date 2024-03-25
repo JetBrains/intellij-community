@@ -67,8 +67,6 @@ private fun isMarketplacePluginCompatible(homePath: Path, pluginDir: Path, mpBoo
  */
 fun initMarketplace() {
   val distDir = Path.of(PathManager.getHomePath())
-  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
-                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
   val preinstalledPluginDir = distDir.resolve("plugins")
 
   var pluginDir = preinstalledPluginDir
@@ -89,6 +87,8 @@ fun initMarketplace() {
   }
 
   val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
+  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
+                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
   if (Files.exists(marketplaceImpl)) {
     classLoader.classPath.addFiles(listOf(marketplaceImpl))
   }

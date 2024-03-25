@@ -18,10 +18,6 @@ interface Serializer {
   fun getBinding(aClass: Class<*>, type: Type): Binding?
 }
 
-fun interface SerializationFilter {
-  fun accepts(accessor: Accessor, bean: Any): Boolean
-}
-
 interface RootBinding : Binding {
   fun serialize(bean: Any, filter: SerializationFilter?): Element?
 
@@ -68,3 +64,14 @@ internal interface MultiNodeBinding : Binding {
 
   fun doDeserializeListToJson(elements: List<Element>): JsonElement
 }
+
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
+@Target(
+  AnnotationTarget.CLASS,
+  AnnotationTarget.TYPEALIAS,
+  AnnotationTarget.FUNCTION,
+  AnnotationTarget.PROPERTY,
+  AnnotationTarget.FIELD,
+  AnnotationTarget.CONSTRUCTOR
+)
+annotation class SettingsInternalApi

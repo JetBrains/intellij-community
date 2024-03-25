@@ -2,6 +2,7 @@
 package com.intellij.platform.experiment.ab.impl.option
 
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
+import com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
 
 
@@ -11,9 +12,9 @@ fun isControlOptionEnabled(): Boolean {
 
 internal class ABExperimentControlOption : ABExperimentOptionBase() {
 
-  override val id: String = "control.option"
+  override val id: ABExperimentOptionId = ABExperimentOptionId("control.option")
 
-  override fun getGroupCountForIde(isPopular: Boolean): Int {
-    return 2
+  override fun getGroupSizeForIde(isPopular: Boolean): ABExperimentOptionGroupSize {
+    return ABExperimentOptionGroupSize.MEDIUM
   }
 }

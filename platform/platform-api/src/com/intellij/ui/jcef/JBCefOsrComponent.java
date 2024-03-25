@@ -95,7 +95,7 @@ class JBCefOsrComponent extends JPanel {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     myWheelEventsAccumulator = new MouseWheelEventsAccumulator(myDisposable);
 
-    if (!JBCefBrowserBase.isCefBrowserCreated(myBrowser)) {
+    if (!JBCefBrowserBase.isCefBrowserCreationStarted(myBrowser)) {
       myBrowser.createImmediately();
     }
   }

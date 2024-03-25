@@ -10,9 +10,21 @@ fun Finder.editorTabs(@Language("xpath") xpath: String? = null) =
 
 class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
-  private val fixture by lazy { driver.cast(component, EditorTabsRef::class) }
+  private val editorTabsComponent by lazy { driver.cast(component, EditorTabsRef::class) }
 
-  fun getTabs() = fixture.getTabs().map { Tab(it) }
+  fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
+
+  fun closeTab(text: String = "") {
+    x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]//div[@myicon='closeSmall.svg']")
+      .click()
+  }
+
+  fun closeAllTabs() {
+    xx("//div[@class='EditorTabLabel']//div[@myicon='closeSmall.svg']")
+      .list().forEach { it.click() }
+  }
+
+  fun isTabOpened(text: String) = getTabs().any { it.text == text }
 
   inner class Tab(private val data: TabInfoRef) {
     val text: String

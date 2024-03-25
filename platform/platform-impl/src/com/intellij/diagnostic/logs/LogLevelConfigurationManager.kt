@@ -57,9 +57,8 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
         DebugLogLevel.ALL -> Level.ALL
       }
 
-      val trimmed = logCategory.category.trim('#')
+      val trimmed = logCategory.category.trimStart('#')
       // IDEA-297747 Convention for categories naming is not clear, so set logging for both with '#' and without '#'
-      addLogger(logCategory.category, loggerLevel, level)
       addLogger("#$trimmed", loggerLevel, level)
       addLogger(trimmed, loggerLevel, level)
       LogCategory(trimmed, level)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.components.SettingsCategory;
@@ -12,7 +12,7 @@ import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServ
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract public class TestRunnerService
+public abstract class TestRunnerService
   extends
   PyDefaultProjectAwareService<TestRunnerService.ServiceState, TestRunnerService, TestRunnerService.AppService, TestRunnerService.ModuleService> {
 
@@ -25,8 +25,7 @@ abstract public class TestRunnerService
   }
 
 
-  @NotNull
-  public final PyAbstractTestFactory<?> getSelectedFactory() {
+  public final @NotNull PyAbstractTestFactory<?> getSelectedFactory() {
     return PyTestsSharedKt.getFactoryByIdOrDefault(getProjectConfiguration());
   }
 
@@ -34,13 +33,11 @@ abstract public class TestRunnerService
     setProjectConfiguration(factory.getId());
   }
 
-  @NotNull
-  public static TestRunnerService getInstance(@Nullable Module module) {
+  public static @NotNull TestRunnerService getInstance(@Nullable Module module) {
     return SERVICE_CLASSES.getService(module);
   }
 
-  @NotNull
-  public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+  public static @NotNull PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
     return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES, DETECTOR);
   }
 
@@ -54,14 +51,12 @@ abstract public class TestRunnerService
   /**
    * Use {@link #getSelectedFactory()} instead
    */
-  @NotNull
-  public final String getProjectConfiguration() {
+  public final @NotNull String getProjectConfiguration() {
     return getState().PROJECT_TEST_RUNNER;
   }
 
   static final class ServiceState {
-    @NotNull
-    public String PROJECT_TEST_RUNNER;
+    public @NotNull String PROJECT_TEST_RUNNER;
 
     ServiceState(@NotNull String projectTestRunner) {
       assert !projectTestRunner.isEmpty();

@@ -10,6 +10,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
 import java.util.concurrent.ConcurrentHashMap
 
+@Suppress("LightServiceMigrationCode")
 class ShortNamesCacheService(private val project: Project) {
 
     private val tracker = FileBaseIndexModificationTracker(KotlinShortClassNameFileIndex.NAME, project)

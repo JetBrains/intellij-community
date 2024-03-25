@@ -1,4 +1,5 @@
 // IGNORE_K2
+// ConvertToRawStringTemplateIntention is not applied in K2 basic mode
 public class Test {
     String s1 = "asdf\n" +
                "asdfasdf";

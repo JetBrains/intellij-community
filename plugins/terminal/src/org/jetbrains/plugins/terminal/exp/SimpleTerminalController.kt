@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
@@ -65,12 +64,8 @@ class SimpleTerminalController(
 
   private fun updateEditorContent() {
     val content: TerminalContent = computeTerminalContent()
-    // Can not use invokeAndWait here because deadlock may happen. TerminalTextBuffer is locked at this place,
-    // and EDT can be frozen now trying to acquire this lock
-    invokeLater(ModalityState.any()) {
-      if (!editor.isDisposed) {
-        updateEditor(content)
-      }
+    invokeLater(editor.getDisposed(), ModalityState.any()) {
+      updateEditor(content)
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -52,6 +52,7 @@ public class IntentionsUIImpl extends IntentionsUI {
     hide();
     if (!HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(false)
         && visibleArea.contains(xy)
+        && !editor.isViewer()
         && editor.getSettings().isShowIntentionBulb()
         && editor.getCaretModel().getCaretCount() == 1
         && cachedIntentions.showBulb()

@@ -15,7 +15,7 @@ interface TSuite {
 
     val models: List<TModel>
     val annotations: List<TAnnotation>
-    val imports: List<String>
+    val imports: Set<String>
 
     val indexingMode: List<IndexingMode>
 }
@@ -23,7 +23,7 @@ interface TSuite {
 interface MutableTSuite : TSuite {
     override val models: MutableList<TModel>
     override val annotations: MutableList<TAnnotation>
-    override val imports: MutableList<String>
+    override val imports: MutableSet<String>
 }
 
 class TSuiteImpl(
@@ -34,7 +34,7 @@ class TSuiteImpl(
 ) : MutableTSuite {
     override val models: MutableList<TModel> = mutableListOf<TModel>()
     override val annotations: MutableList<TAnnotation> = mutableListOf<TAnnotation>()
-    override val imports: MutableList<String> = mutableListOf<String>()
+    override val imports: MutableSet<String> = mutableSetOf<String>()
 
     init {
       check(generatedClassName.indexOf('.') > 0) {

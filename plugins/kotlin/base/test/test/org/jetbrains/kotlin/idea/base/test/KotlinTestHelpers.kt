@@ -30,7 +30,9 @@ object KotlinTestHelpers {
         assertEqualsToPath(expectedPath, actual, { it }) { "Expected file content differs from the actual result" }
     }
 
-    fun assertEqualsToPath(expectedPath: Path, actual: String, sanitizer: (String) -> String, message: () -> String) {
+    data class DoesEqual(val yes: Boolean, val processedExpected: String, val processedActual: String)
+
+    fun doesEqualsToPath(expectedPath: Path, actual: String, sanitizer: (String) -> String): DoesEqual {
         if (!expectedPath.exists()) {
             expectedPath.writeText(actual)
             TestCase.fail("File didn't exist. New file was created (${expectedPath.absolutePathString()}).")
@@ -46,8 +48,18 @@ object KotlinTestHelpers {
 
         val processedExpected = process(expectedPath.readText())
         val processedActual = process(actual)
-        if (processedExpected != processedActual) {
-            throw FileComparisonFailedError(message(), processedExpected, processedActual, expectedPath.absolutePathString())
+        return DoesEqual(processedExpected == processedActual, processedExpected, processedActual)
+    }
+
+    fun assertEqualsToPath(expectedPath: Path, actual: String, sanitizer: (String) -> String, message: () -> String) {
+        val equalsToPath = doesEqualsToPath(expectedPath, actual, sanitizer)
+        if (!equalsToPath.yes) {
+            throw FileComparisonFailedError(
+                message(),
+                equalsToPath.processedExpected,
+                equalsToPath.processedActual,
+                expectedPath.absolutePathString()
+            )
         }
     }
 }

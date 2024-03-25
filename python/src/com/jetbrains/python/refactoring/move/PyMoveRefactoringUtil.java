@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,8 +60,7 @@ public final class PyMoveRefactoringUtil {
    * @param element named PSI element
    * @return element name as described
    */
-  @NotNull
-  public static String getPresentableName(@NotNull PsiNamedElement element) {
+  public static @NotNull String getPresentableName(@NotNull PsiNamedElement element) {
     String name = null;
     if (element instanceof PyQualifiedNameOwner) {
       // Will return null for a local function
@@ -86,15 +85,13 @@ public final class PyMoveRefactoringUtil {
    * @param destination file where original/generated element is to be moved
    * @return anchor element as described
    */
-  @Nullable
-  public static PsiElement findLowestPossibleTopLevelInsertionPosition(@NotNull List<UsageInfo> usages, @NotNull PsiFile destination) {
+  public static @Nullable PsiElement findLowestPossibleTopLevelInsertionPosition(@NotNull List<UsageInfo> usages, @NotNull PsiFile destination) {
     return findFirstTopLevelUsageInFile(usages, destination)
       .map(element -> PyPsiUtils.getParentRightBefore(element, element.getContainingFile()))
       .orElse(null);
   }
 
-  @NotNull
-  private static Optional<PsiElement> findFirstTopLevelUsageInFile(@NotNull List<UsageInfo> usages, @NotNull PsiFile destination) {
+  private static @NotNull Optional<PsiElement> findFirstTopLevelUsageInFile(@NotNull List<UsageInfo> usages, @NotNull PsiFile destination) {
     return usages.stream()
       .map(UsageInfo::getElement)
       .filter(Objects::nonNull)

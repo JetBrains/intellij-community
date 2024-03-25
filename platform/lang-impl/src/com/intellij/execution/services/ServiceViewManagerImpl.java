@@ -82,7 +82,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   private final ServiceModel myModel;
   private final ServiceModelFilter myModelFilter;
   private final Map<String, Collection<ServiceViewContributor<?>>> myGroups = new ConcurrentHashMap<>();
-  private final Set<ServiceViewContributor<?>> myNotInitializedContributors = new HashSet<>();
+  private final Set<ServiceViewContributor<?>> myNotInitializedContributors = ConcurrentHashMap.newKeySet();
   private final List<ServiceViewContentHolder> myContentHolders = new SmartList<>();
   private boolean myActivationActionsRegistered;
   private AutoScrollToSourceHandler myAutoScrollToSourceHandler;

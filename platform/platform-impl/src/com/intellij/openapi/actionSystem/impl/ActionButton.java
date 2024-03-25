@@ -275,7 +275,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean isPopupMenuAction(@NotNull AnActionEvent event) {
     if (!(myAction instanceof ActionGroup)) return false;
-    if (myAction instanceof CustomComponentAction) return false;
     if (!event.getPresentation().isPopupGroup()) return false;
     if (event.getPresentation().isPerformGroup()) return false;
     return true;

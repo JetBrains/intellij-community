@@ -74,6 +74,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -513,6 +514,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
     assertNotNull(file);
     file.refresh(false, true);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     if (policy != null) {
@@ -520,8 +522,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       assertNotNull(directory);
       policy.testDirectoryConfigured(directory);
     }
-
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return file;
   }
@@ -1545,7 +1545,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public VirtualFile createFile(@NotNull String fileName, @NotNull String text) {
     assertInitialized();
     try {
-      return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      VirtualFile createdFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
         VirtualFile file;
         if (myTempDirFixture instanceof LightTempDirTestFixtureImpl) {
           VirtualFile root = LightPlatformTestCase.getSourceRoot();
@@ -1574,6 +1574,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         VfsUtil.saveText(file, text);
         return file;
       });
+
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+      return createdFile;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -1654,6 +1657,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
       if (caresAboutInjection) {
         setupEditorForInjectedLanguage();
       }
@@ -1663,8 +1667,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         policy.testFileConfigured(getFile());
       }
     });
-
-    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     return getFile();
   }
@@ -2042,6 +2044,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void testRainbow(@NotNull String fileName, @NotNull String text, boolean isRainbowOn, boolean withColor) {
+    String RB_PREFIF = "TEMP::RAINBOW_TEMP_";
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
     boolean isRainbowOnInScheme = RainbowHighlighter.isRainbowEnabled(globalScheme, null);
     try {
@@ -2053,6 +2056,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         if (!withColor) {
           return null;
         }
+
+        TextAttributesKey rb_key = highlightInfo.forcedTextAttributesKey;
+        if (rb_key != null) {
+          String name = rb_key.getExternalName();
+          if (name.startsWith(RB_PREFIF)) {
+            // Temp-rainbow key approach (current)
+            int color = 0xff000001 + Integer.parseInt(name.substring(RB_PREFIF.length()));
+            return "color='" + Integer.toHexString(color) + "'";
+          }
+        }
+
+        // Fg-attributes approach (obsolete, but alternative)
         TextAttributes attributes = highlightInfo.getTextAttributes(null, null);
         String color = attributes == null ? "null"
                                           : attributes.getForegroundColor() == null

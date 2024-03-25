@@ -28,7 +28,6 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -124,9 +123,9 @@ public final class GradleProjectResolverUtil {
 
     File rootDir = gradleProject.getProjectIdentifier().getBuildIdentifier().getRootDir();
     String rootProjectPath = ExternalSystemApiUtil.toCanonicalPath(rootDir.getPath());
-    boolean isComposite = !resolverCtx.getModels().getIncludedBuilds().isEmpty();
+    boolean isComposite = !resolverCtx.getNestedBuilds().isEmpty();
     boolean isIncludedBuildTaskRunningSupported = isComposite && isIncludedBuildTaskRunningSupported(projectDataNode, resolverCtx);
-    File mainBuildRootDir = resolverCtx.getModels().getMainBuild().getBuildIdentifier().getRootDir();
+    File mainBuildRootDir = resolverCtx.getRootBuild().getBuildIdentifier().getRootDir();
     String mainBuildRootPath = ExternalSystemApiUtil.toCanonicalPath(mainBuildRootDir.getPath());
     boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
 
@@ -359,19 +358,19 @@ public final class GradleProjectResolverUtil {
     if (buildScriptClasspathModel == null) return;
     final File gradleHomeDir = buildScriptClasspathModel.getGradleHomeDir();
     if (gradleHomeDir == null) return;
-    final GradleVersion gradleVersion = GradleVersion.version(buildScriptClasspathModel.getGradleVersion());
+    final String gradleVersion = buildScriptClasspathModel.getGradleVersion();
     attachGradleSdkSources(libFile, library, gradleHomeDir, gradleVersion);
   }
 
   public static void attachGradleSdkSources(@Nullable final File libFile,
                                             @NotNull final LibraryData library,
                                             @NotNull final File gradleHomeDir,
-                                            @NotNull final GradleVersion gradleVersion) {
+                                            @NotNull final String gradleVersion) {
     if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
     if (!FileUtil.isAncestor(gradleHomeDir, libFile, true)) {
       File libFileParent = libFile.getParentFile();
       if (libFileParent == null || !StringUtil.equals("generated-gradle-jars", libFileParent.getName())) return;
-      if (("gradle-api-" + gradleVersion.getVersion() + ".jar").equals(libFile.getName())) {
+      if (("gradle-api-" + gradleVersion + ".jar").equals(libFile.getName())) {
         File gradleSrc = new File(gradleHomeDir, "src");
         File[] gradleSrcRoots = gradleSrc.listFiles();
         if (gradleSrcRoots == null) return;
@@ -390,7 +389,7 @@ public final class GradleProjectResolverUtil {
     if (libOrPluginsFile != null && "lib".equals(libOrPluginsFile.getName()) && libOrPluginsFile.getParentFile() != null) {
       File srcDir = new File(libOrPluginsFile.getParentFile(), "src");
 
-      int endIndex = libFile.getName().indexOf(gradleVersion.getVersion());
+      int endIndex = libFile.getName().indexOf(gradleVersion);
       if (endIndex != -1) {
         String srcDirChild = libFile.getName().substring("gradle-".length(), endIndex - 1);
         srcDir = new File(srcDir, srcDirChild);

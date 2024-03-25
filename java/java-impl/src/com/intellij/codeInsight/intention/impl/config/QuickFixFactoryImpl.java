@@ -759,7 +759,16 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createCreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
-    return new CreateGetterOrSetterFix(createGetter, createSetter, field);
+    if (createGetter && createSetter) {
+      return new CreateGetterOrSetterFix.CreateGetterAndSetterFix(field).asIntention();
+    }
+    if (createGetter) {
+      return new CreateGetterOrSetterFix.CreateGetterFix(field).asIntention();
+    }
+    if (createSetter) {
+      return new CreateGetterOrSetterFix.CreateSetterFix(field).asIntention();
+    }
+    throw new IllegalArgumentException();
   }
 
   @NotNull
@@ -796,6 +805,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createSafeDeleteFix(@NotNull PsiElement element) {
     return new SafeDeleteFix(element);
+  }
+
+  @Override
+  public @NotNull ModCommandAction createDeletePrivateMethodFix(@NotNull PsiMethod method) {
+    return new DeletePrivateMethodFix(method);
   }
 
   @Override
@@ -1022,13 +1036,13 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createCreateFieldFromParameterFix() {
-    return new CreateFieldFromParameterAction(true);
+  public @NotNull IntentionAction createCreateFieldFromParameterFix(@NotNull PsiParameter parameter) {
+    return new CreateFieldFromParameterAction(parameter).asIntention();
   }
 
   @Override
-  public @NotNull IntentionAction createAssignFieldFromParameterFix() {
-    return new AssignFieldFromParameterAction(true).asIntention();
+  public @NotNull IntentionAction createAssignFieldFromParameterFix(@NotNull PsiParameter parameter) {
+    return new AssignFieldFromParameterAction(parameter).asIntention();
   }
 
   @Override

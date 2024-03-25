@@ -8,17 +8,17 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
-import com.jetbrains.rd.util.concurrentMapOf
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 @VisibleForTesting
 class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentManager {
-  private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = concurrentMapOf()
+  private val myCache: MutableMap<String, SuspendingLazy<IjentApi>> = ConcurrentHashMap()
 
   override val isIjentAvailable: Boolean
     get() {
@@ -32,9 +32,19 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   override suspend fun getIjentApi(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentApi {
     return myCache.compute(wslDistribution.id + if (rootUser) ":root" else "") { _, oldHolder ->
       val validOldHolder = when (oldHolder?.isInitialized()) {
-        true ->
-          if (oldHolder.getInitialized().isRunning) oldHolder
+        true -> {
+          val ijentApi =
+            try {
+              oldHolder.getInitialized()
+            }
+            catch (ignored: Exception) {
+              // Something wrong happened. It is supposed that the error is logged by the caller side that called this method the first.
+              // There should be an attempt to start IJent again.
+              null
+            }
+          if (ijentApi?.isRunning == true) oldHolder
           else null
+        }
         false -> oldHolder
         null -> null
       }

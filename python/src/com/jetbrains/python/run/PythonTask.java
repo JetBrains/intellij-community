@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -36,6 +36,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -156,7 +157,7 @@ public class PythonTask {
   /**
    * @param env environment variables to be passed to process or null if nothing should be passed
    */
-  public final ProcessHandler createProcess(@Nullable final Map<String, String> env) throws ExecutionException {
+  public final ProcessHandler createProcess(final @Nullable Map<String, String> env) throws ExecutionException {
     final GeneralCommandLine commandLine = createCommandLine();
     if (env != null) {
       commandLine.getEnvironment().putAll(env);
@@ -187,8 +188,7 @@ public class PythonTask {
    * Runs task on targets API based SDK.
    * Uploads all path-based parameters ({@link #myPathParameterIndices}), runs command and downloads everything back
    */
-  @NotNull
-  private ProcessHandler executeTargetBasedProcess(@NotNull PyTargetAwareAdditionalData data) throws ExecutionException {
+  private @NotNull ProcessHandler executeTargetBasedProcess(@NotNull PyTargetAwareAdditionalData data) throws ExecutionException {
     var helper = myHelper;
     var script = myRunnerScript;
     assert (helper == null) != (script == null) : "Either script or helper must be set but not both";
@@ -196,26 +196,21 @@ public class PythonTask {
     TargetEnvironmentRequest request;
 
     var uploadedPaths = new HashMap<@NotNull Path, @NotNull Function<TargetEnvironment, String>>();
+    var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
+    assert helpersAwareRequest != null : data.getClass() + " is not supported";
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
-      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
       helpersAwareRequest.preparePyCharmHelpers();
-      assert helpersAwareRequest != null : data.getClass() + " is not supported";
       execution = PythonScripts.prepareHelperScriptExecution(helper, helpersAwareRequest);
-      request = helpersAwareRequest.getTargetEnvironmentRequest();
     }
     else {
-      // For scripts (not helpers) create configuration manually
-      var configuration = data.getTargetEnvironmentConfiguration();
-      assert configuration != null : data.getClass() + " is not supported";
-
-      request = configuration.createEnvironmentRequest(myModule.getProject());
       execution = new PythonScriptExecution();
       // We do not know if script path is local or not, so we only support target script
       execution.setPythonScriptPath(constant(script));
     }
+    request = helpersAwareRequest.getTargetEnvironmentRequest();
 
-    customizePythonExecution(request, execution, myModule);
+    customizePythonExecution(helpersAwareRequest, execution, myModule);
 
     // All paths params must be uploaded before call
     for (int i = 0; i < myParameters.size(); i++) {
@@ -294,14 +289,13 @@ public class PythonTask {
                                            addSource, false, request);
   }
 
-  protected void customizePythonExecution(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
+  protected void customizePythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
                                           @NotNull Module module) { }
 
   /**
    * Utility fun for {@link #executeTargetBasedProcess(PyTargetAwareAdditionalData)}, see usage
    */
-  @NotNull
-  private static Function<TargetEnvironment, String> addDirToUploadList(@NotNull TargetEnvironmentRequest request,
+  private static @NotNull Function<TargetEnvironment, String> addDirToUploadList(@NotNull TargetEnvironmentRequest request,
                                                                         @NotNull Map<@NotNull Path, @NotNull Function<TargetEnvironment, String>> uploadedPaths,
                                                                         @NotNull String dir) {
     Path path = Path.of(dir);
@@ -312,16 +306,14 @@ public class PythonTask {
     return pathFun;
   }
 
-  @NotNull
-  private static ProcessHandler executeLegacyLocalProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  private static @NotNull ProcessHandler executeLegacyLocalProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     ProcessHandler handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
     ProcessTerminatedListener.attach(handler);
     return handler;
   }
 
-  @NotNull
-  private ProcessHandler executeLegacyRemoteProcess(@NotNull GeneralCommandLine commandLine,
-                                                    @NotNull PyRemoteSdkAdditionalData additionalData)
+  private @NotNull ProcessHandler executeLegacyRemoteProcess(@NotNull GeneralCommandLine commandLine,
+                                                             @NotNull PyRemoteSdkAdditionalData additionalData)
     throws ExecutionException {
     // give the hint for Docker Compose process starter that this process should be run with `docker-compose run` command
     // (yep, this is hacky)
@@ -336,7 +328,7 @@ public class PythonTask {
    * @param consoleView console view to be used for command or null to create new
    * @throws ExecutionException failed to execute command
    */
-  public void run(@Nullable final ConsoleView consoleView) throws ExecutionException {
+  public void run(final @Nullable ConsoleView consoleView) throws ExecutionException {
     run(createCommandLine().getEnvironment(), consoleView);
   }
 
@@ -412,7 +404,7 @@ public class PythonTask {
    * @param env         environment variables to be passed to process or null if nothing should be passed
    * @param consoleView console to run this task on. New console will be used if no console provided.
    */
-  public void run(@Nullable final Map<String, String> env, @Nullable final ConsoleView consoleView) throws ExecutionException {
+  public void run(final @Nullable Map<String, String> env, final @Nullable ConsoleView consoleView) throws ExecutionException {
     final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     stopProcessWhenAppClosed(process);
@@ -492,8 +484,7 @@ public class PythonTask {
    * @return stdout
    * @throws ExecutionException in case of error. Consider using {@link com.intellij.execution.util.ExecutionErrorDialog}
    */
-  @NotNull
-  public final String runNoConsole() throws ExecutionException {
+  public final @NotNull String runNoConsole() throws ExecutionException {
     final ProgressManager manager = ProgressManager.getInstance();
     final Output output;
     if (SwingUtilities.isEventDispatchThread()) {
@@ -511,8 +502,7 @@ public class PythonTask {
                                                   exitCode, output.getStderr(), output.getStdout()));
   }
 
-  @NotNull
-  private Output getOutputInternal() throws ExecutionException {
+  private @NotNull Output getOutputInternal() throws ExecutionException {
     assert !SwingUtilities.isEventDispatchThread();
     final ProcessHandler process = createProcess(new HashMap<>());
     final OutputListener listener = new OutputListener();

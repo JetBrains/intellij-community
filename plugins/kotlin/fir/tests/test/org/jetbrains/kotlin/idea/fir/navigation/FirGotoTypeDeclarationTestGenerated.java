@@ -38,6 +38,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/explicitParameterInLambda.test");
     }
 
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/flexibleType.test");
+    }
+
     @TestMetadata("fromFunctionDeclarationName.test")
     public void testFromFunctionDeclarationName() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/fromFunctionDeclarationName.test");
@@ -66,6 +71,11 @@ public class FirGotoTypeDeclarationTestGenerated extends AbstractFirGotoTypeDecl
     @TestMetadata("itParameterInLambda.test")
     public void testItParameterInLambda() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/itParameterInLambda.test");
+    }
+
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoTypeDeclaration/listFlexibleType.test");
     }
 
     @TestMetadata("noParametersLambda.test")

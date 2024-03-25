@@ -5,6 +5,7 @@ package com.intellij.platform.settings.local
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
@@ -89,11 +90,11 @@ private class LocalSettingsController : DelegatedSettingsController {
 @Service(Service.Level.APP)
 private class InternalAndCacheStorageManager : SettingsSavingComponent {
   @JvmField
-  val storeManager: MvStoreManager = MvStoreManager()
+  val storeManager: MvStoreManager = MvStoreManager(readOnly = !ApplicationManager.getApplication().isSaveAllowed)
 
   // Telemetry is not ready at this point yet
   val cacheMap by lazy {
-    InternalStateStorageService(storeManager.openMap("cache_v2"), telemetryScopeName = "cacheStateStorage")
+    InternalStateStorageService(storeManager.openMap("cache_v3"), telemetryScopeName = "cacheStateStorage")
   }
 
   val internalMap by lazy {

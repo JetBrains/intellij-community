@@ -88,8 +88,14 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
     }
   }
 
-  private static @NotNull LightVirtualFile getCopy(@NotNull LightVirtualFile lightVirtualFile) {
-    return new LightVirtualFile(lightVirtualFile, lightVirtualFile.getContent(), lightVirtualFile.getModificationStamp());
+  private static @NotNull LightVirtualFile getCopy(@NotNull LightVirtualFile original) {
+    VirtualFile parent = original.getParent();
+    return new LightVirtualFile(original, original.getContent(), original.getModificationStamp()) {
+      @Override
+      public VirtualFile getParent() {
+        return parent;
+      }
+    };
   }
 
   private void clearCache() {

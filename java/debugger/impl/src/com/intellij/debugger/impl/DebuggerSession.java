@@ -346,6 +346,20 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     stepInto(ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
   }
 
+  public void stepOverInstruction() {
+    SuspendContextImpl suspendContext = getSuspendContext();
+    DebugProcessImpl.ResumeCommand cmd = myDebugProcess.new StepOverCommand(suspendContext, false, null, StepRequest.STEP_MIN) {
+      @Override
+      public @Nullable RequestHint getHint(SuspendContextImpl suspendContext,
+                                           ThreadReferenceProxyImpl stepThread,
+                                           @Nullable RequestHint parentHint) {
+        return null;
+      }
+    };
+    setSteppingThrough(cmd.getContextThread());
+    resumeAction(cmd, Event.STEP);
+  }
+
   public void runToCursor(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
     try {
       SuspendContextImpl suspendContext = getSuspendContext();

@@ -2,28 +2,22 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinModCommandWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyContext
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 
 internal class ConvertToBlockBodyIntention :
-    AbstractKotlinModCommandWithContext<KtDeclarationWithBody, ConvertToBlockBodyContext>(KtDeclarationWithBody::class) {
+    KotlinApplicableModCommandAction<KtDeclarationWithBody, ConvertToBlockBodyContext>(KtDeclarationWithBody::class) {
 
     override fun getFamilyName(): String = KotlinBundle.message("convert.to.block.body")
-
-    override fun getActionName(element: KtDeclarationWithBody, context: ConvertToBlockBodyContext): String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtDeclarationWithBody> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean = ConvertToBlockBodyUtils.isConvertibleByPsi(element)
 
@@ -31,10 +25,16 @@ internal class ConvertToBlockBodyIntention :
     override fun prepareContext(element: KtDeclarationWithBody): ConvertToBlockBodyContext? =
         ConvertToBlockBodyUtils.createContext(element, ShortenReferencesFacility.getInstance(), reformat = true)
 
-    override fun apply(element: KtDeclarationWithBody, context: AnalysisActionContext<ConvertToBlockBodyContext>, updater: ModPsiUpdater) {
-        ConvertToBlockBodyUtils.convert(element, context.analyzeContext)
+    override fun invoke(
+        context: ActionContext,
+        element: KtDeclarationWithBody,
+        elementContext: ConvertToBlockBodyContext,
+        updater: ModPsiUpdater,
+    ) {
+        ConvertToBlockBodyUtils.convert(element, elementContext)
     }
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
-        element is KtDeclaration || super.skipProcessingFurtherElementsAfter(element)
+    override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean {
+        return element is KtDeclaration || super.stopSearchAt(element, context)
+    }
 }

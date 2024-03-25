@@ -7,12 +7,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.FilenameIndex;
-import com.intellij.util.SmartList;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +57,10 @@ public final class RegisteredIndexes {
 
   boolean performShutdown() {
     return myShutdownPerformed.compareAndSet(false, true);
+  }
+
+  boolean isShutdownPerformed() {
+    return myShutdownPerformed.get();
   }
 
   void setState(@NotNull IndexConfiguration state) {

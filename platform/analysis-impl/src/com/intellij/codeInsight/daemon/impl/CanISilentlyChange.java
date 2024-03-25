@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -13,6 +13,8 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * Sometimes we need to know if we can silently change the file, without user's explicit permission.
  * By convention, permission is required for:<pre>
@@ -21,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * - files in the middle of cut-n-paste operation.
  * </pre>
  * <p/>
- * To determine this, we need to compute several things, in two stages.
+ * To determine this, we need to compute several things in two stages.
  * Some things require EDT for computation, e.g. {@link CanISilentlyChange#thisFile(PsiFileSystemItem)}, to query this file "undo" status.
  * Some things, on the other hand, are quite expensive to compute in EDT and thus require BGT, e.g. {@link SilentChangeVetoer#extensionsAllowToChangeFileSilently(Project, VirtualFile)}
  * The complete algorithm is the following:<pre>
@@ -34,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ThreadingAssertions.assertEventDispatchThread();
-    FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
-    if (editors.length == 0) {
+    List<FileEditor> editors = FileEditorManager.getInstance(project).getEditorList(virtualFile);
+    if (editors.isEmpty()) {
       return false;
     }
 

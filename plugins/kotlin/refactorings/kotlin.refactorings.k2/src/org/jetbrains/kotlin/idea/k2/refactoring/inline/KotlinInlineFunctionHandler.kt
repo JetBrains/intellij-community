@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 
@@ -23,13 +24,18 @@ class KotlinInlineFunctionHandler: AbstractKotlinInlineFunctionHandler<KtNamedFu
         editor: Editor?,
         function: KtNamedFunction
     ) {
-        val message = RefactoringBundle.getCannotRefactorMessage(
-            KotlinBundle.message("text.inline.function.not.supported")
-        )
 
         val nameReference = editor?.findSimpleNameReference()
 
         val recursive = function.bodyExpression?.includesCallOf(function) == true
+        if (recursive && nameReference == null) {
+            val message = RefactoringBundle.getCannotRefactorMessage(
+                KotlinBundle.message("text.inline.recursive.function.is.supported.only.on.references")
+            )
+
+            return showErrorHint(project, editor, message)
+        }
+
         val dialog = KotlinInlineNamedFunctionDialog(
             function,
             nameReference,
@@ -51,7 +57,7 @@ class KotlinInlineFunctionHandler: AbstractKotlinInlineFunctionHandler<KtNamedFu
     private fun KtExpression.includesCallOf(function: KtNamedFunction): Boolean {
         val refDescriptor = mainReference?.resolve()
         return function == refDescriptor || anyDescendantOfType<KtExpression> {
-            it !== this && function == it.mainReference?.resolve()
+            it !== this && it !is KtLabelReferenceExpression && function == it.mainReference?.resolve()
         }
     }
 }

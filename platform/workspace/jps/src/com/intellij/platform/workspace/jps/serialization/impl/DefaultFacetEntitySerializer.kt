@@ -3,15 +3,15 @@ package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.FacetId
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.childrenFacets
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
+
+private val facetEntityTypes = ConcurrentFactoryMap.createMap<String, FacetEntityTypeId> { FacetEntityTypeId(it) }
 
 class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
   override val rootEntityType: Class<FacetEntity>
@@ -40,8 +40,9 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       val configurationXmlTag = configurationXmlTagRaw?.let { configurationStringInterner.computeIfAbsent(it, Function.identity()) }
 
       // Check for existing facet it's needed in cases when we read sub-facet located in .xml but underling facet is from .iml,
-      // thus same root facet will be declared in two places
-      val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.symbolicId)
+      // thus the same root facet will be declared in two places
+      val facetEntityTypeId = facetEntityTypes[facetState.facetType]!!
+      val newFacetId = FacetId(facetState.name, facetEntityTypeId, moduleEntity.symbolicId)
       var facetEntity: FacetEntity? = null
       val existingFacet = findFacetById(moduleEntity.facets, newFacetId)
       if (existingFacet != null && configurationXmlTag != null) {
@@ -55,7 +56,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
       }
 
       if (existingFacet == null) {
-        facetEntity = FacetEntity(facetState.name, moduleEntity.symbolicId, facetState.facetType, entitySource) {
+        facetEntity = FacetEntity(facetState.name, moduleEntity.symbolicId, facetEntityTypeId, entitySource) {
           this.configurationXmlTag = configurationXmlTag
           this.module = moduleEntity
           this.underlyingFacet = underlyingFacet
@@ -93,7 +94,7 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
 
     val state = FacetState().apply {
       name = facetEntity.name
-      facetType = facetEntity.facetType
+      facetType = facetEntity.typeId.name
       val externalSystemIdValue = (facetEntity.entitySource as? JpsImportedEntitySource)?.externalSystemId
       if (storeExternally) {
         externalSystemId = externalSystemIdValue

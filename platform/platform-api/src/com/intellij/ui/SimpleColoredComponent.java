@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -973,7 +973,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
                           + (nextFragment != null ? nextFragment.text : "");
       Graphics2D clippedGraphics = (Graphics2D)g.create();
       try {
-        clippedGraphics.setClip(new Rectangle2D.Float(x1, 0, x2 - x1, getHeight()));
+        clippedGraphics.clip(new Rectangle2D.Float(x1, 0, x2 - x1, getHeight()));
 
         if (prevFragment != null) x1 -= computeStringWidth(prevFragment, index - 1, font);
         clippedGraphics.drawString(mergedText, x1, baseline);

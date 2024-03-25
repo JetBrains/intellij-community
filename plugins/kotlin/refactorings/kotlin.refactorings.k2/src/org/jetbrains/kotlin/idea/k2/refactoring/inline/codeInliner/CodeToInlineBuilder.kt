@@ -21,8 +21,8 @@ class CodeToInlineBuilder(
             allowAnalysisFromWriteAction {
                 val codeToInline = super.prepareMutableCodeToInline(mainExpression, statementsBefore, reformat)
                 insertExplicitTypeArguments(codeToInline)
-                encodeInternalReferences(codeToInline, original)
                 removeContracts(codeToInline)
+                encodeInternalReferences(codeToInline, original)
                 specifyFunctionLiteralTypesExplicitly(codeToInline)
                 specifyNullTypeExplicitly(codeToInline, original)
                 return codeToInline

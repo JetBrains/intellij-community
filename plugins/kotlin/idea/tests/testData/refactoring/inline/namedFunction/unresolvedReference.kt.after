@@ -1,0 +1,8 @@
+open class Base {
+}
+val result = run {
+    Base()
+    "bar"
+}
+
+// IGNORE_K1

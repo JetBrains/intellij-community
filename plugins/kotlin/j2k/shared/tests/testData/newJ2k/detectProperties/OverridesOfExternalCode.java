@@ -1,4 +1,6 @@
 // IGNORE_K2
+// !ADD_KOTLIN_API
+// !ADD_JAVA_API
 import kotlinApi.KotlinClassWithProperties;
 import javaApi.JavaClassWithProperties;
 import javaApi.JavaClassDerivedFromKotlinClassWithProperties;

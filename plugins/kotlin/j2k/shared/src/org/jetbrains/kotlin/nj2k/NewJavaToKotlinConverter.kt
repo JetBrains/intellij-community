@@ -150,7 +150,8 @@ class NewJavaToKotlinConverter(
             importStorage,
             JKElementInfoStorage(),
             externalCodeProcessing,
-            languageVersion.supportsFeature(LanguageFeature.FunctionalInterfaceConversion)
+            languageVersion.supportsFeature(LanguageFeature.FunctionalInterfaceConversion),
+            settings
         )
 
         val treeRoots = elementsWithAsts.mapNotNull { it.second }

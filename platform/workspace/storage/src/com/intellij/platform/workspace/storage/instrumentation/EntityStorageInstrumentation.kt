@@ -123,6 +123,11 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * @param child The WorkspaceEntity to be added as a child.
    */
   public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity)
+
+  public fun getOneChildBuilder(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>?
+  public fun getManyChildrenBuilders(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): Sequence<WorkspaceEntity.Builder<*>>
+
+  public fun getParentBuilder(connectionId: ConnectionId, child: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>?
 }
 
 /**

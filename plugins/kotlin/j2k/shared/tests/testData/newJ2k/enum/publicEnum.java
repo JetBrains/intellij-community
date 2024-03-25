@@ -1,2 +1,1 @@
-//class
 public enum Test {}

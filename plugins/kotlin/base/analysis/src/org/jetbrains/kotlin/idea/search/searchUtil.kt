@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.search
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -18,9 +17,10 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.util.*
+import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.scriptDefinitionExists
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -96,14 +96,13 @@ fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsag
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,
     scope: GlobalSearchScope,
-    fileToIgnoreOccurrencesIn: PsiFile?,
-    progress: ProgressIndicator?
+    fileToIgnoreOccurrencesIn: PsiFile?
 ): PsiSearchHelper.SearchCostResult {
     if (OperatorConventions.isConventionName(Name.identifier(name))) {
         return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
     }
 
-    return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn, progress)
+    return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn)
 }
 
 fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {

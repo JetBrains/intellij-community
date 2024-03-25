@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import com.intellij.openapi.editor.Editor
@@ -6,11 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticModCommandFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
@@ -53,15 +49,17 @@ class ChangeVariableMutabilityFix(
     }
 
     companion object {
+
         val VAL_WITH_SETTER_FACTORY: QuickFixesPsiBasedFactory<KtPropertyAccessor> =
             quickFixesPsiBasedFactory { psiElement: KtPropertyAccessor ->
                 listOf(ChangeVariableMutabilityFix(psiElement.property, true))
             }
 
-        val VAL_REASSIGNMENT: KotlinDiagnosticFixFactory<KtFirDiagnostic.ValReassignment> = diagnosticFixFactory(KtFirDiagnostic.ValReassignment::class) { diagnostic ->
-            val property = diagnostic.variable.psi as? KtValVarKeywordOwner ?: return@diagnosticFixFactory emptyList()
+        val VAL_REASSIGNMENT = KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ValReassignment ->
+            val property = diagnostic.variable.psi as? KtValVarKeywordOwner
+                ?: return@IntentionBased emptyList()
             listOf(
-                ChangeVariableMutabilityFix(property, makeVar = true)
+                ChangeVariableMutabilityFix(property, makeVar = true),
             )
         }
 

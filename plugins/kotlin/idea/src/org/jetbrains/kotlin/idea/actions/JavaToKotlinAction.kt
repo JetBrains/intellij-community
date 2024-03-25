@@ -9,6 +9,7 @@ import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -43,7 +44,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
@@ -96,27 +97,37 @@ class JavaToKotlinAction : AnAction() {
                 prepareExternalCodeUpdate(project, externalCodeProcessing, enableExternalCodeProcessing, askExternalCodeProcessing)
 
             lateinit var newFiles: List<KtFile>
-            CommandProcessor.getInstance().runUndoTransparentAction {
-                newFiles = project.executeWriteCommand {
-                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+
+            // We execute a single command with the following steps:
+            //
+            // 1. Create new Kotlin files in a transparent global write action.
+            // 2. Prepare external code processing in a read action.
+            // 3. Update external usages in a transparent global write action.
+            //
+            // "Transparent" means that it will not be considered as a separate step for undo/redo purposes,
+            // so when you undo a J2K conversion, it undoes the whole outermost command at once.
+            //
+            // "Global" means that you can undo it from any changed file: the converted files,
+            // or the external files that were updated.
+            project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
+                newFiles = project.runUndoTransparentGlobalWriteAction {
                     saveResults(javaFiles, result.results)
                         .map { it.toPsiFile(project) as KtFile }
                         .onEach { it.commitAndUnblockDocument() }
                 }
 
-                val contextElement = newFiles.firstOrNull() ?: return@runUndoTransparentAction
+                val contextElement = newFiles.firstOrNull() ?: return@executeCommand
                 allowAnalysisOnEdt {
                     analyze(contextElement) {
                         externalCodeProcessing?.bindJavaDeclarationsToConvertedKotlinOnes(newFiles)
                     }
                 }
 
-                project.executeWriteCommand {
-                    CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
+                project.runUndoTransparentGlobalWriteAction {
                     externalCodeUpdate?.invoke()
                     PsiDocumentManager.getInstance(project).commitAllDocuments()
                     newFiles.singleOrNull()?.let {
-                        FileEditorManager.getInstance(project).openFile(it.virtualFile, true)
+                        FileEditorManager.getInstance(project).openFile(it.virtualFile, /* focusEditor = */ true)
                     }
                 }
             }
@@ -149,8 +160,13 @@ class JavaToKotlinAction : AnAction() {
         private fun runSynchronousProcess(project: Project, process: () -> Unit): Boolean =
             ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, /* canBeCanceled = */ true, project)
 
-        private fun <T> Project.executeWriteCommand(command: () -> T): T =
-            executeWriteCommand(KotlinBundle.message("action.j2k.task.name"), groupId = null, command)
+        private fun <T> Project.runUndoTransparentGlobalWriteAction(command: () -> T): T =
+            CommandProcessor.getInstance().withUndoTransparentAction().use {
+                CommandProcessor.getInstance().markCurrentCommandAsGlobal(this)
+                runWriteAction {
+                    command()
+                }
+            }
 
         private fun saveResults(javaFiles: List<PsiJavaFile>, convertedTexts: List<String>): List<VirtualFile> {
             fun uniqueKotlinFileName(javaFile: VirtualFile): String {

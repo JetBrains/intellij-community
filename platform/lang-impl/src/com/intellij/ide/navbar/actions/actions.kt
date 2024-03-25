@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.actions
 
-import com.intellij.ide.navbar.NavBarItem
+import com.intellij.ide.impl.dataRules.GetDataRule
+import com.intellij.ide.navbar.ide.IdeNavBarVmItem
 import com.intellij.ide.navbar.impl.DefaultNavBarItem
 import com.intellij.ide.navbar.impl.ModuleNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
@@ -15,11 +16,14 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.navbar.NavBarVmItem
+import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.toArray
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Fast extension data without selection (allows to override cut/copy/paste providers)
@@ -40,7 +44,24 @@ private fun extensionData(dataId: String, provider: DataProvider): Any? {
   return provider.getData(dataId)
 }
 
-internal fun getBgData(project: Project, selection: List<Pointer<out NavBarItem>>, dataId: String): Any? {
+internal class BgtDataRule : GetDataRule {
+
+  override fun getData(dataProvider: DataProvider): Any? {
+    val project = CommonDataKeys.PROJECT.getData(dataProvider)
+                  ?: return null
+    val selection = NavBarVmItem.SELECTED_ITEMS.getData(dataProvider)
+                    ?: return null
+    val pointers = selection.map {
+      (it as IdeNavBarVmItem).pointer
+    }
+    return DataProvider {
+      getBgData(project, pointers, it)
+    }
+  }
+}
+
+@VisibleForTesting
+fun getBgData(project: Project, selection: List<Pointer<out NavBarItem>>, dataId: String): Any? {
   val selectedItems = lazy(LazyThreadSafetyMode.NONE) {
     ApplicationManager.getApplication().assertReadAccessAllowed()
     selection.mapNotNull {

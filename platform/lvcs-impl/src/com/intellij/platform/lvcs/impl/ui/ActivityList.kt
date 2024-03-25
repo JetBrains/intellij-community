@@ -7,6 +7,7 @@ import com.intellij.platform.lvcs.impl.ActivityItem
 import com.intellij.platform.lvcs.impl.ActivityPresentation
 import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.speedSearch.FilteringListModel
@@ -59,6 +60,12 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
     finally {
       selection.restore()
     }
+  }
+
+  fun moveSelection(forward: Boolean) {
+    val step = if (forward) 1 else -1
+    val newIndex = (model.size + selectionModel.leadSelectionIndex + step) % model.size
+    ScrollingUtil.selectItem(this, newIndex)
   }
 
   fun addListener(listener: Listener, parent: Disposable) {

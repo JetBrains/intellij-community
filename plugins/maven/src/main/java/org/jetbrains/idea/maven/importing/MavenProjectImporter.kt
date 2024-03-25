@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.importing.workspaceModel.StaticWorkspaceProjectImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
@@ -22,6 +23,22 @@ interface MavenProjectImporter {
 
   companion object {
     @JvmStatic
+    fun createStaticImporter(project: Project,
+                             projectsTree: MavenProjectsTree,
+                             projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
+                             modelsProvider: IdeModifiableModelsProvider,
+                             importingSettings: MavenImportingSettings,
+                             parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
+
+      if (!isImportToWorkspaceModelEnabled(project)) {
+        throw IllegalStateException("Static sync is available only if fast import is enabled")
+      }
+      val importer = StaticWorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
+                                                    importingSettings, modelsProvider, project)
+      return wrapWithFUS(project, parentImportingActivity, importer)
+    }
+
+    @JvmStatic
     fun createImporter(project: Project,
                        projectsTree: MavenProjectsTree,
                        projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
@@ -31,6 +48,12 @@ interface MavenProjectImporter {
                        parentImportingActivity: StructuredIdeActivity): MavenProjectImporter {
       val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
                                     modelsProvider, importingSettings, previewModule)
+      return wrapWithFUS(project, parentImportingActivity, importer)
+    }
+
+    private fun wrapWithFUS(project: Project,
+                            parentImportingActivity: StructuredIdeActivity,
+                            importer: MavenProjectImporter): MavenProjectImporter {
       return object : MavenProjectImporter {
         override fun importProject(): List<MavenProjectsProcessorTask> {
           val activity = MavenImportStats.startApplyingModelsActivity(project, parentImportingActivity)

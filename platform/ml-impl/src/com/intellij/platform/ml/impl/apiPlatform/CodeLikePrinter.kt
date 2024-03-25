@@ -28,6 +28,7 @@ class CodeLikePrinter {
       "FeatureDeclaration.categorical(\"$name\", setOf(${possibleValuesSerialized}))"
     }
     FeatureValueType.Version -> "FeatureDeclaration.version(\"${name}\")"
+    FeatureValueType.Language -> "FeatureDeclaration.language(\"${name}\")"
   }
 
   fun <T> printCodeLikeString(featureDeclaration: FeatureDeclaration<T>): String {

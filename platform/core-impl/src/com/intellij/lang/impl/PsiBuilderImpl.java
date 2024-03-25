@@ -282,7 +282,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     abstract int getLexemeIndex(boolean done);
   }
 
-  static class StartMarker extends ProductionMarker implements Marker {
+  static class StartMarker extends ProductionMarker implements Marker, LighterASTSyntaxTreeBuilderBackedNode {
     private IElementType myType;
     private int myDoneLexeme = -1;
     private ProductionMarker myFirstChild;
@@ -436,6 +436,17 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
     boolean isDone() {
       return myDoneLexeme != -1;
+    }
+
+    @Override
+    public CharSequence getText() {
+      if (!isDone()) return null;
+      CharSequence originalText = myBuilder.getOriginalText();
+      int startOffset = getStartOffset() - myBuilder.myOffset;
+      int endOffset = getEndOffset() - myBuilder.myOffset;
+      CharSequence text = originalText.subSequence(startOffset, endOffset);
+      assert text.length() == getEndOffset() - getStartOffset();
+      return text;
     }
   }
 

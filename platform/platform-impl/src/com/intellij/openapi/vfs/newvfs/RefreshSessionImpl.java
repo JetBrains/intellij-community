@@ -62,6 +62,9 @@ final class RefreshSessionImpl extends RefreshSession {
     TransactionGuard.getInstance().assertWriteSafeContext(myModality);
     var app = ApplicationManager.getApplication();
     myStartTrace = app.isUnitTestMode() && (async || !app.isDispatchThread()) ? new Throwable() : null;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RefreshSessionImpl created. Trace.", new Throwable());
+    }
   }
 
   RefreshSessionImpl(List<VirtualFile> files) {

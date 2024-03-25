@@ -21,6 +21,10 @@ object ConversionsRunner {
         val applyingConversionsMessage: String = KotlinNJ2KBundle.message("j2k.applying.conversions")
 
         for ((conversionIndex, conversion) in conversions.withIndex()) {
+            if (context.settings.basicMode && !conversion.isEnabledInBasicMode()) {
+                continue
+            }
+
             val treeSequence = trees.asSequence().onEachIndexed { index, _ ->
                 updateProgress(conversionIndex, conversions.size, index, applyingConversionsMessage)
             }

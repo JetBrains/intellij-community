@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -7,11 +7,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,6 +28,7 @@ import java.util.List;
 public abstract class FileEditorManager {
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
+  @RequiresBlockingContext
   public static FileEditorManager getInstance(@NotNull Project project) {
     return project.getService(FileEditorManager.class);
   }
@@ -175,6 +178,8 @@ public abstract class FileEditorManager {
    * @return all editors for the specified {@code file}
    */
   public abstract FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file);
+
+  public abstract @NotNull @Unmodifiable List<@NotNull FileEditor> getAllEditorList(@NotNull VirtualFile file);
 
   /**
    * @return all open editors

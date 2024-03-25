@@ -42,6 +42,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/equalsOrHashCode")
             model("${idea}/inspectionsLocal/removeRedundantQualifierName")
             model("${idea}/inspectionsLocal/redundantUnitExpression")
+            model("${idea}/inspectionsLocal/useExpressionBody")
             model("${idea}/inspectionsLocal/equalsBetweenInconvertibleTypes")
             model("${idea}/inspectionsLocal/redundantIf")
             model("${idea}/inspectionsLocal/mayBeConstant")
@@ -53,6 +54,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/selfAssignment")
             // unusedSymbol is covered with K2UnusedSymbolHighlightingTestGenerated
             //model("${idea}/inspectionsLocal/unusedSymbol", pattern = pattern)
+            model("${idea}/inspectionsLocal/branched/introduceWhenSubject")
+            model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
         /**

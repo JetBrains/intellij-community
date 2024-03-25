@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.apiPlatform
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ml.EnvironmentExtender
 import com.intellij.platform.ml.Feature
@@ -12,6 +14,7 @@ import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform.replacing
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.util.application
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
@@ -71,7 +74,13 @@ private data object IJPlatform : MLApiPlatform() {
     val codeLikeMissingDeclaration = printer.printCodeLikeString(nonDeclaredFeatures.map { it.declaration })
     thisLogger().debug("${descriptor::class.java} is missing declaration: setOf($codeLikeMissingDeclaration)")
   }
+
+  override val coroutineScope: CoroutineScope
+    get() = service<MLApiPlatformComputations>().coroutineScope
 }
+
+@Service
+private class MLApiPlatformComputations(val coroutineScope: CoroutineScope)
 
 /**
  * Also a "real-life" [MLApiPlatform], but it can be replaced with another one any time.
@@ -112,6 +121,9 @@ object ReplaceableIJPlatform : MLApiPlatform() {
 
   override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) =
     platform.manageNonDeclaredFeatures(descriptor, nonDeclaredFeatures)
+
+  override val coroutineScope: CoroutineScope
+    get() = platform.coroutineScope
 
   private fun <T> extend(obj: T, method: (MLApiPlatform) -> ExtensionController): ExtensionController {
     val initialPlatform = platform

@@ -1,12 +1,14 @@
 package com.intellij.dev.psiViewer.properties.tree
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.ui.SimpleColoredComponent
 
 
 interface PsiViewerPropertyNode {
   data class Context(
+    val project: Project,
     val showEmptyNodes: Boolean,
     val psiSelectorInMainTree: suspend (PsiElement) -> Runnable?
   )

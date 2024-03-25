@@ -1,5 +1,6 @@
 //method
 void foo() {
+  // comment
   switch(a) {
     case 1: {
       int x = 1;

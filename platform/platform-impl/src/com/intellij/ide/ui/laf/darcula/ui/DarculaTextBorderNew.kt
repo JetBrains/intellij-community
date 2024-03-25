@@ -6,6 +6,7 @@ import com.intellij.ide.ui.laf.darcula.fillInsideComponentBorder
 import com.intellij.ide.ui.laf.darcula.paintComponentBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import javax.swing.JComponent
@@ -31,5 +32,14 @@ internal class DarculaTextBorderNew : DarculaTextBorder() {
       fillInsideComponentBorder(g, r, c.background)
     }
     paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), c.isEnabled && c.isEditable)
+  }
+
+  /**
+   * Paints background of text field. Should take into account the shape of the border (like rounded borders and insets)
+   */
+  protected fun paintTextBackground(g: Graphics2D, component: JTextComponent, color: Color) {
+    val r = Rectangle(component.size)
+    JBInsets.removeFrom(r, getBorderInsets(component))
+    fillInsideComponentBorder(g, r, color)
   }
 }

@@ -43,6 +43,7 @@
 
   <extensions defaultExtensionNs="com.intellij.cce">
     <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.testGeneration.TestGenerationFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
     <evaluableFeature implementation="com.intellij.cce.actions.ContextCollectionFeature"/>
     <suggestionsProvider implementation="com.intellij.cce.evaluable.completion.DefaultCompletionProvider"/>

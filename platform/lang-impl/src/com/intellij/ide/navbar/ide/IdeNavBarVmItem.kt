@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ide
 
-import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemPresentation
-import com.intellij.ide.navbar.ide.NavBarVmItem.ItemExpandResult
-import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.impl.isModuleContentRoot
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.readAction
+import com.intellij.platform.navbar.NavBarItemPresentation
+import com.intellij.platform.navbar.NavBarVmItem
+import com.intellij.platform.navbar.NavBarVmItem.ItemExpandResult
+import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
@@ -19,7 +20,7 @@ internal class IdeNavBarVmItem @RequiresReadLock constructor(
     ThreadingAssertions.assertReadAccess()
   }
 
-  override val pointer: Pointer<out NavBarItem> = item.createPointer()
+  val pointer: Pointer<out NavBarItem> = item.createPointer()
 
   override val presentation: NavBarItemPresentation = item.presentation()
 
@@ -63,7 +64,7 @@ internal class IdeNavBarVmItem @RequiresReadLock constructor(
   }
 }
 
-private suspend fun <T> NavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
+private suspend fun <T> IdeNavBarVmItem.fetch(selector: NavBarItem.() -> T): T? {
   return readAction {
     pointer.dereference()?.selector()
   }

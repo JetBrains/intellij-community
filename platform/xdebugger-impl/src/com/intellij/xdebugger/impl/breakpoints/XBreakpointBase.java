@@ -671,7 +671,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @NotNull
     @Override
     public String getAccessibleName() {
-      // FIXME[inline-bp]: implement me? How to debug it?
       return super.getAccessibleName();
     }
 
@@ -697,8 +696,8 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     private void removeBreakpoints() {
       for (var b : breakpoints) {
-        // FIXME[inline-bp]: check it. Maybe we should have single confirmation for all breakpoints.
-        //                   Also it would help to restore them. See XBreakpointManagerImpl.restoreLastRemovedBreakpoint.
+        // FIXME[inline-bp]: support multiple breakpoints restore
+        // FIXME[inline-bp]: Reconsider this, maybe we should have single confirmation for all breakpoints.
         XDebuggerUtilImpl.removeBreakpointWithConfirmation(b);
       }
     }
@@ -808,7 +807,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
         newMarks.add(mark);
       }
-      // FIXME[inline-bp]: do we need to cache this instance?
       newMarks.add(breakpointMarkPosition, new MultipleBreakpointGutterIconRenderer(breakpoints));
 
       return newMarks;

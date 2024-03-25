@@ -38,7 +38,7 @@ abstract class AbstractOpenProjectProvider {
     return if (file.isDirectory) file else file.parent
   }
 
-  @Deprecated("use async method instead")
+  @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"))
   open fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
     throw UnsupportedOperationException()
   }
@@ -46,6 +46,7 @@ abstract class AbstractOpenProjectProvider {
   open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
     withContext(Dispatchers.EDT) {
       blockingContext {
+        @Suppress("DEPRECATION")
         linkToExistingProject(projectFile, project)
       }
     }
@@ -84,7 +85,9 @@ abstract class AbstractOpenProjectProvider {
     return ProjectManagerEx.getInstanceEx().openProjectAsync(nioPath, options)
   }
 
+  @Deprecated("use async method instead", ReplaceWith("linkToExistingProjectAsync"))
   fun linkToExistingProject(projectFilePath: String, project: Project) {
+    @Suppress("DEPRECATION")
     linkToExistingProject(getProjectFile(projectFilePath), project)
   }
 

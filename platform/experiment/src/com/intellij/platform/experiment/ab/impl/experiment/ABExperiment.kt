@@ -1,29 +1,60 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.experiment.ab.impl.experiment
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
-import com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration.Companion.TOTAL_NUMBER_OF_BUCKETS
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
+import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
 
 fun getABExperimentInstance(): ABExperiment {
   return ApplicationManager.getApplication().service<ABExperiment>()
 }
 
+/**
+ * This is a multi-optional A/B experiment for all IDEs and JetBrains plugins,
+ * which affects IDE metrics like user retention in IDE.
+ *
+ * Each feature is represented as an option.
+ * An option defines the number of user groups which will be associated with this option.
+ * There is a control option for default behavior.
+ * You need to implement `ABExperimentOption` extension point to implement an option for your feature.
+ *
+ * The number of A/B experimental groups is limited.
+ * It is necessary to keep a group audience sufficient to make statistically significant conclusions.
+ * So it is crucial to choose group size judiciously.
+ * If group capacity is exhausted for a specific IDE, there will be an error.
+ * In such a case, you need to communicate with related people to handle such a case and rearrange option groups accordingly.
+ *
+ * A/B experiment supports the implemented options from JetBrains plugins.
+ * Plugins can be installed/uninstalled or enabled/disabled.
+ * Accordingly, the options defined in plugins may appear when the plugin is enabled or installed,
+ * or disappear when the plugin is disabled or uninstalled.
+ * The experiment uses special storage to be able to work with such conditions correctly.
+ *
+ * @see com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
+ * @see com.intellij.platform.experiment.ab.impl.experiment.ABExperimentGroupStorageService
+ */
 @Service
 class ABExperiment {
 
   companion object {
     private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOption>("com.intellij.experiment.abExperimentOption")
     private val LOG = logger<ABExperiment>()
+
+    private const val DEVICE_ID_PURPOSE = "A/B Experiment"
+    private const val DEVICE_ID_SALT = "ab experiment salt"
+    private const val TOTAL_NUMBER_OF_BUCKETS = 1024
+    internal val TOTAL_NUMBER_OF_GROUPS = if (isPopularIDE()) 16 else 8
+
+    internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
 
     internal fun getJbABExperimentOptionList(): List<ABExperimentOption> {
       return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
@@ -32,90 +63,71 @@ class ABExperiment {
         pluginInfo.isDevelopedByJetBrains()
       }
     }
-  }
 
-  fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean {
-    return experimentOptionClass.isInstance(getUserExperimentOption())
+    internal fun isPopularIDE() = PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()
   }
 
   fun isControlExperimentOptionEnabled(): Boolean {
     return isExperimentOptionEnabled(ABExperimentControlOption::class.java)
   }
 
-  fun getUserExperimentOption(): ABExperimentOption {
-    val manualOptionId = Registry.stringValue("platform.experiment.ab.manual.option")
-    if (manualOptionId.isNotBlank()) {
+  fun isExperimentOptionEnabled(experimentOptionClass: Class<out ABExperimentOption>): Boolean {
+    return experimentOptionClass.isInstance(getUserExperimentOption())
+  }
 
-      LOG.debug { "Use manual option id from Registry. Registry key value is: $manualOptionId" }
+  internal fun getUserExperimentOption(): ABExperimentOption? {
+    val userOptionId = getUserExperimentOptionId()
+    return getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
+  }
 
-      val manualOption = getJbABExperimentOptionList().find { it.id == manualOptionId }
+  internal fun getUserExperimentOptionId(): ABExperimentOptionId {
+    val manualOptionIdText = System.getProperty("platform.experiment.ab.manual.option", "")
+    if (manualOptionIdText.isNotBlank()) {
+      LOG.debug { "Use manual option id from Registry. Registry key value is: $manualOptionIdText" }
+
+      val manualOption = getJbABExperimentOptionList().find { it.id.value == manualOptionIdText }
       if (manualOption != null) {
         LOG.debug { "Found manual option is: $manualOption" }
-        return manualOption
+        return manualOption.id
+      }
+      else if (manualOptionIdText == OPTION_ID_FREE_GROUP.value) {
+        LOG.debug { "Found manual option is: $manualOptionIdText" }
+        return ABExperimentOptionId(manualOptionIdText)
       }
       else {
-        LOG.debug { "Manual option with id $manualOptionId not found. Returning control option." }
-        return getExperimentControlOption()
+        LOG.debug { "Manual option with id $manualOptionIdText not found." }
+        return OPTION_ID_FREE_GROUP
       }
     }
 
-    val isPopularIde = isPopularIDE()
-    val orderedOptionList = getJbABExperimentOptionList().sortedBy { it.id }
-    return computeUserABOptionByGroupCounts(orderedOptionList.map { it.getGroupCountForIde(isPopularIde) to it })
+    val userGroupNumber = getUserGroupNumber() ?: return OPTION_ID_FREE_GROUP
+    val userOptionId = ABExperimentGroupStorageService.getUserExperimentOptionId(userGroupNumber)
+
+    LOG.debug { "User option id is: ${userOptionId.value}." }
+
+    return userOptionId
   }
 
   internal fun getUserGroupNumber(): Int? {
     val bucket = getUserBucket()
-    val totalNumberOfGroups = getTotalNumberOfGroups()
-    if (TOTAL_NUMBER_OF_BUCKETS < totalNumberOfGroups) {
+    if (TOTAL_NUMBER_OF_BUCKETS < TOTAL_NUMBER_OF_GROUPS) {
       LOG.error("Number of buckets is less than number of groups. " +
-                "Please revise all experiment options and adjust their group counts.")
+                "Please revise related experiment constants and adjust them accordingly.")
       return null
     }
 
-    val experimentGroup = bucket % totalNumberOfGroups
+    val experimentGroup = bucket % TOTAL_NUMBER_OF_GROUPS
+    LOG.debug { "User group number is: $experimentGroup." }
     return experimentGroup
   }
 
   internal fun getUserBucket(): Int {
-    return EventLogConfiguration.getInstance().bucket
-  }
-
-  private fun computeUserABOptionByGroupCounts(groupCountToOption: List<Pair<Int, ABExperimentOption>>): ABExperimentOption {
-    val groupNumber = getUserGroupNumber() ?: return getExperimentControlOption()
-
-    var counter = -1
-    for ((groupCount, option) in groupCountToOption) {
-      LOG.debug {
-        "User group number is: $groupNumber. " +
-                "Option group count is: $groupCount. " +
-        "Sum of previous group counts is: $counter."
-      }
-      if (counter + groupCount > groupNumber) {
-        LOG.debug { "User group belongs to $option option." }
-        return option
-      }
-
-      counter += groupCount
+    val deviceId = LOG.runAndLogException {
+      MachineIdManager.getAnonymizedMachineId(DEVICE_ID_PURPOSE, DEVICE_ID_SALT)
     }
 
-    LOG.error("User group is not in range of available groups. " +
-              "User group is: $groupNumber. " +
-              "Group count to option mapping is: $groupCountToOption")
-
-    return getExperimentControlOption()
-  }
-
-  private fun getTotalNumberOfGroups(): Int {
-    val isPopularIde = isPopularIDE()
-    val totalNumberOfGroups = getJbABExperimentOptionList().sumOf { it.getGroupCountForIde(isPopularIde) }
-    LOG.debug { "Total number of groups for IDE is: $totalNumberOfGroups. Is popular IDE: $isPopularIde." }
-    return totalNumberOfGroups
-  }
-
-  private fun isPopularIDE() = PlatformUtils.isIdeaUltimate() || PlatformUtils.isPyCharmPro()
-
-  private fun getExperimentControlOption(): ABExperimentControlOption {
-    return getJbABExperimentOptionList().asSequence().filterIsInstance<ABExperimentControlOption>().first()
+    val bucketNumber = MathUtil.nonNegativeAbs(deviceId.hashCode()) % TOTAL_NUMBER_OF_BUCKETS
+    LOG.debug { "User bucket number is: $bucketNumber." }
+    return bucketNumber
   }
 }

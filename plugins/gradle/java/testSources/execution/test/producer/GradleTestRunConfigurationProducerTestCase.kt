@@ -7,25 +7,21 @@ import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.task.TaskData
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemRunConfigurationProducer
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskLocation
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testIntegration.TestRunLineMarkerProvider
 import com.intellij.util.LocalTimeCounter
+import org.jetbrains.plugins.gradle.execution.GradleRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducer
-import org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestName
 import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -36,15 +32,7 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.runners.Parameterized
 import java.io.File
 
-abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestCase() {
-
-  fun getContextByLocation(vararg elements: PsiElement): ConfigurationContext {
-    assertTrue(elements.isNotEmpty())
-    return object : ConfigurationContext(elements[0]) {
-      override fun getDataContext() = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT_ARRAY, elements, super.getDataContext())
-      override fun containsMultipleSelection() = elements.size > 1
-    }
-  }
+abstract class GradleTestRunConfigurationProducerTestCase : GradleRunConfigurationProducerTestCase() {
 
   private fun getGutterTestRunActionsByLocation(element: PsiNameIdentifierOwner) = runReadActionAndWait {
     val identifier = element.identifyingElement!!
@@ -57,13 +45,6 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
   protected fun assertGutterRunActionsSize(element: PsiNameIdentifierOwner, expectedSize: Int) {
     val actions = getGutterTestRunActionsByLocation(element)
     assertEquals(expectedSize, actions.size)
-  }
-
-  fun getConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContextImpl {
-    val fromContexts = context.configurationsFromContext
-    val fromContext = fromContexts?.firstOrNull()
-    assertNotNull("Gradle configuration from context not found", fromContext)
-    return fromContext as ConfigurationFromContextImpl
   }
 
   protected inline fun <reified P : GradleTestRunConfigurationProducer> getConfigurationProducer(): P {
@@ -86,21 +67,10 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
     expectedSettings: String,
     vararg elements: PsiElement,
     noinline testTasksFilter: (TestName) -> Boolean = { true }
-  ) = runReadActionAndWait {
-    val context = getContextByLocation(*elements)
-    val configurationFromContext = getConfigurationFromContext(context)
-    val producer = configurationFromContext.configurationProducer as P
-    producer.setTestTasksChooser(testTasksFilter)
-    val configuration = configurationFromContext.configuration as GradleRunConfiguration
-    assertTrue("Configuration created from context must force test re-execution", configuration.isRunAsTest)
-    assertTrue("Configuration can be setup by producer from his context",
-      producer.setupConfigurationFromContext(configuration, context, Ref(context.psiLocation)))
-    if (producer !is PatternGradleConfigurationProducer) {
-      assertTrue("Producer have to identify configuration that was created by him",
-        producer.isConfigurationFromContext(configuration, context))
+  ) {
+    verifyRunConfigurationProducer<P>(expectedSettings, *elements) {
+      setTestTasksChooser(testTasksFilter)
     }
-    producer.onFirstRun(configurationFromContext, context, Runnable {})
-    assertEquals(expectedSettings, configuration.settings.toString())
   }
 
   protected fun assertConfigurationForTask(expectedSettings: String, taskName: String, element: PsiElement) = runReadActionAndWait {

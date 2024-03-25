@@ -36,7 +36,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
     val parent = referenceExpression.parent ?: return false
     if (parent is KtReturnExpression) {
         analyze(parent) {
-            val expectedReturnType = parent.getReturnTargetSymbol()?.returnType ?: return false
+            val expectedReturnType = parent.expectedReturnType() ?: return false
             val expandedClassSymbol = expectedReturnType.expandedClassSymbol
             return expandedClassSymbol != null &&
                     !expectedReturnType.isMarkedNullable &&
@@ -71,6 +71,11 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
 
 private fun isDynamicCall(parent: KtBlockExpression): Boolean = parent.getStrictParentOfType<KtFunctionLiteral>()?.findLambdaReturnType() is KtDynamicType
 
+private fun KtReturnExpression.expectedReturnType(): KtType? = analyze(this) {
+    getReturnTargetSymbol()?.let {
+        (it.psi as? KtFunctionLiteral)?.findLambdaReturnType() ?: it.returnType
+    }
+}
 
 private fun KtFunctionLiteral.findLambdaReturnType(): KtType? {
     val callExpression = getStrictParentOfType<KtCallExpression>() ?: return null

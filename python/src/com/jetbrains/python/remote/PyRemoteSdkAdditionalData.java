@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.intellij.execution.ExecutionException;
@@ -62,8 +63,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     return myRemoteConnectionCredentialsWrapper;
   }
 
-  @Nullable
-  private static PythonSdkFlavor computeFlavor(@Nullable String sdkPath) {
+  private static @Nullable PythonSdkFlavor computeFlavor(@Nullable String sdkPath) {
     if (sdkPath == null) {
       return null;
     }
@@ -156,9 +156,8 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     return myRemoteSdkProperties.getDefaultHelpersName();
   }
 
-  @NotNull
   @Override
-  public PathMappingSettings getPathMappings() {
+  public @NotNull PathMappingSettings getPathMappings() {
     return myRemoteSdkProperties.getPathMappings();
   }
 
@@ -251,9 +250,8 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
     getProducer().produceRemoteSdkCredentials(allowSynchronousInteraction, remoteSdkCredentialsConsumer);
   }
 
-  @NotNull
   @Override
-  public PyRemoteSdkAdditionalData copy() {
+  public @NotNull PyRemoteSdkAdditionalData copy() {
     PyRemoteSdkAdditionalData copy = new PyRemoteSdkAdditionalData(myRemoteSdkProperties.getInterpreterPath(), isRunAsRootViaSudo());
 
     copyTo(copy);
@@ -269,7 +267,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
   @Override
-  public void save(@NotNull final Element rootElement) {
+  public void save(final @NotNull Element rootElement) {
     super.save(rootElement);
 
 
@@ -284,8 +282,7 @@ public class PyRemoteSdkAdditionalData extends PythonSdkAdditionalData implement
   }
 
 
-  @NotNull
-  public static PyRemoteSdkAdditionalData loadRemote(@NotNull Sdk sdk, @Nullable Element element) {
+  public static @NotNull PyRemoteSdkAdditionalData loadRemote(@NotNull Sdk sdk, @Nullable Element element) {
     final String path = sdk.getHomePath();
     assert path != null;
     final PyRemoteSdkAdditionalData data = new PyRemoteSdkAdditionalData(RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path), false);

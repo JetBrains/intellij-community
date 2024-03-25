@@ -1,3 +1,5 @@
+import Anon.E
+
 internal annotation class Anon(val value: String) {
     enum class E {
         A, B
@@ -11,6 +13,6 @@ internal annotation class Anon(val value: String) {
 @Anon("a")
 internal interface I {
     companion object {
-        val e: Anon.E = Anon.field
+        val e: E = Anon.field
     }
 }

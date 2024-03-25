@@ -17,12 +17,12 @@ import java.awt.datatransfer.StringSelection;
 public final class DocRenderCopyHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
 
-  public DocRenderCopyHandler(EditorActionHandler handler) {myOriginalHandler = handler;}
+  public DocRenderCopyHandler(EditorActionHandler handler) { myOriginalHandler = handler; }
 
   @Override
   protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (!editor.getSelectionModel().hasSelection(true)) {
-      DocRenderer.EditorPane pane = DocRenderSelectionManager.getPaneWithSelection(editor);
+      DocRenderer.EditorInlineHtmlPane pane = DocRenderSelectionManager.getPaneWithSelection(editor);
       if (pane != null) {
         String text = pane.getSelectedText();
         if (!StringUtil.isEmpty(text)) {

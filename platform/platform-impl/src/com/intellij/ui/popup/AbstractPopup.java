@@ -2577,6 +2577,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       return false;
     }
 
+    if (myComponent != null) {
+      var prop = myComponent.getClientProperty(UIUtil.ENABLE_IME_FORWARDING_IN_POPUP);
+      if (prop != null && (Boolean)prop) {
+        // Don't handle the event, so that it can be forwarded to the popup
+        return event.isConsumed();
+      }
+    }
+
     // Try forwarding the input method event to various possible speed search handlers
 
     JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;

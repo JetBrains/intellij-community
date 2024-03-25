@@ -2,6 +2,11 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 
 interface WithSealedEntity : WorkspaceEntity {
@@ -20,10 +25,12 @@ interface WithSealedEntity : WorkspaceEntity {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(classes: List<MySealedClass>,
-                        interfaces: List<MySealedInterface>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): WithSealedEntity {
+    operator fun invoke(
+      classes: List<MySealedClass>,
+      interfaces: List<MySealedInterface>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): WithSealedEntity {
       val builder = builder()
       builder.classes = classes.toMutableWorkspaceList()
       builder.interfaces = interfaces.toMutableWorkspaceList()
@@ -36,9 +43,12 @@ interface WithSealedEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: WithSealedEntity,
-                                      modification: WithSealedEntity.Builder.() -> Unit): WithSealedEntity = modifyEntity(
-  WithSealedEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntity(
+  entity: WithSealedEntity,
+  modification: WithSealedEntity.Builder.() -> Unit,
+): WithSealedEntity {
+  return modifyEntity(WithSealedEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 sealed class MySealedClass

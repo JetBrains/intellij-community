@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.actions
 
 import com.intellij.ide.impl.dataRules.GetDataRule
-import com.intellij.ide.navbar.NavBarItem
-import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navbar.impl.*
 import com.intellij.openapi.actionSystem.CommonDataKeys.*
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE
 import com.intellij.openapi.module.ModuleType
+import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 

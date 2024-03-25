@@ -72,7 +72,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                                  @NotNull JEditorPane editorPane,
                                                  boolean highlightActions,
                                                  boolean hasSeparators) {
-    int leftBorder = 10;
+    int leftBorder = 12;
     int rightBorder = 12;
     final class MyPanel extends JPanel implements WidthBasedLayout {
       private MyPanel() {

@@ -364,11 +364,6 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/stepOut/inapplicableFieldWatchpoints.kt");
         }
 
-        @TestMetadata("souSuspendFun.kt")
-        public void testSouSuspendFun() throws Exception {
-            runTest("../testData/stepping/stepOut/souSuspendFun.kt");
-        }
-
         @TestMetadata("stepOutFromInlineFunctionThenResume.kt")
         public void testStepOutFromInlineFunctionThenResume() throws Exception {
             runTest("../testData/stepping/stepOut/stepOutFromInlineFunctionThenResume.kt");
@@ -1588,6 +1583,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
         @TestMetadata("smartStepIntoInterfaceImpl.kt")
         public void testSmartStepIntoInterfaceImpl() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
+        }
+
+        @TestMetadata("smartStepIntoJavaLambda.kt")
+        public void testSmartStepIntoJavaLambda() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoJavaLambda.kt");
         }
 
         @TestMetadata("smartStepIntoJavaSyntheticPropertySetter.kt")

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:JvmName("RootsExtensions")
+
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.platform.workspace.storage.EntityInformation
@@ -158,7 +160,7 @@ open class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrderEnti
             value.entityLinks[EntityLink(true, CONTENTROOTENTITY_CONNECTION_ID)] = this
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToOneParentOfChild(CONTENTROOTENTITY_CONNECTION_ID, this, value)

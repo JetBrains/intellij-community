@@ -205,7 +205,7 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
             value.entityLinks[EntityLink(true, MODULE_CONNECTION_ID)] = data
           }
           // else you're attaching a new entity to an existing entity that is not modifiable
-          _diff.addEntity(value)
+          _diff.addEntity(value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
         }
         if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
           _diff.updateOneToManyParentOfChild(MODULE_CONNECTION_ID, this, value)
@@ -283,7 +283,7 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(SOURCEROOTS_CONNECTION_ID, this, value)
@@ -329,7 +329,7 @@ open class ContentRootEntityImpl(private val dataSource: ContentRootEntityData) 
               }
               // else you're attaching a new entity to an existing entity that is not modifiable
 
-              _diff.addEntity(item_value)
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
             }
           }
           _diff.updateOneToManyChildrenOfParent(EXCLUDEDURLS_CONNECTION_ID, this, value)

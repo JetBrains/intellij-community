@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling
 
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleOlderThan
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
@@ -15,7 +17,10 @@ import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 
-class GradleJvmResolver(private val gradleVersion: GradleVersion) {
+class GradleJvmResolver(
+  private val gradleVersion: GradleVersion,
+  private val versionRestriction: VersionRestriction
+) {
 
   private val sdkType = JavaSdk.getInstance()
 
@@ -28,6 +33,7 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
     return GradleJvmSupportMatrix.isJavaSupportedByIdea(javaVersion)
            && GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)
            && isJavaSupportedByGradleToolingApi(gradleVersion, javaVersion)
+           && !versionRestriction.isRestricted(gradleVersion, javaVersion)
   }
 
   private fun throwSdkNotFoundException(): Nothing {
@@ -78,7 +84,7 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
 
   private fun isJavaSupportedByGradleToolingApi(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean {
     // https://github.com/gradle/gradle/issues/9339
-    if (gradleVersion >= GRADLE_5_6 && gradleVersion < GRADLE_7_2) {
+    if (isGradleAtLeast(gradleVersion, "5.6") && isGradleOlderThan(gradleVersion, "7.3")) {
       if (javaVersion.feature < 11) {
         return false
       }
@@ -120,18 +126,28 @@ class GradleJvmResolver(private val gradleVersion: GradleVersion) {
     return sdk
   }
 
-  companion object {
-    private val GRADLE_5_6 = GradleVersion.version("5.6")
-    private val GRADLE_7_2 = GradleVersion.version("7.2")
+  fun interface VersionRestriction {
 
+    fun isRestricted(gradleVersion: GradleVersion, source: JavaVersion): Boolean
+
+    companion object {
+      @JvmField
+      val NO = VersionRestriction { _, _ -> false }
+    }
+  }
+
+  companion object {
     @JvmStatic
     fun resolveGradleJvm(gradleVersion: GradleVersion, parentDisposable: Disposable): Sdk {
-      return GradleJvmResolver(gradleVersion).resolveGradleJvmImpl(parentDisposable)
+      return GradleJvmResolver(gradleVersion, VersionRestriction.NO)
+        .resolveGradleJvmImpl(parentDisposable)
     }
 
     @JvmStatic
-    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion): String {
-      return GradleJvmResolver(gradleVersion).resolveGradleJvmHomePathImpl()
+    @JvmOverloads
+    fun resolveGradleJvmHomePath(gradleVersion: GradleVersion, versionRestriction: VersionRestriction = VersionRestriction.NO): String {
+      return GradleJvmResolver(gradleVersion, versionRestriction)
+        .resolveGradleJvmHomePathImpl()
     }
   }
 }

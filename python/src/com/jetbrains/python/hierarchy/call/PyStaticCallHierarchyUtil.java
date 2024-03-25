@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hierarchy.call;
 
 import com.intellij.find.findUsages.FindUsagesHandlerBase;
@@ -70,8 +70,7 @@ public final class PyStaticCallHierarchyUtil {
     return callees.freezeValues();
   }
 
-  @NotNull
-  public static Map<PsiElement, Collection<PsiElement>> getCallers(@NotNull PyElement pyElement) {
+  public static @NotNull Map<PsiElement, Collection<PsiElement>> getCallers(@NotNull PyElement pyElement) {
     final MultiMap<PsiElement, PsiElement> callers = MultiMap.createOrderedSet();
     final Collection<UsageInfo> usages = findUsages(pyElement);
 
@@ -108,7 +107,7 @@ public final class PyStaticCallHierarchyUtil {
     return callers.freezeValues();
   }
 
-  private static Collection<UsageInfo> findUsages(@NotNull final PsiElement element) {
+  private static Collection<UsageInfo> findUsages(final @NotNull PsiElement element) {
     final FindUsagesHandlerBase handler = createFindUsageHandler(element);
     if (handler == null) {
       return new ArrayList<>();
@@ -125,8 +124,7 @@ public final class PyStaticCallHierarchyUtil {
   /**
    * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(PsiElement, boolean)
    */
-  @Nullable
-  private static FindUsagesHandlerBase createFindUsageHandler(@NotNull final PsiElement element) {
+  private static @Nullable FindUsagesHandlerBase createFindUsageHandler(final @NotNull PsiElement element) {
     if (element instanceof PyFunction) {
       final TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), null);
       final Collection<PsiElement> superMethods = PySuperMethodsSearch.search((PyFunction)element, true, context).findAll();

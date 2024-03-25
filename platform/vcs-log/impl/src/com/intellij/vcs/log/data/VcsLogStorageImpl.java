@@ -28,7 +28,6 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -97,13 +96,6 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       Disposer.dispose(this);
       throw t;
     }
-  }
-
-  public static @NotNull Function<Integer, Hash> createHashGetter(@NotNull VcsLogStorage storage) {
-    return commitIndex -> {
-      CommitId commitId = storage.getCommitId(commitIndex);
-      return commitId == null ? null : commitId.getHash();
-    };
   }
 
   private @Nullable CommitId doGetCommitId(int index) throws IOException {

@@ -46,7 +46,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
       return
     }
     registrar.startInjecting(language)
-    injectAsOnePlace(host, registrar)
+    injectAsOnePlace(host, registrar, language)
     registrar.doneInjecting()
   }
 
@@ -67,12 +67,15 @@ internal open class CodeFenceInjector : MultiHostInjector {
    * But, the problem is that not all formatters are ready to work in
    * injected context, so we should do it with great care.
    */
-  private fun injectAsOnePlace(host: MarkdownCodeFence, registrar: MultiHostRegistrar) {
+  private fun injectAsOnePlace(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language) {
     val elements = MarkdownCodeFence.obtainFenceContent(host, withWhitespaces = true) ?: return
 
     val first = elements.first()
     val last = elements.last()
 
-    registrar.addPlace(null, null, host, TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength))
+    val surroundings = FenceSurroundingsProvider.EP_NAME.extensionList.find { it.language == language }?.getCodeFenceSurroundings()
+
+    val range = TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength)
+    registrar.addPlace(surroundings?.prefix, surroundings?.suffix, host, range)
   }
 }

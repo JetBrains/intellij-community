@@ -40,6 +40,12 @@ abstract class ProductLoadingStrategy {
       set(value) {
         ourStrategy = value
       }
+
+    /**
+     * Creates an instance of the old path-based strategy even if module-based strategy is used in the product.
+     * This is needed to load plugin descriptors from another IDE during settings import.
+     */
+    internal fun createPathBasedLoadingStrategy(): ProductLoadingStrategy = PathBasedProductLoadingStrategy()
   }
 
   /**
@@ -153,65 +159,79 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
         FileItem(file = file, path = path)
       }
 
-      scope.asyncOrNull(fileItems) {
-        val item = fileItems.first()
-        val dataLoader = MixedDirAndJarDataLoader(files = fileItems, pool = zipFilePool, jarOnly = jarOnly)
-        val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-        val descriptorInput = when {
-          pluginDescriptorData != null -> createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
-          jarOnly || item.path.endsWith(".jar") -> {
-            createNonCoalescingXmlStreamReader(
-              input = dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!,
-              locationSource = item.path,
-            )
-          }
-          else -> {
-            createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
-          }
+      scope.async {
+        try {
+          loadPluginDescriptor(
+            fileItems = fileItems,
+            zipFilePool = zipFilePool,
+            jarOnly = jarOnly,
+            pluginDescriptorData = pluginDescriptorData,
+            context = context,
+            pluginDir = pluginDir,
+          )
         }
-        val raw = readModuleDescriptor(
-          reader = descriptorInput,
-          readContext = context,
-          pathResolver = pluginPathResolver,
-          dataLoader = dataLoader,
-          includeBase = null,
-          readInto = null,
-        )
-
-        val descriptor = IdeaPluginDescriptorImpl(
-          raw = raw,
-          path = pluginDir,
-          isBundled = true,
-          id = null,
-          moduleName = null,
-        )
-        context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
-        descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, isSub = false, dataLoader = dataLoader)
-        descriptor.jarFiles = fileItems.map { it.file }
-        descriptor
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          PluginManagerCore.logger.warn("Cannot load plugin descriptor, files:\n  ${fileItems.joinToString(separator = "\n  ")}", e)
+          null
+        }
       }
     }
+  }
+
+  private suspend fun loadPluginDescriptor(
+    fileItems: Array<FileItem>,
+    zipFilePool: ZipFilePool,
+    jarOnly: Boolean,
+    pluginDescriptorData: ByteArray?,
+    context: DescriptorListLoadingContext,
+    pluginDir: Path,
+  ): IdeaPluginDescriptorImpl {
+    val item = fileItems.first()
+    val dataLoader = MixedDirAndJarDataLoader(files = fileItems, pool = zipFilePool, jarOnly = jarOnly)
+    val pluginPathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
+    val raw = withContext(Dispatchers.IO) {
+      val descriptorInput = when {
+        pluginDescriptorData != null -> createNonCoalescingXmlStreamReader(input = pluginDescriptorData, locationSource = item.path)
+        jarOnly || item.path.endsWith(".jar") -> {
+          createNonCoalescingXmlStreamReader(
+            input = dataLoader.load(PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)!!,
+            locationSource = item.path,
+          )
+        }
+        else -> {
+          createNonCoalescingXmlStreamReader(Files.newInputStream(item.file.resolve(PluginManagerCore.PLUGIN_XML_PATH)), item.path)
+        }
+      }
+      readModuleDescriptor(
+        reader = descriptorInput,
+        readContext = context,
+        pathResolver = pluginPathResolver,
+        dataLoader = dataLoader,
+        includeBase = null,
+        readInto = null,
+      )
+    }
+
+    val descriptor = IdeaPluginDescriptorImpl(
+      raw = raw,
+      path = pluginDir,
+      isBundled = true,
+      id = null,
+      moduleName = null,
+    )
+    context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
+    descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, isSub = false, dataLoader = dataLoader)
+    descriptor.jarFiles = fileItems.map { it.file }
+    return descriptor
   }
 
   override fun isOptionalProductModule(moduleName: String): Boolean = false
 
   override val shouldLoadDescriptorsFromCoreClassPath: Boolean
     get() = true
-}
-
-private fun CoroutineScope.asyncOrNull(files: Array<FileItem>, task: () -> IdeaPluginDescriptorImpl): Deferred<IdeaPluginDescriptorImpl?> {
-  return async(Dispatchers.IO) {
-    try {
-      task()
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      PluginManagerCore.logger.warn("Cannot load plugin descriptor, files:\n  ${files.joinToString(separator = "\n  ")}", e)
-      null
-    }
-  }
 }
 
 private data class FileItem(

@@ -19,8 +19,11 @@ import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 
 /*
 * Logic in IDEA that adds classes to "go to symbol" popup result goes around GotoClassContributor.
@@ -87,6 +90,11 @@ class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<K
     override fun isDumbAware(): Boolean = false
 
     override fun wrapProcessor(processor: Processor<in KtNamedFunction>): Processor<KtNamedFunction> = Processor {
+        // public/private and protected function name stays the same if there are no any annotation modificators like JvmName
+        if (it.annotationEntries.isEmpty() && it.visibilityModifierType() != KtTokens.INTERNAL_KEYWORD && it.containingClassOrObject != null) {
+            return@Processor true
+        }
+
         val method = LightClassUtil.getLightClassMethod(it)
         if (method == null || it.name != method.name) {
             processor.process(it)

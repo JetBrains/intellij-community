@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -49,9 +49,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     myTypes = copyList(types);
   }
 
-  @Nullable
   @Override
-  public Field findFeatureByName(@NotNull String name) {
+  public @Nullable Field findFeatureByName(@NotNull String name) {
     if (!myFields.containsKey(name)) {
       List<Pair<Field, YamlMetaType>> fields = new SmartList<>();
       for (YamlMetaType nextSubType : myTypes) {
@@ -74,9 +73,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return myFields.get(name);
   }
 
-  @NotNull
   @Override
-  public List<String> computeMissingFields(@NotNull Set<String> existingFields) {
+  public @NotNull List<String> computeMissingFields(@NotNull Set<String> existingFields) {
     LinkedHashSet<String> result = new LinkedHashSet<>();
     for (YamlMetaType next : myTypes) {
       if (next instanceof YamlScalarType) {
@@ -91,9 +89,8 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return new LinkedList<>(result);
   }
 
-  @NotNull
   @Override
-  public List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
+  public @NotNull List<Field> computeKeyCompletions(@Nullable YAMLMapping existingMapping) {
     Set<String> processedNames = new HashSet<>();
     LinkedHashSet<Field> result = new LinkedHashSet<>();
     for (YamlMetaType nextSubType : myTypes) {
@@ -156,8 +153,7 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
     return list.isEmpty() ? Collections.emptyList() : new ArrayList<>(list);
   }
 
-  @Nullable
-  private Field mergeFields(@NotNull List<Pair<Field, YamlMetaType>> pairs) {
+  private @Nullable Field mergeFields(@NotNull List<Pair<Field, YamlMetaType>> pairs) {
     switch (pairs.size()) {
       case 0 -> {
         return null;

@@ -1,3 +1,4 @@
+// !ADD_KOTLIN_API
 package test
 
 import kotlinApi.KotlinClassAbstractProperty

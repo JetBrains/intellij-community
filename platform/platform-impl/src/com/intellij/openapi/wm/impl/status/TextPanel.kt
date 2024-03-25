@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
@@ -14,6 +15,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
@@ -55,8 +57,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
 
   override fun updateUI() {
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-    putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS,
-                      UIManager.getDefaults().get(RenderingHints.KEY_FRACTIONALMETRICS) ?: RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+    UISettings.setupFractionalMetrics(this)
     recomputeSize()
   }
 
@@ -91,7 +92,7 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
       y += fontMetrics.leading
     }
 
-    val effect = ClientProperty.get(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY)
+    val effect = getWidgetEffect()
     val foreground: Color = if (isEnabled) {
       when (effect) {
         WidgetEffect.PRESSED -> JBUI.CurrentTheme.StatusBar.Widget.PRESSED_FOREGROUND
@@ -104,6 +105,15 @@ open class TextPanel @JvmOverloads constructor(private val toolTipTextSupplier: 
     }
     g.color = foreground
     g.drawString(s, x, y)
+  }
+
+  private fun getWidgetEffect(): WidgetEffect? {
+    return ClientProperty.get(this, IdeStatusBarImpl.WIDGET_EFFECT_KEY)
+  }
+
+  @TestOnly
+  fun isHoverEffect(): Boolean {
+    return isEnabled && getWidgetEffect() == WidgetEffect.HOVER
   }
 
   protected open fun getTextX(g: Graphics): Int {

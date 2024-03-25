@@ -85,7 +85,7 @@ internal class KotlinChangeSignatureDialog(
             val psiFactory = KtPsiFactory(myDefaultValueContext.project)
 
             val contentElement = psiFactory.createTypeCodeFragment(resultParameterInfo.typeText, typeContext).getContentElement()
-            val presentableText = if (contentElement != null) {
+            val presentableText = if (resultParameterInfo.typeText.isNotEmpty() && contentElement != null) {
                 analyzeInModalWindow(contentElement, KotlinBundle.message("fix.change.signature.prepare")) {
                     contentElement.getKtType().getPresentableText()
                 }
@@ -152,16 +152,18 @@ internal class KotlinChangeSignatureDialog(
 
             parameterInfo.setType((parameter.typeCodeFragment as KtTypeCodeFragment).getCanonicalText(forPreview))
 
-            val codeFragment = parameter.defaultValueCodeFragment as KtExpressionCodeFragment
+            val defaultExpressionText = (parameter.defaultValueCodeFragment as KtExpressionCodeFragment).getContentElement()?.text
 
-            if (!forPreview) AddQualifiersUtil.addQualifiersRecursively(codeFragment)
+            val defaultExpression = defaultExpressionText?.let { KtPsiFactory.contextual(callable).createExpression(defaultExpressionText) }
+
+            if (!forPreview && defaultExpression != null) AddQualifiersUtil.addQualifiersRecursively(defaultExpression)
 
             val oldDefaultValue = parameterInfo.defaultValueForCall
-            if (codeFragment.text != (if (oldDefaultValue != null) oldDefaultValue.text else "")) {
-                parameterInfo.defaultValueForCall = codeFragment.getContentElement()
+            if ((defaultExpression?.text ?: "") != (if (oldDefaultValue != null) oldDefaultValue.text else "")) {
+                parameterInfo.defaultValueForCall = defaultExpression
             }
             if (parameter.parameter.defaultValueAsDefaultParameter) {
-                parameterInfo.defaultValue = codeFragment.getContentElement()
+                parameterInfo.defaultValue = defaultExpression
             }
             parameterInfo
         }
@@ -177,7 +179,7 @@ internal class KotlinChangeSignatureDialog(
             parameterInfos = parametersWithReceiverInFirstPosition,
             receiver = receiverInfo,
             aNewVisibility = myVisibilityPanel.visibility ?: methodDescriptor.visibility,
-            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as KtTypeCodeFragment).getCanonicalText(forPreview), callable)
+            newReturnTypeInfo = KotlinTypeInfo((myReturnTypeCodeFragment as? KtTypeCodeFragment)?.getCanonicalText(forPreview), callable)
         )
     }
 

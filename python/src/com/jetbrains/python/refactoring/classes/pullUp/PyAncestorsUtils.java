@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 
@@ -20,8 +20,7 @@ import java.util.Set;
  * @author Ilya.Kazakevich
  */
 final class PyAncestorsUtils extends NotNullPredicate<PyClass> {
-  @NotNull
-  private final Set<VirtualFile> mySourceRoots;
+  private final @NotNull Set<VirtualFile> mySourceRoots;
 
   /**
    * Returns list of class parents that are under user control
@@ -29,18 +28,17 @@ final class PyAncestorsUtils extends NotNullPredicate<PyClass> {
    * @param pyClass class to  find parents for
    * @return list of parents
    */
-  @NotNull
-  static Collection<PyClass> getAncestorsUnderUserControl(@NotNull final PyClass pyClass) {
+  static @NotNull Collection<PyClass> getAncestorsUnderUserControl(final @NotNull PyClass pyClass) {
     final List<PyClass> allAncestors = pyClass.getAncestorClasses(TypeEvalContext.userInitiated(pyClass.getProject(), pyClass.getContainingFile()));
     return Collections2.filter(allAncestors, new PyAncestorsUtils(PyUtil.getSourceRoots(pyClass)));
   }
 
-  private PyAncestorsUtils(@NotNull final Collection<VirtualFile> sourceRoots) {
+  private PyAncestorsUtils(final @NotNull Collection<VirtualFile> sourceRoots) {
     mySourceRoots = Sets.newHashSet(sourceRoots);
   }
 
   @Override
-  public boolean applyNotNull(@NotNull final PyClass input) {
+  public boolean applyNotNull(final @NotNull PyClass input) {
     return VfsUtilCore.isUnder(input.getContainingFile().getVirtualFile(), mySourceRoots);
   }
 }

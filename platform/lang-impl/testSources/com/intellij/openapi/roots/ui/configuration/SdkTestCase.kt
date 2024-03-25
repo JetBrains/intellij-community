@@ -3,15 +3,17 @@ package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.use
 import com.intellij.testFramework.LightPlatformTestCase
 import org.jdom.Element
 import java.io.File
@@ -20,8 +22,6 @@ import java.util.function.Consumer
 import javax.swing.JComponent
 
 abstract class SdkTestCase : LightPlatformTestCase() {
-
-  val projectSdk get() = ProjectRootManager.getInstance(project).projectSdk
 
   override fun setUp() {
     super.setUp()
@@ -50,51 +50,12 @@ abstract class SdkTestCase : LightPlatformTestCase() {
   private fun registerSdk(sdk: Sdk, isProjectSdk: Boolean = false) {
     registerSdk(sdk, testRootDisposable)
     if (isProjectSdk) {
-      setProjectSdk(sdk)
+      setProjectSdk(project, sdk, testRootDisposable)
     }
   }
 
-  fun registerSdks(vararg sdks: Sdk) {
-    registerSdks(*sdks, parentDisposable = testRootDisposable)
-  }
-
-  private fun setProjectSdk(sdk: Sdk?) {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        val rootManager = ProjectRootManager.getInstance(project)
-        rootManager.projectSdk = sdk
-      }
-    }
-  }
-
-  fun withProjectSdk(sdk: Sdk, action: () -> Unit) {
-    val projectSdk = projectSdk
-    setProjectSdk(sdk)
-    try {
-      action()
-    }
-    finally {
-      setProjectSdk(projectSdk)
-    }
-  }
-
-  fun withRegisteredSdk(sdk: Sdk, isProjectSdk: Boolean = false, action: () -> Unit) {
-    withRegisteredSdks(sdk) {
-      when (isProjectSdk) {
-        true -> withProjectSdk(sdk, action)
-        else -> action()
-      }
-    }
-  }
-
-  fun withRegisteredSdks(vararg sdks: Sdk, action: () -> Unit) {
-    registerSdks(*sdks)
-    try {
-      action()
-    }
-    finally {
-      removeSdks(*sdks)
-    }
+  fun <R> withProjectSdk(sdk: Sdk, action: () -> R): R {
+    return withProjectSdk(project, sdk, action)
   }
 
   interface TestSdkType : JavaSdkType, SdkTypeId {
@@ -261,6 +222,36 @@ abstract class SdkTestCase : LightPlatformTestCase() {
   }
 
   companion object {
+
+    inline fun <R> assertUnexpectedSdksRegistration(action: () -> R): R {
+      return assertNewlyRegisteredSdks({ null }, action = action)
+    }
+
+    inline fun <R> assertNewlyRegisteredSdks(getExpectedNewSdk: () -> Sdk?, isAssertSdkName: Boolean = true, action: () -> R): R {
+      val projectSdkTable = ProjectJdkTable.getInstance()
+      val beforeSdks = projectSdkTable.allJdks.toSet()
+
+      val result = runCatching(action)
+
+      val afterSdks = projectSdkTable.allJdks.toSet()
+      val newSdks = afterSdks - beforeSdks
+      removeSdks(*newSdks.toTypedArray())
+
+      result.onSuccess {
+        val expectedNewSdk = getExpectedNewSdk()
+        if (expectedNewSdk != null) {
+          assertTrue("Expected registration of $expectedNewSdk but found $newSdks", newSdks.size == 1)
+          val newSdk = newSdks.single()
+          assertSdk(expectedNewSdk, newSdk, isAssertSdkName)
+        }
+        else {
+          assertTrue("Unexpected sdk registration $newSdks", newSdks.isEmpty())
+        }
+      }
+
+      return result.getOrThrow()
+    }
+
     fun assertSdk(expected: Sdk?, actual: Sdk?, isAssertSdkName: Boolean = true) {
       if (expected != null && actual != null) {
         if (isAssertSdkName) {
@@ -275,11 +266,9 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     }
 
     fun registerSdk(sdk: Sdk, parentDisposable: Disposable) {
-      invokeAndWaitIfNeeded {
-        runWriteAction {
-          val jdkTable = ProjectJdkTable.getInstance()
-          jdkTable.addJdk(sdk, parentDisposable)
-        }
+      WriteAction.runAndWait<Throwable> {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.addJdk(sdk, parentDisposable)
       }
     }
 
@@ -288,16 +277,41 @@ abstract class SdkTestCase : LightPlatformTestCase() {
     }
 
     fun removeSdk(sdk: Sdk) {
-      invokeAndWaitIfNeeded {
-        runWriteAction {
-          val jdkTable = ProjectJdkTable.getInstance()
-          jdkTable.removeJdk(sdk)
-        }
+      WriteAction.runAndWait<Throwable> {
+        val jdkTable = ProjectJdkTable.getInstance()
+        jdkTable.removeJdk(sdk)
       }
     }
 
     fun removeSdks(vararg sdks: Sdk) {
       sdks.forEach(::removeSdk)
+    }
+
+    fun setProjectSdk(project: Project, sdk: Sdk?, parentDisposable: Disposable) {
+      val rootManager = ProjectRootManager.getInstance(project)
+      val projectSdk = rootManager.projectSdk
+      WriteAction.runAndWait<Throwable> {
+        rootManager.projectSdk = sdk
+      }
+      Disposer.register(parentDisposable, Disposable {
+        WriteAction.runAndWait<Throwable> {
+          rootManager.projectSdk = projectSdk
+        }
+      })
+    }
+
+    inline fun <R> withProjectSdk(project: Project, sdk: Sdk, action: () -> R): R {
+      return Disposer.newDisposable().use { disposable ->
+        setProjectSdk(project, sdk, parentDisposable = disposable)
+        action()
+      }
+    }
+
+    inline fun <R> withRegisteredSdks(vararg sdks: Sdk, action: () -> R): R {
+      return Disposer.newDisposable().use { disposable ->
+        registerSdks(*sdks, parentDisposable = disposable)
+        action()
+      }
     }
   }
 }

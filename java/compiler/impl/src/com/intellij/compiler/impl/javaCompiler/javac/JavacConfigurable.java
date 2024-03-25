@@ -15,14 +15,10 @@
  */
 package com.intellij.compiler.impl.javaCompiler.javac;
 
-import com.intellij.compiler.impl.javaCompiler.CompilerModuleOptionsComponent;
 import com.intellij.compiler.options.ComparingUtils;
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import javax.swing.*;
@@ -31,25 +27,12 @@ import javax.swing.*;
  * @author Eugene Zhuravlev
  */
 public class JavacConfigurable implements Configurable{
-  private JPanel myPanel;
-  private JBCheckBox myCbPreferTargetJdkCompiler;
-  private JCheckBox myCbDebuggingInfo;
-  private JCheckBox myCbDeprecation;
-  private JCheckBox myCbGenerateNoWarnings;
-  private RawCommandLineEditor myAdditionalOptionsField;
-  private CompilerModuleOptionsComponent myOptionsOverride;
-  private final Project myProject;
+  private final JavacConfigurableUi myUi;
   private final JpsJavaCompilerOptions myJavacSettings;
 
   public JavacConfigurable(Project project, final JpsJavaCompilerOptions javacSettings) {
-    myProject = project;
     myJavacSettings = javacSettings;
-    myAdditionalOptionsField.setDialogCaption(JavaCompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
-    myAdditionalOptionsField.setDescriptor(null, false);
-  }
-
-  private void createUIComponents() {
-    myOptionsOverride = new CompilerModuleOptionsComponent(myProject);
+    myUi = new JavacConfigurableUi(project);
   }
 
   @Override
@@ -64,40 +47,40 @@ public class JavacConfigurable implements Configurable{
 
   @Override
   public JComponent createComponent() {
-    return myPanel;
+    return myUi.getPanel();
   }
 
   @Override
   public boolean isModified() {
     boolean isModified = false;
-    isModified |= ComparingUtils.isModified(myCbPreferTargetJdkCompiler, myJavacSettings.PREFER_TARGET_JDK_COMPILER);
-    isModified |= ComparingUtils.isModified(myCbDeprecation, myJavacSettings.DEPRECATION);
-    isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myJavacSettings.DEBUGGING_INFO);
-    isModified |= ComparingUtils.isModified(myCbGenerateNoWarnings, myJavacSettings.GENERATE_NO_WARNINGS);
-    isModified |= ComparingUtils.isModified(myAdditionalOptionsField, myJavacSettings.ADDITIONAL_OPTIONS_STRING);
-    isModified |= !myOptionsOverride.getModuleOptionsMap().equals(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+    isModified |= ComparingUtils.isModified(myUi.preferTargetJdkCompilerCb, myJavacSettings.PREFER_TARGET_JDK_COMPILER);
+    isModified |= ComparingUtils.isModified(myUi.deprecationCb, myJavacSettings.DEPRECATION);
+    isModified |= ComparingUtils.isModified(myUi.debuggingInfoCb, myJavacSettings.DEBUGGING_INFO);
+    isModified |= ComparingUtils.isModified(myUi.generateNoWarningsCb, myJavacSettings.GENERATE_NO_WARNINGS);
+    isModified |= ComparingUtils.isModified(myUi.additionalOptionsField, myJavacSettings.ADDITIONAL_OPTIONS_STRING);
+    isModified |= !myUi.optionsOverrideComponent.getModuleOptionsMap().equals(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
 
     return isModified;
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    myJavacSettings.PREFER_TARGET_JDK_COMPILER =  myCbPreferTargetJdkCompiler.isSelected();
-    myJavacSettings.DEPRECATION =  myCbDeprecation.isSelected();
-    myJavacSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
-    myJavacSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
-    myJavacSettings.ADDITIONAL_OPTIONS_STRING = myAdditionalOptionsField.getText();
+    myJavacSettings.PREFER_TARGET_JDK_COMPILER =  myUi.preferTargetJdkCompilerCb.isSelected();
+    myJavacSettings.DEPRECATION =  myUi.deprecationCb.isSelected();
+    myJavacSettings.DEBUGGING_INFO = myUi.debuggingInfoCb.isSelected();
+    myJavacSettings.GENERATE_NO_WARNINGS = myUi.generateNoWarningsCb.isSelected();
+    myJavacSettings.ADDITIONAL_OPTIONS_STRING = myUi.additionalOptionsField.getText();
     myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.clear();
-    myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myOptionsOverride.getModuleOptionsMap());
+    myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE.putAll(myUi.optionsOverrideComponent.getModuleOptionsMap());
   }
 
   @Override
   public void reset() {
-    myCbPreferTargetJdkCompiler.setSelected(myJavacSettings.PREFER_TARGET_JDK_COMPILER);
-    myCbDeprecation.setSelected(myJavacSettings.DEPRECATION);
-    myCbDebuggingInfo.setSelected(myJavacSettings.DEBUGGING_INFO);
-    myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
-    myAdditionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
-    myOptionsOverride.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+    myUi.preferTargetJdkCompilerCb.setSelected(myJavacSettings.PREFER_TARGET_JDK_COMPILER);
+    myUi.deprecationCb.setSelected(myJavacSettings.DEPRECATION);
+    myUi.debuggingInfoCb.setSelected(myJavacSettings.DEBUGGING_INFO);
+    myUi.generateNoWarningsCb.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
+    myUi.additionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
+    myUi.optionsOverrideComponent.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
   }
 }

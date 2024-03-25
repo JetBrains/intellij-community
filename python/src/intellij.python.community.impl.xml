@@ -18,6 +18,7 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="TOML" enabledByDefault="true" implementationClass="com.jetbrains.python.sdk.poetry.PoetryPackageVersionsInspection" key="INSP.poetry.package.versions.display.name" bundle="messages.PyBundle" groupKey="INSP.GROUP.python" suppressId="PoetryPackageVersions" shortName="PoetryPackageVersionsInspection"/>
 
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
@@ -408,6 +409,9 @@
     <registryKey defaultValue="true" description="Enables an experimental low impact monitoring API for Python 3.12"
                  restartRequired="false" key="python.debug.low.impact.monitoring.api"/>
 
+    <registryKey defaultValue="true" description="Enables the Python debugger Cython speed-ups" restartRequired="false"
+                 key="python.debug.enable.cython.speedups"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
@@ -454,6 +458,7 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.runAnything.PyRunAnythingCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.installer.BinaryInstallerUsagesCollector"/>
 
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"

@@ -1107,14 +1107,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                   boolean allowShadowing,
                                                   Predicate<? super PsiVariable> canBeReused) {
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
-    for (int index = 0; ; index++) {
-      String name = index > 0 ? baseName + index : baseName;
-      if (hasConflictingVariable(place, name, allowShadowing) ||
-          lookForward && hasConflictingVariableAfterwards(scope, name, canBeReused)) {
-        continue;
-      }
-      return name;
-    }
+    return NameUtilCore.uniqName(baseName, name -> hasConflictingVariable(place, name, allowShadowing) ||
+                                                   lookForward && hasConflictingVariableAfterwards(scope, name, canBeReused));
   }
 
   private static boolean hasConflictingVariable(@Nullable PsiElement place, @NotNull String name, boolean allowShadowing) {

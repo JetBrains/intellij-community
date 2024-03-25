@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -13,14 +12,13 @@ import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions;
 import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceChecker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
-import javax.swing.*;
 import java.util.Collection;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspectionBase {
   public boolean myCaseInsensitiveEnum = false;
@@ -32,11 +30,10 @@ public class YamlJsonSchemaHighlightingInspection extends YamlJsonSchemaInspecti
   }
 
   @Override
-  @NotNull
-  protected PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder,
-                                             @NotNull LocalInspectionToolSession session,
-                                             Collection<PsiElement> roots,
-                                             JsonSchemaObject object) {
+  protected @NotNull PsiElementVisitor doBuildVisitor(@NotNull ProblemsHolder holder,
+                                                      @NotNull LocalInspectionToolSession session,
+                                                      Collection<PsiElement> roots,
+                                                      JsonSchemaObject object) {
     JsonComplianceCheckerOptions options = new JsonComplianceCheckerOptions(myCaseInsensitiveEnum);
     return new YamlPsiElementVisitor() {
       @Override

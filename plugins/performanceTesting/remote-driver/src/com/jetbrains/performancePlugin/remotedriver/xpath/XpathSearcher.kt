@@ -14,7 +14,7 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
 internal class XpathSearcher(textToKeyCache: TextToKeyCache) {
-  private val modelCreator = XpathDataModelCreator(textToKeyCache)
+  val modelCreator = XpathDataModelCreator(textToKeyCache)
   private val xPath = XPathFactory.newInstance().newXPath()
 
   fun findComponent(xpathExpression: String, component: Component?): RefDelegate<Component> {
@@ -36,7 +36,7 @@ internal class XpathSearcher(textToKeyCache: TextToKeyCache) {
         val remoteId = it.getAttribute("remoteId")
         val className = it.getAttribute("javaclass")
         val identityHash = it.getAttribute("hashCode")
-        RemoteRefDelegate<Component>(Ref(remoteId, className, identityHash.toInt(), null))
+        RemoteRefDelegate(Ref(remoteId, className, identityHash.toInt(), null))
       }
       else {
         LocalRefDelegate(it.getUserData("component") as Component)

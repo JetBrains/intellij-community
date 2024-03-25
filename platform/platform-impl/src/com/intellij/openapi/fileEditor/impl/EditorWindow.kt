@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
@@ -204,7 +204,6 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     else {
       setTabLayoutPolicy(JTabbedPane.WRAP_TAB_LAYOUT)
     }
-    owner.addWindow(this)
     updateTabsVisibility()
   }
 
@@ -290,7 +289,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   internal fun setComposite(composite: EditorComposite, focusEditor: Boolean) {
-    addComposite(composite, FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
+    addComposite(composite = composite, options = FileEditorOpenOptions(requestFocus = focusEditor, usePreviewTab = composite.isPreview))
   }
 
   internal fun addComposite(composite: EditorComposite, options: FileEditorOpenOptions) {
@@ -308,13 +307,15 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       val file = composite.file
       val template = AllIcons.FileTypes.Text
       val emptyIcon = EmptyIcon.create(template.iconWidth, template.iconHeight)
-      tabbedPane.insertTab(file = file,
-                           icon = emptyIcon,
-                           component = EditorWindowTopComponent(window = this, composite = composite),
-                           tooltip = null,
-                           indexToInsert = indexToInsert,
-                           composite = composite,
-                           parentDisposable = composite)
+      tabbedPane.insertTab(
+        file = file,
+        icon = emptyIcon,
+        component = EditorWindowTopComponent(window = this, composite = composite),
+        tooltip = null,
+        indexToInsert = indexToInsert,
+        composite = composite,
+        parentDisposable = composite,
+      )
       var dragStartIndex: Int? = null
       val hash = file.getUserData(DRAG_START_LOCATION_HASH_KEY)
       if (hash != null && System.identityHashCode(tabbedPane.tabs) == hash) {
@@ -360,11 +361,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   private fun splitAvailable(): Boolean = tabCount >= 1
 
   @JvmOverloads
-  fun split(orientation: Int,
-            forceSplit: Boolean,
-            virtualFile: VirtualFile?,
-            focusNew: Boolean,
-            fileIsSecondaryComponent: Boolean = true): EditorWindow? {
+  fun split(
+    orientation: Int,
+    forceSplit: Boolean,
+    virtualFile: VirtualFile?,
+    focusNew: Boolean,
+    fileIsSecondaryComponent: Boolean = true,
+  ): EditorWindow? {
     checkConsistency()
     if (!splitAvailable()) {
       return null
@@ -374,10 +377,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     if (!forceSplit && inSplitter()) {
       val target = getSiblings()[0]
       if (virtualFile != null) {
-        syncCaretIfPossible(fileEditorManager.openFileImpl4(window = target,
-                                                            _file = virtualFile,
-                                                            entry = null,
-                                                            options = FileEditorOpenOptions(requestFocus = focusNew)).allEditors)
+        syncCaretIfPossible(
+          fileEditorManager.openFileImpl4(
+            window = target,
+            _file = virtualFile,
+            entry = null,
+            options = FileEditorOpenOptions(requestFocus = focusNew)).allEditors,
+        )
       }
       return target
     }
@@ -389,6 +395,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     val splitter = createSplitter(isVertical = orientation == JSplitPane.VERTICAL_SPLIT, proportion = 0.5f, minProp = 0.1f, maxProp = 0.9f)
     splitter.putClientProperty(EditorsSplitters.SPLITTER_KEY, true)
     val result = EditorWindow(owner = owner, owner.coroutineScope.childScope(CoroutineName("EditorWindow")))
+    owner.addWindow(result)
     val selectedComposite = selectedComposite
 
     swapComponents(parent = component.parent as JPanel, toAdd = splitter, toRemove = component)
@@ -1229,7 +1236,7 @@ private class MySplitPainter(
     updateRectangleAndRepaint()
   }
 
-  internal fun updateRectangleAndRepaint() {
+  fun updateRectangleAndRepaint() {
     rectangle = null
     setNeedsRepaint(true)
     val r = tabbedPane.tabs.dropArea

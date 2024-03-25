@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightingPass;
@@ -31,6 +31,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,12 +40,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Document markup manipulation methods during the highlighting.
  * Must be used inside the highlighting process only (e.g., in your {@link HighlightingPass#applyInformationToEditor()})
  */
 public final class UpdateHighlightersUtil {
+  static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static final Comparator<HighlightInfo> BY_ACTUAL_START_OFFSET_NO_DUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
     if (d != 0) return d;
@@ -63,14 +66,18 @@ public final class UpdateHighlightersUtil {
     }
 
     if (!Comparing.equal(o1.forcedTextAttributes, o2.forcedTextAttributes)) {
-      return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
+      return String.valueOf(o1.forcedTextAttributes).compareTo(String.valueOf(o2.forcedTextAttributes));
     }
 
     if (!Comparing.equal(o1.forcedTextAttributesKey, o2.forcedTextAttributesKey)) {
-      return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
+      return String.valueOf(o1.forcedTextAttributesKey).compareTo(String.valueOf(o2.forcedTextAttributesKey));
     }
 
-    return Comparing.compare(o1.getDescription(), o2.getDescription());
+    d = Comparing.compare(o1.getDescription(), o2.getDescription());
+    if (d != 0) {
+      return d;
+    }
+    return Integer.compare(System.identityHashCode(o1), System.identityHashCode(o2));
   };
 
   private static boolean isCoveredByOffsets(@NotNull HighlightInfo info, @NotNull HighlightInfo coveredBy) {
@@ -92,6 +99,17 @@ public final class UpdateHighlightersUtil {
       List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
       for (HighlightInfo info : highlightInfos) {
         if (accept(project, info)) {
+          result.add(info);
+        }
+      }
+      return result;
+    }
+    static @NotNull List<HighlightInfo> applyPostAndAdditionalFilter(@NotNull Project project,
+                                                                     @NotNull List<? extends HighlightInfo> highlightInfos,
+                                                                     @NotNull Predicate<? super HighlightInfo> additionalFilter) {
+      List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
+      for (HighlightInfo info : highlightInfos) {
+        if (accept(project, info) && additionalFilter.test(info)) {
           result.add(info);
         }
       }
@@ -145,12 +163,8 @@ public final class UpdateHighlightersUtil {
         psiFile = ((PsiCompiledFile)psiFile).getDecompiledPsiFile();
       }
     }
-    DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     if (psiFile != null) {
-      codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
-    }
-
-    if (psiFile != null) {
+      DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(group, psiFile);
       HighlightingSessionImpl.runInsideHighlightingSessionInEDT(psiFile, colorsScheme, ProperTextRange.create(startOffset, endOffset), false, session -> {
         setHighlightersInRange(document, range, new ArrayList<>(infos), markup, group, session);
       });
@@ -212,7 +226,6 @@ public final class UpdateHighlightersUtil {
     }
   }
 
-  private static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static boolean incinerateObsoleteHighlighters(@NotNull HighlightersRecycler infosToRemove, @NotNull HighlightingSession session) {
     boolean changed = false;
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
@@ -456,13 +469,10 @@ public final class UpdateHighlightersUtil {
   }
 
   /**
-   * Remove all highlighters with exactly the given range from {@link DocumentMarkupModel}.
-   * This might be useful in quick fixes and intention actions to provide immediate feedback.
-   * Note that all highlighters at the given range are removed, not only the ones produced by your inspection,
-   * but most likely that will look fine:
-   * they'll be restored when the new highlighting pass is finished.
-   * This method currently works in O(total highlighter count in file) time.
+   * Do not use, this method might break highlighting, left for binary compatibility only
    */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
     if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
     ThreadingAssertions.assertEventDispatchThread();
@@ -475,5 +485,4 @@ public final class UpdateHighlightersUtil {
       }
     }
   }
-
 }

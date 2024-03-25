@@ -10,14 +10,17 @@ import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 
@@ -31,8 +34,9 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     }
   }
 
+  @OptIn(IntellijInternalApi::class)
   override suspend fun execute(project: Project) {
-    val checker = WindowsDefenderChecker.getInstance()
+    val checker = serviceAsync<WindowsDefenderChecker>()
 
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
@@ -40,7 +44,14 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    val protection = checker.isRealTimeProtectionEnabled
+    @Suppress("OPT_IN_USAGE")
+    computeDetached {
+      checkDefenderStatus(project, checker)
+    }
+  }
+
+  private suspend fun checkDefenderStatus(project: Project, checker: WindowsDefenderChecker) {
+    val protection = checker.isRealTimeProtectionEnabled()
     WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
     if (protection != true) {
       LOG.info("real-time protection: ${protection}")

@@ -116,7 +116,7 @@ public final class RawUseOfParameterizedTypeInspection extends BaseInspection {
         return new CastQuickFix(typeElement.getText() + StreamEx.constant("?", count).joining(",", "<", ">"));
       }
       else if (parent instanceof PsiNewExpression newExpression) {
-        if (!PsiUtil.isLanguageLevel7OrHigher(parent)) return null;
+        if (!PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, parent)) return null;
         if (newExpression.isArrayCreation() || newExpression.getAnonymousClass() != null) return null;
         PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
         if (expectedType == null || expectedType.equals(PsiTypes.nullType()) || 

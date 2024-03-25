@@ -19,7 +19,7 @@ public abstract class MavenSimpleProjectComponent {
 
   protected boolean isHeadless() {
     return ApplicationManager.getApplication().isHeadlessEnvironment() &&
-           !WarmupStatus.InProgress.INSTANCE.equals(WarmupStatus.Companion.currentStatus(ApplicationManager.getApplication()));
+           !WarmupStatus.InProgress.INSTANCE.equals(WarmupStatus.Companion.currentStatus());
   }
 
   protected boolean isDefault() {

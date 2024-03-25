@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.Nullability;
@@ -45,7 +45,6 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
   }
 
   @Override
-  @Nullable
   protected LocalQuickFix buildFix(Object... infos) {
     final String text = (String)infos[0];
     return new UnnecessaryToStringCallFix(text);
@@ -119,12 +118,16 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
     @NonNls final String referenceName = methodExpression.getReferenceName();
     if (!"toString".equals(referenceName) || !call.getArgumentList().isEmpty()) return false;
     final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
-    if (qualifier == null || qualifier.getType() instanceof PsiArrayType) {
+    if (qualifier == null) {
+      return false;
+    }
+    PsiType type = qualifier.getType();
+    if (type instanceof PsiArrayType) {
       // do not warn on nonsensical code
       return false;
     }
     if (qualifier instanceof PsiSuperExpression) return false;
     final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, CommonClassNames.JAVA_LANG_THROWABLE);
-    return !ExpressionUtils.isConversionToStringNecessary(call, throwable);
+    return !ExpressionUtils.isConversionToStringNecessary(call, throwable, type);
   }
 }

@@ -1,5 +1,4 @@
 // IGNORE_K2
-//class
 abstract class Shape {
 	public String color;
 	public Shape() {

@@ -78,6 +78,8 @@ import java.util.zip.ZipFile;
 import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
 import static com.intellij.openapi.application.ImportOldConfigsState.InitialImportScenario.*;
+import static com.intellij.openapi.application.migrations.AIAssistant241Kt.AI_PLUGIN_ID;
+import static com.intellij.openapi.application.migrations.AIAssistant241Kt.migrateAiForToolbox;
 import static com.intellij.openapi.application.migrations.PluginMigrationKt.MIGRATION_INSTALLED_PLUGINS_TXT;
 import static com.intellij.platform.ide.bootstrap.SplashManagerKt.hideSplash;
 
@@ -616,6 +618,16 @@ public final class ConfigImportHelper {
     return name;
   }
 
+  private static @Nullable String parseVersionFromConfig(@NotNull Path configDir) {
+    String nameWithVersion = getNameWithVersion(configDir);
+    Matcher m = matchNameWithVersion(nameWithVersion);
+    String version = null;
+    if (m.matches()) {
+      version = m.group(1);
+    }
+    return version;
+  }
+
   private static @Nullable String getPrefixFromSelector(@Nullable String nameWithSelector) {
     if (nameWithSelector != null) {
       Matcher m = SELECTOR_PATTERN.matcher(nameWithSelector);
@@ -888,6 +900,15 @@ public final class ConfigImportHelper {
     // copying plugins, unless the target directory is not empty (the plugin manager will sort out incompatible ones)
     if (!isEmptyDirectory(newPluginsDir)) {
       log.info("non-empty plugins directory: " + newPluginsDir);
+
+      // ad-hoc migration for AI Assistant in Toolbox
+      var pluginsToDownload = new ArrayList<IdeaPluginDescriptor>();
+      var previousVersion = parseVersionFromConfig(oldConfigDir);
+      migrateAiForToolbox(newPluginsDir, newConfigDir, previousVersion, log, pluginsToDownload);
+      if (!pluginsToDownload.isEmpty()) {
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, pluginsToDownload);
+        writeMigrationResult(newConfigDir, AI_PLUGIN_ID, log);
+      }
     }
     else {
       Predicate<IdeaPluginDescriptor> hasPendingUpdate =
@@ -997,28 +1018,29 @@ public final class ConfigImportHelper {
                                            List<IdeaPluginDescriptor> toDownload,
                                            Logger log) {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+    String previousVersion = parseVersionFromConfig(oldConfigDir);
 
-    String nameWithVersion = getNameWithVersion(oldConfigDir);
-    Matcher m = matchNameWithVersion(nameWithVersion);
-    String previousVersion = null;
-    if (m.matches()) {
-      previousVersion = m.group(1);
-    }
-
-    var options = new PluginMigrationOptions(previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, log);
+    var options = new PluginMigrationOptions(previousVersion, currentProductVersion,
+                                             newConfigDir, oldConfigDir,
+                                             toMigrate, toDownload,
+                                             log);
 
     performMigrations(options);
 
-    var resultFile = newConfigDir.resolve(MIGRATION_INSTALLED_PLUGINS_TXT);
     var downloadIds = toDownload.stream()
       .map(descriptor -> descriptor.getPluginId().getIdString())
       .collect(Collectors.joining("\n"));
+    writeMigrationResult(newConfigDir, downloadIds, options.getLog());
+  }
+
+  private static void writeMigrationResult(Path newConfigDir, String downloadIds, Logger log) {
+    var resultFile = newConfigDir.resolve(MIGRATION_INSTALLED_PLUGINS_TXT);
 
     try {
       Files.writeString(resultFile, downloadIds);
     }
     catch (IOException e) {
-      options.getLog().error("Unable to write auto install result", e);
+      log.error("Unable to write auto install result", e);
     }
   }
 

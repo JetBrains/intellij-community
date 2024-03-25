@@ -23,6 +23,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,13 +136,10 @@ public final class IdeBackgroundUtil {
   public static void createTemporaryBackgroundTransform(@NotNull JPanel root, String tmp, @NotNull Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
     PainterHelper.initWallpaperPainter(tmp, paintersHelper);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) return v;
-      return MyGraphics.wrap(v, paintersHelper, t);
-    }));
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
   }
 
-  public static void createTemporaryBackgroundTransform(JPanel root,
+  public static void createTemporaryBackgroundTransform(JComponent root,
                                                         Image image,
                                                         Fill fill,
                                                         Anchor anchor,
@@ -150,11 +148,21 @@ public final class IdeBackgroundUtil {
                                                         Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
     paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) {
-        return v;
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  private static void createTemporaryBackgroundTransform(JComponent root, PainterHelper painterHelper, Disposable disposable) {
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((c, g) -> {
+      if (!UIUtil.isAncestor(root, c)) {
+        return g;
       }
-      return MyGraphics.wrap(v, paintersHelper, t);
+
+      Boolean noBackground = ClientProperty.get(c, NO_BACKGROUND);
+      if (Boolean.TRUE.equals(noBackground)) {
+        return MyGraphics.unwrap(g);
+      }
+
+      return MyGraphics.wrap(g, painterHelper, c);
     }));
   }
 
@@ -178,6 +186,14 @@ public final class IdeBackgroundUtil {
   }
 
   static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val instanceof Boolean;
+    }
+  };
+
+  @ApiStatus.Internal
+  public static final RenderingHints.Key NO_BACKGROUND_HINT = new RenderingHints.Key(2) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;
@@ -208,6 +224,11 @@ public final class IdeBackgroundUtil {
     @Override
     public @NotNull Graphics create() {
       return new MyGraphics(getDelegate().create(), helper, offsets, preserved);
+    }
+
+    private Boolean isNoBackground() {
+      Object obj = getRenderingHint(NO_BACKGROUND_HINT);
+      return obj != null && Boolean.TRUE.equals(obj);
     }
 
     @Override
@@ -311,7 +332,7 @@ public final class IdeBackgroundUtil {
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
-      if (width <= 1 || height <= 1) return;
+      if (width <= 1 || height <= 1 || isNoBackground()) return;
       boolean hasAlpha;
       if (reason instanceof Color) {
         hasAlpha = ((Color)reason).getAlpha() < 255;

@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.ShutDownTracker;
-import org.apache.log4j.Level;
-import org.apache.log4j.Priority;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -13,6 +12,7 @@ import java.nio.file.Path;
 import java.util.IdentityHashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public class JulLogger extends Logger {
@@ -37,82 +37,48 @@ public class JulLogger extends Logger {
 
   @Override
   public boolean isTraceEnabled() {
-    return myLogger.isLoggable(java.util.logging.Level.FINER);
+    return myLogger.isLoggable(Level.FINER);
   }
 
   @Override
   public void trace(String message) {
-    myLogger.log(java.util.logging.Level.FINER, message);
+    myLogger.log(Level.FINER, message);
   }
 
   @Override
   public void trace(@Nullable Throwable t) {
-    myLogger.log(java.util.logging.Level.FINER, "", t);
+    myLogger.log(Level.FINER, "", t);
   }
 
   @Override
   public boolean isDebugEnabled() {
-    return myLogger.isLoggable(java.util.logging.Level.FINE);
+    return myLogger.isLoggable(Level.FINE);
   }
 
   @Override
   public void debug(String message, @Nullable Throwable t) {
-    myLogger.log(java.util.logging.Level.FINE, message, t);
+    myLogger.log(Level.FINE, message, t);
   }
 
   @Override
   public void info(String message, @Nullable Throwable t) {
-    myLogger.log(java.util.logging.Level.INFO, message, t);
+    myLogger.log(Level.INFO, message, t);
   }
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
-    myLogger.log(java.util.logging.Level.WARNING, message, t);
+    myLogger.log(Level.WARNING, message, t);
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     String fullMessage = details.length > 0 ? message + "\nDetails: " + String.join("\n", details) : message;
-    myLogger.log(java.util.logging.Level.SEVERE, fullMessage, t);
+    myLogger.log(Level.SEVERE, fullMessage, t);
   }
 
   @Override
   public void setLevel(@NotNull LogLevel level) {
     myLogger.setLevel(level.getLevel());
-  }
-
-  @Override
-  public void setLevel(@NotNull Level level) {
-    switch (level.toInt()) {
-      case Priority.OFF_INT:
-        myLogger.setLevel(java.util.logging.Level.OFF);
-        break;
-
-      case Priority.FATAL_INT:
-      case Priority.ERROR_INT:
-        myLogger.setLevel(java.util.logging.Level.SEVERE);
-        break;
-
-      case Priority.WARN_INT:
-        myLogger.setLevel(java.util.logging.Level.WARNING);
-        break;
-
-      case Priority.INFO_INT:
-        myLogger.setLevel(java.util.logging.Level.INFO);
-        break;
-
-      case Priority.DEBUG_INT:
-        myLogger.setLevel(java.util.logging.Level.FINE);
-        break;
-
-      case Level.TRACE_INT:
-        myLogger.setLevel(java.util.logging.Level.FINER);
-        break;
-
-      case Priority.ALL_INT:
-        myLogger.setLevel(java.util.logging.Level.ALL);
-        break;
-    }
   }
 
   public static void clearHandlers() {
@@ -125,47 +91,29 @@ public class JulLogger extends Logger {
     }
   }
 
-  public static void configureLogFileAndConsole(@NotNull Path logFilePath,
-                                                boolean appendToFile,
-                                                boolean showDateInConsole,
-                                                boolean enableConsoleLogger,
-                                                @Nullable Runnable onRotate) {
-    long limit = 10_000_000;
-    String limitProp = System.getProperty("idea.log.limit");
-    if (limitProp != null) {
-      try {
-        limit = Long.parseLong(limitProp);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-
-    int count = 12;
-    String countProp = System.getProperty("idea.log.count");
-    if (countProp != null) {
-      try {
-        count = Integer.parseInt(countProp);
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-
-    boolean logConsole = Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
+  @ApiStatus.Internal
+  public static void configureLogFileAndConsole(
+    @NotNull Path logFilePath,
+    boolean appendToFile,
+    boolean enableConsoleLogger,
+    boolean showDateInConsole,
+    @Nullable Runnable onRotate
+  ) {
+    long limit = Long.getLong("idea.log.limit", 10_000_000);
+    int count = Integer.getInteger("idea.log.count", 12);
 
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
 
     Handler fileHandler = new RollingFileHandler(logFilePath, limit, count, appendToFile, onRotate);
     fileHandler.setFormatter(layout);
-    fileHandler.setLevel(java.util.logging.Level.FINEST);
+    fileHandler.setLevel(Level.FINEST);
     rootLogger.addHandler(fileHandler);
 
-    if (enableConsoleLogger && logConsole) {
+    if (enableConsoleLogger) {
       Handler consoleHandler = new OptimizedConsoleHandler();
       consoleHandler.setFormatter(new IdeaLogRecordFormatter(showDateInConsole, layout));
-      consoleHandler.setLevel(java.util.logging.Level.WARNING);
+      consoleHandler.setLevel(Level.WARNING);
       rootLogger.addHandler(consoleHandler);
     }
   }

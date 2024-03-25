@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.project.stateStore
+import com.intellij.util.LocalizationUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.ResourceUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -28,9 +29,9 @@ import com.intellij.util.lang.UrlClassLoader
 import org.apache.velocity.runtime.ParserPool
 import org.apache.velocity.runtime.RuntimeSingleton
 import org.apache.velocity.runtime.directive.Stop
-import java.io.File
 import java.io.IOException
 import java.net.URL
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.MessageFormat
@@ -38,6 +39,7 @@ import java.util.*
 import java.util.function.BiPredicate
 import java.util.function.Function
 import java.util.function.Supplier
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val DEFAULT_TEMPLATES_ROOT = FileTemplatesLoader.TEMPLATES_DIR
 private const val DESCRIPTION_FILE_EXTENSION = "html"
@@ -240,14 +242,15 @@ private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTe
 
   val descriptionPaths: MutableSet<String> = HashSet()
   for (path in children) {
-    if (path == "default.html") {
-      result.defaultTemplateDescription = createSupplierForUrlSource(url, path)
+    if (path.endsWith("includes/default.html")) {
+      result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { loadTemplate(url, it) } }
     }
-    else if (path == "includes/default.html") {
-      result.defaultIncludeDescription = createSupplierForUrlSource(url, path)
+    else if (path.endsWith("default.html")) {
+      result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { loadTemplate(url, it) } }
     }
     else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
-      descriptionPaths.add(path)
+      val filePath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path).invariantSeparatorsPathString
+      descriptionPaths.add(filePath)
     }
   }
 
@@ -255,17 +258,17 @@ private fun loadDefaultsFromJar(url: URL, prefixes: List<String>, result: FileTe
                    prefixes = prefixes,
                    descriptionPaths = descriptionPaths,
                    result = result,
-                   descriptionLoader = { loadTemplate(url, it) }) {
-    createSupplierForUrlSource(url, it)
-  }
+                   descriptionLoader = { loadTemplate(url, it) },
+                   dataLoader = { loadTemplate(url, it) }
+  )
 }
 
-private inline fun processTemplates(files: Sequence<String>,
+private fun processTemplates(files: Sequence<String>,
                                     prefixes: List<String>,
                                     descriptionPaths: MutableSet<String>,
                                     result: FileTemplateLoadResult,
-                                    descriptionLoader: Function<String, String>,
-                                    dataLoader: (path: String) -> Supplier<String>) {
+                                    descriptionLoader: Function<String, String?>,
+                             dataLoader: Function<String, String?>) {
   for (path in files) {
     val prefix = prefixes.firstOrNull {
       if (it.isEmpty()) {
@@ -288,9 +291,10 @@ private inline fun processTemplates(files: Sequence<String>,
     val descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths)
     val template = DefaultTemplate(name = templateName,
                                    extension = extension,
-                                   textSupplier = dataLoader(path),
+                                   textLoader = dataLoader,
                                    descriptionLoader = descriptionLoader.takeIf { descriptionPath != null },
-                                   descriptionPath = descriptionPath)
+                                   descriptionPath = descriptionPath,
+                                   templatePath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path))
     result.prefixToTemplates.computeIfAbsent(prefix) { mutableListOf() }.add(template)
   }
 }
@@ -298,18 +302,18 @@ private inline fun processTemplates(files: Sequence<String>,
 private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult, prefixes: List<String>) {
   val descriptionPaths = HashSet<String>()
   val templateFiles = mutableListOf<String>()
-  val rootFile = urlToPath(root)
-
-  Files.find(rootFile, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
+  val pathToFileTemplate = urlToPath(root)
+  val rootFolder = pathToFileTemplate.parent
+  Files.find(pathToFileTemplate, Int.MAX_VALUE, BiPredicate { _, a -> a.isRegularFile }).use {
     it.forEach { file ->
-      val path = rootFile.relativize(file).toString().replace(File.separatorChar, '/')
-      if (path.endsWith("/default.html")) {
-        result.defaultTemplateDescription = Supplier { Files.readString(file) }
+      val path = pathToFileTemplate.relativize(file).invariantSeparatorsPathString
+      if (path.endsWith("includes/default.html")) {
+        result.defaultIncludeDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
       }
-      else if (path.endsWith("/includes/default.html")) {
-        result.defaultIncludeDescription = Supplier { Files.readString(file) }
+      else if (path.endsWith("default.html")) {
+        result.defaultTemplateDescription = Supplier { getLocalizedContent(path) { filePath -> loadFileContent(rootFolder, filePath) } }
       }
-      else if (path.endsWith(".html")) {
+      else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path)
       }
       else if (path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
@@ -322,9 +326,39 @@ private fun loadDefaultsFromDirectory(root: URL, result: FileTemplateLoadResult,
                    prefixes = prefixes,
                    descriptionPaths = descriptionPaths,
                    result = result,
-                   descriptionLoader = { Files.readString(rootFile.resolve(it)) }) {
-    Supplier { Files.readString(rootFile.resolve(it)) }
+                   descriptionLoader = { loadFileContent(rootFolder, it) },
+                   dataLoader = {
+                     loadFileContent(rootFolder, it) })
+}
+
+private fun getLocalizedContent(path: String, pathResolver: Function<String, String?>): String {
+  val fullPath = Path.of(DEFAULT_TEMPLATES_ROOT).resolve(path)
+  if (LocalizationUtil.getLocaleFromPlugin() != null) {
+    val localizedPaths = LocalizationUtil.getLocalizedPaths(fullPath).map { it.invariantSeparatorsPathString }
+    for (localizedPath in localizedPaths) {
+      pathResolver.apply(localizedPath)?.let { return it }
+    }
   }
+  val result = pathResolver.apply(fullPath.invariantSeparatorsPathString)
+  if (result == null) {
+    logger<FileTemplatesLoader>().error("Cannot find file by path: $path")
+    return "Unexpected error occurred"
+  }
+  return result
+}
+
+private fun loadFileContent(root: Path, filePath: String): String? {
+  try {
+    val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
+    return pluginClassLoader?.let {
+      ResourceUtil.getResourceAsBytesSafely(filePath, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
+    } ?: ResourceUtil.getResourceAsBytesSafely(filePath, FileTemplatesLoader::class.java.classLoader)?.toString(StandardCharsets.UTF_8)
+           ?: Files.readString(root.resolve(filePath))
+  }
+  catch (e: IOException) {
+    logger<FileTemplatesLoader>().info(e)
+  }
+  return null
 }
 
 private fun urlToPath(root: URL): Path {
@@ -353,22 +387,22 @@ private class LoadedConfiguration(@JvmField val managers: Map<String, FTManager>
   fun getManager(kind: String) = managers.get(kind)!!
 }
 
-private fun createSupplierForUrlSource(root: URL, path: String): Supplier<String> {
-  // no need to cache the result - it is client responsibility, see DefaultTemplate.getDescriptionText for example
-  return object : Supplier<String> {
-    override fun get() = loadTemplate(root, path)
-
-    override fun toString() = "(root=$root, path=$path)"
-  }
-}
-
-private fun loadTemplate(root: URL, path: String): String {
-  // root url should be used as context to use provided handler to load data to avoid using a generic one
-  return try {
-    ResourceUtil.loadText(URL(root, "${FileTemplatesLoader.TEMPLATES_DIR}/${path.trimEnd('/')}").openStream())
+private fun loadTemplate(root: URL, path: String): String? {
+  try {
+    val pluginClassLoader = LocalizationUtil.getPluginClassLoader()
+    val result = pluginClassLoader?.let {
+      ResourceUtil.getResourceAsBytesSafely(path, pluginClassLoader)?.toString(StandardCharsets.UTF_8)
+    } ?: FileTemplatesLoader::class.java.classLoader.let {
+      ResourceUtil.getResourceAsBytesSafely(path, it)?.toString(StandardCharsets.UTF_8)
+    }
+    if (result == null) {
+      val url = URL(root.protocol, root.host, root.port, root.path.replace(DEFAULT_TEMPLATES_ROOT, path))
+      return ResourceUtil.loadText(url.openStream())
+    }
+    return result
   }
   catch (e: IOException) {
-    logger<FileTemplatesLoader>().error(e)
-    ""
+    logger<FileTemplatesLoader>().info(e)
   }
+  return null
 }

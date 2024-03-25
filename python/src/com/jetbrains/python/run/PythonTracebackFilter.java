@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.filters.Filter;
@@ -24,14 +24,13 @@ public class PythonTracebackFilter implements Filter {
     myWorkingDirectory = project.getBasePath();
   }
 
-  public PythonTracebackFilter(final Project project, @Nullable final String workingDirectory) {
+  public PythonTracebackFilter(final Project project, final @Nullable String workingDirectory) {
     myProject = project;
     myWorkingDirectory = workingDirectory;
   }
 
   @Override
-  @Nullable
-  public final Result applyFilter(@NotNull final String line, final int entireLength) {
+  public final @Nullable Result applyFilter(final @NotNull String line, final int entireLength) {
 
     for (final TraceBackParser parser : TraceBackParser.PARSERS) {
       final LinkInTrace linkInTrace = parser.findLinkInTrace(line);
@@ -58,8 +57,7 @@ public class PythonTracebackFilter implements Filter {
     return null;
   }
 
-  @Nullable
-  protected VirtualFile findFileByName(@NotNull final String fileName) {
+  protected @Nullable VirtualFile findFileByName(final @NotNull String fileName) {
     VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fileName);
     if (vFile == null && !StringUtil.isEmptyOrSpaces(myWorkingDirectory)) {
       vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(myWorkingDirectory, fileName));

@@ -358,6 +358,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
+                public static class TestPropertyDelegate extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("propertyDelegate.0.kt")
+                    public void testPropertyDelegate() throws Exception {
+                        runTest("../../idea/tests/testData/findUsages/kotlin/conventions/components/propertyDelegate.0.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("../../idea/tests/testData/findUsages/kotlin/conventions/components")
                 public static class TestRecursiveDataClass1 extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -1887,6 +1900,97 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
                 @TestMetadata("kotlinOverloadAndExtensionUsages5.0.kt")
                 public void testKotlinOverloadAndExtensionUsages5() throws Exception {
                     runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages5.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesSameClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesSameClass.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesSameClass() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSameClass.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesSuperClass extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesSuperClass.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesSuperClass() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesSuperClass.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevel extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevel.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesTopLevel() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevel.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentFiles() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentFiles.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelDifferentReceivers.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelExtension extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelExtension.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesTopLevelExtension() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelExtension.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestKotlinOverloadAndExtensionUsagesTopLevelVsInstance extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinOverloadAndExtensionUsagesTopLevelVsInstance.0.kt")
+                public void testKotlinOverloadAndExtensionUsagesTopLevelVsInstance() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsagesTopLevelVsInstance.0.kt");
                 }
             }
 

@@ -1,23 +1,35 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.impl.huggingFace.api
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCache
-import com.intellij.python.community.impl.huggingFace.service.HuggingFaceSafeExecutor
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCacheEntry
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCardsCache
+import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationPlaceholdersUtil
+import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceReadmeCleaner
+import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCoroutine
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import java.time.Instant
 
+@ApiStatus.Internal
 object HuggingFaceApi {
-  fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int) {
-    val executor = HuggingFaceSafeExecutor.instance
+  private val nextLinkRegex = Regex("""<(.+)>; rel="next"""")
 
-    executor.asyncSuspend("FetchHuggingFace$endpoint") {
+  fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int) {
+
+    HuggingFaceCoroutine.Utils.ioScope.launch {
       var nextPageUrl: String? = HuggingFaceURLProvider.fetchApiDataUrl(endpoint).toString()
 
       while (nextPageUrl != null && cache.getCacheSize() < maxCount) {
         val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
+          .getOrDefault(HfHttpResponseWithHeaders(null, null))
+
         response.content?.let {
           val dataMap = parseBasicEntityData(endpoint, it)
           cache.saveEntities(dataMap)
@@ -27,23 +39,21 @@ object HuggingFaceApi {
     }
   }
 
-  suspend fun performSearch(query: String, tags: String?): Map<String, HuggingFaceEntityBasicApiData> {
-    val queryUrl = HuggingFaceURLProvider.getModelSearchQuery(query, tags)
-    val executor = HuggingFaceSafeExecutor.instance
+  suspend fun performSearch(query: String, tags: String?, sortKey: HuggingFaceModelSortKey
+  ): Map<String, HuggingFaceEntityBasicApiData> = withContext(HuggingFaceCoroutine.Utils.ioScope.coroutineContext) {
+    val queryUrl = HuggingFaceURLProvider.getModelSearchQuery(query, tags, sortKey)
 
-    return executor.asyncSuspend("SearchHuggingFace") {
-      // todo: add pagination - but only if needed (user scrolls down)
-      val nextPageUrl: String = queryUrl.toString()
-      val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
-      response.content?.let {
-        val dataMap = parseBasicEntityData(HuggingFaceEntityKind.MODEL, it)
-        dataMap
-      } ?: emptyMap()
-    }.await()
+    val nextPageUrl: String = queryUrl.toString()
+    val response = HuggingFaceHttpClient.downloadContentAndHeaders(nextPageUrl)
+      .getOrDefault(HfHttpResponseWithHeaders(null, null))
+    response.content?.let {
+      val dataMap = parseBasicEntityData(HuggingFaceEntityKind.MODEL, it)
+      dataMap
+    } ?: emptyMap()
   }
 
   private fun extractNextPageUrl(linkHeader: String?): String? {
-    val nextLinkMatch = Regex("""<(.+)>; rel="next"""").find(linkHeader ?: "")
+    val nextLinkMatch = nextLinkRegex.find(linkHeader ?: "")
     return nextLinkMatch?.groupValues?.get(1)
   }
 
@@ -52,34 +62,36 @@ object HuggingFaceApi {
     json: String
   ): Map<String, HuggingFaceEntityBasicApiData> {
     val objectMapper = ObjectMapper().registerKotlinModule()
-    val jsonArray: JsonNode = objectMapper.readTree(json)
+    val jsonArray: ArrayNode = objectMapper.readTree(json) as ArrayNode
     val modelDataMap = mutableMapOf<String, HuggingFaceEntityBasicApiData>()
 
-    jsonArray.forEach { element ->
-      val jsonObject: JsonNode = element
-      val id = jsonObject.get("id")?.asText()?.takeIf { it.isNotEmpty() } ?: return@forEach
-
-      @NlsSafe val nlsSafeId = id
-      @NlsSafe val pipelineTag = jsonObject.get("pipeline_tag")?.asText() ?: "unknown"
-      val gated = jsonObject.get("gated")?.asText() ?: "true"
-      val downloads = jsonObject.get("downloads")?.asInt() ?: -1
-      val likes = jsonObject.get("likes")?.asInt() ?: -1
-      val lastModified = jsonObject.get("lastModified")?.asText() ?: "1000-01-01T01:01:01.000Z"
-      val libraryName = jsonObject.get("library_name")?.asText() ?: "unknown"
-
-      val modelData = HuggingFaceEntityBasicApiData(
-        endpointKind,
-        nlsSafeId,
-        gated,
-        downloads,
-        likes,
-        lastModified,
-        libraryName,
-        pipelineTag,
-      )
-      modelDataMap[nlsSafeId] = modelData
+    jsonArray.forEach { jsonNode ->
+      val data = objectMapper.treeToValue(jsonNode, HuggingFaceEntityBasicApiData::class.java).copy(kind = endpointKind)
+      modelDataMap[data.itemId] = data
     }
 
     return modelDataMap
+  }
+
+  @Nls
+  fun fetchOrRetrieveModelCard(entityDataApiContent: HuggingFaceEntityBasicApiData,
+                               entityId: String,
+                               entityKind: HuggingFaceEntityKind,
+                               prefix: String = "markdown"): String {
+    if (entityDataApiContent.gated != "false") return HuggingFaceDocumentationPlaceholdersUtil.generateGatedEntityMarkdownString(entityId, entityKind)
+    val cached = HuggingFaceMdCardsCache.getData("${prefix}_${entityId}")
+    cached?.let { return cached.data }
+
+    val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
+    val rawDataResult = HuggingFaceHttpClient.downloadFile(mdUrl)
+
+    if (rawDataResult.isSuccess) {
+      val rawData = rawDataResult.getOrThrow()
+      val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
+      HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now().epochSecond))
+      return cleanedData
+    } else {
+      return HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
+    }
   }
 }
