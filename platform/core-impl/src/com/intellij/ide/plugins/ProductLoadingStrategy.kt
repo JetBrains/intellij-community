@@ -223,7 +223,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       moduleName = null,
     )
     context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
-    descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, isSub = false, dataLoader = dataLoader)
+    descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, dataLoader = dataLoader)
     descriptor.jarFiles = fileItems.map { it.file }
     return descriptor
   }

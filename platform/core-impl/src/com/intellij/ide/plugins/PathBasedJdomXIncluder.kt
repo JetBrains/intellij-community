@@ -7,20 +7,26 @@ interface PathResolver {
   val isFlat: Boolean
     get() = false
 
-  fun loadXIncludeReference(readInto: RawPluginDescriptor,
-                            readContext: ReadModuleContext,
-                            dataLoader: DataLoader,
-                            base: String?,
-                            relativePath: String): Boolean
+  fun loadXIncludeReference(
+    readInto: RawPluginDescriptor,
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    base: String?,
+    relativePath: String,
+  ): Boolean
 
-  fun resolvePath(readContext: ReadModuleContext,
-                  dataLoader: DataLoader,
-                  relativePath: String,
-                  readInto: RawPluginDescriptor?): RawPluginDescriptor?
+  fun resolvePath(
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    relativePath: String,
+    readInto: RawPluginDescriptor?,
+  ): RawPluginDescriptor?
 
   // module in a new file name format must always be resolved
-  fun resolveModuleFile(readContext: ReadModuleContext,
-                        dataLoader: DataLoader,
-                        path: String,
-                        readInto: RawPluginDescriptor?): RawPluginDescriptor
+  fun resolveModuleFile(
+    readContext: ReadModuleContext,
+    dataLoader: DataLoader,
+    path: String,
+    readInto: RawPluginDescriptor?,
+  ): RawPluginDescriptor
 }

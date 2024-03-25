@@ -58,12 +58,14 @@ class IdeaPluginDescriptorImpl(
   // only for sub descriptors
   @JvmField
   internal var descriptorPath: String? = null
+
   @Volatile
   private var description: String? = null
   private val productCode = raw.productCode
   private var releaseDate: Date? = raw.releaseDate?.let { Date.from(it.atStartOfDay(ZoneOffset.UTC).toInstant()) }
   private val releaseVersion = raw.releaseVersion
   private val isLicenseOptional = raw.isLicenseOptional
+
   @NonNls
   private var resourceBundleBaseName: String? = null
   private val changeNotes = raw.changeNotes
@@ -72,10 +74,13 @@ class IdeaPluginDescriptorImpl(
   private val vendorEmail = raw.vendorEmail
   private val vendorUrl = raw.vendorUrl
   private var category: String? = raw.category
+
   @JvmField
   internal val url: String? = raw.url
+
   @JvmField
   val pluginDependencies: List<PluginDependency>
+
   @JvmField
   val incompatibilities: List<PluginId> = raw.incompatibilities ?: Java11Shim.INSTANCE.listOf()
 
@@ -140,8 +145,10 @@ class IdeaPluginDescriptorImpl(
 
   @JvmField
   val appContainerDescriptor: ContainerDescriptor = raw.appContainerDescriptor
+
   @JvmField
   val projectContainerDescriptor: ContainerDescriptor = raw.projectContainerDescriptor
+
   @JvmField
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleContainerDescriptor
 
@@ -151,6 +158,7 @@ class IdeaPluginDescriptorImpl(
 
   @JvmField
   val dependencies: ModuleDependenciesDescriptor = raw.dependencies
+
   @JvmField
   var modules: List<PluginId> = raw.modules ?: Java11Shim.INSTANCE.listOf()
 
@@ -158,12 +166,16 @@ class IdeaPluginDescriptorImpl(
 
   @JvmField
   val isUseIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
+
   @JvmField
   val isBundledUpdateAllowed: Boolean = raw.isBundledUpdateAllowed
+
   @JvmField
   internal val implementationDetail: Boolean = raw.implementationDetail
+
   @JvmField
   internal val isRestartRequired: Boolean = raw.isRestartRequired
+
   @JvmField
   val packagePrefix: String? = raw.`package`
 
@@ -185,9 +197,7 @@ class IdeaPluginDescriptorImpl(
   private fun createSub(
     raw: RawPluginDescriptor,
     descriptorPath: String,
-    pathResolver: PathResolver,
     context: DescriptorListLoadingContext,
-    dataLoader: DataLoader,
     moduleName: String?,
   ): IdeaPluginDescriptorImpl {
     raw.name = name
@@ -202,10 +212,13 @@ class IdeaPluginDescriptorImpl(
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
     result.descriptorPath = descriptorPath
     result.vendor = vendor
-    result.version = version
-    result.resourceBundleBaseName = resourceBundleBaseName
 
-    result.readExternal(raw = raw, pathResolver = pathResolver, context = context, isSub = true, dataLoader = dataLoader)
+    result.resourceBundleBaseName = resourceBundleBaseName
+    if (raw.resourceBundleBaseName != null) {
+      result.readResourceBundleBaseName(raw = raw)
+    }
+
+    result.version = version ?: context.defaultVersion
     return result
   }
 
@@ -213,73 +226,63 @@ class IdeaPluginDescriptorImpl(
     raw: RawPluginDescriptor,
     pathResolver: PathResolver,
     context: DescriptorListLoadingContext,
-    isSub: Boolean,
     dataLoader: DataLoader,
   ) {
     // include module file descriptor if not specified as `depends` (old way - xi:include)
     // must be first because merged into raw descriptor
-    if (!isSub) {
-      for (module in content.modules) {
-        val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-        val subDescriptor = createSub(
-          raw = pathResolver.resolveModuleFile(
-            readContext = context,
-            dataLoader = dataLoader,
-            path = subDescriptorFile,
-            readInto = null,
-          ),
-          descriptorPath = subDescriptorFile,
-          pathResolver = pathResolver,
-          context = context,
+    for (module in content.modules) {
+      val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+      val subDescriptor = createSub(
+        raw = pathResolver.resolveModuleFile(
+          readContext = context,
           dataLoader = dataLoader,
-          moduleName = module.name,
-        )
-        module.descriptor = subDescriptor
-      }
+          path = subDescriptorFile,
+          readInto = null,
+        ),
+        descriptorPath = subDescriptorFile,
+        context = context,
+        moduleName = module.name,
+      )
+      module.descriptor = subDescriptor
     }
 
     if (raw.resourceBundleBaseName != null) {
-      if (id == PluginManagerCore.CORE_ID && !isSub) {
+      if (id == PluginManagerCore.CORE_ID) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
                  " included into the platform part of the IDE but the platform part uses predefined bundles " +
                  "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +
                  "(e.g. by 'resource-bundle' attribute in 'actions' tag)")
       }
-      if (resourceBundleBaseName != null && resourceBundleBaseName != raw.resourceBundleBaseName) {
-        LOG.warn("Resource bundle redefinition for plugin $id. " +
-                 "Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
-      }
-      resourceBundleBaseName = raw.resourceBundleBaseName
+      readResourceBundleBaseName(raw)
     }
 
     if (version == null) {
       version = context.defaultVersion
     }
 
-    if (!isSub) {
-      if (id == PluginManagerCore.CORE_ID) {
-        modules = modules + IdeaPluginOsRequirement.getHostOsModuleIds()
-        if (!AppMode.isRemoteDevHost()) {
-          /* dependency on this ID may be used to enable some functionality in local IDE and in JetBrains Client, but disable it in product
-             running in backend mode; this is needed because the backend process currently doesn't use module-based loader and therefore cannot
-             use marker modules from ProductModes. */
-          modules = modules + PluginId.getId("com.intellij.platform.experimental.frontend")
-        }
+    if (id == PluginManagerCore.CORE_ID) {
+      modules = modules + IdeaPluginOsRequirement.getHostOsModuleIds()
+      if (!AppMode.isRemoteDevHost()) {
+        // Dependency on this ID may be used to enable some functionality in the local IDE
+        // and in JetBrains Client, but disable it in product running in backend mode.
+        // This is needed because the backend process currently doesn't use module-based loader and therefore cannot
+        // use marker modules from ProductModes.
+        modules = modules + PluginId.getId("com.intellij.platform.experimental.frontend")
+      }
+    }
+
+    if (context.isPluginDisabled(id)) {
+      markAsIncomplete(disabledDependency = null, shortMessage = null)
+    }
+    else {
+      checkCompatibility(context)
+      if (isIncomplete != null) {
+        return
       }
 
-      if (context.isPluginDisabled(id)) {
-        markAsIncomplete(disabledDependency = null, shortMessage = null)
-      }
-      else {
-        checkCompatibility(context)
-        if (isIncomplete != null) {
-          return
-        }
-
-        for (pluginDependency in dependencies.plugins) {
-          if (context.isPluginDisabled(pluginDependency.id)) {
-            markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
-          }
+      for (pluginDependency in dependencies.plugins) {
+        if (context.isPluginDisabled(pluginDependency.id)) {
+          markAsIncomplete(pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
         }
       }
     }
@@ -291,6 +294,13 @@ class IdeaPluginDescriptorImpl(
                              dependencies = pluginDependencies,
                              dataLoader = dataLoader)
     }
+  }
+
+  private fun readResourceBundleBaseName(raw: RawPluginDescriptor) {
+    if (resourceBundleBaseName != null && resourceBundleBaseName != raw.resourceBundleBaseName) {
+      LOG.warn("Resource bundle redefinition for plugin $id. Old value: $resourceBundleBaseName, new value: ${raw.resourceBundleBaseName}")
+    }
+    resourceBundleBaseName = raw.resourceBundleBaseName
   }
 
   private fun processOldDependencies(descriptor: IdeaPluginDescriptorImpl,
@@ -346,11 +356,21 @@ class IdeaPluginDescriptorImpl(
       val subDescriptor = descriptor.createSub(
         raw = raw,
         descriptorPath = configFile,
-        pathResolver = pathResolver,
         context = context,
-        dataLoader = dataLoader,
         moduleName = null,
       )
+
+      if (subDescriptor.isIncomplete == null) {
+        processOldDependencies(
+          descriptor = subDescriptor,
+          context = context,
+          pathResolver = pathResolver,
+          dependencies = subDescriptor.pluginDependencies,
+          dataLoader = dataLoader,
+        )
+      }
+
+
       dependency.subDescriptor = subDescriptor
       visitedFiles.clear()
     }
