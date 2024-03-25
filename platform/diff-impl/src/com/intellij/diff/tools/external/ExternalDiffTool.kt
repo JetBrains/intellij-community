@@ -96,12 +96,8 @@ object ExternalDiffTool {
                    chain: DiffRequestChain,
                    hints: DiffDialogHints): Boolean {
     if (chain is AsyncDiffRequestChain) {
-      return show(project, hints) { indicator: ProgressIndicator ->
-        val listSelection = chain.loadRequestsInBackground()
-        val producers = listSelection.explicitSelection
-        if (!wantShowExternalToolFor(producers)) return@show null
-        if (!checkNotTooManyRequests(project, producers)) return@show null
-        collectRequests(project, producers, indicator)
+      return showIfNeeded(project, hints) {
+        chain.loadRequestsInBackground().explicitSelection
       }
     }
     else {
@@ -110,11 +106,8 @@ object ExternalDiffTool {
         else -> ListSelection.createAt(chain.requests, chain.index)
       }
 
-      return show(project, hints) { indicator: ProgressIndicator ->
-        val producers = listSelection.explicitSelection
-        if (!wantShowExternalToolFor(producers)) return@show null
-        if (!checkNotTooManyRequests(project, producers)) return@show null
-        collectRequests(project, producers, indicator)
+      return showIfNeeded(project, hints) {
+        listSelection.explicitSelection
       }
     }
   }
@@ -123,20 +116,22 @@ object ExternalDiffTool {
   fun showIfNeeded(project: Project?,
                    requestProducers: List<DiffRequestProducer>,
                    hints: DiffDialogHints): Boolean {
-    return show(project, hints) { indicator: ProgressIndicator ->
-      if (!wantShowExternalToolFor(requestProducers)) return@show null
-      if (!checkNotTooManyRequests(project, requestProducers)) return@show null
-      collectRequests(project, requestProducers, indicator)
+    return showIfNeeded(project, hints) {
+      requestProducers
     }
   }
 
-  private fun show(project: Project?,
-                   hints: DiffDialogHints,
-                   requestsProducer: ThrowableConvertor<in ProgressIndicator, out List<DiffRequest>?, out Exception>): Boolean {
+  private fun showIfNeeded(project: Project?,
+                           hints: DiffDialogHints,
+                           requestProducer: () -> List<DiffRequestProducer>): Boolean {
     try {
-      val requests: List<DiffRequest>? = computeWithModalProgress(project,
-                                                                  DiffBundle.message("progress.title.loading.requests"),
-                                                                  requestsProducer)
+      val requests: List<DiffRequest>? = computeWithModalProgress(
+        project,
+        DiffBundle.message("progress.title.loading.requests")
+      ) { indicator ->
+        val requestProducers = requestProducer()
+        collectRequests(project, requestProducers, indicator)
+      }
       if (requests == null) return false
 
       showRequests(project, requests, hints)
@@ -182,7 +177,10 @@ object ExternalDiffTool {
 
   private fun collectRequests(project: Project?,
                               producers: List<DiffRequestProducer>,
-                              indicator: ProgressIndicator): List<DiffRequest> {
+                              indicator: ProgressIndicator): List<DiffRequest>? {
+    if (!wantShowExternalToolFor(producers)) return null
+    if (!checkNotTooManyRequests(project, producers)) return null
+
     val requests = mutableListOf<DiffRequest>()
 
     val context = UserDataHolderBase()
