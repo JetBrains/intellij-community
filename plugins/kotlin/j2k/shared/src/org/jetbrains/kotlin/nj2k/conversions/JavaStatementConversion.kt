@@ -8,6 +8,15 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+/**
+ * Converts Java-specific statements to Kotlin statements:
+ *   * `assert` statement
+ *   * `synchronized` statement
+ *   * Try-with-resources or `try` with multiple `catch` blocks
+ *   * A so-called "guard clause" of the form
+ *   `if (param == null) throw new IllegalArgumentException("error message")` to a more idiomatic Kotlin
+ *   `requireNotNull` call (disabled in basic mode)
+ */
 class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {

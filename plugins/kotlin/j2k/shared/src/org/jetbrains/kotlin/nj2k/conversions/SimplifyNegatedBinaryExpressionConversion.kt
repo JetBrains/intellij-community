@@ -10,6 +10,12 @@ import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.asPrimitiveType
 import org.jetbrains.kotlin.nj2k.types.isFloatingPoint
 
+/**
+ * A code style conversion (disabled in basic mode) that simplifies negated binary expressions
+ * of the form `!(a > b)` -> `a <= b`.
+ *
+ * This is a J2K equivalent of `SimplifyNegatedBinaryExpressionInspection`.
+ */
 class SimplifyNegatedBinaryExpressionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     override fun isEnabledInBasicMode(): Boolean = false
 
