@@ -1,46 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.testFramework.RunAll
-import com.intellij.util.ThrowableRunnable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.tooling.GradleConnectionException
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener
-import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
 import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
-class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
-
-  override fun setUp() {
-    super.setUp()
-    GradleProjectResolverExtension.EP_NAME.point.registerExtension(TestProjectResolverExtension(), testRootDisposable)
-  }
-
-  override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { TestProjectResolverExtension.cleanup() },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
-  }
+class GradleActionWithImportTest : GradleActionWithImportTestCase() {
 
   @Test
   @TargetVersions("4.8+")
   fun `test start tasks can be set by model builder and run on import`() {
-    val testFile = File(projectPath, "testFile")
-    assertThat(testFile).doesNotExist()
+    Disposer.newDisposable().use { disposable ->
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(disposable, TestBuildObjectModelProvider())
+      }
 
-    val testFilePath = testFile.absolutePath
-    val randomKey = Random().nextLong().toString()
+      val testFile = File(projectPath, "testFile")
+      assertThat(testFile).doesNotExist()
 
-    importProject(
-      """
+      val testFilePath = testFile.absolutePath
+      val randomKey = Random().nextLong().toString()
+
+      importProject("""
         import org.gradle.api.Project;
         import javax.inject.Inject;
         import org.gradle.tooling.provider.model.ToolingModelBuilder;
@@ -81,23 +66,27 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
         }
       """.trimIndent())
 
-    TestProjectResolverExtension.waitForBuildFinished(projectPath, 10, TimeUnit.SECONDS)
-    assertThat(testFile)
-      .exists()
-      .hasContent(randomKey)
+      assertThat(testFile)
+        .exists()
+        .hasContent(randomKey)
 
-    assertSyncViewTree {
-      assertNode("finished") {
-        assertNode(":importTestTask")
-        assertNodeWithDeprecatedGradleWarning()
+      assertSyncViewTree {
+        assertNode("finished") {
+          assertNode(":importTestTask")
+          assertNodeWithDeprecatedGradleWarning()
+        }
       }
     }
   }
 
   @Test
   fun `test default tasks are not run on import`() {
-    importProject(
-      """
+    Disposer.newDisposable().use { disposable ->
+      addProjectResolverExtension(TestProjectResolverExtension::class.java, disposable) {
+        addModelProviders(disposable, TestBuildObjectModelProvider())
+      }
+
+      importProject("""
         defaultTasks "clean", "build"
         
         import org.gradle.api.Project;
@@ -130,51 +119,11 @@ class GradleActionWithImportTest : BuildViewMessagesImportingTestCase() {
         apply plugin: TestPlugin
       """.trimIndent())
 
-    assertSyncViewTree {
-      assertNode("finished") {
-        assertNodeWithDeprecatedGradleWarning()
+      assertSyncViewTree {
+        assertNode("finished") {
+          assertNodeWithDeprecatedGradleWarning()
+        }
       }
-    }
-  }
-}
-
-class TestProjectResolverExtension : AbstractProjectResolverExtension() {
-  val buildFinished = CompletableFuture<Boolean>()
-
-  override fun setProjectResolverContext(projectResolverContext: ProjectResolverContext) {
-    register(this, projectResolverContext.projectPath)
-  }
-
-  override fun createBuildListener() = object : GradleBuildActionListener {
-
-    override fun onBuildCompleted() {
-      buildFinished.complete(true)
-    }
-
-    override fun onBuildFailed(exception: GradleConnectionException) {
-      buildFinished.complete(true)
-    }
-  }
-
-  override fun getModelProviders() = listOf(
-    TestBuildObjectModelProvider()
-  )
-
-  companion object {
-    private val extensions: MutableMap<String, TestProjectResolverExtension> = mutableMapOf()
-
-    fun register(extension: TestProjectResolverExtension, key: String) {
-      extensions[key] = extension
-    }
-
-    @Throws(Exception::class)
-    fun waitForBuildFinished(key: String, timeout: Int, unit: TimeUnit): Boolean {
-      val ext = extensions[key] ?: throw Exception("Unknown test extension key [$key].\nAvailable extension keys: ${extensions.keys}")
-      return ext.buildFinished.get(timeout.toLong(), unit)
-    }
-
-    fun cleanup() {
-      extensions.clear()
     }
   }
 }
