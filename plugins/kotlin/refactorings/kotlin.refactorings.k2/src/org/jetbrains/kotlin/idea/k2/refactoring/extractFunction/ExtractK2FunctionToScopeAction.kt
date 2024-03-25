@@ -9,9 +9,9 @@ import com.intellij.refactoring.actions.BasePlatformRefactoringAction
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractFunction.KotlinFirExtractFunctionHandler
 import org.jetbrains.kotlin.psi.KtElement
 
-class ExtractK2FunctionAction : BasePlatformRefactoringAction() {
+class ExtractK2FunctionToScopeAction : BasePlatformRefactoringAction() {
     override fun getRefactoringHandler(provider: RefactoringSupportProvider): RefactoringActionHandler? =
-        KotlinFirExtractFunctionHandler(false)
+        KotlinFirExtractFunctionHandler(true)
 
     override fun isAvailableInEditorOnly(): Boolean {
         return true

@@ -43,5 +43,10 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
       <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
     </action>
+    <action id="ExtractFunctionToScope" class="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractK2FunctionToScopeAction"
+            use-shortcut-of="ExtractMethod">
+      <keyboard-shortcut keymap="$default" first-keystroke="control alt shift M"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractFunction"/>
+    </action>
   </actions>
 </idea-plugin>

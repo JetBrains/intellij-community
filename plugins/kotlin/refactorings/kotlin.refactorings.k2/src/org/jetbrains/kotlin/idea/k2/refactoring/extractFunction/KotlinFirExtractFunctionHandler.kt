@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui.KotlinFirExtractFunctionDialog
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractFunction.KotlinFirExtractFunctionHandler.InteractiveExtractionHelper
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionDataAnalyzer
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.ExtractionEngineHelper
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
@@ -36,8 +37,11 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class KotlinFirExtractFunctionHandler(private val helper: ExtractionEngineHelper = InplaceExtractionHelper) :
-    AbstractExtractKotlinFunctionHandler() {
+class KotlinFirExtractFunctionHandler(
+    private val acceptAllScopes: Boolean,
+    private val helper: ExtractionEngineHelper = InplaceExtractionHelper(acceptAllScopes)
+) :
+    AbstractExtractKotlinFunctionHandler(acceptAllScopes) {
 
     object InteractiveExtractionHelper : ExtractionEngineHelper(EXTRACT_FUNCTION) {
         @OptIn(KtAllowAnalysisOnEdt::class)
@@ -59,10 +63,10 @@ class KotlinFirExtractFunctionHandler(private val helper: ExtractionEngineHelper
         }
     }
 
-    object InplaceExtractionHelper : ExtractionEngineHelper(EXTRACT_FUNCTION),
-                                     AbstractInplaceExtractionHelper<KtType, ExtractionResult, ExtractableCodeDescriptorWithConflicts> {
+    class InplaceExtractionHelper(private val acceptAllScopes: Boolean) : ExtractionEngineHelper(EXTRACT_FUNCTION),
+                                                                          AbstractInplaceExtractionHelper<KtType, ExtractionResult, ExtractableCodeDescriptorWithConflicts> {
         override fun createRestartHandler(): AbstractExtractKotlinFunctionHandler =
-            KotlinFirExtractFunctionHandler(InteractiveExtractionHelper)
+            KotlinFirExtractFunctionHandler(acceptAllScopes, InteractiveExtractionHelper)
 
         override fun extractDuplicates(
             duplicateReplacers: Map<KotlinPsiRange, () -> Unit>, project: Project, editor: Editor

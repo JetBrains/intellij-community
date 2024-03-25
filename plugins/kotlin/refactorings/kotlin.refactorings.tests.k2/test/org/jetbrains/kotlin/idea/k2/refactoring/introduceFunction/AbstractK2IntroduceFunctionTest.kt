@@ -33,6 +33,7 @@ abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
         extractionOptions: ExtractionOptions
     ): AbstractExtractKotlinFunctionHandler {
         return KotlinFirExtractFunctionHandler(
+            false,
             helper = object : ExtractionEngineHelper(EXTRACT_FUNCTION) {
                 override fun adjustExtractionData(data: ExtractionData): ExtractionData {
                     return ActionUtil.underModalProgress(project, "adjust for tests") {
