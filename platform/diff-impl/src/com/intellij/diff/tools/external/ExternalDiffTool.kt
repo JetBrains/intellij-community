@@ -1,259 +1,254 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.diff.tools.external;
+package com.intellij.diff.tools.external
 
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffManagerEx;
-import com.intellij.diff.DiffNotificationIdsHolder;
-import com.intellij.diff.chains.*;
-import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.requests.ContentDiffRequest;
-import com.intellij.diff.requests.DiffRequest;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.ListSelection;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diff.DiffDialogHints
+import com.intellij.diff.DiffManagerEx
+import com.intellij.diff.DiffNotificationIdsHolder
+import com.intellij.diff.chains.*
+import com.intellij.diff.requests.ContentDiffRequest
+import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.ListSelection
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.UnknownFileType
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.util.ThrowableConvertor
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import java.io.IOException
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+object ExternalDiffTool {
+  private val LOG = Logger.getInstance(ExternalDiffTool::class.java)
+  private val ERROR_NOTIFICATION_GROUP_ID = "Diff Changes Loading Error"
 
-public final class ExternalDiffTool {
-  private static final Logger LOG = Logger.getInstance(ExternalDiffTool.class);
-
-  public static boolean isEnabled() {
-    return ExternalDiffSettings.getInstance().isExternalToolsEnabled();
+  @JvmStatic
+  fun isEnabled(): Boolean {
+    return ExternalDiffSettings.instance.isExternalToolsEnabled
   }
 
-  public static boolean isDefault() {
-    return isEnabled() && ExternalDiffSettings.isNotBuiltinDiffTool();
+  @JvmStatic
+  fun isDefault(): Boolean = isEnabled() && ExternalDiffSettings.isNotBuiltinDiffTool()
+
+  @JvmStatic
+  fun wantShowExternalToolFor(diffProducers: List<DiffRequestProducer>): Boolean {
+    if (isDefault()) return true
+
+    return diffProducers.asSequence()
+      .map { producer -> getFileType(producer) }
+      .distinct()
+      .mapNotNull { fileType -> ExternalDiffSettings.findDiffTool(fileType) }
+      .firstOrNull() != null
   }
 
-  public static boolean wantShowExternalToolFor(@NotNull List<? extends DiffRequestProducer> diffProducers) {
-    if (isDefault()) return true;
+  private fun getFileType(producer: DiffRequestProducer): FileType {
+    val contentType = producer.contentType
+    if (contentType != null) return contentType
 
-    return JBIterable.from(diffProducers)
-             .map(ExternalDiffTool::getFileType)
-             .unique()
-             .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
-             .filter(Conditions.notNull())
-             .first() != null;
+    val filePath = producer.name
+    return FileTypeManager.getInstance().getFileTypeByFileName(filePath)
   }
 
-  @NotNull
-  private static FileType getFileType(@NotNull DiffRequestProducer producer) {
-    FileType contentType = producer.getContentType();
-    if (contentType != null) return contentType;
-
-    String filePath = producer.getName();
-    return FileTypeManager.getInstance().getFileTypeByFileName(filePath);
-  }
-
-  public static boolean checkNotTooManyRequests(@Nullable Project project, @NotNull List<? extends DiffRequestProducer> diffProducers) {
-    if (diffProducers.size() <= Registry.intValue("diff.external.tool.file.limit")) return true;
-    new Notification("Diff Changes Loading Error",
-                     DiffBundle.message("can.t.show.diff.in.external.tool.too.many.files", diffProducers.size()),
-                     NotificationType.WARNING)
+  @JvmStatic
+  fun checkNotTooManyRequests(project: Project?, diffProducers: List<DiffRequestProducer>): Boolean {
+    if (diffProducers.size <= Registry.intValue("diff.external.tool.file.limit")) return true
+    Notification(ERROR_NOTIFICATION_GROUP_ID,
+                 DiffBundle.message("can.t.show.diff.in.external.tool.too.many.files", diffProducers.size),
+                 NotificationType.WARNING)
       .setDisplayId(DiffNotificationIdsHolder.EXTERNAL_TOO_MANY_SELECTED)
-      .notify(project);
-    return false;
+      .notify(project)
+    return false
   }
 
-  @Nullable
-  private static ExternalDiffSettings.ExternalTool getExternalToolFor(@NotNull ContentDiffRequest request) {
-    ExternalDiffSettings.ExternalTool diffTool = JBIterable.from(request.getContents())
-      .map(content -> content.getContentType())
-      .filter(Conditions.notNull())
-      .unique()
-      .sort(Comparator.comparing(fileType -> fileType != UnknownFileType.INSTANCE ? -1 : 1))
-      .map(fileType -> ExternalDiffSettings.findDiffTool(fileType))
-      .filter(Conditions.notNull())
-      .first();
-    if (diffTool != null) return diffTool;
+  private fun getExternalToolFor(request: ContentDiffRequest): ExternalTool? {
+    val diffTool = request.contents.asSequence()
+      .mapNotNull { content -> content.contentType }
+      .distinct()
+      .sortedBy { fileType -> if (fileType !== UnknownFileType.INSTANCE) -1 else 1 }
+      .mapNotNull { fileType -> ExternalDiffSettings.findDiffTool(fileType) }
+      .firstOrNull()
+    if (diffTool != null) return diffTool
 
     if (isDefault()) {
-      return ExternalDiffSettings.findDefaultDiffTool();
+      return ExternalDiffSettings.findDefaultDiffTool()
     }
-    return null;
+    return null
   }
 
+  @JvmStatic
   @RequiresEdt
-  public static boolean showIfNeeded(@Nullable Project project,
-                                     @NotNull DiffRequestChain chain,
-                                     @NotNull DiffDialogHints hints) {
-    if (chain instanceof AsyncDiffRequestChain asyncChain) {
-      return show(project, hints, indicator -> {
-        ListSelection<? extends DiffRequestProducer> listSelection = asyncChain.loadRequestsInBackground();
-        List<? extends DiffRequestProducer> producers = listSelection.getExplicitSelection();
-        if (!wantShowExternalToolFor(producers)) return null;
-        if (!checkNotTooManyRequests(project, producers)) return null;
-        return collectRequests(project, producers, indicator);
-      });
+  fun showIfNeeded(project: Project?,
+                   chain: DiffRequestChain,
+                   hints: DiffDialogHints): Boolean {
+    if (chain is AsyncDiffRequestChain) {
+      return show(project, hints) { indicator: ProgressIndicator ->
+        val listSelection = chain.loadRequestsInBackground()
+        val producers = listSelection.explicitSelection
+        if (!wantShowExternalToolFor(producers)) return@show null
+        if (!checkNotTooManyRequests(project, producers)) return@show null
+        collectRequests(project, producers, indicator)
+      }
     }
     else {
-      ListSelection<? extends DiffRequestProducer> listSelection;
-      if (chain instanceof DiffRequestSelectionChain selectionChain) {
-        listSelection = selectionChain.getListSelection();
-      }
-      else {
-        listSelection = ListSelection.createAt(chain.getRequests(), chain.getIndex());
+      val listSelection = when (chain) {
+        is DiffRequestSelectionChain -> chain.listSelection
+        else -> ListSelection.createAt(chain.requests, chain.index)
       }
 
-      return show(project, hints, indicator -> {
-        List<? extends DiffRequestProducer> producers = listSelection.getExplicitSelection();
-        if (!wantShowExternalToolFor(producers)) return null;
-        if (!checkNotTooManyRequests(project, producers)) return null;
-        return collectRequests(project, producers, indicator);
-      });
+      return show(project, hints) { indicator: ProgressIndicator ->
+        val producers = listSelection.explicitSelection
+        if (!wantShowExternalToolFor(producers)) return@show null
+        if (!checkNotTooManyRequests(project, producers)) return@show null
+        collectRequests(project, producers, indicator)
+      }
     }
   }
 
-  public static boolean showIfNeeded(@Nullable Project project,
-                                     @NotNull List<? extends DiffRequestProducer> requestProducers,
-                                     @NotNull DiffDialogHints hints) {
-    return show(project, hints, indicator -> {
-      if (!wantShowExternalToolFor(requestProducers)) return null;
-      if (!checkNotTooManyRequests(project, requestProducers)) return null;
-      return collectRequests(project, requestProducers, indicator);
-    });
+  @JvmStatic
+  fun showIfNeeded(project: Project?,
+                   requestProducers: List<DiffRequestProducer>,
+                   hints: DiffDialogHints): Boolean {
+    return show(project, hints) { indicator: ProgressIndicator ->
+      if (!wantShowExternalToolFor(requestProducers)) return@show null
+      if (!checkNotTooManyRequests(project, requestProducers)) return@show null
+      collectRequests(project, requestProducers, indicator)
+    }
   }
 
-  private static boolean show(@Nullable Project project,
-                              @NotNull DiffDialogHints hints,
-                              @NotNull ThrowableConvertor<? super ProgressIndicator, ? extends List<DiffRequest>, ? extends Exception> requestsProducer) {
+  private fun show(project: Project?,
+                   hints: DiffDialogHints,
+                   requestsProducer: ThrowableConvertor<in ProgressIndicator, out List<DiffRequest>?, out Exception>): Boolean {
     try {
-      List<DiffRequest> requests = computeWithModalProgress(project,
-                                                            DiffBundle.message("progress.title.loading.requests"),
-                                                            requestsProducer);
-      if (requests == null) return false;
+      val requests: List<DiffRequest>? = computeWithModalProgress(project,
+                                                                  DiffBundle.message("progress.title.loading.requests"),
+                                                                  requestsProducer)
+      if (requests == null) return false
 
-      showRequests(project, requests, hints);
-      return true;
+      showRequests(project, requests, hints)
+      return true
     }
-    catch (ProcessCanceledException ignore) {
+    catch (ignore: ProcessCanceledException) {
     }
-    catch (Throwable e) {
-      LOG.warn(e);
-      Messages.showErrorDialog(project, e.getMessage(), DiffBundle.message("can.t.show.diff.in.external.tool"));
+    catch (e: Throwable) {
+      LOG.warn(e)
+      Messages.showErrorDialog(project, e.message, DiffBundle.message("can.t.show.diff.in.external.tool"))
     }
-    return false;
+    return false
   }
 
   @RequiresEdt
-  private static void showRequests(@Nullable Project project,
-                                   @NotNull List<? extends DiffRequest> requests,
-                                   @NotNull DiffDialogHints hints) throws IOException {
-    List<DiffRequest> showInBuiltin = new ArrayList<>();
-    for (DiffRequest request : requests) {
-      boolean success = tryShowRequestInExternal(project, request);
+  @Throws(IOException::class)
+  private fun showRequests(project: Project?,
+                           requests: List<DiffRequest>,
+                           hints: DiffDialogHints) {
+    val showInBuiltin = mutableListOf<DiffRequest>()
+    for (request in requests) {
+      val success = tryShowRequestInExternal(project, request)
       if (!success) {
-        showInBuiltin.add(request);
+        showInBuiltin.add(request)
       }
     }
 
     if (!showInBuiltin.isEmpty()) {
-      DiffManagerEx.getInstance().showDiffBuiltin(project, new SimpleDiffRequestChain(showInBuiltin), hints);
+      DiffManagerEx.getInstance().showDiffBuiltin(project, SimpleDiffRequestChain(showInBuiltin), hints)
     }
   }
 
-  private static boolean tryShowRequestInExternal(@Nullable Project project, @NotNull DiffRequest request) throws IOException {
-    if (!canShow(request)) return false;
+  @Throws(IOException::class)
+  private fun tryShowRequestInExternal(project: Project?, request: DiffRequest): Boolean {
+    if (!canShow(request)) return false
 
-    ExternalDiffSettings.ExternalTool externalTool = getExternalToolFor(((ContentDiffRequest)request));
-    if (externalTool == null) return false;
+    val externalTool = getExternalToolFor((request as ContentDiffRequest))
+    if (externalTool == null) return false
 
-    showRequest(project, request, externalTool);
-    return true;
+    showRequest(project, request, externalTool)
+    return true
   }
 
-  @NotNull
-  private static List<DiffRequest> collectRequests(@Nullable Project project,
-                                                   @NotNull List<? extends DiffRequestProducer> producers,
-                                                   @NotNull ProgressIndicator indicator) {
-    List<DiffRequest> requests = new ArrayList<>();
+  private fun collectRequests(project: Project?,
+                              producers: List<DiffRequestProducer>,
+                              indicator: ProgressIndicator): List<DiffRequest> {
+    val requests = mutableListOf<DiffRequest>()
 
-    UserDataHolderBase context = new UserDataHolderBase();
-    List<DiffRequestProducer> errorRequests = new ArrayList<>();
+    val context = UserDataHolderBase()
+    val errorRequests = mutableListOf<DiffRequestProducer>()
 
-    for (DiffRequestProducer producer : producers) {
+    for (producer in producers) {
       try {
-        requests.add(producer.process(context, indicator));
+        requests.add(producer.process(context, indicator))
       }
-      catch (DiffRequestProducerException e) {
-        LOG.warn(e);
-        errorRequests.add(producer);
+      catch (e: DiffRequestProducerException) {
+        LOG.warn(e)
+        errorRequests.add(producer)
       }
     }
 
     if (!errorRequests.isEmpty()) {
-      HtmlBuilder message = new HtmlBuilder()
-        .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errorRequests, producer -> HtmlChunk.text(producer.getName())));
-      new Notification("Diff Changes Loading Error",
-                       DiffBundle.message("can.t.load.some.changes"),
-                       message.toString(),
-                       NotificationType.ERROR)
+      val message = HtmlBuilder()
+        .appendWithSeparators(HtmlChunk.br(), errorRequests.map { producer -> HtmlChunk.text(producer.name) })
+      Notification(ERROR_NOTIFICATION_GROUP_ID,
+                   DiffBundle.message("can.t.load.some.changes"),
+                   message.toString(),
+                   NotificationType.ERROR)
         .setDisplayId(DiffNotificationIdsHolder.EXTERNAL_CANT_LOAD_CHANGES)
-        .notify(project);
+        .notify(project)
     }
 
-    return requests;
+    return requests
   }
 
-  private static <T> T computeWithModalProgress(@Nullable Project project,
-                                                @NotNull @NlsContexts.DialogTitle String title,
-                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
-    throws Exception {
-    return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, true) {
-      @Override
-      protected T compute(@NotNull ProgressIndicator indicator) throws Exception {
-        return computable.convert(indicator);
+  @Throws(Exception::class)
+  private fun <T> computeWithModalProgress(project: Project?,
+                                           title: @NlsContexts.DialogTitle String,
+                                           computable: ThrowableConvertor<in ProgressIndicator, T, out Exception>): T {
+    return ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
+      @Throws(Exception::class)
+      override fun compute(indicator: ProgressIndicator): T {
+        return computable.convert(indicator)
       }
-    });
+    })
   }
 
-  public static void showRequest(@Nullable Project project,
-                                 @NotNull DiffRequest request,
-                                 @NotNull ExternalDiffSettings.ExternalTool externalDiffTool) throws IOException {
-    request.onAssigned(true);
+  @JvmStatic
+  @Throws(IOException::class)
+  fun showRequest(project: Project?,
+                  request: DiffRequest,
+                  externalDiffTool: ExternalTool) {
+    request as ContentDiffRequest
+
+    request.onAssigned(true)
     try {
-      List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
-      List<String> titles = ((ContentDiffRequest)request).getContentTitles();
-      ExternalDiffToolUtil.executeDiff(project, externalDiffTool, contents, titles, request.getTitle());
+      val contents = request.contents
+      val titles = request.contentTitles
+      ExternalDiffToolUtil.executeDiff(project, externalDiffTool, contents, titles, request.getTitle())
     }
     finally {
-      request.onAssigned(false);
+      request.onAssigned(false)
     }
   }
 
-  public static boolean canShow(@NotNull DiffRequest request) {
-    if (!(request instanceof ContentDiffRequest)) return false;
-    List<DiffContent> contents = ((ContentDiffRequest)request).getContents();
-    if (contents.size() != 2 && contents.size() != 3) return false;
-    for (DiffContent content : contents) {
-      if (!ExternalDiffToolUtil.canCreateFile(content)) return false;
+  @JvmStatic
+  fun canShow(request: DiffRequest): Boolean {
+    if (request !is ContentDiffRequest) return false
+    val contents = request.contents
+    if (contents.size != 2 && contents.size != 3) return false
+    for (content in contents) {
+      if (!ExternalDiffToolUtil.canCreateFile(content)) return false
     }
-    return true;
+    return true
   }
 }
