@@ -62,10 +62,11 @@ fn main_os_specific() -> Result<()> {
     link_cef_sandbox(&cef_dir)?;
     write_cef_version(cef_version)?;
 
-    let needs_metadata = env::var("XPLAT_LAUNCHER_EMBED_RESOURCES_AND_MANIFEST")
-        .unwrap_or("0".to_string());
-
-    if needs_metadata == "1" {
+    // metadata embedding breaks incremental build due to verbose output of the used tools
+    // for the convenience of the development we'll avoid this
+    // for the builds which are explicitly marked as debug by cargo
+    let is_debug =  env::var("DEBUG")? == "true";
+    if !is_debug {
         embed_metadata()?;
     }
 
