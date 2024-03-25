@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 //TeamCity inherits StringUtil: do not add private constructors!!!
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
+
+  @SuppressWarnings("UnnecessaryUnicodeEscape")
   public static final String ELLIPSIS = "\u2026";
   public static final String THREE_DOTS = "...";
   public static final String NON_BREAK_SPACE = "\u00A0";
@@ -128,7 +130,7 @@ public class StringUtil extends StringUtilRt {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @Contract(pure = true)
-  public static @NotNull <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
+  public static @NotNull <T> Function<T, String> createToStringFunction(@SuppressWarnings("unused") @NotNull Class<T> cls) {
     return Object::toString;
   }
 
@@ -2579,8 +2581,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
-    //noinspection StringEquality
-    if (s1 == s2) return 0;
+    if (Strings.areSameInstance(s1, s2)) return 0;
     if (s1 == null) return -1;
     if (s2 == null) return 1;
     return ignoreCase ? s1.compareToIgnoreCase(s2) : s1.compareTo(s2);
@@ -3010,7 +3011,6 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String toHexString(byte @NotNull [] bytes) {
-    @SuppressWarnings("SpellCheckingInspection")
     String digits = "0123456789abcdef";
     StringBuilder sb = new StringBuilder(2 * bytes.length);
     for (byte b : bytes) {
