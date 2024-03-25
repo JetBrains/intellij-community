@@ -21,8 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object AddSuspendModifierFixFactory {
     val addSuspendModifierFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.IllegalSuspendFunctionCall ->
-        val element = diagnostic.psi as? KtElement ?: return@ModCommandBased emptyList()
-        val function = element.containingFunction() ?: return@ModCommandBased emptyList()
+        val function = (diagnostic.psi as? KtElement)?.containingFunction() ?: return@ModCommandBased emptyList()
         val functionName = function.name ?: return@ModCommandBased emptyList()
 
         listOf(AddSuspendModifierFix(function, ElementContext(functionName)))
@@ -77,10 +76,11 @@ private fun KtDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
     var result: Visibility? = null
     while (declaration != null) {
         if (declaration is KtFunctionSymbol && declaration.isInline) {
-            if (Visibilities.isPrivate(declaration.visibility)) {
-                return declaration.visibility
+            val visibility = declaration.visibility
+            if (Visibilities.isPrivate(visibility)) {
+                return visibility
             }
-            result = declaration.visibility
+            result = visibility
         }
         declaration = declaration.getContainingSymbol()
     }
