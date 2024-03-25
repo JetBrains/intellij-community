@@ -67,6 +67,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
+  private String myCopySourceActionId;
 
   @ApiStatus.Internal
   int myMetaFlags;
@@ -473,6 +474,18 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
 
   public @NotNull List<Supplier<@Nls String>> getSynonyms() {
     return mySynonyms;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public String getCopySourceActionId() {
+    return myCopySourceActionId;
+  }
+
+  @Nullable
+  @ApiStatus.Internal
+  public void setCopySourceActionId(String copySourceActionId) {
+    myCopySourceActionId = copySourceActionId;
   }
 
   public static @Nullable Project getEventProject(@Nullable AnActionEvent e) {

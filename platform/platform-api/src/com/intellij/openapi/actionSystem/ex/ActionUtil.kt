@@ -368,6 +368,7 @@ object ActionUtil {
     val from = ActionManager.getInstance().getAction(actionId)
     if (from != null) {
       action.copyFrom(from)
+      action.copySourceActionId = actionId
     }
     ActionsCollector.getInstance().onActionConfiguredByActionId(action, actionId)
     return action
