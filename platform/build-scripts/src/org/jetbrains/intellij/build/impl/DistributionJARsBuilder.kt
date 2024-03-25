@@ -180,7 +180,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     val specific = specificDeferred.await()
     for ((supportedDist) in pluginDirs) {
       val specificList = specific.get(supportedDist)
-      val specificClasspath = specificList?.let { generatePluginClassPath(it, writeDescriptor = true) }
+      val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, writeDescriptor = true) }
 
       val byteOut = ByteArrayOutputStream()
       val out = DataOutputStream(byteOut)

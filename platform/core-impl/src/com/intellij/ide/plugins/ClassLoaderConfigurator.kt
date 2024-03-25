@@ -212,11 +212,7 @@ class ClassLoaderConfigurator(
   }
 
   private fun getCoreUrlClassLoaderIfPossible(): UrlClassLoader? {
-    val coreUrlClassLoader = coreLoader as? UrlClassLoader
-    if (coreUrlClassLoader == null) {
-      return null
-    }
-
+    val coreUrlClassLoader = coreLoader as? UrlClassLoader ?: return null
     if (coreUrlClassLoader.resolveScopeManager == null) {
       val corePlugin = pluginSet.enabledPlugins.first()
       assert(corePlugin.pluginId == PluginManagerCore.CORE_ID)
@@ -365,7 +361,8 @@ fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorI
 
       return null
     }
-  }}
+  }
+}
 
 private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): List<Pair<String, String?>> {
   val modules = descriptor.content.modules

@@ -23,8 +23,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
-private val excludedLibJars = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
-
 private fun processClassReport(consumer: (String, String) -> Unit) {
   val osName = System.getProperty("os.name")
   val classifier = when {
@@ -58,23 +56,21 @@ fun reorderJar(relativePath: String, file: Path) {
     }
 }
 
+private val excludedLibJars = java.util.Set.of(PlatformJarNames.TEST_FRAMEWORK_JAR, "junit.jar")
+
 fun generateClasspath(homeDir: Path, libDir: Path): List<String> {
   spanBuilder("generate classpath")
     .setAttribute("dir", homeDir.toString())
     .useWithoutActiveScope { span ->
-      val files = computeAppClassPath(homeDir = homeDir, libDir = libDir)
+      val existing = HashSet<Path>()
+      addJarsFromDir(dir = libDir) { paths ->
+        paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
+      }
+      val files = computeAppClassPath(libDir = libDir, existing = existing, homeDir = homeDir)
       val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
       return result
     }
-}
-
-private fun computeAppClassPath(homeDir: Path, libDir: Path): LinkedHashSet<Path> {
-  val existing = HashSet<Path>()
-  addJarsFromDir(libDir) { paths ->
-    paths.filterTo(existing) { !excludedLibJars.contains(it.fileName.toString()) }
-  }
-  return computeAppClassPath(libDir = libDir, existing = existing, homeDir = homeDir)
 }
 
 fun computeAppClassPath(libDir: Path, existing: Set<Path>, homeDir: Path): LinkedHashSet<Path> {
@@ -197,9 +193,9 @@ fun generatePluginClassPath(
       .map { it.path }
       .distinct()
       .toMutableList()
-    allEntries += pluginAsset.dir to files
+    allEntries.add(pluginAsset.dir to files)
   }
-  return generatePluginClassPathFromFiles(allEntries, writeDescriptor)
+  return generatePluginClassPathFromFiles(pluginEntries = allEntries, writeDescriptor = writeDescriptor)
 }
 
 fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>, writeDescriptor: Boolean): ByteArray {
@@ -210,13 +206,14 @@ fun generatePluginClassPathFromFiles(pluginEntries: List<Pair<Path, List<Path>>>
     val files = entries.asSequence()
       .onEach {
         check(!it.startsWith(pluginDir) || pluginDir.relativize(it).nameCount == 2) {
-          "plugin entry is not specified correctly: ${it}"
+          "plugin entry is not specified correctly: $it"
         }
       }
       .distinct()
       .toMutableList()
     if (files.size > 1) {
-      putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)  // always sort
+      // always sort
+      putMoreLikelyPluginJarsFirst(pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
     // move dir with plugin.xml to top (it may not exist if for some reason the main module dir still being packed into JAR)

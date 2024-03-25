@@ -154,7 +154,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     val pluginDistributionEntriesDeferred = async {
-      buildPlugins(request, context, runDir, platformLayout, artifactTask)
+      buildPlugins(request = request, context = context, runDir = runDir, platformLayout = platformLayout, artifactTask = artifactTask)
     }
 
     launch {
