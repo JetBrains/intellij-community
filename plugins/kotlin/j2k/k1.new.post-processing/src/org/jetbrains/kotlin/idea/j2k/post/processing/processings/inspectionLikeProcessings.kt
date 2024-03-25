@@ -211,14 +211,16 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     private val inspection = RedundantVisibilityModifierInspection()
 
     override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings?): Boolean =
-        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
-                RedundantVisibilityModifierInspection.Holder.getRedundantVisibility(element) != null
+        when {
+            element is KtConstructor<*> -> false
+            isInspectionEnabledInCurrentProfile(inspection, element.project) &&
+                    RedundantVisibilityModifierInspection.Holder.getRedundantVisibility(element) != null -> true
+            else -> false
+        }
+
 
     override fun apply(element: KtDeclaration) {
         element.visibilityModifierType()?.let { element.removeModifier(it) }
-        if (element is KtPrimaryConstructor && element.isRedundant()) {
-            element.delete()
-        }
     }
 }
 
