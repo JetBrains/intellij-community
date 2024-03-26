@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource
+import com.intellij.psi.stubs.StubInconsistencyReporter.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -52,6 +52,20 @@ object StubInconsistencyReportUtil {
     else {
       STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT.log(project, EventPair(STUB_TREE_AND_INDEX_DO_NOT_MATCH_SOURCE_FIELD, source))
     }
+  }
+
+  private val CHECK_REASON_FIELD = EventFields.Enum<SourceOfCheck>("reason")
+  private val INCONSISTENCY_TYPE_FIELD = EventFields.Enum<InconsistencyType>("type")
+  private val STUB_INCONSISTENCY_EVENT = GROUP.registerVarargEvent(
+    "stub.inconsistency", CHECK_REASON_FIELD, INCONSISTENCY_TYPE_FIELD
+  )
+
+  @JvmStatic
+  fun reportStubInconsistency(project: Project, reason: SourceOfCheck?, type: InconsistencyType?) {
+    val parameters = mutableListOf<EventPair<*>>()
+    reason?.let { parameters.add(CHECK_REASON_FIELD.with(it)) }
+    type?.let { parameters.add(INCONSISTENCY_TYPE_FIELD.with(it)) }
+    STUB_INCONSISTENCY_EVENT.log(project, parameters)
   }
 }
 
