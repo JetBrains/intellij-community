@@ -73,4 +73,10 @@ public interface StubInconsistencyReporter {
   void reportStubInconsistency(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                @NotNull InconsistencyType type,
                                @Nullable EnforcedInconsistencyType enforcedInconsistencyType);
+
+  void reportKotlinDescriptorNotFound(@Nullable Project project);
+
+  void reportKotlinMissingClassName(@NotNull Project project,
+                                    boolean foundInKotlinFullClassNameIndex,
+                                    boolean foundInEverythingScope);
 }
