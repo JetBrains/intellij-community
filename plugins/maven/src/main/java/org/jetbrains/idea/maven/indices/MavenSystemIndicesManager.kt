@@ -21,6 +21,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.model.MavenIndexId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
@@ -49,6 +50,7 @@ interface IndexChangeProgressListener {
 
 @Service
 @State(name = "MavenIndices", storages = ([Storage(value = "mavenIndicesState.xml", roamingType = RoamingType.LOCAL)]))
+@ApiStatus.Experimental
 class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateComponent<IndexStateList> {
 
   private var myState: IndexStateList? = null
@@ -238,7 +240,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     }
   }
 
-  internal fun scheduleUpdateIndexContent(toUpdate: List<MavenUpdatableIndex>, explicit: Boolean) {
+  fun scheduleUpdateIndexContent(toUpdate: List<MavenUpdatableIndex>, explicit: Boolean) {
     val luceneUpdate = ArrayList<MavenLuceneClassIndexServer>()
     val inMemoryUpdate = ArrayList<MavenGAVIndex>()
     for (idx: MavenUpdatableIndex in toUpdate) {
