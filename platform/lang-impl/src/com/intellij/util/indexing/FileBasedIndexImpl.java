@@ -13,6 +13,8 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.FileType;
@@ -226,6 +228,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
 
     myConnection = connection;
+
+    FileBasedIndexExtension.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionRemoved(@NotNull FileBasedIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
+        ID.unloadId(extension.getName());
+      }
+    }, null);
 
     myIndexableFilesFilterHolder = new IncrementalProjectIndexableFilesFilterHolder();
 
