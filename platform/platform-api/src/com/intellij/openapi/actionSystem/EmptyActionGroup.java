@@ -18,7 +18,10 @@ package com.intellij.openapi.actionSystem;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The purpose of this class is to override (hide) already registered action groups by means of plugin.xml.
+ * The purpose of this class is to reserve action-id in a {@code plugin.xml}, so the action appears in <em>Preferences | Keymap</em>.
+ * Then Keymap assignments can be used for non-registered actions created at runtime.
+ * <p>
+ * It must never be shown in the UI.
  *
  * @author gregsh
  * @see EmptyAction

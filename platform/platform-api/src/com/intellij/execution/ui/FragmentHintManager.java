@@ -125,7 +125,7 @@ public class FragmentHintManager {
   }
 
   private static @Nullable @NlsSafe String getShortcutText(@NotNull SettingsEditorFragment<?, ?> fragment) {
-    ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(new EmptyAction(fragment.getName(), null, null));
+    ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(EmptyAction.createEmptyAction(fragment.getName(), null, false));
     if (shortcut != null && shortcut.hasShortcuts()) {
       return KeymapUtil.getShortcutsText(new Shortcut[]{ArrayUtil.getLastElement(shortcut.getShortcuts())});
     }

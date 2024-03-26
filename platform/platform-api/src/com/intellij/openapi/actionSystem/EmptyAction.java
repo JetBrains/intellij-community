@@ -2,7 +2,6 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,31 +13,34 @@ import javax.swing.*;
  * Then Keymap assignments can be used for non-registered actions created at runtime.
  * <p>
  * Another usage is to override (hide) already registered actions via {@code plugin.xml}, see {@link EmptyActionGroup} as well.
+ * <p>
+ * It must never be shown in the UI.
  *
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  * @see EmptyActionGroup
  */
 public final class EmptyAction extends AnAction {
-  private boolean myEnabled;
+  private final boolean myEnabled;
 
+  /** Always hidden in the UI! */
   public EmptyAction() {
+    this(false);
   }
 
+  /** Do not use this in the UI! */
   public EmptyAction(boolean enabled) {
     myEnabled = enabled;
-  }
-
-  public EmptyAction(@Nullable @NlsActions.ActionText String text,
-                     @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
-    super(text, description, icon);
   }
 
   public static @NotNull AnAction createEmptyAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String name,
                                                     @Nullable Icon icon,
                                                     boolean alwaysEnabled) {
-    final EmptyAction emptyAction = new EmptyAction(name, null, icon);
-    emptyAction.myEnabled = alwaysEnabled;
+    EmptyAction emptyAction = new EmptyAction(alwaysEnabled);
+    if (name != null || icon != null) {
+      emptyAction.getTemplatePresentation().setText(name);
+      emptyAction.getTemplatePresentation().setIcon(icon);
+    }
     return emptyAction;
   }
 
