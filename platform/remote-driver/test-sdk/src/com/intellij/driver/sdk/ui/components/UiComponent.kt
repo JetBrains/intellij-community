@@ -63,11 +63,26 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return filteredTexts.first()
   }
 
-  fun waitForText(text: String, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds) : UiText {
-    waitFor(duration) {
-      findAllText().any { it.text == text }
+  fun findFirst(text: String, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds): UiText {
+    var allTexts = emptyList<UiText>()
+    waitFor(duration, errorMessage = "Can't find '$text' in ${data.parentSearchContext.context}") {
+      allTexts = findAllText()
+      allTexts.any { it.text == text }
     }
-    return findText(text)
+    return allTexts.first { it.text == text }
+  }
+
+  fun findOne(text: String, duration: Duration = DEFAULT_FIND_TIMEOUT_SECONDS.seconds) : UiText {
+    var allTexts = emptyList<UiText>()
+    waitFor(duration, errorMessage = "Can't find '$text' in ${data.parentSearchContext.context}") {
+      allTexts = findAllText()
+      allTexts.any { it.text == text }
+    }
+    val filteredTexts = allTexts.filter { it.text == text }
+    if (filteredTexts.size > 1) {
+      throw AssertionError("Found ${filteredTexts.size} texts '$text', expected 1")
+    }
+    return filteredTexts.first()
   }
 
   fun hasText(text: String): Boolean {
