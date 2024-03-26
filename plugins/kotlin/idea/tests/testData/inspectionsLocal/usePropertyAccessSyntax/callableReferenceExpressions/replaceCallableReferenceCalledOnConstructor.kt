@@ -1,8 +1,7 @@
 // LANGUAGE_VERSION: 2.1
 // COMPILER_ARGUMENTS: -XXLanguage:+ReferencesToSyntheticJavaProperties
 // FIX: Use property access syntax
-// IGNORE_K2
-// Delete the ignore directive after fixing KTIJ-29118
+
 fun main() {
     suppressUnused(Foo()::<caret>getFoo)
 }

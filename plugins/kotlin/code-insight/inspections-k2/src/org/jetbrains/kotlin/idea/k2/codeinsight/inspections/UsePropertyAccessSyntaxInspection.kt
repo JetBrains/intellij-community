@@ -117,7 +117,10 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val problemHighlightType = getProblemHighlightType(symbolPsi)
 
-            val receiverType = callableReferenceExpression.getReceiverKtType()?.lowerBoundIfFlexible() ?: return
+            val receiverType =
+                callableReferenceExpression.resolveCall()
+                    ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
+                    ?: callableReferenceExpression.getReceiverKtType()?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
 
