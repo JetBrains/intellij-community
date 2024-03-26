@@ -1471,7 +1471,8 @@ public final class PyUtil {
   }
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
-    return PyNames.OBJECT.equals(cls.getQualifiedName());
+    String qualifiedName = cls.getQualifiedName();
+    return PyNames.OBJECT.equals(qualifiedName) || (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
   }
 
   @Nullable
