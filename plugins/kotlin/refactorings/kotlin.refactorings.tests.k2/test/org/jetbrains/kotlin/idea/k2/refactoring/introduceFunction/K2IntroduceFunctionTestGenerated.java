@@ -1649,6 +1649,16 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/runQualifier.kt");
             }
 
+            @TestMetadata("smartCastInside.kt")
+            public void testSmartCastInside() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/smartCastInside.kt");
+            }
+
+            @TestMetadata("smartCastInside1.kt")
+            public void testSmartCastInside1() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/smartCastInside1.kt");
+            }
+
             @TestMetadata("thisInObject.kt")
             public void testThisInObject() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");

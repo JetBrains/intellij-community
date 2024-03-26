@@ -84,6 +84,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
 
 context(KtAnalysisSession)
 internal fun ExtractionData.inferParametersInfo(
@@ -416,6 +417,7 @@ private fun createOriginalType(
 private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): List<ResolvedReferenceInfo<PsiNamedElement, KtSimpleNameExpression, KtType>> {
     val newReferences = body.collectDescendantsOfType<KtSimpleNameExpression> { it.resolveResult != null }
 
+    val smartCastPossibleRoots = mutableSetOf<KtExpression>()
     val referencesInfo = ArrayList<ResolvedReferenceInfo<PsiNamedElement, KtSimpleNameExpression, KtType>>()
     for (newRef in newReferences) {
         val originalResolveResult = newRef.resolveResult as? ResolveResult<PsiNamedElement, KtSimpleNameExpression> ?: continue
@@ -428,7 +430,21 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
         val qualifiedExpression = newRef.getQualifiedExpressionForSelector()
         if (qualifiedExpression != null) {
             val smartCastTarget = originalRefExpr.parent as KtExpression
-            smartCast = analyze(smartCastTarget) { smartCastTarget.getSmartCastInfo()?.smartCastType }
+            smartCast = analyze(smartCastTarget) {
+                val cast = smartCastTarget.getSmartCastInfo()?.smartCastType
+                when {
+                    cast == null -> {
+                        smartCastPossibleRoots.add(smartCastTarget)
+                        null
+                    }
+
+                    //same qualified expressions without smartcast are present in the code fragment,
+                    //so smart cast is done inside selection, no need to extract additional parameter
+                    smartCastPossibleRoots.any { it.isSemanticMatch(smartCastTarget) } -> null
+                    else -> cast
+                }
+            }
+
             possibleTypes = analyze(smartCastTarget) { smartCastTarget.getExpectedType()?.let { setOf(it) } ?: emptySet() }
             val (isCompanionObject, bothReceivers) = analyze(smartCastTarget) {
                 val symbol = originalRefExpr.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol

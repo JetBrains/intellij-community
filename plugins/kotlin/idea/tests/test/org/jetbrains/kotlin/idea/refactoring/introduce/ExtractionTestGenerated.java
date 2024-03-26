@@ -2491,6 +2491,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/runQualifier.kt");
                 }
 
+                @TestMetadata("smartCastInside.kt")
+                public void testSmartCastInside() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/smartCastInside.kt");
+                }
+
+                @TestMetadata("smartCastInside1.kt")
+                public void testSmartCastInside1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/smartCastInside1.kt");
+                }
+
                 @TestMetadata("thisInObject.kt")
                 public void testThisInObject() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");
