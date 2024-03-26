@@ -3,5 +3,5 @@
 fun test(r1: Runnable, r2: Runnable) {}
 
 fun usage() {
-    test(Runnable { return@Runnable }, {})
+    test(Runnable { return@Runnable }) {}
 }

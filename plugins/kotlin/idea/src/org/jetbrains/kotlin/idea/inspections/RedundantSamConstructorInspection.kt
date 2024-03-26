@@ -6,6 +6,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.codegen.SamCodegenUtil
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -17,6 +18,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.name.Name
@@ -44,6 +47,11 @@ import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.utils.keysToMapExceptNulls
 
+/**
+ * Tests:
+ *  * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.RedundantSamConstructor]
+ *  * [org.jetbrains.kotlin.idea.inspections.InspectionTestGenerated.Inspections.testRedundantSamConstructor_inspectionData_Inspections_test]
+ */
 class RedundantSamConstructorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return callExpressionVisitor(fun(expression) {
@@ -86,7 +94,7 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                 val callExpression = pointer.element ?: return
                 if (!FileModificationService.getInstance().preparePsiElementForWrite(callExpression)) return
-                replaceSamConstructorCall(callExpression)
+                removeSamConstructor(callExpression)
             }
         }
     }
@@ -100,9 +108,17 @@ class RedundantSamConstructorInspection : AbstractKotlinInspection() {
                 val callExpressions = pointers.mapNotNull { it.element }
                 if (!FileModificationService.getInstance().preparePsiElementsForWrite(callExpressions)) return
                 for (callExpression in callExpressions) {
-                    replaceSamConstructorCall(callExpression)
+                    removeSamConstructor(callExpression)
                 }
             }
+        }
+    }
+
+    private fun removeSamConstructor(callExpression: KtCallExpression) {
+        val lambdaExpression = replaceSamConstructorCall(callExpression)
+        val outerCallExpression = lambdaExpression.parentOfType<KtCallExpression>() ?: return
+        if (outerCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls = true)) {
+            outerCallExpression.moveFunctionLiteralOutsideParentheses()
         }
     }
 
