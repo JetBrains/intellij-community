@@ -104,7 +104,13 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   //          we find a record(s) with modCount>globalModCount => there were writes unfinished on app crush, and
   //          likely at least those records are corrupted.
 
-  //MAYBE RC: instead of dirty flag -> just compare .globalModCount != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET)
+  /**
+   * In the current implementation almost all fields are read/write straight from/to the mmapped buffer -- which means
+   * they are always 'saved', and no need to flush them explicitly => no need to update .dirty status. The only exception
+   * is {@link #globalModCount} which _should_ be flushed explicitly-- which is why the only modifications that must be
+   * followed by dirty=true are the {@link #globalModCount}'s modifications.
+   * MAYBE RC: instead of dirty flag -> just compare .globalModCount != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET)
+   */
   private final AtomicBoolean dirty = new AtomicBoolean(false);
 
   //cached for faster access:
@@ -624,7 +630,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       }
       if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
         owningProcessId = acquiringProcessId;
-        dirty.compareAndSet(false, true);
         return acquiringProcessId;
       }
     }
@@ -653,7 +658,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
         return currentOwnerProcessId;
       }
       if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, NULL_OWNER_PID)) {
-        dirty.compareAndSet(false, true);
         return 0;
       }
     }
@@ -737,9 +741,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   public void force() throws IOException {
     if (dirty.compareAndSet(true, false)) {
       setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
-      if (MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT) {
-        storage.fsync();
-      }
+    }
+    if (MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT) {
+      storage.fsync();
     }
   }
 
