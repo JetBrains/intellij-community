@@ -54,6 +54,7 @@ public final class JavaModuleGraphUtil {
   @Contract("null->null")
   public static @Nullable PsiJavaModule findDescriptorByElement(@Nullable PsiElement element) {
     if (element == null) return null;
+    if (element instanceof PsiJavaModule module) return module;
     if (element.getContainingFile() instanceof PsiJavaFile file) {
       PsiJavaModule module = file.getModuleDeclaration();
       if (module != null) return module;
