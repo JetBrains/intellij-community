@@ -85,7 +85,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 context(KtAnalysisSession)
 internal fun ExtractionData.inferParametersInfo(
@@ -426,27 +425,31 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
         val parent = newRef.parent
 
         val smartCast: KtType?
+
+        fun calculateSmartCastType(target: KtExpression): KtType? {
+            return analyze(target) {
+                val cast = target.getSmartCastInfo()?.smartCastType
+                when {
+                    cast == null -> {
+                        smartCastPossibleRoots.add(target)
+                        null
+                    }
+
+                    //same qualified expressions without smartcast are present in the code fragment,
+                    //so smart cast is done inside selection, no need to extract additional parameter
+                    smartCastPossibleRoots.any { it.isSemanticMatch(target) } -> null
+                    else -> cast
+                }
+            }
+        }
+
         val possibleTypes: Set<KtType>
 
         // Qualified property reference: a.b
         val qualifiedExpression = newRef.getQualifiedExpressionForSelector()
         if (qualifiedExpression != null) {
             val smartCastTarget = originalRefExpr.parent as KtExpression
-            smartCast = analyze(smartCastTarget) {
-                val cast = smartCastTarget.getSmartCastInfo()?.smartCastType
-                when {
-                    cast == null -> {
-                        smartCastPossibleRoots.add(smartCastTarget)
-                        null
-                    }
-
-                    //same qualified expressions without smartcast are present in the code fragment,
-                    //so smart cast is done inside selection, no need to extract additional parameter
-                    smartCastPossibleRoots.any { it.isSemanticMatch(smartCastTarget) } -> null
-                    else -> cast
-                }
-            }
-
+            smartCast = calculateSmartCastType(smartCastTarget)
             possibleTypes = analyze(smartCastTarget) { smartCastTarget.getExpectedType()?.let { setOf(it) } ?: emptySet() }
             val (isCompanionObject, bothReceivers) = analyze(smartCastTarget) {
                 val symbol = originalRefExpr.resolveCall()?.singleCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
@@ -464,7 +467,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             if (originalResolveResult.descriptor is KtProperty && parent is KtCallExpression && parent.calleeExpression == newRef && parent.getQualifiedExpressionForSelector() != null) {
                 continue
             }
-            smartCast = analyze(originalRefExpr) { originalRefExpr.getSmartCastInfo()?.smartCastType }
+            smartCast = calculateSmartCastType(originalRefExpr)
             possibleTypes = analyze(originalRefExpr) { originalRefExpr.getExpectedType()?.let { setOf(it) } ?: emptySet() }
         }
 
