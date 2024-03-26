@@ -282,6 +282,10 @@ internal class BrowseIconsComboBox(private val customActionsSchema: CustomAction
         selectPossibleValue(curInd, false)
       }
 
+      override fun isNewBorderSupported(comboBox: JComboBox<*>): Boolean {
+        return true
+      }
+
       private fun selectPossibleValue(curInd: Int, next: Boolean) {
         if (next && curInd < comboBox.model.size - 1) {
           trySelectValue(curInd + 1, true)
