@@ -117,7 +117,7 @@ public class Element extends Content implements Parent, Serializable {
    * The content of the element.  Subclasses have to
    * track content using their own mechanism.
    */
-  protected transient ContentList content = new ContentList(this);
+  transient ContentList content = new ContentList(this);
 
   /**
    * This protected constructor is provided in order to support an Element
