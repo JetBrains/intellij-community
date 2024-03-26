@@ -2416,6 +2416,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/kt5001.kt");
                 }
 
+                @TestMetadata("labeledReturns.kt")
+                public void testLabeledReturns() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/labeledReturns.kt");
+                }
+
                 @TestMetadata("multiDeclaration.kt")
                 public void testMultiDeclaration() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/multiDeclaration.kt");

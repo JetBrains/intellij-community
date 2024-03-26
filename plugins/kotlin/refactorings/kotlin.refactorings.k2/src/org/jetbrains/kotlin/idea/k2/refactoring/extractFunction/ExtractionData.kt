@@ -59,7 +59,7 @@ data class ExtractionData(
     init {
         analyze(commonParent) {
             encodeReferences({ expr -> expr.getSmartCastInfo() != null }) { physicalRef ->
-                val resolve = physicalRef.mainReference.resolve()
+                val resolve = if (physicalRef is KtLabelReferenceExpression) null else physicalRef.mainReference.resolve()
                 val declaration =
                     resolve as? KtNamedDeclaration ?: resolve as? PsiMember
                     //if this resolves to the receiver, then retrieve corresponding class

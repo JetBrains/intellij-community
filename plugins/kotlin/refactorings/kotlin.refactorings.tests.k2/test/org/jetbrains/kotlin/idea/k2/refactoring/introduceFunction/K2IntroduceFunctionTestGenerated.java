@@ -1574,6 +1574,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/kt5001.kt");
             }
 
+            @TestMetadata("labeledReturns.kt")
+            public void testLabeledReturns() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/labeledReturns.kt");
+            }
+
             @TestMetadata("multiDeclaration.kt")
             public void testMultiDeclaration() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/multiDeclaration.kt");
