@@ -45,7 +45,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         "override fun wrapAsModifiable(diff: ${MutableEntityStorage}): ${WorkspaceEntity.Builder}<$javaFullName>") {
         line("val modifiable = $javaImplBuilderName(null)")
         line("modifiable.diff = diff")
-        line("modifiable.snapshot = diff")
         line("modifiable.id = createEntityId()")
         line("return modifiable")
       }

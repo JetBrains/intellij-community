@@ -25,7 +25,6 @@ ${
         }
         line()
         line("this.diff = builder")
-        line("this.snapshot = builder")
         line("addToBuilder()")
         line("this.id = getEntityData().createEntityId()")
         lineComment("After adding entity data to the builder, we need to unbind it and move the control over entity data to builder")
