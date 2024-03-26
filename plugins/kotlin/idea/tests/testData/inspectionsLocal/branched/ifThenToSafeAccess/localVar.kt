@@ -1,4 +1,6 @@
-// PROBLEM: none
+// FIX: Replace 'if' expression with safe access expression
+// HIGHLIGHT: WARNING
+// IGNORE_K1
 fun maybeFoo(): String? {
     return "foo"
 }
@@ -8,5 +10,5 @@ fun main(args: Array<String>) {
     if (foo == null<caret>)
         null
     else
-        foo?.length
+        foo.length
 }

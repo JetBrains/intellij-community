@@ -6,18 +6,27 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
+/**
+ * If [this] is [KtBlockExpression], returns, after deparenthesizing, a single block statement or `null` if multiple statements are present.
+ * Otherwise, simply returns deparenthesized [this].
+ */
+fun KtExpression.getSingleUnwrappedStatement(): KtExpression? {
     val innerExpression = KtPsiUtil.safeDeparenthesize(this, true)
 
     if (innerExpression is KtBlockExpression) {
-        val statement = innerExpression.statements.singleOrNull() ?: return this
+        val statement = innerExpression.statements.singleOrNull() ?: return null
         val deparenthesized = KtPsiUtil.safeDeparenthesize(statement, true)
-        if (deparenthesized is KtLambdaExpression) return this
+        if (deparenthesized is KtLambdaExpression) return null
         return deparenthesized
     }
 
     return innerExpression
 }
+
+/**
+ * See [getSingleUnwrappedStatement].
+ */
+fun KtExpression.getSingleUnwrappedStatementOrThis(): KtExpression = getSingleUnwrappedStatement() ?: this
 
 fun KtBinaryExpression.expressionComparedToNull(): KtExpression? {
     val operationToken = this.operationToken
@@ -32,4 +41,4 @@ fun KtBinaryExpression.expressionComparedToNull(): KtExpression? {
     return if (leftIsNull) right else left
 }
 
-fun KtExpression?.isNullExpression(): Boolean = this?.unwrapBlockOrParenthesis()?.node?.elementType == KtNodeTypes.NULL
+fun KtExpression?.isNullExpression(): Boolean = this?.getSingleUnwrappedStatementOrThis()?.node?.elementType == KtNodeTypes.NULL

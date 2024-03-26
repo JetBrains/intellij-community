@@ -204,8 +204,11 @@ private fun getNegatedOperatorText(token: IElementType): String {
     return negatedOperator.value
 }
 
-fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
-    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+fun KtQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
+    (receiverExpression as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+
+fun KtExpression.getLeftMostReceiverExpressionOrThis(): KtExpression =
+    (this as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: this
 
 fun KtDotQualifiedExpression.replaceFirstReceiver(
     factory: KtPsiFactory,

@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.analysis.api.calls.KtCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.KtReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.KtSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
@@ -185,6 +187,15 @@ fun KtReference.resolveToExpandedSymbol(): KtSymbol? = when (val symbol = resolv
     else -> symbol
 }
 
+/**
+ * @return implicit receivers of [this], including implicit receivers with smart casts, which are unwrapped to [KtImplicitReceiverValue]
+ */
 fun KtCallableMemberCall<*, *>.getImplicitReceivers(): List<KtImplicitReceiverValue> = partiallyAppliedSymbol
     .let { listOfNotNull(it.dispatchReceiver, it.extensionReceiver) }
+    .map { it.unwrapSmartCasts() }
     .filterIsInstance<KtImplicitReceiverValue>()
+
+private tailrec fun KtReceiverValue.unwrapSmartCasts(): KtReceiverValue = when (this) {
+    is KtSmartCastedReceiverValue -> original.unwrapSmartCasts()
+    else -> this
+}

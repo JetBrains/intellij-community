@@ -170,3 +170,19 @@ fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpress
     val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
     return runWriteActionIfPhysical(ktExpression) { ktExpression.replace(functionalArgument) as KtLambdaExpression }
 }
+
+/**
+ * @return the expression which was actually inserted in the tree
+ */
+fun KtExpression.prependDotQualifiedReceiver(receiver: KtExpression, factory: KtPsiFactory): KtExpression {
+    val dotQualified = factory.createExpressionByPattern("$0.$1", receiver, this)
+    return this.replaced(dotQualified)
+}
+
+/**
+ * @return the expression which was actually inserted in the tree
+ */
+fun KtExpression.appendDotQualifiedSelector(selector: KtExpression, factory: KtPsiFactory): KtExpression {
+    val dotQualified = factory.createExpressionByPattern("$0.$1", this, selector)
+    return this.replaced(dotQualified)
+}
