@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteOrder;
 
-public class InputStreamAccess implements Access<InputStream> {
+class InputStreamAccess implements Access<InputStream> {
   private static final VarHandle LONG_HANDLE = MethodHandles.byteArrayViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
   private static final VarHandle INT_HANDLE = MethodHandles.byteArrayViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
 
@@ -16,7 +16,7 @@ public class InputStreamAccess implements Access<InputStream> {
   private final int totalStreamLength;
   private final int totalBlocks;
 
-  public InputStreamAccess(int streamLength) {
+  InputStreamAccess(int streamLength) {
     currentBlock = -1;
     buffer = new byte[Xxh3Impl.getBlockLength()];
     totalStreamLength = streamLength;
