@@ -15,7 +15,6 @@ import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.StubInconsistencyReporter.EnforcedInconsistencyType;
 import com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -128,7 +127,7 @@ public abstract class StubProcessingHelperBase {
     if (psiFile instanceof PsiBinaryFile) {
       // a file can be indexed as containing stubs,
       // but then in a specific project FileViewProviderFactory can decide not to create stub-aware PSI
-      // because the file isn't in expected location
+      // because the file isn't in the expected location
       return true;
     }
 
@@ -163,9 +162,7 @@ public abstract class StubProcessingHelperBase {
     @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
   ) {
     try {
-      StubTextInconsistencyException.checkStubTextConsistency(psiFile,
-                                                              SourceOfCheck.WrongTypePsiInStubHelper,
-                                                              EnforcedInconsistencyType.PsiOfUnexpectedClass);
+      StubTextInconsistencyException.checkStubTextConsistency(psiFile, SourceOfCheck.WrongTypePsiInStubHelper);
       LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null, source));
     }
     finally {

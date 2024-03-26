@@ -17,6 +17,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,14 +55,15 @@ public abstract class StubTreeLoader {
   }
 
   /**
-   * Creates exception with full description. Should be used when requesting indexes is safe,
-   * in particular counting indexes for changed files won't need some already taken lock.
+   * Creates exception with full description.
+   * Should be used when requesting indexes is safe, in particular, counting indexes for changed files won't need some already taken lock.
    * <p/>
    * From under lock, which may be needed to compute indexes for changed files,
    * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
    * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}
    * and invoke {@link StubTreeAndIndexUnmatchCoarseException#createCompleteException()} outside the lock.
    */
+  @ApiStatus.Internal
   public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(
     @Nullable ObjectStubTree<?> stubTree,
     @NotNull PsiFileWithStubSupport psiFile,
@@ -74,21 +76,10 @@ public abstract class StubTreeLoader {
   }
 
   /**
-   * @deprecated Use @{link {@link #stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
-   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}}
-   */
-  @Deprecated
-  public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                              @NotNull PsiFileWithStubSupport psiFile,
-                                                              @Nullable Throwable cause) {
-    return stubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, null);
-  }
-
-
-  /**
    * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
    * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)
    */
+  @ApiStatus.Internal
   public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(
     @Nullable ObjectStubTree<?> stubTree,
     @NotNull PsiFileWithStubSupport psiFile,
@@ -98,19 +89,6 @@ public abstract class StubTreeLoader {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source);
     });
-  }
-
-  /**
-   * @deprecated Use {@link #createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
-   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}
-   */
-  @Deprecated
-  public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(
-    @Nullable ObjectStubTree<?> stubTree,
-    @NotNull PsiFileWithStubSupport psiFile,
-    @Nullable Throwable cause
-  ) {
-    return createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, null);
   }
 
   private @NotNull StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(
