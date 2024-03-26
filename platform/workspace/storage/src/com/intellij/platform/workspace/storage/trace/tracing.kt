@@ -220,9 +220,9 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
           }
         }
 
-        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
-        }
+        //if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+        //  patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        //}
       }
       is ChangeEntry.RemoveEntity -> {
         val ofClass = id.clazz.findWorkspaceEntity()
@@ -236,9 +236,9 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
           }
         }
 
-        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
-        }
+        //if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+        //  patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        //}
       }
       is ChangeEntry.ReplaceEntity -> {
         val ofClass = id.clazz.findWorkspaceEntity()
@@ -254,9 +254,9 @@ internal fun ChangeLog.toTraces(newSnapshot: ImmutableEntityStorageInstrumentati
         }
 
         // Because maybe we update the field that calculates symbolic id
-        if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
-          patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
-        }
+        //if (entityData is WorkspaceEntityData.WithCalculableSymbolicId) {
+        //  patternSet.add(ReadTrace.Resolve(entityData.symbolicId()).hash)
+        //}
       }
     }
   }
