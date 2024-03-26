@@ -38,21 +38,14 @@ internal class CreateKotlinCallableAction(
     private val myText: String,
     pointerToContainer: SmartPsiElementPointer<*>,
 ) : CreateKotlinElementAction(request, pointerToContainer), JvmGroupIntentionAction {
-    private val candidatesOfParameterNames: List<Collection<String>> = request.expectedParameters.map { it.semanticNames }
-
-    private val candidatesOfRenderedParameterTypes: List<List<String>> = renderCandidatesOfParameterTypes()
-
+    data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
+    private val parameterCandidates: List<ParamCandidate> = renderCandidatesOfParameterTypes()
     private val candidatesOfRenderedReturnType: List<String> = renderCandidatesOfReturnType()
-
     private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
+
     private val call: PsiElement? = when (request) {
         is CreateMethodFromKotlinUsageRequest -> request.call
         is CreateExecutableFromJavaUsageRequest<*> -> request.call
-        else -> null
-    }
-    private val isAbstract: Boolean? = when (request) {
-        is CreateMethodFromKotlinUsageRequest -> request.isAbstractClassOrInterface
-        is CreateExecutableFromJavaUsageRequest<*> -> false
         else -> null
     }
     private val isForCompanion: Boolean = (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion == true
@@ -84,8 +77,7 @@ internal class CreateKotlinCallableAction(
         if (callableDefinitionAsString != null) {
             val callableInfo = NewCallableInfo(
                 callableDefinitionAsString,
-                candidatesOfParameterNames,
-                candidatesOfRenderedParameterTypes,
+                parameterCandidates,
                 candidatesOfRenderedReturnType,
                 containerClassFqName,
                 isForCompanion
@@ -103,21 +95,23 @@ internal class CreateKotlinCallableAction(
         return element
     }
 
-    private fun renderCandidatesOfParameterTypes(): List<List<String>> {
-        val container = getContainer() ?: return List(request.expectedParameters.size) { listOf("Any") }
-        return analyze(container) {
-            request.expectedParameters.map { expectedParameter ->
-                expectedParameter.expectedTypes.map {
-                    val parameterType =
-                    if (it is ExpectedTypeWithNullability) {
-                        toKtTypeWithNullability(it, container)
+    private fun renderCandidatesOfParameterTypes(): List<ParamCandidate> {
+        request.expectedParameters.map { it.semanticNames }
+        val container = getContainer()
+        return request.expectedParameters.map { expectedParameter ->
+            val types = if (container == null) listOf("Any") else
+                analyze(container) {
+                    expectedParameter.expectedTypes.map {
+                        val parameterType =
+                            if (it is ExpectedTypeWithNullability) {
+                                toKtTypeWithNullability(it, container)
+                            } else {
+                                it.theType.toKtType(container)
+                            }
+                        parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
                     }
-                    else{
-                        it.theType.toKtType(container)
-                    }
-                    parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
                 }
-            }
+            ParamCandidate(expectedParameter.semanticNames, types)
         }
     }
 
@@ -149,7 +143,7 @@ internal class CreateKotlinCallableAction(
             append(" ")
 
             val (receiver, receiverTypeText) = if (request is CreateMethodFromKotlinUsageRequest) CreateKotlinCallableActionTextBuilder.renderReceiver(request) else "" to ""
-            append(renderTypeParameterDeclarations(request, receiver, receiverTypeText));
+            append(renderTypeParameterDeclarations(request, receiver, receiverTypeText))
             append(request.methodName)
             append("(")
             append(renderParameterList())
@@ -174,10 +168,10 @@ internal class CreateKotlinCallableAction(
     }
 
     private fun renderParameterList(): String {
-        assert(candidatesOfParameterNames.size == candidatesOfRenderedParameterTypes.size)
-        return candidatesOfParameterNames.mapIndexed { index, candidates ->
-            val candidatesOfTypes = candidatesOfRenderedParameterTypes[index]
-            "${candidates.firstOrNull() ?: "p$index"}: ${candidatesOfTypes.firstOrNull() ?: "Any"}"
+        return parameterCandidates.mapIndexed { index, candidate ->
+            val typeNames = candidate.renderedTypes
+            val names = candidate.names
+            "${names.firstOrNull() ?: "p$index"}: ${typeNames.firstOrNull() ?: "Any"}"
         }.joinToString()
     }
 

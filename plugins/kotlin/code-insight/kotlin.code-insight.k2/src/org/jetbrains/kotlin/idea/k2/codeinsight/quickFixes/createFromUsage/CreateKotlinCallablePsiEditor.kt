@@ -39,8 +39,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  */
 internal data class NewCallableInfo(
     val definitionAsString: String,
-    val candidatesOfParameterNames: List<Collection<String>>,
-    val candidatesOfRenderedParameterTypes: List<List<String>>,
+    val parameterCandidates: List<CreateKotlinCallableAction.ParamCandidate>,
     val candidatesOfRenderedReturnType: List<String>,
     val containerClassFqName: FqName?,
     val isForCompanion: Boolean,
@@ -111,21 +110,12 @@ internal class CreateKotlinCallablePsiEditor(
         // Set up template for the parameter name:
         val nameIdentifier = parameter.nameIdentifier ?: return
         replaceElement(
-            nameIdentifier, ParameterNameExpression(parameterIndex, callableInfo.candidatesOfParameterNames[parameterIndex].toList())
+            nameIdentifier, ParameterNameExpression(parameterIndex, callableInfo.parameterCandidates[parameterIndex].names.toList())
         )
 
         // Set up template for the parameter type:
         val parameterTypeElement = parameter.typeReference ?: return
-        replaceElement(parameterTypeElement, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedParameterTypes[parameterIndex]))
-    }
-
-    private fun KtElement.addToContainer(container: PsiElement): PsiElement = when (container) {
-        is KtClassOrObject -> {
-            val classBody = container.getOrCreateBody()
-            classBody.addBefore(this, classBody.rBrace)
-        }
-
-        else -> container.add(this)
+        replaceElement(parameterTypeElement, ExpressionForCreateCallable(callableInfo.parameterCandidates[parameterIndex].renderedTypes))
     }
 
     private fun buildTemplateListener(editor: Editor, file: KtFile, functionMarker: RangeMarker): TemplateEditingAdapter {
