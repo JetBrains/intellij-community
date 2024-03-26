@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlDomReader")
 @file:Suppress("ReplacePutWithAssignment")
+@file:Internal
 
 package com.intellij.util.xml.dom
 
 import com.fasterxml.aalto.WFCException
 import com.fasterxml.aalto.impl.ErrorConsts
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.InputStream
 import java.io.Reader
 import java.nio.file.Files
@@ -21,6 +22,7 @@ private class XmlElementBuilder(@JvmField var name: String, @JvmField var attrib
   @JvmField val children: ArrayList<XmlElement> = ArrayList()
 }
 
+@Internal
 interface XmlInterner {
   fun name(value: String): String
 
@@ -30,6 +32,7 @@ interface XmlInterner {
   fun value(name: String, value: String): String
 }
 
+@Internal
 object NoOpXmlInterner : XmlInterner {
   override fun name(value: String): String = value
 
@@ -62,7 +65,7 @@ private fun readAndClose(reader: XMLStreamReader2): XmlElement {
   }
 }
 
-@ApiStatus.Internal
+@Internal
 fun readXmlAsModel(reader: XMLStreamReader2, rootName: String?, interner: XmlInterner): XmlElement {
   val fragment = XmlElementBuilder(name = if (rootName == null) "" else interner.name(rootName),
                                    attributes = readAttributes(reader = reader, interner = interner))

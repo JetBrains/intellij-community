@@ -1,0 +1,6 @@
+f:com.intellij.util.xml.dom.StaxFactory
+- sf:createNonCoalescingXmlStreamReader(java.io.InputStream,java.lang.String):org.codehaus.stax2.XMLStreamReader2
+- sf:createNonCoalescingXmlStreamReader(B[],java.lang.String):org.codehaus.stax2.XMLStreamReader2
+- sf:createXmlStreamReader(java.io.InputStream):org.codehaus.stax2.XMLStreamReader2
+- sf:createXmlStreamReader(java.io.Reader):org.codehaus.stax2.XMLStreamReader2
+- sf:createXmlStreamReader(B[]):org.codehaus.stax2.XMLStreamReader2
