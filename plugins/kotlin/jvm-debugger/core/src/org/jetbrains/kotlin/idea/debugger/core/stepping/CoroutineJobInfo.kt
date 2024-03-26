@@ -7,28 +7,28 @@ import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 
-interface ContinuationFilter {
-    fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean
+interface CoroutineFilter {
+    fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean
 }
 
-data class CoroutineJobInfo(private val continuationFilter: ContinuationFilter) : LightOrRealThreadInfo {
+data class CoroutineJobInfo(private val coroutineFilter: CoroutineFilter) : LightOrRealThreadInfo {
     override val realThread = null
 
     override fun checkSameThread(thread: ThreadReference, suspendContext: SuspendContextImpl): Boolean {
-        val nextContinuationFilter = getContinuationObject(suspendContext)
-        return nextContinuationFilter != null && continuationFilter.canRunTo(nextContinuationFilter)
+        val nextCoroutineFilter = getCoroutineFilter(suspendContext)
+        return nextCoroutineFilter != null && coroutineFilter.canRunTo(nextCoroutineFilter)
     }
 
     companion object {
         @JvmStatic
-        private fun getContinuationObject(suspendContext: SuspendContextImpl): ContinuationFilter? {
-            return StackFrameInterceptor.instance?.extractContinuationFilter(suspendContext)
+        private fun getCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
+            return StackFrameInterceptor.instance?.extractCoroutineFilter(suspendContext)
         }
 
         @JvmStatic
         fun extractJobInfo(suspendContext: SuspendContextImpl): LightOrRealThreadInfo? {
             if (!Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")) return null
-            return getContinuationObject(suspendContext)?.let { CoroutineJobInfo(it) }
+            return getCoroutineFilter(suspendContext)?.let { CoroutineJobInfo(it) }
         }
     }
 }

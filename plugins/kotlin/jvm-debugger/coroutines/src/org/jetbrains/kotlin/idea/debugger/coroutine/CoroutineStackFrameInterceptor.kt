@@ -25,7 +25,7 @@ import com.sun.jdi.LongValue
 import com.sun.jdi.ObjectReference
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
-import org.jetbrains.kotlin.idea.debugger.core.stepping.ContinuationFilter
+import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): XStackFrame? {
@@ -62,7 +61,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
     }
 
-    override fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? {
+    override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
         val defaultExecutionContext = DefaultExecutionContext(suspendContext, frameProxy)
         val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
@@ -76,7 +75,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             }
             return when {
                 currentCoroutines.isEmpty() -> null
-                else -> ContinuationIdFilter(currentCoroutines)
+                else -> CoroutineIdFilter(currentCoroutines)
             }
         } else {
             //TODO: IDEA-341142 show nice notification about this
@@ -158,19 +157,24 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =
         activeExecutionStack?.threadProxy?.frame(0) ?: this.frameProxy
 
-    private data class ContinuationIdFilter(val coroutinesRunningOnCurrentThread: Set<Long>) : ContinuationFilter {
+    /**
+     * The coroutine filter which defines a coroutine by the set of ids of coroutines running on the current thread.
+     */
+    private data class CoroutineIdFilter(val coroutinesRunningOnCurrentThread: Set<Long>) : CoroutineFilter {
         init {
             require(coroutinesRunningOnCurrentThread.isNotEmpty()) { "Coroutines set can not be empty" }
         }
-        override fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean {
-            return nextContinuationFilter is ContinuationIdFilter && 
-                    coroutinesRunningOnCurrentThread.intersect(nextContinuationFilter.coroutinesRunningOnCurrentThread).isNotEmpty()
+        override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean {
+            return nextCoroutineFilter is CoroutineIdFilter &&
+                    coroutinesRunningOnCurrentThread.intersect(nextCoroutineFilter.coroutinesRunningOnCurrentThread).isNotEmpty()
         }
     }
-
-    // Is used when there is no debug information about unique Continuation ID (for example, for the old versions)
-    private data class ContinuationObjectFilter(val reference: ObjectReference) : ContinuationFilter {
-        override fun canRunTo(nextContinuationFilter: ContinuationFilter): Boolean = 
-            this == nextContinuationFilter
+    
+    /**
+     * The coroutine filter which defines a coroutine by the instance of the Continuation corresponding to the root coroutine frame.
+     */
+    private data class ContinuationObjectFilter(val reference: ObjectReference) : CoroutineFilter {
+        override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean = 
+            this == nextCoroutineFilter
     }
 }
