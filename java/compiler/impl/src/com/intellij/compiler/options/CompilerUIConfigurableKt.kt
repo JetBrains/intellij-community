@@ -145,8 +145,8 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       }
     }
 
-    vmOptionsField.getDocument().addDocumentListener(updateStateListener)
-    heapSizeField.getDocument().addDocumentListener(updateStateListener)
+    vmOptionsField.document.addDocumentListener(updateStateListener)
+    heapSizeField.document.addDocumentListener(updateStateListener)
   }
 
   private fun tweakControls() {
@@ -191,7 +191,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     for (setting in disabledSettings) {
       val components = controls[setting]
       if (components != null) {
-        components.forEach { it.setVisible(false) }
+        components.forEach { it.isVisible = false }
       }
     }
   }
@@ -203,22 +203,22 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     cbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR)
     cbDisplayNotificationPopup.setSelected(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP)
     cbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY)
-    cbAssertNotNull.setSelected(configuration.isAddNotNullAssertions())
+    cbAssertNotNull.setSelected(configuration.isAddNotNullAssertions)
     cbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE)
     cbParallelCompilation.setSelected(configuration.isParallelCompilationEnabled())
     cbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE)
     val heapSize = workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE
-    heapSizeField.setText(if (heapSize > 0) heapSize.toString() else "")
+    heapSizeField.text = if (heapSize > 0) heapSize.toString() else ""
     // for compatibility with older projects
     val javacPreferred = JavacConfiguration.getOptions(project, JavacConfiguration::class.java).MAXIMUM_HEAP_SIZE
-    sharedHeapSizeField.setText(configuration.getBuildProcessHeapSize(javacPreferred).toString())
+    sharedHeapSizeField.text = configuration.getBuildProcessHeapSize(javacPreferred).toString()
     val options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS
     vmOptionsField.setText(options?.trim() ?: "")
-    sharedVMOptionsField.setText(configuration.getBuildProcessVMOptions())
+    sharedVMOptionsField.setText(configuration.buildProcessVMOptions)
 
     configuration.convertPatterns()
 
-    resourcePatternsField.setText(CompilerUIConfigurable.patternsToString(configuration.getResourceFilePatterns()))
+    resourcePatternsField.text = CompilerUIConfigurable.patternsToString(configuration.resourceFilePatterns)
 
     if (PowerSaveMode.isEnabled()) {
       cbEnableAutomakeCell.comment(JavaCompilerBundle.message("disabled.in.power.save.mode"), 70, HyperlinkEventAction.HTML_HYPERLINK_INSTANCE)
@@ -251,13 +251,13 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     isModified = isModified || !disabledSettings.contains(Setting.HEAP_SIZE)
                  && ComparingUtils.isModified(sharedHeapSizeField, compilerConfiguration.getBuildProcessHeapSize(0))
     isModified = isModified || !disabledSettings.contains(Setting.COMPILER_VM_OPTIONS)
-                 && ComparingUtils.isModified(sharedVMOptionsField, compilerConfiguration.getBuildProcessVMOptions())
+                 && ComparingUtils.isModified(sharedVMOptionsField, compilerConfiguration.buildProcessVMOptions)
     isModified = isModified || !disabledSettings.contains(Setting.ADD_NOT_NULL_ASSERTIONS)
-                 && ComparingUtils.isModified(cbAssertNotNull, compilerConfiguration.isAddNotNullAssertions())
+                 && ComparingUtils.isModified(cbAssertNotNull, compilerConfiguration.isAddNotNullAssertions)
     isModified = isModified || !disabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)
                  && ComparingUtils.isModified(cbClearOutputDirectory, workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY)
     isModified = isModified || !disabledSettings.contains(Setting.RESOURCE_PATTERNS)
-                 && ComparingUtils.isModified(resourcePatternsField, CompilerUIConfigurable.patternsToString(compilerConfiguration.getResourceFilePatterns()))
+                 && ComparingUtils.isModified(resourcePatternsField, CompilerUIConfigurable.patternsToString(compilerConfiguration.resourceFilePatterns))
 
     return isModified
   }
