@@ -9,6 +9,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInsight.util.GlobalInspectionScopeKt;
 import com.intellij.codeInspection.*;
@@ -328,8 +329,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Future<?> future = startIterateScopeInBackground(scope, fileScanningIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
     var enabledInspectionsProvider = createEnabledInspectionsProvider(localTools, globalSimpleTools, getProject());
-    Processor<VirtualFile> processor =
-      buildProcessor(scope, enabledInspectionsProvider, searchScope, inspectionManager, map);
+    Processor<VirtualFile> processor = buildProcessor(scope, enabledInspectionsProvider, searchScope, inspectionManager, map);
     var localInspectionsSpan = tracer.spanBuilder("localInspectionsAnalysis").startSpan();
     try {
       Queue<VirtualFile> filesFailedToInspect = new LinkedBlockingQueue<>();
@@ -391,7 +391,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                                                 SearchScope searchScope,
                                                 InspectionManager inspectionManager,
                                                 Map<String, InspectionToolWrapper<?, ?>> map) {
-
     PsiManager psiManager = PsiManager.getInstance(getProject());
     boolean inspectInjectedPsi = Registry.is("idea.batch.inspections.inspect.injected.psi", true);
 
@@ -532,10 +531,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
                            boolean inspectInjectedPsi) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
-    ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (progressIndicator == null) {
-      throw new IllegalStateException("Must be run under progress");
-    }
+    DaemonProgressIndicator progressIndicator = assertUnderDaemonProgress();
     InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
       try {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
@@ -587,6 +583,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
       finally {
         InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
+        HighlightingSessionImpl.clearHighlightingSession(progressIndicator, file);
       }
     });
   }
