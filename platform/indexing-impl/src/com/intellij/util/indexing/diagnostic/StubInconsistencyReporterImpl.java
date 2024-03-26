@@ -35,4 +35,9 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
                                            boolean foundInEverythingScope) {
     StubInconsistencyReportUtil.reportKotlinMissingClassName(project, foundInKotlinFullClassNameIndex, foundInEverythingScope);
   }
+
+  @Override
+  public void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @Nullable StubTreeAndIndexDoNotMatchSource source) {
+    StubInconsistencyReportUtil.reportStubTreeAndIndexDoNotMatch(project, source);
+  }
 }
