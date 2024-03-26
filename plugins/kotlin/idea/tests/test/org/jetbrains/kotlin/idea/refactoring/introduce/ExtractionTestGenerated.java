@@ -1449,6 +1449,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");
                 }
 
+                @TestMetadata("nonLocalReturn.kt")
+                public void testNonLocalReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nonLocalReturn.kt");
+                }
+
                 @TestMetadata("outputValueByNullability.kt")
                 public void testOutputValueByNullability() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueByNullability.kt");
