@@ -237,9 +237,13 @@ class JavaToKotlinAction : AnAction() {
             return
         }
         val j2kKind = getJ2kKind()
-        if (!J2kConverterExtension.extension(j2kKind).doCheckBeforeConversion(project, module)) return
+        val j2kConverterExtension = J2kConverterExtension.extension(j2kKind)
         if (shouldSkipConversionOfErroneousCode(javaFiles, project)) return
-        Handler.convertFiles(javaFiles, project, module)
+        if (j2kConverterExtension.doCheckBeforeConversion(project, module)) {
+            Handler.convertFiles(javaFiles, project, module)
+        } else {
+            j2kConverterExtension.setUpAndConvert(project, module, javaFiles, Handler::convertFiles)
+        }
     }
 
     private fun getSelectedWritableJavaFiles(e: AnActionEvent): List<PsiJavaFile> {

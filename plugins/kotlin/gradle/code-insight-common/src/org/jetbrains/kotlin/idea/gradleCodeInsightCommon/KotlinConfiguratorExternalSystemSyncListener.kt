@@ -10,7 +10,7 @@ class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificat
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
-        KotlinProjectConfigurationService.getInstance(project).onGradleSyncStarted()
+        KotlinProjectConfigurationService.getInstance(project).onSyncStarted()
 
         // Removes the Kotlin not configured notification immediately when a project sync was started
         KotlinProjectConfigurationService.getInstance(project).refreshEditorNotifications()
@@ -20,6 +20,6 @@ class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificat
         if (id.type != ExternalSystemTaskType.RESOLVE_PROJECT) return
         val project = id.findProject() ?: return
         val configurationService = KotlinProjectConfigurationService.getInstance(project)
-        configurationService.onGradleSyncFinished()
+        configurationService.onSyncFinished()
     }
 }

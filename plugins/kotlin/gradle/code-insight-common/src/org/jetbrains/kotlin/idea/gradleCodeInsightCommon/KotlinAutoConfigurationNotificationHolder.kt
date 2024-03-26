@@ -118,7 +118,7 @@ class KotlinAutoConfigurationNotificationHolder(private val project: Project) : 
     private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
-        if (KotlinProjectConfigurationService.getInstance(project).isGradleSyncInProgress()) {
+        if (KotlinProjectConfigurationService.getInstance(project).isSyncInProgress()) {
             Messages.showWarningDialog(
                 project,
                 KotlinProjectConfigurationBundle.message("auto.configure.kotlin.wait.gradle.sync.finished"),

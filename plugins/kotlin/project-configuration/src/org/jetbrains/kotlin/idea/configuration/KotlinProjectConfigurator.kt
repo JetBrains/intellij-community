@@ -74,8 +74,27 @@ interface KotlinProjectConfigurator {
 
     fun getStatus(moduleSourceRootGroup: ModuleSourceRootGroup): ConfigureKotlinStatus
 
+    /**
+     * Returns a collection of configured base modules.
+     * Note that the default implementation deliberately doesn't do anything but always returns an empty collection for the sake of
+     * API compatibility.
+     */
+    @JvmSuppressWildcards
+    fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
+        // Stub for not breaking external API implementations
+        return emptySet()
+    }
+
     @JvmSuppressWildcards
     fun configure(project: Project, excludeModules: Collection<Module>)
+
+    fun queueSyncIfNeeded(project: Project) {
+        // Do nothing here. Stub for not breaking external API implementations
+    }
+
+    suspend fun queueSyncAndWaitForProjectToBeConfigured(project: Project) {
+        // Do nothing here. Stub for not breaking external API implementations
+    }
 
     val presentableText: String
 

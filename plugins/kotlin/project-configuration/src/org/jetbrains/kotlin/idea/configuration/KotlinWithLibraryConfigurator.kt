@@ -33,7 +33,6 @@ import org.jetbrains.kotlin.idea.base.platforms.StdlibDetectorFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
-import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
@@ -76,6 +75,11 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
 
     @JvmSuppressWildcards
     override fun configure(project: Project, excludeModules: Collection<Module>) {
+        configureAndGetConfiguredModules(project, excludeModules)
+    }
+
+    @JvmSuppressWildcards
+    override fun configureAndGetConfiguredModules(project: Project, excludeModules: Collection<Module>): Set<Module> {
         var nonConfiguredModules = if (!isUnitTestMode()) {
             underModalProgressOrUnderWriteActionWithNonCancellableProgressInDispatchThread(
                 project,
@@ -98,7 +102,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
 
             if (!isUnitTestMode()) {
                 dialog.show()
-                if (!dialog.isOK) return
+                if (!dialog.isOK) return emptySet()
             } else {
                 dialog.close(0)
             }
@@ -110,6 +114,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val collector = NotificationMessageCollector.create(project)
         getOrCreateKotlinLibrary(project, collector)
         val writeActions = mutableListOf<() -> Unit>()
+        val configuredModules = mutableSetOf<Module>()
         ActionUtil.underModalProgress(project, KotlinProjectConfigurationBundle.message("configure.kotlin.in.modules.progress.text")) {
             val progressIndicator = ProgressManager.getGlobalProgressIndicator()
             for ((index, module) in modulesToConfigure.withIndex()) {
@@ -121,7 +126,8 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
                         it.text2 = KotlinProjectConfigurationBundle.message("configure.kotlin.in.module.0.progress.text", module.name)
                     }
                 }
-                configureModule(module, collector, writeActions)
+                val configured = configureModuleAndGetResult(module, collector, writeActions)
+                if (configured) configuredModules.add(module)
             }
         }
 
@@ -130,6 +136,12 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         configureKotlinSettings(modulesToConfigure)
 
         collector.showNotification()
+        return configuredModules
+    }
+
+    override fun queueSyncIfNeeded(project: Project) {
+        // Do nothing; we queue syncs for Gradle and Maven projects for Kotlin stdlib to be loaded before Java to Kotlin conversion.
+        // In the case of JPS, it immediately loads Kotlin
     }
 
     fun getOrCreateKotlinLibrary(
@@ -143,15 +155,37 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val collector = NotificationMessageCollector.create(project)
         getOrCreateKotlinLibrary(project, collector)
         for (module in ModuleManager.getInstance(project).modules) {
-            configureModule(module, collector)
+            configureModuleAndGetResult(module, collector)
         }
     }
 
-    open fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>? = null) {
-        configureModuleWithLibrary(module, collector, writeActions)
+    open fun configureModule(
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>? = null
+    ) {
+        configureModuleAndGetResult(module, collector, writeActions)
     }
 
-    private fun configureModuleWithLibrary(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
+    /**
+     * Returns true if the module was configured.
+     */
+    open fun configureModuleAndGetResult (
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>? = null
+    ): Boolean {
+        return configureModuleWithLibrary(module, collector, writeActions)
+    }
+
+    /**
+     * Returns true if the module was configured.
+     */
+    private fun configureModuleWithLibrary(
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>?
+    ): Boolean {
         val project = module.project
 
         val library = (findAndFixBrokenKotlinLibrary(module, collector)
@@ -159,7 +193,6 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             ?: getKotlinLibrary(project)
             ?: error("Kotlin Library has to be created in advance")) as LibraryEx
 
-        val sdk = module.sdk
         library.modifiableModel.let { libraryModel ->
             configureLibraryJar(project, libraryModel, libraryJarDescriptor, collector, ProgressManager.getGlobalProgressIndicator())
 
@@ -168,6 +201,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         }
 
         addLibraryToModuleIfNeeded(module, library, collector, writeActions)
+        return true
     }
 
     private fun MutableList<() -> Unit>?.addOrExecute(writeAction: () -> Unit) {

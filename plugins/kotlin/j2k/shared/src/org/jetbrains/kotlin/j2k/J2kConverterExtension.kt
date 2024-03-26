@@ -28,6 +28,14 @@ abstract class J2kConverterExtension {
     open fun doCheckBeforeConversion(project: Project, module: Module): Boolean =
         true
 
+    open fun setUpAndConvert(
+        project: Project,
+        module: Module,
+        javaFiles: List<PsiJavaFile>,
+        convertFunction: (List<PsiJavaFile>, Project, Module) -> Unit
+    ) {
+    }
+
     abstract fun createWithProgressProcessor(
         progress: ProgressIndicator?,
         files: List<PsiJavaFile>?,

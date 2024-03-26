@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.nj2k.NewJ2kWithProgressProcessor
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
 
-// TODO: reuse NewJ2kConverterExtension.doCheckBeforeConversion
+// TODO: reuse NewJ2kConverterExtension.checkEverythingIsSetUpBeforeConversion() and NewJ2kConverterExtension.setUpAndConvert()
 class K2J2KConverterExtension : J2kConverterExtension() {
     override val kind: Kind = K2
 
