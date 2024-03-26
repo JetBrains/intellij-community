@@ -67,6 +67,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.telemetry.GradleDaemonOpenTelemetryUtil;
 
 import java.io.File;
@@ -555,6 +556,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           .filter(node -> buildSrcProjectPaths.contains(node.getData().getLinkedExternalProjectPath()))
           .forEach(node -> {
             buildSrcModules.put(node.getData().getId(), node);
+            GradleModuleDataKt.setBuildSrcModule(node.getData());
             findAll(node, GradleSourceSetData.KEY).forEach(
               sourceSetNode -> buildSrcModules.put(sourceSetNode.getData().getId(), sourceSetNode));
 

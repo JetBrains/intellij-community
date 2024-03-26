@@ -134,10 +134,13 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject();
 
-    DataNode<ModuleData> data = GradleUtil.findGradleModuleData(getModule("my-app"));
+    DataNode<ModuleData> myAppData = GradleUtil.findGradleModuleData(getModule("my-app"));
 
-    assertFalse(GradleModuleDataKt.isBuildSrcModule(data.getData()));
-    assertTrue(GradleModuleDataKt.isIncludedBuild(data.getData()));
+    assertFalse(GradleModuleDataKt.isBuildSrcModule(myAppData.getData()));
+    assertTrue(GradleModuleDataKt.isIncludedBuild(myAppData.getData()));
+
+    DataNode<ModuleData> buildSrcData = GradleUtil.findGradleModuleData(getModule("adhoc.buildSrc"));
+    assertTrue(GradleModuleDataKt.isBuildSrcModule(buildSrcData.getData()));
   }
 
   @Test
