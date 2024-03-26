@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
 
-internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, @JvmField val isRunningFromSources: Boolean) : PathResolver {
+internal class ClassPathXmlPathResolver(
+  private val classLoader: ClassLoader,
+  @JvmField val isRunningFromSources: Boolean,
+) : PathResolver {
   override val isFlat: Boolean
     get() = true
 
@@ -68,17 +71,17 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, @J
         return descriptor
       }
 
-      val logger = Logger.getInstance(ClassPathXmlPathResolver::class.java)
+      val log = logger<ClassPathXmlPathResolver>()
       val moduleName = path.removeSuffix(".xml")
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {
-        logger.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
+        log.trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
         val descriptor = RawPluginDescriptor()
         descriptor.`package` = "unresolved.$moduleName"
         return descriptor
       }
       if (ProductLoadingStrategy.strategy.isOptionalProductModule(moduleName)) {
         //this check won't be needed when we are able to load optional modules directly from product-modules.xml
-        logger.debug("Skip module '$path' since its descriptor cannot be found and it's optional")
+        log.debug("Skip module '$path' since its descriptor cannot be found and it's optional")
         return RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
       }
 

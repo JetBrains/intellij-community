@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
-package org.jetbrains.intellij.build.devServer
+package org.jetbrains.intellij.build.dev
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.coroutines.NonCancellable

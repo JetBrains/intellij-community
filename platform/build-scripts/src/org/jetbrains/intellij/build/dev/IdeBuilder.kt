@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
-package org.jetbrains.intellij.build.devServer
+package org.jetbrains.intellij.build.dev
 
 import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.Hashing
@@ -41,12 +41,11 @@ import java.time.temporal.TemporalAdjusters
 import kotlin.String
 import kotlin.time.Duration.Companion.seconds
 
-private val isUnpackedDist = System.getProperty("idea.dev.build.unpacked").toBoolean()
-
 data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
   @JvmField val homePath: Path,
+  @JvmField val devRootPath: Path = homePath.normalize().toAbsolutePath().resolve("out/dev-run"),
   @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
@@ -57,6 +56,8 @@ data class BuildRequest(
    * and its generation makes build a little longer, so it should be enabled only if needed.
    */
   @JvmField val generateRuntimeModuleRepository: Boolean = false,
+
+  @JvmField val isUnpackedDist: Boolean = System.getProperty("idea.dev.build.unpacked").toBoolean()
 ) {
   override fun toString(): String {
     return "BuildRequest(platformPrefix='$platformPrefix', " +
@@ -70,7 +71,7 @@ data class BuildRequest(
 @OptIn(ExperimentalCoroutinesApi::class)
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
   val rootDir = withContext(Dispatchers.IO) {
-    val rootDir = request.homePath.normalize().toAbsolutePath().resolve("out/dev-run")
+    val rootDir = request.devRootPath
     // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
     if (Files.exists(rootDir)) {
       // toRealPath must be called only on existing file
@@ -108,7 +109,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   val runDir = buildDir.resolve(productDirNameWithoutClassifier)
   val context = createBuildContext(
-    productConfiguration = productConfiguration,
+    createProductProperties = { createProductProperties(productConfiguration = productConfiguration, request = request) },
     request = request,
     runDir = runDir,
     buildDir = buildDir,
@@ -160,13 +161,13 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     launch {
       val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
       spanBuilder("generate plugin classpath").useWithScope(Dispatchers.IO) {
-        val mainData = generatePluginClassPath(pluginEntries, writeDescriptor = !isUnpackedDist)
-        val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it, writeDescriptor = !isUnpackedDist) }
+        val mainData = generatePluginClassPath(pluginEntries, writeDescriptor = !request.isUnpackedDist)
+        val additionalData = additionalEntries?.let { generatePluginClassPathFromFiles(it, writeDescriptor = !request.isUnpackedDist) }
 
         val byteOut = ByteArrayOutputStream()
         val out = DataOutputStream(byteOut)
         val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-        writePluginClassPathHeader(out = out, isJarOnly = !isUnpackedDist, pluginCount = pluginCount)
+        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount)
         out.write(mainData)
         additionalData?.let { out.write(it) }
         out.close()
@@ -332,7 +333,7 @@ private suspend fun buildPlugins(
 }
 
 private suspend fun createBuildContext(
-  productConfiguration: ProductConfiguration,
+  createProductProperties: suspend () -> ProductProperties,
   request: BuildRequest,
   runDir: Path,
   jarCacheDir: Path,
@@ -342,7 +343,7 @@ private suspend fun createBuildContext(
     // ~1 second
     val productProperties = async {
       withTimeout(30.seconds) {
-        createProductProperties(productConfiguration = productConfiguration, request = request)
+        createProductProperties()
       }
     }
 
@@ -369,7 +370,7 @@ private suspend fun createBuildContext(
           BuildOptions.FUS_METADATA_BUNDLE_STEP,
         )
 
-        if (isUnpackedDist && options.enableEmbeddedJetBrainsClient) {
+        if (request.isUnpackedDist && options.enableEmbeddedJetBrainsClient) {
           options.enableEmbeddedJetBrainsClient = false
         }
 
@@ -497,7 +498,7 @@ private fun getBundledMainModuleNames(productProperties: ProductProperties, addi
   return LinkedHashSet(productProperties.productLayout.bundledPluginModules) + additionalModules
 }
 
-internal fun getAdditionalModules(): Sequence<String>? {
+fun getAdditionalModules(): Sequence<String>? {
   return System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
 }
 

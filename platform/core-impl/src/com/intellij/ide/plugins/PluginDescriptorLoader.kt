@@ -617,6 +617,7 @@ private fun CoroutineScope.loadCoreModules(
         context = context,
         pathResolver = pathResolver,
         useCoreClassLoader = useCoreClassLoader,
+        pool = pool,
       )!!
     })
   }
@@ -628,6 +629,7 @@ private fun CoroutineScope.loadCoreModules(
       path = "${PluginManagerCore.META_INF}$fileName",
       classLoader = classLoader,
       context = context,
+      pool = pool,
       pathResolver = pathResolver,
       useCoreClassLoader = useCoreClassLoader,
     )
@@ -663,6 +665,7 @@ private fun loadCoreProductPlugin(
   context: DescriptorListLoadingContext,
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
+  pool: ZipFilePool,
 ): IdeaPluginDescriptorImpl? {
   val reader = getResourceReader(path, classLoader) ?: return null
   val dataLoader = object : DataLoader {
@@ -682,16 +685,76 @@ private fun loadCoreProductPlugin(
     includeBase = null,
     readInto = null,
   )
+  val libDir = Paths.get(PathManager.getLibPath())
   val descriptor = IdeaPluginDescriptorImpl(
     raw = raw,
-    path = Paths.get(PathManager.getLibPath()),
+    path = libDir,
     isBundled = true,
     id = null,
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )
   context.debugData?.recordDescriptorPath(descriptor, raw, path)
-  descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
+
+  val moduleDir = libDir.resolve("modules")
+  val moduleDirExists = Files.isDirectory(moduleDir)
+
+  for (module in descriptor.content.modules) {
+    check(module.configFile == null) {
+      "product module must not use `/` notation for module descriptor file (configFile=${module.configFile})"
+    }
+
+    val moduleName = module.name
+    var moduleRaw: RawPluginDescriptor?
+    val subDescriptorFile = "$moduleName.xml"
+
+    if (moduleDirExists && !pathResolver.isRunningFromSources && moduleName.startsWith("intellij.")) {
+      val jarFile = Paths.get(PathManager.getLibPath(), "modules", "$moduleName.jar")
+      val resolver = pool.load(jarFile)
+      try {
+        moduleRaw = resolver.loadZipEntry(subDescriptorFile)?.let {
+          readModuleDescriptor(
+            input = it,
+            readContext = context,
+            pathResolver = pathResolver,
+            dataLoader = dataLoader,
+            includeBase = null,
+            readInto = null,
+            locationSource = jarFile.toString(),
+          )
+        }
+      }
+      finally {
+        (resolver as? Closeable)?.close()
+      }
+
+      if (moduleRaw != null) {
+        val subDescriptor = descriptor.createSub(
+          raw = moduleRaw,
+          descriptorPath = subDescriptorFile,
+          context = context,
+          moduleName = moduleName,
+        )
+        subDescriptor.jarFiles = Java11Shim.INSTANCE.listOf(jarFile)
+        module.descriptor = subDescriptor
+        continue
+      }
+    }
+
+    moduleRaw = pathResolver.resolveModuleFile(
+      readContext = context,
+      dataLoader = dataLoader,
+      path = subDescriptorFile,
+      readInto = null,
+    )
+    module.descriptor = descriptor.createSub(
+      raw = moduleRaw,
+      descriptorPath = subDescriptorFile,
+      context = context,
+      moduleName = moduleName,
+    )
+  }
+  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
   return descriptor
 }
 
@@ -818,12 +881,13 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
   result.addAll(toSequence(runBlocking {
+    val pool = ZipFilePool.POOL?.takeIf { !context.transient } ?: NonShareableJavaZipFilePool()
     loadDescriptorsFromClassPath(
       urlToFilename = urlToFilename,
       context = context,
       pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
       useCoreClassLoader = true,
-      pool = ZipFilePool.POOL?.takeIf { !context.transient } ?: NonShareableJavaZipFilePool(),
+      pool = pool,
     )
   }, isMainProcess()), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
   return result.enabledPlugins

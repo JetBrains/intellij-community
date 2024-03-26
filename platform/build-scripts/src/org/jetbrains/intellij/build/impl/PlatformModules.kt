@@ -9,7 +9,6 @@ import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -99,9 +98,9 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.util.commonsLangV2Shim"
 )
 
-internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
-  "jetbrains-annotations" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-  "intellij-coverage" to LibraryPackMode.STANDALONE_SEPARATE,
+internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
+  "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+  "intellij-coverage", LibraryPackMode.STANDALONE_SEPARATE,
 )
 
 internal fun collectPlatformModules(to: MutableCollection<String>) {
@@ -323,7 +322,8 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   return layout
 }
 
-fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp"
+// sqlite - used by DB and "import settings" (temporarily)
+fun isLibraryAlwaysPackedIntoPlugin(name: String): Boolean = name == "flexmark" || name == "okhttp" || name == "sqlite"
 
 internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, context: BuildContext): SortedSet<ProjectLibraryData> {
   val result = ObjectLinkedOpenHashSet<ProjectLibraryData>()
@@ -467,10 +467,7 @@ private fun compute(list: List<Pair<String, PersistentList<String>>>,
   }
 
   if (oldSize != result.size) {
-    compute(list = result.subList(oldSize, result.size).sortedBy { it.first },
-            context = context,
-            unique = unique,
-            result = result)
+    compute(list = result.subList(oldSize, result.size).sortedBy { it.first }, context = context, unique = unique, result = result)
   }
 }
 
@@ -507,8 +504,17 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
 
 private fun collectProductModules(content: XmlElement, result: LinkedHashSet<ModuleItem>) {
   for (module in content.children("module")) {
-    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue,
-                          relativeOutputFile = "modules.jar",
-                          reason = "productModule"))
+    val moduleName = module.attributes.get("name") ?: continue
+    result.add(
+      ModuleItem(
+        moduleName = moduleName,
+        relativeOutputFile = "modules/$moduleName.jar",
+        reason = ModuleIncludeReasons.PRODUCT_MODULES
+      ),
+    )
   }
+}
+
+internal object ModuleIncludeReasons {
+  const val PRODUCT_MODULES: String = "productModule"
 }

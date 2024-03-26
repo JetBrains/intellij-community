@@ -390,7 +390,7 @@ class JarPackager private constructor(
     }
     moduleSources.add(DirSource(dir = moduleOutDir, excludes = excludes))
 
-    if (layout != null && !item.relativeOutputFile.contains('/') && !layout.modulesWithExcludedModuleLibraries.contains(moduleName)) {
+    if (layout != null && !layout.modulesWithExcludedModuleLibraries.contains(moduleName)) {
       val jarAsset = if (packToDir) {
         getJarAsset(
           targetFile = outFile,
@@ -438,8 +438,8 @@ class JarPackager private constructor(
           libToMetadata.put(element.library!!, projectLibraryData)
         }
         else if (isLibraryAlwaysPackedIntoPlugin(libName)) {
-          check(!platformLayout!!.hasLibrary(libName)) {
-            "Library $libName must not be included into platform layout"
+          platformLayout!!.findProjectLibrary(libName)?.let {
+            throw IllegalStateException("Library $libName must not be included into platform layout: $it")
           }
 
           if (layout.hasLibrary(libName)) {
@@ -469,11 +469,7 @@ class JarPackager private constructor(
       for (i in (files.size - 1) downTo 0) {
         val file = files.get(i)
         val fileName = file.fileName.toString()
-        val jarName = when (layout) {
-          is PluginLayout -> layout.getMainJarName()
-          is PlatformLayout -> PlatformJarNames.APP_JAR
-        }
-        if (item.relativeOutputFile.contains('/') || isSeparateJar(fileName = fileName, file = file, jarName = jarName)) {
+        if (isSeparateJar(fileName = fileName, file = file, jarPath = asset.relativePath)) {
           files.removeAt(i)
           addLibrary(
             library = library,
@@ -728,7 +724,11 @@ class JarPackager private constructor(
   }
 }
 
-private suspend fun isSeparateJar(fileName: String, file: Path, jarName: String): Boolean {
+private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
+  if (jarPath.contains('/') && !jarPath.startsWith("modules/")) {
+    return true
+  }
+
   if (fileName.endsWith("-rt.jar") || fileName.contains("-agent")) {
     return true
   }
@@ -744,7 +744,7 @@ private suspend fun isSeparateJar(fileName: String, file: Path, jarName: String)
     }
   }
   if (result) {
-    Span.current().addEvent("$fileName contains file '$filePreventingMerging' that prevent its merging into $jarName")
+    Span.current().addEvent("$fileName contains file '$filePreventingMerging' that prevent its merging into $jarPath")
   }
   return result
 }

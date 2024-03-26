@@ -2,7 +2,7 @@
 @file:Suppress("PrivatePropertyName", "LiftReturnOrAssignment")
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
-package org.jetbrains.intellij.build.devServer
+package org.jetbrains.intellij.build.dev
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey

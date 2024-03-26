@@ -54,6 +54,8 @@ sealed class BaseLayout {
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 
+  fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
+
   @TestOnly
   fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
 

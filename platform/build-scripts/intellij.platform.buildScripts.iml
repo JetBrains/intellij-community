@@ -284,5 +284,6 @@
     <orderEntry type="library" scope="RUNTIME" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jackson-dataformat-yaml" level="project" />
     <orderEntry type="library" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.boot" />
   </component>
 </module>

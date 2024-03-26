@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.JavaModuleOptions
@@ -83,17 +84,20 @@ suspend fun runIdea(context: CompilationContext,
           onError = onError)
 }
 
-suspend fun runApplicationStarter(context: BuildContext,
-                                  tempDir: Path,
-                                  ideClasspath: Set<String>,
-                                  arguments: List<String>,
-                                  systemProperties: Map<String, Any> = emptyMap(),
-                                  vmOptions: List<String> = emptyList(),
-                                  timeout: Duration = DEFAULT_TIMEOUT) {
+suspend fun runApplicationStarter(
+  context: BuildContext,
+  tempDir: Path,
+  ideClasspath: Collection<String>,
+  arguments: List<String>,
+  systemProperties: Map<String, Any> = emptyMap(),
+  vmOptions: List<String> = emptyList(),
+  homePath: Path = context.paths.projectHome,
+  timeout: Duration = DEFAULT_TIMEOUT,
+) {
   Files.createDirectories(tempDir)
   val jvmArgs = mutableListOf<String>()
   val systemDir = tempDir.resolve("system")
-  BuildUtils.addVmProperty(jvmArgs, "idea.home.path", context.paths.projectHome.toString())
+  BuildUtils.addVmProperty(jvmArgs, PathManager.PROPERTY_HOME_PATH, homePath.toString())
   BuildUtils.addVmProperty(jvmArgs, "idea.system.path", systemDir.toString())
   BuildUtils.addVmProperty(jvmArgs, "idea.config.path", "$tempDir/config")
   BuildUtils.addVmProperty(jvmArgs, "idea.builtin.server.disabled", "true")
@@ -120,12 +124,14 @@ suspend fun runApplicationStarter(context: BuildContext,
     }
   }
   disableCompatibleIgnoredPlugins(context = context, configDir = tempDir.resolve("config"), explicitlyEnabledPlugins = additionalPluginIds)
-  runIdea(context = context,
-          mainClass = context.productProperties.mainClassName,
-          args = arguments,
-          jvmArgs = jvmArgs,
-          classPath = effectiveIdeClasspath.toList(),
-          timeout = timeout) {
+  runIdea(
+    context = context,
+    mainClass = context.productProperties.mainClassName,
+    args = arguments,
+    jvmArgs = jvmArgs,
+    classPath = effectiveIdeClasspath.toList(),
+    timeout = timeout
+  ) {
     val logFile = systemDir.resolve("log").resolve("idea.log")
     if (Files.exists(logFile)) {
       val logFileToPublish = Files.createTempFile("idea-", ".log")

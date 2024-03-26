@@ -29,6 +29,9 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.dev.BuildRequest
+import org.jetbrains.intellij.build.dev.buildProductInProcess
+import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
@@ -660,17 +663,41 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
         compilationTasks.compileModules(moduleNames = it)
         localizeModules(context, moduleNames = it)
       }
+
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
-        val ideClasspath = createIdeClassPath(platform = platform, context = context)
+        //val ideClasspath = createIdeClassPath(platform = platform, context = context)
+
+        var homePath: Path? = null
+        var newClassPath: Collection<Path>? = null
+        val systemProperties =  HashMap<String, Any>()
+        val tempDir = context.paths.tempDir.resolve("builtinModules")
+        buildProductInProcess(
+          BuildRequest(
+            devRootPath = tempDir,
+            isUnpackedDist = true,
+            platformPrefix = context.productProperties.platformPrefix ?: "idea",
+            additionalModules = emptyList(),
+            homePath = context.paths.projectHome,
+            platformClassPathConsumer = { classPath, runDir ->
+              newClassPath = classPath
+              homePath = runDir
+              for ((name, value) in getIdeSystemProperties(runDir)) {
+                systemProperties.put(name, value)
+              }
+            }
+          )
+        )
 
         Files.deleteIfExists(providedModuleFile)
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
         runApplicationStarter(
           context = context,
-          tempDir = context.paths.tempDir.resolve("builtinModules"),
-          ideClasspath = ideClasspath,
+          tempDir = tempDir,
+          ideClasspath = newClassPath!!.map { it.toString() },
           arguments = listOf("listBundledPlugins", providedModuleFile.toString()),
-          timeout = 30.seconds
+          timeout = 30.seconds,
+          homePath = homePath ?: context.paths.projectHome,
+          systemProperties = systemProperties,
         )
         context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {

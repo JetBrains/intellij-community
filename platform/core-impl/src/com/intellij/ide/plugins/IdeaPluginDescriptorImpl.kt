@@ -194,7 +194,7 @@ class IdeaPluginDescriptorImpl(
 
   override fun getPluginPath(): Path = path
 
-  private fun createSub(
+  internal fun createSub(
     raw: RawPluginDescriptor,
     descriptorPath: String,
     context: DescriptorListLoadingContext,
@@ -232,7 +232,7 @@ class IdeaPluginDescriptorImpl(
     // must be first because merged into raw descriptor
     for (module in content.modules) {
       val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-      val subDescriptor = createSub(
+      module.descriptor = createSub(
         raw = pathResolver.resolveModuleFile(
           readContext = context,
           dataLoader = dataLoader,
@@ -243,9 +243,17 @@ class IdeaPluginDescriptorImpl(
         context = context,
         moduleName = module.name,
       )
-      module.descriptor = subDescriptor
     }
 
+    initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+  }
+
+  internal fun initByRawDescriptor(
+    raw: RawPluginDescriptor,
+    context: DescriptorListLoadingContext,
+    pathResolver: PathResolver,
+    dataLoader: DataLoader,
+  ) {
     if (raw.resourceBundleBaseName != null) {
       if (id == PluginManagerCore.CORE_ID) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +

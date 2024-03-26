@@ -194,6 +194,20 @@ class ClassLoaderConfigurator(
   }
 
   private fun configureCorePluginModuleClassLoader(module: IdeaPluginDescriptorImpl, deps: Array<IdeaPluginDescriptorImpl>) {
+    val jarFiles = module.jarFiles
+    if (jarFiles != null) {
+      module.pluginClassLoader = PluginClassLoader(
+        classPath = ClassPath(jarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
+        parents = deps,
+        pluginDescriptor = module,
+        coreLoader = coreLoader,
+        resolveScopeManager = null,
+        packagePrefix = module.packagePrefix,
+        libDirectories = ArrayList(),
+      )
+      return
+    }
+
     val coreUrlClassLoader = getCoreUrlClassLoaderIfPossible()
     if (coreUrlClassLoader == null) {
       setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
