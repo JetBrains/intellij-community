@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.application.options.PathMacrosImpl
@@ -64,7 +64,7 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
       }
     }
 
-    JvmBuildSystem.findFor(project).refresh(project)
+    JvmBuildSystem.tryFindFor(project)?.refresh(project)
 
     return workspace
   }
@@ -128,7 +128,7 @@ class SetupJDKStep(private val project: Project) : SetupSdkStep() {
 }
 
 private fun forceUseProjectJdkForImporter(project: Project) {
-  when (JvmBuildSystem.findFor(project)) {
+  when (JvmBuildSystem.tryFindFor(project)) {
     JvmBuildSystem.Maven -> {
       val mavenManager = MavenProjectsManager.getInstance(project)
       mavenManager.importingSettings.jdkForImporter = ExternalSystemJdkUtil.USE_PROJECT_JDK
@@ -152,6 +152,9 @@ private fun forceUseProjectJdkForImporter(project: Project) {
                                                                          true)
       val outPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java)).parent.parent
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(jpsProject).outputUrl = outPath.toString()
+    }
+    else -> {
+      println("Unknown JVM build system. No additional setup will be performed.")
     }
   }
 }
@@ -189,7 +192,7 @@ enum class JvmBuildSystem {
       ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.first { it.name.lowercase().contains("maven") }
     }
 
-    fun findFor(project: Project): JvmBuildSystem = entries.first { it.accepts(project) }
+    fun tryFindFor(project: Project): JvmBuildSystem? = entries.firstOrNull { it.accepts(project) }
   }
 
   internal fun refresh(project: Project) {
