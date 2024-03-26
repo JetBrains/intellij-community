@@ -23,4 +23,16 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
                                       @Nullable EnforcedInconsistencyType enforcedInconsistencyType) {
     IndexStatisticGroup.reportStubInconsistency(project, reason, type, enforcedInconsistencyType);
   }
+
+  @Override
+  public void reportKotlinDescriptorNotFound(@Nullable Project project) {
+    StubInconsistencyReportUtil.reportKotlinDescriptorNotFound(project);
+  }
+
+  @Override
+  public void reportKotlinMissingClassName(@NotNull Project project,
+                                           boolean foundInKotlinFullClassNameIndex,
+                                           boolean foundInEverythingScope) {
+    StubInconsistencyReportUtil.reportKotlinMissingClassName(project, foundInKotlinFullClassNameIndex, foundInEverythingScope);
+  }
 }

@@ -1729,6 +1729,7 @@
 
     <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.StubInconsistencyFusCollector"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubInconsistencyReporter"
                         serviceImplementation="com.intellij.util.indexing.diagnostic.StubInconsistencyReporterImpl"/>
 
