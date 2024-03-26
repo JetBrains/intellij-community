@@ -289,7 +289,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val actual = JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input)
 
-    val expected = "<html><div class='content'>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
+    val expected = "<html><div class='content'><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                    "<br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                    "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +
@@ -309,7 +309,7 @@ class JavaDocumentationTest : LightJavaCodeInsightFixtureTestCase() {
 
     val documentationManager = DocumentationManager.getInstance(myFixture.project)
     JavaExternalDocumentationTest.getDocumentationText(myFixture.project, input) { component ->
-      val expected = "<html><div class='content'>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
+      val expected = "<html><div class='content'><p>Candidates for method call <b>s.<wbr>regionMatches()</b> are:<br>" +
                      "<br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)\">boolean regionMatches(int, String, int, int)</a><br>" +
                      "&nbsp;&nbsp;<a href=\"psi_element://java.lang.String#regionMatches(boolean, int, java.lang.String, int, int)\">boolean regionMatches(boolean, int, String, int, int)</a><br>" +

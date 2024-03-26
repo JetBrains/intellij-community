@@ -1925,12 +1925,19 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (!hasContent && !hasDefinition && !hasSections) {
       int bodyStart = findContentStart(text);
       if (bodyStart > 0) {
+        var contents = text.substring(bodyStart).trim();
+        if (!contents.startsWith("<p") && !contents.startsWith("<div")) {
+          contents = "<p>" + contents;
+        }
         text = text.substring(0, bodyStart) +
                CONTENT_START +
-               text.substring(bodyStart) +
+               contents +
                CONTENT_END;
       }
       else {
+        if (!text.startsWith("<p") && !text.startsWith("<div")) {
+          text = "<p>" + text;
+        }
         text = CONTENT_START + text + CONTENT_END;
       }
       hasContent = true;
