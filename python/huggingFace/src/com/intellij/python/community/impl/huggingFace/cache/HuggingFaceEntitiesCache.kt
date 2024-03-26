@@ -38,6 +38,12 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
   }
 
   @Synchronized
+  fun saveEntity(entityData: HuggingFaceEntityBasicApiData) {
+    cacheMap[entityData.itemId] = entityData
+    nameSet.add(entityData.itemId)
+  }
+
+  @Synchronized
   fun isInCache(entityId: String): Boolean {
     if (hotCache.containsKey(entityId)) return true
 
@@ -66,7 +72,6 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
     nameSet = state.nameSet
   }
 }
-
 
 @State(
   name = "HuggingFaceModelsCache",
