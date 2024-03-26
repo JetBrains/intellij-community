@@ -287,12 +287,12 @@ To use Jewel in the IntelliJ Platform, you should depend on the appropriate `jew
 will bring in the necessary transitive dependencies. These are the currently supported versions of the IntelliJ Platform
 and the branch on which the corresponding bridge code lives:
 
-| IntelliJ Platform version(s) | Branch to use     |
- |------------------------------|-------------------|
-| 2024.1 (EAP 3+)              | `main`            |
-| 2023.3                       | `releases/233`    |
-| 2023.2                       | `releases/232`    |
-| 2023.1 or older              | **Not supported** |
+| IntelliJ Platform version(s) | Branch to use           |
+ |------------------------------|-------------------------|
+| 2024.1 (EAP 3+)              | `main`                  |
+| 2023.3                       | `releases/233`          |
+| 2023.2 (**deprecated**)      | `archived-releases/232` |
+| 2023.1 or older              | **Not supported**       |
 
 For an example on how to set up an IntelliJ Plugin, you can refer to
 the [`ide-plugin` sample](samples/ide-plugin/build.gradle.kts).

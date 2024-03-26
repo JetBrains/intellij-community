@@ -10,7 +10,7 @@ on:
 
 jobs:
   publish-current:
-    name: Publish standalone & current-IJP-version bridge
+    name: Publish current IJP version (main)
     runs-on: ubuntu-latest
 
     steps:
@@ -32,13 +32,12 @@ jobs:
           MAVEN_SPACE_PASSWORD: ${{secrets.MAVEN_SPACE_PASSWORD}}
 
   publish-older:
-    name: Publish older-IJP-version bridge(s)
+    name: Publish older IJP version(s)
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         branch-name:
-          - releases/232
           - releases/233
 
     steps:
