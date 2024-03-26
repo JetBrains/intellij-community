@@ -85,6 +85,8 @@ public final class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorCache.clearCacheForTests();
+    //noinspection CallToSystemGC
+    System.gc();
     Runnable runnable = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
         DebugReflectionUtil.walkObjects(10000, rootsSupplier.get(), suspectClass, __ -> true, (leaked, backLink) -> {

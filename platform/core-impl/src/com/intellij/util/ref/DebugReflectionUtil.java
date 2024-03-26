@@ -10,6 +10,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.RefValueHashMapUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -157,6 +158,9 @@ public final class DebugReflectionUtil {
                                                     @NotNull BackLink<?> backLink,
                                                     @NotNull Predicate<Object> shouldExamineValue) {
     Class<?> rootClass = root.getClass();
+    if (root instanceof Map) {
+      RefValueHashMapUtil.expungeStaleEntries((Map<?, ?>)root);
+    }
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
       // do not follow weak/soft refs
