@@ -24,8 +24,8 @@ import org.jetbrains.intellij.build.io.runJava
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.function.Predicate
-import kotlin.io.path.copyTo
 import kotlin.time.Duration
 
 internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
@@ -104,7 +104,7 @@ suspend fun runApplicationStarter(
   BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
   BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)
   jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties.entries.map { it.key to it.value.toString() }))
-  jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx1536m"))
+  jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
   System.getProperty("intellij.build.${arguments.first()}.debug.port")?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
@@ -135,7 +135,7 @@ suspend fun runApplicationStarter(
     val logFile = systemDir.resolve("log").resolve("idea.log")
     if (Files.exists(logFile)) {
       val logFileToPublish = Files.createTempFile("idea-", ".log")
-      logFile.copyTo(target = logFileToPublish, overwrite = true)
+      Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
       context.notifyArtifactBuilt(logFileToPublish)
       Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
     }

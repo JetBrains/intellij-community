@@ -186,7 +186,12 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     launch {
-      computeIdeFingerprint(platformDistributionEntriesDeferred, pluginDistributionEntriesDeferred, runDir, request.homePath)
+      computeIdeFingerprint(
+        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
+        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
+        runDir = runDir,
+        homePath = request.homePath,
+      )
     }
   }
     .invokeOnCompletion {

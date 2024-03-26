@@ -29,9 +29,6 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.dev.BuildRequest
-import org.jetbrains.intellij.build.dev.buildProductInProcess
-import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
@@ -67,7 +64,6 @@ import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
 import kotlin.io.NoSuchFileException
 import kotlin.io.path.*
-import kotlin.time.Duration.Companion.seconds
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
@@ -106,7 +102,7 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
       compilationTasks = compilationTasks,
       context = context,
     )
-    buildSearchableOptions(distState.platform, context)
+    buildSearchableOptions(context)
     buildNonBundledPlugins(
       pluginsToPublish = pluginsToPublish,
       compressPluginArchive = context.options.compressZipFiles,
@@ -649,7 +645,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
                             hasPlatformCoverage(
                               productLayout = productLayout,
                               enabledPluginModules = enabledPluginModules,
-                              context = context
+                              context = context,
                             )
 
   if (context.shouldBuildDistributions()) {
@@ -665,40 +661,14 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       }
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
-        //val ideClasspath = createIdeClassPath(platform = platform, context = context)
-
-        var homePath: Path? = null
-        var newClassPath: Collection<Path>? = null
-        val systemProperties =  HashMap<String, Any>()
-        val tempDir = context.paths.tempDir.resolve("builtinModules")
-        buildProductInProcess(
-          BuildRequest(
-            devRootPath = tempDir,
-            isUnpackedDist = true,
-            platformPrefix = context.productProperties.platformPrefix ?: "idea",
-            additionalModules = emptyList(),
-            homePath = context.paths.projectHome,
-            platformClassPathConsumer = { classPath, runDir ->
-              newClassPath = classPath
-              homePath = runDir
-              for ((name, value) in getIdeSystemProperties(runDir)) {
-                systemProperties.put(name, value)
-              }
-            }
-          )
-        )
-
         Files.deleteIfExists(providedModuleFile)
+        val tempDir = context.paths.tempDir.resolve("builtinModules")
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        runApplicationStarter(
-          context = context,
+        createDevIdeBuild(context = context).runProduct(
           tempDir = tempDir,
-          ideClasspath = newClassPath!!.map { it.toString() },
-          arguments = listOf("listBundledPlugins", providedModuleFile.toString()),
-          timeout = 30.seconds,
-          homePath = homePath ?: context.paths.projectHome,
-          systemProperties = systemProperties,
+          listOf("listBundledPlugins", providedModuleFile.toString()),
         )
+
         context.productProperties.customizeBuiltinModules(context = context, builtinModulesFile = providedModuleFile)
         try {
           val builtinModuleData = readBuiltinModulesFile(file = providedModuleFile)
@@ -791,7 +761,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
           "skip building product distributions because " +
           "'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'"
         )
-        buildSearchableOptions(distributionState.platform, context)
+        buildSearchableOptions(context)
         buildNonBundledPlugins(
           pluginsToPublish = pluginsToPublish,
           compressPluginArchive = context.options.compressZipFiles,
@@ -1418,7 +1388,7 @@ fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
 // This is later used by Qodana and other tools.
 // Keymaps are extracted as an XML file and also used in authoring help.
-internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>, context: BuildContext) {
+internal suspend fun buildAdditionalAuthoringArtifacts(ide: DevIdeBuild, context: BuildContext) {
   context.executeStep(spanBuilder("build authoring asserts"), BuildOptions.DOC_AUTHORING_ASSETS_STEP) {
     val commands = listOf(
       Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
@@ -1429,12 +1399,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>
       launch {
         val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
         val targetPath = temporaryStepDirectory.resolve(command.second)
-        runApplicationStarter(
-          context = context,
-          tempDir = temporaryStepDirectory,
-          ideClasspath = ideClassPath,
-          arguments = listOf(command.first, targetPath.toString())
-        )
+        ide.runProduct(tempDir = temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()))
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(

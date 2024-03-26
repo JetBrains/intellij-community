@@ -65,10 +65,10 @@ internal suspend fun buildDistribution(
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)
 
-  val flatIdeClassPath = createIdeClassPath(state.platform, context)
+  val ide = createDevIdeBuild(context)
   if (context.productProperties.buildDocAuthoringAssets) {
     launch {
-      buildAdditionalAuthoringArtifacts(ideClassPath = flatIdeClassPath, context = context)
+      buildAdditionalAuthoringArtifacts(ide = ide, context = context)
     }
   }
 
@@ -76,7 +76,7 @@ internal suspend fun buildDistribution(
   val entries = coroutineScope {
     // must be completed before plugin building
     context.executeStep(spanBuilder("build searchable options index"), BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP) {
-      buildSearchableOptions(ideClassPath = flatIdeClassPath, context = context)
+      buildSearchableOptions(ide = ide, context = context)
     }
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(
@@ -1359,12 +1359,11 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
 }
 
 suspend fun buildSearchableOptions(
-  platform: PlatformLayout,
   context: BuildContext,
   systemProperties: Map<String, Any> = emptyMap(),
 ): Path? {
   return buildSearchableOptions(
-    ideClassPath = createIdeClassPath(platform, context),
+    ide = createDevIdeBuild(context),
     context = context,
     systemProperties = systemProperties,
   )
@@ -1373,8 +1372,8 @@ suspend fun buildSearchableOptions(
 /**
  * Build index which is used to search options in the Settings dialog.
  */
-suspend fun buildSearchableOptions(
-  ideClassPath: Set<String>,
+private suspend fun buildSearchableOptions(
+  ide: DevIdeBuild,
   context: BuildContext,
   systemProperties: Map<String, Any> = emptyMap(),
 ): Path? {
@@ -1406,13 +1405,11 @@ suspend fun buildSearchableOptions(
     }
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
-    runApplicationStarter(
-      context = context,
+    ide.runProduct(
       tempDir = context.paths.tempDir.resolve("searchableOptions"),
-      ideClasspath = ideClassPath,
       arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-      vmOptions = listOf("-Xmx2g"),
       systemProperties = systemProperties,
+      isLongRunning = true,
     )
     check(Files.isDirectory(targetDirectory)) {
       "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
