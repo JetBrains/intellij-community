@@ -4,6 +4,7 @@ package com.intellij.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -11,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Treats byte array as a sequence of chars in {@link StandardCharsets#US_ASCII} encoding
  */
+@Internal
 @ReviseWhenPortedToJDK("9")
 public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private final int myStart;

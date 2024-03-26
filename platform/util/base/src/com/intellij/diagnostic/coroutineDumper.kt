@@ -29,10 +29,12 @@ fun isCoroutineDumpHeader(line: String): Boolean {
   return line == COROUTINE_DUMP_HEADER || line == COROUTINE_DUMP_HEADER_STRIPPED
 }
 
+@Internal
 fun isCoroutineDumpEnabled(): Boolean {
   return DebugProbes.isInstalled
 }
 
+@Internal
 fun enableCoroutineDump(): Result<Unit> {
   return runCatching {
     DebugProbes.enableCreationStackTraces = false
@@ -45,7 +47,7 @@ fun enableCoroutineDump(): Result<Unit> {
  * @param deduplicateTrees deduplicate identical coroutine job trees in the dump. If there are multiple identical repetitions of a job tree,
  * such tree will have `-[x<number> of]` prefix in the dump.
  */
-@JvmOverloads
+//@JvmOverloads
 fun dumpCoroutines(scope: CoroutineScope? = null, stripDump: Boolean = true, deduplicateTrees: Boolean = true): String? {
   if (!isCoroutineDumpEnabled()) {
     return null

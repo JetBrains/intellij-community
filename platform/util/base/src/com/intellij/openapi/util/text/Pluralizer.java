@@ -26,6 +26,7 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ import java.util.regex.Pattern;
  * @author gregsh
  * @noinspection SpellCheckingInspection, HardCodedStringLiteral
  */
+@Internal
 public final class Pluralizer {
   static final Pluralizer PLURALIZER;
 

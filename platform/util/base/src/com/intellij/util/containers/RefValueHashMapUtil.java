@@ -4,7 +4,7 @@ package com.intellij.util.containers;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public final class RefValueHashMapUtil {
+final class RefValueHashMapUtil {
   public static @NotNull IncorrectOperationException pointlessContainsKey() {
     return new IncorrectOperationException("containsKey() makes no sense for weak/soft map because GC can clear the value any moment now");
   }
