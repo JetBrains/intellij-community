@@ -31,7 +31,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
    */
   private var cachedWidgetItems: List<LanguageServiceWidgetItem> = emptyList()
 
-  override fun ID(): String = LanguageServiceWidgetFactory.ID
+  override fun ID(): String = LANGUAGE_SERVICES_WIDGET_ID
 
   override fun createInstance(project: Project): StatusBarWidget = LanguageServiceWidget(project, scope)
 
@@ -55,7 +55,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     val isError = fileSpecificItems.any { it.isError } // or maybe `allItems.any { it.isError }`?
 
     return WidgetState(tooltip, shortenedText, true).apply {
-      icon = if (isError) errorIcon else normalIcon
+      icon = if (isError) Icons.errorIcon else Icons.normalIcon
     }
   }
 
@@ -91,7 +91,6 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     return group
   }
 
-
   private object NoServices : AnAction(LangBundle.messagePointer("language.services.widget.no.services")), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -102,9 +101,8 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     override fun actionPerformed(e: AnActionEvent) {}
   }
 
-
-  private companion object {
-    private val normalIcon: Icon = AllIcons.Json.Object
-    private val errorIcon: Icon = LayeredIcon.layeredIcon { arrayOf(AllIcons.Json.Object, AllIcons.Nodes.ErrorMark) }
+  private object Icons {
+    val normalIcon: Icon = AllIcons.Json.Object
+    val errorIcon: Icon = LayeredIcon.layeredIcon(arrayOf(AllIcons.Json.Object, AllIcons.Nodes.ErrorMark))
   }
 }

@@ -7,12 +7,10 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 import kotlinx.coroutines.CoroutineScope
 
-class LanguageServiceWidgetFactory : StatusBarEditorBasedWidgetFactory() {
-  companion object {
-    const val ID = "LanguageServiceStatusBarWidget"
-  }
+internal const val LANGUAGE_SERVICES_WIDGET_ID = "LanguageServiceStatusBarWidget"
 
-  override fun getId(): String = ID
+internal class LanguageServiceWidgetFactory : StatusBarEditorBasedWidgetFactory() {
+  override fun getId(): String = LANGUAGE_SERVICES_WIDGET_ID
 
   override fun getDisplayName(): String = LangBundle.message("language.services.widget")
 
