@@ -42,11 +42,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   private static final ThreadLocal<Boolean> skipFindingResource = new ThreadLocal<>();
 
+  @ApiStatus.Internal
   protected final ClassPath classPath;
   private final ClassLoadingLocks classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
   private final boolean isSystemClassLoader;
 
+  @ApiStatus.Internal
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
 
@@ -152,6 +154,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks() : null;
   }
 
+  @ApiStatus.Internal
   protected UrlClassLoader(@NotNull ClassPath classPath) {
     super(null);
 
@@ -387,12 +390,14 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
    * @see #createCachePool()
    * @see Builder#useCache
    */
+  @ApiStatus.Internal
   public interface CachePool { }
 
   /**
    * @return a new pool to be able to share internal caches between different class loaders if they contain the same URLs
    * in their class paths.
    */
+  @ApiStatus.Internal
   public static @NotNull CachePool createCachePool() {
     return new CachePoolImpl();
   }
@@ -647,6 +652,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
      * @param pool      cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      */
+    @ApiStatus.Internal
     public @NotNull UrlClassLoader.Builder useCache(@NotNull UrlClassLoader.CachePool pool, @NotNull Predicate<? super Path> condition) {
       useCache = true;
       cachePool = (CachePoolImpl)pool;
