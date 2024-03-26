@@ -191,7 +191,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   synchronized void clearProgressIndicator() {
-    myUpdateProgress.values().forEach(HighlightingSessionImpl::clearProgressIndicator);
+    myUpdateProgress.values().forEach(HighlightingSessionImpl::clearAllHighlightingSessions);
   }
 
   @TestOnly
@@ -1283,7 +1283,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       DaemonCodeAnalyzerImpl daemon = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
       daemon.myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
       myFileEditor = null;
-      HighlightingSessionImpl.clearProgressIndicator(this);
+      HighlightingSessionImpl.clearAllHighlightingSessions(this);
       daemon.completeEssentialHighlightingRequested = false;
     }
   }
