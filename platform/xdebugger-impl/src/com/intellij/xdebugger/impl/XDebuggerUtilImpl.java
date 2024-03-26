@@ -308,30 +308,43 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     if (areInlineBreakpointsEnabled(file)) {
       return variantsAsync.then(variantsWithAll -> {
         var variants = variantsWithAll.stream().filter(v -> !v.isMultiVariant()).toList();
-
-        var breakpointOrVariant = getBestMatchingBreakpoint(selectVariantByPositionColumn ? position.getOffset() : 0,
-                                                            Stream.concat(
-                                                              types.stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()),
-                                                              variants.stream()).iterator(),
-                                                            o ->
-                                                              o instanceof XLineBreakpoint b
-                                                              ? b.getType().getHighlightRange(b)
-                                                              : ((XLineBreakpointType.XLineBreakpointVariant)o).getHighlightRange());
-
-        if (breakpointOrVariant instanceof XLineBreakpoint existingBreakpoint) {
-          if (!temporary && canRemove) {
-            removeBreakpointWithConfirmation(project, existingBreakpoint);
-          }
+        if (variants.isEmpty()) {
+          LOG.error("Unexpected empty variants");
           return null;
         }
 
-        if (breakpointOrVariant instanceof XLineBreakpointType.XLineBreakpointVariant variant) {
-          return addLineBreakpoint(breakpointManager, variant, file, line, temporary);
+        var breakpoints = types.stream().flatMap(t -> breakpointManager.findBreakpointsAtLine(t, file, line).stream()).toList();
+
+        XLineBreakpointType.XLineBreakpointVariant variant;
+        if (selectVariantByPositionColumn) {
+          var breakpointOrVariant = getBestMatchingBreakpoint(position.getOffset(),
+                                                              Stream.concat(breakpoints.stream(), variants.stream()).iterator(),
+                                                              o ->
+                                                                o instanceof XLineBreakpoint b
+                                                                ? b.getType().getHighlightRange(b)
+                                                                : ((XLineBreakpointType.XLineBreakpointVariant)o).getHighlightRange());
+
+          if (breakpointOrVariant instanceof XLineBreakpoint existingBreakpoint) {
+            if (!temporary && canRemove) {
+              removeBreakpointWithConfirmation(project, existingBreakpoint);
+            }
+            return null;
+          }
+
+          variant = (XLineBreakpointType.XLineBreakpointVariant)breakpointOrVariant;
+        }
+        else {
+          if (!breakpoints.isEmpty()) {
+            if (!temporary && canRemove) {
+              removeBreakpointsWithConfirmation(project, breakpoints);
+            }
+            return null;
+          }
+
+          variant = variants.stream().max(Comparator.comparing(v -> v.getPriority(project))).get();
         }
 
-        assert !variants.isEmpty();
-        LOG.error("Unexpected breakpoint toggle state, any variant would be considered as the best one");
-        return null;
+        return addLineBreakpoint(breakpointManager, variant, file, line, temporary);
       });
     }
 
@@ -501,6 +514,21 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static boolean removeBreakpointWithConfirmation(final XBreakpointBase<?, ?, ?> breakpoint) {
     return removeBreakpointWithConfirmation(breakpoint.getProject(), breakpoint);
+  }
+
+  public static <B extends XBreakpoint<?>> void removeBreakpointsWithConfirmation(final Project project, final List<B> breakpoints) {
+    // FIXME[inline-bp]: support multiple breakpoints restore
+    // FIXME[inline-bp]: Reconsider this, maybe we should have single confirmation for all breakpoints.
+    for (XBreakpoint<?> b : breakpoints) {
+      removeBreakpointWithConfirmation(project, b);
+    }
+  }
+
+  public static <B extends XBreakpointBase<?, ?, ?>> void removeBreakpointsWithConfirmation(final List<B> breakpoints) {
+    if (breakpoints.isEmpty()) return;
+    var project = breakpoints.get(0).getProject();
+    LOG.assertTrue(ContainerUtil.and(breakpoints, b -> b.getProject().equals(project)));
+    removeBreakpointsWithConfirmation(project, breakpoints);
   }
 
   public static void reshowInlayRunToCursor(@NotNull AnActionEvent e) {

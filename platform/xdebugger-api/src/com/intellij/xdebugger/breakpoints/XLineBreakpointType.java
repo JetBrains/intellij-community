@@ -223,6 +223,14 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     public abstract TextRange getHighlightRange();
 
     /**
+     * The priority is considered when several breakpoint variants can be set on the same line,
+     * in this case we choose the variant with the highest priority.
+     */
+    public int getPriority(@NotNull Project project) {
+      return getType().getPriority();
+    }
+
+    /**
      * @return true iff this variant corresponds to breakpoint hitting at all line locations
      *         (i.e., "all", "line and all lambdas")
      */

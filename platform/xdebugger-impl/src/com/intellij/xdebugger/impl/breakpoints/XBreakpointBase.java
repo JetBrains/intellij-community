@@ -695,11 +695,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
 
     private void removeBreakpoints() {
-      for (var b : breakpoints) {
-        // FIXME[inline-bp]: support multiple breakpoints restore
-        // FIXME[inline-bp]: Reconsider this, maybe we should have single confirmation for all breakpoints.
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(b);
-      }
+      XDebuggerUtilImpl.removeBreakpointsWithConfirmation(breakpoints);
     }
 
     @Override
