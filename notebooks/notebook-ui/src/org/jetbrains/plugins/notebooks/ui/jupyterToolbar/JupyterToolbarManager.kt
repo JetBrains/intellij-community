@@ -16,8 +16,7 @@ import javax.swing.Timer
 class JupyterToolbarManager(
   private val editor: EditorImpl,
   private val panel: JPanel,
-  private val actionGroupId: String,
-  private val firstLine: Int = 0
+  private val actionGroupId: String
 ) {  // See PY-66455
   private var toolbar: JupyterToolbar? = null
   private var hideToolbarTimer = Timer(TOOLBAR_HIDE_DELAY) { conditionallyHideToolBar() }
@@ -115,7 +114,7 @@ class JupyterToolbarManager(
   private fun showToolbar() {
     if (toolbar == null) {
       val actionGroup = createActionGroup() ?: return
-      toolbar = JupyterToolbar(actionGroup, firstLine).apply {
+      toolbar = JupyterToolbar(actionGroup).apply {
         targetComponent = editor.contentComponent
       }
     }

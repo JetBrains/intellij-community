@@ -13,13 +13,14 @@ class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(BorderLayo
   private var backgroundColor: Color = editor.colorsScheme.defaultBackground
   private var cellRoofColor: Color? = null
   private var isCodeCell: Boolean = false
+  private val standardDelimiterHeight = editor.notebookAppearance.CELL_BORDER_HEIGHT / 2
 
-  fun initialize(isCodeCell: Boolean) {
+  fun initialize(isCodeCell: Boolean, isFirstCell: Boolean) {
     if (editor.editorKind == EditorKind.DIFF) return
     this.isCodeCell = isCodeCell
     refreshColorScheme()
 
-    val (delimiterPanel, roofPanel) = createRoofAndDelimiterPanels(cellRoofColor)
+    val (delimiterPanel, roofPanel) = createRoofAndDelimiterPanels(cellRoofColor, isFirstCell)
 
     add(delimiterPanel, BorderLayout.NORTH)
     add(roofPanel, BorderLayout.SOUTH)
@@ -27,14 +28,18 @@ class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(BorderLayo
     listenForColorSchemeChanges()
   }
 
-  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?): Pair<JPanel, JPanel> {
+  private fun createRoofAndDelimiterPanels(cellRoofColor: Color?, isFirstCell: Boolean): Pair<JPanel, JPanel> {
     val delimiterPanel = JPanel()
+    val delimiterPanelHeight = when (isFirstCell) {
+      true -> FIRST_CELL_DELIMITER_HEIGHT
+      false -> standardDelimiterHeight
+    }
     delimiterPanel.background = backgroundColor
-    delimiterPanel.preferredSize = Dimension(JBUIScale.scale(1), editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
+    delimiterPanel.preferredSize = Dimension(JBUIScale.scale(1), delimiterPanelHeight)
 
     val roofPanel = JPanel()
     roofPanel.background = cellRoofColor
-    roofPanel.preferredSize = Dimension(JBUIScale.scale(1), editor.notebookAppearance.CELL_BORDER_HEIGHT / 2)
+    roofPanel.preferredSize = Dimension(JBUIScale.scale(1), standardDelimiterHeight)
 
     return Pair(delimiterPanel, roofPanel)
   }
@@ -55,5 +60,9 @@ class NotebookAboveCellDelimiterPanelNew(val editor: Editor) : JPanel(BorderLayo
       delimiterPanel?.background = backgroundColor
       roofPanel?.background = cellRoofColor
     }
+  }
+
+  companion object {
+    private val FIRST_CELL_DELIMITER_HEIGHT = JBUIScale.scale(24)  // see figma PY-66455
   }
 }
