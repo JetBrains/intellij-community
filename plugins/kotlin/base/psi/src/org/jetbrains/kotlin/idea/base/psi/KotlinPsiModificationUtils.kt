@@ -166,7 +166,7 @@ fun shouldLambdaParameterBeNamed(argument: KtLambdaArgument): Boolean {
 
 fun replaceSamConstructorCall(callExpression: KtCallExpression): KtLambdaExpression {
     val functionalArgument = callExpression.getSamConstructorValueArgument()?.getArgumentExpression()
-        ?: throw AssertionError("SAM-constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
+        ?: throw AssertionError("SAM constructor should have a FunctionLiteralExpression as single argument: ${callExpression.getElementTextWithContext()}")
     val ktExpression = callExpression.getQualifiedExpressionForSelectorOrThis()
     return runWriteActionIfPhysical(ktExpression) { ktExpression.replace(functionalArgument) as KtLambdaExpression }
 }

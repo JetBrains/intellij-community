@@ -4,16 +4,16 @@
         <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
         <line>11</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
-        <problem_class severity="WARNING" attribute_key="WEAK_WARNING">Redundant SAM-constructors</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="WEAK_WARNING">Redundant SAM constructors</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
@@ -21,7 +21,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorKt void test()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>Runnable</highlighted_element>
         <offset>37</offset>
         <length>8</length>
@@ -31,24 +31,24 @@
         <line>22</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
         <line>25</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
         <line>27</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
@@ -56,7 +56,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorKt void test()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>Runnable</highlighted_element>
         <offset>31</offset>
         <length>8</length>
@@ -66,8 +66,8 @@
         <line>38</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
@@ -75,7 +75,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorKt void test()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>Runnable</highlighted_element>
         <offset>27</offset>
         <length>8</length>
@@ -85,16 +85,16 @@
         <line>9</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructorWithGenericsInReturnType.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructorWithGenericsInReturnType.kt</file>
         <line>11</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructorWithGenericsInReturnType.kt" />
-        <problem_class severity="WARNING" attribute_key="WEAK_WARNING">Redundant SAM-constructors</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="WEAK_WARNING">Redundant SAM constructors</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructorWithGenericsInReturnType.kt</file>
@@ -102,7 +102,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorWithGenericsInReturnTypeKt void testGenericsReturnType()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>JFunction0</highlighted_element>
         <offset>39</offset>
         <length>10</length>
@@ -112,24 +112,24 @@
         <line>15</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructorWithGenericsInReturnType.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructorWithGenericsInReturnType.kt</file>
         <line>18</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructorWithGenericsInReturnType.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructorWithGenericsInReturnType.kt</file>
         <line>20</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructorWithGenericsInReturnType.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructorWithGenericsInReturnType.kt</file>
@@ -137,7 +137,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorWithGenericsInReturnTypeKt void testGenericsReturnType()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>JFunction0</highlighted_element>
         <offset>31</offset>
         <length>10</length>
@@ -147,16 +147,16 @@
         <line>24</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructorWithGenericsInReturnType.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>otherGenericsInParams.kt</file>
         <line>6</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="otherGenericsInParams.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>otherGenericsInParams.kt</file>
@@ -164,7 +164,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.OtherGenericsInParamsKt void test()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>Runnable</highlighted_element>
         <offset>21</offset>
         <length>8</length>
@@ -174,8 +174,8 @@
         <line>8</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="otherGenericsInParams.kt" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>otherGenericsInParams.kt</file>
@@ -183,7 +183,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.OtherGenericsInParamsKt void test()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>Runnable</highlighted_element>
         <offset>35</offset>
         <length>8</length>
@@ -193,8 +193,8 @@
         <line>11</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="otherGenericsInParams.kt" />
-        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM-constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>expectedType.kt</file>
@@ -202,7 +202,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="expectedType.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>expectedType.kt</file>
@@ -210,7 +210,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="expectedType.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
@@ -218,7 +218,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructor.kt</file>
@@ -226,7 +226,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="redundantSamConstructor.kt" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
     </problem>
     <problem>
         <file>redundantSamConstructorWithGenerics.kt</file>
@@ -234,7 +234,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorWithGenericsKt void testGenerics()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>JFunction1&lt;String&gt;</highlighted_element>
         <offset>39</offset>
         <length>18</length>
@@ -245,7 +245,7 @@
         <module>light_idea_test_case</module>
         <entry_point TYPE="method" FQNAME="redundantSamConstructor.RedundantSamConstructorWithGenericsKt void testGenerics()" />
         <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Redundant SAM constructor</problem_class>
-        <description>Redundant SAM-constructor</description>
+        <description>Redundant SAM constructor</description>
         <highlighted_element>JFunction1&lt;String&gt;</highlighted_element>
         <offset>31</offset>
         <length>18</length>
