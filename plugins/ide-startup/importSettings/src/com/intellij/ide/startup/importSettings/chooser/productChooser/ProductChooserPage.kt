@@ -86,7 +86,11 @@ class ProductChooserPage(val controller: ImportSettingsController, override val 
     }
   }
 
-  private val south = JPanel(BorderLayout()).apply {
+  private val south = object: JPanel(BorderLayout()) {
+    override fun getComponentGraphics(g: Graphics?): Graphics {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
+    }
+  }.apply {
     val group = DefaultActionGroup()
     group.add(OtherOptions(controller))
 
