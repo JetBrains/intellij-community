@@ -64,6 +64,7 @@ internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, stor
 }
 
 internal fun WorkspaceEntity.asBase(): WorkspaceEntityBase = this as WorkspaceEntityBase
+internal fun <T : WorkspaceEntity> WorkspaceEntity.Builder<T>.asBase(): ModifiableWorkspaceEntityBase<T, *> = this as ModifiableWorkspaceEntityBase<T, *>
 
 internal val EntityStorage.mutable: MutableEntityStorage
   get() = this as MutableEntityStorage

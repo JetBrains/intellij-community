@@ -121,7 +121,7 @@ public interface WorkspaceEntity {
    * Currently, the class must inherit from ModifiableWorkspaceEntityBase.
    */
   @Abstract
-  public interface Builder<Unmodifiable : WorkspaceEntity> : WorkspaceEntity {
-    override var entitySource: EntitySource
+  public interface Builder<Unmodifiable : WorkspaceEntity> {
+    public var entitySource: EntitySource
   }
 }

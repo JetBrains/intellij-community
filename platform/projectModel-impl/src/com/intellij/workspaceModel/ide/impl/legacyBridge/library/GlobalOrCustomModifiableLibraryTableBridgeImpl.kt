@@ -41,13 +41,13 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
       this.typeId = type?.kindId?.let { LibraryTypeId(it) }
     }
 
-    if (type != null) {
-      diff addEntity LibraryPropertiesEntity(libraryEntity.entitySource) {
-        library = libraryEntity
-        propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
-                                                      type.createDefaultProperties())
+    val addedLibrary = if (type != null) {
+      libraryEntity.libraryProperties = LibraryPropertiesEntity(libraryEntity.entitySource) {
+        propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
       }
-    } else {
+      diff addEntity libraryEntity
+    }
+    else {
       diff addEntity libraryEntity
     }
 
@@ -59,7 +59,7 @@ internal class GlobalOrCustomModifiableLibraryTableBridgeImpl(private val librar
       targetBuilder = this.diff
     )
     myAddedLibraries.add(library)
-    diff.mutableLibraryMap.addMapping(libraryEntity, library)
+    diff.mutableLibraryMap.addMapping(addedLibrary, library)
     return library
   }
 

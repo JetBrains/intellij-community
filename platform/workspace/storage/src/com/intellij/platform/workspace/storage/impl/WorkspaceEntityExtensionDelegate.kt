@@ -30,7 +30,7 @@ public class WorkspaceEntityExtensionDelegateMutable<T, W: WorkspaceEntity>(
     return res as T
   }
 
-  public operator fun setValue(thisRef: WorkspaceEntity, property: KProperty<*>, value: T?) {
+  public operator fun setValue(thisRef: WorkspaceEntity.Builder<*>, property: KProperty<*>, value: T?) {
     thisRef as ModifiableWorkspaceEntityBase<*, *>
     val entities = if (value is List<*>) value else listOf(value)
     thisRef.updateReferenceToEntity(immutableClass, property.isChildProperty, entities as List<WorkspaceEntity.Builder<*>?>)

@@ -147,9 +147,8 @@ class CollectChangesInBuilderTest {
 
   @Test
   fun `remove parent with child`() {
-    val parent = XParentEntity("to remove", MySource)
-    builder addEntity XChildEntity("to remove", MySource) {
-      parentEntity = parent
+    val parent = builder addEntity  XParentEntity("to remove", MySource) {
+      this.children += XChildEntity("to remove", MySource)
     }
     val storage = builder.toSnapshot()
     val newBuilder = createBuilderFrom(storage)

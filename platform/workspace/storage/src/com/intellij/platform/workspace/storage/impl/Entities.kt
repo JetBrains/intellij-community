@@ -132,7 +132,8 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
                                     ?.toMutableMap() ?: mutableMapOf()
     val idToInterface = parents?.associate { it.asBase().id to it.getEntityInterface() } ?: emptyMap()
 
-    (diff as MutableEntityStorageImpl).refs.getParentRefsOfChild(childId).forEach { (connectionId, existingParent) ->
+    val diff = diff as MutableEntityStorageImpl
+    diff.refs.getParentRefsOfChild(childId).forEach { (connectionId, existingParent) ->
       val interfaceOfParent = idToInterface[existingParent.id]
       if (interfaceOfParent != null) {
         // We're trying to add parent that already exists. Skip it
@@ -147,12 +148,13 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
     // Update existing references
     entityInterfaceToEntity.forEach { (parentEntityClass, parentEntity) ->
-      updateReferenceToEntity(parentEntityClass, false, listOf(parentEntity))
+      val newParent = diff.entityDataByIdOrDie(parentEntity.asBase().id).wrapAsModifiable(diff)
+      updateReferenceToEntity(parentEntityClass, false, listOf(newParent))
     }
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  public fun updateReferenceToEntity(entityClass: Class<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity?>) {
+  public fun updateReferenceToEntity(entityClass: Class<out WorkspaceEntity>, isThisFieldChild: Boolean, entities: List<WorkspaceEntity.Builder<*>?>) {
     val foundConnectionId = findConnectionId(entityClass, entities)
     if (foundConnectionId == null) return
 
@@ -278,14 +280,13 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
-  private fun findConnectionId(entityClass: Class<out WorkspaceEntity>, entity: List<WorkspaceEntity?>): ConnectionId? {
+  private fun findConnectionId(entityClass: Class<out WorkspaceEntity>, entity: List<WorkspaceEntity.Builder<out WorkspaceEntity>?>): ConnectionId? {
     val someEntity = entity.filterNotNull().firstOrNull()
     val firstClass = this.getEntityClass()
     val connectionChecker = { connectionId: ConnectionId -> isCorrectConnection(connectionId, firstClass, entityClass)
                                                             || isCorrectConnection(connectionId, entityClass, firstClass) }
     if (someEntity != null) {
-      someEntity as WorkspaceEntityBase
-      val resultingConnection = someEntity.connectionIdList().firstOrNull(connectionChecker)
+      val resultingConnection = someEntity.asBase().connectionIdList().firstOrNull(connectionChecker)
       if (resultingConnection != null) return resultingConnection
       return this.connectionIdList().firstOrNull(connectionChecker) ?: error("Cannot find connection for $entityClass and ${someEntity::class.java}")
     }
@@ -455,7 +456,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     if (entity is List<*>) {
       error("Cannot have parent lists")
     }
-    else if (entity is WorkspaceEntity) {
+    else if (entity is WorkspaceEntity.Builder<out WorkspaceEntity>) {
       if (entity is ModifiableWorkspaceEntityBase<*, *> && entity.diff == null) {
         builder.addEntity(entity as ModifiableWorkspaceEntityBase<T, *>)
       }
@@ -476,11 +477,11 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
       }
       if (connectionId.isOneToOne) error("Only one-to-many connection is supported")
       @Suppress("UNCHECKED_CAST")
-      entity as List<WorkspaceEntity>
+      entity as List<WorkspaceEntity.Builder<out WorkspaceEntity>>
       val withBuilder_entity = entity.filter { it is ModifiableWorkspaceEntityBase<*, *> && it.diff != null }
       builder.instrumentation.replaceChildren(connectionId, this, withBuilder_entity)
     }
-    else if (entity is WorkspaceEntity) {
+    else if (entity is WorkspaceEntity.Builder<out WorkspaceEntity>) {
       if (entity is ModifiableWorkspaceEntityBase<*, *> && entity.diff == null) {
         builder.addEntity(entity as ModifiableWorkspaceEntityBase<T, *>)
       }

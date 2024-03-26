@@ -661,10 +661,10 @@ class ApplyChangesFromTest {
 
     val parentEntity = builder.entities(OoParentEntity::class.java).single()
     val newChild = OoChildEntity("ccc", MySource)
-    builder.modifyEntity(parentEntity) {
+    val updatedParent = builder.modifyEntity(parentEntity) {
       this.child = newChild
     }
-    builder.removeEntity(newChild)
+    builder.removeEntity(updatedParent.child!!)
 
     snapshot.toBuilder().applyChangesFrom(builder)
   }

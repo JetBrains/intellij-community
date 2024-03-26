@@ -69,12 +69,13 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       this.typeId = type?.kindId?.let { LibraryTypeId(it) }
     }
 
-    if (type != null) {
-      diff addEntity LibraryPropertiesEntity( libraryEntity.entitySource) {
-        library = libraryEntity
+    val addedEntity = if (type != null) {
+      libraryEntity.libraryProperties = LibraryPropertiesEntity(libraryEntity.entitySource) {
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
       }
-    } else {
+      diff addEntity libraryEntity
+    }
+    else {
       diff addEntity libraryEntity
     }
 
@@ -86,7 +87,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       targetBuilder = this.diff
     )
     myAddedLibraries.add(library)
-    diff.mutableLibraryMap.addMapping(libraryEntity, library)
+    diff.mutableLibraryMap.addMapping(addedEntity, library)
     return library
   }
 

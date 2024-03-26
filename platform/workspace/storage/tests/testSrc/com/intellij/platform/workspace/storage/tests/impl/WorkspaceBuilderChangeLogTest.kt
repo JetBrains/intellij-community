@@ -754,10 +754,9 @@ class WorkspaceBuilderChangeLogTest {
     val contentRoot = builder.entities(ModuleTestEntity::class.java).single().contentRoots.single()
     val original = builder.toSnapshot()
     builder.removeEntity(contentRoot)
-    val newContentRoot = ContentRootTestEntity(MySource) {
+    val newContentRoot = builder addEntity ContentRootTestEntity(MySource) {
       module = moduleTestEntity
     }
-    builder.addEntity(newContentRoot)
     builder.getMutableExternalMapping(externalMappingKey).addMapping(newContentRoot, 1)
     assertFalse(builder.hasSameEntities())
   }

@@ -91,7 +91,7 @@ private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl
     val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
     val someEntity = entities.removeAt(entityIndex)
     if (someEntity is ModifiableWorkspaceEntityBase<*, *> && someEntity.diff == null) {
-      storage.addEntity(someEntity as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
+      storage.addEntity(someEntity as WorkspaceEntity)
       env.logMessage("Added ${someEntity.id.asString()} to storage")
     }
     else {
@@ -548,7 +548,7 @@ private object SampleEntityManipulation : EntityManipulation {
                               someProperty: String,
                               env: ImperativeCommand.Environment): Pair<WorkspaceEntity?, String> {
         val virtualFileManager = VirtualFileUrlManagerImpl()
-        return SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"), source) {
+        return storage addEntity SampleEntity(false, someProperty, emptyList(), emptyMap(), virtualFileManager.getOrCreateFromUrl("file:///tmp"), source) {
           this.children = emptyList()
         } to "property: $someProperty"
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -264,12 +264,11 @@ class GlobalWorkspaceModel : Disposable {
       val entitySourceCopy = (libraryEntity.entitySource as? JpsGlobalFileEntitySource)?.copy(vfuManager) ?: libraryEntity.entitySource
       val excludedRootsCopy = libraryEntity.excludedRoots.map { it.copy(entitySourceCopy, vfuManager) }
       val libraryPropertiesCopy = libraryEntity.libraryProperties?.copy(entitySourceCopy)
-      val libraryEntityCopy = LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
+      val libraryEntityCopy = mutableEntityStorage addEntity  LibraryEntity(libraryEntity.name, libraryEntity.tableId, libraryRootsCopy, entitySourceCopy) {
         typeId = libraryEntity.typeId
         excludedRoots = excludedRootsCopy
         libraryProperties = libraryPropertiesCopy
       }
-      mutableEntityStorage.addEntity(libraryEntityCopy)
       val libraryBridge = storage.libraryMap.getDataByEntity(libraryEntity)
       if (libraryBridge != null) mutableEntityStorage.mutableLibraryMap.addIfAbsent(libraryEntityCopy, libraryBridge)
     }
@@ -284,11 +283,10 @@ class GlobalWorkspaceModel : Disposable {
       }
 
       val entitySourceCopy = (sdkEntity.entitySource as JpsGlobalFileEntitySource).copy(vfuManager)
-      val sdkEntityCopy = SdkEntity(sdkEntity.name, sdkEntity.type, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
+      val sdkEntityCopy = mutableEntityStorage addEntity SdkEntity(sdkEntity.name, sdkEntity.type, sdkRootsCopy, sdkEntity.additionalData, entitySourceCopy) {
         homePath = sdkEntity.homePath?.createCopyAtManager(vfuManager)
         version = sdkEntity.version
       }
-      mutableEntityStorage.addEntity(sdkEntityCopy)
       val sdkBridge = storage.getExternalMapping(SDK_BRIDGE_MAPPING_ID).getDataByEntity(sdkEntity)
       if (sdkBridge != null) {
         mutableEntityStorage.getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID).addIfAbsent(sdkEntityCopy, sdkBridge)

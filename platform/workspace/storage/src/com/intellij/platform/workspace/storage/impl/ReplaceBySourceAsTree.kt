@@ -198,10 +198,8 @@ internal class ReplaceBySourceAsTree {
     }
 
     private fun addElement(parents: Set<EntityId>?, replaceWithDataSource: EntityId, replaceToTarget: HashBiMap<EntityId, EntityId>) {
-      val targetParents = mutableListOf<WorkspaceEntity>()
       val targetParentBuilders = mutableListOf<WorkspaceEntity.Builder<*>>()
       parents?.forEach { parent ->
-        targetParents += targetStorage.entityDataByIdOrDie(parent).createEntity(targetStorage)
         targetParentBuilders += targetStorage.entityDataByIdOrDie(parent).wrapAsModifiable(targetStorage)
       }
 
@@ -211,10 +209,10 @@ internal class ReplaceBySourceAsTree {
       // We actually bind parents in [createDetachedEntity], but we can't do it for external entities (that are defined in a separate module)
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
       // Actually, I hope to get rid of [createDetachedEntity] at some moment.
-      targetParents.groupBy { it::class }.forEach { (_, entities) ->
-        modifiableEntity.updateReferenceToEntity(entities.first().getEntityInterface(), false, entities)
+      targetParentBuilders.groupBy { it::class }.forEach { (_, entities) ->
+        modifiableEntity.updateReferenceToEntity((entities.first() as ModifiableWorkspaceEntityBase<*, *>).getEntityInterface(), false, entities)
       }
-      targetStorage.addEntity(modifiableEntity as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
+      targetStorage.addEntity(modifiableEntity as WorkspaceEntity.Builder)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
       replaceToTarget[replaceWithDataSource] = modifiableEntity.id
     }

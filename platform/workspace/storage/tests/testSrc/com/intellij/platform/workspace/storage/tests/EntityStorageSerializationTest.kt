@@ -295,14 +295,12 @@ class EntityStorageSerializationTest {
   fun `empty entity family serialization`() {
     val builder = createEmptyBuilder()
 
-    val entity = SampleEntity(
+    val entity = builder addEntity SampleEntity(
       false, stringProperty = "MyEntity",
       stringListProperty = mutableListOf("a", "b"),
       stringMapProperty = HashMap(), fileProperty = virtualFileManager.getOrCreateFromUrl("file:///tmp"),
       entitySource = SampleEntitySource("test")
     )
-
-    builder addEntity entity
 
     builder addEntity CollectionFieldEntity(hashSetOf(1, 2, 3), arrayListOf("1", "2", "3"), MySource)
 

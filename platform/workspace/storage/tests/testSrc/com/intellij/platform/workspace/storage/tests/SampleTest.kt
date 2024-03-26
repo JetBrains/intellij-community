@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
 class SampleTest {
@@ -44,15 +43,5 @@ class SampleTest {
     assertEquals("data", entity.data)
     assertEquals("data2", updatedEntity.data)
     assertEquals("data2", builder.entities(SampleEntity2::class.java).single().data)
-  }
-
-  @Test
-  fun `add and remove from builder`() {
-    val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("data", true, MySource)
-    builder.addEntity(entity)
-    builder.removeEntity(entity)
-
-    assertThrows<IllegalStateException> { entity.data }
   }
 }

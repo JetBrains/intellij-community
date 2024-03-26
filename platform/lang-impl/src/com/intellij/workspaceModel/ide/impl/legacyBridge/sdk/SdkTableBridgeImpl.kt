@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.projectRoots.Sdk
@@ -75,8 +75,8 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       this.version = sdk.versionString
     }
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {
-      it.addEntity(sdkEntity)
-      it.mutableSdkMap.addIfAbsent(sdkEntity, sdk)
+      val addedEntity = it.addEntity(sdkEntity)
+      it.mutableSdkMap.addIfAbsent(addedEntity, sdk)
     }
   }
 

@@ -57,7 +57,8 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity.createPointer<CollectionFieldEntity>().resolve(it)!!) {
+        val entity = it.entities(CollectionFieldEntity::class.java).single()
+        it.modifyEntity(entity) {
           names.add(baz)
         }
       }
@@ -71,7 +72,8 @@ class EntityWithCollectionTest {
 
     runWriteActionAndWait {
       model.updateProjectModel {
-        it.modifyEntity(collectionEntity.createPointer<CollectionFieldEntity>().resolve(it)!!) {
+        val entity = it.entities(CollectionFieldEntity::class.java).single()
+        it.modifyEntity(entity) {
           names = mutableListOf(baz)
         }
       }

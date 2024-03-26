@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
@@ -682,14 +681,12 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `replace oneToOne connection with partial move and pid`() {
-    val parentEntity = OoParentWithPidEntity("parent", entitySource = AnotherSource)
-    builder addEntity OoChildForParentWithPidEntity("child", entitySource = MySource) {
-      this.parentEntity = parentEntity
+    val parentEntity = builder addEntity OoParentWithPidEntity("parent", entitySource = AnotherSource) {
+      this.childOne = OoChildForParentWithPidEntity("child", entitySource = MySource)
     }
 
-    val anotherParent = OoParentWithPidEntity("parent", entitySource = MySource)
-    replacement addEntity OoChildForParentWithPidEntity("child", entitySource = MySource) {
-      this.parentEntity = anotherParent
+    val anotherParent = replacement addEntity OoParentWithPidEntity("parent", entitySource = MySource) {
+      this.childOne = OoChildForParentWithPidEntity("child", entitySource = MySource)
     }
 
     builder.replaceBySource({ it is MySource }, replacement)
@@ -1137,15 +1134,14 @@ class ReplaceBySourceTest {
 
   @RepeatedTest(10)
   fun `detach root parent`() {
-    val internalChild = builder addEntity  TreeMultiparentLeafEntity("internal", MySource)
-    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+    val internalChild = builder addEntity TreeMultiparentLeafEntity("internal", MySource)
+    val leafsStructure = builder addEntity TreeMultiparentRootEntity("data", AnotherSource) {
       this.children = listOf(
         TreeMultiparentLeafEntity("data", AnotherSource) {
           this.children = listOf(internalChild.builderFrom(builder))
         }
       )
     }
-    builder addEntity leafsStructure
     builder.modifyEntity(internalChild) {
       this.mainParent = leafsStructure.builderFrom(builder)
     }
@@ -1226,14 +1222,14 @@ class ReplaceBySourceTest {
 
     thisStateCheck {
       root assert ReplaceState.NoChange(replaceWithEntity.base.id)
-      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceChild1.base.id)
-      internalChild assert ReplaceState.Relabel(replaceChild2.base.id, setOf(ParentsRef.TargetRef(root.base.id)))
+      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithEntity.children.first().base.id)
+      internalChild assert ReplaceState.Relabel(replaceWithEntity.children.last().base.id, setOf(ParentsRef.TargetRef(root.base.id)))
     }
 
     replaceWithCheck {
       replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
-      replaceChild1 assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
-      replaceChild2 assert ReplaceWithState.Relabel(internalChild.base.id)
+      replaceWithEntity.children.first() assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
+      replaceWithEntity.children.last() assert ReplaceWithState.Relabel(internalChild.base.id)
     }
   }
 
@@ -1275,27 +1271,26 @@ class ReplaceBySourceTest {
 
     thisStateCheck {
       root assert ReplaceState.NoChange(replaceWithEntity.base.id)
-      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithDataElement.base.id)
+      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithEntity.children.first().base.id)
       internalChild assert ReplaceState.Remove
     }
 
     replaceWithCheck {
       replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
-      replaceWithDataElement assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
+      replaceWithEntity.children.first() assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
     }
   }
 
   @RepeatedTest(10)
   fun `attach to root entity`() {
     val internalChild = TreeMultiparentLeafEntity("internal", MySource)
-    val leafsStructure = TreeMultiparentRootEntity("data", AnotherSource) {
+    val leafsStructure = builder addEntity TreeMultiparentRootEntity("data", AnotherSource) {
       this.children = listOf(
         TreeMultiparentLeafEntity("data", AnotherSource) {
           this.children = listOf(internalChild)
         }
       )
     }
-    builder addEntity leafsStructure
     val root = builder.toSnapshot().entities(TreeMultiparentRootEntity::class.java).single()
 
     val replaceWithDataElement = TreeMultiparentLeafEntity("data", AnotherSource)
@@ -1325,8 +1320,8 @@ class ReplaceBySourceTest {
 
     thisStateCheck {
       root assert ReplaceState.NoChange(replaceWithEntity.base.id)
-      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithDataElement.base.id)
-      internalChild assert ReplaceState.Relabel(
+      root.children.single { it.data == "data" } assert ReplaceState.NoChange(replaceWithEntity.children.first().base.id)
+      leafsStructure.children.first().children.first() assert ReplaceState.Relabel(
         internalReplacement.base.id,
         parents = setOf(ParentsRef.TargetRef(leafsStructure.base.id), ParentsRef.TargetRef(root.children.single().base.id))
       )
@@ -1334,7 +1329,7 @@ class ReplaceBySourceTest {
 
     replaceWithCheck {
       replaceWithEntity assert ReplaceWithState.NoChange(root.base.id)
-      replaceWithDataElement assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
+      replaceWithEntity.children.first() assert ReplaceWithState.NoChange(root.children.single { it.data == "data" }.base.id)
     }
   }
 

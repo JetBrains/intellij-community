@@ -64,8 +64,7 @@ class ImlSerializationTest {
   @Test
   fun externalIndexIsNotSerialized() {
     val builder = MutableEntityStorage.create()
-    val entity = SampleEntity2("Test", true, Source)
-    builder.addEntity(entity)
+    val entity = builder addEntity SampleEntity2("Test", true, Source)
     val index = builder.getMutableExternalMapping(externalMappingKey)
     index.addMapping(entity, "Hello")
 

@@ -547,7 +547,11 @@ internal class MutableEntityStorageImpl(
     return@addMeasuredTime snapshot
   }
 
-  override fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity>) {
+  override fun replaceChildren(
+    connectionId: ConnectionId,
+    parent: WorkspaceEntity,
+    newChildren: List<WorkspaceEntity.Builder<out WorkspaceEntity>>
+  ) {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
         val parentId = parent.asBase().id
@@ -609,16 +613,16 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity?, child: WorkspaceEntity) {
+  override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity) {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
         val parentId = parent?.asBase()?.id?.asParent()
         val childId = child.asBase().id
         if (!connectionId.isParentNullable && parentId != null) {
           // If we replace a field in one-to-one connection, the previous entity is automatically removed.
-          val existingChild = getOneChild(connectionId, parent)
-          if (existingChild != null && existingChild != child) {
-            removeEntity(existingChild)
+          val existingChild = getOneChildData(connectionId, parent.asBase().id)
+          if (existingChild != null && existingChild.createEntityId() != child.asBase().id) {
+            removeEntityByEntityId(existingChild.createEntityId())
           }
         }
         if (parentId != null) {
@@ -665,9 +669,9 @@ internal class MutableEntityStorageImpl(
         val childId = child.asBase().id.asChild()
         if (!connectionId.isParentNullable && parentId != null) {
           // If we replace a field in one-to-one connection, the previous entity is automatically removed.
-          val existingChild = getOneChild(connectionId, parent)
-          if (existingChild != null && existingChild != child) {
-            removeEntity(existingChild)
+          val existingChild = getOneChildData(connectionId, parent.asBase().id)
+          if (existingChild != null && existingChild.createEntityId() != child.asBase().id) {
+            removeEntityByEntityId(existingChild.createEntityId())
           }
         }
         if (parentId != null) {
