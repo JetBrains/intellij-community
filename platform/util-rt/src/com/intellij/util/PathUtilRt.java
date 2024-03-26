@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -14,6 +14,9 @@ import java.util.Locale;
 import java.util.Set;
 
 public final class PathUtilRt {
+
+  private PathUtilRt() { }
+
   @NotNull
   public static String getFileName(@Nullable String path) {
     if (path == null || path.isEmpty()) {

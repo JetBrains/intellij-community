@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import java.util.Locale;
@@ -44,4 +44,6 @@ public final class SystemInfoRt {
 
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
+
+  private SystemInfoRt() {}
 }

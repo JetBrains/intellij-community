@@ -38,6 +38,8 @@ public final class FileUtilRt {
 
   private static String ourCanonicalTempPathCache;
 
+  private FileUtilRt() { }
+
   public static boolean isJarOrZip(@NotNull File file) {
     return isJarOrZip(file, true);
   }

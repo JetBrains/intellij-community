@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.Pair;
@@ -25,7 +25,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.*;
 
-public final class PrivateKeyReader {
+final class PrivateKeyReader {
   public static final String P1_BEGIN_MARKER = "-----BEGIN RSA PRIVATE KEY";
   public static final String P1_END_MARKER = "-----END RSA PRIVATE KEY";
 
@@ -43,7 +43,7 @@ public final class PrivateKeyReader {
   @NotNull private final String myFileName;
   @NotNull private final char[] myPassword;
 
-  public PrivateKeyReader(@NotNull String fileName, @Nullable char[] password) {
+  PrivateKeyReader(@NotNull String fileName, @Nullable char[] password) {
     myFileName = fileName;
     myPassword = password;
   }

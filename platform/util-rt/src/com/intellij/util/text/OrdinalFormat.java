@@ -5,6 +5,9 @@ import java.text.*;
 import java.util.Locale;
 
 public final class OrdinalFormat {
+
+  private OrdinalFormat() { }
+
   /**
    * Replaces all instances of {@code "{?,number,ordinal}"} format elements with the ordinal format for the locale.
    */

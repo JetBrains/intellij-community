@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -12,6 +12,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class ReflectionUtilRt {
+
+  private ReflectionUtilRt() { }
+
   @NotNull
   public static List<Field> collectFields(@NotNull Class<?> clazz) {
     List<Field> result = new ArrayList<>();
