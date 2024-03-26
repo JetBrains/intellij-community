@@ -17,6 +17,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,9 +239,10 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       while (ref.getQualifier() instanceof PyReferenceExpression refQualifier) {
         ResolveResult[] resolved = refQualifier.getReference().multiResolve(false);
         for (ResolveResult rr : resolved) {
-          if (rr.isValidResult()) {
-            if (rr.getElement() instanceof PyImportElement && rr.getElement().getContainingFile() == file) {
-              return new IntentionState(file, (PyImportElement)rr.getElement(), ref.asQualifiedName());
+          if (rr.isValidResult() && rr instanceof ImportedResolveResult importedResolveResult) {
+            if (importedResolveResult.getDefiner() instanceof PyImportElement importDefiner &&
+                importDefiner.getContainingFile() == file) {
+              return new IntentionState(file, importDefiner, ref.asQualifiedName());
             }
           }
         }
