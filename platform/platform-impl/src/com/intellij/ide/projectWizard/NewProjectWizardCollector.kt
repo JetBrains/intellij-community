@@ -306,11 +306,11 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
     }
 
     override val validationRule: List<String>
-      get() = listOf("{util#${GeneratorValidationRule.ID}}")
+      get() = listOf("{util#${GENERATOR_VALIDATION_RULE_ID}}")
   }
 
   class GeneratorValidationRule : CustomValidationRule() {
-    override fun getRuleId(): String = ID
+    override fun getRuleId(): String = GENERATOR_VALIDATION_RULE_ID
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
       if (isThirdPartyValue(data) || NewProjectWizardConstants.OTHER == data) {
@@ -318,9 +318,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
       }
       return acceptWhenReportedByPluginFromPluginRepository(context)
     }
-
-    companion object {
-      const val ID: String = "npw_generator"
-    }
   }
 }
+
+private const val GENERATOR_VALIDATION_RULE_ID = "npw_generator"
