@@ -17,7 +17,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
@@ -91,9 +90,15 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /**
    * Incremented on each update of anything in the storage -- header, record. Hence be seen as 'version'
-   * of storage content -- not storage format version, but current storage content.
+   * of storage content -- not a storage _format_ version, but current storage _content_.
    * Stored in {@link PersistentFSHeaders#HEADER_GLOBAL_MOD_COUNT_OFFSET} header field.
    * If a record is updated -> current value of globalModCount is 'stamped' into a record MOD_COUNT field.
+   * <p>
+   * In the current implementation almost all fields are read/write straight from/to the mmapped buffer -- which means
+   * they are always 'saved', and no need to flush them explicitly => no need to update .dirty status. The only exception
+   * is globalModCount which _should_ be flushed explicitly -- which is why difference between globalModCount and apt
+   * header field {@link PersistentFSHeaders#HEADER_GLOBAL_MOD_COUNT_OFFSET} is used as sign of storage being 'dirty',
+   * i.e. ask for {@link #force()}
    */
   private final AtomicInteger globalModCount = new AtomicInteger(0);
   //MAYBE RC: if we increment .globalModCount on _each_ modification -- this rises interesting possibility to
@@ -103,15 +108,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   //          If this is true -- most likely records were stored correctly, even if app was crushed. If not, if
   //          we find a record(s) with modCount>globalModCount => there were writes unfinished on app crush, and
   //          likely at least those records are corrupted.
-
-  /**
-   * In the current implementation almost all fields are read/write straight from/to the mmapped buffer -- which means
-   * they are always 'saved', and no need to flush them explicitly => no need to update .dirty status. The only exception
-   * is {@link #globalModCount} which _should_ be flushed explicitly-- which is why the only modifications that must be
-   * followed by dirty=true are the {@link #globalModCount}'s modifications.
-   * MAYBE RC: instead of dirty flag -> just compare .globalModCount != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET)
-   */
-  private final AtomicBoolean dirty = new AtomicBoolean(false);
 
   //cached for faster access:
   private final transient int pageSize;
@@ -203,8 +199,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   @Override
   public <E extends Throwable> void updateHeader(final @NotNull HeaderUpdater<E> updater) throws E, IOException {
     if (updater.updateHeader(headerAccessor)) {
-      globalModCount.incrementAndGet();
-      dirty.compareAndSet(true, false);
+      incrementGlobalModCount();
     }
   }
 
@@ -379,7 +374,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public int allocateRecord() {
-    dirty.compareAndSet(false, true);
     final Page headerPage = headerPage();
     final ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
     while (true) {// CAS loop:
@@ -671,16 +665,14 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   @Override
   public void setErrorsAccumulated(int errors) {
     setIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
-    globalModCount.incrementAndGet();
-    dirty.compareAndSet(false, true);
+    incrementGlobalModCount();
   }
 
   @Override
   public void setVersion(final int version) {
     setIntHeaderField(HEADER_VERSION_OFFSET, version);
     setLongHeaderField(HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
-    globalModCount.incrementAndGet();
-    dirty.compareAndSet(false, true);
+    incrementGlobalModCount();
   }
 
   @Override
@@ -734,14 +726,26 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public boolean isDirty() {
-    return dirty.get();
+    return globalModCount.get() != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);
   }
 
   @Override
   public void force() throws IOException {
-    if (dirty.compareAndSet(true, false)) {
-      setIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET, globalModCount.get());
+    //store globalModCount in apt header field:
+    ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
+    while (true) {//CAS loop:
+      int currentModCount = globalModCount.get();
+      int storedModCount = (int)INT_HANDLE.getVolatile(headerPageBuffer, HEADER_GLOBAL_MOD_COUNT_OFFSET);
+      if (currentModCount <= storedModCount) {
+        //Stored modCount is already ahead => we're quite late, someone else is already stored 'fresher' value
+        //(modCount always increases => larger value implies 'later' in happens-before sequence)
+        break;
+      }
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, HEADER_GLOBAL_MOD_COUNT_OFFSET, storedModCount, currentModCount)) {
+        break;
+      }
     }
+
     if (MMappedFileStorage.FSYNC_ON_FLUSH_BY_DEFAULT) {
       storage.fsync();
     }
@@ -930,8 +934,16 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   private void incrementRecordVersion(final @NotNull ByteBuffer pageBuffer,
                                       final int recordOffsetOnPage) {
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
-    dirty.compareAndSet(false, true);
+    int globalModCount = incrementGlobalModCount();
+    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.MOD_COUNT_OFFSET, globalModCount);
+  }
+
+  private int incrementGlobalModCount() {
+    int modCount = globalModCount.incrementAndGet();
+    if (modCount < 0) {
+      throw new IllegalStateException("GlobalModCount(=" + modCount + ") is negative: overflow?");
+    }
+    return modCount;
   }
 
   //============ header fields access: ============================================================ //
