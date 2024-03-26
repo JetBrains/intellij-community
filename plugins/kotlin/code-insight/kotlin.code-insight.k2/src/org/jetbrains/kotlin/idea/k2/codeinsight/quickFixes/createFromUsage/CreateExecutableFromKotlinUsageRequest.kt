@@ -18,13 +18,13 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
 ) : CreateExecutableRequest {
     private val project = call.project
     private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer()
-    private val expectedParameterInfo: MutableList<ExpectedParameter> = mutableListOf()
+    private val expectedParameterInfo: List<ExpectedParameter> = computeExpectedParams(call)
 
-    init {
-        analyze(call) {
-            call.valueArgumentList?.arguments?.forEachIndexed { index, valueArgument ->
-                expectedParameterInfo.add(valueArgument.getExpectedParameterInfo(index))
-            }
+    private fun computeExpectedParams(call: T): List<ExpectedParameter> {
+        return analyze(call) {
+            call.valueArgumentList?.arguments?.mapIndexed { index, valueArgument ->
+                valueArgument.getExpectedParameterInfo(index)
+            } ?: emptyList()
         }
     }
 

@@ -92,7 +92,8 @@ object CreateKotlinCallableActionTextBuilder {
     // We must use short names of types for create-from-usage quick-fix (or IntentionAction) text.
     private val RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT: KtTypeRenderer = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
         classIdRenderer = object : KtClassTypeQualifierRenderer {
-            context(KtAnalysisSession, KtTypeRenderer) override fun renderClassTypeQualifier(type: KtClassType, printer: PrettyPrinter) {
+            context(KtAnalysisSession, KtTypeRenderer)
+            override fun renderClassTypeQualifier(type: KtClassType, printer: PrettyPrinter) {
                 printer.append(type.qualifiers.joinToString(separator = ".") { it.name.asString() })
             }
         }
