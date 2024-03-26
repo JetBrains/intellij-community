@@ -13,10 +13,13 @@ internal fun getCollectionPsiPresentationText(array: JsonArray): @Nls String {
 }
 
 fun getCollectionPsiPresentationText(childrenCount: Int): @Nls String {
-  return if (childrenCount % 10 == 1) {
-    JsonBundle.message("folding.collapsed.array.one.element.text", childrenCount)
+  return if (childrenCount % 10 == 1 && childrenCount % 100 != 11) {
+    JsonBundle.message("folding.collapsed.array.one.element.text", childrenCount, SINGULAR_FORM)
   }
   else {
-    JsonBundle.message("folding.collapsed.array.several.elements.text", childrenCount)
+    JsonBundle.message("folding.collapsed.array.one.element.text", childrenCount, PLURAL_FORM)
   }
 }
+
+private const val SINGULAR_FORM = 1
+private const val PLURAL_FORM = 2
