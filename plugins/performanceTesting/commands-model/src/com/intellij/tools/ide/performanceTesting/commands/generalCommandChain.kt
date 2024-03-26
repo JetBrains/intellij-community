@@ -619,6 +619,11 @@ fun <T : CommandChain> T.createGradleProject(newGradleProjectDto: NewGradleProje
   addCommand("${CMD_PREFIX}createGradleProject $options")
 }
 
+fun <T : CommandChain> T.createSpringProject(newMavenProjectDto: NewSpringProjectDto): T = apply {
+  val options = objectMapper.writeValueAsString(newMavenProjectDto)
+  addCommand("${CMD_PREFIX}createSpringProject $options")
+}
+
 fun <T : CommandChain> T.updateMavenGoal(settings: MavenGoalConfigurationDto): T = apply {
   val options = objectMapper.writeValueAsString(settings)
   addCommand("${CMD_PREFIX}updateMavenGoal $options")
