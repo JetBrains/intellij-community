@@ -11,6 +11,7 @@ import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceURLProvider
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
+import com.jetbrains.python.PythonLanguage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -29,7 +30,7 @@ class HuggingFaceHtmlBuilder(
     } else {
       generateCardHeader(modelDataApiContent)
     }
-    @NlsSafe val convertedHtml = readAction { DocMarkdownToHtmlConverter.convert(project, modelCardContent) }
+    @NlsSafe val convertedHtml = readAction { DocMarkdownToHtmlConverter.convert(project, modelCardContent, PythonLanguage.INSTANCE) }
 
     val wrappedBodyContent = HtmlChunk.div()
       .setClass(DocumentationMarkup.CLASS_CONTENT)
@@ -58,8 +59,6 @@ class HuggingFaceHtmlBuilder(
       listOf(HtmlChunk.text(PyHuggingFaceBundle.message("python.hugging.face.dataset")), HtmlChunk.nbsp(2))
     }
 
-
-
     val modelInfoRow = DocumentationMarkup.GRAYED_ELEMENT
       .children(
         *conditionalChunks.toTypedArray(),
@@ -80,21 +79,22 @@ class HuggingFaceHtmlBuilder(
       .child(HtmlChunk.text(PyHuggingFaceBundle.getMessage("python.hugging.face.open.on.link.text")))
       .wrapWith("p")
 
-      val headerContainer = HtmlChunk.div()
-        .setClass(DocumentationMarkup.CLASS_DEFINITION)
-        .children(
-          modelNameWithIconRow,
-          modelInfoRow,
-          linkRow,
-        )
+    val headerContainer = HtmlChunk.div()
+      .setClass(DocumentationMarkup.CLASS_DEFINITION)
+      .children(
+        modelNameWithIconRow,
+        modelInfoRow,
+        linkRow,
+      )
+
     return headerContainer
   }
 
   companion object {
     private const val NBHP = "&#8209;"
     private val DOWNLOADS_ICON = HtmlChunk.tag("icon")
-      .attr("src", "AllIcons.Actions.Download")
+      .attr("src", "AllIcons.Plugins.Downloads")
     private val LIKES_ICON = HtmlChunk.tag("icon")
-      .attr(".src", "AllIcons.Toolwindows.ToolWindowFavorites")
+      .attr(".src", "AllIcons.Plugins.Rating")
   }
 }
