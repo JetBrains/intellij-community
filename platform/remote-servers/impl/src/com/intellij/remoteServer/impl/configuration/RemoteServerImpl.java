@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.remoteServer.ServerType;
@@ -17,21 +17,18 @@ public class RemoteServerImpl<C extends ServerConfiguration> implements RemoteSe
     myConfiguration = configuration;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
   @Override
-  public ServerType<C> getType() {
+  public @NotNull ServerType<C> getType() {
     return myType;
   }
 
-  @NotNull
   @Override
-  public C getConfiguration() {
+  public @NotNull C getConfiguration() {
     return myConfiguration;
   }
 

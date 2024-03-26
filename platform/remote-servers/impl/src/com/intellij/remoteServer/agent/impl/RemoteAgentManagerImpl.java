@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -77,8 +78,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       return myAgentProxyFactory.createProxy(libraries, myAgentInterface, agentClassName);
     }
 
-    @NotNull
-    private List<File> listLibraryFiles() {
+    private @NotNull List<File> listLibraryFiles() {
       List<File> result = new ArrayList<>(myInstanceLibraries);
 
       List<Class<?>> allRtClasses = new ArrayList<>(myRtClasses);

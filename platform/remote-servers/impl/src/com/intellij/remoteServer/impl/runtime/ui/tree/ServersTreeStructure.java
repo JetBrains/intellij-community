@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -88,14 +88,12 @@ public final class ServersTreeStructure {
       myNodeProducer = nodeProducer;
     }
 
-    @NotNull
-    public RemoteServer<?> getServer() {
+    public @NotNull RemoteServer<?> getServer() {
       return getValue();
     }
 
-    @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
       final ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return Collections.emptyList();
@@ -139,8 +137,7 @@ public final class ServersTreeStructure {
       presentation.setTooltip(connection != null ? connection.getStatusText() : null);
     }
 
-    @Nullable
-    private ServerConnection<?> getConnection() {
+    private @Nullable ServerConnection<?> getConnection() {
       return ServerConnectionManager.getInstance().getConnection(getServer());
     }
 
@@ -186,9 +183,8 @@ public final class ServersTreeStructure {
             return runConfigOrSourceType != null ? serverType.getIcon() : null;
           }
 
-          @NotNull
           @Override
-          public String getTextFor(Object runConfigOrSourceType) {
+          public @NotNull String getTextFor(Object runConfigOrSourceType) {
             if (runConfigOrSourceType instanceof RunnerAndConfigurationSettings) {
               return ((RunnerAndConfigurationSettings)runConfigOrSourceType).getName();
             }
@@ -227,8 +223,7 @@ public final class ServersTreeStructure {
       ShowSettingsUtil.getInstance().editConfigurable(myProject, new SingleRemoteServerConfigurable(getValue(), null, false));
     }
 
-    @Nullable
-    private static Icon getStatusIcon(final ConnectionStatus status) {
+    private static @Nullable Icon getStatusIcon(final ConnectionStatus status) {
       return switch (status) {
         case CONNECTED -> RemoteServersIcons.ResumeScaled;
         case DISCONNECTED -> RemoteServersIcons.SuspendScaled;
@@ -253,14 +248,12 @@ public final class ServersTreeStructure {
       myNodeProducer = nodeProducer;
     }
 
-    @NotNull
-    public Deployment getDeployment() {
+    public @NotNull Deployment getDeployment() {
       return getValue();
     }
 
-    @NotNull
     @Override
-    public RemoteServerNode getServerNode() {
+    public @NotNull RemoteServerNode getServerNode() {
       return myServerNode;
     }
 
@@ -344,17 +337,15 @@ public final class ServersTreeStructure {
       return myConnection;
     }
 
-    @Nullable
     @Override
-    public JComponent getComponent() {
+    public @Nullable JComponent getComponent() {
       DeploymentLogManagerImpl logManager = getLogManager();
       return logManager != null && logManager.isMainHandlerVisible()
              ? logManager.getMainLoggingHandler().getConsole().getComponent()
              : null;
     }
 
-    @Nullable
-    protected DeploymentLogManagerImpl getLogManager() {
+    protected @Nullable DeploymentLogManagerImpl getLogManager() {
       return (DeploymentLogManagerImpl)myConnection.getLogManager(myProject, getDeployment());
     }
 
@@ -362,15 +353,13 @@ public final class ServersTreeStructure {
       return myServerNode.getName() + ";deployment" + getDeployment().getName();
     }
 
-    @NotNull
     @Override
-    public String getLogId() {
+    public @NotNull String getLogId() {
       return getId() + ";main-log";
     }
 
-    @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
       List<AbstractTreeNode<?>> result = new ArrayList<>();
       collectDeploymentChildren(result);
       collectLogChildren(result);
@@ -413,16 +402,15 @@ public final class ServersTreeStructure {
   }
 
   public static class DeploymentLogNode extends AbstractTreeNode<LoggingHandlerBase> implements ServersTreeNode, LogProvidingNode {
-    @NotNull private final DeploymentNodeImpl myDeploymentNode;
+    private final @NotNull DeploymentNodeImpl myDeploymentNode;
 
     public DeploymentLogNode(Project project, @NotNull LoggingHandlerBase value, @NotNull DeploymentNodeImpl deploymentNode) {
       super(project, value);
       myDeploymentNode = deploymentNode;
     }
 
-    @NotNull
     @Override
-    public Collection<? extends AbstractTreeNode<?>> getChildren() {
+    public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
       return Collections.emptyList();
     }
 
@@ -436,15 +424,13 @@ public final class ServersTreeStructure {
       return getValue().getPresentableName();
     }
 
-    @Nullable
     @Override
-    public JComponent getComponent() {
+    public @Nullable JComponent getComponent() {
       return getValue().getComponent();
     }
 
-    @NotNull
     @Override
-    public String getLogId() {
+    public @NotNull String getLogId() {
       return myDeploymentNode.getId() + ";log:" + getLogName();
     }
   }

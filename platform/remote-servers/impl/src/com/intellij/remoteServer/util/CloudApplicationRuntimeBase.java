@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.ServerType;
@@ -18,7 +18,7 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
   }
 
   @Override
-  public void undeploy(@NotNull final UndeploymentTaskCallback callback) {
+  public void undeploy(final @NotNull UndeploymentTaskCallback callback) {
     myTaskExecutor.submit(() -> getApplication().undeploy(new CloudAgentDeploymentCallback() {
       @Override
       public void succeeded() {
