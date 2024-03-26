@@ -10,7 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.RawCommandLineEditor
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 
 class EclipseCompilerConfigurableUi(project: Project) {
@@ -42,16 +45,13 @@ class EclipseCompilerConfigurableUi(project: Project) {
       }
         .bottomGap(BottomGap.SMALL)
       row {
-        pathToEcjField = textFieldWithBrowseButton()
-          .align(AlignX.FILL)
-          .applyToComponent {
-            addBrowseFolderListener(
-              JavaCompilerBundle.message("path.to.ecj.compiler.tool"), null, project,
-              object : FileChooserDescriptor(true, false, true, true, false, false) {}.withFileFilter { file ->
-                FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)
-              }
-            )
+        pathToEcjField = textFieldWithBrowseButton(
+          JavaCompilerBundle.message("path.to.ecj.compiler.tool"), project,
+          object : FileChooserDescriptor(true, false, true, true, false, false) {}.withFileFilter { file ->
+            FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)
           }
+        )
+          .align(AlignX.FILL)
           .label(JavaCompilerBundle.message("eclipse.compiler.path.label"), LabelPosition.TOP)
           .comment(JavaCompilerBundle.message("eclipse.compiler.path.comment"))
           .component
