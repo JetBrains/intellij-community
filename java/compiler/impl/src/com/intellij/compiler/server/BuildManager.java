@@ -1308,11 +1308,13 @@ public final class BuildManager implements Disposable {
       }
 
       vmExecutablePath = projectJdkType.getVMExecutablePath(projectJdk);
+      project.getService(BuildManagerVersionChecker.class).checkArch(projectJdk.getHomePath());
     }
     else {
       sdkName = forcedCompiledJdkHome;
       compilerPath = new File(forcedCompiledJdkHome, "lib/tools.jar").getAbsolutePath();
       vmExecutablePath = new File(forcedCompiledJdkHome, "bin/java").getAbsolutePath();
+      project.getService(BuildManagerVersionChecker.class).checkArch(forcedCompiledJdkHome);
     }
 
     final CompilerConfiguration projectConfig = CompilerConfiguration.getInstance(project);

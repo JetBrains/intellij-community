@@ -32,6 +32,9 @@ public abstract class CompilerConfiguration {
   public abstract String getProjectBytecodeTarget();
   public abstract void setProjectBytecodeTarget(String level);
 
+  public abstract boolean warnOnArchMismatch();
+  public abstract void setWarnOnArchMismatch(boolean warnOnArchMismatch);
+
   public abstract boolean isParallelCompilationEnabled();
 
   /**

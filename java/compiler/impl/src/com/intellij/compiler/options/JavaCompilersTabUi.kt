@@ -6,7 +6,10 @@ import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import java.util.function.Consumer
 import javax.swing.JCheckBox
@@ -16,9 +19,10 @@ class JavaCompilersTabUi(
   val compilers: Collection<BackendCompiler>,
   configurableConsumer: Consumer<Configurable>,
   val compilerSelected: Consumer<BackendCompiler>,
-  ) {
+) {
 
   lateinit var compilerComboBox: ComboBox<BackendCompiler>
+  lateinit var warnOnArchMismatchCb: JCheckBox
   lateinit var useReleaseOptionCb: JCheckBox
   lateinit var targetOptionsComponent: TargetOptionsComponent
 
@@ -38,6 +42,11 @@ class JavaCompilersTabUi(
 
     row {
       useReleaseOptionCb = checkBox(JavaCompilerBundle.message("settings.use.release.option.for.cross.compilation"))
+        .component
+    }
+
+    row {
+      warnOnArchMismatchCb = checkBox(JavaCompilerBundle.message("settings.warn.on.arch.mismatch"))
         .component
     }
 
