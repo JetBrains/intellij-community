@@ -374,12 +374,14 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }.getOrLogException(LOG)
   }
 
-  override fun getGlobalScheme(): EditorColorsScheme {
+  override fun getGlobalScheme(): EditorColorsScheme = activeVisibleScheme ?: getDefaultScheme()
+
+  override fun getActiveVisibleScheme(): EditorColorsScheme? {
     val scheme = schemeManager.activeScheme
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly && !scheme.isVisible) {
-      return getDefaultScheme()
+      return null
     }
-    return scheme?.let { getEditableCopy(it) } ?: scheme ?: getDefaultScheme()
+    return scheme?.let { getEditableCopy(it) } ?: scheme
   }
 
   private fun getDefaultScheme(): EditorColorsScheme {

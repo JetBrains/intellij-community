@@ -527,7 +527,9 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private fun setLookAndFeelImpl(lookAndFeelInfo: UIThemeLookAndFeelInfo, installEditorScheme: Boolean) {
     val oldLaf = currentTheme
 
-    rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
+    EditorColorsManager.getInstance().activeVisibleScheme ?.let {
+      rememberSchemeForLaf(it)
+    }
 
     if (oldLaf !== lookAndFeelInfo && oldLaf != null) {
       oldLaf.dispose()
