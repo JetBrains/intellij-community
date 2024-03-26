@@ -18,43 +18,38 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.fields.ExpandableTextField
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
-import java.util.EnumSet
+import java.util.*
 import javax.swing.JButton
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JTextField
 
 class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), SearchableConfigurable {
-  val disabledSettings: MutableSet<Setting> = EnumSet.noneOf(Setting::class.java)
+  private val disabledSettings: MutableSet<Setting> = EnumSet.noneOf(Setting::class.java)
 
-  lateinit var resourcePatternsField: RawCommandLineEditor
+  private lateinit var resourcePatternsField: RawCommandLineEditor
 
-  lateinit var cbClearOutputDirectory: JCheckBox
-  lateinit var cbAssertNotNull: JCheckBox
+  private lateinit var cbClearOutputDirectory: JCheckBox
+  private lateinit var cbAssertNotNull: JCheckBox
 
-  lateinit var cbAutoShowFirstError: JCheckBox
-  lateinit var cbDisplayNotificationPopup: JCheckBox
-  lateinit var cbEnableAutomakeCell: Cell<JCheckBox>
-  lateinit var cbEnableAutomake: JCheckBox
-  lateinit var cbParallelCompilation: JCheckBox
+  private lateinit var cbAutoShowFirstError: JCheckBox
+  private lateinit var cbDisplayNotificationPopup: JCheckBox
+  private lateinit var cbEnableAutomakeCell: Cell<JCheckBox>
+  private lateinit var cbEnableAutomake: JCheckBox
+  private lateinit var cbParallelCompilation: JCheckBox
 
   lateinit var sharedHeapSizeField: JTextField
   lateinit var sharedVMOptionsField: ExpandableTextField
   lateinit var heapSizeField: JTextField
   lateinit var vmOptionsField: ExpandableTextField
 
-  lateinit var cbRebuildOnDependencyChange: JCheckBox
+  private lateinit var cbRebuildOnDependencyChange: JCheckBox
 
-  lateinit var configureAnnotations: JButton
+  private lateinit var configureAnnotations: JButton
 
   override fun createPanel() = panel {
     row(JavaCompilerBundle.message("label.option.resource.patterns.text")) {
@@ -154,7 +149,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     heapSizeField.getDocument().addDocumentListener(updateStateListener)
   }
 
-  fun tweakControls() {
+  private fun tweakControls() {
     val managers = CompilerOptionsFilter.EP_NAME.extensionList
     var showExternalBuildSetting = true
     for (manager in managers) {
