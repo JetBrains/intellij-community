@@ -234,18 +234,26 @@ fn embed_metadata() -> Result<()> {
     let cargo_root_env_var = env::var("CARGO_MANIFEST_DIR")?;
     let cargo_root = PathBuf::from(cargo_root_env_var);
 
-    let manifest_file = cargo_root.join("./resources/windows/WinLauncher.manifest");
+    let manifest_relative_to_root = "resources/windows/WinLauncher.manifest";
+    println!("cargo:rerun-if-changed={manifest_relative_to_root}");
+
+    let manifest_file = cargo_root.join(manifest_relative_to_root);
     assert_exists_and_file(&manifest_file)?;
 
-    let rc_template_file = PathBuf::from("./resources/windows/WinLauncher.rc");
+    println!("cargo:rustc-link-arg-bins=/MANIFEST:EMBED");
+    println!("cargo:rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_to_root}");
+
+    let rc_template_relative_to_root = "resources/windows/WinLauncher.rc";
+    println!("cargo:rerun-if-changed={rc_template_relative_to_root}");
+
+    let rc_template_file = PathBuf::from(rc_template_relative_to_root);
     assert_exists_and_file(&rc_template_file)?;
 
     let rc_file = process_rc_template(&rc_template_file)?;
 
     let mut res = WindowsResource::new();
-    res.set_resource_file(rc_file.to_str().context("Failed to get &str from rc file path")?);
-    res.set_manifest_file(manifest_file.to_str().context("Failed to get &str from manifest file path")?);
-    res.compile().context("Failed to embed resource table and/or application manifest")
+    res.set_resource_file(&get_non_unc_string(&rc_file)?);
+    res.compile().context("Failed to embed resource table")
 }
 
 #[cfg(target_os = "windows")]
