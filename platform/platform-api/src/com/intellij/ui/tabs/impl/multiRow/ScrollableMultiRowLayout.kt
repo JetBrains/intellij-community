@@ -11,7 +11,7 @@ class ScrollableMultiRowLayout(tabs: JBTabsImpl,
   private var scrollOffset: Int = 0
 
   override fun layoutTable(visibleInfos: List<TabInfo>): LayoutPassInfo {
-    if (!tabs.isMouseInsideTabsArea && !tabs.isHideTabs) {
+    if (!tabs.isMouseInsideTabsArea && !tabs.isHideTabs && !tabs.isScrollBarAdjusting()) {
       scrollToSelectedTab()
     }
     return super.layoutTable(visibleInfos)

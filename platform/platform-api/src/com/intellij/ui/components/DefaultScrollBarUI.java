@@ -460,6 +460,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     public void mouseReleased(MouseEvent event) {
       if (isDragging) updateMouse(event.getX(), event.getY());
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
+      myScrollBar.setValueIsAdjusting(false);
       if (redispatchIfTrackNotClickable(event)) return;
       if (SwingUtilities.isRightMouseButton(event)) return;
       isDragging = false;
@@ -467,7 +468,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
       myScrollTimer.stop();
       isValueCached = true;
       myCachedValue = myScrollBar.getValue();
-      myScrollBar.setValueIsAdjusting(false);
       repaint();
     }
 

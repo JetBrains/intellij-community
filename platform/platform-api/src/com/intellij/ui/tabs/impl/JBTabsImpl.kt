@@ -154,6 +154,8 @@ open class JBTabsImpl(
     }
   }
 
+  private final val RELAYOUT_DELAY = 5000
+
   private val visibleInfos = ArrayList<TabInfo>()
   private val infoToPage = HashMap<TabInfo, AccessibleTabPage>()
   private val hiddenInfos = HashMap<TabInfo, Int>()
@@ -393,6 +395,8 @@ open class JBTabsImpl(
     scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
+  fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
+
   private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
     StartupUiUtil.addAwtListener(object : AWTEventListener {
       val afterScroll = Alarm(parentDisposable)
@@ -419,7 +423,7 @@ open class JBTabsImpl(
                                    if (!isMouseInsideTabsArea) {
                                      relayout(false, false)
                                    }
-                                 }, 500)
+                                 }, RELAYOUT_DELAY)
         }
       }
     }, AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable)
@@ -539,8 +543,10 @@ open class JBTabsImpl(
   fun unHover(label: TabLabel) {
     if (tabLabelAtMouse === label) {
       tabLabelAtMouse = null
-      label.revalidate()
-      label.repaint()
+      Alarm().addRequest({
+                           label.revalidate()
+                           label.repaint()
+                         }, RELAYOUT_DELAY)
     }
   }
 
