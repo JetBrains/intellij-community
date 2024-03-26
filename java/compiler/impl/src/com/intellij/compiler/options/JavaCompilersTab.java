@@ -25,11 +25,12 @@ import java.util.Objects;
  * @author Eugene Zhuravlev
  */
 public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable {
-  private final JavaCompilersTabUi myUi;
+  private JavaCompilersTabUi myUi;
 
   private final Project myProject;
   private final CompilerConfigurationImpl myCompilerConfiguration;
   private final BackendCompiler myDefaultCompiler;
+  private final Collection<BackendCompiler> myCompilers;
   private final List<Configurable> myConfigurables;
   private BackendCompiler mySelectedCompiler;
 
@@ -38,15 +39,8 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     myDefaultCompiler = myCompilerConfiguration.getDefaultCompiler();
 
-    Collection<BackendCompiler> compilers = myCompilerConfiguration.getRegisteredJavaCompilers();
-    myConfigurables = new ArrayList<>(compilers.size());
-
-    myUi = new JavaCompilersTabUi(
-      project,
-      compilers,
-      configurable -> myConfigurables.add(configurable),
-      compiler -> selectCompiler(compiler)
-    );
+    myCompilers = myCompilerConfiguration.getRegisteredJavaCompilers();
+    myConfigurables = new ArrayList<>(myCompilers.size());
   }
 
   @Override
@@ -69,6 +63,12 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
 
   @Override
   public JComponent createComponent() {
+    myUi = new JavaCompilersTabUi(
+      myProject,
+      myCompilers,
+      configurable -> myConfigurables.add(configurable),
+      compiler -> selectCompiler(compiler)
+    );
     return myUi.getPanel();
   }
 
@@ -127,5 +127,10 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
   @Override
   protected List<Configurable> createConfigurables() {
     return myConfigurables;
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myUi = null;
   }
 }

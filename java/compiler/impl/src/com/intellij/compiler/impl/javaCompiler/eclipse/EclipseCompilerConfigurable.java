@@ -18,7 +18,6 @@ public class EclipseCompilerConfigurable implements Configurable {
   public EclipseCompilerConfigurable(Project project, EclipseCompilerOptions options) {
     myProject = project;
     myCompilerSettings = options;
-    myUi = new EclipseCompilerConfigurableUi(project);
   }
 
   @Override
@@ -28,6 +27,7 @@ public class EclipseCompilerConfigurable implements Configurable {
 
   @Override
   public JComponent createComponent() {
+    myUi = new EclipseCompilerConfigurableUi(myProject);
     return myUi.getPanel();
   }
 
@@ -67,5 +67,10 @@ public class EclipseCompilerConfigurable implements Configurable {
     myUi.pathToEcjField.setText(FileUtil.toSystemDependentName(myCompilerSettings.ECJ_TOOL_PATH));
     myUi.additionalOptionsField.setText(myCompilerSettings.ADDITIONAL_OPTIONS_STRING);
     myUi.optionsOverrideComponent.setModuleOptionsMap(myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myUi = null;
   }
 }

@@ -26,13 +26,14 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavacConfigurable implements Configurable{
-  private final JavacConfigurableUi myUi;
+public class JavacConfigurable implements Configurable {
+  private final Project myProject;
+  private JavacConfigurableUi myUi;
   private final JpsJavaCompilerOptions myJavacSettings;
 
   public JavacConfigurable(Project project, final JpsJavaCompilerOptions javacSettings) {
     myJavacSettings = javacSettings;
-    myUi = new JavacConfigurableUi(project);
+    myProject = project;
   }
 
   @Override
@@ -47,6 +48,7 @@ public class JavacConfigurable implements Configurable{
 
   @Override
   public JComponent createComponent() {
+    myUi = new JavacConfigurableUi(myProject);
     return myUi.getPanel();
   }
 
@@ -82,5 +84,10 @@ public class JavacConfigurable implements Configurable{
     myUi.generateNoWarningsCb.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
     myUi.additionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
     myUi.optionsOverrideComponent.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
+  }
+
+  @Override
+  public void disposeUIResources() {
+    myUi = null;
   }
 }
