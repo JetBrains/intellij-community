@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildCla
 
 fun getExternalProjectsBuildClasspathEntity(
   projectBuildClasspath: Map<String, ExternalProjectBuildClasspathPojo>
-): ExternalProjectsBuildClasspathEntity {
+): ExternalProjectsBuildClasspathEntity.Builder {
   val classpathEntityMap = projectBuildClasspath.mapValues { getExternalProjectBuildClasspathEntity(it.value) }
   return ExternalProjectsBuildClasspathEntity.invoke(
     projectsBuildClasspath = classpathEntityMap,

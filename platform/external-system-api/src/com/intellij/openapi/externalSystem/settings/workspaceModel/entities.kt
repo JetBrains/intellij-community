@@ -14,10 +14,10 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
   val projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
 
   //region generated code
-  @GeneratedCodeApiVersion(2)
-  interface Builder : ExternalProjectsBuildClasspathEntity, WorkspaceEntity.Builder<ExternalProjectsBuildClasspathEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ExternalProjectsBuildClasspathEntity> {
     override var entitySource: EntitySource
-    override var projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
+    var projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>
   }
 
   companion object : EntityType<ExternalProjectsBuildClasspathEntity, Builder>() {
@@ -28,7 +28,7 @@ interface ExternalProjectsBuildClasspathEntity : WorkspaceEntity {
       projectsBuildClasspath: Map<String, ExternalProjectBuildClasspathEntity>,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): ExternalProjectsBuildClasspathEntity {
+    ): Builder {
       val builder = builder()
       builder.projectsBuildClasspath = projectsBuildClasspath
       builder.entitySource = entitySource

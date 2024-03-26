@@ -236,7 +236,7 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
       storage -> {
         Sequence<ExternalProjectsBuildClasspathEntity> entities = storage.entities(ExternalProjectsBuildClasspathEntity.class);
         Iterator<ExternalProjectsBuildClasspathEntity> entityIterator = entities.iterator();
-        ExternalProjectsBuildClasspathEntity newClasspathEntity = getExternalProjectsBuildClasspathEntity(projectBuildClasspath);
+        ExternalProjectsBuildClasspathEntity.Builder newClasspathEntity = getExternalProjectsBuildClasspathEntity(projectBuildClasspath);
         if (!entityIterator.hasNext()) {
           storage.addEntity(newClasspathEntity);
         }
