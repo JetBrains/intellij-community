@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -19,7 +19,7 @@ import java.util.*
 fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.modules.size + builtinModuleData.plugins.size)
   availableModulesAndPlugins.addAll(builtinModuleData.plugins)
-  availableModulesAndPlugins.addAll(builtinModuleData.modules)
+  builtinModuleData.modules.mapTo(availableModulesAndPlugins) { it.name }
 
   val descriptorMap = collectPluginDescriptors(skipImplementationDetailPlugins = true,
                                                skipBundledPlugins = true,

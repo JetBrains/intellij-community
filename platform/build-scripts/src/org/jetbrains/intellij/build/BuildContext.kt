@@ -153,8 +153,15 @@ suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
 @Serializable
 class BuiltinModulesFileData(
   @JvmField val plugins: MutableList<String> = mutableListOf(),
-  @JvmField val modules: MutableList<String> = mutableListOf(),
+  @JvmField var modules: List<ModuleDescriptor> = emptyList(),
   @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
+)
+
+@Serializable
+class ModuleDescriptor(
+  @JvmField val name: String,
+  @JvmField val isAlias: Boolean = false,
+  @JvmField val classPath: List<String> = emptyList(),
 )
 
 sealed interface DistFileContent {

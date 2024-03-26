@@ -8,6 +8,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuiltinModulesFileData
+import org.jetbrains.intellij.build.ModuleDescriptor
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -25,7 +26,16 @@ fun customizeBuiltinModulesAllowOnlySpecified(
 
   val root = readBuiltinModulesFile(builtinModulesFile)
   if (moduleNames != null) {
-    setArrayNodeElementsInBuiltinModules(builtinModulesFile, root.modules, moduleNames)
+    val existingValues = root.modules.associateByTo(HashMap(root.modules.size)) { it.name }
+    val newList = ArrayList<ModuleDescriptor>(moduleNames.size)
+    for (name in moduleNames) {
+      val item = existingValues.get(name)
+      requireNotNull(item) {
+        "Value '$name' in '$moduleNames' was not found across existing values in $builtinModulesFile:\n" + Files.readString(builtinModulesFile)
+      }
+      newList.add(item)
+    }
+    root.modules = newList
   }
 
   if (pluginNames != null) {

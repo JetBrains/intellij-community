@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
@@ -16,6 +17,8 @@ import java.io.Writer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
 import kotlin.system.exitProcess
 
 private class BundledPluginsLister : ModernApplicationStarter() {
@@ -38,12 +41,23 @@ private class BundledPluginsLister : ModernApplicationStarter() {
       }
       JsonFactory().createGenerator(out).use { writer ->
         val plugins = PluginManagerCore.getPluginSet().enabledPlugins
-        val modules = HashSet<String>()
+        val modules = HashSet<ModuleDescriptor>()
         val pluginIds = ArrayList<String>(plugins.size)
+        val homeDir = Path.of(PathManager.getHomePath())
         for (plugin in plugins) {
           pluginIds.add(plugin.pluginId.idString)
-          plugin.pluginAliases.mapTo(modules) { it.idString }
-          plugin.content.modules.mapTo(modules) { it.name }
+          plugin.pluginAliases.mapTo(modules) {
+            ModuleDescriptor(name = it.idString, isAlias = true, classPath = emptyList())
+          }
+          plugin.content.modules.mapTo(modules) {
+            ModuleDescriptor(
+              name = it.name,
+              isAlias = false,
+              classPath = it.requireDescriptor().jarFiles?.map {
+                file -> file.relativeTo(homeDir).invariantSeparatorsPathString
+              } ?: emptyList(),
+            )
+          }
         }
         pluginIds.sort()
         val fileTypeManager = FileTypeManager.getInstance()
@@ -58,7 +72,19 @@ private class BundledPluginsLister : ModernApplicationStarter() {
         extensions.sort()
 
         writer.obj {
-          writeList(writer, "modules", modules.sorted())
+          writer.array("modules") {
+            for (module in modules.sortedBy { it.name }) {
+              writer.obj {
+                writer.writeStringField("name", module.name)
+                if (module.isAlias) {
+                  writer.writeBooleanField("isAlias", module.isAlias)
+                }
+                if (module.classPath.isNotEmpty()) {
+                  writeList(writer, "classPath", module.classPath)
+                }
+              }
+            }
+          }
           writeList(writer, "plugins", pluginIds)
           writeList(writer, "fileExtensions", extensions)
         }
@@ -76,6 +102,12 @@ private class BundledPluginsLister : ModernApplicationStarter() {
     exitProcess(0)
   }
 }
+
+private class ModuleDescriptor(
+  @JvmField val name: String,
+  @JvmField val isAlias: Boolean = false,
+  @JvmField val classPath: List<String> = emptyList(),
+)
 
 private fun writeList(writer: JsonGenerator, name: String, elements: Collection<String>) {
   writer.array(name) {

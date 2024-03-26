@@ -54,8 +54,13 @@ internal fun generateProductInfoJson(
     customProperties = context.productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
-    modules = builtinModules?.modules ?: emptyList(),
-    flavors = jbrFlavors + productFlavors
+
+    modules = (builtinModules?.modules?.asSequence() ?: emptySequence()).filter { it.isAlias }.map { it.name }.toList(),
+    modulesV2 = (builtinModules?.modules?.asSequence() ?: emptySequence()).filter { !it.isAlias }.map {
+      ProductInfoModuleV2(name = it.name, classPath = it.classPath)
+    }.toList(),
+
+    flavors = jbrFlavors + productFlavors,
   )
   return jsonEncoder.encodeToString<ProductInfoData>(json)
 }
@@ -83,13 +88,21 @@ data class ProductInfoData(
   val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String>,
+  // it is not modules, but plugin aliases
   val modules: List<String>,
+  val modulesV2: List<ProductInfoModuleV2>,
   val fileExtensions: List<String>,
   val flavors: List<ProductFlavorData> = emptyList(),
 )
 
 @Serializable
-data class ProductFlavorData(val id: String)
+data class ProductInfoModuleV2(
+  @JvmField val name: String,
+  @JvmField val classPath: List<String> = emptyList(),
+)
+
+@Serializable
+data class ProductFlavorData(@JvmField val id: String)
 
 @Serializable
 data class ProductInfoLaunchData(
