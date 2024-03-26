@@ -238,6 +238,10 @@ class PsiTreeCompletion {
             return super.visitClassBody(classBody, data.registerSubScope(classBody.textRange, scopeType))
         }
 
+        override fun visitForExpression(expression: KtForExpression, data: LookupScope): Void? {
+            return super.visitForExpression(expression, data.registerSubScope(expression.textRange, ScopeType.LOCAL))
+        }
+
         override fun visitNamedFunction(function: KtNamedFunction, data: LookupScope): Void? {
             // We handle this declaration separately because it needs to open a new scope for the
             // function parameters, so they do not leak to the outside scope.
