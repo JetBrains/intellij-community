@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -102,8 +102,8 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
-      for (module in descriptor.modules) {
-        checkAndAdd(descriptor, module)
+      for (pluginAlias in descriptor.pluginAliases) {
+        checkAndAdd(descriptor, pluginAlias)
       }
       return
     }

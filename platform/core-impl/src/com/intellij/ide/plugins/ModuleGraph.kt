@@ -52,8 +52,8 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
   for (module in plugins) {
     moduleMap.put(module.pluginId.idString, module)
-    for (v1Module in module.modules) {
-      moduleMap.put(v1Module.idString, module)
+    for (pluginAlias in module.pluginAliases) {
+      moduleMap.put(pluginAlias.idString, module)
     }
 
     modules.add(module)

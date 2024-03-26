@@ -857,8 +857,9 @@ object PluginManagerCore {
   }
 
   @Internal
-  fun findPluginByModuleDependency(id: PluginId): IdeaPluginDescriptorImpl? =
-    getPluginSet().allPlugins.firstOrNull { it.modules.contains(id) }
+  fun findPluginByModuleDependency(id: PluginId): IdeaPluginDescriptorImpl? {
+    return getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
+  }
 
   @JvmStatic
   fun isPluginInstalled(id: PluginId): Boolean {
@@ -877,8 +878,8 @@ object PluginManagerCore {
         duplicateMap = newDuplicateMap
         continue
       }
-      for (module in descriptor.modules) {
-        newDuplicateMap = checkAndPut(descriptor = descriptor, id = module, idMap = idMap, prevDuplicateMap = duplicateMap)
+      for (pluginAlias in descriptor.pluginAliases) {
+        newDuplicateMap = checkAndPut(descriptor = descriptor, id = pluginAlias, idMap = idMap, prevDuplicateMap = duplicateMap)
         if (newDuplicateMap != null) {
           duplicateMap = newDuplicateMap
         }

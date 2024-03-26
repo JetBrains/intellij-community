@@ -227,10 +227,10 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     "product-descriptor" -> readProduct(reader, descriptor)
     "module" -> {
       findAttributeValue(reader, "value")?.let { moduleName ->
-        if (descriptor.modules == null) {
-          descriptor.modules = ArrayList()
+        if (descriptor.pluginAliases == null) {
+          descriptor.pluginAliases = ArrayList()
         }
-        descriptor.modules!!.add(PluginId.getId(moduleName))
+        descriptor.pluginAliases!!.add(PluginId.getId(moduleName))
       }
       reader.skipElement()
     }

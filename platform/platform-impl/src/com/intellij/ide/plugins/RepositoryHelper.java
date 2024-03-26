@@ -173,7 +173,7 @@ public final class RepositoryHelper {
 
   private static boolean isPaidPluginsRequireMarketplacePlugin() {
     var core = PluginManagerCore.findPlugin(PluginManagerCore.CORE_ID);
-    return core == null || !core.modules.contains(PluginId.getId(ULTIMATE_MODULE)) || !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    return core == null || !core.pluginAliases.contains(PluginId.getId(ULTIMATE_MODULE)) || !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
   }
 
   private static void addMarketplacePluginDependencyIfRequired(PluginNode node, boolean isPaidPluginsRequireMarketplacePlugin) {
