@@ -3303,6 +3303,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/lambdaArgument.kt");
             }
 
+            @TestMetadata("lambdaOutsideParenthesesOnCallSite.kt")
+            public void testLambdaOutsideParenthesesOnCallSite() throws Exception {
+                runTest("testData/refactoring/introduceParameter/lambdaOutsideParenthesesOnCallSite.kt");
+            }
+
             @TestMetadata("lastParameterHasBlockComment.kt")
             public void testLastParameterHasBlockComment() throws Exception {
                 runTest("testData/refactoring/introduceParameter/lastParameterHasBlockComment.kt");
