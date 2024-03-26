@@ -12,7 +12,7 @@ lto = true
 codegen-units = 1
 
 [dependencies]
-chrono = { version = "0.4", default-features = false, features = ["std"] }
+chrono = { version = "0.4.35", default-features = false, features = ["std"] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
-libc = "0.2"
+libc = "0.2.153"
