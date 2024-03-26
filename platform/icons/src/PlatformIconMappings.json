@@ -535,9 +535,18 @@
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
       "accessLocal.svg": "nodes/c_plocal.svg",
-      "accessPrivate.svg": "nodes/c_private.svg",
-      "accessProtected.svg": "nodes/c_protected.svg",
-      "accessPublic.svg": "nodes/c_public.svg",
+      "accessPrivate.svg": [
+        "nodes/c_private.svg",
+        "nodes/private.svg"
+      ],
+      "accessProtected.svg": [
+        "nodes/c_protected.svg",
+        "nodes/protected.svg"
+      ],
+      "accessPublic.svg": [
+        "nodes/public.svg",
+        "nodes/c_public.svg"
+      ],
       "alias.svg": "nodes/alias.svg",
       "annotation.svg": "nodes/annotationtype.svg",
       "annotationFolder.svg": "modules/annotation.svg",
