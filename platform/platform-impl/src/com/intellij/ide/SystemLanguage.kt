@@ -2,11 +2,10 @@
 package com.intellij.ide
 
 import com.intellij.DynamicBundle
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.icons.AllIcons
-import com.intellij.ide.gdpr.EndUserAgreement
+import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
-import com.intellij.ide.ui.laf.setEarlyUiLaF
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -15,16 +14,11 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.ide.bootstrap.prepareShowEuaIfNeeded
-import com.intellij.ui.IconManager
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.messages.AlertDialog
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -40,7 +34,7 @@ import javax.swing.*
  * @author Alexander Lobas
  */
 class SystemLanguage private constructor() {
-  private lateinit var myLocale: Locale
+  private var myLocale: Locale = Locale.getDefault()
   private var myNeedInstallPlugin = false
   private var myPluginId: String? = null
   private var myPluginUrl: String? = null
@@ -66,20 +60,33 @@ class SystemLanguage private constructor() {
     }
   }
 
-  fun loadState() {
+  init {
+    loadState()
+  }
+
+  private fun loadState() {
+    myNeedInstallPlugin = false
+    myPluginSize = null
+    myPluginUrl = null
+    myPluginId = null
+
     val property = System.getProperty(TOOLBOX_KEY)
     if (property != null) {
       myLocale = Locale(property)
-      myNeedInstallPlugin = false
+      return
     }
-    else if (ConfigImportHelper.isNewUser()) {
-      myLocale = Locale.getDefault()
-      myPluginSize = null
-      myPluginUrl = null
-      myPluginId = null
 
+    val locale = loadSavedLanguage()
+    if (locale != null) {
+      myLocale = locale
+      return
+    }
+
+    myLocale = Locale.getDefault()
+
+    if (ConfigImportHelper.isNewUser() || ConfigImportHelper.isConfigImported()) {
       if (Locale.ENGLISH.language != myLocale.language) {
-        val path = Path.of(PathManager.getBinPath(), LANGUAGE_PLUGINS_FILE)
+        val path = Path.of(PathManager.getPreInstalledPluginsPath(), LANGUAGE_PLUGINS_FILE)
         if (Files.exists(path)) {
           try {
             val root = JDOMUtil.load(path)
@@ -97,52 +104,32 @@ class SystemLanguage private constructor() {
             LOG.warn(e)
           }
         }
-      }
-      myNeedInstallPlugin = myPluginId != null && myPluginUrl != null
-    }
-    else {
-      myLocale = Locale.getDefault()
-      myNeedInstallPlugin = false
+        myNeedInstallPlugin = myPluginId != null && myPluginUrl != null
 
-      val path = getSavedLanguageFile()
-      if (Files.exists(path)) {
-        try {
-          myLocale = Locale(Files.readString(path))
-        }
-        catch (e: IOException) {
-          LOG.warn(e)
-        }
-      }
-    }
-    applyState()
-  }
-
-  private fun applyState() {
-    if (myNeedInstallPlugin) {
-      val runnable = Runnable {
-        @Suppress("TestOnlyProblems")
-        setEarlyUiLaF()
-        IconManager.activate(CoreIconManager())
-        @Suppress("TestOnlyProblems")
-        IconLoader.activate()
-        val document = EndUserAgreement.getLatestDocument()
-        prepareShowEuaIfNeeded(if (document.isAccepted) null else document)
-      }
-      if (SwingUtilities.isEventDispatchThread()) {
-        runnable.run()
-      }
-      else {
-        try {
-          SwingUtilities.invokeAndWait(runnable)
-        }
-        catch (e: Exception) {
-          LOG.warn(e)
+        if (myNeedInstallPlugin && ConfigImportHelper.isConfigImported()) {
+          myNeedInstallPlugin = PluginManagerCore.findPlugin(PluginId.getId(myPluginId!!)) == null
+          if (!myNeedInstallPlugin) {
+            saveLanguage(myLocale.language)
+          }
         }
       }
     }
   }
 
   private fun getSavedLanguageFile(): Path = Path.of(PathManager.getConfigPath(), SAVED_LANGUAGE_FILE)
+
+  private fun loadSavedLanguage(): Locale? {
+    val path = getSavedLanguageFile()
+    if (Files.exists(path)) {
+      try {
+        return Locale(Files.readString(path))
+      }
+      catch (e: IOException) {
+        LOG.warn(e)
+      }
+    }
+    return null
+  }
 
   private fun saveLanguage(language: String?) {
     val path = getSavedLanguageFile()
@@ -159,10 +146,12 @@ class SystemLanguage private constructor() {
     }
   }
 
-  val locale: Locale get() = Locale.getDefault()
+  fun getLocale() = myLocale
 
-  fun doChooseLanguage() {
-    if (!myNeedInstallPlugin || myPluginId == null || myPluginUrl == null) {
+  fun needInstallPlugin() = myNeedInstallPlugin
+
+  fun doChooseLanguage(args: List<String>) {
+    if (!myNeedInstallPlugin) {
       return
     }
 
@@ -175,61 +164,56 @@ class SystemLanguage private constructor() {
     dialog.show()
 
     if (dialog.exitCode == Messages.YES) {
-      val node = PluginNode(PluginId.getId(myPluginId!!))
-      node.downloadUrl = myPluginUrl
-
       val progress = ProgressDialog(bundle)
-      SwingUtilities.invokeLater {
-        Thread({
-                 val ref = Ref<PluginDownloader>()
-                 try {
-                   val downloader = PluginDownloader.createDownloader(node, "", null)
-                   if (downloader.prepareToInstall(progress.indicator)) {
-                     ref.set(downloader)
-                   }
-                   else {
-                     LOG.warn("=== Early plugin install: not prepared $myPluginId ===")
-                   }
-                 }
-                 catch (e: IOException) {
-                   LOG.warn(e)
-                 }
-                 SwingUtilities.invokeLater {
-                   val downloader = ref.get()
-                   var result = false
-
-                   if (downloader != null) {
-                     try {
-                       downloader.install()
-                       result = true
-                       LOG.warn("=== Early plugin installed: $myPluginId ===")
-                     }
-                     catch (e: IOException) {
-                       LOG.warn(e)
-                     }
-                   }
-                   if (!result) {
-                     myLocale = Locale.ENGLISH
-                   }
-                   saveLanguage(if (result) myLocale.language else null)
-                   progress.isVisible = false
-                   clearMeasuring()
-                   IdeBundle.clearCache()
-                 }
-               }, "Plugin downloader").start()
-      }
+      SwingUtilities.invokeLater { Thread({ doInstallPlugin(progress, args) }, "Plugin downloader").start() }
       progress.isVisible = true
     }
     else {
       myLocale = Locale.ENGLISH
       saveLanguage(null)
-      clearMeasuring()
+      clearCaches()
     }
   }
 
-  private fun clearMeasuring() {
-    StartUpMeasurer.processAndClear(true) {}
+  private fun doInstallPlugin(progress: ProgressDialog, args: List<String>) {
+    var result = false
+
+    try {
+      val node = PluginNode(PluginId.getId(myPluginId!!))
+      node.downloadUrl = myPluginUrl
+      val downloader = PluginDownloader.createDownloader(node, "", null)
+      if (downloader.prepareToInstall(progress.indicator)) {
+        PluginInstaller.unpackPlugin(downloader.filePath, PathManager.getPluginsDir())
+        result = true
+        LOG.warn("=== Early plugin installed: $myPluginId ===")
+      }
+      else {
+        LOG.warn("=== Early plugin install: not prepared $myPluginId ===")
+      }
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+    }
+
+    if (!result) {
+      myLocale = Locale.ENGLISH
+    }
+    saveLanguage(if (result) myLocale.language else null)
+
+    SwingUtilities.invokeLater {
+      progress.isVisible = false
+      if (result) {
+        ConfigImportHelper.restartWithContinue(PathManager.getConfigDir(), args, null)
+      }
+      else {
+        clearCaches()
+      }
+    }
+  }
+
+  private fun clearCaches() {
     JBUIScale.drop()
+    IdeBundle.clearCache()
   }
 
   private class ProgressDialog(bundle: ResourceBundle) : JDialog(null as Frame?, null, true) {

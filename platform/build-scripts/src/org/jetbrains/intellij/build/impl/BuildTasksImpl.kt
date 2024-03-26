@@ -1469,7 +1469,7 @@ internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
   Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
 }
 
-internal fun generateLanguagePluginsXml(context: BuildContext, targetDirectory: Path) {
+internal fun generateLanguagePluginsXml(context: BuildContext, targetPath: Path) {
   val root = Element("plugins")
   root.addContent(createPluginNode(context, "com.intellij.ja", "ja", "7 MB"))
   root.addContent(createPluginNode(context, "com.intellij.ko", "ko", "7 MB"))
@@ -1477,7 +1477,7 @@ internal fun generateLanguagePluginsXml(context: BuildContext, targetDirectory: 
 
   val document = Document()
   document.rootElement = root
-  JDOMUtil.writeDocument(document, targetDirectory.resolve("language-plugins.xml"))
+  JDOMUtil.writeDocument(document, targetPath.resolve("plugins/language-plugins.xml"))
 }
 
 private fun createPluginNode(context: BuildContext, id: String, language: String, size: String): Element {

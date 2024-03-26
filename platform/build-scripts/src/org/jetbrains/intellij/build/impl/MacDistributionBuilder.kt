@@ -103,6 +103,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                  arch = arch)
 
     generateBuildTxt(context, macDistDir.resolve("Resources"))
+    generateLanguagePluginsXml(context, macDistDir)
 
     // if copyDistFiles false, it means that we will copy dist files directly without a stage dir
     if (copyDistFiles) {

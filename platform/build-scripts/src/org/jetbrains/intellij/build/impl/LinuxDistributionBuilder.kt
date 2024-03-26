@@ -52,6 +52,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
+        generateLanguagePluginsXml(context, targetPath)
         copyDistFiles(context = context, newDir = targetPath, os = OsFamily.LINUX, arch = arch)
 
         //todo converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;

@@ -20,7 +20,10 @@ import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 
 internal class WindowsDistributionBuilder(
   override val context: BuildContext,
@@ -48,6 +51,7 @@ internal class WindowsDistributionBuilder(
         .copyToDir(distBinDir)
 
       generateBuildTxt(context, targetPath)
+      generateLanguagePluginsXml(context, distBinDir)
       copyDistFiles(context = context, newDir = targetPath, os = OsFamily.WINDOWS, arch = arch)
 
       Files.writeString(distBinDir.resolve(PROPERTIES_FILE_NAME), StringUtilRt.convertLineSeparators(ideaProperties!!, "\r\n"))

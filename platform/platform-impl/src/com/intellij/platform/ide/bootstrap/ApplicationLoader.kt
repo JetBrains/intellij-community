@@ -111,7 +111,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
     else {
       async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope)
+        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), appInfoDeferred = appInfoDeferred, asyncScope = asyncScope, args)
       }
     }
 

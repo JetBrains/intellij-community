@@ -22,7 +22,7 @@ import kotlin.system.exitProcess
 
 fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
   val isPrivacyPolicy = agreement.isPrivacyPolicy
-  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().locale)
+  val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().getLocale())
   showAgreementUi {
     htmlText = agreement.text
     title = if (isPrivacyPolicy) {
@@ -86,7 +86,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
 
 internal fun showDataSharingAgreement() {
   showAgreementUi {
-    configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().locale))
+    configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", SystemLanguage.getInstance().getLocale()))
   }
 }
 

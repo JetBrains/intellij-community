@@ -35,25 +35,10 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
   }
 }
 
-fun prepareShowEuaIfNeeded(document: EndUserAgreement.Document?) {
-  EndUserAgreement.updateCachedContentToLatestBundledVersion()
-
-  if (document != null) {
-    showEndUserAndDataSharingAgreements(document)
-    SystemLanguage.getInstance().doChooseLanguage()
-    return
-  }
-  if (ConsentOptions.needToShowUsageStatsConsent()) {
-    showDataSharingAgreement()
-    SystemLanguage.getInstance().doChooseLanguage()
-    return
-  }
-  SystemLanguage.getInstance().doChooseLanguage()
-}
-
 internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Document?,
                                                 appInfoDeferred: Deferred<ApplicationInfoEx>,
-                                                asyncScope: CoroutineScope): (suspend () -> Boolean)? {
+                                                asyncScope: CoroutineScope,
+                                                args: List<String>): (suspend () -> Boolean)? {
   val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
     EndUserAgreement.updateCachedContentToLatestBundledVersion()
   }
@@ -63,6 +48,7 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       updateCached.join()
       withContext(RawSwingDispatcher) {
         task()
+        SystemLanguage.getInstance().doChooseLanguage(args)
       }
     }
   }
@@ -86,7 +72,12 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       false
     }
   }
-  else {
-    return null
+  if (SystemLanguage.getInstance().needInstallPlugin()) {
+    return {
+      prepareAndExecuteInEdt {
+      }
+      false
+    }
   }
+  return null
 }

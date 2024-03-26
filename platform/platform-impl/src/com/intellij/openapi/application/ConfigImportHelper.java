@@ -275,17 +275,20 @@ public final class ConfigImportHelper {
     // TODO If so, we need to patch restarter.
     if (vmOptionFileChanged && !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
       log.info("The vmoptions file has changed, restarting...");
+      restartWithContinue(newConfigDir, args, settings);
+    }
+  }
 
-      List<String> properties = new ArrayList<>();
-      properties.add(FIRST_SESSION_KEY);
-      if (isConfigImported()) {
-        properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
-      }
+  public static void restartWithContinue(@NotNull Path newConfigDir, @NotNull List<String> args, @Nullable ConfigImportSettings settings) {
+    List<String> properties = new ArrayList<>();
+    properties.add(FIRST_SESSION_KEY);
+    if (isConfigImported()) {
+      properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+    }
 
-      if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
-        new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
-        restart(args);
-      }
+    if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
+      new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+      restart(args);
     }
   }
 
