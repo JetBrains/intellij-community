@@ -99,7 +99,6 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -386,7 +385,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryEntity> {
     val modifiable = LibraryEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

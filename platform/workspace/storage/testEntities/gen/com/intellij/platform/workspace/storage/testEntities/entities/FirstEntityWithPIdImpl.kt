@@ -63,7 +63,6 @@ open class FirstEntityWithPIdImpl(private val dataSource: FirstEntityWithPIdData
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -127,7 +126,6 @@ class FirstEntityWithPIdData : WorkspaceEntityData.WithCalculableSymbolicId<Firs
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FirstEntityWithPId> {
     val modifiable = FirstEntityWithPIdImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

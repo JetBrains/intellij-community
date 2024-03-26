@@ -75,7 +75,6 @@ open class SampleEntity2Impl(private val dataSource: SampleEntity2Data) : Sample
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -160,7 +159,6 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleEntity2> {
     val modifiable = SampleEntity2Impl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

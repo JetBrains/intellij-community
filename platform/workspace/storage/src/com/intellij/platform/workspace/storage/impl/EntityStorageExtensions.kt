@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.instrumentation
@@ -12,7 +13,7 @@ import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
-                                                         parent: WorkspaceEntity,
+                                                         parent: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                          children: List<WorkspaceEntity.Builder<out WorkspaceEntity>>) {
   this.mutable.instrumentation.replaceChildren(connectionId, parent, children)
 }
@@ -24,7 +25,7 @@ public fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: Connectio
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
-                                                                 parentEntity: WorkspaceEntity,
+                                                                 parentEntity: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                                  childrenEntity: Sequence<WorkspaceEntity.Builder<out WorkspaceEntity>>) {
   this.mutable.instrumentation.replaceChildren(connectionId, parentEntity, childrenEntity.toList())
 }
@@ -32,14 +33,14 @@ public fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: C
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
-                                                             parentEntity: WorkspaceEntity,
+                                                             parentEntity: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                              childEntity: WorkspaceEntity.Builder<out WorkspaceEntity>?) {
   this.mutable.instrumentation.replaceChildren(connectionId, parentEntity, listOfNotNull(childEntity))
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
-public fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parentEntity: WorkspaceEntity,
+public fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parentEntity: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                      childEntity: WorkspaceEntity.Builder<out WorkspaceEntity>?) {
   this.mutable.instrumentation.replaceChildren(connectionId, parentEntity, listOfNotNull(childEntity))
 }
@@ -47,7 +48,7 @@ public fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId,
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToManyParentOfChild(connectionId: ConnectionId,
-                                                      childEntity: WorkspaceEntity,
+                                                      childEntity: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                       parentEntity: WorkspaceEntity.Builder<out WorkspaceEntity>?) {
   this.mutable.instrumentation.addChild(connectionId, parentEntity, childEntity)
 }
@@ -55,7 +56,7 @@ public fun EntityStorage.updateOneToManyParentOfChild(connectionId: ConnectionId
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToAbstractManyParentOfChild(connectionId: ConnectionId,
-                                                              child: WorkspaceEntity,
+                                                              child: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                               parent: WorkspaceEntity.Builder<out WorkspaceEntity>?) {
   this.mutable.instrumentation.addChild(connectionId, parent, child)
 }
@@ -63,7 +64,7 @@ public fun EntityStorage.updateOneToAbstractManyParentOfChild(connectionId: Conn
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToOneParentOfChild(connectionId: ConnectionId,
-                                                     childEntity: WorkspaceEntity,
+                                                     childEntity: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                      parentEntity: WorkspaceEntity.Builder<out WorkspaceEntity>?) {
   this.mutable.instrumentation.addChild(connectionId, parentEntity, childEntity)
 }
@@ -71,7 +72,7 @@ public fun EntityStorage.updateOneToOneParentOfChild(connectionId: ConnectionId,
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun EntityStorage.updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
-                                                             childEntity: WorkspaceEntity,
+                                                             childEntity: WorkspaceEntity.Builder<out WorkspaceEntity>,
                                                              parentEntity: WorkspaceEntity.Builder<out WorkspaceEntity>?) {
   this.mutable.instrumentation.addChild(connectionId, parentEntity, childEntity)
 }
@@ -88,6 +89,12 @@ public fun <Child : WorkspaceEntity> EntityStorage.extractOneToManyChildren(conn
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
+public fun <Child : WorkspaceEntity> MutableEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
+                                                                                   parent: WorkspaceEntity.Builder<out WorkspaceEntity>): Sequence<WorkspaceEntity.Builder<out WorkspaceEntity>> {
+  return this.instrumentation.getManyChildrenBuilders(connectionId, parent)
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
 public fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
                                                                                     parent: WorkspaceEntity): Sequence<Child> {
@@ -101,6 +108,15 @@ public fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractManyPare
   child: WorkspaceEntity
 ): Parent? {
   return this.instrumentation.getParent(connectionId, child) as? Parent
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
+public fun <Parent : WorkspaceEntity> MutableEntityStorage.extractOneToAbstractManyParent(
+  connectionId: ConnectionId,
+  child: WorkspaceEntity.Builder<out WorkspaceEntity>,
+): WorkspaceEntity.Builder<out WorkspaceEntity>? {
+  return this.instrumentation.getParentBuilder(connectionId, child)
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
@@ -149,6 +165,13 @@ public fun <Parent : WorkspaceEntity> EntityStorage.extractOneToOneParent(connec
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
+public fun <Parent : WorkspaceEntity> MutableEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
+                                                                          child: WorkspaceEntity.Builder<out WorkspaceEntity>): WorkspaceEntity.Builder<out WorkspaceEntity>? {
+  return this.instrumentation.getParentBuilder(connectionId, child)
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 public fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractOneParent(
   connectionId: ConnectionId,
   child: WorkspaceEntity,
@@ -158,7 +181,23 @@ public fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractOneParen
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Use the method from the instrumentation API")
+public fun <Parent : WorkspaceEntity> MutableEntityStorage.extractOneToAbstractOneParent(
+  connectionId: ConnectionId,
+  child: WorkspaceEntity.Builder<out WorkspaceEntity>,
+): WorkspaceEntity.Builder<out WorkspaceEntity>? {
+  return this.instrumentation.getParentBuilder(connectionId, child)
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 public fun <Parent : WorkspaceEntity> EntityStorage.extractOneToManyParent(connectionId: ConnectionId,
                                                                            child: WorkspaceEntity): Parent? {
   return this.instrumentation.getParent(connectionId, child) as? Parent
+}
+
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
+public fun <Parent : WorkspaceEntity> MutableEntityStorage.extractOneToManyParent(connectionId: ConnectionId,
+                                                                                  child: WorkspaceEntity.Builder<out WorkspaceEntity>): WorkspaceEntity.Builder<out WorkspaceEntity>? {
+  return this.instrumentation.getParentBuilder(connectionId, child)
 }

@@ -549,7 +549,7 @@ internal class MutableEntityStorageImpl(
 
   override fun replaceChildren(
     connectionId: ConnectionId,
-    parent: WorkspaceEntity,
+    parent: WorkspaceEntity.Builder<out WorkspaceEntity>,
     newChildren: List<WorkspaceEntity.Builder<out WorkspaceEntity>>
   ) {
     when (connectionId.connectionType) {
@@ -613,7 +613,7 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity) {
+  override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity.Builder<out WorkspaceEntity>) {
     when (connectionId.connectionType) {
       ConnectionId.ConnectionType.ONE_TO_ONE -> {
         val parentId = parent?.asBase()?.id?.asParent()

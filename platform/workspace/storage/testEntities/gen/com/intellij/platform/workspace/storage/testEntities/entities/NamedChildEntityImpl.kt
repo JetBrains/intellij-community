@@ -72,7 +72,6 @@ open class NamedChildEntityImpl(private val dataSource: NamedChildEntityData) : 
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -186,7 +185,6 @@ class NamedChildEntityData : WorkspaceEntityData<NamedChildEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NamedChildEntity> {
     val modifiable = NamedChildEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

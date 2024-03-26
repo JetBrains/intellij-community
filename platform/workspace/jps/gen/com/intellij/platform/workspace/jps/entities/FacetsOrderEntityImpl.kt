@@ -76,7 +76,6 @@ open class FacetsOrderEntityImpl(private val dataSource: FacetsOrderEntityData) 
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -207,7 +206,6 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<FacetsOrderEntity> {
     val modifiable = FacetsOrderEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

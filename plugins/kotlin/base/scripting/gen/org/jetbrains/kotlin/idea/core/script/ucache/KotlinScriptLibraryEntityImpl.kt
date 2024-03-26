@@ -92,7 +92,6 @@ open class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScriptLib
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -291,7 +290,6 @@ class KotlinScriptLibraryEntityData : WorkspaceEntityData.WithCalculableSymbolic
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
     val modifiable = KotlinScriptLibraryEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

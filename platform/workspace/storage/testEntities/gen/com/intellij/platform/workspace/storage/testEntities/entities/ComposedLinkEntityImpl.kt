@@ -66,7 +66,6 @@ open class ComposedLinkEntityImpl(private val dataSource: ComposedLinkEntityData
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -168,7 +167,6 @@ class ComposedLinkEntityData : WorkspaceEntityData<ComposedLinkEntity>(), SoftLi
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ComposedLinkEntity> {
     val modifiable = ComposedLinkEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

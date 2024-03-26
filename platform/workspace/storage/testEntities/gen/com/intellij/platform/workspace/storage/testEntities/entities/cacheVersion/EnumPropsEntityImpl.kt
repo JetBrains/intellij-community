@@ -62,7 +62,6 @@ open class EnumPropsEntityImpl(private val dataSource: EnumPropsEntityData) : En
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -127,7 +126,6 @@ class EnumPropsEntityData : WorkspaceEntityData<EnumPropsEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EnumPropsEntity> {
     val modifiable = EnumPropsEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

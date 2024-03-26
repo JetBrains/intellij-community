@@ -84,7 +84,6 @@ open class ArtifactOutputPackagingElementEntityImpl(private val dataSource: Arti
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -240,7 +239,6 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ArtifactOutputPackagingElementEntity> {
     val modifiable = ArtifactOutputPackagingElementEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

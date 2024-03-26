@@ -106,7 +106,6 @@ open class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymb
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -315,7 +314,6 @@ class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymboli
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SampleWithSymbolicIdEntity> {
     val modifiable = SampleWithSymbolicIdEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

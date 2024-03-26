@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.indices
 
 import com.intellij.openapi.diagnostic.logger
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.EntityId
-import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.asBase
 import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap
@@ -147,8 +147,8 @@ public open class VirtualFileIndex internal constructor(
     private var freezed = true
 
     @Synchronized
-    override fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
-      index((entity as WorkspaceEntityBase).id, propertyName, virtualFileUrl)
+    override fun index(entity: WorkspaceEntity.Builder<out WorkspaceEntity>, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
+      index(entity.asBase().id, propertyName, virtualFileUrl)
     }
 
     @Synchronized

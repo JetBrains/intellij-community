@@ -104,7 +104,7 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * @param parent The parent WorkspaceEntity whose children will be replaced.
    * @param newChildren The new list of WorkspaceEntities to replace the children with.
    */
-  public fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity, newChildren: List<WorkspaceEntity.Builder<out WorkspaceEntity>>)
+  public fun replaceChildren(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>, newChildren: List<WorkspaceEntity.Builder<out WorkspaceEntity>>)
 
   /**
    * Adds a child to the list of children of parent.
@@ -122,7 +122,7 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * @param parent The parent WorkspaceEntity.
    * @param child The WorkspaceEntity to be added as a child.
    */
-  public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity)
+  public fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity.Builder<out WorkspaceEntity>)
 
   public fun getOneChildBuilder(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): WorkspaceEntity.Builder<*>?
   public fun getManyChildrenBuilders(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<*>): Sequence<WorkspaceEntity.Builder<*>>

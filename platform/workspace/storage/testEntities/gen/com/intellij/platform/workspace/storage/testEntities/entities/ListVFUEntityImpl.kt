@@ -71,7 +71,6 @@ open class ListVFUEntityImpl(private val dataSource: ListVFUEntityData) : ListVF
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -172,7 +171,6 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ListVFUEntity> {
     val modifiable = ListVFUEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

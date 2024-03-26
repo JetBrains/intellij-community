@@ -71,7 +71,6 @@ open class OoChildEntityImpl(private val dataSource: OoChildEntityData) : OoChil
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -181,7 +180,6 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OoChildEntity> {
     val modifiable = OoChildEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

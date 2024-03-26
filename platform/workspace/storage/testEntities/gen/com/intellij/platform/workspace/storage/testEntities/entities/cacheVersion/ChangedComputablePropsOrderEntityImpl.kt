@@ -77,7 +77,6 @@ open class ChangedComputablePropsOrderEntityImpl(private val dataSource: Changed
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -184,7 +183,6 @@ class ChangedComputablePropsOrderEntityData : WorkspaceEntityData.WithCalculable
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChangedComputablePropsOrderEntity> {
     val modifiable = ChangedComputablePropsOrderEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

@@ -73,7 +73,6 @@ open class NullToNotNullEntityImpl(private val dataSource: NullToNotNullEntityDa
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -158,7 +157,6 @@ class NullToNotNullEntityData : WorkspaceEntityData<NullToNotNullEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<NullToNotNullEntity> {
     val modifiable = NullToNotNullEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

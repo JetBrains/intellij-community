@@ -98,7 +98,6 @@ open class ProjectModelTestEntityImpl(private val dataSource: ProjectModelTestEn
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -313,7 +312,6 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ProjectModelTestEntity> {
     val modifiable = ProjectModelTestEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

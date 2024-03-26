@@ -83,7 +83,6 @@ open class LeftEntityImpl(private val dataSource: LeftEntityData) : LeftEntity, 
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -264,7 +263,6 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LeftEntity> {
     val modifiable = LeftEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

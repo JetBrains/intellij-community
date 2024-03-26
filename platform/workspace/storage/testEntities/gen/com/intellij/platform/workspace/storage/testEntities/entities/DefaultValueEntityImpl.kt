@@ -67,7 +67,6 @@ open class DefaultValueEntityImpl(private val dataSource: DefaultValueEntityData
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -151,7 +150,6 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<DefaultValueEntity> {
     val modifiable = DefaultValueEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

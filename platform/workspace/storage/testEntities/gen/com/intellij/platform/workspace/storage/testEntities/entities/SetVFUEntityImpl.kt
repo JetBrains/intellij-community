@@ -70,7 +70,6 @@ open class SetVFUEntityImpl(private val dataSource: SetVFUEntityData) : SetVFUEn
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -171,7 +170,6 @@ class SetVFUEntityData : WorkspaceEntityData<SetVFUEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SetVFUEntity> {
     val modifiable = SetVFUEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

@@ -64,7 +64,6 @@ open class AttachedEntityParentListImpl(private val dataSource: AttachedEntityPa
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -128,7 +127,6 @@ class AttachedEntityParentListData : WorkspaceEntityData<AttachedEntityParentLis
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<AttachedEntityParentList> {
     val modifiable = AttachedEntityParentListImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

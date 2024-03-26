@@ -210,7 +210,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -817,7 +816,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinSettingsEntity> {
     val modifiable = KotlinSettingsEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

@@ -114,7 +114,6 @@ open class EclipseProjectPropertiesEntityImpl(private val dataSource: EclipsePro
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -361,7 +360,6 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<EclipseProjectPropertiesEntity> {
     val modifiable = EclipseProjectPropertiesEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

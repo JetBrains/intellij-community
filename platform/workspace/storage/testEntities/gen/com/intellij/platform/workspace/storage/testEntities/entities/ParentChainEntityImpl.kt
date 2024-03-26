@@ -67,7 +67,6 @@ open class ParentChainEntityImpl(private val dataSource: ParentChainEntityData) 
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -154,7 +153,6 @@ class ParentChainEntityData : WorkspaceEntityData<ParentChainEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentChainEntity> {
     val modifiable = ParentChainEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

@@ -74,7 +74,6 @@ open class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneTo
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -175,7 +174,6 @@ class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOneToOneChil
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<OptionalOneToOneChildEntity> {
     val modifiable = OptionalOneToOneChildEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

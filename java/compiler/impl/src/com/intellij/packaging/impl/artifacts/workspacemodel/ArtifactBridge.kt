@@ -24,7 +24,9 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.util.EventDispatcher
 import com.intellij.workspaceModel.ide.toExternalSource
 import io.opentelemetry.api.metrics.Meter
@@ -204,7 +206,7 @@ open class ArtifactBridge(
       }
     }
     val oldRootElement = entity.rootElement!!
-    if (oldRootElement != rootEntity) {
+    if ((oldRootElement as WorkspaceEntityBase).id != (rootEntity as ModifiableWorkspaceEntityBase<*, *>).id) {
       // As we replace old root element with the new one, we should kick builder from old root element
       if (originalArtifact != null) {
         diff.elements.getDataByEntity(oldRootElement)?.let { oldRootBridge ->

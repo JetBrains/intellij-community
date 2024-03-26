@@ -80,7 +80,6 @@ open class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : 
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -260,7 +259,6 @@ class ModuleTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Module
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ModuleTestEntity> {
     val modifiable = ModuleTestEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }

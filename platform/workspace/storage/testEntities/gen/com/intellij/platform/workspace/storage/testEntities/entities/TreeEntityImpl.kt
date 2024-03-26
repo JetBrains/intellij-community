@@ -79,7 +79,6 @@ open class TreeEntityImpl(private val dataSource: TreeEntityData) : TreeEntity, 
       }
 
       this.diff = builder
-      this.snapshot = builder
       addToBuilder()
       this.id = getEntityData().createEntityId()
       // After adding entity data to the builder, we need to unbind it and move the control over entity data to builder
@@ -241,7 +240,6 @@ class TreeEntityData : WorkspaceEntityData<TreeEntity>() {
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<TreeEntity> {
     val modifiable = TreeEntityImpl.Builder(null)
     modifiable.diff = diff
-    modifiable.snapshot = diff
     modifiable.id = createEntityId()
     return modifiable
   }
