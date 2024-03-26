@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.elementType
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
@@ -50,7 +51,12 @@ class KotlinLineBreakpointType :
         position: XSourcePosition,
         element: PsiElement?,
         lambdaOrdinal: Int
-    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal)
+    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal) {
+        override fun isLowPriority(firstLineElement: PsiElement?): Boolean {
+            // Dot at the beginning is the sign of a multi-line statement, lower the line breakpoint priority.
+            return firstLineElement.elementType == KtTokens.DOT
+        }
+    }
 
     inner class KotlinBreakpointVariant(
         position: XSourcePosition,

@@ -432,6 +432,30 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     public Icon getIcon() {
       return AllIcons.Debugger.Db_set_breakpoint;
     }
+
+    @Override
+    public int getPriority(@NotNull Project project) {
+      var basePriority = super.getPriority(project);
+
+      PsiFile file = DebuggerUtilsEx.getPsiFile(mySourcePosition, project);
+      if (file == null) return basePriority;
+
+      SourcePosition pos = SourcePosition.createFromLine(file, mySourcePosition.getLine());
+      var firstLineElement = pos.getElementAt();
+      if (firstLineElement == null) return basePriority;
+
+      if (isLowPriority(firstLineElement)) {
+        // Thus, we are raising the priority of other variants (i.e., lambda argument).
+        return basePriority - 50;
+      }
+
+      return basePriority;
+    }
+
+    protected boolean isLowPriority(PsiElement firstLineElement) {
+      // Dot at the beginning is the sign of a multi-line statement, lower the line breakpoint priority.
+      return firstLineElement instanceof PsiJavaToken dot && dot.getTokenType() == JavaTokenType.DOT;
+    }
   }
 
   public class LambdaJavaBreakpointVariant extends ExactJavaBreakpointVariant {
