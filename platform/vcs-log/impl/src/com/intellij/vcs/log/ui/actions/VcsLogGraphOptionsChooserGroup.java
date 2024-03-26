@@ -3,7 +3,9 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.ui.IconManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
@@ -17,6 +19,7 @@ import com.intellij.vcs.log.util.GraphOptionsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +55,19 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
   @Override
   public void update(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    e.getPresentation().setEnabled(properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS));
+    boolean isEnabled = properties != null && properties.exists(MainVcsLogUiProperties.GRAPH_OPTIONS);
+    e.getPresentation().setEnabled(isEnabled);
+
+    if (isEnabled) {
+      Icon icon = getTemplatePresentation().getIcon();
+      if (icon != null) {
+        if (!PermanentGraph.Options.Default.equals(properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS))) {
+          e.getPresentation().setIcon(IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS));
+        } else {
+          e.getPresentation().setIcon(icon);
+        }
+      }
+    }
   }
 
   @Override
