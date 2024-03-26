@@ -459,7 +459,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     };
   }
 
-  public static void setupCancelOnWriteProgress(@NotNull Disposable disposable, @NotNull ProgressIndicator progressIndicator) {
+  private static void setupCancelOnWriteProgress(@NotNull Disposable disposable, @NotNull ProgressIndicator progressIndicator) {
     // avoid "attach listener"/"write action" race
     ReadAction.run(() -> {
       progressIndicator.start();
@@ -471,11 +471,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     });
   }
 
-  protected EnabledInspectionsProvider createEnabledInspectionsProvider(
-    @NotNull List<Tools> localTools,
-    @NotNull List<Tools> globalSimpleTools,
-    @NotNull Project project
-  ) {
+  protected EnabledInspectionsProvider createEnabledInspectionsProvider(@NotNull List<? extends Tools> localTools,
+                                                                        @NotNull List<? extends Tools> globalSimpleTools,
+                                                                        @NotNull Project project) {
     return new EnabledInspectionsProvider() {
       @NotNull
       @Override
