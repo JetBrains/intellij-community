@@ -359,7 +359,7 @@ abstract class ToolWindowHeader internal constructor(
         if (toolWindow.toolWindowManager.isNewUi) JBUI.CurrentTheme.ToolWindow.headerHeight() else SingleHeightTabs.UNSCALED_PREF_HEIGHT
     val insets = insets
     val top = if (InternalDecoratorImpl.headerNeedsTopBorder(this)) 1 else 0
-    val height = JBUI.scale(unscaledHeight) + top - insets.top - insets.bottom - 1 // -1 to match the editors area header.
+    val height = JBUI.scale(unscaledHeight) + top - insets.top - insets.bottom
     val size = super.getPreferredSize()
     return Dimension(size.width, height)
   }
