@@ -98,7 +98,6 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 @SkipSlowTestLocally
 public class IndexTest extends JavaCodeInsightFixtureTestCase {
@@ -698,38 +697,27 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   private void runFindClassStubIndexQueryThatProducesInvalidResult(final String qName) {
-    final AtomicReference<PsiClass> foundFile = new AtomicReference<>();
-
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(getProject());
+
+    class StubMismatchLikeException extends RuntimeException {
+    }
+
     final Processor<PsiClass> processor = file -> {
-      foundFile.set(file);
-      return false;
+      throw new StubMismatchLikeException();
     };
 
     try {
-
       StubIndex.getInstance()
         .processElements(JavaStubIndexKeys.CLASS_FQN, qName, getProject(), searchScope, PsiClass.class, aClass -> {
           StubIndex.getInstance()
             .processElements(JavaStubIndexKeys.CLASS_FQN, qName, getProject(), searchScope, PsiClass.class, processor);
           return false;
         });
-      fail("Should fail with class mismatch");
+      fail("Should fail with StubMismatchLikeException");
     }
-    catch (AssertionError ignored) {
-      // stub mismatch
+    catch (StubMismatchLikeException ignored) {
+      // expected
     }
-
-    //assertTrue(((StubIndexImpl)StubIndex.instance).areAllProblemsProcessedInTheCurrentThread())
-    //
-    //try {
-    //  StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, qName, project, searchScope, PsiFile.class, processor)
-    //
-    //  fail("Unexpected")
-    //}
-    //catch (AssertionError ignored) {
-    //  // stub mismatch
-    //}
   }
 
   public void test_do_not_collect_stub_tree_while_holding_stub_elements() {
