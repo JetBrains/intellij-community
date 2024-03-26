@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.scala.ScalaCompileOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

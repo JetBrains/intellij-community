@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
 import org.junit.Test;
 
 import java.util.Arrays;

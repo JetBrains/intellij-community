@@ -21,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.Build;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleUserHomeUtil;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 

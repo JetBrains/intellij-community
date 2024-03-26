@@ -25,7 +25,7 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;

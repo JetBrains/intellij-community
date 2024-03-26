@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleBuildActionListener;
+import org.jetbrains.plugins.gradle.service.syncAction.GradleBuildActionListener;
 
 import java.util.*;
 

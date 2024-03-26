@@ -17,7 +17,7 @@ import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelP
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
-import org.jetbrains.plugins.gradle.service.buildActionRunner.GradleIdeaModelHolder
+import org.jetbrains.plugins.gradle.service.syncAction.GradleIdeaModelHolder
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
 import org.jetbrains.plugins.gradle.settings.DistributionType
