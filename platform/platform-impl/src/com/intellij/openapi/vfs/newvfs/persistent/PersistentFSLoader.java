@@ -829,7 +829,7 @@ public final class PersistentFSLoader {
       }
       catch (Throwable t) {
         LOG.info(storage.getClass().getSimpleName() + ".closeAndClean() fails: " +
-                 ExceptionUtil.getNonEmptyMessage(t, t.getClass().getSimpleName() + "(<no error message given>)"));
+                 t.getClass().getSimpleName() + "(" + ExceptionUtil.getNonEmptyMessage(t, "<no error message given>") + ")");
       }
     }
     else {
