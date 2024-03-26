@@ -1614,6 +1614,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/qualifiedPackage.kt");
             }
 
+            @TestMetadata("qualifiedPropertyFunctionCall.kt")
+            public void testQualifiedPropertyFunctionCall() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/qualifiedPropertyFunctionCall.kt");
+            }
+
             @TestMetadata("qualifiedTypeArg.kt")
             public void testQualifiedTypeArg() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/parameters/misc/qualifiedTypeArg.kt");

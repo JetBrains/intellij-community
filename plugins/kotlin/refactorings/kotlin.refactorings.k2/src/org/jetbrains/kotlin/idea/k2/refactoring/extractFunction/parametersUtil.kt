@@ -85,6 +85,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 
 context(KtAnalysisSession)
 internal fun ExtractionData.inferParametersInfo(
@@ -422,6 +423,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
     for (newRef in newReferences) {
         val originalResolveResult = newRef.resolveResult as? ResolveResult<PsiNamedElement, KtSimpleNameExpression> ?: continue
         val originalRefExpr = originalResolveResult.originalRefExpr
+        val parent = newRef.parent
 
         val smartCast: KtType?
         val possibleTypes: Set<KtType>
@@ -458,11 +460,13 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             if (shouldSkipPrimaryReceiver && !bothReceivers) continue
         } else {
             if (newRef.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) continue
+            // Qualified functional property reference: a.*b*()
+            if (originalResolveResult.descriptor is KtProperty && parent is KtCallExpression && parent.calleeExpression == newRef && parent.getQualifiedExpressionForSelector() != null) {
+                continue
+            }
             smartCast = analyze(originalRefExpr) { originalRefExpr.getSmartCastInfo()?.smartCastType }
             possibleTypes = analyze(originalRefExpr) { originalRefExpr.getExpectedType()?.let { setOf(it) } ?: emptySet() }
         }
-
-        val parent = newRef.parent
 
         // Skip P in type references like 'P.Q'
         if (parent is KtUserType && (parent.parent as? KtUserType)?.qualifier == parent) continue

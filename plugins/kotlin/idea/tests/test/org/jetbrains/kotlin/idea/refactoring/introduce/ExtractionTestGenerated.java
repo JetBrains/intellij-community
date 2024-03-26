@@ -2456,6 +2456,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedPackage.kt");
                 }
 
+                @TestMetadata("qualifiedPropertyFunctionCall.kt")
+                public void testQualifiedPropertyFunctionCall() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedPropertyFunctionCall.kt");
+                }
+
                 @TestMetadata("qualifiedTypeArg.kt")
                 public void testQualifiedTypeArg() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeArg.kt");
