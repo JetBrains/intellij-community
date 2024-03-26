@@ -118,6 +118,16 @@ public class DumbCompletionTestGenerated extends AbstractDumbCompletionTest {
         runTest("../testData/dumb/ExtensionProperty.kt");
     }
 
+    @TestMetadata("ForLoopDeclarationInBody.kt")
+    public void testForLoopDeclarationInBody() throws Exception {
+        runTest("../testData/dumb/ForLoopDeclarationInBody.kt");
+    }
+
+    @TestMetadata("ForLoopDeclarationShouldNotLeak.kt")
+    public void testForLoopDeclarationShouldNotLeak() throws Exception {
+        runTest("../testData/dumb/ForLoopDeclarationShouldNotLeak.kt");
+    }
+
     @TestMetadata("Function.kt")
     public void testFunction() throws Exception {
         runTest("../testData/dumb/Function.kt");

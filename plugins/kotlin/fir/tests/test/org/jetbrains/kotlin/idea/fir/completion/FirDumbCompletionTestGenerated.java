@@ -118,6 +118,16 @@ public class FirDumbCompletionTestGenerated extends AbstractFirDumbCompletionTes
         runTest("../../completion/testData/dumb/ExtensionProperty.kt");
     }
 
+    @TestMetadata("ForLoopDeclarationInBody.kt")
+    public void testForLoopDeclarationInBody() throws Exception {
+        runTest("../../completion/testData/dumb/ForLoopDeclarationInBody.kt");
+    }
+
+    @TestMetadata("ForLoopDeclarationShouldNotLeak.kt")
+    public void testForLoopDeclarationShouldNotLeak() throws Exception {
+        runTest("../../completion/testData/dumb/ForLoopDeclarationShouldNotLeak.kt");
+    }
+
     @TestMetadata("Function.kt")
     public void testFunction() throws Exception {
         runTest("../../completion/testData/dumb/Function.kt");
