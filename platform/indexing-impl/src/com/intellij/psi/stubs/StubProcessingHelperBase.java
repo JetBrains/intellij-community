@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.*;
+
 /**
  * Author: dmitrylomov
  */
@@ -54,7 +56,7 @@ public abstract class StubProcessingHelperBase {
 
     if (value.size() == 1 && value.get(0) == 0) {
       //noinspection unchecked
-      return !checkType(requiredClass, psiFile, psiFile, debugOperationName, value) || processor.process((Psi)psiFile);
+      return !checkType(requiredClass, psiFile, psiFile, debugOperationName, value, ZeroStubIdList) || processor.process((Psi)psiFile);
     }
 
     List<StubbedSpine> spines = getAllSpines(psiFile);
@@ -64,7 +66,7 @@ public abstract class StubProcessingHelperBase {
 
     for (int i = 0, size = value.size(); i < size; i++) {
       PsiElement psi = getStubPsi(spines, value.get(i));
-      if (!checkType(requiredClass, psiFile, psi, debugOperationName, value)) break;
+      if (!checkType(requiredClass, psiFile, psi, debugOperationName, value, StubPsiCheck)) break;
       //noinspection unchecked
       if (!processor.process((Psi)psi)) return false;
     }
@@ -80,7 +82,8 @@ public abstract class StubProcessingHelperBase {
   }
 
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement,
-                                                     @NotNull Computable<String> debugOperationName, @NotNull StubIdList debugStubIdList) {
+                                                     @NotNull Computable<String> debugOperationName, @NotNull StubIdList debugStubIdList,
+                                                     @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source) {
     if (requiredClass.isInstance(psiElement)) return true;
 
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
@@ -93,7 +96,7 @@ public abstract class StubProcessingHelperBase {
 
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
-    inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
+    inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile, extraMessage, source);
     return false;
   }
 
@@ -146,21 +149,24 @@ public abstract class StubProcessingHelperBase {
                             ", psiFile.class=" + psiFile.getClass() +
                             ", requiredClass=" + requiredClass +
                             ".\nref: 50cf572587cf";
-      inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile, extraMessage);
+      inconsistencyDetected(objectStubTree, (PsiFileWithStubSupport)psiFile, extraMessage, WrongPsiFileClassInNonPsiStub);
       return true;
     }
     //noinspection unchecked
     return processor.process((Psi)psiFile);
   }
 
-  private void inconsistencyDetected(@Nullable ObjectStubTree<?> stubTree,
-                                     @NotNull PsiFileWithStubSupport psiFile,
-                                     @NotNull String extraMessage) {
+  private void inconsistencyDetected(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @NotNull String extraMessage,
+    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     try {
       StubTextInconsistencyException.checkStubTextConsistency(psiFile,
                                                               SourceOfCheck.WrongTypePsiInStubHelper,
                                                               EnforcedInconsistencyType.PsiOfUnexpectedClass);
-      LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null));
+      LOG.error(extraMessage + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null, source));
     }
     finally {
       onInternalError(psiFile.getVirtualFile());

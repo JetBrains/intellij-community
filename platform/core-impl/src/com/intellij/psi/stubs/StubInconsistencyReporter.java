@@ -79,4 +79,11 @@ public interface StubInconsistencyReporter {
   void reportKotlinMissingClassName(@NotNull Project project,
                                     boolean foundInKotlinFullClassNameIndex,
                                     boolean foundInEverythingScope);
+
+  /**
+   * Use nulls for parameters of this type in plugins. These values are reserved for the platform
+   */
+  enum StubTreeAndIndexDoNotMatchSource {FileTreesPsiReconciliation, WrongPsiFileClassInNonPsiStub, ZeroStubIdList, StubPsiCheck}
+
+  void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @Nullable StubTreeAndIndexDoNotMatchSource source);
 }

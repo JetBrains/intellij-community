@@ -4,8 +4,10 @@ package com.intellij.util.indexing.diagnostic
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -34,6 +36,22 @@ object StubInconsistencyReportUtil {
     foundInEverythingScope: Boolean
   ) {
     KOTLIN_MISSING_CLASS_NAME_EVENT.log(project, foundInKotlinFullClassNameIndex, foundInEverythingScope)
+  }
+
+  private val STUB_TREE_AND_INDEX_DO_NOT_MATCH_SOURCE_FIELD = EventFields.Enum<StubTreeAndIndexDoNotMatchSource>("source")
+  private val STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT = GROUP.registerVarargEvent(
+    "stub.tree.and.index.do.not.match.event",
+    STUB_TREE_AND_INDEX_DO_NOT_MATCH_SOURCE_FIELD
+  )
+
+  @JvmStatic
+  fun reportStubTreeAndIndexDoNotMatch(project: Project, source: StubTreeAndIndexDoNotMatchSource?) {
+    if (source == null) {
+      STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT.log(project)
+    }
+    else {
+      STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT.log(project, EventPair(STUB_TREE_AND_INDEX_DO_NOT_MATCH_SOURCE_FIELD, source))
+    }
   }
 }
 

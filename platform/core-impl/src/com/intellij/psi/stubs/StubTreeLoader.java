@@ -58,31 +58,67 @@ public abstract class StubTreeLoader {
    * in particular counting indexes for changed files won't need some already taken lock.
    * <p/>
    * From under lock, which may be needed to compute indexes for changed files,
-   * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)}
+   * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}
    * and invoke {@link StubTreeAndIndexUnmatchCoarseException#createCompleteException()} outside the lock.
    */
-  public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                     @NotNull PsiFileWithStubSupport psiFile,
-                                                     @Nullable Throwable cause) {
+  public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause,
+    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause).doCreateCompleteException();
+      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source).doCreateCompleteException();
     });
   }
 
   /**
-   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)
+   * @deprecated Use @{link {@link #stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}}
    */
-  public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                                                                @NotNull PsiFileWithStubSupport psiFile,
-                                                                                                @Nullable Throwable cause) {
+  @Deprecated
+  public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
+                                                              @NotNull PsiFileWithStubSupport psiFile,
+                                                              @Nullable Throwable cause) {
+    return stubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, null);
+  }
+
+
+  /**
+   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)
+   */
+  public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause,
+    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause);
+      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source);
     });
   }
 
-  private @NotNull StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                                                                            @NotNull PsiFileWithStubSupport psiFile,
-                                                                                                            @Nullable Throwable cause) {
+  /**
+   * @deprecated Use {@link #createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}
+   */
+  @Deprecated
+  public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause
+  ) {
+    return createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, null);
+  }
+
+  private @NotNull StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause,
+    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
       boolean compiled = psiFile instanceof PsiCompiledElement;
@@ -135,12 +171,14 @@ public abstract class StubTreeLoader {
       msg += "\nref: 50cf572587cf";
 
       ArrayList<Attachment> attachments = createAttachments(stubTree, psiFile, file);
+      StubInconsistencyReporter.getInstance().reportStubTreeAndIndexDoNotMatch(psiFile.getProject(), source);
       return new StubTreeAndIndexUnmatchCoarseException(psiFile, file, msg, attachments, upToDate, cause, stubTree);
     });
   }
 
   /**
-   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)
+   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)
    */
   public static class StubTreeAndIndexUnmatchCoarseException extends Exception {
     private final @NotNull Project project;
