@@ -121,6 +121,7 @@ class TerminalPromptView(
 
     val editor = textField.getEditor(true) as EditorImpl
     editor.settings.isUseSoftWraps = true
+    editor.settings.isShowingSpecialChars = false
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.verticalScrollBarPolicy = JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
