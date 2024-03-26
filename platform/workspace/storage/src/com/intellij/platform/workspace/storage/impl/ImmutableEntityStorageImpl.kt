@@ -270,9 +270,11 @@ internal class MutableEntityStorageImpl(
       lockWrite()
 
       val newEntityData = entity.getEntityData()
+      val immutableEntity = newEntityData.createEntity(this)
+      val symbolicId = (immutableEntity as? WorkspaceEntityWithSymbolicId)?.symbolicId
 
       // Check for persistent id uniqueness
-      assertUniqueSymbolicId(newEntityData)
+      assertUniqueSymbolicId(newEntityData, symbolicId)
 
       entitiesByType.add(newEntityData, entity.getEntityClass().toClassId())
 
@@ -280,24 +282,24 @@ internal class MutableEntityStorageImpl(
       changeLog.addAddEvent(newEntityData.createEntityId(), newEntityData)
 
       // Update indexes
-      indexes.entityAdded(newEntityData)
+      indexes.entityAdded(newEntityData, symbolicId)
     }
     finally {
       unlockWrite()
     }
   }
 
-  private fun <T : WorkspaceEntity> assertUniqueSymbolicId(pEntityData: WorkspaceEntityData<T>) {
-    pEntityData.symbolicId()?.let { symbolicId ->
-      val ids = indexes.symbolicIdIndex.getIdsByEntry(symbolicId)
-      if (ids != null) {
-        // Oh, oh. This symbolic id exists already
-        // Fallback strategy: remove existing entity with all it's references
-        val existingEntityData = entityDataByIdOrDie(ids)
-        val existingEntity = existingEntityData.createEntity(this)
-        removeEntity(existingEntity)
-        LOG.error(
-          """
+  private fun <T : WorkspaceEntity> assertUniqueSymbolicId(pEntityData: WorkspaceEntityData<T>, symbolicId: SymbolicEntityId<*>?) {
+    if (symbolicId == null) return
+    val ids = indexes.symbolicIdIndex.getIdsByEntry(symbolicId)
+    if (ids != null) {
+      // Oh, oh. This symbolic id exists already
+      // Fallback strategy: remove existing entity with all it's references
+      val existingEntityData = entityDataByIdOrDie(ids)
+      val existingEntity = existingEntityData.createEntity(this)
+      removeEntity(existingEntity)
+      LOG.error(
+        """
               addEntity: symbolic id already exists. Replacing entity with the new one.
               Symbolic id: $symbolicId
               
@@ -306,8 +308,7 @@ internal class MutableEntityStorageImpl(
               
               Broken consistency: $brokenConsistency
             """.trimIndent(), SymbolicIdAlreadyExistsException(symbolicId)
-        )
-      }
+      )
     }
   }
 
@@ -339,7 +340,8 @@ internal class MutableEntityStorageImpl(
 
       // Check for persistent id uniqueness
       if (beforeSymbolicId != null) {
-        val newSymbolicId = copiedData.symbolicId()
+        val immutableEntity = modifiableEntity.getEntityData().createEntity(this)
+        val newSymbolicId = if (immutableEntity is WorkspaceEntityWithSymbolicId) immutableEntity.symbolicId else null
         if (newSymbolicId != null) {
           val ids = indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId)
           if (beforeSymbolicId != newSymbolicId && ids != null) {

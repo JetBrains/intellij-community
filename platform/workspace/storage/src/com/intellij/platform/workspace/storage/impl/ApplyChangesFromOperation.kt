@@ -5,6 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import java.util.*
@@ -195,7 +196,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
     target.indexes.updateIndices(sourceEntityId.id, newTargetEntityData, diff)
 
     val newEntityId = newTargetEntityData.createEntityId()
-    val oldSymbolicId = target.entityDataById(newEntityId)?.symbolicId()
+    val oldSymbolicId = (target.entityDataById(newEntityId)?.createEntity(target) as? WorkspaceEntityWithSymbolicId)?.symbolicId
 
     /// Replace entity data. id should not be changed
     target.entitiesByType.replaceById(newTargetEntityData, sourceEntityId.id.clazz)
@@ -414,7 +415,7 @@ internal class ApplyChangesFromOperation(val target: MutableEntityStorageImpl, v
   }
 
   private fun checkSymbolicId(entityData: WorkspaceEntityData<out WorkspaceEntity>, newEntityId: EntityId?) {
-    val newSymbolicId = entityData.symbolicId()
+    val newSymbolicId = (entityData.createEntity(diff) as? WorkspaceEntityWithSymbolicId)?.symbolicId
     if (newSymbolicId != null) {
       val existingIds = target.indexes.symbolicIdIndex.getIdsByEntry(newSymbolicId)
       if (existingIds != null) {

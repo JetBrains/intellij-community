@@ -671,8 +671,3 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Seri
     public abstract fun symbolicId(): SymbolicEntityId<*>
   }
 }
-
-internal fun WorkspaceEntityData<*>.symbolicId(): SymbolicEntityId<*>? = when (this) {
-  is WorkspaceEntityData.WithCalculableSymbolicId -> this.symbolicId()
-  else -> null
-}

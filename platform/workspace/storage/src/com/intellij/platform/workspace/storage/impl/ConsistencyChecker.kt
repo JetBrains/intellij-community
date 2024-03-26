@@ -16,7 +16,7 @@ public fun EntityStorage.assertConsistency() {
 internal fun AbstractEntityStorage.assertConsistency() {
   AbstractEntityStorage.LOG.trace { "Checking consistency of $this" }
 
-  entitiesByType.assertConsistency()
+  entitiesByType.assertConsistency(this)
   // Rules:
   //  1) Refs should not have links without a corresponding entity
   //    1.1) For abstract containers: EntityId has the class of ConnectionId
