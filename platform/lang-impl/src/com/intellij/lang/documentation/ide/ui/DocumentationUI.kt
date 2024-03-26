@@ -101,9 +101,11 @@ internal class DocumentationUI(
     trackDocumentationBackgroundChange(this) {
       // Force update of the background color for scroll pane
       @Suppress("UseJBColor")
-      scrollPane.viewport.background = Color(it.rgb)
-      locationLabel.background = it
-      switcherToolbarComponent.background = it
+      val color = Color(it.rgb)
+      editorPane.parent.background = color
+      scrollPane.viewport.background = color
+      locationLabel.background = color
+      switcherToolbarComponent.background = color
     }
 
     browser.ui = this
