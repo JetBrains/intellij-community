@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -62,21 +62,25 @@ object BundledMavenDownloader {
     return BigInteger(1, digest).toString(32)
   }
 
-  fun downloadMaven4LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
-    runBlocking(Dispatchers.Default) {
+  fun downloadMaven4LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return runBlocking(Dispatchers.Default) {
       downloadMaven4Libs(communityRoot)
     }
+  }
 
-  suspend fun downloadMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): Path =
-    downloadMavenLibs(communityRoot, "plugins/maven/maven40-server-impl/lib", maven4Libs)
+  suspend fun downloadMaven4Libs(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return downloadMavenLibs(communityRoot, "plugins/maven/maven40-server-impl/lib", maven4Libs)
+  }
 
-  fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path =
-    runBlocking(Dispatchers.Default) {
+  fun downloadMaven3LibsSync(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return runBlocking(Dispatchers.Default) {
       downloadMaven3Libs(communityRoot)
     }
+  }
 
-  suspend fun downloadMaven3Libs(communityRoot: BuildDependenciesCommunityRoot): Path =
-    downloadMavenLibs(communityRoot, "plugins/maven/maven3-server-common/lib", maven3Libs)
+  suspend fun downloadMaven3Libs(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return downloadMavenLibs(communityRoot, "plugins/maven/maven3-server-common/lib", maven3Libs)
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private suspend fun downloadMavenLibs(communityRoot: BuildDependenciesCommunityRoot, path: String, libs: List<String>): Path {
@@ -105,8 +109,9 @@ object BundledMavenDownloader {
     }
 
     val toDownload = targetFileToUris.filter { !Files.exists(it.key) }
-
-    if (toDownload.isEmpty()) return root
+    if (toDownload.isEmpty()) {
+      return root
+    }
 
     val targetToSourceFiles = coroutineScope {
       toDownload.map { (targetFile, uri) ->
@@ -163,6 +168,7 @@ object BundledMavenDownloader {
     return extractDir
   }
 
-  suspend fun downloadMavenTelemetryDependencies(communityRoot: BuildDependenciesCommunityRoot): Path =
-    downloadMavenLibs(communityRoot, "plugins/maven/maven-server-telemetry/lib", mavenTelemetryDependencies)
+  suspend fun downloadMavenTelemetryDependencies(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return downloadMavenLibs(communityRoot, "plugins/maven/maven-server-telemetry/lib", mavenTelemetryDependencies)
+  }
 }
