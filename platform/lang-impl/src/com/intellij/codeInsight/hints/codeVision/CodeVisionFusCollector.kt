@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId3
-import com.intellij.internal.statistic.eventLog.events.IntListEventField
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.lang.Language
@@ -16,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 object CodeVisionFusCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("daemon.code.vision", 3)
+  private val GROUP = EventLogGroup("daemon.code.vision", 4)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -41,6 +38,11 @@ object CodeVisionFusCollector : CounterUsagesCollector() {
                                                                                                                  "histogram"),
                                                                                                                EventFields.Language,
                                                                                                                EventFields.Size)
+
+  enum class Refactorings { Rename, }
+
+  private val REFACTORING_PERFORMED: EventId1<String> = GROUP.registerEvent("refactoring.performed",
+                                                                            EventFields.String("refactoring", Refactorings.entries.map { it.name }))
 
   internal val PROVIDER_STORAGE_KEY: Key<CodeVisionFusProviderStorage> = Key.create<CodeVisionFusProviderStorage>("code.vision.fus.provider.storage")
   internal val VCS_ANNOTATION_HISTOGRAM_KEY: Key<FusHistogramBuilder> = Key.create<FusHistogramBuilder>("vcs.annotation.histogram")
@@ -79,5 +81,9 @@ object CodeVisionFusCollector : CounterUsagesCollector() {
       return newHistogram
     }
     return vcsAnnotationHistogramBuilder
+  }
+
+  internal fun refactoringPerformed(refactoring: Refactorings) {
+    REFACTORING_PERFORMED.log(refactoring.name)
   }
 }

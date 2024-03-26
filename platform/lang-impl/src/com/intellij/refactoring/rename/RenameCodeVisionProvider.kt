@@ -6,6 +6,7 @@ import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.command.CommandProcessor
@@ -19,7 +20,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.RefactoringCodeVisionCollector
 import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
@@ -40,7 +40,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     providerId: String,
   ) : TextCodeVisionEntry(text, providerId, AllIcons.Actions.SuggestedRefactoringBulb, tooltip, tooltip, listOf()), CodeVisionPredefinedActionEntry {
     override fun onClick(editor: Editor) {
-      RefactoringCodeVisionCollector.refactoringPerformed(RefactoringCodeVisionCollector.Refactorings.Rename)
+      CodeVisionFusCollector.refactoringPerformed(CodeVisionFusCollector.Refactorings.Rename)
       val mouseEvent = this.getUserData(codeVisionEntryMouseEventKey)
       CommandProcessor.getInstance().executeCommand(project, {
         performSuggestedRefactoring(project,
