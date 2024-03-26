@@ -8,8 +8,25 @@ class Java8Class {
     fun foo2(r: Function2<Int?, Int?, String?>?) {
     }
 
+    fun foo3(r1: Function0<String?>?, r2: Function0<String?>?) {
+    }
+
+    @JvmOverloads
+    fun bar(f: Function0<String?>?, g: Function1<Int?, String?>? = { i: Int? -> "default g" }) {
+    }
+
+    fun doNotTouch(f: Function0<String?>?, s: String?) {
+    }
+
     fun helper() {
     }
+
+    fun vararg(key: String?, vararg functions: Function0<String?>?) {
+    }
+
+    internal open inner class Base(name: String?, f: Function0<String?>?)
+
+    internal inner class Child : Base("Child", { "a child class" })
 
     fun foo() {
         foo0 { "42" }
@@ -34,6 +51,18 @@ class Java8Class {
             helper()
             "42"
         }
+
+        foo3({ "42" }, { "42" })
+
+        bar({ "f" }, { i: Int? -> "g" })
+
+        checkNotNull("s") { "that's strange" }
+
+        val base = Base("Base") { "base" }
+
+        vararg("first", { "f" })
+
+        runnableFun { "hello" }
 
         val f: Function2<Int, Int, String> = label@{ i: Int, k: Int? ->
             helper()
@@ -76,5 +105,29 @@ class Java8Class {
             }
             "43"
         }
+
+        doNotTouch({ "first arg" }, "last arg")
+    }
+
+    fun moreTests(
+        m1: MutableMap<String?, String?>,
+        m2: MutableMap<String?, String?>,
+        m3: MutableMap<String?, String?>,
+        m4: MutableMap<String?, String>
+    ) {
+        m1.compute("m1") { k: String?, v: String? -> v }
+        m2.computeIfAbsent("m2") { k: String? -> "value" }
+        m3.computeIfPresent("m1") { k: String?, v: String? -> v }
+        m4.merge("", "") { k: String?, v: String? -> v }
+        m4.merge("", "") { obj: String, str: String -> obj + str }
+
+        val ss = Array(5) { arrayOfNulls<String>(5) }
+
+        val s = "test"
+        s.trim { it <= ' ' }
+    }
+
+    companion object {
+        fun runnableFun(r: Runnable?) {}
     }
 }

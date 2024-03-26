@@ -1,4 +1,6 @@
 // IGNORE_K2
+
+import java.util.*;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import kotlin.jvm.functions.Function2;
@@ -13,7 +15,39 @@ public class Java8Class {
     public void foo2(Function2<Integer, Integer, String> r) {
     }
 
+    public void foo3(Function0<String> r1, Function0<String> r2) {
+    }
+
+    public void bar(Function0<String> f) {
+        // It seems we can't resolve overloaded methods, so this lambda stays inside the parentheses
+        bar(f, (i) -> "default g");
+    }
+
+    public void bar(Function0<String> f, Function1<Integer, String> g) {
+    }
+
+    public doNotTouch(Function0<String> f, String s) {
+    }
+
     public void helper() {
+    }
+
+    public void vararg(String key, Function0<String>... functions) {
+    }
+
+    public static void runnableFun(Runnable r) {}
+
+    class Base {
+        Base(String name, Function0<String> f) {
+        }
+    }
+
+    class Child extends Base {
+        Child() {
+            super("Child", () -> {
+                return "a child class";
+            })
+        }
     }
 
     public void foo() {
@@ -39,6 +73,23 @@ public class Java8Class {
         foo2((Integer i, Integer j) -> {
             helper();
             return "42";
+        });
+
+        foo3(() -> "42", () -> "42");
+
+        bar(() -> "f", (i) -> "g");
+
+        assert "s" != null : "that's strange";
+
+        Base base = new Base("Base", () -> "base");
+
+        vararg("first", () -> "f");
+
+        runnableFun(new Runnable() {
+            @Override
+            public void run() {
+                "hello"
+            }
         });
 
         Function2<Integer, Integer, String> f = (Integer i, Integer k) -> {
@@ -86,5 +137,27 @@ public class Java8Class {
 
             return "43";
         });
+
+        doNotTouch(() -> {
+            return "first arg";
+        }, "last arg");
+    }
+
+    void moreTests(
+            Map<String, String> m1,
+            Map<String, String> m2,
+            Map<String, String> m3,
+            Map<String, String> m4
+    ) {
+        m1.compute("m1", (k, v) -> v);
+        m2.computeIfAbsent("m2", (k) -> "value");
+        m3.computeIfPresent("m1", (k, v) -> v);
+        m4.merge("", "", (k, v) -> v);
+        m4.merge("", "", String::concat);
+
+        String [][] ss = new String[5][5];
+
+        String s = "test";
+        s.trim();
     }
 }

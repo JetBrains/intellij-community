@@ -37,7 +37,8 @@ class TypeMappingConversion(
                         element::arguments.detached(),
                         element::typeArgumentList.detached().fixTypeArguments(newClassSymbol),
                         element::classBody.detached(),
-                        element.isAnonymousClass
+                        element.isAnonymousClass,
+                        canMoveLambdaOutsideParentheses = element.canMoveLambdaOutsideParentheses
                     ).withPsiAndFormattingFrom(element)
                 )
             }

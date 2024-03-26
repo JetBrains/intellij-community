@@ -32,7 +32,8 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
             newElement = JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.$arrayConstructorName"),
                 arguments,
-                typeArguments
+                typeArguments,
+                canMoveLambdaOutsideParentheses = true
             )
         } else if (element is JKJavaNewEmptyArray) {
             newElement = buildArrayInitializer(
@@ -54,7 +55,8 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
             } else {
                 JKNewExpression(
                     symbolProvider.provideClassSymbol(type.arrayFqName()),
-                    JKArgumentList(dimensions[0])
+                    JKArgumentList(dimensions[0]),
+                    canMoveLambdaOutsideParentheses = true
                 )
             }
         }
@@ -68,7 +70,8 @@ class ArrayInitializerConversion(context: NewJ2kConverterContext) : RecursiveCon
                     dimensions[0],
                     JKLambdaExpression(JKExpressionStatement(buildArrayInitializer(dimensions.subList(1, dimensions.size), type)))
                 ),
-                JKTypeArgumentList(arrayType)
+                JKTypeArgumentList(arrayType),
+                canMoveLambdaOutsideParentheses = true
             )
         }
         var resultType = JKClassType(
