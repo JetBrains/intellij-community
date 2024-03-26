@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,13 +88,28 @@ public interface VcsLogProvider {
   Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
-   * <p>Return commits, which correspond to the given filters.</p>
-   *
-   * @param maxCount maximum number of commits to request from the VCS, or -1 for unlimited.
+   * @deprecated implement {@link VcsLogProvider#getCommitsMatchingFilter(VirtualFile, VcsLogFilterCollection, PermanentGraph.Options, int)} instead
    */
   @NotNull
-  List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection, int maxCount)
-    throws VcsException;
+  default List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                        int maxCount)
+    throws VcsException {
+    return getCommitsMatchingFilter(root, filterCollection, PermanentGraph.Options.Default, maxCount);
+  }
+
+  /**
+   * Return commits, which correspond to the given filters.
+   *
+   * @param root             repository root
+   * @param filterCollection filters to use
+   * @param graphOptions     additional options, such as "--first-parent", see {@link PermanentGraph.Options}
+   * @param maxCount         maximum number of commits to request from the VCS, or -1 for unlimited.
+   */
+  @NotNull
+  default List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                        @NotNull PermanentGraph.Options graphOptions, int maxCount) throws VcsException {
+    throw new UnsupportedOperationException("Method getCommitsMatchingFilter is not implemented the class " + this.getClass().getName());
+  }
 
   /**
    * Returns the name of current user as specified for the given root,
@@ -115,7 +131,8 @@ public interface VcsLogProvider {
    * @param <T>      Type of property value.
    * @return Property value or null if unset.
    */
-  @Nullable <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
+  @Nullable
+  <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
 
   /**
    * Returns currently checked out branch in given root, or null if not on any branch or provided root is not under version control.

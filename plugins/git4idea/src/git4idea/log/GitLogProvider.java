@@ -22,6 +22,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogSorter;
 import com.intellij.vcs.log.graph.GraphCommit;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.graph.impl.print.GraphColorGetterByNodeFactory;
 import com.intellij.vcs.log.impl.*;
@@ -394,10 +395,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
   @Override
   public @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
-                                                                int maxCount) throws VcsException {
+                                                                @NotNull PermanentGraph.Options graphOptions, int maxCount) throws VcsException {
     VcsLogRangeFilter rangeFilter = filterCollection.get(RANGE_FILTER);
     if (rangeFilter == null) {
-      return getCommitsMatchingFilter(root, filterCollection, null, maxCount);
+      return getCommitsMatchingFilter(root, filterCollection, null, graphOptions, maxCount);
     }
 
      /*
@@ -407,17 +408,19 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
      */
     Set<TimedVcsCommit> commits = new LinkedHashSet<>();
     if (filterCollection.get(BRANCH_FILTER) != null || filterCollection.get(REVISION_FILTER) != null) {
-      commits.addAll(getCommitsMatchingFilter(root, filterCollection, null, maxCount));
+      commits.addAll(getCommitsMatchingFilter(root, filterCollection, null, graphOptions, maxCount));
       filterCollection = VcsLogFiltersKt.without(VcsLogFiltersKt.without(filterCollection, BRANCH_FILTER), REVISION_FILTER);
     }
     for (VcsLogRangeFilter.RefRange range : rangeFilter.getRanges()) {
-      commits.addAll(getCommitsMatchingFilter(root, filterCollection, range, maxCount));
+      commits.addAll(getCommitsMatchingFilter(root, filterCollection, range, graphOptions, maxCount));
     }
     return new ArrayList<>(commits);
   }
 
   private @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
-                                                                 @Nullable VcsLogRangeFilter.RefRange range, int maxCount) throws VcsException {
+                                                                 @Nullable VcsLogRangeFilter.RefRange range,
+                                                                 @NotNull PermanentGraph.Options options,
+                                                                 int maxCount) throws VcsException {
 
     GitRepository repository = getRepository(root);
     if (repository == null) {
@@ -470,6 +473,10 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
 
     if (!CommitCountStageKt.isAll(maxCount)) {
       filterParameters.add(prepareParameter("max-count", String.valueOf(maxCount)));
+    }
+
+    if (options.equals(PermanentGraph.Options.FirstParent.INSTANCE)) {
+      filterParameters.add("--first-parent");
     }
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths

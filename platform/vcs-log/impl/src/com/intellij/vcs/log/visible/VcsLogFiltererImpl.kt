@@ -113,7 +113,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       }
 
       try {
-        val filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads, commitCandidates, forceFilterByVcs)
+        val filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads, commitCandidates, graphOptions, forceFilterByVcs)
 
         val visibleGraph = createVisibleGraph(dataPack, graphOptions, matchingHeads, filterResult.matchingCommits, filterResult.fileHistoryData)
         val visiblePack = VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters)
@@ -179,6 +179,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
                                visibleRoots: Collection<VirtualFile>,
                                matchingHeads: Set<Int>?,
                                commitCandidates: IntSet?,
+                               graphOptions: PermanentGraph.Options,
                                forceFilterByVcs: Boolean): FilterByDetailsResult {
     val detailsFilters = filters.detailsFilters
     if (!forceFilterByVcs && detailsFilters.isEmpty()) {
@@ -202,7 +203,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
     val filterAllWithVcs = rootsForVcs.containsAll(visibleRoots)
     val filtersForVcs = if (filterAllWithVcs) filters else filters.with(VcsLogFilterObject.fromRoots(rootsForVcs))
     val headsForVcs = if (filterAllWithVcs) matchingHeads else getMatchingHeads(dataPack.refsModel, rootsForVcs, filtersForVcs)
-    val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, headsForVcs, commitCount, commitCandidates)
+    val filteredWithVcs = filterWithVcs(dataPack.permanentGraph, filtersForVcs, headsForVcs, graphOptions, commitCount, commitCandidates)
 
     val filteredCommits = union(filteredWithIndex, filteredWithVcs.matchingCommits)
     return FilterByDetailsResult(filteredCommits, filteredWithVcs.canRequestMore, filteredWithVcs.commitCount,
@@ -230,6 +231,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   private fun filterWithVcs(graph: PermanentGraph<Int>,
                             filters: VcsLogFilterCollection,
                             matchingHeads: Set<Int>?,
+                            graphOptions: PermanentGraph.Options,
                             commitCount: CommitCountStage,
                             commitCandidates: IntSet?): FilterByDetailsResult {
     var commitCountToTry = commitCount
@@ -243,12 +245,12 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
       commitCountToTry = commitCountToTry.next()
     }
 
-    val commitsFromVcs = filterWithVcs(filters, commitCountToTry.count)
+    val commitsFromVcs = filterWithVcs(filters, graphOptions, commitCountToTry.count)
     return FilterByDetailsResult(commitsFromVcs, commitsFromVcs.size >= commitCountToTry.count, commitCountToTry, FilterKind.Vcs)
   }
 
   @Throws(VcsException::class)
-  internal fun filterWithVcs(filterCollection: VcsLogFilterCollection, maxCount: Int): IntSet {
+  internal fun filterWithVcs(filterCollection: VcsLogFilterCollection, graphOptions: PermanentGraph.Options, maxCount: Int): IntSet {
     val commits = IntOpenHashSet()
 
     val visibleRoots = VcsLogUtil.getAllVisibleRoots(logProviders.keys, filterCollection)
@@ -290,7 +292,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
           .with(VcsLogFilterObject.fromRange(resolvedRanges))
       }
 
-      provider.getCommitsMatchingFilter(root, actualFilterCollection, maxCount).forEach { commit ->
+      provider.getCommitsMatchingFilter(root, actualFilterCollection, graphOptions, maxCount).forEach { commit ->
         commits.add(storage.getCommitIndex(commit.id, root))
       }
     }
@@ -329,7 +331,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
 
     val textFilter = hashFilter.toTextFilter()
     val textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
-                                           commitCount, dataPack.logProviders.keys, null, null, false)
+                                           commitCount, dataPack.logProviders.keys, null, null, graphOptions, false)
     if (hashFilterResult.isEmpty() && textFilterResult.matchingCommits.matchesNothing()) return null
     val filterResult = union(textFilterResult.matchingCommits, hashFilterResult)
 

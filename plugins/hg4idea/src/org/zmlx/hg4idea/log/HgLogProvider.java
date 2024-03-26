@@ -16,6 +16,7 @@ import com.intellij.util.EmptyConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -186,9 +187,8 @@ public final class HgLogProvider implements VcsLogProvider {
   }
 
   @Override
-  public @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(final @NotNull VirtualFile root,
-                                                                @NotNull VcsLogFilterCollection filterCollection,
-                                                                int maxCount) {
+  public @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                                @NotNull PermanentGraph.Options graphOptions, int maxCount) {
     List<String> filterParameters = new ArrayList<>();
 
     // branch filter and user filter may be used several times without delimiter
