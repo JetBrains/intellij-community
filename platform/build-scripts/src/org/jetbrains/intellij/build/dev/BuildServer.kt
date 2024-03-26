@@ -16,9 +16,6 @@ import org.jetbrains.intellij.build.closeKtorClient
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.bufferedReader
-import kotlin.io.path.exists
-import kotlin.io.path.listDirectoryEntries
 
 @Serializable
 internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
@@ -35,22 +32,27 @@ private const val CUSTOM_PRODUCT_PROPERTIES_PATH = "idea.product.properties.path
 
 @Suppress("SpellCheckingInspection")
 fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+  val result = LinkedHashMap<String, String>()
+
+  val properties = Properties()
+  properties.load(Files.newInputStream(runDir.resolve("bin/idea.properties")))
+  for (property in properties) {
+    result.put(property.key.toString(), property.value.toString())
+  }
+
   // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
   val libDir = runDir.resolve("lib")
-
-  val defaultProperties: Map<String, String> = Properties().apply {
-    load(runDir.resolve("bin/idea.properties").bufferedReader())
-  }.map { it.key.toString() to it.value.toString() }.toMap()
-
-  return defaultProperties.plus(
-    mapOf(
+  result.putAll(
+    listOf(
       "jna.boot.library.path" to "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}",
       "pty4j.preferred.native.folder" to "$libDir/pty4j",
       // require bundled JNA dispatcher lib
       "jna.nosys" to "true",
       "jna.noclasspath" to "true",
-      "jb.vmOptionsFile" to "${runDir.parent.listDirectoryEntries(glob = "*.vmoptions").singleOrNull()}"
-  ))
+      "jb.vmOptionsFile" to "${Files.newDirectoryStream(runDir.parent, "*.vmoptions").use { it.singleOrNull() }}"
+    )
+  )
+  return result
 }
 
 /** Returns IDE installation directory */
@@ -80,9 +82,9 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Co
 }
 
 private fun getProductPropertiesPath(homePath: Path): Path {
-  // Handle custom product properties path
+  // handle a custom product properties path
   val customPath = System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }
-  if (customPath != null && customPath.exists()) {
+  if (customPath != null && Files.exists(customPath)) {
     return customPath
   }
   return homePath.resolve(PRODUCTS_PROPERTIES_PATH)

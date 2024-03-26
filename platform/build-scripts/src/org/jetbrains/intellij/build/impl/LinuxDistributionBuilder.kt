@@ -26,9 +26,11 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration.Companion.minutes
 
-class LinuxDistributionBuilder(override val context: BuildContext,
-                               private val customizer: LinuxDistributionCustomizer,
-                               private val ideaProperties: CharSequence?) : OsSpecificDistributionBuilder {
+class LinuxDistributionBuilder(
+  override val context: BuildContext,
+  private val customizer: LinuxDistributionCustomizer,
+  private val ideaProperties: CharSequence?
+) : OsSpecificDistributionBuilder {
   private companion object {
     const val NO_RUNTIME_SUFFIX = "-no-jbr"
   }
@@ -84,12 +86,16 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildArtifactWithoutRuntime) {
         launch {
-          context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
-                              BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
-            buildTarGz(runtimeDir = null,
-                       unixDistPath = osAndArchSpecificDistPath,
-                       suffix = NO_RUNTIME_SUFFIX + suffix(arch),
-                       arch = arch)
+          context.executeStep(
+            spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
+            BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP
+          ) {
+            buildTarGz(
+              runtimeDir = null,
+              unixDistPath = osAndArchSpecificDistPath,
+              suffix = NO_RUNTIME_SUFFIX + suffix(arch),
+              arch = arch
+            )
           }
         }
       }
@@ -111,10 +117,12 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         val tempTar = Files.createTempDirectory(context.paths.tempDir, "tar-")
         try {
           unTar(tarGzPath, tempTar)
-          RepairUtilityBuilder.generateManifest(context = context,
-                                                unpackedDistribution = tempTar.resolve(rootDirectoryName),
-                                                os = OsFamily.LINUX,
-                                                arch = arch)
+          RepairUtilityBuilder.generateManifest(
+            context = context,
+            unpackedDistribution = tempTar.resolve(rootDirectoryName),
+            os = OsFamily.LINUX,
+            arch = arch
+          )
         }
         finally {
           NioFiles.deleteRecursively(tempTar)
@@ -135,16 +143,19 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     val fullName = context.applicationInfo.fullProductName
     val sourceFile = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/Install-Linux-tar.txt")
     val targetFile = unixDistPath.resolve("Install-Linux-tar.txt")
-    substituteTemplatePlaceholders(sourceFile, targetFile, "@@", listOf(
+    substituteTemplatePlaceholders(
+      sourceFile, targetFile, "@@", listOf(
       "product_full" to fullName,
       "product" to context.productProperties.baseFileName,
       "product_vendor" to context.applicationInfo.shortCompanyName,
       "system_selector" to context.systemSelector
-    ), convertToUnixLineEndings = true)
+    ), convertToUnixLineEndings = true
+    )
   }
 
-  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> =
-    customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
+  override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture): List<String> {
+    return customizer.generateExecutableFilesPatterns(context, includeRuntime, arch)
+  }
 
   private val rootDirectoryName: String
     get() = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
@@ -161,18 +172,24 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       check(Files.exists(runtimeDir.resolve(javaExecutablePath))) { "$javaExecutablePath was not found under $runtimeDir" }
     }
 
-    val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json${suffix}")
-    generateProductJson(productJsonDir, context, arch, withRuntime = runtimeDir != null)
+    val productJsonDir = context.paths.tempDir.resolve("linux.dist.product-info.json$suffix")
+    generateProductJson(targetDir = productJsonDir, context = context, arch = arch, withRuntime = runtimeDir != null)
     dirs.add(productJsonDir)
 
     spanBuilder("build Linux tar.gz")
       .setAttribute("runtimeDir", runtimeDir?.toString() ?: "")
       .useWithScope {
-        val executableFileMatchers = generateExecutableFilesMatchers(runtimeDir != null, arch).keys
-        tar(tarPath, tarRoot, dirs, executableFileMatchers, context.options.buildDateInSeconds)
+        val executableFileMatchers = generateExecutableFilesMatchers(includeRuntime = runtimeDir != null, arch = arch).keys
+        tar(
+          archive = tarPath,
+          rootDir = tarRoot,
+          directories = dirs,
+          executableFileMatchers = executableFileMatchers,
+          buildDateInSeconds = context.options.buildDateInSeconds,
+        )
         checkInArchive(tarPath, tarRoot, context)
         context.notifyArtifactBuilt(tarPath)
-        checkExecutablePermissions(tarPath, rootDirectoryName, includeRuntime = runtimeDir != null, arch = arch)
+        checkExecutablePermissions(distribution = tarPath, root = rootDirectoryName, includeRuntime = runtimeDir != null, arch = arch)
       }
     tarPath
   }
@@ -228,7 +245,8 @@ class LinuxDistributionBuilder(override val context: BuildContext,
         )
         copyFile(iconPngPath, snapDir.resolve("$snapName.png"))
         val snapcraftTemplate = context.paths.communityHomeDir.resolve(
-          "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml")
+          "platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
+        )
         val snapcraftConfig = snapDir.resolve("snapcraft.yaml")
         substituteTemplatePlaceholders(
           inputFile = snapcraftTemplate,
@@ -243,19 +261,23 @@ class LinuxDistributionBuilder(override val context: BuildContext,
             "SCRIPT" to "bin/${context.productProperties.baseFileName}.sh"
           )
         )
-        context.messages.info("""
+        context.messages.info(
+          """
           |# <${snapcraftConfig.name}>
           |${Files.readString(snapcraftConfig)}
           |# </${snapcraftConfig.name}>
-        """.trimMargin())
+        """.trimMargin()
+        )
 
         val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.product-info.json")
         val jsonText = generateProductJson(productJsonDir, context, arch)
-        validateProductJson(jsonText = jsonText,
-                            relativePathToProductJson = "",
-                            installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir),
-                            installationArchives = listOf(),
-                            context = context)
+        validateProductJson(
+          jsonText = jsonText,
+          relativePathToProductJson = "",
+          installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir),
+          installationArchives = listOf(),
+          context = context
+        )
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
         span.addEvent("build package")
@@ -317,17 +339,21 @@ private fun generateProductJson(targetDir: Path, context: BuildContext, arch: Jv
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
-    launch = listOf(ProductInfoLaunchData(
-      os = OsFamily.LINUX.osName,
-      arch = arch.dirName,
-      launcherPath = "bin/${context.productProperties.baseFileName}.sh",
-      javaExecutablePath = if (withRuntime) "jbr/bin/java" else null,
-      vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
-      startupWmClass = getLinuxFrameClass(context),
-      bootClassPathJarNames = context.bootClassPathJarNames,
-      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
-      mainClass = context.ideMainClassName)),
-    context)
+    launch = listOf(
+      ProductInfoLaunchData(
+        os = OsFamily.LINUX.osName,
+        arch = arch.dirName,
+        launcherPath = "bin/${context.productProperties.baseFileName}.sh",
+        javaExecutablePath = if (withRuntime) "jbr/bin/java" else null,
+        vmOptionsFilePath = "bin/${context.productProperties.baseFileName}64.vmoptions",
+        startupWmClass = getLinuxFrameClass(context),
+        bootClassPathJarNames = context.bootClassPathJarNames,
+        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
+        mainClass = context.ideMainClassName,
+      )
+    ),
+    context
+  )
   writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json
 }
@@ -348,10 +374,12 @@ private fun generateScripts(distBinDir: Path, arch: JvmArchitecture, context: Bu
     for (file in it) {
       val fileName = file.fileName.toString()
       if (fileName != EXECUTABLE_TEMPLATE_NAME) {
-        copyScript(sourceFile = file,
-                   targetFile = distBinDir.resolve(fileName),
-                   additionalTemplateValues = emptyList(),
-                   context = context)
+        copyScript(
+          sourceFile = file,
+          targetFile = distBinDir.resolve(fileName),
+          additionalTemplateValues = emptyList(),
+          context = context
+        )
       }
     }
   }
@@ -398,16 +426,20 @@ private fun generateMainScript(distBinDir: Path, arch: JvmArchitecture, addition
 
   val sourceScriptDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
 
-  copyScript(sourceFile = sourceScriptDir.resolve(EXECUTABLE_TEMPLATE_NAME),
-             targetFile = distBinDir.resolve(context.productProperties.mainScriptFileName),
-             additionalTemplateValues = additionalTemplateValues,
-             context = context)
+  copyScript(
+    sourceFile = sourceScriptDir.resolve(EXECUTABLE_TEMPLATE_NAME),
+    targetFile = distBinDir.resolve(context.productProperties.mainScriptFileName),
+    additionalTemplateValues = additionalTemplateValues,
+    context = context
+  )
 }
 
-private fun copyScript(sourceFile: Path,
-                       targetFile: Path,
-                       additionalTemplateValues: List<Pair<String, String>>,
-                       context: BuildContext) {
+private fun copyScript(
+  sourceFile: Path,
+  targetFile: Path,
+  additionalTemplateValues: List<Pair<String, String>>,
+  context: BuildContext
+) {
   // Until CR (\r) will be removed from the repository checkout, we need to filter it out from Unix-style scripts
   // https://youtrack.jetbrains.com/issue/IJI-526/Force-git-to-use-LF-line-endings-in-working-copy-of-via-gitattri
   substituteTemplatePlaceholders(
@@ -431,8 +463,10 @@ private fun writeLinuxVmOptions(distBinDir: Path, context: BuildContext): Path {
 
   @Suppress("SpellCheckingInspection")
   val vmOptions = VmOptionsGenerator.computeVmOptions(context) +
-                  listOf("-Dsun.tools.attach.tmp.only=true",
-                         "-Dawt.lock.fair=true")
+                  listOf(
+                    "-Dsun.tools.attach.tmp.only=true",
+                    "-Dawt.lock.fair=true"
+                  )
   writeVmOptions(file = vmOptionsPath, vmOptions = vmOptions, separator = "\n")
 
   return vmOptionsPath
