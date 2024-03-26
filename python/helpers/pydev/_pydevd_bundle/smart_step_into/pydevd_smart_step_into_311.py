@@ -28,13 +28,37 @@ def _is_binary_opname(opname):
     return opname in _BINARY_OPS
 
 
+_LOAD_OPS = {
+    'LOAD_NAME',
+    'LOAD_GLOBAL',
+    'LOAD_ATTR',
+    'LOAD_METHOD',
+    'LOAD_DEREF',
+    'LOAD_FAST',
+}
+
+
+def _remove_latest_load_instruction_from_stack(stk):
+    """Remove the latest load instruction from the stack.
+
+    Note that this function removes everything before the latest load instruction.
+    """
+    while stk and stk[-1].opname not in _LOAD_OPS:
+        stk.pop()
+    if stk:
+        # The instruction loading the arguments is found, pop it.
+        stk.pop()
+
+
 def get_stepping_variants(code):
     stk = []
     for instruction in dis.get_instructions(code):
-        if instruction.opname == 'CALL':
-            while stk and stk[-1].opname not in ('LOAD_NAME', 'LOAD_GLOBAL',
-                                                 'LOAD_ATTR', 'LOAD_METHOD',
-                                                 'LOAD_DEREF'):
+        if instruction.opname in ('CALL', 'CALL_FUNCTION_EX'):
+            if instruction.opname == 'CALL_FUNCTION_EX':
+                # The latest load instruction is the function arguments,
+                # not its name.
+                _remove_latest_load_instruction_from_stack(stk)
+            while stk and stk[-1].opname not in _LOAD_OPS:
                 stk.pop()
             if not stk:
                 continue
