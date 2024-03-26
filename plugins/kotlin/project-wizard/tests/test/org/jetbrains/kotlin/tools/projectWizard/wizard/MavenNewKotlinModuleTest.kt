@@ -329,7 +329,8 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
     }
 
     override fun postprocessOutputFile(relativePath: String, fileContents: String): String {
-        return substituteArtifactsVersions(fileContents)
+        val result = substituteCompilerSourceAndTargetLevels(fileContents)
+        return substituteArtifactsVersions(result)
     }
 
     override fun getTestFolderName(): String {
@@ -364,6 +365,19 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
                 regex, "<artifactId>$artifactId</artifactId>\n" +
                         "$additionalSpaces            <version>VERSION"
             )
+        }
+        return result
+    }
+
+    private fun substituteCompilerSourceAndTargetLevels(fileContents: String): String {
+        val compilerSourceRegex = Regex("<maven.compiler.source>(\\d\\d)")
+        val compilerTargetRegex = Regex("<maven.compiler.target>(\\d\\d)")
+        var result = fileContents
+        if (result.contains(compilerSourceRegex)) {
+            result = result.replace(compilerSourceRegex, "<maven.compiler.source>VERSION")
+        }
+        if (result.contains(compilerTargetRegex)) {
+            result = result.replace(compilerTargetRegex, "<maven.compiler.target>VERSION")
         }
         return result
     }
