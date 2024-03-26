@@ -1358,20 +1358,26 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
   return classPath
 }
 
-suspend fun buildSearchableOptions(platform: PlatformLayout,
-                                   context: BuildContext,
-                                   systemProperties: Map<String, Any> = emptyMap()): Path? {
-  return buildSearchableOptions(ideClassPath = createIdeClassPath(platform, context),
-                                context = context,
-                                systemProperties = systemProperties)
+suspend fun buildSearchableOptions(
+  platform: PlatformLayout,
+  context: BuildContext,
+  systemProperties: Map<String, Any> = emptyMap(),
+): Path? {
+  return buildSearchableOptions(
+    ideClassPath = createIdeClassPath(platform, context),
+    context = context,
+    systemProperties = systemProperties,
+  )
 }
 
 /**
  * Build index which is used to search options in the Settings dialog.
  */
-suspend fun buildSearchableOptions(ideClassPath: Set<String>,
-                                   context: BuildContext,
-                                   systemProperties: Map<String, Any> = emptyMap()): Path? {
+suspend fun buildSearchableOptions(
+  ideClassPath: Set<String>,
+  context: BuildContext,
+  systemProperties: Map<String, Any> = emptyMap(),
+): Path? {
   val span = Span.current()
   if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
     span.addEvent("skip building searchable options index")
@@ -1384,18 +1390,30 @@ suspend fun buildSearchableOptions(ideClassPath: Set<String>,
     // bundled maven is also downloaded during traverseUI execution in an external process,
     // making it fragile to call more than one traverseUI at the same time (in the reproducibility test, for example),
     // so it's pre-downloaded with proper synchronization
-    BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
-    BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+    coroutineScope {
+      launch {
+        BundledMavenDownloader.downloadMaven4Libs(context.paths.communityHomeDirRoot)
+      }
+      launch {
+        BundledMavenDownloader.downloadMaven3Libs(context.paths.communityHomeDirRoot)
+      }
+      launch {
+        BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
+      }
+      launch {
+        BundledMavenDownloader.downloadMavenTelemetryDependencies(context.paths.communityHomeDirRoot)
+      }
+    }
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
-    runApplicationStarter(context = context,
-                          tempDir = context.paths.tempDir.resolve("searchableOptions"),
-                          ideClasspath = ideClassPath,
-                          arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
-                          vmOptions = listOf("-Xmx2g"),
-                          systemProperties = systemProperties)
+    runApplicationStarter(
+      context = context,
+      tempDir = context.paths.tempDir.resolve("searchableOptions"),
+      ideClasspath = ideClassPath,
+      arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
+      vmOptions = listOf("-Xmx2g"),
+      systemProperties = systemProperties,
+    )
     check(Files.isDirectory(targetDirectory)) {
       "Failed to build searchable options index: $targetDirectory does not exist. See log above for error output from traverseUI run."
     }
