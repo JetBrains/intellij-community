@@ -10,7 +10,7 @@ Currently supports the [CommonMark 0.31.2](https://spec.commonmark.org/0.31.2/) 
 
 Additional supported Markdown, via extensions:
 
-* Alerts ([GitHub Flavored Markdown][alerts-specs]) — see [`extension-gfm-alerts`](extension-gfm-alerts)
+* Alerts ([GitHub Flavored Markdown][alerts-specs]) — see [`extension-gfm-alerts`](extension/gfm-alerts)
 
 [alerts-specs]: https://github.com/orgs/community/discussions/16925
 
@@ -46,16 +46,20 @@ Not supported, and not on the roadmap:
 
 ## Add the Markdown renderer to your project
 
-You need to add the renderer **alongside** either a `jewel-standalone` or `jewel-ide-laf-bridge-*` dependency in order
-for the renderer to work, as it assumes that the necessary `jewel-ui` and `jewel-foundation` are on the classpath 
-already.
+The Jewel Markdown renderer is designed to be run in a project that already has a `jewel-standalone` or
+`jewel-ide-laf-bridge-*` dependency. The `core` module doesn't contain any styling, and you're supposed to use either
+the `jewel-markdown-int-ui-standalone-styling` or `jewel-markdown-ide-laf-bridge-styling` instead. They will carry the
+necessary dependencies.
+
+> [!CAUTION]
+> Don't use the standalone artifact in an IDE plugin, and don't use the bridge artifact in a standalone project!
 
 If you want to use extensions, you also need to add them **alongside** the `jewel-markdown-core`:
 
 ```kotlin
 dependencies {
     implementation(libs.jewel.standalone)
-    implementation(libs.jewel.markdown.core)
+    implementation(libs.jewel.markdown.intUiStandaloneStyling)
     implementation(libs.jewel.markdown.extension.gfm.alerts) // Optional
     // Et cetera...
 }

@@ -12,8 +12,8 @@ dependencies {
     implementation(libs.filePicker)
     implementation(projects.intUi.intUiStandalone)
     implementation(projects.intUi.intUiDecoratedWindow)
-    implementation(projects.markdown.core)
-    implementation(projects.markdown.extensionGfmAlerts)
+    implementation(projects.markdown.intUiStandaloneStyling)
+    implementation(projects.markdown.extension.gfmAlerts)
 
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")

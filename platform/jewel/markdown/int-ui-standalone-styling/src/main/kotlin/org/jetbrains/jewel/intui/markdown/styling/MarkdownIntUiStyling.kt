@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.markdown.rendering
+package org.jetbrains.jewel.intui.markdown.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +19,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
+import org.jetbrains.jewel.markdown.rendering.InlinesStyling
+import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.BlockQuote
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Code.Fenced
@@ -108,7 +112,7 @@ public fun Heading.Companion.dark(
 public fun Heading.H1.Companion.light(
     inlinesStyling: InlinesStyling =
         InlinesStyling.light(
-            defaultLightTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * 2,
                 lineHeight = defaultTextSize * 2 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -123,7 +127,7 @@ public fun Heading.H1.Companion.light(
 public fun Heading.H1.Companion.dark(
     inlinesStyling: InlinesStyling =
         InlinesStyling.dark(
-            defaultDarkTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * 2,
                 lineHeight = defaultTextSize * 2 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -138,7 +142,7 @@ public fun Heading.H1.Companion.dark(
 public fun Heading.H2.Companion.light(
     inlinesStyling: InlinesStyling =
         InlinesStyling.light(
-            defaultLightTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * 1.5,
                 lineHeight = defaultTextSize * 1.5 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -153,7 +157,7 @@ public fun Heading.H2.Companion.light(
 public fun Heading.H2.Companion.dark(
     inlinesStyling: InlinesStyling =
         InlinesStyling.dark(
-            defaultDarkTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * 1.5,
                 lineHeight = defaultTextSize * 1.5 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -169,7 +173,7 @@ public fun Heading.H2.Companion.dark(
 public fun Heading.H3.Companion.light(
     inlinesStyling: InlinesStyling =
         InlinesStyling.light(
-            defaultLightTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * 1.25,
                 lineHeight = defaultTextSize * 1.25 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -185,7 +189,7 @@ public fun Heading.H3.Companion.light(
 public fun Heading.H3.Companion.dark(
     inlinesStyling: InlinesStyling =
         InlinesStyling.dark(
-            defaultDarkTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * 1.25,
                 lineHeight = defaultTextSize * 1.25 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -201,7 +205,7 @@ public fun Heading.H3.Companion.dark(
 public fun Heading.H4.Companion.light(
     inlinesStyling: InlinesStyling =
         InlinesStyling.light(
-            defaultLightTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize,
                 lineHeight = defaultTextSize * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -217,7 +221,7 @@ public fun Heading.H4.Companion.light(
 public fun Heading.H4.Companion.dark(
     inlinesStyling: InlinesStyling =
         InlinesStyling.dark(
-            defaultDarkTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize,
                 lineHeight = defaultTextSize * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -233,7 +237,7 @@ public fun Heading.H4.Companion.dark(
 public fun Heading.H5.Companion.light(
     inlinesStyling: InlinesStyling =
         InlinesStyling.light(
-            defaultLightTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * .875,
                 lineHeight = defaultTextSize * .875 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -249,7 +253,7 @@ public fun Heading.H5.Companion.light(
 public fun Heading.H5.Companion.dark(
     inlinesStyling: InlinesStyling =
         InlinesStyling.dark(
-            defaultDarkTextStyle.copy(
+            defaultTextStyle.copy(
                 fontSize = defaultTextSize * .875,
                 lineHeight = defaultTextSize * .875 * 1.25,
                 fontWeight = FontWeight.SemiBold,
@@ -265,7 +269,7 @@ public fun Heading.H5.Companion.dark(
 public fun Heading.H6.Companion.light(
     inlinesStyling: InlinesStyling =
         InlinesStyling.light(
-            defaultLightTextStyle.copy(
+            defaultTextStyle.copy(
                 color = Color(0xFF656d76),
                 fontSize = defaultTextSize * .85,
                 lineHeight = defaultTextSize * .85 * 1.25,
@@ -282,7 +286,7 @@ public fun Heading.H6.Companion.light(
 public fun Heading.H6.Companion.dark(
     inlinesStyling: InlinesStyling =
         InlinesStyling.dark(
-            defaultDarkTextStyle.copy(
+            defaultTextStyle.copy(
                 color = Color(0xFF848d97),
                 fontSize = defaultTextSize * .85,
                 lineHeight = defaultTextSize * .85 * 1.25,
@@ -324,7 +328,7 @@ public fun List.Companion.dark(
 ): List = List(ordered, unordered)
 
 public fun Ordered.Companion.light(
-    numberStyle: TextStyle = defaultLightTextStyle,
+    numberStyle: TextStyle = defaultTextStyle,
     numberContentGap: Dp = 8.dp,
     numberMinWidth: Dp = 16.dp,
     numberTextAlign: TextAlign = TextAlign.End,
@@ -343,7 +347,7 @@ public fun Ordered.Companion.light(
     )
 
 public fun Ordered.Companion.dark(
-    numberStyle: TextStyle = defaultDarkTextStyle,
+    numberStyle: TextStyle = defaultTextStyle,
     numberContentGap: Dp = 8.dp,
     numberMinWidth: Dp = 16.dp,
     numberTextAlign: TextAlign = TextAlign.End,
@@ -363,7 +367,7 @@ public fun Ordered.Companion.dark(
 
 public fun Unordered.Companion.light(
     bullet: Char? = '•',
-    bulletStyle: TextStyle = defaultLightTextStyle.copy(fontWeight = FontWeight.Black),
+    bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
     bulletContentGap: Dp = 16.dp,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
@@ -380,7 +384,7 @@ public fun Unordered.Companion.light(
 
 public fun Unordered.Companion.dark(
     bullet: Char? = '•',
-    bulletStyle: TextStyle = defaultDarkTextStyle.copy(fontWeight = FontWeight.Black),
+    bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
     bulletContentGap: Dp = 16.dp,
     itemVerticalSpacing: Dp = 16.dp,
     itemVerticalSpacingTight: Dp = 4.dp,
@@ -407,7 +411,7 @@ public fun Code.Companion.dark(
 
 public fun Indented.Companion.light(
     textStyle: TextStyle =
-        defaultLightTextStyle.copy(
+        defaultTextStyle.copy(
             color = Color(0xFF1F2328),
             fontFamily = FontFamily.Monospace,
             fontSize = defaultTextSize * .85,
@@ -434,7 +438,7 @@ public fun Indented.Companion.light(
 
 public fun Indented.Companion.dark(
     textStyle: TextStyle =
-        defaultDarkTextStyle.copy(
+        defaultTextStyle.copy(
             color = Color(0xFFe6edf3),
             fontFamily = FontFamily.Monospace,
             fontSize = defaultTextSize * .85,
@@ -461,7 +465,7 @@ public fun Indented.Companion.dark(
 
 public fun Fenced.Companion.light(
     textStyle: TextStyle =
-        defaultLightTextStyle.copy(
+        defaultTextStyle.copy(
             color = Color(0xFF1F2328),
             fontFamily = FontFamily.Monospace,
             fontSize = defaultTextSize * .85,
@@ -494,7 +498,7 @@ public fun Fenced.Companion.light(
 
 public fun Fenced.Companion.dark(
     textStyle: TextStyle =
-        defaultDarkTextStyle.copy(
+        defaultTextStyle.copy(
             color = Color(0xFFe6edf3),
             fontFamily = FontFamily.Monospace,
             fontSize = defaultTextSize * .85,
@@ -549,7 +553,7 @@ public fun ThematicBreak.Companion.dark(
 
 public fun HtmlBlock.Companion.light(
     textStyle: TextStyle =
-        defaultLightTextStyle.copy(color = Color.DarkGray, fontFamily = FontFamily.Monospace),
+        defaultTextStyle.copy(color = Color.DarkGray, fontFamily = FontFamily.Monospace),
     padding: PaddingValues = PaddingValues(8.dp),
     shape: Shape = RoundedCornerShape(4.dp),
     background: Color = Color.LightGray,
@@ -560,7 +564,7 @@ public fun HtmlBlock.Companion.light(
 
 public fun HtmlBlock.Companion.dark(
     textStyle: TextStyle =
-        defaultDarkTextStyle.copy(color = Color.Gray, fontFamily = FontFamily.Monospace),
+        defaultTextStyle.copy(color = Color.Gray, fontFamily = FontFamily.Monospace),
     padding: PaddingValues = PaddingValues(8.dp),
     shape: Shape = RoundedCornerShape(4.dp),
     background: Color = Color.DarkGray,
@@ -569,21 +573,8 @@ public fun HtmlBlock.Companion.dark(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
-private val defaultTextSize = 14.sp
-
-private val defaultLightTextStyle =
-    TextStyle.Default.copy(
-        color = Color.Unspecified,
-        fontSize = defaultTextSize,
-        lineHeight = defaultTextSize * 1.5,
-        fontWeight = FontWeight.Normal,
-    )
-
-private val defaultDarkTextStyle =
-    defaultLightTextStyle.copy(color = Color.Unspecified)
-
 public fun InlinesStyling.Companion.light(
-    textStyle: TextStyle = defaultLightTextStyle,
+    textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
         textStyle
             .copy(
@@ -610,7 +601,7 @@ public fun InlinesStyling.Companion.light(
     )
 
 public fun InlinesStyling.Companion.dark(
-    textStyle: TextStyle = defaultDarkTextStyle,
+    textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
         textStyle
             .copy(
@@ -637,3 +628,12 @@ public fun InlinesStyling.Companion.dark(
         inlineHtml,
         renderInlineHtml,
     )
+
+private val defaultTextSize = 13.sp
+
+private val defaultTextStyle
+    get() =
+        JewelTheme.createDefaultTextStyle(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * 1.5,
+        )

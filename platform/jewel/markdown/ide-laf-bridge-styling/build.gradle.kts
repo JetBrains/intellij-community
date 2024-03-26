@@ -6,16 +6,12 @@ plugins {
 }
 
 dependencies {
-    api(projects.ui)
-    api(libs.commonmark.core)
+    api(projects.markdown.core)
+    api(projects.ideLafBridge)
+    compileOnly(projects.markdown.extension.gfmAlerts)
+    compileOnly(libs.bundles.idea)
 
     testImplementation(compose.desktop.uiTestJUnit4)
-    testImplementation(projects.ui)
-}
-
-publicApiValidation {
-    // TODO Oleg remove this once migrated to value classes
-    excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.MarkdownBlock.*")
 }
 
 publishing.publications.named<MavenPublication>("main") {

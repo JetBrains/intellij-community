@@ -27,6 +27,10 @@ dependencies {
         exclude(group = "org.jetbrains.kotlinx")
     }
 
+    implementation(projects.markdown.ideLafBridgeStyling) {
+        exclude(group = "org.jetbrains.kotlinx")
+    }
+
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
         exclude(group = "org.jetbrains.kotlinx")

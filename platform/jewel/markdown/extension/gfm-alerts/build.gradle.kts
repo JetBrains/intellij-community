@@ -6,19 +6,17 @@ plugins {
 }
 
 dependencies {
-    api(projects.ui)
-    api(libs.commonmark.core)
+    implementation(projects.markdown.core)
 
     testImplementation(compose.desktop.uiTestJUnit4)
-    testImplementation(projects.ui)
 }
 
 publicApiValidation {
     // TODO Oleg remove this once migrated to value classes
-    excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.MarkdownBlock.*")
+    excludedClassRegexes = setOf("org.jetbrains.jewel.markdown.extensions.github.alerts.*")
 }
 
 publishing.publications.named<MavenPublication>("main") {
     val ijpTarget = project.property("ijp.target") as String
-    artifactId = "jewel-markdown-${project.name}-$ijpTarget"
+    artifactId = "jewel-markdown-extension-${project.name}-$ijpTarget"
 }

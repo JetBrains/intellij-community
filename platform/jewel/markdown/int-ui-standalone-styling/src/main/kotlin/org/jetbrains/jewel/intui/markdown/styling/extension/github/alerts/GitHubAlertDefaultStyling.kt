@@ -1,4 +1,4 @@
-package org.jetbrains.jewel.markdown.extensions.github.alerts
+package org.jetbrains.jewel.intui.markdown.styling.extension.github.alerts
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.graphics.Color
@@ -8,6 +8,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.CautionAlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.ImportantAlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.NoteAlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.TipAlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.WarningAlertStyling
 
 public fun AlertStyling.Companion.light(
     note: NoteAlertStyling = NoteAlertStyling.light(),

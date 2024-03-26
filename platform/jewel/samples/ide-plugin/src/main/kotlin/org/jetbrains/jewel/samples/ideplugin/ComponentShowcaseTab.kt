@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import icons.JewelIcons
 import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.toComposeColor
@@ -33,11 +35,13 @@ import org.jetbrains.jewel.foundation.modifier.onActivated
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
+import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.LazyTree
@@ -211,6 +215,24 @@ private fun RowScope.ColumnTwo() {
         Modifier.trackActivation().weight(1f),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        MarkdownPreview(
+            """
+            |Hi! This is an example of **Markdown** rendering. We support the [CommonMark specs](https://commonmark.org/)
+            |out of the box, but you can also have _extensions_.
+            |
+            |For example:
+            | * Images
+            | * Tables
+            | * And more — I am running out of random things to say 😆
+            """.trimMargin(),
+            Modifier.fillMaxWidth()
+                .background(JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor())
+                .border(1.dp, JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(), RoundedCornerShape(8.dp))
+                .padding(8.dp),
+        )
+
+        Divider(Orientation.Horizontal)
+
         var activated by remember { mutableStateOf(false) }
         Text(
             "activated: $activated",
@@ -218,9 +240,7 @@ private fun RowScope.ColumnTwo() {
                 activated = it
             },
         )
-        OutlinedButton({}) {
-            Text("Outlined")
-        }
+
         val tree = remember {
             buildTree {
                 addNode("root 1") {

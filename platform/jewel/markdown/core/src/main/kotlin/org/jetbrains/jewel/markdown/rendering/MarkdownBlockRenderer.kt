@@ -19,7 +19,6 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
-import org.jetbrains.jewel.markdown.extensions.MarkdownRendererExtension
 
 @ExperimentalJewelApi
 public interface MarkdownBlockRenderer {
@@ -87,20 +86,5 @@ public interface MarkdownBlockRenderer {
     @Composable
     public fun render(block: HtmlBlock, styling: MarkdownStyling.HtmlBlock)
 
-    public companion object {
-
-        public fun light(
-            styling: MarkdownStyling = MarkdownStyling.light(),
-            rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
-            inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
-            onUrlClick: (String) -> Unit = {},
-        ): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick)
-
-        public fun dark(
-            styling: MarkdownStyling = MarkdownStyling.dark(),
-            rendererExtensions: List<MarkdownRendererExtension> = emptyList(),
-            inlineRenderer: InlineMarkdownRenderer = InlineMarkdownRenderer.default(),
-            onUrlClick: (String) -> Unit = {},
-        ): MarkdownBlockRenderer = DefaultMarkdownBlockRenderer(styling, rendererExtensions, inlineRenderer, onUrlClick)
-    }
+    public companion object
 }

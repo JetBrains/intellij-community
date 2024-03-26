@@ -1,12 +1,12 @@
 package org.jetbrains.jewel.samples.standalone.view.markdown
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -39,9 +39,9 @@ internal fun MarkdownEditor(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
-        ControlsRow(onMarkdownChange, Modifier.fillMaxWidth().padding(8.dp))
+        ControlsRow(onMarkdownChange, Modifier.fillMaxWidth().background(JewelTheme.globalColors.paneBackground).padding(8.dp))
         Divider(orientation = Orientation.Horizontal)
-        Editor(currentMarkdown, onMarkdownChange, Modifier.fillMaxSize())
+        Editor(currentMarkdown, onMarkdownChange, Modifier.fillMaxWidth().weight(1f))
     }
 }
 

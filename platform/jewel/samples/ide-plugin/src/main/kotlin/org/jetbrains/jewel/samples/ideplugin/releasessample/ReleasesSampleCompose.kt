@@ -88,12 +88,10 @@ import org.jetbrains.jewel.ui.component.items
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
-import org.jetbrains.skiko.DependsOnJBR
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(DependsOnJBR::class)
 @Composable
 fun ReleasesSampleCompose(project: Project) {
     var selectedItem: ContentItem? by remember { mutableStateOf(null) }
@@ -412,7 +410,6 @@ private fun OverflowMenu(
     }
 }
 
-@DependsOnJBR
 @Composable
 private fun RightColumn(
     selectedItem: ContentItem?,
@@ -494,7 +491,6 @@ private fun VerticalScrollbarContainer(
     }
 }
 
-@DependsOnJBR
 @Composable
 private fun ItemDetailsText(selectedItem: ContentItem) {
     Column(

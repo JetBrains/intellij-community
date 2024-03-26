@@ -28,7 +28,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
-import org.jetbrains.skiko.DependsOnJBR
 import java.awt.Dimension
 import java.awt.Insets
 import javax.swing.UIManager
@@ -153,14 +152,12 @@ public fun retrieveArcAsCornerSizeWithFallbacks(vararg keys: String): CornerSize
     keysNotFound(keys.toList(), "Int")
 }
 
-@DependsOnJBR
 public fun retrieveTextStyle(fontKey: String, colorKey: String? = null): TextStyle {
     val baseColor = colorKey?.let { retrieveColorOrUnspecified(colorKey) } ?: Color.Unspecified
     return retrieveTextStyle(fontKey, color = baseColor)
 }
 
 @OptIn(ExperimentalTextApi::class)
-@DependsOnJBR
 public fun retrieveTextStyle(
     key: String,
     color: Color = Color.Unspecified,

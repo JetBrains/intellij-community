@@ -44,12 +44,12 @@ custom repository for it in `settings.gradle.kts`:
 
 ```kotlin
 pluginManagement {
-  repositories {
-    google()
-    gradlePluginPortal()
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    mavenCentral()
-  }
+    repositories {
+        google()
+        gradlePluginPortal()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        mavenCentral()
+    }
 }
 ```
 
@@ -57,9 +57,9 @@ Then, in your app's `build.gradle.kts`:
 
 ```kotlin
 plugins {
-  // Should align with the Kotlin and Compose dependencies in Jewel
-  kotlin("jvm") version "1.9.21"
-  id("org.jetbrains.compose") version "1.6.0-dev1440"
+    // Should align with the Kotlin and Compose dependencies in Jewel
+    kotlin("jvm") version "1.9.21"
+    id("org.jetbrains.compose") version "1.6.0-dev1440"
 }
 
 repositories {
@@ -89,7 +89,7 @@ dependencies {
 
     // Do not bring in Material (we use Jewel)
     implementation(compose.desktop.currentOs) {
-      exclude(group = "org.jetbrains.compose.material")
+        exclude(group = "org.jetbrains.compose.material")
     }
 }
 ```
@@ -104,8 +104,8 @@ dependencies {
 
     // Do not bring in Material (we use Jewel) and Coroutines (the IDE has its own)
     api(compose.desktop.currentOs) {
-      exclude(group = "org.jetbrains.compose.material")
-      exclude(group = "org.jetbrains.kotlinx")
+        exclude(group = "org.jetbrains.compose.material")
+        exclude(group = "org.jetbrains.kotlinx")
     }
 }
 ```
@@ -119,9 +119,11 @@ dependencies {
 
 ## Using ProGuard/obfuscation/minification
 
-Jewel doesn't officially support using ProGuard to minimize and/or obfuscate your code, and there is currently no plan to. 
+Jewel doesn't officially support using ProGuard to minimize and/or obfuscate your code, and there is currently no plan
+to.
 That said, people are reporting successes in using it. Please note that there is no guarantee that it will keep working,
-and you most definitely need to have some rules in place. We don't provide any official rule set, but these have been known
+and you most definitely need to have some rules in place. We don't provide any official rule set, but these have been
+known
 to work for some: https://github.com/romainguy/kotlin-explorer/blob/main/compose-desktop.pro
 
 > [!IMPORTANT]
@@ -131,12 +133,12 @@ to work for some: https://github.com/romainguy/kotlin-explorer/blob/main/compose
 
 For each version of Jewel, these are the minimum supported Kotlin and Compose Multiplatform versions:
 
- Jewel version | Kotlin version | Compose version
- --- | --- | ---
- 0.15.2 -> * | 1.8.21 | 1.6.10-dev1490
- 0.15.1 | 1.8.21 | 1.6.10-dev1457
- 0.15.0 | 1.8.21 | 1.6.0-dev1440
- 0.13.1 -> 0.14.1 | 1.8.21 | 1.6.0-dev1369
+| Jewel version    | Kotlin version | Compose version |
+|------------------|----------------|-----------------|
+| 0.15.2 -> *      | 1.8.21         | 1.6.10-dev1490  |
+| 0.15.1           | 1.8.21         | 1.6.10-dev1457  |
+| 0.15.0           | 1.8.21         | 1.6.0-dev1440   |
+| 0.13.1 -> 0.14.1 | 1.8.21         | 1.6.0-dev1369   |
 
 For older versions please refer to the Jewel tags and release notes.
 
@@ -171,7 +173,9 @@ The project is split in modules:
 6. `ide-laf-bridge` contains the Swing LaF bridge to use in IntelliJ Platform plugins (see more below)
 7. `markdown` contains a few modules:
     * `core` the core logic for parsing and rendering Markdown documents with Jewel, using GitHub-like styling
-    * `extensions` contains several extensions to the base CommonMark specs that can be used to add more features
+    * `extension` contains several extensions to the base CommonMark specs that can be used to add more features
+    * `ide-laf-bridge-styling` contains the IntelliJ Platform bridge theming for the Markdown renderer
+    * `int-ui-standalone-styling` contains the standalone Int UI theming for the Markdown renderer
 8. `samples` contains the example apps, which showcase the available components:
     * `standalone` is a regular CfD app, using the standalone theme definitions and custom window decoration
     * `ide-plugin` is an IntelliJ plugin that showcases the use of the Swing Bridge
