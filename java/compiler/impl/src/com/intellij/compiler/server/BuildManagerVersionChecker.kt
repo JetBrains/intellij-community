@@ -10,8 +10,10 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -29,6 +31,18 @@ class BuildManagerVersionChecker(val project: Project, val scope: CoroutineScope
 
     scope.launch {
       val versionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(home) ?: return@launch
+
+      // Update the version string
+      ProjectJdkTable.getInstance().allJdks.filter { it.homePath == home }.forEach { jdk ->
+        val versionString = versionInfo.displayVersionString()
+        if (jdk.versionString != versionString) {
+          writeAction {
+            val modificator = jdk.sdkModificator
+            modificator.versionString = versionString
+            modificator.commitChanges()
+          }
+        }
+      }
 
       val jdkArch = versionInfo.arch ?: return@launch
 
