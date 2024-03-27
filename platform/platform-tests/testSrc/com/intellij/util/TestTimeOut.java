@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -7,16 +7,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.TimeUnit;
 
 public final class TestTimeOut {
-  private final long timeOutMs;
+  private final long endTime;
 
-  private TestTimeOut(long ms) {
-    timeOutMs = ms;
+  private TestTimeOut(long endTime) {
+    this.endTime = endTime;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public static TestTimeOut setTimeout(long timeout, @NotNull TimeUnit unit) {
-    return new TestTimeOut(System.currentTimeMillis() + unit.toMillis(timeout));
+  public static @NotNull TestTimeOut setTimeout(long timeout, @NotNull TimeUnit unit) {
+    return new TestTimeOut(System.nanoTime() + unit.toNanos(timeout));
   }
 
   public boolean timedOut() {
@@ -25,13 +24,13 @@ public final class TestTimeOut {
 
   public boolean timedOut(Object workProgress) {
     if (isTimedOut()) {
-      System.err.println("Timed out. Stopped at "+workProgress);
+      System.err.println("Timed out. Stopped at " + workProgress);
       return true;
     }
     return false;
   }
 
   public boolean isTimedOut() {
-    return System.currentTimeMillis() > timeOutMs;
+    return System.nanoTime() > endTime;
   }
 }
