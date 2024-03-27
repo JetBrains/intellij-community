@@ -20,7 +20,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 @ApiStatus.Internal
 object InlineCompletionUsageTracker : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("inline.completion", 30)
+  private val GROUP = EventLogGroup("inline.completion", 31)
 
   const val INVOKED_EVENT_ID = "invoked"
   const val SHOWN_EVENT_ID = "shown"
