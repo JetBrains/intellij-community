@@ -44,6 +44,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
 
     if (shouldExit) {
       tracker.onLeave()
+      ImportSettingsEventsCollector.dialogClosed()
       StartupWizardService.getInstance()?.onCancel()
       cancelCallback()
       super.doCancelAction()
@@ -52,7 +53,6 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
 
   fun dialogClose() {
     if(isShowing && isVisible) {
-      ImportSettingsEventsCollector.dialogClosed()
       doClose(CANCEL_EXIT_CODE)
     }
   }

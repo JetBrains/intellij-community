@@ -64,6 +64,7 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
   override fun goToImportPage(importFromProduct: DialogImportData) {
     val page = ImportProgressPage(importFromProduct, this)
     Disposer.tryRegister(dialog.disposable, page)
+    ImportSettingsEventsCollector.importProgressPageShown()
     dialog.changePage(page)
   }
 

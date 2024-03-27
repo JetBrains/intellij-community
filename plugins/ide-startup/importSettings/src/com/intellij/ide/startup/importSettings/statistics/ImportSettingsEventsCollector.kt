@@ -4,17 +4,15 @@ package com.intellij.ide.startup.importSettings.statistics
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ExpChooserAction
 import com.intellij.ide.startup.importSettings.chooser.productChooser.JbChooserAction
 import com.intellij.ide.startup.importSettings.chooser.productChooser.OtherOptions
-import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserItemAction
 import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.util.ExceptionUtil
 
 
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("import.settings", 1)
+  private val GROUP = EventLogGroup("import.settings", 2)
   override fun getGroup(): EventLogGroup = GROUP
   private val UNKNOWN = "UNKNOWN"
   private val FOLDER = "FOLDER"
@@ -51,7 +49,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     OTHER
   }
 
-  private enum class FirstPageButton {
+  private enum class ProductPageButton {
     SYNC,
     SYNC_OLD,
     JB,
@@ -62,7 +60,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     CLOSE,
   }
 
-  enum class SecondPageButton {
+  enum class ConfigurePageButton {
     NEXT,
     BACK,
     CLOSE
@@ -74,8 +72,8 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
 
   private val JB_IDE_VALUES = EventFields.StringList("jbIdeValues", ALLOWED_JB_IDES, "Supported JB IDEs")
-  private val FIRST_PAGE_BUTTONS = EventFields.Enum<FirstPageButton>("firstPageButton", "Buttons on the first page")
-  private val SECOND_PAGE_BUTTONS = EventFields.Enum<SecondPageButton>("secondPageButton", "Buttons on the second page")
+  private val FIRST_PAGE_BUTTONS = EventFields.Enum<ProductPageButton>("productPageButton", "Buttons on the first page")
+  private val SECOND_PAGE_BUTTONS = EventFields.Enum<ConfigurePageButton>("configurePageButton", "Buttons on the second page")
   private val IMPORT_TYPES = EventFields.Enum<ImportType>("importTypes", "Import type")
   private val PLUGIN_CANT_IMPORT_REASONS = EventFields.Enum<ImportErrorTypes>("importErrorTypes")
   private val JB_IMPORT_CATEGORIES = EventFields.StringList("settingsCategories",
@@ -83,7 +81,6 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
                                                             "Settings categories when importing from JB or SYNC")
 
   private val IMPORT_SOURCE = EventFields.String("importSource", ALLOWED_JB_IDES.plus("FOLDER"))
-  private val TIME = EventFields.Long("timeMs")
 
   // before first page - preparations and performance
 
@@ -94,7 +91,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   private val jbIdeOldValues = GROUP.registerEvent("jb.ide.old.values", JB_IDE_VALUES, "JB IDEs in the other dropdown")
   private val productPageButton = GROUP.registerEvent("page.product.button", FIRST_PAGE_BUTTONS, "Button pressed on the product page")
   private val jbIdeSelectedValue = GROUP.registerEvent("page.product.selected.jb.ide", EventFields.String("jbIde", ALLOWED_JB_IDES), "JB IDE selected")
-  private val productPageTimeSpent = GROUP.registerEvent("page.product.time.spent", TIME)
+  private val productPageTimeSpent = GROUP.registerEvent("page.product.time.spent", EventFields.DurationMs)
 
   private val productPageDropdownClicked = GROUP.registerEvent("page.product.dropdown.clicked",
                                                                EventFields.Enum<ProductPageDropdown>("dropdownId"),
@@ -114,7 +111,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
                                                                EventFields.String("itemId", ITEMS_MULTIPLE_IDS),
                                                                "User clicked on configure/show all link")
   private val configurePageButton = GROUP.registerEvent("page.configure.button", SECOND_PAGE_BUTTONS, "Button pressed on the second page")
-  private val configurePageTimeSpent = GROUP.registerEvent("page.configure.time.spent", TIME)
+  private val configurePageTimeSpent = GROUP.registerEvent("page.configure.time.spent", EventFields.DurationMs)
 
   // third page - (import) progress dialog
   private val importPageShown = GROUP.registerEvent("page.import.shown",
@@ -126,19 +123,18 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
                                                IMPORT_TYPES,
                                                IMPORT_SOURCE,
                                                "Which type of import is used (JB/NONJB/SYNC) and the source name")
-  private val pluginsImportTime = GROUP.registerEvent("import.plugins.time.spent", TIME, "How long did it take to import plugins")
+  private val pluginsImportTime = GROUP.registerEvent("import.plugins.time.spent", EventFields.DurationMs, "How long did it take to import plugins")
   private val pluginsCounts = GROUP.registerEvent("import.plugins.counts",
                                                   EventFields.Long("imported"),
                                                   EventFields.Long("skipped"),
                                                   "How many plugins were imported during imported or skipped")
   private val jbPluginImportType = GROUP.registerEvent("import.plugins.import.type", EventFields.Boolean("isNew"), "What plugin import type is used (new or legacy)")
   private val jbPluginCantImport = GROUP.registerEvent("import.plugins.cant.import.reason", PLUGIN_CANT_IMPORT_REASONS)
-  private val optionsImportTime = GROUP.registerEvent("import.options.time.spent", TIME, "How long did it take to import options and schemas")
-  private val totalImportTime = GROUP.registerEvent("import.total.time.spent", TIME, "how long did it take to import everything")
-
+  private val optionsImportTime = GROUP.registerEvent("import.options.time.spent", EventFields.DurationMs, "How long did it take to import options and schemas")
+  private val totalImportTime = GROUP.registerEvent("import.total.time.spent", EventFields.DurationMs, "how long did it take to import everything")
 
   // after restart, but before showing welcome screen - reload last settings
-  private val afterImportRestartTime = GROUP.registerEvent("after.import.restart.time", TIME, "How long did it take to restart")
+  private val afterImportRestartTime = GROUP.registerEvent("after.import.restart.time", EventFields.DurationMs, "How long did it take to restart")
 
 
   /////// Methods
@@ -165,7 +161,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   }
 
   fun productPageSkipButton() {
-    productPageButton.log(FirstPageButton.SKIP)
+    productPageButton.log(ProductPageButton.SKIP)
   }
 
   fun productPageDropdownClicked(caller: Any) {
@@ -183,10 +179,10 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   fun dialogClosed() {
     when (currentPageIdx) {
       1 -> {
-        productPageButton.log(FirstPageButton.CLOSE)
+        productPageButton.log(ProductPageButton.CLOSE)
       }
       2 -> {
-        configurePageButton.log(SecondPageButton.CLOSE)
+        configurePageButton.log(ConfigurePageButton.CLOSE)
       }
       3 -> {
         importPageClosed.log()
@@ -198,11 +194,15 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   }
 
   fun configurePageBack() {
-    configurePageButton.log(SecondPageButton.BACK)
+    configurePageButton.log(ConfigurePageButton.BACK)
   }
 
   fun configurePageExpandClicked(itemId: String) {
     configurePageExpandClicked.log(itemId)
+  }
+
+  fun configurePageImportSettingsClicked() {
+    configurePageButton.log(ConfigurePageButton.NEXT)
   }
 
   fun actualJbIdes(jbIdes: List<String>) {
@@ -218,7 +218,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   }
 
   fun jbIdeSelected(jbIde: String, isActual: Boolean) {
-    productPageButton.log(if (isActual) FirstPageButton.JB else FirstPageButton.JB_OLD)
+    productPageButton.log(if (isActual) ProductPageButton.JB else ProductPageButton.JB_OLD)
     configurePageShown.log(ImportType.JB)
     changePage(2)
     if (IDEData.IDE_MAP.keys.contains(jbIde))
@@ -228,13 +228,13 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   }
 
   fun externalSelected(externalId: String) {
-    productPageButton.log(FirstPageButton.EXTERNAL)
+    productPageButton.log(ProductPageButton.EXTERNAL)
     configurePageShown.log(ImportType.EXTERNAL)
     changePage(2)
   }
 
   fun customDirectorySelected() {
-    productPageButton.log(FirstPageButton.FOLDER)
+    productPageButton.log(ProductPageButton.FOLDER)
     importType.log(ImportType.FOLDER, FOLDER)
     changePage(0)
   }

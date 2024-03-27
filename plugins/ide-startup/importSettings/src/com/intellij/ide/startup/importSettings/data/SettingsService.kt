@@ -33,9 +33,7 @@ import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.ISignal
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.Signal
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -77,8 +75,6 @@ interface SettingsService {
 
 class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : SettingsService, Disposable.Default {
 
-  private var pluginsPreloadedDeferred: Deferred<Set<PluginId>>? = null
-
   override fun getSyncService() =
     if (useMockDataForStartupWizard) TestSyncService()
     else SyncServiceImpl.getInstance()
@@ -91,10 +87,26 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
     if (useMockDataForStartupWizard) TestExternalService()
     else SettingTransferService.getInstance()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override suspend fun warmUp() {
-    pluginsPreloadedDeferred = coroutineScope.async { MarketplaceRequests.getInstance().getMarketplacePlugins(null) }
-    coroutineScope.async { getJbService().warmUp() }
-    coroutineScope.async { getExternalService().warmUp(coroutineScope) }
+    coroutineScope.async {
+      MarketplaceRequests.getInstance().getMarketplacePlugins(null)
+    }.also { deferred ->
+      deferred.invokeOnCompletion {
+        if (it == null && deferred.getCompleted().isNotEmpty()) {
+          logger.info("Plugin IDs from marketplace were preloaded")
+          pluginIdsPreloaded = true
+        }
+        else if (it != null) {
+          logger.warn("Couldn't preload plugin IDs from marketplace: ${it}")
+        }
+        else {
+          logger.warn("Couldn't preload plugin IDs from marketplace")
+        }
+      }
+    }
+    coroutineScope.launch { getJbService().warmUp() }
+    coroutineScope.launch { getExternalService().warmUp(coroutineScope) }
   }
 
   override suspend fun shouldShowImport(): Boolean {
@@ -124,8 +136,9 @@ class SettingsServiceImpl(private val coroutineScope: CoroutineScope) : Settings
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
 
   override val doClose = Signal<Unit>()
-  override val pluginIdsPreloaded: Boolean
-    get() = pluginsPreloadedDeferred?.isCompleted == true
+
+  @Volatile
+  override var pluginIdsPreloaded: Boolean = false
 
   override fun configChosen() {
     if (useMockDataForStartupWizard) {
