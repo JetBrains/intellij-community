@@ -140,12 +140,12 @@ object LogPacker {
       withRawProgressReporter {
         withContext(Dispatchers.IO) {
           val file = packLogs(project)
-          checkCancelled()
+          checkCanceled()
           val responseJson = requestSign(file.name)
           val uploadUrl = responseJson["url"] as String
           val folderName = responseJson["folderName"] as String
           val headers = responseJson["headers"] as Map<*, *>
-          checkCancelled()
+          checkCanceled()
           coroutineToIndicator {
             upload(file, uploadUrl, headers)
           }

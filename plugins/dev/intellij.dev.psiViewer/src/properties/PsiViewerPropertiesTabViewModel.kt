@@ -5,10 +5,9 @@ import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertiesTreeViewMod
 import com.intellij.dev.psiViewer.properties.tree.PsiViewerPropertyNode
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.descendants
@@ -52,13 +51,13 @@ class PsiViewerPropertiesTabViewModel(
 
     currentTreeViewModel = currentContext
       .transformLatest { contextHolder ->
-        checkCancelled()
+        checkCanceled()
         val emitter = this
         supervisorScope {
           val treesVMsScope = this
           val treesVMsCache = mutableMapOf<PsiElement, PsiViewerPropertiesTreeViewModel>()
           selectedPsiElement.collect { psiElement ->
-            checkCancelled()
+            checkCanceled()
             if (psiElement == null) {
               emitter.emit(null)
               return@collect
@@ -78,14 +77,14 @@ class PsiViewerPropertiesTabViewModel(
 
     allNodesInCurrentPsiFile = currentTreeViewModel
       .mapLatest {
-        checkCancelled()
+        checkCanceled()
         readAction {
           it?.rootNode?.element?.containingFile
         }
       }
       .distinctUntilChangedBy { System.identityHashCode(it) }
       .mapLatest { currentPsiFile ->
-        checkCancelled()
+        checkCanceled()
         val allNodesSet = currentPsiFile?.descendants()?.toSet() ?: return@mapLatest null
         currentPsiFile to allNodesSet
       }

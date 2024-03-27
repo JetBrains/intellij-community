@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.server
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import kotlinx.coroutines.delay
@@ -78,7 +78,7 @@ abstract class MavenServerConnectorBase(project: Project?,
       if (throwExceptionIfProjectDisposed && project!!.isDisposed) {
         throw CannotStartServerException("Project already disposed")
       }
-      checkCancelled()
+      checkCanceled()
     }
     return myServerPromise.get()
   }
@@ -122,7 +122,7 @@ abstract class MavenServerConnectorBase(project: Project?,
       }
       catch (ignored: Throwable) {
       }
-      checkCancelled()
+      checkCanceled()
       throw if (e is CannotStartServerException) e else CannotStartServerException(e)
     }
   }

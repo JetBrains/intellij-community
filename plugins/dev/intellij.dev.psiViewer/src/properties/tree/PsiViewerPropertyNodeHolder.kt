@@ -1,7 +1,7 @@
 package com.intellij.dev.psiViewer.properties.tree
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import kotlinx.coroutines.*
 
 class PsiViewerPropertyNodeHolder(
@@ -14,7 +14,7 @@ class PsiViewerPropertyNodeHolder(
 
   private fun childrenListAsync(): Deferred<List<PsiViewerPropertyNodeHolder>> {
     return scope.async(Dispatchers.Default, start = CoroutineStart.LAZY) {
-      checkCancelled()
+      checkCanceled()
       val mainChildren = async {
         when (val children = node.children) {
           is PsiViewerPropertyNode.Children.Enumeration -> {

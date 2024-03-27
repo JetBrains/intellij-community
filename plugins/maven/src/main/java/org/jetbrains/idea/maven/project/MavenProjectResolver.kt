@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
@@ -129,7 +129,7 @@ class MavenProjectResolver(private val myProject: Project) {
                                 updateSnapshots: Boolean,
                                 userProperties: Properties): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
-    checkCancelled()
+    checkCanceled()
     MavenLog.LOG.debug("Project resolution started: ${mavenProjects.size}")
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)

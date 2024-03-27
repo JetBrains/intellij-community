@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineSuspender
 import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -24,7 +24,7 @@ class CoroutineSuspenderTest {
       repeat(count) {
         launch {
           started.send(Unit)
-          checkCancelled()
+          checkCanceled()
           fail("must not be called")
         }
       }
@@ -47,10 +47,10 @@ class CoroutineSuspenderTest {
     val result = async(Dispatchers.Default + suspender) {
       (1..count).map {
         async { // coroutine context (including CoroutineSuspender) is inherited
-          checkCancelled() // won't suspend
+          checkCanceled() // won't suspend
           started.send(Unit)
           paused.receive()
-          checkCancelled() // should suspend here
+          checkCanceled() // should suspend here
           it
         }
       }.awaitAll().sum()

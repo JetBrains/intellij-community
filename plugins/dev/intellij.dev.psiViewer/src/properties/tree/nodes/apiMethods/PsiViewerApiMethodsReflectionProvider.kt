@@ -1,7 +1,7 @@
 package com.intellij.dev.psiViewer.properties.tree.nodes.apiMethods
 
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.progress.checkCancelled
+import com.intellij.openapi.progress.checkCanceled
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
@@ -16,7 +16,7 @@ class PsiViewerApiMethodsReflectionProvider : PsiViewerApiMethod.Provider {
 
   private fun fromReflectionMethod(instance: Any, method: Method): PsiViewerApiMethod {
     return PsiViewerApiMethod(method.name, psiViewerReflectionMethodReturnType(method)) {
-      checkCancelled()
+      checkCanceled()
       return@PsiViewerApiMethod readAction {
         method.invoke(instance)
       }
