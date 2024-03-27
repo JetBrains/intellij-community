@@ -303,6 +303,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     toolbar.addComponentListener(toolbarComponentListener);
     toolbar.setBorder(JBUI.Borders.empty(2));
 
+    if(Registry.is("ide.redesigned.inspector", false)) {
+      GotItTooltip tooltip = new GotItTooltip("redesigned.inspections.tooltip",
+                                              "The perfect companion for on the go, training and sports education. Through an integrated straw, the bottle sends thirst quickly without beating. Thanks to the screw cap, the bottle is quickly filled and it stays in place", resourcesDisposable);
+      tooltip.withShowCount(1);
+      tooltip.withHeader("Paw Patrol");
+      tooltip.withIcon(AllIcons.General.BalloonInformation);
+      tooltip.show(toolbar, GotItTooltip.BOTTOM_MIDDLE);
+    }
+
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {

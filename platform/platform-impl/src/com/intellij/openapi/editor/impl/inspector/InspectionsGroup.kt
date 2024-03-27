@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.PowerSaveMode
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -12,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.AnalyzerStatus
+import com.intellij.openapi.editor.markup.InspectionsFUS
 import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -26,17 +28,21 @@ import org.jetbrains.annotations.Nls
 import java.awt.Insets
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl) : DefaultActionGroup() {
   companion object {
     val INSPECTION_TYPED_ERROR = DataKey.create<StatusItem>("INSPECTION_TYPED_ERROR")
+    val idCounter = AtomicInteger(0)
   }
 
   private val actionList = mutableListOf<InspectionAction>()
   private var base: InspectionsBaseAction? = null
-  private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction(analyzerGetter)
+  private val fusTabId = idCounter.incrementAndGet()
+  private var myInspectionsSettingAction: InspectionsSettingAction = InspectionsSettingAction(analyzerGetter, fusTabId)
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     if (!Registry.`is`("ide.redesigned.inspector", false) || PowerSaveMode.isEnabled()) return emptyArray()
@@ -45,17 +51,12 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
 
     val analyzerStatus = analyzerGetter()
     presentation.isVisible = !analyzerStatus.isEmpty()
-    if(!presentation.isVisible) return emptyArray()
+    if (!presentation.isVisible) return emptyArray()
 
     val newStatus: List<StatusItem> = analyzerStatus.expandedStatus
     val newIcon: Icon = analyzerStatus.icon
 
-    /*    val bla = if (newStatus.size == 1) newStatus.first() else null
-
-        println("${analyzerStatus.analyzingType} ${analyzerStatus.icon} ${newStatus.isEmpty()} isTextStatus: ${analyzerStatus.isTextStatus()} showNavigation: " +
-                "${analyzerStatus.showNavigation} ${bla?.text} ${bla?.detailsText}")*/
-
-  //TODO  PowerSaveMode.isEnabled()
+    //TODO  PowerSaveMode.isEnabled()
 
     if (!analyzerStatus.showNavigation) {
       val item = if (newStatus.isEmpty()) StatusItem("", newIcon) else newStatus.first()
@@ -64,8 +65,12 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         it.title = analyzerStatus.title
         it.description = analyzerStatus.details
         it
-      } ?: InspectionsBaseAction(item, editor, analyzerStatus.title, analyzerStatus.details)
+      } ?: InspectionsBaseAction(item, editor, analyzerStatus.title, analyzerStatus.details, fusTabId = fusTabId)
       base = action
+
+      analyzerStatus.inspectionsState?.let {
+        InspectionsFUS.infoStateDetected(e.project, fusTabId, it)
+      }
 
       return arrayOf(action, myInspectionsSettingAction)
     }
@@ -80,7 +85,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         action
       }
               else {
-        val action = InspectionAction(item, editor, actionLink = actionLink)
+        val action = InspectionAction(item, editor, actionLink = actionLink, fusTabId = fusTabId)
         actionList.add(action)
         action
       })
@@ -91,8 +96,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     return arr.toTypedArray()
   }
 
-  private class InspectionsSettingAction(val analyzerGetter: () -> AnalyzerStatus) : DumbAwareAction(), CustomComponentAction {
-
+  private class InspectionsSettingAction(val analyzerGetter: () -> AnalyzerStatus, val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.BGT
     }
@@ -117,9 +121,13 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
 
-      val comp: JComponent =  e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
+      val comp: JComponent = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
 
-      InspectionsSettingContentService.getInstance().showPopup(analyzerGetter, project, RelativePoint.getSouthWestOf(comp))
+
+      SwingUtilities.invokeLater {
+        InspectionsFUS.signal(e.project, fusTabId, InspectionsFUS.InspectionsEvent.SHOW_POPUP)
+        InspectionsSettingContentService.getInstance().showPopup(analyzerGetter, project, RelativePoint.getSouthWestOf(comp), fusTabId)
+      }
     }
 
     override fun update(e: AnActionEvent) {
@@ -127,7 +135,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     }
   }
 
-  private open class InspectionsBaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null) : DumbAwareAction(), CustomComponentAction {
+  private open class InspectionsBaseAction(var item: StatusItem, val editor: EditorImpl, var title: @Nls String? = null, var description: @Nls String? = null, var actionLink: Link? = null, protected val fusTabId: Int) : DumbAwareAction(), CustomComponentAction {
     companion object {
       private val ICON_TEXT_COLOR: ColorKey = ColorKey.createColorKey("ActionButton.iconTextForeground",
                                                                       UIUtil.getContextHelpForeground())
@@ -185,22 +193,25 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       e.presentation.icon = item.icon
       e.presentation.text = item.text
     }
+
     override fun actionPerformed(e: AnActionEvent) {
     }
   }
 
   private data class Link(val text: @Nls String, val action: () -> Unit)
 
-  private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null) : InspectionsBaseAction(item, editor, actionLink = actionLink) {
-    companion object{
+  private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null, fusTabId: Int) : InspectionsBaseAction(item, editor, actionLink = actionLink, fusTabId = fusTabId) {
+    companion object {
       private val leftRight = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
 
-      private const val previousActionId = "GotoPreviousError"
-      private const val nextActionId = "GotoNextError"
+      private const val PREVIOUS_ACTION_ID = "GotoPreviousError"
+      private const val NEXT_ACTION_ID = "GotoNextError"
 
-      private fun convertSC(str: String) : String {
+      private fun convertSC(str: String): String {
         return "<span style=\"color: ${ColorUtil.toHex(UIUtil.getToolTipForeground())};\"><b>$str</b></span>"
       }
+
+      private val fusActionNotFound = InspectionsFUS.group.registerEvent("inspections_action_not_found", EventFields.Int("tabId"), EventFields.String("actionId", listOf(PREVIOUS_ACTION_ID, NEXT_ACTION_ID)))
     }
 
     init {
@@ -214,13 +225,16 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val action = if (isSecondActionEvent(e.inputEvent)) {
-        ActionManager.getInstance().getAction(previousActionId)
+      val actionId = if (isSecondActionEvent(e.inputEvent)) {
+        PREVIOUS_ACTION_ID
+      } else {
+        NEXT_ACTION_ID
       }
-                   else {
-        ActionManager.getInstance().getAction(nextActionId)
-      } ?: return
 
+      val action = ActionManager.getInstance().getAction(actionId) ?: run {
+        fusActionNotFound.log(fusTabId, actionId)
+        return
+      }
 
       val focusManager = IdeFocusManager.getInstance(editor.project)
 
@@ -230,9 +244,12 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
                                                            editor.dataContext)
 
       val wrapped = delegateEvent.withDataContext(wrapDataContext(delegateEvent.dataContext))
+      InspectionsFUS.performAction(e.project, fusTabId, actionId)
 
       if (focusManager.focusOwner !== editor.contentComponent) {
-        focusManager.requestFocus(editor.contentComponent, true).doWhenDone(Runnable { action.actionPerformed(wrapped) })
+        focusManager.requestFocus(editor.contentComponent, true).doWhenDone(Runnable {
+          action.actionPerformed(wrapped)
+        })
       }
       else {
         action.actionPerformed(wrapped)
@@ -251,16 +268,16 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       e.presentation.icon = item.icon
       e.presentation.text = item.text
 
-      val nextKey = getShortcut(nextActionId)
-      val prevKey = getShortcut(previousActionId)
-      val allTypes = DaemonBundle.message("iw.inspection.all.types", convertSC(nextKey), convertSC(prevKey ))
+      val nextKey = getShortcut(NEXT_ACTION_ID)
+      val prevKey = getShortcut(PREVIOUS_ACTION_ID)
+      val allTypes = DaemonBundle.message("iw.inspection.all.types", convertSC(nextKey), convertSC(prevKey))
 
       description = "<html>$leftRight<p>${allTypes}</html><p>"
     }
 
     protected fun getShortcut(id: String): String {
       val shortcuts = KeymapUtil.getActiveKeymapShortcuts(id).shortcuts
-      return if(shortcuts.isEmpty()) "Not set" else KeymapUtil.getShortcutsText(shortcuts)
+      return if (shortcuts.isEmpty()) "Not set" else KeymapUtil.getShortcutsText(shortcuts)
     }
   }
 }

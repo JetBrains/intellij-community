@@ -11,12 +11,12 @@ interface InspectionsSettingContentService {
   companion object {
     fun getInstance(): InspectionsSettingContentService = ApplicationManager.getApplication().getService(InspectionsSettingContentService::class.java)
   }
-  fun showPopup(analyzerGetter: () -> AnalyzerStatus, project: Project, point: RelativePoint)
+  fun showPopup(analyzerGetter: () -> AnalyzerStatus, project: Project, point: RelativePoint, fusTabId: Int)
 }
 
 class InspectionsSettingContentServiceImpl : InspectionsSettingContentService {
-  override fun showPopup(analyzerGetter: () -> AnalyzerStatus, project: Project, point: RelativePoint) {
-    val panel = InspectionsSettingContent(analyzerGetter, project).panel
+  override fun showPopup(analyzerGetter: () -> AnalyzerStatus, project: Project, point: RelativePoint, fusTabId: Int) {
+    val panel = InspectionsSettingContent(analyzerGetter, project, fusTabId).panel
 
     JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, panel)
