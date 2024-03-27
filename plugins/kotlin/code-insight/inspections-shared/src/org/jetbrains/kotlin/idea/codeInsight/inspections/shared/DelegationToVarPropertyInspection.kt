@@ -3,19 +3,31 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.delegatedSuperTypeEntry
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         delegatedSuperTypeEntry(fun(delegatedSuperTypeEntry) {
-            val parameter = delegatedSuperTypeEntry.delegateExpression?.mainReference?.resolve() as? KtParameter ?: return
+            val delegateExpression = delegatedSuperTypeEntry.delegateExpression ?: return
+            val parameter = delegateExpression.mainReference?.resolve() as? KtParameter ?: return
             if (parameter.valOrVarKeyword?.node?.elementType != KtTokens.VAR_KEYWORD) return
+
+            val containingClass = parameter.containingClassOrObject as? KtClass ?: return
+            if (containingClass != delegatedSuperTypeEntry.getStrictParentOfType<KtClass>()) return
+
+            if (ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).any { it.element != delegateExpression }) return
+
             holder.registerProblem(
                 parameter,
                 KotlinBundle.message("delegating.to.var.property.does.not.take.its.changes.into.account"),
