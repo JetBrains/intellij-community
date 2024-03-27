@@ -11,12 +11,12 @@ use std::path::PathBuf;
 #[cfg(target_os = "windows")]
 use {
     anyhow::bail,
-    bzip2::read::BzDecoder,
     reqwest::blocking::Client,
     sha1::{Digest, Sha1},
     std::env,
     std::io::{BufRead, BufReader, Read},
     std::path::Path,
+    std::process::Command,
     windows::Win32::System::SystemInformation::GetLocalTime,
     winresource::WindowsResource,
 };
@@ -140,34 +140,28 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     assert!(!extract_marker.exists());
     assert!(!dest.exists());
 
-    let archive_file_name = get_file_name(&archive)?;
+    let dest_file_name = get_file_name(dest)?;
 
-    let tarball_top_directory = archive_file_name
-        .strip_suffix(".tar.bz2")
-        .context("No .tar.bz2 suffix on the archive")?;
-
-    let dest_file_name = get_file_name(&dest)?;
-
-    let tmp_dest = dest.parent()
+    let tmp_dest = &dest.parent()
         .context(format!("No parent for {dest:?}"))?
         .join(format!("{dest_file_name}.tmp"));
 
-    fs_remove(&tmp_dest)?;
+    fs_remove(tmp_dest)?;
+    std::fs::create_dir_all(tmp_dest)?;
 
-    let file = File::open(archive)?;
-    let decompressed = BzDecoder::new(file);
-    let mut tarball = tar::Archive::new(decompressed);
+    Command::new("tar")
+        .arg("-xjvf")
+        .arg(get_non_unc_string(archive)?)
+        .arg("-C")
+        .arg(get_non_unc_string(tmp_dest)?)
+        .arg("--strip-components=1")
+        .status()?;
 
-    tarball.unpack(&tmp_dest)?;
+    assert!(tmp_dest.exists());
+    assert!(tmp_dest.is_dir());
 
-    let tarball_stripped = tmp_dest.join(tarball_top_directory);
-    assert!(tarball_stripped.exists());
-    assert!(tarball_stripped.is_dir());
-
-    std::fs::rename(&tarball_stripped, &dest)?;
-    File::create(&extract_marker)?;
-
-    fs_remove(&tmp_dest)?;
+    std::fs::rename(tmp_dest, dest)?;
+    File::create(extract_marker)?;
 
     Ok(())
 }
