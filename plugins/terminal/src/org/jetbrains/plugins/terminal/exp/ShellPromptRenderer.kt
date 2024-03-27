@@ -22,17 +22,39 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
 
   override fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
     val escapedPrompt = state.originalPrompt
+    val escapedRightPrompt = state.originalRightPrompt
     if (escapedPrompt == null) {
       LOG.warn("Original prompt is null, falling back to built-in prompt. Prompt state: $state")
       return fallbackRenderer.calculateRenderingInfo(state)
     }
-    val expandedPrompt = expandPrompt(escapedPrompt)
-    val expandedRightPrompt = state.originalRightPrompt?.let { expandPrompt(it) } ?: TextWithHighlightings("", emptyList())
-    return PromptRenderingInfo(expandedPrompt.text, expandedPrompt.highlightings,
-                               expandedRightPrompt.text, expandedRightPrompt.highlightings)
+    val (prompt, rightPrompt) = if (escapedRightPrompt != null) {
+      // Simple case, the right prompt is represented as a separate escape sequence.
+      expandPrompt(escapedPrompt).content to expandPrompt(escapedRightPrompt).content
+    }
+    else {
+      // There is a monolithic prompt, so we need to check that there is no meaningful after the cursor.
+      // If there is something after the cursor - extract it as a right prompt.
+      val promptInfo = expandPrompt(escapedPrompt)
+      val lines = promptInfo.content.text.split("\n")
+      assert(lines.size == promptInfo.cursorY + 1) { "Cursor is not at the last prompt line. Expanded prompt: $promptInfo, prompt state: $state" }
+      assert(lines[promptInfo.cursorY].length >= promptInfo.cursorX) { "Cursor X position is out of prompt line length. Expanded prompt: $promptInfo, prompt state: $state" }
+      val rightText = lines[promptInfo.cursorY].substring(promptInfo.cursorX)
+      if (rightText.isNotBlank()) {
+        val fullLines = lines.subList(0, lines.size - 1)
+        val cursorOffset = fullLines.fold(0) { acc, line -> acc + line.length } + fullLines.size + promptInfo.cursorX
+        val leftPart = promptInfo.content.subtext(0, cursorOffset)
+        val rightPart = promptInfo.content.subtext(cursorOffset, promptInfo.content.text.length).trimStart()
+        leftPart to rightPart
+      }
+      else {
+        promptInfo.content to TextWithHighlightings("", emptyList())
+      }
+    }
+    return PromptRenderingInfo(prompt.text, prompt.highlightings,
+                               rightPrompt.text, rightPrompt.highlightings)
   }
 
-  private fun expandPrompt(escapedPrompt: String): TextWithHighlightings {
+  private fun expandPrompt(escapedPrompt: String): ExpandedPromptInfo {
     val styleState = StyleState()
     val defaultStyle = TextStyle(TerminalColor { session.colorPalette.defaultForeground },
                                  TerminalColor { session.colorPalette.defaultBackground })
@@ -49,7 +71,7 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
 
     val output: StyledCommandOutput = ShellCommandOutputScraper.scrapeOutput(textBuffer)
     val highlightings = output.styleRanges.toHighlightings(output.text.length)
-    return TextWithHighlightings(output.text, highlightings)
+    return ExpandedPromptInfo(TextWithHighlightings(output.text, highlightings), terminal.cursorX - 1, terminal.cursorY - 1)
   }
 
   private fun List<StyleRange>.toHighlightings(totalTextLength: Int): List<HighlightingInfo> {
@@ -67,6 +89,47 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
     }
     return highlightings
   }
+
+  private fun TextWithHighlightings.subtext(startOffset: Int, endOffset: Int): TextWithHighlightings {
+    assert(startOffset in 0..endOffset && endOffset <= text.length)
+    if (startOffset == endOffset) {
+      return TextWithHighlightings("", emptyList())
+    }
+    val startHighlightingIndex = highlightings.indexOfFirst { startOffset in it.startOffset until it.endOffset }
+    val endHighlightingIndex = highlightings.indexOfFirst { endOffset - 1 in it.startOffset until it.endOffset }
+    assert(startHighlightingIndex >= 0 && endHighlightingIndex >= 0)
+    val startHighlighting = highlightings[startHighlightingIndex]
+    val endHighlighting = highlightings[endHighlightingIndex]
+    val newHighlightings = if (startHighlightingIndex != endHighlightingIndex) {
+      buildList {
+        add(HighlightingInfo(startOffset, startHighlighting.endOffset, startHighlighting.textAttributesProvider))
+        addAll(highlightings.subList(startHighlightingIndex + 1, endHighlightingIndex))
+        add(HighlightingInfo(endHighlighting.startOffset, endOffset, endHighlighting.textAttributesProvider))
+      }
+    }
+    else listOf(HighlightingInfo(startOffset, endOffset, startHighlighting.textAttributesProvider))
+
+    val adjustedHighlightings = newHighlightings.rebase(-newHighlightings.first().startOffset)
+    return TextWithHighlightings(text.substring(startOffset, endOffset), adjustedHighlightings)
+  }
+
+  /** Removes blank text parts with default highlighting from the start */
+  private fun TextWithHighlightings.trimStart(): TextWithHighlightings {
+    if (text.isEmpty()) {
+      return this
+    }
+    val newHighlightings = highlightings.dropWhile {
+      text.substring(it.startOffset, it.endOffset).isBlank() && it.textAttributesProvider === EmptyTextAttributesProvider
+    }
+    if (newHighlightings.isEmpty()) {
+      return TextWithHighlightings("", emptyList())
+    }
+    val startOffset = newHighlightings.first().startOffset
+    val adjustedHighlightings = newHighlightings.rebase(-startOffset)
+    return TextWithHighlightings(text.substring(startOffset), adjustedHighlightings)
+  }
+
+  private data class ExpandedPromptInfo(val content: TextWithHighlightings, val cursorX: Int, val cursorY: Int)
 
   private class FakeDisplay(private val settings: JBTerminalSystemSettingsProviderBase) : TerminalDisplay {
     override fun setCursor(x: Int, y: Int) {

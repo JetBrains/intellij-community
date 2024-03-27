@@ -50,7 +50,7 @@ class TerminalOutputModel(val editor: EditorEx) {
       val blockHighlightings = mutableListOf<HighlightingInfo>()
 
       fun appendTextWithHighlightings(text: String, highlightings: List<HighlightingInfo>) {
-        val adjustedHighlightings = adjustHighlightings(highlightings, document.textLength)
+        val adjustedHighlightings = highlightings.rebase(document.textLength)
         document.insertString(document.textLength, text)
         blockHighlightings.addAll(adjustedHighlightings)
       }
@@ -276,12 +276,6 @@ class TerminalOutputModel(val editor: EditorEx) {
 
   private fun getMaxCapacity(): Int {
     return AdvancedSettings.getInt(NEW_TERMINAL_OUTPUT_CAPACITY_KB).coerceIn(1, 10 * 1024) * 1024
-  }
-
-  private fun adjustHighlightings(highlightings: List<HighlightingInfo>, baseOffset: Int): List<HighlightingInfo> {
-    return highlightings.map {
-      HighlightingInfo(baseOffset + it.startOffset, baseOffset + it.endOffset, it.textAttributesProvider)
-    }
   }
 
   interface TerminalOutputListener {

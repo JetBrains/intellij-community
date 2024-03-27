@@ -53,6 +53,11 @@ internal fun List<TextWithAttributes>.toTextWithHighlightings(): TextWithHighlig
   return TextWithHighlightings(builder.toString(), highlightings)
 }
 
+/** Returns a new list where an [adjustmentValue] added to the start and end offsets of each highlighting */
+internal fun List<HighlightingInfo>.rebase(adjustmentValue: Int): List<HighlightingInfo> {
+  return map { HighlightingInfo(adjustmentValue + it.startOffset, adjustmentValue + it.endOffset, it.textAttributesProvider) }
+}
+
 class TerminalTextHighlighter private constructor(
   private val allHighlightingsSnapshotProvider: () -> AllHighlightingsSnapshot
 ) : EditorHighlighter {
