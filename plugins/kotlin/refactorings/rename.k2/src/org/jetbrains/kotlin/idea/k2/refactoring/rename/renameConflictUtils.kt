@@ -309,9 +309,9 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
                 val containerFQN =
                     if (containingSymbol is KtClassOrObjectSymbol) {
                         containingSymbol.classIdIfNonLocal?.asSingleFqName()?.parent()
-                    } else {
+                    } else if (containingSymbol == null) {
                         (symbol?.psi as? KtElement)?.containingKtFile?.packageFqName
-                    }
+                    } else null
                 containerFQN?.asString()?.takeIf { it.isNotEmpty() }
             }
         } ?: return null
