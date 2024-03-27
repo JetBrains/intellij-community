@@ -10742,6 +10742,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantUnitReturnType/expressionBodyUnitType.kt");
         }
 
+        @TestMetadata("nullableUnit.kt")
+        public void testNullableUnit() throws Exception {
+            runTest("testData/inspectionsLocal/redundantUnitReturnType/nullableUnit.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/redundantUnitReturnType/simple.kt");

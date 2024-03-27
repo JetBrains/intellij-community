@@ -4918,6 +4918,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitReturnType/expressionBodyUnitType.kt");
         }
 
+        @TestMetadata("nullableUnit.kt")
+        public void testNullableUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitReturnType/nullableUnit.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitReturnType/simple.kt");

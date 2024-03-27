@@ -42,9 +42,14 @@ internal class RedundantUnitReturnTypeInspection :
     }
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtNamedFunction): TypeInfo? = when {
-        element.getFunctionLikeSymbol().returnType.isUnit -> TypeInfo(TypeInfo.UNIT)
-        else -> null
+    override fun prepareContext(element: KtNamedFunction): TypeInfo? {
+        val returnType = element.getFunctionLikeSymbol().returnType
+
+        if (!returnType.isMarkedNullable && returnType.isUnit) {
+            return TypeInfo(TypeInfo.UNIT)
+        }
+
+        return null
     }
 
     override fun createQuickFix(
