@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.descriptors.ConfigFileItemSerializer
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -95,6 +96,51 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
     }
 
     override fun serialize(entity: KotlinSettingsEntity, rootElement: Element): Element {
+        KotlinFacetSettings().apply {
+            version = entity.version
+            useProjectSettings = entity.useProjectSettings
+
+            compilerArguments = CompilerArgumentsSerializer.deserializeFromString(entity.compilerArguments)
+
+            compilerSettings = entity.compilerSettings?.let {
+                CompilerSettings().apply {
+                    additionalArguments = it.additionalArguments
+                    scriptTemplates = it.scriptTemplates
+                    scriptTemplatesClasspath = it.scriptTemplatesClasspath
+                    copyJsLibraryFiles = it.copyJsLibraryFiles
+                    outputDirectoryForJsLibraryFiles = it.outputDirectoryForJsLibraryFiles
+                }
+            }
+
+            implementedModuleNames = entity.implementedModuleNames
+            dependsOnModuleNames = entity.dependsOnModuleNames
+            additionalVisibleModuleNames = entity.additionalVisibleModuleNames
+            productionOutputPath = entity.productionOutputPath
+            testOutputPath = entity.testOutputPath
+            kind = entity.kind
+            sourceSetNames = entity.sourceSetNames
+            isTestModule = entity.isTestModule
+            externalProjectId = entity.externalProjectId
+            isHmppEnabled = entity.isHmppEnabled
+            pureKotlinSourceFolders = entity.pureKotlinSourceFolders
+            externalSystemRunTasks = entity.externalSystemRunTasks.map { deserializeExternalSystemTestRunTask(it) }
+
+            val args = compilerArguments
+            val deserializedTargetPlatform =
+                entity.targetPlatform?.deserializeTargetPlatformByComponentPlatforms()
+            val singleSimplePlatform = deserializedTargetPlatform?.componentPlatforms?.singleOrNull()
+            if (singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull() && args != null) {
+                targetPlatform = IdePlatformKind.platformByCompilerArguments(args)
+            }
+            targetPlatform = deserializedTargetPlatform
+        }.serializeFacetSettings(rootElement)
+
+        return rootElement
+    }
+
+    override fun serializeBuilder(entity: WorkspaceEntity.Builder<out KotlinSettingsEntity>, module: ModuleEntity, rootElement: Element): Element {
+        entity as KotlinSettingsEntity.Builder
+
         KotlinFacetSettings().apply {
             version = entity.version
             useProjectSettings = entity.useProjectSettings

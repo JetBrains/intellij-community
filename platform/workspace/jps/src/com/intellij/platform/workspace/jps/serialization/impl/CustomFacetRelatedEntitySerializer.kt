@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -78,9 +79,11 @@ interface CustomFacetRelatedEntitySerializer<T: ModuleSettingsBase> {
    * Default implementation creates "configuration" root element and calls [serialize] method
    */
   fun serializeIntoXml(entity: T): Element = serialize(entity, Element(JpsFacetSerializer.CONFIGURATION_TAG))
+  fun serializeIntoXmlBuilder(entity: WorkspaceEntity.Builder<out T>, module: ModuleEntity): Element = serializeBuilder(entity, module, Element(JpsFacetSerializer.CONFIGURATION_TAG))
 
   /**
    * Method for creation facet XML tag from root type entity and root element passed as parameters
    */
   fun serialize(entity: T, rootElement: Element): Element
+  fun serializeBuilder(entity: WorkspaceEntity.Builder<out T>, module: ModuleEntity, rootElement: Element): Element
 }

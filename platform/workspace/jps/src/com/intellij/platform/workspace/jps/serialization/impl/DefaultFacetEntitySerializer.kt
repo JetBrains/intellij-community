@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -118,7 +119,13 @@ class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEnti
     return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
   }
 
+  override fun serializeIntoXmlBuilder(entity: WorkspaceEntity.Builder<out FacetEntity>, module: ModuleEntity): Element {
+    entity as FacetEntity.Builder
+    return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
+  }
+
   override fun serialize(entity: FacetEntity, rootElement: Element): Element = error("Unsupported operation")
+  override fun serializeBuilder(entity: WorkspaceEntity.Builder<out FacetEntity>, module: ModuleEntity, rootElement: Element): Element = error("Unsupported operation")
 
   companion object {
     internal const val ALL_FACETS_TYPES_MARKER = "<all types of facets>"

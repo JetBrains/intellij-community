@@ -212,14 +212,11 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       val moduleEntity = event.storageAfter.resolve(ModuleId(facet.module.name))!!
       val facetConfigurationElement = if (facet is FacetBridge<*, *>) {
         val builder = event.storageAfter.toBuilder()
-        builder.removeEntity(rootEntity)
         val thief = Ref.create<ModuleEntity.Builder>()
         builder.modifyEntity(moduleEntity) {
           thief.set(this)
         }
-        val entityBuilder: WorkspaceEntity.Builder<out ModuleSettingsBase> = facet.config.getEntityBuilder(thief.get()!!)
-        val added = builder.addEntity(entityBuilder)
-        serializer.serializeIntoXml(added)
+        serializer.serializeIntoXmlBuilder(facet.config.getEntityBuilder(thief.get()!!), moduleEntity)
       } else {
         FacetUtil.saveFacetConfiguration(facet)
       }
