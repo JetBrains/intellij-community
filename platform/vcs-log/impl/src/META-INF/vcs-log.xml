@@ -81,6 +81,7 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
+    <vcsAnnotationGutterActionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowInFileHistoryAnnotationActionProvider" />
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
 
