@@ -8,8 +8,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
+import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.containers.OrderedSet
@@ -165,19 +164,30 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
             val psiFactory = KtPsiFactory(targetClass.project)
             val newReceiver = psiFactory.createExpression(fqName)
             return ReferencesSearch.search(targetClass, targetClass.useScope).mapNotNull {
-                val callExpression = it.element.parent as? KtCallExpression ?: return@mapNotNull null
-                val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
-                val parentClass = callExpression.getStrictParentOfType<KtClass>()
+                val element = it.element
+                val parent = element.parent
                 when {
-                    // Explicit receiver
-                    qualifiedExpression != null ->
-                        if (parentClass == containingClass) {
-                            qualifiedExpression.replace(callExpression)
-                        } else {
-                            qualifiedExpression.receiverExpression.replace(newReceiver)
+                    parent is KtCallExpression -> {
+                        val qualifiedExpression = parent.getQualifiedExpressionForSelector()
+                        val parentClass = parent.getStrictParentOfType<KtClass>()
+                        when {
+                            // Explicit receiver
+                            qualifiedExpression != null ->
+                                if (parentClass == containingClass) {
+                                    qualifiedExpression.replace(parent)
+                                } else {
+                                    qualifiedExpression.receiverExpression.replace(newReceiver)
+                                }
+                            // Implicit receiver
+                            else -> parent.replace(psiFactory.createExpressionByPattern("$0.$1", newReceiver, parent))
                         }
-                    // Implicit receiver
-                    else -> callExpression.replace(psiFactory.createExpressionByPattern("$0.$1", newReceiver, callExpression))
+                    }
+                    parent is KtUserType ->
+                        parent.qualifier?.apply { typeArgumentList?.delete() }
+                    element is PsiJavaCodeReferenceElement ->
+                        element.qualifier.safeAs<PsiJavaCodeReferenceElement>()?.apply { parameterList?.delete() }
+                    else ->
+                        null
                 }
             }
         }

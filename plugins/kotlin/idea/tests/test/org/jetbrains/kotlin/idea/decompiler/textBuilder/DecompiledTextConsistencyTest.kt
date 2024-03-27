@@ -61,7 +61,7 @@ class DecompiledTextConsistencyTest : LightJavaCodeInsightFixtureTestCase() {
         }
     }
 
-    private inner class ResolverForDecompilerImpl(val module: ModuleDescriptor) : ResolverForDecompiler {
+    private class ResolverForDecompilerImpl(val module: ModuleDescriptor) : ResolverForDecompiler {
         override fun resolveTopLevelClass(classId: ClassId): ClassDescriptor? =
             module.resolveTopLevelClass(classId.asSingleFqName(), NoLookupLocation.FROM_TEST)
 

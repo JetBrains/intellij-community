@@ -131,8 +131,8 @@ class TargetEnvironmentLanguagesPanel(private val project: Project,
     })
   }
 
-  private abstract inner class ChangeRuntimeActionBase(protected val language: LanguageRuntimeConfiguration,
-                                                       @NlsActions.ActionText text: String) : AnAction(text)
+  private abstract class ChangeRuntimeActionBase(protected val language: LanguageRuntimeConfiguration,
+                                                 @NlsActions.ActionText text: String) : AnAction(text)
 
   private inner class DuplicateRuntimeAction(runtime: LanguageRuntimeConfiguration)
     : ChangeRuntimeActionBase(runtime, ExecutionBundle.message("targets.details.action.duplicate.text")) {

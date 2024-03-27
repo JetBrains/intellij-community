@@ -64,7 +64,7 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
   override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndReimport(projectPath)) else emptyList()
   override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and reload the project")
 
-  inner class DisableOfflineAndReimport(private val projectPath: String) : BuildIssueQuickFix {
+  class DisableOfflineAndReimport(private val projectPath: String) : BuildIssueQuickFix {
     override val id = offlineQuickFixId
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false
@@ -80,7 +80,7 @@ class UnresolvedDependencyBuildIssue(dependencyName: String,
   override val quickFixes = if (isOfflineMode) listOf<BuildIssueQuickFix>(DisableOfflineAndRerun()) else emptyList()
   override val description: String = buildDescription(failureMessage, isOfflineMode, "Disable offline mode and rerun the build")
 
-  inner class DisableOfflineAndRerun : BuildIssueQuickFix {
+  class DisableOfflineAndRerun : BuildIssueQuickFix {
     override val id = offlineQuickFixId
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false

@@ -18,7 +18,7 @@ open class SingleHeightTabs(project: Project?, @Suppress("UNUSED_PARAMETER") foc
 
   override fun createTabLabel(info: TabInfo): TabLabel = SingleHeightLabel(this, info)
 
-  open inner class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
+  open class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
     override fun getPreferredSize(): Dimension {
       return Dimension(super.getPreferredSize().width, getPreferredHeight())
     }
