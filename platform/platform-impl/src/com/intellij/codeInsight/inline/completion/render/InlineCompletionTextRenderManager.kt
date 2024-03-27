@@ -41,7 +41,7 @@ internal class InlineCompletionTextRenderManager private constructor(
   private var elementsCounter = 0
   private var isActive = true
 
-  private fun append(text: String, attributes: TextAttributes, disposable: Disposable): RenderedInlineCompletionElementDescriptor? {
+  private fun append(text: String, attributes: TextAttributes, disposable: Disposable): RenderedInlineCompletionElementDescriptor {
     check(isActive) { "Cannot render an element since the renderer is already disposed." }
     elementsCounter++
     disposable.whenDisposed {
@@ -67,11 +67,9 @@ internal class InlineCompletionTextRenderManager private constructor(
     private var state = RenderState.RENDERING_SUFFIX
     private val descriptor = Descriptor()
 
-    fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor? {
-      if (text.isEmpty()) {
-        return null
-      }
+    fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor {
       val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
+      check(newLines.isNotEmpty())
       render(newLines)
       return descriptor
     }
@@ -95,7 +93,6 @@ internal class InlineCompletionTextRenderManager private constructor(
       if (state != RenderState.RENDERING_SUFFIX) {
         return newLines
       }
-      check(newLines.isNotEmpty())
 
       val previousSuffix = suffixInlay?.renderer?.blocks ?: emptyList()
       val suffixBlocks = previousSuffix + newLines[0]
@@ -193,7 +190,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       attributes: TextAttributes,
       offset: Int,
       disposable: Disposable
-    ): RenderedInlineCompletionElementDescriptor? {
+    ): RenderedInlineCompletionElementDescriptor {
       ThreadingAssertions.assertEventDispatchThread()
 
       val storage = editor.getUserData(STORAGE_KEY) ?: Storage()
