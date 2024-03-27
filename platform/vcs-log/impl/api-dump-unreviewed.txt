@@ -1553,22 +1553,28 @@ f:com.intellij.vcs.log.ui.actions.MoveDiffPreviewToRightAction
 - <init>():V
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-c:com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction
+a:com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction
 - com.intellij.openapi.project.DumbAwareAction
-- p:<init>(com.intellij.vcs.log.impl.VcsLogTabLocation):V
+- p:<init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:getDescription(java.lang.String):java.lang.String
+- p:getFilters(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.vcs.log.VcsLogFilterCollection
+- pa:getLocation(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.vcs.log.impl.VcsLogTabLocation
 - p:getText(java.lang.String):java.lang.String
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InEditor
 - com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction
-- p:<init>():V
+- <init>():V
 - p:getDescription(java.lang.String):java.lang.String
+- p:getLocation(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.vcs.log.impl.VcsLogTabLocation
 - p:getText(java.lang.String):java.lang.String
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InToolWindow
 - com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction
-- p:<init>():V
+- <init>():V
+- p:getFilters(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.vcs.log.VcsLogFilterCollection
+- p:getLocation(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.vcs.log.impl.VcsLogTabLocation
 c:com.intellij.vcs.log.ui.actions.PreferCommitDateAction
 - com.intellij.vcs.log.ui.actions.BooleanPropertyToggleAction
 - com.intellij.openapi.project.DumbAware
