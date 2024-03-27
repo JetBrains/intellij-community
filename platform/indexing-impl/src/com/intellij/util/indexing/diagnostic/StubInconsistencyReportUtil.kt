@@ -47,13 +47,8 @@ object StubInconsistencyReportUtil {
   )
 
   @JvmStatic
-  fun reportStubTreeAndIndexDoNotMatch(project: Project, source: StubTreeAndIndexDoNotMatchSource?) {
-    if (source == null) {
-      STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT.log(project)
-    }
-    else {
-      STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT.log(project, EventPair(STUB_TREE_AND_INDEX_DO_NOT_MATCH_SOURCE_FIELD, source))
-    }
+  fun reportStubTreeAndIndexDoNotMatch(project: Project, source: StubTreeAndIndexDoNotMatchSource) {
+    STUB_TREE_AND_INDEX_DO_NOT_MATCH_EVENT.log(project, EventPair(STUB_TREE_AND_INDEX_DO_NOT_MATCH_SOURCE_FIELD, source))
   }
 
   private val CHECK_REASON_FIELD = EventFields.Enum<SourceOfCheck>("reason")

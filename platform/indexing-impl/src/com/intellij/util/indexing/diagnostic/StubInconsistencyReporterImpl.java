@@ -44,7 +44,7 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
   }
 
   @Override
-  public void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @Nullable StubTreeAndIndexDoNotMatchSource source) {
+  public void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @NotNull StubTreeAndIndexDoNotMatchSource source) {
     StubInconsistencyReportUtil.reportStubTreeAndIndexDoNotMatch(project, source);
   }
 }
