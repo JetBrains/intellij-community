@@ -52,7 +52,7 @@ public interface StubInconsistencyReporter {
 
   void reportStubInconsistency(@NotNull Project project,
                                @Nullable StubInconsistencyReporter.SourceOfCheck reason,
-                               @Nullable InconsistencyType type);
+                               @NotNull InconsistencyType type);
 
   /**
    * @deprecated Use {@link #reportStubInconsistency(Project, SourceOfCheck, InconsistencyType)}
