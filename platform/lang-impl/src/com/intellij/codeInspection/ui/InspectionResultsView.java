@@ -123,7 +123,15 @@ public final class InspectionResultsView extends JPanel implements Disposable, D
     myTree = new InspectionTree(this);
 
     mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    JScrollPane scrollPane;
+    if (ExperimentalUI.isNewUI()) {
+      scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
+      ScrollableContentBorder.setup(scrollPane, Side.LEFT);
+    }
+    else {
+      scrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
+    }
+    mySplitter.setFirstComponent(scrollPane);
     mySplitter.setHonorComponentsMinimumSize(false);
 
     mySplitter.addPropertyChangeListener(evt -> {
