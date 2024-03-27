@@ -2681,6 +2681,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/stringTemplates/multipleEntriesWithSuffix.kt");
             }
 
+            @TestMetadata("propertyFromReceiver.kt")
+            public void testPropertyFromReceiver() throws Exception {
+                runTest("testData/refactoring/extractFunction/stringTemplates/propertyFromReceiver.kt");
+            }
+
             @TestMetadata("rawTemplateWithSubstring.kt")
             public void testRawTemplateWithSubstring() throws Exception {
                 runTest("testData/refactoring/extractFunction/stringTemplates/rawTemplateWithSubstring.kt");

@@ -1816,6 +1816,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/stringTemplates/multipleEntriesWithSuffix.kt");
         }
 
+        @TestMetadata("propertyFromReceiver.kt")
+        public void testPropertyFromReceiver() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/stringTemplates/propertyFromReceiver.kt");
+        }
+
         @TestMetadata("rawTemplateWithSubstring.kt")
         public void testRawTemplateWithSubstring() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/stringTemplates/rawTemplateWithSubstring.kt");
