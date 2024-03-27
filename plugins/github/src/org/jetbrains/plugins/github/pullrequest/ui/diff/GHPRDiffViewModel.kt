@@ -7,10 +7,7 @@ import com.intellij.collaboration.async.mapNullableScoped
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
-import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiscussionsViewModel
-import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
-import com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.*
 import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
@@ -30,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
@@ -69,8 +67,10 @@ internal class GHPRDiffViewModelImpl(
   override val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 
   private val changesFetchFlow = dataProvider.changesData.fetchedChangesFlow().shareIn(cs, SharingStarted.Lazily, 1)
+  private val changesSorter = GithubPullRequestsProjectUISettings.getInstance(project).changesGroupingState
+    .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val helper =
-    CodeReviewDiffViewModelComputer(changesFetchFlow) { changesBundle, change ->
+    CodeReviewDiffViewModelComputer(changesFetchFlow, changesSorter) { changesBundle, change ->
       val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
       val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
                                ?: error("Could not create diff producer from $change")

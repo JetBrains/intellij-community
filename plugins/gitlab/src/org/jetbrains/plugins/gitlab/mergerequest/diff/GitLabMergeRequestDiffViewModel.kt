@@ -7,10 +7,12 @@ import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProduc
 import com.intellij.collaboration.ui.codereview.diff.model.CodeReviewDiffViewModelComputer
 import com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModel
 import com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
+import com.intellij.collaboration.ui.codereview.diff.model.RefComparisonChangesSorter
 import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
@@ -21,6 +23,7 @@ import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModel
@@ -49,9 +52,10 @@ internal class GitLabMergeRequestDiffViewModelImpl(
   parentCs.childScope(CoroutineName("GitLab Merge Request Diff Review VM")),
   currentUser, mergeRequest
 ) {
-
+  private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
+    .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val helper = CodeReviewDiffViewModelComputer(
-    mergeRequest.changes.mapScoped { async { it.loadRevisionsAndParseChanges() } }
+    mergeRequest.changes.mapScoped { async { it.loadRevisionsAndParseChanges() } }, changesSorter
   ) { changesBundle, change ->
     val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
     val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
