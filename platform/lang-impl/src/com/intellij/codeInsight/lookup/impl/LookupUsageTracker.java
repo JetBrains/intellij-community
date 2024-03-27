@@ -37,7 +37,7 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 28);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 29);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
