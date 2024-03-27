@@ -121,16 +121,9 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
         else:
             # Always compile the .c (and not the .pyx) file (which we should keep
             # up-to-date by running build_tools/build.py).
-
-            # The C file for Python 3.11 and older is incompatible with
-            # Python 3.12.
-            effective_c_file_name = "%s.c" % (
-                extension_name + "_312" if IS_PY312_OR_GREATER and should_add_python_3_12_suffix else extension_name
-            )
-
             ext_modules = [Extension(
                 "%s%s.%s" % (dir_name, "_ext" if extended else "", target_pydevd_name),
-                [os.path.join(dir_name, effective_c_file_name)],
+                [os.path.join(dir_name, extension_name + ".c")],
                 # uncomment to generate pdbs for visual studio.
                 # extra_compile_args=["-Zi", "/Od"],
                 # extra_link_args=["-debug"],
