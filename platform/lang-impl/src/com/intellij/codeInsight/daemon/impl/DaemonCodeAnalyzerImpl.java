@@ -160,6 +160,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Disposer.register(this, myListeners);
   }
 
+  @NotNull
   private FileEditorManager getFileEditorManager() {
     FileEditorManager result = fileEditorManager;
     if (result == null) {
@@ -169,6 +170,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return result;
   }
 
+  @NotNull
   private PsiDocumentManager getPsiDocumentManager() {
     PsiDocumentManager result = psiDocumentManager;
     if (result == null) {
@@ -492,8 +494,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         throw new ProcessCanceledException();
       }
       ProgressIndicator progress = session.getProgressIndicator();
-      // there can be PCE in FJP during queuePassesCreation
-      // no PCE guarantees session is not null
+      // there can be PCE in FJP during queuePassesCreation; "no PCE" guarantees that session is not null
       progress.checkCanceled();
       try {
         long start = System.currentTimeMillis();
@@ -1006,7 +1007,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   // made this class static and fields clearable to avoid leaks when this object stuck in invokeLater queue
   private static final class UpdateRunnable implements Runnable {
-    private Project myProject;
+    private volatile Project myProject;
     private UpdateRunnable(@NotNull Project project) {
       myProject = project;
     }
@@ -1015,42 +1016,44 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     @Override
     public void run() {
-      runUpdate(myProject);
+      Project project = myProject;
+      if (project != null &&
+          !project.isDefault() &&
+          project.isInitialized() &&
+          !LightEdit.owns(project)) {
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).runUpdate();
+      }
     }
   }
 
-  private static void runUpdate(@Nullable Project project) {
+  private void runUpdate() {
     ThreadingAssertions.assertEventDispatchThread();
-    DaemonCodeAnalyzerImpl dca;
-    if (project == null ||
-        project.isDefault() ||
-        !project.isInitialized() ||
-        project.isDisposed() ||
-        LightEdit.owns(project) ||
-        (dca = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
+    if (myDisposed) {
       return;
     }
     if (PowerSaveMode.isEnabled()) {
       // to show the correct "power save" traffic light icon
-      dca.myListeners.repaintTrafficLightIconForAllEditors();
+      myListeners.repaintTrafficLightIconForAllEditors();
       return;
     }
 
-    synchronized (dca) {
-      long actualDelay = dca.myScheduledUpdateTimestamp - System.nanoTime();
+    synchronized (this) {
+      long actualDelay = myScheduledUpdateTimestamp - System.nanoTime();
       if (actualDelay > 0) {
          // started too soon (there must've been some typings after we'd scheduled this; need to re-schedule)
-        dca.scheduleUpdateRunnable(actualDelay);
+        scheduleUpdateRunnable(actualDelay);
         return;
       }
     }
 
-    Collection<? extends FileEditor> activeEditors = dca.getSelectedEditors();
-    boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
+    Collection<? extends FileEditor> activeEditors = getSelectedEditors();
+    boolean updateByTimerEnabled = isUpdateByTimerEnabled();
+    PsiDocumentManager documentManager = getPsiDocumentManager();
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
         updateByTimerEnabled, " activeEditors:", activeEditors,
-        (dca.getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(dca.getPsiDocumentManager().getUncommittedDocuments()) + ")" : "()")
+        (documentManager.hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(
+          documentManager.getUncommittedDocuments()) + ")" : "()")
         + (ApplicationManager.getApplication().isWriteAccessAllowed() ? " inside write action" : "r"));
     }
     if (!updateByTimerEnabled || activeEditors.isEmpty()) {
@@ -1062,11 +1065,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       // we'll restart when the write action finish
       return;
     }
-    if (dca.getPsiDocumentManager().hasEventSystemEnabledUncommittedDocuments()) {
+    if (documentManager.hasEventSystemEnabledUncommittedDocuments()) {
       // restart when everything committed
-      dca.getPsiDocumentManager().performLaterWhenAllCommitted(() -> {
+      documentManager.performLaterWhenAllCommitted(() -> {
         LOG.debug("Rescheduled after commit");
-        dca.scheduleIfNotRunning();
+        scheduleIfNotRunning();
       });
       return;
     }
@@ -1081,12 +1084,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             PassExecutorService.log(null, null, "runUpdate for ", fileEditor, " rescheduled because the editor was not loaded yet");
           }
           AsyncEditorLoader.Companion.performWhenLoaded(textEditor.getEditor(), () ->
-            dca.stopProcess(true, "restart after editor is loaded"));
+            stopProcess(true, "restart after editor is loaded"));
         }
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
-          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
-          submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(myProject, virtualFile);
+          submitted |= psiFile != null && queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
           if (PassExecutorService.LOG.isDebugEnabled()) {
             PassExecutorService.log(null, null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
           }
@@ -1094,9 +1097,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       }
       if (!submitted) {
         // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
-        ApplicationManager.getApplication().invokeLater(() -> {
-          dca.stopProcess(true, "Couldn't create session for " + activeEditors);
-        });
+        // invokeLater is required because we can't stop daemon from inside UpdateRunnable, since its future hasn't been scheduled yet
+        ApplicationManager.getApplication().invokeLater(() ->
+        stopProcess(true, "Couldn't create session for "+activeEditors), __->myDisposed);
       }
     }
     catch (ProcessCanceledException ignored) {
@@ -1377,7 +1380,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   private static @Nullable Project getProject(@Nullable Window window) {
-    // A window may be not an IdeFrame itself, but owned by an IdeFrame, e.g. FloatingDecorator.
+    // A window may be not an IdeFrame itself, but owned by an IdeFrame, e.g., FloatingDecorator.
     var maybeIdeFrame = window;
     while (maybeIdeFrame != null) {
       if (maybeIdeFrame instanceof IdeFrame ideFrame) {
