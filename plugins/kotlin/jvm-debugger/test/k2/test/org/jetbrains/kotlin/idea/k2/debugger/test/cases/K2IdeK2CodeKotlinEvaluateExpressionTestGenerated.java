@@ -1720,6 +1720,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/privatePropertyWithNonDefaultAccessor.kt");
             }
 
+            @TestMetadata("privateToplevelField.kt")
+            public void testPrivateToplevelField() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/privateToplevelField.kt");
+            }
+
             @TestMetadata("privateToplevelProperty.kt")
             public void testPrivateToplevelProperty() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/privateToplevelProperty.kt");
