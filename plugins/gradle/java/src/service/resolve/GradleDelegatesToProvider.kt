@@ -5,13 +5,14 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.psi.*
 import com.intellij.util.asSafely
 import groovy.lang.Closure
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ACTION
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.service.resolve.transformation.GRADLE_GENERATED_CLOSURE_OVERLOAD_DELEGATE_KEY
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
@@ -26,11 +27,11 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
 
   override fun getDelegatesToInfo(expression: GrFunctionalExpression): DelegatesToInfo? {
     if (expression !is GrClosableBlock) return null
-    var delegatesToInfo = processBeforeContributors(expression)
-    if (delegatesToInfo != null) return delegatesToInfo
-
     val file = expression.containingFile
     if (file == null || !FileUtilRt.extensionEquals(file.name, GradleConstants.EXTENSION)) return null
+
+    var delegatesToInfo = processBeforeContributors(expression)
+    if (delegatesToInfo != null) return delegatesToInfo
 
     for (contributor in GradleMethodContextContributor.EP_NAME.extensions) {
       delegatesToInfo = contributor.getDelegatesToInfo(expression)
@@ -51,8 +52,30 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     val argumentMapping = resolvedCall.candidate?.argumentMapping ?: return null
     val type = argumentMapping.expectedType(ExpressionArgument(expression)) as? PsiClassType ?: return null
     val clazz = type.resolve() ?: return null
-    return getDelegateFromAction(clazz, type, resolvedCall.substitutor)
-           ?: getDelegateFromClosure(clazz, resolvedCall)
+    val delegate = getDelegateFromAction(clazz, type, resolvedCall.substitutor)
+                   ?: getDelegateFromClosure(clazz, resolvedCall)
+                   ?: return null
+    val optionallyWrapped = replaceWithProjectAwareType(delegate, expression, resolvedCall)
+    return DelegatesToInfo(optionallyWrapped, Closure.DELEGATE_FIRST)
+  }
+
+  /**
+   * Allows some [NonCodeMembersContributor]'s like [GradleArtifactHandlerContributor] adding additional resolve logic for PSI elements
+   * inside the closable block for which we determine a delegate. For such cases it creates a delegate as [GradleProjectAwareType].
+   */
+  private fun replaceWithProjectAwareType(delegate: PsiType, expression: GrClosableBlock, resolvedCall: GroovyMethodResult): PsiType {
+    val projectAwareReceiver = resolvedCall.candidate?.receiverType
+    if (projectAwareReceiver !is GradleProjectAwareType) {
+      return delegate
+    }
+    val fqClassName = delegate.canonicalText
+    if (fqClassName != GRADLE_API_ARTIFACT_HANDLER) {
+      return delegate
+    }
+    val type = createType(fqClassName, expression)
+    // propagate GradleProjectAwareType wrap from receiver class to delegate
+    val result: GradleProjectAwareType = projectAwareReceiver.setType(type)
+    return result
   }
 
   /**
@@ -72,7 +95,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
    * It also works for other classes with @HasImplicitReceiver and single generic parameter.
    * But currently only Action has this annotation in Gradle sources.
    */
-  private fun getDelegateFromAction(clazz: PsiClass, type: PsiClassType, substitutor: PsiSubstitutor): DelegatesToInfo? {
+  private fun getDelegateFromAction(clazz: PsiClass, type: PsiClassType, substitutor: PsiSubstitutor): PsiType? {
     if (clazz.qualifiedName != GRADLE_API_ACTION
         && !clazz.hasAnnotation("org.gradle.api.HasImplicitReceiver")) {
       return null
@@ -85,8 +108,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     else {
       genericParameter
     }
-    val delegateType = substitutor.substitute(specificType)
-    return DelegatesToInfo(delegateType, Closure.DELEGATE_FIRST)
+    return substitutor.substitute(specificType)
   }
 
   /**
@@ -94,21 +116,23 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
    * generic. If Closure parameter has @DelegatesTo, it should be processed by
    * [org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DefaultDelegatesToProvider]
    */
-  private fun getDelegateFromClosure(clazz: PsiClass, resolvedCall: GroovyMethodResult): DelegatesToInfo? {
+  private fun getDelegateFromClosure(clazz: PsiClass, resolvedCall: GroovyMethodResult): PsiType? {
     if (clazz.qualifiedName != GROOVY_LANG_CLOSURE
-        || clazz.hasAnnotation(GROOVY_LANG_DELEGATES_TO)) return null
-
+        || clazz.hasAnnotation(GROOVY_LANG_DELEGATES_TO)
+    ) {
+      return null
+    }
     val methodName = resolvedCall.candidate?.method?.name ?: return null
     val classProvidingMethod = resolvedCall.candidate?.receiverType.resolve() ?: return null
     val methodOverloads = classProvidingMethod.findMethodsAndTheirSubstitutorsByName(methodName, true)
     for (method in methodOverloads) {
-      val delegatesToInfo = getDelegateFromMethodSignature(psiMethod = method.first, substitutor = method.second)
-      if (delegatesToInfo != null) return delegatesToInfo
+      val delegate = getDelegateFromMethodSignature(psiMethod = method.first, substitutor = method.second)
+      if (delegate != null) return delegate
     }
     return null
   }
 
-  private fun getDelegateFromMethodSignature(psiMethod: PsiMethod, substitutor: PsiSubstitutor): DelegatesToInfo? {
+  private fun getDelegateFromMethodSignature(psiMethod: PsiMethod, substitutor: PsiSubstitutor): PsiType? {
     val lastParam = psiMethod.parameters.lastOrNull() ?: return null
     val paramType = lastParam.type.asSafely<PsiClassType>() ?: return null
     val resolvedClass = paramType.resolve() ?: return null
