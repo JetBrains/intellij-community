@@ -53,11 +53,14 @@ import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 // cannot be final - extended by Bazel plugin
 public class CompilerManagerImpl extends CompilerManager {
@@ -425,6 +428,44 @@ public class CompilerManagerImpl extends CompilerManager {
                                                  Collection<? extends File> sourcePath,
                                                  Collection<? extends File> files,
                                                  File outputDir) throws IOException, CompilationException {
+    final List<CompilationException.Message> messages = new SmartList<>();
+    final DiagnosticListener<JavaFileObject> diagnosticListener = d -> {
+      final JavaFileObject source = d.getSource();
+      final URI uri = source != null ? source.toUri() : null;
+      URL url = null;
+      if (uri != null) {
+        try {
+          url = uri.toURL();
+        }
+        catch (MalformedURLException e) {}
+      }
+      messages.add(new CompilationException.Message(
+        kindToCategory(d.getKind()), d.getMessage(Locale.US), url != null? url.toString() : null, (int)d.getLineNumber(), (int)d.getColumnNumber()
+      ));
+    };
+
+    final List<ClassObject> result = new ArrayList<>();
+
+    boolean compiledOk = compileJavaCode(
+      options, platformCp, classpath, upgradeModulePath, modulePath, sourcePath, files, outputDir, diagnosticListener, result::add);
+
+    if (!compiledOk) {
+      throw new CompilationException("Compilation failed", messages);
+    }
+
+    return result;
+  }
+
+  public boolean compileJavaCode(List<String> options,
+                                 Collection<? extends File> platformCp,
+                                 Collection<? extends File> classpath,
+                                 Collection<? extends File> upgradeModulePath,
+                                 Collection<? extends File> modulePath,
+                                 Collection<? extends File> sourcePath,
+                                 Collection<? extends File> files,
+                                 File outputDir,
+                                 DiagnosticListener<? super JavaFileObject> diagnosticListener,
+                                 Consumer<? super ClassObject> outputListener) throws IOException {
     final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
 
     final Sdk sdk = runtime.getFirst();
@@ -446,9 +487,6 @@ public class CompilerManagerImpl extends CompilerManager {
       throw new IOException("Was not able to determine JDK for project " + myProject.getName());
     }
 
-    final OutputCollector outputCollector = new OutputCollector();
-    DiagnosticCollector diagnostic = new DiagnosticCollector();
-
     final Set<File> sourceRoots = FileCollectionFactory.createCanonicalFileSet();
     if (!sourcePath.isEmpty()) {
       sourceRoots.addAll(sourcePath);
@@ -465,30 +503,20 @@ public class CompilerManagerImpl extends CompilerManager {
 
     final ExternalJavacManager javacManager = getJavacManager();
     final CompilationPaths paths = CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath);
+    final OutputFileConsumer outputForwarder = new OutputFileConsumer() {
+      @Override
+      public void save(@NotNull OutputFileObject fileObject) {
+        final BinaryContent content = fileObject.getContent();
+        outputListener.accept(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
+      }
+    };
     // do not keep process alive in tests since every test expects all spawned processes to terminate in teardown
     boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaHome, -1, Collections.emptyList(), options, paths, files, outs, diagnostic, outputCollector,
+      javaHome, -1, Collections.emptyList(), options, paths, files, outs, new DiagnosticForwarder(diagnosticListener), outputForwarder,
       new JavacCompilerTool(), CanceledStatus.NULL, !ApplicationManager.getApplication().isUnitTestMode()
     ).get();
 
-    if (!compiledOk) {
-      final List<CompilationException.Message> messages = new SmartList<>();
-      for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
-        final JavaFileObject source = d.getSource();
-        final URI uri = source != null ? source.toUri() : null;
-        messages.add(new CompilationException.Message(
-          kindToCategory(d.getKind()), d.getMessage(Locale.US), uri != null? uri.toURL().toString() : null, (int)d.getLineNumber(), (int)d.getColumnNumber()
-        ));
-      }
-      throw new CompilationException("Compilation failed", messages);
-    }
-
-    final List<ClassObject> result = new ArrayList<>();
-    for (OutputFileObject fileObject : outputCollector.getCompiledClasses()) {
-      final BinaryContent content = fileObject.getContent();
-      result.add(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
-    }
-    return result;
+    return compiledOk;
   }
 
   private static boolean isJdkOrJre(@Nullable String path) {
@@ -586,8 +614,7 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
-  private static class DiagnosticCollector implements DiagnosticOutputConsumer {
-    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<>();
+  private static abstract class AbstractDiagnosticConsumer implements DiagnosticOutputConsumer {
     @Override
     public void outputLineAvailable(String line) {
       // for debugging purposes uncomment this line
@@ -610,7 +637,10 @@ public class CompilerManagerImpl extends CompilerManager {
     @Override
     public void customOutputData(String pluginId, String dataName, byte[] data) {
     }
+  }
 
+  private static class DiagnosticCollector extends AbstractDiagnosticConsumer {
+    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<>();
     @Override
     public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       myDiagnostics.add(diagnostic);
@@ -621,17 +651,14 @@ public class CompilerManagerImpl extends CompilerManager {
     }
   }
 
+  private static class DiagnosticForwarder extends AbstractDiagnosticConsumer {
+    private final DiagnosticListener<? super JavaFileObject> listener;
 
-  private static class OutputCollector implements OutputFileConsumer {
-    private final List<OutputFileObject> myClasses = new ArrayList<>();
+    private DiagnosticForwarder(DiagnosticListener<? super JavaFileObject> listener) { this.listener = listener; }
 
     @Override
-    public void save(@NotNull OutputFileObject fileObject) {
-      myClasses.add(fileObject);
-    }
-
-    List<OutputFileObject> getCompiledClasses() {
-      return myClasses;
+    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
+      listener.report(diagnostic);
     }
   }
 
