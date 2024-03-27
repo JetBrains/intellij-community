@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.IntermediateResultHandler
@@ -104,9 +105,13 @@ class GradleBuildActionResultHandler(
     }
   }
 
-  private fun runCancellable(action: () -> Unit) {
+  private fun runCancellable(action: suspend () -> Unit) {
     try {
-      resolverContext.runCancellable(action)
+      resolverContext.runCancellable {
+        runBlockingCancellable {
+          action()
+        }
+      }
     }
     catch (ignored: ProcessCanceledException) {
       // Gradle TAPI cannot handle ProcessCanceledException

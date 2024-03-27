@@ -13,12 +13,12 @@ class GradleModelFetchActionResultHandler(
   private val resultHandler: GradleSyncActionResultHandler
 ) {
 
-  fun onPhaseCompleted(phase: GradleModelFetchPhase, state: GradleModelHolderState) {
+  suspend fun onPhaseCompleted(phase: GradleModelFetchPhase, state: GradleModelHolderState) {
     resolverContext.models.addState(state)
     resultHandler.onModelFetchPhaseCompleted(phase)
   }
 
-  fun onProjectLoaded(state: GradleModelHolderState) {
+  suspend fun onProjectLoaded(state: GradleModelHolderState) {
     resolverContext.models.addState(state)
 
     if (!modelFetchAction.isUseStreamedValues) {
@@ -30,7 +30,7 @@ class GradleModelFetchActionResultHandler(
     resultHandler.onProjectLoadedActionCompleted()
   }
 
-  fun onBuildCompleted(state: GradleModelHolderState) {
+  suspend fun onBuildCompleted(state: GradleModelHolderState) {
     resolverContext.models.addState(state)
 
     if (!modelFetchAction.isUseProjectsLoadedPhase && !modelFetchAction.isUseStreamedValues) {
@@ -50,7 +50,7 @@ class GradleModelFetchActionResultHandler(
     resultHandler.onModelFetchCompleted()
   }
 
-  fun onBuildFailed(exception: GradleConnectionException) {
+  suspend fun onBuildFailed(exception: GradleConnectionException) {
     resultHandler.onModelFetchFailed(exception)
   }
 }

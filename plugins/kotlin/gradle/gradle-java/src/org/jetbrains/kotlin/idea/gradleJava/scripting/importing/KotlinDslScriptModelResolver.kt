@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
+import com.intellij.openapi.progress.blockingContext
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
@@ -33,22 +34,24 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
 
     override val name: String = "Kotlin DSL Script"
 
-    override fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
-        for (buildModel in resolverContext.allBuilds) {
-            for (projectModel in buildModel.projects) {
-                val projectIdentifier = projectModel.projectIdentifier.projectPath
-                if (projectIdentifier == ":") {
-                    val gradleVersion = resolverContext.projectGradleVersion
-                    if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
-                        val model = resolverContext.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
-                        if (model != null) {
-                            if (!processScriptModel(resolverContext, model, projectIdentifier)) {
-                                continue
+    override suspend fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
+        blockingContext {
+            for (buildModel in resolverContext.allBuilds) {
+                for (projectModel in buildModel.projects) {
+                    val projectIdentifier = projectModel.projectIdentifier.projectPath
+                    if (projectIdentifier == ":") {
+                        val gradleVersion = resolverContext.projectGradleVersion
+                        if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
+                            val model = resolverContext.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
+                            if (model != null) {
+                                if (!processScriptModel(resolverContext, model, projectIdentifier)) {
+                                    continue
+                                }
                             }
                         }
-                    }
 
-                    saveGradleBuildEnvironment(resolverContext)
+                        saveGradleBuildEnvironment(resolverContext)
+                    }
                 }
             }
         }

@@ -22,7 +22,7 @@ interface GradleSyncContributor {
    *
    * @see GradleModelFetchPhase
    */
-  fun onModelFetchPhaseCompleted(
+  suspend fun onModelFetchPhaseCompleted(
     resolverContext: ProjectResolverContext,
     phase: GradleModelFetchPhase
   ) = Unit
@@ -34,7 +34,7 @@ interface GradleSyncContributor {
    * @param resolverContext contain all information about the current state of the Gradle sync.
    * Use this context to access to the fetched Gradle models.
    */
-  fun onModelFetchCompleted(
+  suspend fun onModelFetchCompleted(
     resolverContext: ProjectResolverContext
   ) = Unit
 
@@ -46,7 +46,7 @@ interface GradleSyncContributor {
    * Use this context to access to the fetched Gradle models.
    * @param exception the exception thrown by Gradle, if everything completes successfully, then this will be null.
    */
-  fun onModelFetchFailed(
+  suspend fun onModelFetchFailed(
     resolverContext: ProjectResolverContext,
     exception: Throwable
   ) = Unit
@@ -62,7 +62,7 @@ interface GradleSyncContributor {
    * @see org.gradle.tooling.IntermediateResultHandler
    */
   @ApiStatus.Internal
-  fun onProjectLoadedActionCompleted(
+  suspend fun onProjectLoadedActionCompleted(
     resolverContext: ProjectResolverContext
   ) = Unit
 

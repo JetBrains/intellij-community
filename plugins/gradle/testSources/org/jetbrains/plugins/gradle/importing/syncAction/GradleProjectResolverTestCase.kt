@@ -20,28 +20,29 @@ import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.cancellation.CancellationException
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
-  fun whenPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
+  fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override fun onModelFetchPhaseCompleted(resolverContext: ProjectResolverContext, phase: GradleModelFetchPhase) {
+      override suspend fun onModelFetchPhaseCompleted(resolverContext: ProjectResolverContext, phase: GradleModelFetchPhase) {
         action(resolverContext, phase)
       }
     }, parentDisposable)
   }
 
-  fun whenModelFetchCompleted(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+  fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
+      override suspend fun onModelFetchCompleted(resolverContext: ProjectResolverContext) {
         action(resolverContext)
       }
     }, parentDisposable)
   }
 
-  fun whenProjectLoaded(parentDisposable: Disposable, action: (ProjectResolverContext) -> Unit) {
+  fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
-      override fun onProjectLoadedActionCompleted(resolverContext: ProjectResolverContext) {
+      override suspend fun onProjectLoadedActionCompleted(resolverContext: ProjectResolverContext) {
         action(resolverContext)
       }
     }, parentDisposable)
@@ -208,21 +209,28 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       failures.clear()
     }
 
-    fun trace(action: () -> Unit) {
-      counter.incrementAndGet()
+    inline fun trace(action: () -> Unit) {
+      touch()
       try {
         return action()
       }
       catch (e: ProcessCanceledException) {
         throw e
       }
+      catch (e: CancellationException) {
+        throw e
+      }
       catch (failure: Throwable) {
-        failures.add(failure)
+        addFailure(failure)
       }
     }
 
     fun touch() {
       counter.incrementAndGet()
+    }
+
+    fun addFailure(failure: Throwable) {
+      failures.add(failure)
     }
 
     fun assertListenerFailures() {

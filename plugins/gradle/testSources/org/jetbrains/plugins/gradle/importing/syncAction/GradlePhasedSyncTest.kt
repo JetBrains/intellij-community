@@ -2,17 +2,18 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
-import org.jetbrains.plugins.gradle.importing.TestPhasedModel
+import kotlinx.coroutines.delay
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
+import org.jetbrains.plugins.gradle.importing.TestPhasedModel
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import org.opentest4j.AssertionFailedError
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 
 class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
@@ -194,7 +195,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
-        throw ProcessCanceledException()
+        throw CancellationException()
       }
 
       initMultiModuleProject()
@@ -223,7 +224,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
       whenProjectLoaded(disposable) {
         projectLoadingAssertion.touch()
-        throw ProcessCanceledException()
+        throw CancellationException()
       }
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
@@ -277,7 +278,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         modelFetchPhaseCompletionAssertion.touch()
         actualCompletedPhases.add(phase)
         if (phase == cancellationPhase) {
-          throw ProcessCanceledException()
+          throw CancellationException()
         }
       }
       whenProjectLoaded(disposable) {
@@ -360,7 +361,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           Assertions.assertTrue(resolverContext.cancellationToken.isCancellationRequested) {
             "The Gradle sync cancellation token should be cancelled after progress indicator cancellation"
           }
-          ProgressManager.checkCanceled()
+          delay(10.seconds)
           throw AssertionFailedError(
             "The Gradle sync should be cancelled after progress indicator cancellation"
           )
@@ -401,7 +402,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           Assertions.assertTrue(resolverContext.cancellationToken.isCancellationRequested) {
             "The Gradle sync cancellation token should be cancelled after progress indicator cancellation"
           }
-          ProgressManager.checkCanceled()
+          delay(10.seconds)
           throw AssertionFailedError(
             "The Gradle sync should be cancelled after progress indicator cancellation"
           )
@@ -467,7 +468,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
             Assertions.assertTrue(resolverContext.cancellationToken.isCancellationRequested) {
               "The Gradle sync cancellation token should be cancelled after progress indicator cancellation"
             }
-            ProgressManager.checkCanceled()
+            delay(10.seconds)
             throw AssertionFailedError(
               "The Gradle sync should be cancelled after progress indicator cancellation"
             )
