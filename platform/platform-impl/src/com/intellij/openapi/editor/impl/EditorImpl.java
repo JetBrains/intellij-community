@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
@@ -2955,7 +2956,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCurrentDragIsSubstantial = true;
   }
 
-  private static final class RepaintCursorCommand implements Runnable {
+  private static final class RepaintCursorCommand implements ContextAwareRunnable {
     private long mySleepTime = 500;
     private boolean myIsBlinkCaret = true;
     private @Nullable EditorImpl myEditor;
