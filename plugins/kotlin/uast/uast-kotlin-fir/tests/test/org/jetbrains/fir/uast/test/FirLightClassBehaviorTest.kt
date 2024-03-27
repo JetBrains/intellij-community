@@ -77,8 +77,12 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
         checkUpperBoundForRecursiveTypeParameter(myFixture)
     }
 
-    fun testDefaultValueOfAnnotation() {
-        checkDefaultValueOfAnnotation(myFixture)
+    fun testDefaultValueOfAnnotation_Kotlin() {
+        checkDefaultValueOfAnnotation_Kotlin(myFixture)
+    }
+
+    fun testDefaultValueOfAnnotation_Java() {
+        checkDefaultValueOfAnnotation_Java(myFixture)
     }
 
     fun testAnnotationParameterReference() {

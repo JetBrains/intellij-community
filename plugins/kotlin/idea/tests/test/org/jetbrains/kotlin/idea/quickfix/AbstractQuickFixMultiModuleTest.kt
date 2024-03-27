@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -154,7 +155,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         val afterFiles = projectDirectory.walkTopDown().filter { it.path.endsWith(".after") }.toList()
 
         for (editedFile in project.allKotlinFiles()) {
-            val afterFileInTmpProject = editedFile.containingDirectory?.findFile(editedFile.name + ".after") ?: continue
+            val afterFileInTmpProject = findAfterFile(editedFile) ?: continue
             val afterFileInTestData = afterFiles.filter { it.name == afterFileInTmpProject.name }.single {
                 it.readText() == File(afterFileInTmpProject.virtualFile.path).readText()
             }
@@ -168,6 +169,8 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             }
         }
     }
+
+    protected open fun findAfterFile(editedFile: KtFile): PsiFile? = editedFile.containingDirectory?.findFile(editedFile.name + ".after")
 
     private val availableActions: List<IntentionAction>
         get() {

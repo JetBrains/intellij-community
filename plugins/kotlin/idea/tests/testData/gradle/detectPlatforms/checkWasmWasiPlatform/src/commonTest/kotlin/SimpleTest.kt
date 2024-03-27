@@ -1,9 +1,9 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class JsTestClient {
+class TestClient {
     @Test
     fun testGreet() {
         assertEquals("world", greet())
     }
-}
+} 

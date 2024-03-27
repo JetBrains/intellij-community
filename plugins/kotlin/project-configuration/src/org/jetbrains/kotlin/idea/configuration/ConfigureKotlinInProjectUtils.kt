@@ -388,7 +388,15 @@ fun getPlatform(module: Module): String {
             if (module.name.contains("android")) "jvm.android"
             else "jvm"
         }
-        module.platform.isWasm() && hasKotlinWasmRuntimeInScope(module) -> "wasm"
+
+        module.platform.isWasm() -> {
+            when {
+                hasKotlinWasmJsRuntimeInScope(module) -> "wasm.js"
+                hasKotlinWasmWasiRuntimeInScope(module) -> "wasm.wasi"
+                else -> "wasm.unknown"
+            }
+        }
+
         module.platform.isJs() && hasKotlinJsRuntimeInScope(module) -> "js"
         module.platform.isCommon() -> "common"
         module.platform.isNative() -> "native." + (module.platform?.componentPlatforms?.first()?.targetName ?: "unknown")
@@ -434,6 +442,14 @@ fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
 
 fun hasKotlinWasmRuntimeInScope(module: Module): Boolean {
     return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmLibraryKind)
+}
+
+fun hasKotlinWasmJsRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_JS_FQ_NAME, KotlinWasmLibraryKind)
+}
+
+fun hasKotlinWasmWasiRuntimeInScope(module: Module): Boolean {
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_WASI_FQ_NAME, KotlinWasmLibraryKind)
 }
 
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
@@ -570,6 +586,8 @@ private fun getJvmTargetFromSdkOrDefault(
 
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
 private val KOTLIN_WASM_FQ_NAME = FqName("kotlin.wasm")
+private val KOTLIN_WASM_JS_FQ_NAME = FqName("kotlin.wasm.js")
+private val KOTLIN_WASM_WASI_FQ_NAME = FqName("kotlin.wasm.wasi")
 
 private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
 

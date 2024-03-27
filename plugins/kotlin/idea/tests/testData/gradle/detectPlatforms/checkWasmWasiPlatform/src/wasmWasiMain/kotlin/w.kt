@@ -1,9 +1,6 @@
 package foo
 
 @kotlin.js.JsExport
-fun jsMain() {
-    Foo()
+fun wasmMain() {
     println()
 }
-
-class Foo
