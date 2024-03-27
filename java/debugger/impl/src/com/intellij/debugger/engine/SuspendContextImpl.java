@@ -88,12 +88,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (myThread == threadProxy) {
       return;
     }
-    if (myEvaluationContext != null) {
-      LOG.error("Resetting thread during evaluation is not supported");
-    }
-    if (myActiveExecutionStack != null) {
-      LOG.error("Thread should be retested before the active execution stack initialization");
-    }
+    LOG.assertTrue(myEvaluationContext == null, "Resetting thread during evaluation is not supported");
+    LOG.assertTrue(myActiveExecutionStack == null, "Thread should be retested before the active execution stack initialization");
     assertNotResumed();
     if (myThread != null) {
       myThread.removeListener(myListener);
