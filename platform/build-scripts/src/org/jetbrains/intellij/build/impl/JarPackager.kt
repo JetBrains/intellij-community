@@ -469,7 +469,8 @@ class JarPackager private constructor(
       for (i in (files.size - 1) downTo 0) {
         val file = files.get(i)
         val fileName = file.fileName.toString()
-        if (isSeparateJar(fileName = fileName, file = file, jarPath = asset.relativePath)) {
+        if (item.reason != ModuleIncludeReasons.PRODUCT_MODULES &&
+            isSeparateJar(fileName = fileName, file = file, jarPath = asset.relativePath)) {
           files.removeAt(i)
           addLibrary(
             library = library,
@@ -508,7 +509,7 @@ class JarPackager private constructor(
                 )
               }
             },
-            isPreSignedAndExtractedCandidate = asset.nativeFiles != null,
+            isPreSignedAndExtractedCandidate = asset.nativeFiles != null || isLibPreSigned(library),
           )
         )
       }
@@ -725,7 +726,7 @@ class JarPackager private constructor(
 }
 
 private suspend fun isSeparateJar(fileName: String, file: Path, jarPath: String): Boolean {
-  if (jarPath.contains('/') && !jarPath.startsWith("modules/")) {
+  if (jarPath.contains('/')) {
     return true
   }
 
