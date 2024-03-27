@@ -12,7 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object StubInconsistencyReportUtil {
-  val GROUP = EventLogGroup("stub.inconsistency", 1)
+  val GROUP = EventLogGroup("stub.inconsistency", 1, "FUS",
+                            "Collector for breakages of indexes defined in implementation-level terms, " +
+                            "see more at https://youtrack.jetbrains.com/articles/IJPL-A-308")
 
   private val KOTLIN_DESCRIPTOR_EVENT = GROUP.registerEvent("kotlin.descriptor.not.found")
 
