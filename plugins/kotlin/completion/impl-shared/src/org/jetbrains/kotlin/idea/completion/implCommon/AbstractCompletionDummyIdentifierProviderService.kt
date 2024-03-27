@@ -11,6 +11,7 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -83,6 +84,9 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
                 ?: isInAnnotationEntry(tokenBefore)
+                ?: isInEndOfTypeReference(tokenBefore)
+                ?: isInEndOfStatement(tokenBefore)
+                ?: isInKDocName(tokenBefore)
                 ?: DEFAULT_PARSING_BREAKER
         }
 
@@ -98,10 +102,25 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         }
     }
 
+    private fun isInEndOfStatement(tokenBefore: PsiElement): String? {
+        val blockExpression = tokenBefore.parentOfType<KtBlockExpression>(withSelf = true)
+        if (blockExpression?.statements?.any { it.endOffset == tokenBefore.endOffset } == true) return EMPTY_SUFFIX
+        return null
+    }
+
+    private fun isInEndOfTypeReference(tokenBefore: PsiElement): String? {
+        val userType = (tokenBefore.parent as? KtNameReferenceExpression)?.parent as? KtUserType
+        val typeReference = userType?.parentOfType<KtTypeReference>(withSelf = true)
+        if (tokenBefore.endOffset == typeReference?.endOffset) return EMPTY_SUFFIX
+        return null
+    }
+
+    private fun isInKDocName(tokenBefore: PsiElement): String? = if (tokenBefore.parent is KDocName) EMPTY_SUFFIX else null
+
     protected open fun handleDefaultCase(context: CompletionInitializationContext): String? = null
 
     private fun isInValueOrTypeParametersList(tokenBefore: PsiElement): String? {
-        if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList }) {
+        if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList || it is KtContextReceiverList }) {
             return EMPTY_SUFFIX
         }
         return null
@@ -164,6 +183,8 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
 
     private fun specialExtensionReceiverDummyIdentifierSuffix(tokenBefore: PsiElement): String? {
+        if (tokenBefore.parentOfType<KtTypeReference>() != null) return null // already parsed as type reference
+
         var token = tokenBefore
         var ltCount = 0
         var gtCount = 0
@@ -191,7 +212,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 val declaration = file.declarations.singleOrNull() ?: return null
                 if (declaration.textLength != text.length) return null
                 val containsErrorElement = !PsiTreeUtil.processElements(file) { it !is PsiErrorElement }
-                return if (containsErrorElement) null else "$tail$DEFAULT_PARSING_BREAKER"
+                return if (containsErrorElement) null else tail
             }
             if (tokenType !in typeArgumentsTokens) return null
             if (tokenType == KtTokens.LT) ltCount++
@@ -212,7 +233,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
         val nameRef = nameToken.parent as? KtNameReferenceExpression ?: return null
         return if (allTargetsAreFunctionsOrClasses(nameRef)) {
-            ">".repeat(balance) + DEFAULT_PARSING_BREAKER
+            ">".repeat(balance)
         } else {
             null
         }
