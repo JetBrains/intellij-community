@@ -8,11 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.xml.util.XmlStringUtil
 
 private class ForcePushAction : PushActionBase() {
   override fun actionPerformed(project: Project, ui: VcsPushUi) {
-    if (confirmForcePush(project, ui)) {
+    if (Registry.`is`("vcs.non.modal.force.push.warning", false) || confirmForcePush(project, ui)) {
       ui.push(true)
     }
   }
