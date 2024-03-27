@@ -78,4 +78,16 @@ internal class SimpleInlineCompletionTest : InlineCompletionTestCase() {
     assertFileContent("This is tutorial<caret>")
     assertInlineHidden()
   }
+
+  @Test
+  fun `test insert suggestion with first empty element`() = myFixture.testInlineCompletion {
+    init(PlainTextFileType.INSTANCE, "<caret>")
+    registerSuggestion(InlineCompletionGrayTextElement(""), InlineCompletionGrayTextElement("value"))
+    typeChar(':')
+    delay()
+    assertInlineRender("value")
+    insertWithTab()
+    assertInlineHidden()
+    assertFileContent(":value<caret>")
+  }
 }
