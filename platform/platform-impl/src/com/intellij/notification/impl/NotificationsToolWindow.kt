@@ -641,7 +641,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myList.background = NotificationComponent.BG_COLOR
     myList.border = JBUI.Borders.emptyRight(10)
 
-    myScrollPane.border = null
+    ScrollableContentBorder.setup(myScrollPane, Side.TOP)
     mainPanel.add(myScrollPane)
 
     myEventHandler.add(this)
