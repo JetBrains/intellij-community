@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -13,11 +13,13 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.filters.TagValueFilter;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.XmlMatchingStrategy;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.CODE;
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.TEXT;
 
+@Internal
 public class XmlCompilingVisitor extends XmlRecursiveElementVisitor {
   @NotNull
   private final GlobalCompilingVisitor myCompilingVisitor;

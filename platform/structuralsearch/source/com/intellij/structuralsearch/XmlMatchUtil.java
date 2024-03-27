@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.psi.PsiElement;
@@ -6,6 +6,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.xml.*;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@Internal
 public final class XmlMatchUtil {
 
   private XmlMatchUtil() {}
