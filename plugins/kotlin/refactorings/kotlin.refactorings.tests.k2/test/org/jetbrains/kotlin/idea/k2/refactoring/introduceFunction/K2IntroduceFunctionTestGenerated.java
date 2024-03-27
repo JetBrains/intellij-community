@@ -301,6 +301,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
         }
 
+        @TestMetadata("typedFunctionLiteral.kt")
+        public void testTypedFunctionLiteral() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/typedFunctionLiteral.kt");
+        }
+
         @TestMetadata("unnecessaryNullabilityAnnotation.kt")
         public void testUnnecessaryNullabilityAnnotation() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/unnecessaryNullabilityAnnotation.kt");

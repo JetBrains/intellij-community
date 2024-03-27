@@ -1080,6 +1080,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
             }
 
+            @TestMetadata("typedFunctionLiteral.kt")
+            public void testTypedFunctionLiteral() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/typedFunctionLiteral.kt");
+            }
+
             @TestMetadata("unnecessaryNullabilityAnnotation.kt")
             public void testUnnecessaryNullabilityAnnotation() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/unnecessaryNullabilityAnnotation.kt");
