@@ -4,11 +4,7 @@ package com.jetbrains.jsonSchema.impl.nestedCompletions
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.json.pointer.JsonPointerPosition
-import com.intellij.openapi.editor.CaretModel
-import com.intellij.openapi.editor.CaretState
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -20,6 +16,7 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver
+import com.jetbrains.jsonSchema.impl.JsonSchemaType
 
 /**
  * Collects nested completions for a JSON schema object.
@@ -222,8 +219,8 @@ private inline fun Int.movedToFirstOrNull(text: CharSequence, predicate: (Char) 
 private fun Int.movedToEndOfLine(text: CharSequence) = movedToFirstOrNull(text) { it == '\n' } ?: text.length
 
 private fun createTextWrapper(treeWalker: JsonLikePsiWalker, accessor: List<String>): WrappedText? {
-  val objectCloser = treeWalker.defaultObjectValue.getOrNull(1)?.toString() ?: ""
-  val objectOpener = (": " + (treeWalker.defaultObjectValue.getOrNull(0)?.toString() ?: "")).trimEnd()
+  val objectCloser = treeWalker.defaultObjectValue.getOrNull(1)?.toString()?.let {"\n$it"} ?: ""
+  val objectOpener = (treeWalker.getPropertyValueSeparator(JsonSchemaType._object) + " " + (treeWalker.defaultObjectValue.getOrNull(0)?.toString() ?: "")).trimEnd()
   return accessor.asReversed().fold(null as WrappedText?) { acc, nextName ->
     WrappedText(prefix = treeWalker.quoted(nextName) + objectOpener, acc, suffix = objectCloser)
   }
