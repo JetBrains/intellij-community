@@ -65,6 +65,7 @@ internal class InlineCompletionTextRenderManager private constructor(
     private var suffixInlay: Inlay<InlineCompletionLineRenderer>? = null
     private val blockLineInlays = mutableListOf<Inlay<InlineCompletionLineRenderer>>()
     private var state = RenderState.RENDERING_SUFFIX
+    private val descriptor = Descriptor()
 
     fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor? {
       if (text.isEmpty()) {
@@ -72,7 +73,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
       val newLines = text.lines().map { InlineCompletionRenderTextBlock(it, attributes) }
       render(newLines)
-      return getDescriptor(offset)
+      return descriptor
     }
 
     override fun dispose() {
@@ -102,17 +103,15 @@ internal class InlineCompletionTextRenderManager private constructor(
       suffixInlay?.let { Disposer.dispose(it) }
       suffixInlay = null
 
-      if (suffixBlocks.any { it.text.isNotEmpty() }) {
+      editor.inlayModel.execute(true) {
         val element = editor.inlayModel.addInlineElement(offset, true, InlineCompletionLineRenderer(editor, suffixBlocks))
-        if (element != null) {
-          element.addActionAvailabilityHint(
-            EditorActionAvailabilityHint(
-              IdeActions.ACTION_INSERT_INLINE_COMPLETION,
-              EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart,
-            )
+        element?.addActionAvailabilityHint(
+          EditorActionAvailabilityHint(
+            IdeActions.ACTION_INSERT_INLINE_COMPLETION,
+            EditorActionAvailabilityHint.AvailabilityCondition.CaretOnStart,
           )
-          suffixInlay = element
-        }
+        )
+        suffixInlay = element
       }
 
       return newLines.subList(1, newLines.size)
@@ -163,15 +162,15 @@ internal class InlineCompletionTextRenderManager private constructor(
       }
     }
 
-    private fun getDescriptor(offset: Int): RenderedInlineCompletionElementDescriptor {
-      return object : RenderedInlineCompletionElementDescriptor {
-        override fun getStartOffset(): Int = offset
-        override fun getEndOffset(): Int = offset
-        override fun getRectangle(): Rectangle? {
-          return blockLineInlays.fold(suffixInlay?.bounds) { result, inlay ->
-            val newBounds = inlay.bounds ?: return@fold result
-            if (result == null) newBounds else result.union(newBounds)
-          }
+    private inner class Descriptor : RenderedInlineCompletionElementDescriptor {
+      override fun getStartOffset(): Int? = suffixInlay?.offset
+
+      override fun getEndOffset(): Int? = suffixInlay?.offset
+
+      override fun getRectangle(): Rectangle? {
+        return blockLineInlays.fold(suffixInlay?.bounds) { result, inlay ->
+          val newBounds = inlay.bounds ?: return@fold result
+          if (result == null) newBounds else result.union(newBounds)
         }
       }
     }
@@ -228,9 +227,9 @@ internal class InlineCompletionTextRenderManager private constructor(
 @ApiStatus.Experimental
 internal interface RenderedInlineCompletionElementDescriptor {
 
-  fun getStartOffset(): Int
+  fun getStartOffset(): Int?
 
-  fun getEndOffset(): Int
+  fun getEndOffset(): Int?
 
   fun getRectangle(): Rectangle?
 }
