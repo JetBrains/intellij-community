@@ -36,7 +36,7 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
 
 private val LOG = logger<GitLabMergeRequestTimelineViewModel>()
 
-class LoadAllGitLabMergeRequestTimelineViewModel(
+internal class LoadAllGitLabMergeRequestTimelineViewModel(
   private val project: Project,
   parentCs: CoroutineScope,
   private val projectData: GitLabProject,

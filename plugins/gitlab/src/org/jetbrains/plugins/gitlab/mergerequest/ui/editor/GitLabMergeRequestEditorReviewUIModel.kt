@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapModelsToViewModels
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.*
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
 import com.intellij.openapi.vcs.ex.LstRange
+import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -25,7 +27,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
  * A wrapper over [GitLabMergeRequestEditorReviewFileViewModel] to encapsulate LST integration
  */
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
-  cs: CoroutineScope,
+  private val cs: CoroutineScope,
   private val preferences: GitLabMergeRequestsPreferences,
   private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
   document: Document
@@ -96,13 +98,11 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   override fun addDiffHighlightListener(disposable: Disposable, listener: () -> Unit) {
-    var lastKnown = preferences.highlightDiffLinesInEditor
-    preferences.addListener(disposable) {
-      if (lastKnown != it.highlightDiffLinesInEditor) {
+    cs.launchNow {
+      preferences.highlightDiffLinesInEditorState.collect {
         listener()
       }
-      lastKnown = it.highlightDiffLinesInEditor
-    }
+    }.cancelOnDispose(disposable, false)
   }
 
   private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
