@@ -1094,7 +1094,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       }
       if (!submitted) {
         // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
-        dca.stopProcess(true, "Couldn't create session for "+activeEditors);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          dca.stopProcess(true, "Couldn't create session for " + activeEditors);
+        });
       }
     }
     catch (ProcessCanceledException ignored) {
