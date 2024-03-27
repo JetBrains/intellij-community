@@ -105,12 +105,12 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
-      if (LOG.isDebugEnabled()) {
+      if (LOG.isTraceEnabled()) {
         if (content == null) {
-          LOG.debug("Map input: inputId(" + inputId + ") -> null, because content is null");
+          LOG.trace("Map input: inputId(" + inputId + ") -> null, because content is null");
         }
         else {
-          LOG.debug("Map input: inputId(" + inputId + ") -> fileType(" + content.getFileType() + ", fileTypeId=" + fileTypeId + ")");
+          LOG.trace("Map input: inputId(" + inputId + ") -> fileType(" + content.getFileType() + ", fileTypeId=" + fileTypeId + ")");
         }
       }
       return () -> updateIndex(inputId, checkFileTypeIdIsShort(fileTypeId));
