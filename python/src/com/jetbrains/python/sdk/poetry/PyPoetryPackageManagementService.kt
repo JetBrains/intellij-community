@@ -21,17 +21,17 @@ class PyPoetryPackageManagementService(project: Project, sdk: Sdk) : PyPackageMa
   override fun canInstallToUser() = false
 
   override fun getAllPackages(): List<RepoPackage> {
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(sdk.poetrySources, false)
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(poetrySources, false)
     return allPackagesCached
   }
 
   override fun reloadAllPackages(): List<RepoPackage> {
-    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(sdk.poetrySources, true)
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(poetrySources, true)
     return allPackagesCached
   }
 
   override fun getAllPackagesCached(): List<RepoPackage> =
-    PyPIPackageUtil.INSTANCE.getAdditionalPackages(sdk.poetrySources)
+    PyPIPackageUtil.INSTANCE.getAdditionalPackages(poetrySources)
 
   override fun installPackage(repoPackage: RepoPackage,
                               version: String?,

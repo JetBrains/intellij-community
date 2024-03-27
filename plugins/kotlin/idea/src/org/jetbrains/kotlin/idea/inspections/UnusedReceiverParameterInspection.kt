@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -36,10 +37,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -106,8 +104,11 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                         }
                     }
                 })
+                if (used) return
 
-                if (!used) registerProblem(receiverTypeReference)
+                if (callableDeclaration.isCalledWithCallOrQualifiedReceiver()) return
+
+                registerProblem(receiverTypeReference)
             }
 
             override fun visitNamedFunction(function: KtNamedFunction) {
@@ -124,6 +125,16 @@ class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                     KotlinBundle.message("inspection.unused.receiver.parameter"),
                     RemoveReceiverFix(inSameClass)
                 )
+            }
+
+            private fun KtCallableDeclaration.isCalledWithCallOrQualifiedReceiver(): Boolean {
+                return ReferencesSearch.search(this).any {
+                    val expression = it.element.let { element ->
+                        if (this is KtFunction) element.parent as? KtCallExpression else element as? KtNameReferenceExpression
+                    } ?: return@any false
+                    val receiver = expression.getQualifiedExpressionForSelector()?.receiverExpression
+                    receiver is KtQualifiedExpression || receiver is KtCallExpression
+                }
             }
         }
     }

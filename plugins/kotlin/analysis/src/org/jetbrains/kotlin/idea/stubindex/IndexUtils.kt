@@ -134,7 +134,7 @@ private fun ValueArgument.stringTemplateExpression(): KtStringTemplateExpression
 }
 
 // TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation fix 1.5.20 in compiler
-private fun JvmFileClassUtil.stringFromAnnotation(annotation: KtAnnotationEntry): String? {
+private fun stringFromAnnotation(annotation: KtAnnotationEntry): String? {
     val stringTemplateExpression = annotation.valueArguments.firstOrNull()?.stringTemplateExpression()
     return stringTemplateExpression?.entries?.singleOrNull()?.safeAs<KtLiteralStringTemplateEntry>()?.text
 }
@@ -142,7 +142,7 @@ private fun JvmFileClassUtil.stringFromAnnotation(annotation: KtAnnotationEntry)
 fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     if (stub.getShortName() != JvmFileClassUtil.JVM_NAME_SHORT) return
 
-    val jvmName = JvmFileClassUtil.stringFromAnnotation(stub.psi) ?: return
+    val jvmName = stringFromAnnotation(stub.psi) ?: return
     val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
 
     if (annotatedElementName != jvmName) {
