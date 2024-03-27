@@ -215,9 +215,9 @@ abstract class TreeHandlerEditorDiffPreview(
 
 
 abstract class ChangesTreeDiffPreviewHandler {
-  abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<Wrapper>
+  abstract fun iterateSelectedChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
-  abstract fun iterateAllChanges(tree: ChangesTree): Iterable<Wrapper>
+  abstract fun iterateAllChanges(tree: ChangesTree): Iterable<@JvmWildcard Wrapper>
 
   abstract fun selectChange(tree: ChangesTree, change: Wrapper)
 
