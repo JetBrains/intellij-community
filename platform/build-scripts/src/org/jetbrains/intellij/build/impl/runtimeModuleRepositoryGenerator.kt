@@ -219,7 +219,7 @@ private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescripto
  * Some project-level libraries and modules are copied to multiple places in the distribution. 
  * In order to decide which location should be specified in the runtime descriptor, this method determines the main location used the
  * following heuristics:
- *   * the entry from IDE_HOME/lib is preferred;
+ *   * the entry from IDE_HOME/lib is preferred (unless it's also included in a separate JAR in the split frontend part and scrambled there);
  *   * otherwise, the entry which is put to a separate JAR file is preferred;
  *   * otherwise, a JAR included in JetBrains Client is preferred.
  */
@@ -243,7 +243,7 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
     this is ModuleOutputEntry && context.jetBrainsClientModuleFilter.isModuleIncluded(moduleName) 
   
   fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
-    val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" } ?:
+    val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
                        paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true }
     if (mainLocation != null) {
