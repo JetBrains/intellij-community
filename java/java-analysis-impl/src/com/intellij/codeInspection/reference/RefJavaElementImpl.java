@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -80,14 +80,17 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @NotNull
   private static String getName(@NotNull UElement declaration) {
     PsiElement element = declaration.getJavaPsi();
-    if (element instanceof PsiAnonymousClass psiAnonymousClass) {
-      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
+    if (element instanceof PsiAnonymousClass anonymousClass) {
+      PsiClass psiBaseClass = anonymousClass.getBaseClassType().resolve();
       if (psiBaseClass == null) {
-        return "anonymous class";
+        return JavaAnalysisBundle.message("inspection.reference.anonymous.class");
       }
       else {
         return JavaAnalysisBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
       }
+    }
+    if (element instanceof PsiImplicitClass) {
+      return JavaAnalysisBundle.message("inspection.reference.implicit.class");
     }
 
     if (element instanceof PsiSyntheticClass jspClass) {
