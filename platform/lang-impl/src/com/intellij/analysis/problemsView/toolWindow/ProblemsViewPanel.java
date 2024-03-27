@@ -21,10 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.TreeUIHelper;
+import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -73,6 +70,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   protected final DescriptorPreview myPreview;
   private final JPanel myPanel;
   protected final ActionToolbar myToolbar;
+  private final @NotNull JScrollPane myScrollPane;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
   private final Tree myTree;
   private final TreeExpander myTreeExpander;
@@ -222,22 +220,30 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myToolbar.setTargetComponent(centerComponent);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
     myPanel = new JPanel(new BorderLayout());
-    JScrollPane scrollPane = createScrollPane(centerComponent, true);
+    myScrollPane = createScrollPane(centerComponent, true);
     if (ExperimentalUI.isNewUI()) {
-      int orientation = myToolbar.getOrientation();
-      Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
-                                                        : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
-      Border border = i != null ? JBUI.Borders.empty(i) : JBUI.Borders.empty(2);
-      myToolbar.getComponent().setBorder(border);
+      updateBorders();
     }
     else {
       UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
     }
 
-    myPanel.add(BorderLayout.CENTER, scrollPane);
+    myPanel.add(BorderLayout.CENTER, myScrollPane);
     myPanel.add(BorderLayout.WEST, myToolbar.getComponent());
     myPanel.putClientProperty(OPEN_IN_PREVIEW_TAB, true);
     setFirstComponent(myPanel);
+  }
+
+  private void updateBorders() {
+    if (!ExperimentalUI.isNewUI()) {
+      return;
+    }
+    int orientation = myToolbar.getOrientation();
+    Insets i = orientation == SwingConstants.VERTICAL ? JBUI.CurrentTheme.Toolbar.verticalToolbarInsets()
+                                                      : JBUI.CurrentTheme.Toolbar.horizontalToolbarInsets();
+    Border border = i != null ? JBUI.Borders.empty(i) : JBUI.Borders.empty(2);
+    myToolbar.getComponent().setBorder(border);
+    ScrollableContentBorder.setup(myScrollPane, orientation == SwingConstants.VERTICAL ? Side.LEFT : Side.TOP);
   }
 
   @Override
@@ -381,6 +387,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myToolbarInsets.right = !vertical ? scale(1) : 0;
     myToolbarInsets.bottom = vertical ? scale(1) : 0;
     myPanel.add(vertical ? BorderLayout.NORTH : BorderLayout.WEST, myToolbar.getComponent());
+    updateBorders();
     updatePreview();
   }
 
