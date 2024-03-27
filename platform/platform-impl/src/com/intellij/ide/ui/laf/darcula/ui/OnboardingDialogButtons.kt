@@ -12,10 +12,7 @@ import java.awt.Graphics
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.AbstractAction
-import javax.swing.Icon
-import javax.swing.JButton
-import javax.swing.SwingConstants
+import javax.swing.*
 
 object OnboardingDialogButtons {
   fun createLinkButton(@Nls text: String, icon: Icon?, onClick: Runnable?): JButton {
@@ -90,21 +87,34 @@ object OnboardingDialogButtons {
   fun createMainButton(@Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
     return createButton(true, text, icon, onClick)
   }
+
+  @JvmStatic
+  fun createMainButton(action: Action): JButton {
+    return createButton(true, action)
+  }
+
   @JvmStatic
   fun createButton(@Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
     return createButton(false, text, icon, onClick)
   }
 
-  private fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
+  @JvmStatic
+  fun createButton(action: Action): JButton {
+    return createButton(false, action)
+  }
+
+  private fun createButton(isDefault: Boolean, action: Action): JButton {
     val btn = createButton(isDefault)
-    onClick?.let {runnable ->
-      btn.action = object : AbstractAction(text, icon) {
-        override fun actionPerformed(e: ActionEvent) {
-          runnable.run()
-        }
-      }
-    }
+    btn.action = action
     return btn
+  }
+
+  private fun createButton(isDefault: Boolean, @Nls text: String, icon: Icon?, onClick: Runnable? = null): JButton {
+    return createButton(isDefault, object : AbstractAction(text, icon) {
+      override fun actionPerformed(e: ActionEvent) {
+        onClick?.run()
+      }
+    })
   }
 
   fun createButton(isDefault: Boolean): JButton {
