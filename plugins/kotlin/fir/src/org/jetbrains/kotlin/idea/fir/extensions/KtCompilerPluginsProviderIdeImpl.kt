@@ -156,13 +156,20 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
         val logger = logger<KtCompilerPluginsProviderIdeImpl>()
 
+        ProgressManager.checkCanceled()
+
         val pluginRegistrars =
             logger.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(pluginClasspaths, classLoader) }
             ?.takeIf { it.isNotEmpty() }
             ?: return null
+
+        ProgressManager.checkCanceled()
+
         val commandLineProcessors = logger.runAndLogException {
             ServiceLoaderLite.loadImplementations<CommandLineProcessor>(pluginClasspaths, classLoader)
         } ?: return null
+
+        ProgressManager.checkCanceled()
 
         val compilerConfiguration = CompilerConfiguration().apply {
             // Temporary work-around for KTIJ-24320. Calls to 'setupCommonArguments()' and 'setupJvmSpecificArguments()'
@@ -184,6 +191,8 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
 
         val storage = CompilerPluginRegistrar.ExtensionStorage()
         for (pluginRegistrar in pluginRegistrars) {
+            ProgressManager.checkCanceled()
+
             with(pluginRegistrar) {
                 try {
                     storage.registerExtensions(compilerConfiguration)
