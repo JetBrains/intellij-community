@@ -273,11 +273,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
-        @TestMetadata("redundantUnitReturnType/inspectionData/inspections.test")
-        public void testRedundantUnitReturnType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantUnitReturnType/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test")
         public void testRedundantVisibilityModifierWithExplicitApi_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test");
