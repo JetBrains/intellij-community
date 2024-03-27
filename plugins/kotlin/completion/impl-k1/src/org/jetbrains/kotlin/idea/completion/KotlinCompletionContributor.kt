@@ -132,6 +132,8 @@ class KotlinCompletionContributor : KindExecutingCompletionContributor() {
             generateCompletionKinds(correctedParameters, generatorExecutor, result, ::wrapLookupElementForStringTemplateAfterDotCompletion)
             return
         }
+        
+       
 
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(ThrowableComputable {
             generateCompletionKinds(parameters, generatorExecutor, result, null)

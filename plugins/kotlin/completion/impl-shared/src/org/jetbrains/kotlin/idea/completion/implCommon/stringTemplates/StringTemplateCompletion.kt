@@ -30,5 +30,22 @@ object StringTemplateCompletion {
         }
         return null
     }
+    
+    
+    fun checkQualifiedThisInStringTemplateCompletion(parameters: CompletionParameters): CompletionParameters? {
+        val position = parameters.position
+        if (position.parent is KtReferenceExpression) {
+            if (position.parent.prevSibling.elementType == KtTokens.SHORT_TEMPLATE_ENTRY_START) {
+                if (position.parent.prevSibling.parent is KtStringTemplateEntry)
+                {
+                    return true
+
+                }
+            }
+        }
+
+        return false
+
+    }
 
 }
