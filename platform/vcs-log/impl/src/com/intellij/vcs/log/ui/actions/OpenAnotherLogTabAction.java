@@ -107,11 +107,6 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-    }
-
-    @Override
     protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
       return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log.in.editor", vcsName);
     }
