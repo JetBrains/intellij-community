@@ -268,7 +268,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitIsExpressionRaw(isExpression: JKIsExpression) {
             isExpression.expression.accept(this)
-            printer.printWithSurroundingSpaces(if (isExpression.isNegated)  "!is" else "is")
+            printer.printWithSurroundingSpaces(if (isExpression.isNegated) "!is" else "is")
             isExpression.type.accept(this)
         }
 
@@ -284,14 +284,32 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             ) {
                 printer.printWithSurroundingSpaces("val")
             }
-            parameter.name.accept(this)
-            if (parameter.type.present() && parameter.type.type !is JKContextType) {
-                printer.print(": ")
-                parameter.type.accept(this)
-            }
+
+            renderVariableDeclaration(parameter)
             if (parameter.initializer !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("=")
                 parameter.initializer.accept(this)
+            }
+        }
+
+        override fun visitDestructuringDeclarationEntryRaw(destructuringDeclaration: JKKtDestructuringDeclaration) {
+            printer.par {
+                destructuringDeclaration.destructuringDeclarationEntries.withIndex().forEach {
+                    it.value.accept(this)
+                    if (it.index < destructuringDeclaration.destructuringDeclarationEntries.lastIndex) printer.print(", ")
+                }
+            }
+        }
+
+        override fun visitDestructuringDeclarationEntryRaw(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) {
+            renderVariableDeclaration(destructuringDeclarationEntry)
+        }
+
+        private fun renderVariableDeclaration(variable: JKVariable) {
+            variable.name.accept(this)
+            if (variable.type.present() && variable.type.type !is JKContextType) {
+                printer.print(": ")
+                variable.type.accept(this)
             }
         }
 
@@ -307,11 +325,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) {
             forLoopVariable.annotationList.accept(this)
-            forLoopVariable.name.accept(this)
-            if (forLoopVariable.type.present() && forLoopVariable.type.type !is JKContextType) {
-                printer.print(": ")
-                forLoopVariable.type.accept(this)
-            }
+            renderVariableDeclaration(forLoopVariable)
         }
 
         override fun visitMethodRaw(method: JKMethod) {
@@ -542,11 +556,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.print(" ")
             localVariable.annotationList.accept(this)
             renderModifiersList(localVariable)
-            localVariable.name.accept(this)
-            if (localVariable.type.present() && localVariable.type.type != JKContextType) {
-                printer.print(": ")
-                localVariable.type.accept(this)
-            }
+            renderVariableDeclaration(localVariable)
             if (localVariable.initializer !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("=")
                 localVariable.initializer.accept(this)
