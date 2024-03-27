@@ -409,7 +409,11 @@ public final class VcsLogUtil {
    */
   public static boolean canRequestMore(@NotNull VisiblePack visiblePack) {
     if (!visiblePack.canRequestMore()) return false;
-    return !MORE_REQUESTED.get(visiblePack, false);
+    return !isMoreRequested(visiblePack);
+  }
+
+  public static @NotNull Boolean isMoreRequested(@NotNull VisiblePack visiblePack) {
+    return MORE_REQUESTED.get(visiblePack, false);
   }
 
   private static final @NotNull Key<Boolean> MORE_REQUESTED = Key.create("MORE_REQUESTED");
