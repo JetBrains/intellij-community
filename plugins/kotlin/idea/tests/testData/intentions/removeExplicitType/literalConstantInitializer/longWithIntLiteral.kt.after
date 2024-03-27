@@ -1,0 +1,7 @@
+// IGNORE_K2
+fun test() {
+    val x = 1L
+    foo(x)
+}
+
+fun foo(x: Long) = x

@@ -1,0 +1,6 @@
+fun test() {
+    val x = 1
+    foo(x)
+}
+
+fun foo(x: Int) = x

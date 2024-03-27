@@ -1,0 +1,2 @@
+// IGNORE_K2
+val long = null as Long?
