@@ -13,15 +13,12 @@ fun Finder.popupMenu(@Language("xpath") xpath: String? = null) =
   x(xpath ?: "//div[@class='MyMenu']", PopupMenuUiComponent::class.java)
 
 class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
+
   private val menuItems =
     xx("//div[@class='ActionMenuItem' or @class='ActionMenu']", PopupItemUiComponent::class.java)
 
   fun findMenuItemByText(text: String) = menuItems.list().firstOrNull { it.getText() == text}
                                          ?: throw AssertionError("No item with text '$text' found in popup '${this.searchContext}'")
-
-  fun getItemByIndex(index: Int) = menuItems.list()[index]
-
-  fun getItemByText(text: String) = menuItems.list().first { it.getText() == text }
 
   fun select(vararg items: String) {
     items.forEach { item ->
