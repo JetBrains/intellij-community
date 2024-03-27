@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -42,7 +41,7 @@ public final class ConsoleViewUtil {
 
   public static @NotNull EditorEx setupConsoleEditor(@Nullable Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
+    Document document = editorFactory.createDocument(true);
     UndoUtil.disableUndoFor(document);
     EditorEx editor = (EditorEx)editorFactory.createViewer(document, project, EditorKind.CONSOLE);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);

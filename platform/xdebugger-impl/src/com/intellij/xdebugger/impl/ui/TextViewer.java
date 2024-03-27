@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,7 +36,7 @@ public final class TextViewer extends EditorTextField {
 
   private static Document createDocument(@NotNull String initialText, boolean viewer) {
     if (needSlashRSupport(initialText, viewer)){
-      return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(initialText, true, false);
+      return EditorFactory.getInstance().createDocument(initialText, true, false);
     }
     else {
       return EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(initialText));

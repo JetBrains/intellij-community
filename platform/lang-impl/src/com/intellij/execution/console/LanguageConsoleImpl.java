@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -108,7 +107,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   protected @NotNull EditorEx doCreateHistoryEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document historyDocument = ((EditorFactoryImpl)editorFactory).createDocument(true);
+    Document historyDocument = editorFactory.createDocument(true);
     UndoUtil.disableUndoFor(historyDocument);
     return (EditorEx)editorFactory.createViewer(historyDocument, getProject(), EditorKind.CONSOLE);
   }

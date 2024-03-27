@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -203,7 +202,7 @@ public final class PythonCommandQueuePanel extends JPanel {
 
   private @NotNull EditorEx createEmptyEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
-    Document document = ((EditorFactoryImpl)editorFactory).createDocument(false);
+    Document document = editorFactory.createDocument(false);
     UndoUtil.disableUndoFor(document);
     return (EditorEx)createEditor();
   }
