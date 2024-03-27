@@ -12,7 +12,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JValue};
 use jni::sys::{jboolean, jint, jsize};
 use log::{debug, error};
-use crate::{jvm_property, ui, cef_sandbox::CefScopedSandboxInfo, cef_generated::CEF_VERSION};
+use crate::{jvm_property, ui};
 
 #[cfg(target_os = "macos")]
 use {
@@ -84,7 +84,7 @@ type CreateJvmCall<'lib> = libloading::Symbol<
     unsafe extern "C" fn(*mut *mut jni::sys::JavaVM, *mut *mut c_void, *mut c_void) -> jint
 >;
 
-pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>, cef_sandbox: Option<&CefScopedSandboxInfo>, debug_mode: bool) -> Result<()> {
+pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_class: &str, args: Vec<String>, debug_mode: bool) -> Result<()> {
     debug!("Preparing a JVM environment");
     DEBUG_MODE.store(debug_mode, Ordering::Release);
 
@@ -99,16 +99,6 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
     let main_class = main_class.to_owned();
     let (tx, rx) = std::sync::mpsc::channel();
 
-    let additional_vm_options = match cef_sandbox {
-        Some(sandbox_info) => {
-            vec![
-                jvm_property!("jcef.sandbox.ptr", format!("{:016X}", sandbox_info.ptr as usize)),
-                jvm_property!("jcef.sandbox.cefVersion", CEF_VERSION),
-            ]
-        },
-        None => vec![]
-    };
-
     // JNI docs say that JVM should not be created on primordial thread
     // (https://docs.oracle.com/en/java/javase/17/docs/specs/jni/invocation.html#creating-the-vm)
     debug!("Starting a JVM thread");
@@ -118,10 +108,6 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         let mut vm_options = vm_options.clone();
         vm_options.push(jvm_property!("sun.java.command", main_class));
         vm_options.push(jvm_property!("ide.native.launcher", "true"));
-
-        for additional in additional_vm_options {
-            vm_options.push(additional)
-        }
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {

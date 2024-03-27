@@ -48,8 +48,8 @@ use {
 
 #[cfg(target_family = "unix")]
 use std::os::unix::fs::PermissionsExt;
+use crate::cef_generated::CEF_VERSION;
 use crate::cef_sandbox::CefScopedSandboxInfo;
-
 use crate::default::DefaultLaunchConfiguration;
 use crate::remote_dev::RemoteDevLaunchConfiguration;
 
@@ -117,56 +117,17 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let (jre_home, main_class) = configuration.prepare_for_launch().context("Cannot find a runtime")?;
     debug!("Resolved runtime: {jre_home:?}");
 
-    #[cfg(target_os = "windows")]
-    let scoped_sandbox = CefScopedSandboxInfo::new();
-    #[cfg(target_os = "windows")]
-    let cef_sandbox = Some(&scoped_sandbox);
-    #[cfg(not(target_os = "windows"))]
-    let cef_sandbox: Option<&CefScopedSandboxInfo> = None;
-
-    #[cfg(target_os = "windows")]
-    {
-        let is_sandbox_subprocess = configuration.get_args()
-            .iter()
-            .any(|arg| arg.contains("--type"));
-
-        if is_sandbox_subprocess {
-            let exit_code = launch_cef_subprocess(&jre_home, cef_sandbox)?;
-            std::process::exit(exit_code)
-        }
-    }
+    let launch_scope = get_launch_scope_or_launch_subprocess(&*configuration, &jre_home).context("Cannot resolve launch scope")?;
 
     debug!("** Collecting JVM options");
-    let vm_options = get_full_vm_options(&*configuration).context("Cannot collect JVM options")?;
+    let vm_options = get_full_vm_options(&*configuration, &launch_scope).context("Cannot collect JVM options")?;
     debug!("VM options: {vm_options:?}");
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
-    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), cef_sandbox, debug_mode).context("Cannot start the runtime")?;
+    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode).context("Cannot start the runtime")?;
 
     Ok(())
-}
-
-#[cfg(target_os = "windows")]
-fn launch_cef_subprocess(jre_home: &PathBuf, cef_sandbox: Option<&CefScopedSandboxInfo>) -> Result<i32> {
-    let sandbox = cef_sandbox
-        .context("CEF sandbox must be present on Windows")?;
-
-    unsafe {
-        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
-
-        let helper_path = jre_home.join("bin\\jcef_helper.dll");
-        let lib = libloading::Library::new(&helper_path)
-            .with_context(|| format!("Can't load jcef_helper, path='{:#?}'", helper_path))?;
-
-        let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> =
-            lib.get(b"execute_subprocess\0")
-                .context("Can't load execute_subprocess from jcef_helper")?;
-
-        let exit_code = proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, sandbox.ptr);
-
-        Ok(exit_code)
-    }
 }
 
 #[cfg(target_os = "macos")]
@@ -243,7 +204,62 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path) -> Result<Box<dyn Lau
     }
 }
 
-fn get_full_vm_options(configuration: &dyn LaunchConfiguration) -> Result<Vec<String>> {
+struct JvmLaunchScope {
+    pub cef_sandbox: Option<CefScopedSandboxInfo>
+}
+
+#[cfg(not(target_os = "windows"))]
+fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<JvmLaunchScope> {
+    Ok(
+        JvmLaunchScope {
+            cef_sandbox: None,
+        }
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<JvmLaunchScope> {
+    let cef_sandbox = CefScopedSandboxInfo::new();
+
+    let is_sandbox_subprocess = configuration.get_args()
+        .iter()
+        .any(|arg| arg.contains("--type"));
+
+    if is_sandbox_subprocess {
+        let exit_code = unsafe {
+            launch_cef_subprocess(jre_home, &cef_sandbox)?
+        };
+
+        std::process::exit(exit_code)
+    }
+
+    Ok(
+        JvmLaunchScope {
+            cef_sandbox: Some(cef_sandbox)
+        }
+    )
+}
+
+#[cfg(target_os = "windows")]
+unsafe fn launch_cef_subprocess(jre_home: &Path, cef_sandbox: &CefScopedSandboxInfo) -> Result<i32> {
+    unsafe {
+        let mut h_instance = GetModuleHandleW(PCWSTR(std::ptr::null_mut()))?;
+
+        let helper_path = jre_home.join("bin\\jcef_helper.dll");
+        let lib = libloading::Library::new(&helper_path)
+            .with_context(|| format!("Can't load jcef_helper, path='{:#?}'", helper_path))?;
+
+        let proc: libloading::Symbol<'_, unsafe extern "system" fn(*mut std::os::raw::c_void, *mut std::os::raw::c_void) -> i32> =
+            lib.get(b"execute_subprocess\0")
+                .context("Can't load execute_subprocess from jcef_helper")?;
+
+        let exit_code = proc(&mut h_instance as *mut _ as *mut std::os::raw::c_void, cef_sandbox.ptr);
+
+        Ok(exit_code)
+    }
+}
+
+fn get_full_vm_options(configuration: &dyn LaunchConfiguration, jvm_launch_scope: &JvmLaunchScope) -> Result<Vec<String>> {
     let mut vm_options = configuration.get_vm_options()?;
 
     debug!("Looking for custom properties environment variable");
@@ -258,6 +274,11 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration) -> Result<Vec<St
     debug!("Assembling classpath");
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
+
+    if let Some(cef_sandbox) = &jvm_launch_scope.cef_sandbox {
+        vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
+        vm_options.push(jvm_property!("jcef.sandbox.cefVersion", CEF_VERSION));
+    }
 
     Ok(vm_options)
 }
