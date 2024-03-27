@@ -180,14 +180,16 @@ class RuntimeModuleRepositoryChecker private constructor(
       val included = resourceRoots.find { it in productResourceRoots }
       if (included != null && moduleId !in allProductModules) {
         val includedModules = productResourceRoots.getValue(included)
-        val firstIncludedModuleData = includedModules.take(3).joinToString(", ") { includedModuleId ->
-          "'${includedModuleId.stringId}' (<- ${allProductModules.getValue(includedModuleId).joinToString(" <- ")})"
+        val displayedModulesCount = 10
+        val firstIncludedModuleData = includedModules.take(displayedModulesCount).joinToString(separator = System.lineSeparator()) {
+          "'${it.stringId}' (<- ${allProductModules.getValue(it).joinToString(" <- ")})"
         }
-        val rest = includedModules.size - 3
+        val rest = includedModules.size - displayedModulesCount
         val more = if (rest > 0) " and $rest more ${StringUtil.pluralize("module", rest)}" else ""
         softly.collectAssertionError(AssertionError("""
           |Module '${moduleId.stringId}' is not part of '$productModulesModule', but it's packed in ${included.pathString},
-          |which is included in classpath because $firstIncludedModuleData$more are also packed in it, so '${moduleId.stringId}' will be
+          |which is included in classpath because:
+          |$firstIncludedModuleData$more are also packed in it, so '${moduleId.stringId}' will be
           |included in the classpath as well. Unnecessary code and resources in the classpath may cause performance problems, also, they
           |may cause '$productModulesModule' to behave differently in a standalone installation and when invoked from '${context.applicationInfo.fullProductName}'
           |so it's better to fix the problem. Usually, to do that you need to change build scripts to put '${moduleId.stringId}' in a 

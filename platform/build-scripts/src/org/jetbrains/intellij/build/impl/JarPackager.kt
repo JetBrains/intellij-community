@@ -78,10 +78,12 @@ private val notImportantKotlinLibs = java.util.Set.of(
   "kotlinx-html-jvm",
 )
 
+const val rdJarName = "rd.jar"
+
 private val predefinedMergeRules = HashMap<String, (String, JetBrainsClientModuleFilter) -> Boolean>().let { map ->
   map.put("groovy.jar") { it, _ -> it.startsWith("org.codehaus.groovy:") }
   map.put("jsch-agent.jar") { it, _ -> it.startsWith("jsch-agent") }
-  map.put("rd.jar") { it, _ -> it.startsWith("rd-") }
+  map.put(rdJarName) { it, _ -> it.startsWith("rd-") }
   // all grpc garbage into one jar
   map.put("grpc.jar") { it, _ -> it.startsWith("grpc-") }
   // separate file to use in Gradle Daemon classpath
