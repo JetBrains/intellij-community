@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -53,7 +55,7 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     forceSavingAllSettings: Boolean,
     projectSessionManager: ProjectSaveSessionProducerManager
   ) {
-    val projectSessionManager = projectSessionManager as ProjectWithModulesSaveSessionProducerManager
+    projectSessionManager as ProjectWithModulesSaveSessionProducerManager
 
     val writer = JpsStorageContentWriter(session = projectSessionManager, store = this, project = project)
     JpsProjectModelSynchronizer.getInstance(project).saveChangedProjectEntities(writer)
@@ -67,11 +69,13 @@ open class ProjectWithModuleStoreImpl(project: Project) : ProjectStoreImpl(proje
     }
   }
 
-  final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager =
-    ProjectWithModulesSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
+  final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
+    return ProjectWithModulesSaveSessionProducerManager(project, storageManager.isUseVfsForWrite)
+  }
 
-  override fun createContentReader(): JpsFileContentReaderWithCache =
-    StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
+  override fun createContentReader(): JpsFileContentReaderWithCache {
+    return StorageJpsConfigurationReader(project, getJpsProjectConfigLocation(project)!!)
+  }
 }
 
 private class JpsStorageContentWriter(
@@ -122,8 +126,7 @@ private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMa
 private val NULL_ELEMENT = Element("null")
 
 private class ProjectWithModulesSaveSessionProducerManager(project: Project, isUseVfsForWrite: Boolean)
-  : ProjectSaveSessionProducerManager(project, isUseVfsForWrite)
-{
+  : ProjectSaveSessionProducerManager(project, isUseVfsForWrite) {
   private val internalModuleComponents: ConcurrentMap<String, ConcurrentHashMap<String, Element>> =
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       ConcurrentCollectionFactory.createConcurrentMap()
@@ -223,8 +226,9 @@ internal class StorageJpsConfigurationReader(private val project: Project,
     }
   }
 
-  private fun isExternalMiscFile(filePath: String): Boolean =
-    PathUtilRt.getFileName(filePath) == "misc.xml" && Path.of(filePath).startsWith(externalConfigurationDir.value)
+  private fun isExternalMiscFile(filePath: String): Boolean {
+    return PathUtilRt.getFileName(filePath) == "misc.xml" && Path.of(filePath).startsWith(externalConfigurationDir.value)
+  }
 
   private fun getCachingReader(): CachingJpsFileContentReader {
     val reader = fileContentCachingReader ?: CachingJpsFileContentReader(configLocation)

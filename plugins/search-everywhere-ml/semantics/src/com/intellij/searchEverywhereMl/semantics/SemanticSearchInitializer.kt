@@ -3,7 +3,8 @@ package com.intellij.searchEverywhereMl.semantics
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.ml.embeddings.search.services.*
+import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings
+import com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl
 import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings
 
 private class SemanticSearchInitializer : ProjectActivity {
@@ -14,7 +15,7 @@ private class SemanticSearchInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
     val searchEverywhereSemanticSettings = serviceAsync<SearchEverywhereSemanticSettings>()
 
-    EmbeddingIndexSettingsImpl.getInstance().registerClientSettings(
+    serviceAsync<EmbeddingIndexSettingsImpl>().registerClientSettings(
       object : EmbeddingIndexSettings {
         override val shouldIndexActions: Boolean
           get() = searchEverywhereSemanticSettings.enabledInActionsTab

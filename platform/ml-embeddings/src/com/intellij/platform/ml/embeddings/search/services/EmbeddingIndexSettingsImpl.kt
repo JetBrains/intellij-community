@@ -7,7 +7,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-
 @Service(Service.Level.APP)
 class EmbeddingIndexSettingsImpl : EmbeddingIndexSettings {
   override val shouldIndexActions: Boolean
