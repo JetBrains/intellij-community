@@ -4,11 +4,19 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
+import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getContentRange
@@ -16,31 +24,32 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 data class ResolveResult<Descriptor, ResolvedCall>(
-    val originalRefExpr: KtSimpleNameExpression,
+    val originalRefExpr: KtReferenceExpression,
     val declaration: PsiElement,
     val descriptor: Descriptor,
     val resolvedCall: ResolvedCall?
 )
 
 data class ResolvedReferenceInfo<Descriptor, ResolvedCall, KotlinType>(
-    val refExpr: KtSimpleNameExpression,
+    val refExpr: KtReferenceExpression,
     val resolveResult: ResolveResult<Descriptor, ResolvedCall>,
     val smartCast: KotlinType?,
     val possibleTypes: Set<KotlinType>
 )
 
-var KtSimpleNameExpression.resolveResult: ResolveResult<*, *>? by CopyablePsiUserDataProperty(Key.create("RESOLVE_RESULT"))
+var KtReferenceExpression.resolveResult: ResolveResult<*, *>? by CopyablePsiUserDataProperty(Key.create("RESOLVE_RESULT"))
 
 fun unmarkReferencesInside(root: PsiElement) {
     runReadAction {
         if (!root.isValid) return@runReadAction
-        root.forEachDescendantOfType<KtSimpleNameExpression> { it.resolveResult = null }
+        root.forEachDescendantOfType<KtReferenceExpression> { it.resolveResult = null }
     }
 }
 
 fun <Descriptor, ResolvedCall> IExtractionData.encodeReferences(
+    processImplicitInvoke: Boolean,
     hasSmartCast: (KtQualifiedExpression) -> Boolean,
-    resolveResultProvider: (KtSimpleNameExpression) -> ResolveResult<Descriptor, ResolvedCall>?
+    resolveResultProvider: (KtReferenceExpression) -> ResolveResult<Descriptor, ResolvedCall>?
 ) {
     val visitor = object : KtTreeVisitorVoid() {
         override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
@@ -50,6 +59,17 @@ fun <Descriptor, ResolvedCall> IExtractionData.encodeReferences(
             }
 
             super.visitQualifiedExpression(expression)
+        }
+
+        override fun visitCallExpression(expression: KtCallExpression) {
+            if (processImplicitInvoke) {
+                val implicitInvoke =
+                    analyze(expression) { (expression.resolveCall()?.singleFunctionCallOrNull() as? KtSimpleFunctionCall)?.isImplicitInvoke }
+                if (implicitInvoke == true) {
+                    expression.resolveResult = resolveResultProvider(expression)
+                }
+            }
+            super.visitCallExpression(expression)
         }
 
         override fun visitSimpleNameExpression(ref: KtSimpleNameExpression) {

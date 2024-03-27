@@ -77,10 +77,13 @@ internal fun ExtractionData.inferParametersInfo(
             && resolvedCall!!.extensionReceiver is ExpressionReceiver
             && DescriptorUtils.isObject(dispatchReceiverDescriptor)
         ) {
-            info.replacementMap.putValue(
-                refInfo.resolveResult.originalRefExpr,
-                WrapObjectInWithReplacement(dispatchReceiverDescriptor as ClassDescriptor)
-            )
+            val originalRefExpr = refInfo.resolveResult.originalRefExpr
+            if (originalRefExpr is KtSimpleNameExpression) {
+                info.replacementMap.putValue(
+                    originalRefExpr,
+                    WrapObjectInWithReplacement(dispatchReceiverDescriptor as ClassDescriptor)
+                )
+            }
             continue
         }
 
@@ -199,14 +202,16 @@ private fun ExtractionData.extractReceiver(
             )
         ) return
 
-        if (options.canWrapInWith
-            && resolvedCall != null
-            && resolvedCall.hasBothReceivers()
-            && DescriptorUtils.isObject(referencedClassifierDescriptor)
-        ) {
-            info.replacementMap.putValue(originalRef, WrapObjectInWithReplacement(referencedClassifierDescriptor as ClassDescriptor))
-        } else if (referencedClassifierDescriptor is ClassDescriptor) {
-            info.replacementMap.putValue(originalRef, FqNameReplacement(originalDescriptor.getImportableDescriptor().fqNameSafe))
+        if (originalRef is KtSimpleNameExpression) {
+            if (options.canWrapInWith
+                && resolvedCall != null
+                && resolvedCall.hasBothReceivers()
+                && DescriptorUtils.isObject(referencedClassifierDescriptor)
+            ) {
+                info.replacementMap.putValue(originalRef, WrapObjectInWithReplacement(referencedClassifierDescriptor as ClassDescriptor))
+            } else if (referencedClassifierDescriptor is ClassDescriptor) {
+                info.replacementMap.putValue(originalRef, FqNameReplacement(originalDescriptor.getImportableDescriptor().fqNameSafe))
+            }
         }
     } else {
         val extractThis = (hasThisReceiver && refInfo.smartCast == null) || thisExpr != null
@@ -217,6 +222,7 @@ private fun ExtractionData.extractReceiver(
 
         val extractFunctionRef =
             options.captureLocalFunctions
+                    && originalRef is KtSimpleNameExpression
                     && originalRef.getReferencedName() == originalDescriptor.name.asString() // to forbid calls by convention
                     && originalDeclaration is KtNamedFunction && originalDeclaration.isLocal
                     && targetScope.findFunction(originalDescriptor.name, NoLookupLocation.FROM_IDE) { it == originalDescriptor } == null
@@ -287,7 +293,9 @@ private fun ExtractionData.extractReceiver(
             }
 
             parameter.refCount++
-            info.originalRefToParameter.putValue(originalRef, parameter)
+            if (originalRef is KtSimpleNameExpression) {
+                info.originalRefToParameter.putValue(originalRef, parameter)
+            }
 
             parameter.addDefaultType(parameterType)
 
@@ -312,12 +320,14 @@ private fun ExtractionData.extractReceiver(
                 }
             }
 
-            val replacement = when {
-                isMemberExtension -> WrapParameterInWithReplacement(parameter)
-                hasThisReceiver && extractThis -> AddPrefixReplacement(parameter)
-                else -> RenameReplacement(parameter)
+            if (originalRef is KtSimpleNameExpression) {
+                val replacement = when {
+                    isMemberExtension -> WrapParameterInWithReplacement(parameter)
+                    hasThisReceiver && extractThis -> AddPrefixReplacement(parameter)
+                    else -> RenameReplacement(parameter)
+                }
+                info.replacementMap.putValue(originalRef, replacement)
             }
-            info.replacementMap.putValue(originalRef, replacement)
         }
     }
 }

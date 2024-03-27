@@ -53,7 +53,9 @@ import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.NotNullablePsiCopyableUserDataProperty
@@ -188,7 +190,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
              * before calls/types themselves
              */
             val currentRefs = body
-                .collectDescendantsOfType<org.jetbrains.kotlin.psi.KtSimpleNameExpression> { it.resolveResult != null }
+                .collectDescendantsOfType<KtReferenceExpression> { it.resolveResult != null }
                 .sortedByDescending { it.startOffset }
 
             currentRefs.forEach {
@@ -198,10 +200,10 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
                 } else {
                     body.findDescendantOfType { expr -> expr.resolveResult == resolveResult } ?: return@forEach
                 }
-                val originalRef = resolveResult.originalRefExpr
+                val originalRef = resolveResult.originalRefExpr as? KtSimpleNameExpression ?: return@forEach
                 val newRef = descriptor.replacementMap[originalRef]
                     .fold(currentRef as KtElement) { ref, replacement -> replacement(descriptor, ref) }
-                (newRef as? org.jetbrains.kotlin.psi.KtSimpleNameExpression)?.resolveResult = resolveResult
+                (newRef as? KtSimpleNameExpression)?.resolveResult = resolveResult
             }
 
             if (generatorOptions.target == ExtractionTarget.PROPERTY_WITH_INITIALIZER) return

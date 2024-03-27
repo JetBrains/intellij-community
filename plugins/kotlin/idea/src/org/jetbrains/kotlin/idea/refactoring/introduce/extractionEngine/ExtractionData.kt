@@ -73,7 +73,7 @@ data class ExtractionData(
     private val synthesizedInvokeDeclaration by lazy { KtPsiFactory(project).createFunction("fun invoke() {}") }
 
     init {
-        encodeReferences<DeclarationDescriptor, ResolvedCall<*>>({ bindingContext[BindingContext.SMARTCAST, it] != null }) { physicalRef ->
+        encodeReferences<DeclarationDescriptor, ResolvedCall<*>>(false, { bindingContext[BindingContext.SMARTCAST, it] != null }) { physicalRef ->
             val resolvedCall = physicalRef.getResolvedCall(bindingContext)
             val descriptor =
                 bindingContext[BindingContext.REFERENCE_TARGET, physicalRef]

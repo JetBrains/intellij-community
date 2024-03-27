@@ -2285,6 +2285,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitAndExplicitThisInExtension.kt");
                 }
 
+                @TestMetadata("implicitInvoke.kt")
+                public void testImplicitInvoke() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitInvoke.kt");
+                }
+
                 @TestMetadata("implicitThisInExtension.kt")
                 public void testImplicitThisInExtension() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/extractThis/implicitThisInExtension.kt");
