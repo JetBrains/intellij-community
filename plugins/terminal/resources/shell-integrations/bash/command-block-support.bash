@@ -80,8 +80,6 @@ __jetbrains_intellij_prompt_shown() {
 __jetbrains_intellij_configure_prompt() {
   # Surround 'prompt shown' esc sequence with \[ \] to not count characters inside as part of prompt width
   PS1="\[$(__jetbrains_intellij_prompt_shown)\]"
-  # do not show right prompt
-  builtin unset RPROMPT
 }
 
 __jetbrains_intellij_debug_log() {
@@ -119,9 +117,8 @@ __jetbrains_intellij_command_terminated() {
     return 0
   fi
 
-  __jetbrains_intellij_configure_prompt
-
   __jetbrains_intellij_report_prompt_state
+  __jetbrains_intellij_configure_prompt
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
@@ -152,11 +149,25 @@ __jetbrains_intellij_report_prompt_state() {
   then
     conda_env="$CONDA_DEFAULT_ENV"
   fi
-  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s\a' \
+
+  builtin local prompt="$PS1"
+  builtin local expanded_prompt=""
+  # Prompt expansion was introduced in 4.4 version of Bash
+  if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4) ))
+  then
+    expanded_prompt=${prompt@P}
+  else
+    # Launch a subshell with a desired prompt, then parse the output
+    expanded_prompt=$(PS1="$prompt" "$BASH" --norc -i </dev/null 2>&1 | sed -n '${s/^\(.*\)exit$/\1/p;}')
+  fi
+
+  builtin printf '\e]1341;prompt_state_updated;current_directory=%s;git_branch=%s;virtual_env=%s;conda_env=%s;original_prompt=%s;original_right_prompt=%s\a' \
     "$(__jetbrains_intellij_encode "${current_directory}")" \
     "$(__jetbrains_intellij_encode "${git_branch}")" \
     "$(__jetbrains_intellij_encode "${virtual_env}")" \
-    "$(__jetbrains_intellij_encode "${conda_env}")"
+    "$(__jetbrains_intellij_encode "${conda_env}")" \
+    "$(__jetbrains_intellij_encode "${expanded_prompt}")" \
+    "" # there is no dedicated variable for right prompt in Bash, so send an empty string
 }
 
 __jetbrains_intellij_collect_shell_info() {
