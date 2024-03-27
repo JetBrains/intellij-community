@@ -851,7 +851,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       size.width = TabContentLayout.getTabLayoutStart() + getInsets().left + getInsets().right;
       for (int i = 0; i < getComponentCount(); i++) {
         final Component each = getComponent(i);
-        if (each.isVisible() || each == tabToolbar.getComponent()) {
+        if (each.isVisible() || tabToolbar != null && each == tabToolbar.getComponent()) {
           size.height = Math.max(each.getPreferredSize().height, size.height);
           size.width += each.getPreferredSize().width;
         }

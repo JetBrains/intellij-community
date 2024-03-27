@@ -440,6 +440,8 @@ class InternalDecoratorImpl internal constructor(
 
   val headerToolbarActions: ActionGroup
     get() = header.getToolbarActions()
+  val tabToolbarActions: ActionGroup
+    get() = contentUi.tabToolbarActions
 
   override fun toString(): String {
     return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName ?: "null" }, 40) +
