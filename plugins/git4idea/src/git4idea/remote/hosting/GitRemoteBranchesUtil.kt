@@ -129,7 +129,11 @@ object GitRemoteBranchesUtil {
       withRawProgressReporter {
         withContext(Dispatchers.Default) {
           coroutineToIndicator {
-            GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, branch.nameForRemoteOperations)
+            val refspec = when (branch) {
+              is GitSpecialRefRemoteBranch -> "${branch.nameForRemoteOperations}:${branch.nameForLocalOperations}"
+              else -> branch.nameForRemoteOperations
+            }
+            GitFetchSupport.fetchSupport(repository.project).fetch(repository, branch.remote, refspec)
           }
         }
       }
