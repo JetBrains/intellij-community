@@ -4,6 +4,7 @@
   component1(): A
   component2(): B
   constructor Pair(A, B)
+  copy(A, B): Pair<A, B>
   equals(Any?): Boolean
   first: A
   hashCode(): Int
@@ -15,6 +16,7 @@
   component2(): B
   component3(): C
   constructor Triple(A, B, C)
+  copy(A, B, C): Triple<A, B, C>
   equals(Any?): Boolean
   first: A
   hashCode(): Int
