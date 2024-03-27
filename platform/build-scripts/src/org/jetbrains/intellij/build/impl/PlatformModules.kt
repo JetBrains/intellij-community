@@ -478,7 +478,7 @@ private fun compute(list: List<Pair<String, PersistentList<String>>>,
 private suspend fun getProductPluginContentModules(context: BuildContext, productPluginSourceModuleName: String): Set<ModuleItem> {
   val result = LinkedHashSet<ModuleItem>()
 
-  val content = withContext(Dispatchers.IO) {
+  withContext(Dispatchers.IO) {
     var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
       file = context.findFileInModuleSources(moduleName = productPluginSourceModuleName,
@@ -490,9 +490,10 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
     }
 
     readXmlAsModel(file).getChild("content")
-  } ?: return emptySet()
+  }?.let { content ->
+    collectProductModules(content, result)
+  }
 
-  collectProductModules(content, result)
 
   withContext(Dispatchers.IO) {
     val file = context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
