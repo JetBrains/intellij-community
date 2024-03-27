@@ -14,8 +14,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.util.application
-import kotlin.system.measureNanoTime
 
 /**
  * This tracker lives from the moment the inline completion is invoked until the end of generation.
@@ -31,7 +29,6 @@ internal class InlineCompletionInvocationTracker(
 
   private var finished = false
   private val data = mutableListOf<EventPair<*>>()
-  private val contextFeatures = mutableListOf<EventPair<*>>()
   private var hasSuggestions: Boolean? = null
   private var canceled: Boolean = false
   private var exception: Boolean = false
@@ -53,11 +50,6 @@ internal class InlineCompletionInvocationTracker(
     fileLanguage = psiFile.language
     data.add(EventFields.Language.with(language))
     data.add(EventFields.CurrentFile.with(fileLanguage))
-    val computationTime = measureNanoTime {
-      contextFeatures.addAll(InlineContextFeatures.capture(psiFile, editor, offset))
-      request.putUserData(InlineContextFeatures.KEY, contextFeatures)
-    }
-    data.add(InvokedEvents.CONTEXT_FEATURES_COMPUTATION_TIME.with(computationTime))
     assert(!finished)
   }
 
@@ -96,10 +88,6 @@ internal class InlineCompletionInvocationTracker(
       }
     }.takeIf { it.isNotEmpty() }?.let {
       data.add(InvokedEvents.ADDITIONAL.with(ObjectEventData(it)))
-    }
-
-    if (contextFeatures.isNotEmpty()) {
-      data.add(InvokedEvents.CONTEXT_FEATURES.with(ObjectEventData(contextFeatures)))
     }
 
     InlineCompletionUsageTracker.INVOKED_EVENT.log(listOf(
