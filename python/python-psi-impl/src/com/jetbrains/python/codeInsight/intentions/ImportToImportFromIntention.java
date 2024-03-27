@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.*;
@@ -103,14 +104,11 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       return myReferences.size() == getSameNameReferences().size();
     }
 
-    @NotNull
-    private Collection<PyReferenceExpression> getSameNameReferences() {
+    private @NotNull Collection<PyReferenceExpression> getSameNameReferences() {
       if (myQualifiedName == null) return myReferences;
-      return myReferences.stream()
-        .filter(
-          ref -> ref.getParent() instanceof PyReferenceExpression parentRef && Objects.equals(myQualifiedName, parentRef.asQualifiedName())
-        )
-        .toList();
+      return ContainerUtil.filter(myReferences,
+                                  ref -> ref.getParent() instanceof PyReferenceExpression parentRef &&
+                                         myQualifiedName.equals(parentRef.asQualifiedName()));
     }
 
     public void invoke(boolean unqualifyAll) {
@@ -183,8 +181,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
     }
 
 
-    @NotNull
-    public @IntentionName String getText() {
+    public @NotNull @IntentionName String getText() {
       if (myQualifiedName == null) {
         String moduleName = Optional.ofNullable(myModuleName).orElse("?");
         return PyPsiBundle.message("INTN.convert.to.from.import", getDots() + moduleName, "...");
@@ -194,16 +191,11 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       }
     }
 
-    @NotNull
-    private String getDots() {
-      String dots = "";
-      for (int i = 0; i < myRelativeLevel; i += 1) {
-        dots += "."; // this generally runs 1-2 times, so it's cheaper than allocating a StringBuilder
-      }
-      return dots;
+    private @NotNull String getDots() {
+      return StringUtil.repeat(".", myRelativeLevel);
     }
 
-    private static String getQualifierName(PyImportElement importElement) {
+    private static @Nullable String getQualifierName(@NotNull PyImportElement importElement) {
       String asName = importElement.getAsName();
       if (asName != null) {
         return asName;
@@ -222,8 +214,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
     return PyPsiBundle.message("INTN.NAME.convert.import.unqualify");
   }
 
-  @Nullable
-  private static IntentionState createState(@NotNull PsiFile file, int offset) {
+  private static @Nullable IntentionState createState(@NotNull PsiFile file, int offset) {
     final PsiElement elementAtCaret = file.findElementAt(offset);
     final PyImportElement importElement = PsiTreeUtil.getParentOfType(elementAtCaret, PyImportElement.class);
     PyPsiUtils.assertValid(importElement);
@@ -239,11 +230,11 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       while (ref.getQualifier() instanceof PyReferenceExpression refQualifier) {
         ResolveResult[] resolved = refQualifier.getReference().multiResolve(false);
         for (ResolveResult rr : resolved) {
-          if (rr.isValidResult() && rr instanceof ImportedResolveResult importedResolveResult) {
-            if (importedResolveResult.getDefiner() instanceof PyImportElement importDefiner &&
-                importDefiner.getContainingFile() == file) {
-              return new IntentionState(file, importDefiner, ref.asQualifiedName());
-            }
+          if (rr.isValidResult() &&
+              rr instanceof ImportedResolveResult irr &&
+              irr.getDefiner() instanceof PyImportElement importDefiner &&
+              importDefiner.getContainingFile() == file) {
+            return new IntentionState(file, importDefiner, ref.asQualifiedName());
           }
         }
         ref = refQualifier;
@@ -302,15 +293,13 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
     };
   }
 
-  @NotNull
-  private static ModCommand invoke(@NotNull ActionContext context, boolean unqualifyAll) {
+  private static @NotNull ModCommand invoke(@NotNull ActionContext context, boolean unqualifyAll) {
     return ModCommand.psiUpdate(context.file(), fileCopy -> {
       createAndCheckState(fileCopy, context.offset()).invoke(unqualifyAll);
     });
   }
 
-  @NotNull
-  private static IntentionState createAndCheckState(@NotNull PsiFile file, int offset) {
+  private static @NotNull IntentionState createAndCheckState(@NotNull PsiFile file, int offset) {
     IntentionState state = createState(file, offset);
     if (state == null || !state.isAvailable()) {
       throw new IllegalStateException();
