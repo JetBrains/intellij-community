@@ -48,43 +48,23 @@ final class FileTree {
 
     myFiles.add(file);
 
-    List<VirtualFile> children = myStrictDirectory2Children.get(dir);
-    if (children != null) {
-      LOG.assertTrue(!children.contains(file));
-      children.add(file);
-    }
-    else {
-      children = ContainerUtil.createConcurrentList();
-      children.add(file);
-      myStrictDirectory2Children.put(dir, children);
-    }
+    List<VirtualFile> children = myStrictDirectory2Children
+            .computeIfAbsent(dir, d -> ContainerUtil.createConcurrentList());
+    LOG.assertTrue(!children.contains(file));
+    children.add(file);
 
-    children = myDirectory2Children.get(dir);
-    if (children != null) {
-      LOG.assertTrue(!children.contains(file));
-      children.add(file);
-      return;
-    }
-    else {
-      children = ContainerUtil.createConcurrentList();
-      children.add(file);
-      myDirectory2Children.put(dir, children);
-    }
+    children = myDirectory2Children
+            .computeIfAbsent(dir, d -> ContainerUtil.createConcurrentList());
+    LOG.assertTrue(!children.contains(file));
+    children.add(file);
+    if (children.size() > 1) return;
 
     VirtualFile parent = dir.getParent();
     while (parent != null) {
-      children = myDirectory2Children.get(parent);
-      if (children != null) {
-        if ((!children.contains(dir))) {
-          children.add(dir);
-        }
-        return;
-      }
-      else {
-        children = ContainerUtil.createConcurrentList();
-        children.add(dir);
-        myDirectory2Children.put(parent, children);
-      }
+      children = myDirectory2Children
+              .computeIfAbsent(parent, d -> ContainerUtil.createConcurrentList());
+      if (!children.contains(dir)) children.add(dir);
+      if (children.size() > 1) return;
       dir = parent;
       parent = parent.getParent();
     }
@@ -118,11 +98,7 @@ final class FileTree {
       LOG.assertTrue(children != null);
       dirsToBeRemoved = collectDirsToRemove(file, children, dirsToBeRemoved, _directory);
     }
-    for (VirtualFile dir : myStrictDirectory2Children.keySet()) {
-      List<VirtualFile> children = myStrictDirectory2Children.get(dir);
-      LOG.assertTrue(children != null);
-      children.remove(file);
-    }
+    myStrictDirectory2Children.values().forEach(files -> files.remove(file));
     // We have remove also all removed (empty) directories
     if (dirsToBeRemoved != null) {
       LOG.assertTrue(dirsToBeRemoved.size() > 0);
