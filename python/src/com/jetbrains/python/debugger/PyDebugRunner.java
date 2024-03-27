@@ -96,10 +96,11 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   public static final @NonNls String GEVENT_SUPPORT = "GEVENT_SUPPORT";
   public static final @NonNls String PYDEVD_FILTERS = "PYDEVD_FILTERS";
   public static final @NonNls String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
-  public static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
-  public static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
-  public static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
   public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
+
+  protected static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
+  protected static final @NonNls String PYCHARM_DEBUG = "PYCHARM_DEBUG";
+  protected static final @NonNls String USE_LOW_IMPACT_MONITORING = "USE_LOW_IMPACT_MONITORING";
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final @NonNls String PYTHONPATH_ENV_NAME = "PYTHONPATH";
