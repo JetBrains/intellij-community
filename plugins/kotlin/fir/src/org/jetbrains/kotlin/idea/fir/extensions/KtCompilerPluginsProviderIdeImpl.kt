@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.util.registry.Registry
@@ -108,10 +109,11 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         if (!project.isTrusted()) return null
         val pluginsClassLoader: UrlClassLoader = UrlClassLoader.build().apply {
             parent(KtSourceModule::class.java.classLoader)
-            val pluginsClasspath = ModuleManager.getInstance(project).modules
-                .flatMap { it.getCompilerArguments().getSubstitutedPluginClassPaths() }
-                .distinct()
-            files(pluginsClasspath)
+
+            val allModules = ModuleManager.getInstance(project).modules
+            val pluginClasspaths = collectSubstitutedPluginClasspaths(allModules.map { it.getCompilerArguments() })
+
+            files(pluginClasspaths)
         }.get()
         return PluginsCache(
             pluginsClassLoader,
@@ -149,16 +151,17 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
     private fun computeExtensionStorage(module: KtSourceModule): CompilerPluginRegistrar.ExtensionStorage? {
         val classLoader = pluginsCache?.pluginsClassLoader ?: return null
         val compilerArguments = module.ideaModule.getCompilerArguments()
-        val classPaths = compilerArguments.getSubstitutedPluginClassPaths().map { it.toFile() }.takeIf { it.isNotEmpty() } ?: return null
+        val pluginClasspaths = collectSubstitutedPluginClasspaths(listOf(compilerArguments)).map { it.toFile() }
+        if (pluginClasspaths.isEmpty()) return null
 
         val logger = logger<KtCompilerPluginsProviderIdeImpl>()
 
         val pluginRegistrars =
-            logger.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(classPaths, classLoader) }
+            logger.runAndLogException { ServiceLoaderLite.loadImplementations<CompilerPluginRegistrar>(pluginClasspaths, classLoader) }
             ?.takeIf { it.isNotEmpty() }
             ?: return null
         val commandLineProcessors = logger.runAndLogException {
-            ServiceLoaderLite.loadImplementations<CommandLineProcessor>(classPaths, classLoader)
+            ServiceLoaderLite.loadImplementations<CommandLineProcessor>(pluginClasspaths, classLoader)
         } ?: return null
 
         val compilerConfiguration = CompilerConfiguration().apply {
@@ -201,7 +204,7 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
      * in the absolute form with the expansion of the present path macros
      * (like 'KOTLIN_BUNDLED').
      */
-    private fun CommonCompilerArguments.getOriginalPluginClassPaths(): List<Path> {
+    private fun CommonCompilerArguments.getOriginalPluginClasspaths(): List<Path> {
         val pluginClassPaths = this.pluginClasspaths
 
         if (pluginClassPaths.isNullOrEmpty()) return emptyList()
@@ -212,9 +215,21 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
         return expandedPluginClassPaths.map { Path.of(it).toAbsolutePath() }
     }
 
-    private fun CommonCompilerArguments.getSubstitutedPluginClassPaths(): List<Path> {
-        val userDefinedPlugins = getOriginalPluginClassPaths()
-        return userDefinedPlugins.mapNotNull(::substitutePluginJar)
+    /**
+     * Collects the substituted plugin classpaths for the given [compilerArguments] list.
+     *
+     * We process the whole [compilerArguments] list at once, because it gives us opportunity
+     * to not call [substitutePluginJar] multiple times if [compilerArguments] use the same
+     * compiler plugins jars.
+     */
+    private fun collectSubstitutedPluginClasspaths(compilerArguments: List<CommonCompilerArguments>): List<Path> {
+        val combinedOriginalClasspaths = compilerArguments.asSequence()
+            .flatMap { it.getOriginalPluginClasspaths() }
+            .distinct()
+
+        val substitutedClasspaths = combinedOriginalClasspaths.mapNotNull(::substitutePluginJar).distinct()
+
+        return substitutedClasspaths.toList()
     }
 
     /**
@@ -223,6 +238,8 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project, cs
      * 2. Allow to use other compiler plugins only if [onlyBundledPluginsEnabled] is set to false; otherwise, filter them.
      */
     private fun substitutePluginJar(userSuppliedPluginJar: Path): Path? {
+        ProgressManager.checkCanceled()
+
         val bundledPlugin = KotlinK2BundledCompilerPlugins.findCorrespondingBundledPlugin(userSuppliedPluginJar)
         if (bundledPlugin != null) return bundledPlugin.bundledJarLocation
 
