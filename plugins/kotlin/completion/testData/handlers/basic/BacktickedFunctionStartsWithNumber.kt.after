@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+class C {
+    fun `1_fun`() {}
+}
+
+fun main() {
+    C().`1_fun`()
+}
+
+// ELEMENT: 1_fun
