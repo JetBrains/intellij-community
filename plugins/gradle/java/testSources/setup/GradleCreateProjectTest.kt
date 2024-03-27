@@ -6,9 +6,12 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.withProjectAsync
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
@@ -20,8 +23,8 @@ import org.junit.jupiter.api.Test
 class GradleCreateProjectTest : GradleCreateProjectTestCase() {
 
   @Test
-  fun `test project create`() {
-    runBlocking {
+  fun `test project re-create`() = runBlocking {
+    Disposer.newDisposable().use { disposable ->
       val projectInfo = projectInfo("project") {
         withJavaBuildFile()
         withSettingsFile {
@@ -36,6 +39,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           withJavaBuildFile()
         }
       }
+
+      WorkspaceModelCacheImpl.forceEnableCaching(disposable)
       createProjectByWizard(projectInfo)
         .useProjectAsync(save = true) { project ->
           assertProjectState(project, projectInfo)

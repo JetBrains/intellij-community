@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
+import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
 import com.intellij.util.containers.forEachGuaranteed
@@ -432,11 +433,17 @@ private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() ->
 
 private fun Project.closeProject(save: Boolean = false) {
   invokeAndWaitIfNeeded {
+    if (save) {
+      saveWorkspaceModel()
+    }
     ProjectManagerEx.getInstanceEx().forceCloseProject(this, save = save)
   }
 }
 
 suspend fun Project.closeProjectAsync(save: Boolean = false) {
+  if (save) {
+    saveWorkspaceModel()
+  }
   ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(this, save = save)
 }
 
@@ -577,6 +584,14 @@ suspend fun createOrLoadProject(
   }
 
   createOrLoadProject(projectPath = file, loadComponentState = loadComponentState, options = options, task = task)
+}
+
+private fun Project.saveWorkspaceModel() {
+  val workspaceModelCache = WorkspaceModelCache.getInstance(this)
+  requireNotNull(workspaceModelCache) {
+    "WorkspaceModelCache should be enabled explicitly if you need to save the project in tests."
+  }
+  workspaceModelCache.saveCacheNow()
 }
 
 private suspend fun createOrLoadProject(projectPath: Path,

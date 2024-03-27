@@ -7,6 +7,7 @@ import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
@@ -39,7 +40,6 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       openProjectAsync(projectInfo.projectFile)
     }.useProjectAsync {
       assertProjectState(it, projectInfo)
-
     }
   }
 
@@ -50,7 +50,6 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       importProjectActionAsync(projectInfo.projectFile)
     }.useProjectAsync {
       assertProjectState(it, projectInfo)
-
     }
   }
 
@@ -97,6 +96,8 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
   fun `test project re-open`() = runBlocking {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
+
+    WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
     waitForImport {
       openProjectAsync(projectInfo.projectFile)
     }.useProjectAsync(save = true) {
@@ -137,6 +138,8 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
 
     runBlocking {
       val projectInfo = ProjectInfo(projectPom, "project", "m (1)", "M (2)")
+
+      WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
       waitForImport {
         openProjectAsync(projectInfo.projectFile)
       }.useProjectAsync(save = true) {
@@ -154,6 +157,7 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
 
+    WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
     waitForImport {
       openProjectAsync(projectInfo.projectFile)
     }.useProjectAsync(save = true) {
@@ -175,25 +179,26 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
     val projectInfo = generateProject("A")
 
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
-    val p1 = openProjectAsync(projectInfo.projectFile)
-    p1.useProjectAsync(true) {
-      // initial state: workspace import is disabled, has not been forced yet
-      val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-      mavenProjectsManager.importingSettings.isWorkspaceImportForciblyTurnedOn = false
-      waitForImportWithinTimeout(it) {
-        mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
-        Unit
-      }
-    }
+    WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
 
-    val p2 = openProjectAsync(projectInfo.projectFile)
-    p2.useProjectAsync(true) {
-      // check that workspace import has been forced
-      val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-      assertTrue(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
-      // user still chooses legacy import
-      mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
-    }
+    openProjectAsync(projectInfo.projectFile)
+      .useProjectAsync(save = true) {
+        // initial state: workspace import is disabled, has not been forced yet
+        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
+        mavenProjectsManager.importingSettings.isWorkspaceImportForciblyTurnedOn = false
+        waitForImportWithinTimeout(it) {
+          mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+        }
+      }
+
+    openProjectAsync(projectInfo.projectFile)
+      .useProjectAsync(save = true) {
+        // check that workspace import has been forced
+        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
+        assertTrue(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
+        // user still chooses legacy import
+        mavenProjectsManager.importingSettings.isWorkspaceImportEnabled = false
+      }
 
     val projectFileDir = projectInfo.projectFile.parent.toNioPath()
     val moduleFilePath = appSystemDir
@@ -211,11 +216,11 @@ class MavenSetupProjectTest : MavenSetupProjectTestCase() {
       assertTrue("Module file is empty", Files.size(moduleFilePath) > 0)
     }
 
-    val p3 = openProjectAsync(projectInfo.projectFile)
-    p3.useProjectAsync(true) {
-      // check that workspace import has not been forced twice
-      val mavenProjectsManager = MavenProjectsManager.getInstance(it)
-      assertFalse(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
-    }
+    openProjectAsync(projectInfo.projectFile)
+      .useProjectAsync(save = true) {
+        // check that workspace import has not been forced twice
+        val mavenProjectsManager = MavenProjectsManager.getInstance(it)
+        assertFalse(mavenProjectsManager.importingSettings.isWorkspaceImportEnabled)
+      }
   }
 }

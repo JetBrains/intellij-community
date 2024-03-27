@@ -9,11 +9,13 @@ import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.SdkTestFixture
 import com.intellij.util.indexing.FileBasedIndexEx
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
@@ -65,6 +67,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override fun setUp() {
     _testDisposable = Disposer.newDisposable()
 
+    WorkspaceModelCacheImpl.forceEnableCaching(testDisposable)
     sdkFixture.setUp()
     fileFixture.setUp()
 
