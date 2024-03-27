@@ -4,13 +4,16 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.util.containers.DisposableWrapperList
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
-import org.jetbrains.plugins.gradle.service.project.*
+import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
@@ -209,6 +212,9 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       counter.incrementAndGet()
       try {
         return action()
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
       }
       catch (failure: Throwable) {
         failures.add(failure)

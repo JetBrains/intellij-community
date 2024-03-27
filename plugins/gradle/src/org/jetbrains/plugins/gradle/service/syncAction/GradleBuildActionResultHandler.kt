@@ -43,8 +43,8 @@ class GradleBuildActionResultHandler(
 
   fun createStreamValueListener(): StreamedValueListener {
     return StreamedValueListener { state ->
-      if (state is GradleModelHolderState) {
-        runCancellable {
+      runCancellable {
+        if (state is GradleModelHolderState) {
           resultHandler.onPhaseCompleted(state.phase!!, state)
         }
       }
@@ -77,28 +77,28 @@ class GradleBuildActionResultHandler(
        * added to the queue to unblock the main thread.
        */
       override fun onComplete(result: Any?) {
-        try {
-          if (result is GradleModelHolderState) {
-            runCancellable {
+        runCancellable {
+          try {
+            if (result is GradleModelHolderState) {
               isBuildActionInterrupted.set(false)
               resultHandler.onBuildCompleted(result)
             }
           }
-        }
-        finally {
-          buildFinishWaiter.countDown()
+          finally {
+            buildFinishWaiter.countDown()
+          }
         }
       }
 
       override fun onFailure(failure: GradleConnectionException) {
-        try {
-          runCancellable {
+        runCancellable {
+          try {
             buildFailure.set(failure)
             resultHandler.onBuildFailed(failure)
           }
-        }
-        finally {
-          buildFinishWaiter.countDown()
+          finally {
+            buildFinishWaiter.countDown()
+          }
         }
       }
     }
@@ -106,12 +106,10 @@ class GradleBuildActionResultHandler(
 
   private fun runCancellable(action: () -> Unit) {
     try {
-      if (!resolverContext.isCancellationRequested) {
-        action()
-      }
+      resolverContext.runCancellable(action)
     }
-    catch (e: ProcessCanceledException) {
-      resolverContext.cancel()
+    catch (ignored: ProcessCanceledException) {
+      // Gradle TAPI cannot handle ProcessCanceledException
     }
   }
 }

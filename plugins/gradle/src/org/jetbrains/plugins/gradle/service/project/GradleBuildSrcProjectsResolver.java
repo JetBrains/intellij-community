@@ -243,7 +243,7 @@ public final class GradleBuildSrcProjectsResolver {
       buildSrcResolverCtx.getSettings(),
       buildSrcResolverCtx.getExternalSystemTaskId(),
       buildSrcResolverCtx.getListener(),
-      buildSrcResolverCtx.getCancellationTokenSource().token(),
+      buildSrcResolverCtx.getCancellationToken(),
       projectConnectionDataNodeFunction
     );
 

@@ -72,7 +72,7 @@ class GradleBuildActionRunner(
       .buildFinished(buildAction, resultHandler.createBuildFinishedHandler())
       .build()
       .prepareOperationForSync()
-      .withCancellationToken(resolverCtx.cancellationTokenSource.token())
+      .withCancellationToken(resolverCtx.cancellationToken)
       .withStreamedValueListener(resultHandler.createStreamValueListener())
       .forTasks(emptyList()) // this will allow setting up Gradle StartParameter#taskNames using model builders
       .run(resultHandler.createResultHandler())
@@ -82,7 +82,7 @@ class GradleBuildActionRunner(
   private fun runDefaultBuildAction() {
     resolverCtx.connection.action(buildAction)
       .prepareOperationForSync()
-      .withCancellationToken(resolverCtx.cancellationTokenSource.token())
+      .withCancellationToken(resolverCtx.cancellationToken)
       .withStreamedValueListener(resultHandler.createStreamValueListener())
       .run(resultHandler.createResultHandler())
     resultHandler.waitForBuildFinish()

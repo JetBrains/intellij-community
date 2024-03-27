@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
@@ -69,9 +70,9 @@ fun processScriptModel(
                     it.failed = true
                 }
             }
-            resolverCtx.cancel()
+            throw ProcessCanceledException()
         }
-        errors.isEmpty()
+        true
     }
 }
 

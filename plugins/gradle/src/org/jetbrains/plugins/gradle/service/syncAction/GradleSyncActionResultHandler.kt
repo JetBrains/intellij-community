@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -16,7 +17,7 @@ class GradleSyncActionResultHandler(
   fun onModelFetchPhaseCompleted(phase: GradleModelFetchPhase) {
     runWithSpan(telemetry, phase.name) {
       GradleSyncContributor.EP_NAME.forEachExtensionSafe { extension ->
-        resolverContext.checkCancelled()
+        ProgressManager.checkCanceled()
         runWithSpan(telemetry, extension.name) {
           extension.onModelFetchPhaseCompleted(resolverContext, phase)
         }
@@ -27,7 +28,7 @@ class GradleSyncActionResultHandler(
   fun onModelFetchCompleted() {
     runWithSpan(telemetry, "MODEL_FETCH_COMPLETED") {
       GradleSyncContributor.EP_NAME.forEachExtensionSafe { extension ->
-        resolverContext.checkCancelled()
+        ProgressManager.checkCanceled()
         runWithSpan(telemetry, extension.name) {
           extension.onModelFetchCompleted(resolverContext)
         }
@@ -39,7 +40,7 @@ class GradleSyncActionResultHandler(
     runWithSpan(telemetry, "MODEL_FETCH_FAILED") { span ->
       span.setAttribute("exception", exception.message ?: exception.javaClass.name)
       GradleSyncContributor.EP_NAME.forEachExtensionSafe { extension ->
-        resolverContext.checkCancelled()
+        ProgressManager.checkCanceled()
         runWithSpan(telemetry, extension.name) {
           extension.onModelFetchFailed(resolverContext, exception)
         }
@@ -50,7 +51,7 @@ class GradleSyncActionResultHandler(
   fun onProjectLoadedActionCompleted() {
     runWithSpan(telemetry, "PROJECT_LOADED_ACTION") {
       GradleSyncContributor.EP_NAME.forEachExtensionSafe { extension ->
-        resolverContext.checkCancelled()
+        ProgressManager.checkCanceled()
         runWithSpan(telemetry, extension.name) {
           extension.onProjectLoadedActionCompleted(resolverContext)
         }
