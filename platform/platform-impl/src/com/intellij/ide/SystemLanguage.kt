@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
@@ -34,16 +35,16 @@ import javax.swing.*
  * @author Alexander Lobas
  */
 class SystemLanguage private constructor() {
-  private var myLocale: Locale = Locale.getDefault()
-  private var myNeedInstallPlugin = false
-  private var myPluginId: String? = null
-  private var myPluginUrl: String? = null
+  private var locale: Locale = Locale.getDefault()
+  private var needInstallPlugin = false
+  private var pluginId: String? = null
+  private var pluginUrl: String? = null
 
   @NlsSafe
-  private var myPluginSize: String? = null
+  private var pluginSize: String? = null
 
   companion object {
-    private val LOG = Logger.getInstance(SystemLanguage::class.java)
+    private val LOG: Logger get() = logger<SystemLanguage>()
 
     private const val TOOLBOX_KEY = "toolbox.run.with.language"
     private const val LANGUAGE_PLUGINS_FILE = "language-plugins.xml"
@@ -65,37 +66,37 @@ class SystemLanguage private constructor() {
   }
 
   private fun loadState() {
-    myNeedInstallPlugin = false
-    myPluginSize = null
-    myPluginUrl = null
-    myPluginId = null
+    needInstallPlugin = false
+    pluginSize = null
+    pluginUrl = null
+    pluginId = null
 
     val property = System.getProperty(TOOLBOX_KEY)
     if (property != null) {
-      myLocale = Locale(property)
+      locale = Locale(property)
       return
     }
 
-    val locale = loadSavedLanguage()
-    if (locale != null) {
-      myLocale = locale
+    val savedLocale = loadSavedLanguage()
+    if (savedLocale != null) {
+      locale = savedLocale
       return
     }
 
-    myLocale = Locale.getDefault()
+    locale = Locale.getDefault()
 
     if (ConfigImportHelper.isNewUser() || ConfigImportHelper.isConfigImported()) {
-      if (Locale.ENGLISH.language != myLocale.language) {
+      if (Locale.ENGLISH.language != locale.language) {
         val path = Path.of(PathManager.getPreInstalledPluginsPath(), LANGUAGE_PLUGINS_FILE)
         if (Files.exists(path)) {
           try {
             val root = JDOMUtil.load(path)
             for (plugin in root.getChildren("plugin")) {
               val language = plugin.getAttributeValue("language")
-              if (myLocale.language == language) {
-                myPluginId = plugin.getAttributeValue("id")
-                myPluginSize = plugin.getAttributeValue("size")
-                myPluginUrl = plugin.text
+              if (locale.language == language) {
+                pluginId = plugin.getAttributeValue("id")
+                pluginSize = plugin.getAttributeValue("size")
+                pluginUrl = plugin.text
                 break
               }
             }
@@ -104,12 +105,12 @@ class SystemLanguage private constructor() {
             LOG.warn(e)
           }
         }
-        myNeedInstallPlugin = myPluginId != null && myPluginUrl != null
+        needInstallPlugin = pluginId != null && pluginUrl != null
 
-        if (myNeedInstallPlugin && ConfigImportHelper.isConfigImported()) {
-          myNeedInstallPlugin = PluginManagerCore.findPlugin(PluginId.getId(myPluginId!!)) == null
-          if (!myNeedInstallPlugin) {
-            saveLanguage(myLocale.language)
+        if (needInstallPlugin && ConfigImportHelper.isConfigImported()) {
+          needInstallPlugin = PluginManagerCore.findPlugin(PluginId.getId(pluginId!!)) == null
+          if (!needInstallPlugin) {
+            saveLanguage(locale.language)
           }
         }
       }
@@ -146,18 +147,18 @@ class SystemLanguage private constructor() {
     }
   }
 
-  fun getLocale() = myLocale
+  fun getLocale() = locale
 
-  fun needInstallPlugin() = myNeedInstallPlugin
+  fun needInstallPlugin() = needInstallPlugin
 
   fun doChooseLanguage(args: List<String>) {
-    if (!myNeedInstallPlugin) {
+    if (!needInstallPlugin) {
       return
     }
 
-    val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.ChooseLanguageBundle", myLocale)
+    val bundle = DynamicBundle.getResourceBundle(DynamicBundle::class.java.classLoader, "messages.ChooseLanguageBundle", locale)
     val title = bundle.getString("chooseLanguage.dialog.title")
-    val message = StringUtil.replace(bundle.getString("chooseLanguage.dialog.message"), "{0}", myPluginSize!!)
+    val message = StringUtil.replace(bundle.getString("chooseLanguage.dialog.message"), "{0}", pluginSize!!)
     val buttons = arrayOf(bundle.getString("chooseLanguage.dialog.okButton"), bundle.getString("chooseLanguage.dialog.cancelButton"))
 
     val dialog = AlertDialog(null, null, message, title, buttons, 0, -1, AllIcons.General.InformationDialog, null, null)
@@ -169,7 +170,7 @@ class SystemLanguage private constructor() {
       progress.isVisible = true
     }
     else {
-      myLocale = Locale.ENGLISH
+      locale = Locale.ENGLISH
       saveLanguage(null)
       clearCaches()
     }
@@ -179,16 +180,16 @@ class SystemLanguage private constructor() {
     var result = false
 
     try {
-      val node = PluginNode(PluginId.getId(myPluginId!!))
-      node.downloadUrl = myPluginUrl
+      val node = PluginNode(PluginId.getId(pluginId!!))
+      node.downloadUrl = pluginUrl
       val downloader = PluginDownloader.createDownloader(node, "", null)
       if (downloader.prepareToInstall(progress.indicator)) {
         PluginInstaller.unpackPlugin(downloader.filePath, PathManager.getPluginsDir())
         result = true
-        LOG.warn("=== Early plugin installed: $myPluginId ===")
+        LOG.warn("=== Early plugin installed: $pluginId ===")
       }
       else {
-        LOG.warn("=== Early plugin install: not prepared $myPluginId ===")
+        LOG.warn("=== Early plugin install: not prepared $pluginId ===")
       }
     }
     catch (e: IOException) {
@@ -196,9 +197,9 @@ class SystemLanguage private constructor() {
     }
 
     if (!result) {
-      myLocale = Locale.ENGLISH
+      locale = Locale.ENGLISH
     }
-    saveLanguage(if (result) myLocale.language else null)
+    saveLanguage(if (result) locale.language else null)
 
     SwingUtilities.invokeLater {
       progress.isVisible = false
@@ -217,16 +218,16 @@ class SystemLanguage private constructor() {
   }
 
   private class ProgressDialog(bundle: ResourceBundle) : JDialog(null as Frame?, null, true) {
-    private val myProgressBar = JProgressBar(0, 100)
-    private var myCanceled = false
+    private val progressBar = JProgressBar(0, 100)
+    private var canceled = false
 
     val indicator: ProgressIndicator = object : AbstractProgressIndicatorBase() {
       override fun setFraction(fraction: Double) {
-        myProgressBar.value = (fraction * 100).toInt()
+        progressBar.value = (fraction * 100).toInt()
       }
 
       override fun isCanceled(): Boolean {
-        return myCanceled
+        return canceled
       }
 
       override fun isCancelable(): Boolean {
@@ -247,12 +248,12 @@ class SystemLanguage private constructor() {
       val progressPanel = JPanel(BorderLayout())
       progressPanel.border = JBUI.Borders.emptyBottom(15)
       progressPanel.add(JLabel(bundle.getString("chooseLanguage.progress.dialog.message")), BorderLayout.NORTH)
-      progressPanel.add(myProgressBar, BorderLayout.SOUTH)
+      progressPanel.add(progressBar, BorderLayout.SOUTH)
       panel.add(Wrapper(progressPanel))
 
       val cancelButton = JButton(bundle.getString("chooseLanguage.progress.dialog.cancelButton"))
       cancelButton.addActionListener {
-        myCanceled = true
+        canceled = true
       }
       panel.add(Wrapper(cancelButton), BorderLayout.EAST)
       contentPane = panel
