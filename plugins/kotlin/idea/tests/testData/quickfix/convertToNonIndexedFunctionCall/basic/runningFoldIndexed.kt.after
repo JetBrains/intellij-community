@@ -1,0 +1,7 @@
+// "Convert to 'runningFold'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.runningFold("") { acc, s ->
+        acc + s
+    }
+}

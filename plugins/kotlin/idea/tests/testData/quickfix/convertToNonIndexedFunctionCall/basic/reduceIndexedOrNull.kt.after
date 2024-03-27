@@ -1,0 +1,8 @@
+// "Convert to 'reduceOrNull'" "true"
+// WITH_STDLIB
+@OptIn(ExperimentalStdlibApi::class)
+fun test(list: List<String>) {
+    list.reduceOrNull { acc, s ->
+        acc + s
+    }
+}
