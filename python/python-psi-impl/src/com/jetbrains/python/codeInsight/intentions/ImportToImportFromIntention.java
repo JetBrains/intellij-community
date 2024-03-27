@@ -33,7 +33,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <i>NOTE: currently we only check usage of module name in the same file. For re-exported module names this is not sufficient.</i>
  * <br>
  */
-public final class ImportToImportFromIntention extends PsiBasedModCommandAction<PsiElement> {
+public final class ImportToImportFromIntention extends PsiBasedModCommandAction<PyReferenceExpression> {
   private static class IntentionState {
     private String myModuleName = null;
     private final @NotNull PyImportElement myImportElement;
@@ -43,7 +43,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       // is anything that resolves to our imported module is just an exact reference to that module
     private int myRelativeLevel; // true if "from ... import"
 
-    IntentionState(@NotNull PsiFile file, @NotNull PyImportElement importElement, @Nullable QualifiedName qualifiedName) {
+    IntentionState(@NotNull PyImportElement importElement, @Nullable QualifiedName qualifiedName) {
       boolean available = false;
       myImportElement = importElement;
       myQualifiedName = qualifiedName;
@@ -61,7 +61,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
         }
       }
       if (available) {
-        collectReferencesAndOtherData(file); // this will cache data for the invocation
+        collectReferencesAndOtherData(importElement.getContainingFile()); // this will cache data for the invocation
       }
     }
 
@@ -214,31 +214,23 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
     return PyPsiBundle.message("INTN.NAME.convert.import.unqualify");
   }
 
-  private static @Nullable IntentionState createState(@NotNull PsiFile file, int offset) {
-    final PsiElement elementAtCaret = file.findElementAt(offset);
-    final PyImportElement importElement = PsiTreeUtil.getParentOfType(elementAtCaret, PyImportElement.class);
-    PyPsiUtils.assertValid(importElement);
+  private static @Nullable IntentionState createState(@NotNull PyReferenceExpression refExprUnderCaret) {
+    final PyImportElement importElement = PsiTreeUtil.getParentOfType(refExprUnderCaret, PyImportElement.class);
     if (importElement != null) {
-      return new IntentionState(file, importElement, null);
+      return new IntentionState(importElement, null);
     }
-    PyReferenceExpression ref = PsiTreeUtil.getParentOfType(elementAtCaret, PyReferenceExpression.class);
-    PyPsiUtils.assertValid(ref);
-    if (ref != null) {
-      while (ref.getParent() instanceof PyReferenceExpression parentRef) {
-        ref = parentRef;
-      }
-      while (ref.getQualifier() instanceof PyReferenceExpression refQualifier) {
-        ResolveResult[] resolved = refQualifier.getReference().multiResolve(false);
-        for (ResolveResult rr : resolved) {
-          if (rr.isValidResult() &&
-              rr instanceof ImportedResolveResult irr &&
-              irr.getDefiner() instanceof PyImportElement importDefiner &&
-              importDefiner.getContainingFile() == file) {
-            return new IntentionState(file, importDefiner, ref.asQualifiedName());
-          }
+    PyReferenceExpression reference =
+      Objects.requireNonNullElse(PsiTreeUtil.getTopmostParentOfType(refExprUnderCaret, PyReferenceExpression.class), refExprUnderCaret);
+    while (reference.getQualifier() instanceof PyReferenceExpression refQualifier) {
+      for (ResolveResult rr : refQualifier.getReference().multiResolve(false)) {
+        if (rr.isValidResult() &&
+            rr instanceof ImportedResolveResult irr &&
+            irr.getDefiner() instanceof PyImportElement importDefiner &&
+            importDefiner.getContainingFile() == refExprUnderCaret.getContainingFile()) {
+          return new IntentionState(importDefiner, reference.asQualifiedName());
         }
-        ref = refQualifier;
       }
+      reference = refQualifier;
     }
     return null;
   }
@@ -251,17 +243,17 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
   }
 
   private ImportToImportFromIntention(@NotNull ThreeState unqualifyAll) {
-    super(PsiElement.class);
+    super(PyReferenceExpression.class);
     myUnqualifyAll = unqualifyAll;
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyReferenceExpression element) {
     if (!(context.file() instanceof PyFile)) {
       return null;
     }
 
-    final IntentionState state = createState(context.file(), context.offset());
+    final IntentionState state = createState(element);
     if (state != null && state.isAvailable()) {
       return Presentation.of(
         switch (myUnqualifyAll) {
@@ -275,14 +267,14 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
   }
 
   @Override
-  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PyReferenceExpression element) {
     return switch (myUnqualifyAll) {
-      case YES -> invoke(context, true);
-      case NO -> invoke(context, false);
+      case YES -> invoke(element, true);
+      case NO -> invoke(element, false);
       case UNSURE -> {
-        IntentionState state = createAndCheckState(context.file(), context.offset());
+        IntentionState state = createAndCheckState(element);
         if (state.allReferencesHaveSameName()) {
-          yield invoke(context, true);
+          yield invoke(element, true);
         }
         else {
           yield new ModChooseAction(PyPsiBundle.message("INTN.multiple.usages.of.import.found"),
@@ -293,14 +285,14 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
     };
   }
 
-  private static @NotNull ModCommand invoke(@NotNull ActionContext context, boolean unqualifyAll) {
-    return ModCommand.psiUpdate(context.file(), fileCopy -> {
-      createAndCheckState(fileCopy, context.offset()).invoke(unqualifyAll);
+  private static @NotNull ModCommand invoke(@NotNull PyReferenceExpression refExpr, boolean unqualifyAll) {
+    return ModCommand.psiUpdate(refExpr, refExprCopy -> {
+      createAndCheckState(refExprCopy).invoke(unqualifyAll);
     });
   }
 
-  private static @NotNull IntentionState createAndCheckState(@NotNull PsiFile file, int offset) {
-    IntentionState state = createState(file, offset);
+  private static @NotNull IntentionState createAndCheckState(@NotNull PyReferenceExpression refExpr) {
+    IntentionState state = createState(refExpr);
     if (state == null || !state.isAvailable()) {
       throw new IllegalStateException();
     }
