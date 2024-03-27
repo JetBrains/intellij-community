@@ -47,7 +47,7 @@ object VcsLogNavigationUtil {
   fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): CompletableFuture<Boolean> {
     val resultFuture = CompletableFuture<Boolean>()
 
-    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString())
+    val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
     runBackgroundableTask(progressTitle, project, true) { indicator ->
       runBlockingCancellable {
         resultFuture.computeResult {

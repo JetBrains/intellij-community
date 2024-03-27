@@ -94,7 +94,7 @@ public class ShowCommitInLogAction extends DumbAwareAction {
     Future<Boolean> future = VcsLogNavigationUtil.jumpToHash(logUi, hash.asString(), false, true);
     if (!future.isDone()) {
       ProgressManager.getInstance().run(new Task.Backgroundable(project,
-                                                                VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.asString()),
+                                                                VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString()),
                                                                 false/*can not cancel*/,
                                                                 PerformInBackgroundOption.ALWAYS_BACKGROUND) {
         @Override
