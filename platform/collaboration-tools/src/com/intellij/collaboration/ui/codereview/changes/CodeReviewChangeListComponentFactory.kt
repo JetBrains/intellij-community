@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.changes
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.CodeReviewProgressTreeModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.setupCodeReviewProgressModel
@@ -11,7 +12,6 @@ import com.intellij.collaboration.util.fileStatus
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
@@ -38,7 +38,7 @@ object CodeReviewChangeListComponentFactory {
                progressModel: CodeReviewProgressTreeModel<*>?,
                emptyTextText: @Nls String): AsyncChangesTree {
     val treeModel = createTreeModel(vm)
-    val tree = createTree(vm.project, treeModel).apply {
+    val tree = cs.createTree(vm, treeModel).apply {
       emptyText.text = emptyTextText
     }.also { tree ->
       ClientProperty.put(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
@@ -89,8 +89,8 @@ object CodeReviewChangeListComponentFactory {
     return tree
   }
 
-  private fun createTree(project: Project, treeModel: AsyncChangesTreeModel) =
-    object : AsyncChangesTree(project, false, false) {
+  private fun CoroutineScope.createTree(vm: CodeReviewChangeListViewModel, treeModel: AsyncChangesTreeModel) =
+    object : AsyncChangesTree(vm.project, false, false) {
       override val changesTreeModel: AsyncChangesTreeModel = treeModel
 
       override fun getData(dataId: String): Any? {
@@ -108,6 +108,23 @@ object CodeReviewChangeListComponentFactory {
 
       private fun getSelectedFiles(): List<VirtualFile> =
         getSelectedChanges().mapNotNull { it.filePath.virtualFile }
+
+      override fun installGroupingSupport(): ChangesGroupingSupport =
+        if (vm is CodeReviewChangeListViewModel.WithGrouping) {
+          ChangesGroupingSupport(vm.project, this, false).also { gs ->
+            installGroupingSupport(this, gs, vm.grouping::value, vm::setGrouping)
+            launchNow {
+              vm.grouping.collect {
+                if(gs.groupingKeys != it) {
+                  gs.setGroupingKeysOrSkip(it)
+                }
+              }
+            }
+          }
+        }
+        else {
+          super.installGroupingSupport()
+        }
     }
 }
 

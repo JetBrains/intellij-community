@@ -17,8 +17,8 @@ abstract class CollectableSerializablePersistentStateComponent<T : Any>(defaultS
   }
 
 
-  protected fun updateStateAndEmit(updateFunction: (currentState: T) -> T): T {
+  protected fun updateStateAndEmit(updateFunction: (currentState: T) -> T) {
+    updateState(updateFunction)
     stateFlow.update(updateFunction)
-    return updateState(updateFunction)
   }
 }

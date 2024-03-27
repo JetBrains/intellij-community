@@ -14,13 +14,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.createViewedStateRequestsFlow
 
 @ApiStatus.Experimental
-interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
+interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, CodeReviewChangeListViewModel.WithGrouping {
   val isUpdating: StateFlow<Boolean>
   val isOnLatest: Boolean
 
@@ -40,6 +41,7 @@ internal class GHPRChangeListViewModelImpl(
   changes: CodeReviewChangesContainer,
   changeList: CodeReviewChangeList
 ) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
+  private val preferences = GithubPullRequestsProjectUISettings.getInstance(project)
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
   private val _isUpdating = MutableStateFlow(false)
@@ -56,6 +58,8 @@ internal class GHPRChangeListViewModelImpl(
     else {
       MutableStateFlow(emptyMap())
     }
+
+  override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
 
   fun setUpdating(updating: Boolean) {
     _isUpdating.value = updating
@@ -83,6 +87,10 @@ internal class GHPRChangeListViewModelImpl(
     }.forEach {
       viewedStateData.updateViewedState(it, viewed)
     }
+  }
+
+  override fun setGrouping(grouping: Collection<String>) {
+    preferences.changesGrouping = grouping.toSet()
   }
 
   private fun createDetailsByChangeFlow(): Flow<Map<RefComparisonChange, CodeReviewChangeDetails>> {

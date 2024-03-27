@@ -15,10 +15,13 @@ import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
+import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import java.util.concurrent.ConcurrentHashMap
 
-interface GitLabMergeRequestChangeListViewModel : CodeReviewChangeListViewModel.WithDetails {
+interface GitLabMergeRequestChangeListViewModel
+  : CodeReviewChangeListViewModel.WithDetails,
+    CodeReviewChangeListViewModel.WithGrouping {
   val isOnLatest: Boolean
 
   fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean)
@@ -33,6 +36,7 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
 ) : CodeReviewChangeListViewModelBase(parentCs, changeList),
     GitLabMergeRequestChangeListViewModel {
   private val persistentChangesViewedState = project.service<GitLabPersistentMergeRequestChangesViewedState>()
+  private val preferences = project.service<GitLabMergeRequestsPreferences>()
 
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests: Flow<Unit> = _showDiffRequests.asSharedFlow()
@@ -67,6 +71,8 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
       }
     }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 
+  override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
+
   override fun showDiffPreview() {
     cs.launch {
       _showDiffRequests.emit(Unit)
@@ -89,6 +95,10 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
       filePathsWithShas,
       viewed
     )
+  }
+
+  override fun setGrouping(grouping: Collection<String>) {
+    preferences.changesGrouping = grouping.toSet()
   }
 }
 

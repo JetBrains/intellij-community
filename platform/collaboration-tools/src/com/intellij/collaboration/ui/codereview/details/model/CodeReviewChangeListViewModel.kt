@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 
 interface CodeReviewChangeListViewModel {
   val project: Project
@@ -50,6 +51,16 @@ interface CodeReviewChangeListViewModel {
     val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>>
   }
 
+  @ApiStatus.Experimental
+  interface WithGrouping : CodeReviewChangeListViewModel {
+    /**
+     * A set of enabled grouping policies
+     */
+    val grouping: StateFlow<Set<String>>
+
+    fun setGrouping(grouping: Collection<String>)
+  }
+
   sealed interface SelectionRequest {
     data object All : SelectionRequest
     data class OneChange(val change: RefComparisonChange) : SelectionRequest
@@ -63,6 +74,7 @@ interface CodeReviewChangeListViewModel {
 fun CodeReviewChangeListViewModel.WithDetails.isViewedStateForAllChanges(changes: Iterable<RefComparisonChange>, viewed: Boolean): Boolean =
   changes.all { detailsByChange.value[it]?.isRead == viewed }
 
+@ApiStatus.Internal
 abstract class CodeReviewChangeListViewModelBase(
   parentCs: CoroutineScope,
   protected val changeList: CodeReviewChangeList
