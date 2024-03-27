@@ -1,0 +1,13 @@
+fun main() {
+    println()
+
+    __dummyTestFun__()
+}
+
+private fun __dummyTestFun__() {
+    // comment
+    if (true) return
+    println()
+}
+
+// IGNORE_K1

@@ -830,6 +830,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/classQualifier.kt");
             }
 
+            @TestMetadata("commentPlacement.kt")
+            public void testCommentPlacement() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/commentPlacement.kt");
+            }
+
             @TestMetadata("companionObjectMemberRef.kt")
             public void testCompanionObjectMemberRef() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/companionObjectMemberRef.kt");

@@ -51,6 +51,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/classQualifier.kt");
         }
 
+        @TestMetadata("commentPlacement.kt")
+        public void testCommentPlacement() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/commentPlacement.kt");
+        }
+
         @TestMetadata("companionObjectMemberRef.kt")
         public void testCompanionObjectMemberRef() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/companionObjectMemberRef.kt");
