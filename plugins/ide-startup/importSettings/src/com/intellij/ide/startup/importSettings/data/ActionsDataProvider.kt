@@ -246,7 +246,7 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider<Externa
   override val other: List<Product>?
     get() = null
   override fun productSelected(contributor: SettingsContributor) {
-    ImportSettingsEventsCollector.externalSelected((contributor as Product).name)
+    ImportSettingsEventsCollector.externalSelected((contributor as Product).id)
   }
 }
 
