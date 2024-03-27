@@ -33,6 +33,8 @@ class ForMultiLanguageSupport {
 
   // The index is in the range [start, end). Tries to find a group of non-conflicting events in range [`startIndex`..`inEvents.size()`).
 
+  // Move [0; value) elements to the end of the list, so this list will start from element.
+
   // An iterable of bundle instances
 
   // Resolve '../' in paths (like real_path)

@@ -182,7 +182,7 @@ private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
 private val cacheKey = Key.create<List<LanguageToolChecker.Problem>>("grazie.LT.problem.cache")
 private val interner = Interner.createWeakInterner<String>()
 private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
-private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,).+[])]")
+private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,|;).+[])]")
 private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 
 internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
