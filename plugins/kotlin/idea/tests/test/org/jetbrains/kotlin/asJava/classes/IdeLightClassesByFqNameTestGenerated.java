@@ -637,6 +637,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InterfaceTypeParameterAnnotation.kt"));
         }
 
+        @TestMetadata("InterfaceWithDefaultMethodAndCompanion.kt")
+        public void testInterfaceWithDefaultMethodAndCompanion() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InterfaceWithDefaultMethodAndCompanion.kt"));
+        }
+
         @TestMetadata("InvalidJavaIdentifierAsAnnotationArgument.kt")
         public void testInvalidJavaIdentifierAsAnnotationArgument() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/InvalidJavaIdentifierAsAnnotationArgument.kt"));
