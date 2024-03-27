@@ -43,7 +43,7 @@ internal class RedundantUnitReturnTypeInspection :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtNamedFunction): TypeInfo? {
-        val returnType = element.getFunctionLikeSymbol().returnType
+        val returnType = element.getFunctionLikeSymbol().returnType.fullyExpandedType
 
         if (!returnType.isMarkedNullable && returnType.isUnit) {
             return TypeInfo(TypeInfo.UNIT)

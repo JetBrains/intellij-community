@@ -4898,6 +4898,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("aliasedNullableUnit.kt")
+        public void testAliasedNullableUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitReturnType/aliasedNullableUnit.kt");
+        }
+
+        @TestMetadata("aliasedUnit.kt")
+        public void testAliasedUnit() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitReturnType/aliasedUnit.kt");
+        }
+
         @TestMetadata("explicitReturn.kt")
         public void testExplicitReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/redundantUnitReturnType/explicitReturn.kt");
