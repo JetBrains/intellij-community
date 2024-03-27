@@ -21,18 +21,25 @@ import org.cef.callback.CefSchemeHandlerFactory;
 import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.cef.misc.BoolRef;
+import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
@@ -57,6 +64,7 @@ public final class JBCefApp {
   private final @NotNull CefApp myCefApp;
 
   private final @NotNull CefSettings myCefSettings;
+  private final @NotNull CompletableFuture<Integer> myDebuggingPort = new CompletableFuture<>();
 
   private final @NotNull Disposable myDisposable = new Disposable() {
     @Override
@@ -107,6 +115,20 @@ public final class JBCefApp {
     CefApp.addAppHandler(new MyCefAppHandler(args, trackGPUCrashes.get()));
     myCefSettings = settings;
     myCefApp = CefApp.getInstance(settings);
+
+    if (myCefSettings.remote_debugging_port > 0) {
+      myDebuggingPort.complete(myCefSettings.remote_debugging_port);
+    } else {
+      myCefApp.onInitialization(state -> {
+        try {
+          myDebuggingPort.complete(readDebugPortFile(Path.of(myCefSettings.cache_path, "DevToolsActivePort")));
+        }
+        catch (Exception e) {
+          myDebuggingPort.completeExceptionally(e);
+        }
+      });
+    }
+
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
@@ -265,10 +287,37 @@ public final class JBCefApp {
     return myCefSettings.cache_path;
   }
 
+
+  /**
+   * @deprecated use {@link JBCefApp#getRemoteDebuggingPort(Consumer)} instead
+   */
+  @Deprecated
   @Contract(pure = true)
   @NotNull
   public Integer getRemoteDebuggingPort() {
     return myCefSettings.remote_debugging_port;
+  }
+
+  /**
+   * Schedules passing the debug port number to the consumer once the value is available.
+   * In case of error, null will be passed to the consumer. The consumer will be called from EDT.
+   * <p>
+   * Warning: waiting the callback in EDT may result in deadlock.
+   *
+   * @param consumer - the port number consumer.
+   */
+  public void getRemoteDebuggingPort(Consumer<Integer> consumer) {
+    myDebuggingPort.whenCompleteAsync(
+      (integer, throwable) -> {
+        if (throwable != null) {
+          LOG.error("Failed to get JCEF debugging port: " + throwable.getMessage());
+          consumer.accept(null);
+        } else {
+          consumer.accept(integer);
+        }
+      },
+      f -> SwingUtilities.invokeLater(f)
+    );
   }
 
   public @NotNull JBCefClient createClient() {
@@ -428,5 +477,20 @@ public final class JBCefApp {
 
   protected static boolean isRemoteEnabled() {
     return IS_REMOTE_ENABLED;
+  }
+
+  static int readDebugPortFile(Path filePath) throws IOException {
+    try (Stream<String> lines = Files.lines(filePath)) {
+      String portNumber = lines.findFirst().orElseThrow(() -> {
+        return new IllegalArgumentException("Failed to read JCEF debugging port number in " + filePath);
+      });
+
+      int value = Integer.parseInt(portNumber);
+      if (value > 0) {
+        return value;
+      }
+
+      throw new IllegalDataException("Invalid JCEF JCEF debugging port number value: " + value);
+    }
   }
 }

@@ -220,6 +220,10 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
     }
 
+    if (settings.remote_debugging_port == 0 && Registry.intValue("ide.browser.jcef.debug.port") == 0) {
+      args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
+    }
+
     return args;
   }
 
