@@ -147,11 +147,6 @@ public class TasksExecutionSettingsBuilder {
         rootProjectPath = gradleModuleData.getDirectoryToRunTask();
       }
 
-      // all buildSrc runtime projects will be built by gradle implicitly
-      if (gradleModuleData.isBuildSrcModule()) {
-        continue;
-      }
-
       String gradlePath = gradleModuleData.getGradlePath();
       List<TaskData> taskDataList =
         ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
