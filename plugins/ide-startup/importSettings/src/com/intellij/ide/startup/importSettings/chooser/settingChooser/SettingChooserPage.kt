@@ -144,7 +144,7 @@ class ConfigurableSettingChooserPage<T : BaseService>(val provider: ActionsDataP
     val productService = provider.productService
     val dataForSaves = prepareDataForSave()
     val importSettings = productService.importSettings(product.id, dataForSaves)
-    ImportSettingsEventsCollector.importProgressPageShown()
+    ImportSettingsEventsCollector.configurePageImportSettingsClicked()
     controller.goToImportPage(importSettings)
   }
 
