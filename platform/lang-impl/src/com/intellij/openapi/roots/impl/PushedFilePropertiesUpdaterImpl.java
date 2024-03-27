@@ -382,7 +382,14 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
     if (tasks.isEmpty()) return;
-    if (tasks.size() == 1 || ApplicationManager.getApplication().isWriteAccessAllowed() || DumbServiceImpl.isSynchronousTaskExecution()) {
+    boolean synchronous = (tasks.size() == 1);
+    if (DumbServiceImpl.isSynchronousTaskExecution()) {
+      synchronous = true;
+    }
+    else {
+      LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "Write access is not allowed");
+    }
+    if (synchronous) {
       for (Runnable r : tasks) r.run();
       return;
     }
