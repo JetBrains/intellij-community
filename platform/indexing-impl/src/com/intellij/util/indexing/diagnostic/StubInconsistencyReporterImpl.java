@@ -12,7 +12,7 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
   @Override
   public void reportStubInconsistency(@NotNull Project project,
                                       @Nullable SourceOfCheck reason,
-                                      @Nullable InconsistencyType type) {
+                                      @NotNull InconsistencyType type) {
     StubInconsistencyReportUtil.reportStubInconsistency(project, reason, type);
   }
 
@@ -20,7 +20,7 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
   public void reportEnforcedStubInconsistency(@NotNull Project project,
                                               @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                               @SuppressWarnings("deprecation") @NotNull EnforcedInconsistencyType enforcedInconsistencyType) {
-    StubInconsistencyReportUtil.reportStubInconsistency(project, reason, null);
+    //ignore
   }
 
   @Override
@@ -28,7 +28,7 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
                                       @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                       @NotNull InconsistencyType type,
                                       @SuppressWarnings("deprecation") @Nullable EnforcedInconsistencyType enforcedInconsistencyType) {
-    StubInconsistencyReportUtil.reportStubInconsistency(project, reason, type);
+    //ignore
   }
 
   @Override
