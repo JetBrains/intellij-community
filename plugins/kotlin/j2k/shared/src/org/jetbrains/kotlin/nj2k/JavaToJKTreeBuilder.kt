@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.codeInsight.AnnotationTargetUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.*
 import com.intellij.psi.JavaTokenType.SUPER_KEYWORD
 import com.intellij.psi.JavaTokenType.THIS_KEYWORD
@@ -30,7 +32,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.j2k.content
-import org.jetbrains.kotlin.j2k.Nullability.NotNull
+import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -60,8 +62,18 @@ class JavaToJKTreeBuilder(
     private val declarationMapper = DeclarationMapper(expressionTreeMapper, withBody = bodyFilter == null)
     private val formattingCollector = FormattingCollector()
 
-    fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? =
-        when (psi) {
+    // Per-file property with collected nullability information for various declarations.
+    // Needs to be flushed before building the tree for each root element.
+    private var declarationNullabilityInfo: DeclarationNullabilityInfo? = null
+
+    companion object {
+        private val LOG = Logger.getInstance("@org.jetbrains.kotlin.nj2k.JavaToJKTreeBuilder")
+    }
+
+    fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
+        declarationNullabilityInfo = null
+
+        return when (psi) {
             is PsiJavaFile -> psi.toJK()
             is PsiReferenceExpression -> with(expressionTreeMapper) { psi.toJK(ignoreFacades = false) }
             is PsiExpression -> with(expressionTreeMapper) { psi.toJK() }
@@ -82,6 +94,7 @@ class JavaToJKTreeBuilder(
 
             else -> null
         }?.let { JKTreeRoot(it) }
+    }
 
     private inner class ExpressionTreeMapper {
         fun PsiExpression?.toJK(): JKExpression {
@@ -794,6 +807,7 @@ class JavaToJKTreeBuilder(
         ).also {
             symbolProvider.provideUniverseSymbol(this, it)
             it.psi = this
+            it.updateNullability()
             it.withFormattingFrom(this)
         }
 
@@ -903,6 +917,7 @@ class JavaToJKTreeBuilder(
                 modality()
             ).also { jkMethod ->
                 jkMethod.psi = this
+                jkMethod.updateNullability()
                 symbolProvider.provideUniverseSymbol(this, jkMethod)
                 parameterList.node
                     ?.safeAs<CompositeElement>()
@@ -927,6 +942,7 @@ class JavaToJKTreeBuilder(
             ).also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this
+                it.updateNullability()
                 it.withFormattingFrom(this)
             }
         }
@@ -950,6 +966,7 @@ class JavaToJKTreeBuilder(
             ).also {
                 symbolProvider.provideUniverseSymbol(this, it)
                 it.psi = this
+                it.updateNullability()
                 it.withFormattingFrom(this)
             }
         }
@@ -1094,12 +1111,35 @@ class JavaToJKTreeBuilder(
             JKErrorStatement(this, message)
     }
 
-    private fun PsiJavaFile.toJK(): JKFile =
-        JKFile(
+    private fun PsiJavaFile.toJK(): JKFile {
+        collectNullabilityInfo(this)
+
+        return JKFile(
             packageStatement?.toJK() ?: JKPackageDeclaration(JKNameIdentifier("")),
             importList.toJK(saveImports = false),
             with(declarationMapper) { classes.map { it.toJK() } }
         )
+    }
+
+    // TODO support not only PsiJavaFile but any PsiElement
+    private fun collectNullabilityInfo(element: PsiJavaFile) {
+        val nullityInferrer = J2KNullityInferrer(/* annotateLocalVariables = */ true, element.project)
+        try {
+            nullityInferrer.collect(element)
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (t: Throwable) {
+            LOG.error(t)
+        }
+        val nullableSet = nullityInferrer.nullableSet.filterNotNull().toSet()
+        val notNullSet = nullityInferrer.notNullSet.filterNotNull().toSet()
+        declarationNullabilityInfo = DeclarationNullabilityInfo(nullableSet, notNullSet)
+    }
+
+    private fun JKDeclaration.updateNullability() {
+        val info = declarationNullabilityInfo ?: return
+        updateNullability(info)
+    }
 
     private fun PsiImportList?.toJK(saveImports: Boolean): JKImportList =
         JKImportList(this?.allImportStatements?.mapNotNull { it.toJK(saveImports) }.orEmpty()).also { importList ->

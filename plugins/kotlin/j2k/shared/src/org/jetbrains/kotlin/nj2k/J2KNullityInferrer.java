@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -50,6 +51,14 @@ class J2KNullityInferrer {
         myPointerManager = SmartPointerManager.getInstance(project);
     }
 
+    public List<SmartPsiElementPointer<? extends PsiModifierListOwner>> getNotNullSet() {
+        return myNotNullSet;
+    }
+
+    public List<SmartPsiElementPointer<? extends PsiModifierListOwner>> getNullableSet() {
+        return myNullableSet;
+    }
+
     private boolean expressionIsNeverNull(@Nullable PsiExpression expression) {
         if (expression == null) {
             return false;
@@ -84,7 +93,12 @@ class J2KNullityInferrer {
             return false;
         }
 
-        final Query<PsiReference> references = ReferencesSearch.search(variable);
+        SearchScope scope = getScope(variable);
+        if (scope == null) {
+            return false;
+        }
+
+        final Query<PsiReference> references = ReferencesSearch.search(variable, scope);
         for (final PsiReference reference : references) {
             final PsiElement element = reference.getElement();
             if (!(element instanceof PsiReferenceExpression)) {
@@ -110,7 +124,12 @@ class J2KNullityInferrer {
             return true;
         }
 
-        final Query<PsiReference> references = ReferencesSearch.search(variable);
+        SearchScope scope = getScope(variable);
+        if (scope == null) {
+            return false;
+        }
+
+        final Query<PsiReference> references = ReferencesSearch.search(variable, scope);
         for (final PsiReference reference : references) {
             final PsiElement element = reference.getElement();
             if (!(element instanceof PsiReferenceExpression)) {
@@ -127,6 +146,23 @@ class J2KNullityInferrer {
         }
 
         return false;
+    }
+
+    private static @Nullable SearchScope getScope(@NotNull PsiVariable variable) {
+        if (!(variable instanceof PsiField field)) {
+            return variable.getUseScope();
+        }
+
+        PsiModifierList modifierList = field.getModifierList();
+        if (modifierList == null) return null;
+        if (modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
+            return variable.getUseScope();
+        }
+
+        // Optimization: for public and protected fields, don't try to search for usages outside the file
+        // because it can be very slow in large projects
+        PsiFile containingFile = variable.getContainingFile();
+        return containingFile != null ? new LocalSearchScope(containingFile) : null;
     }
 
     public void collect(@NotNull PsiFile file) {
