@@ -88,7 +88,7 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
 
     let client = Client::new();
 
-    let archive_url = format!("https://cef-builds.spotifycdn.com/{cef_distribution}.tar.bz2");
+    let archive_url = format!("https://cache-redirector.jetbrains.com/cef-builds.spotifycdn.com/{cef_distribution}.tar.bz2");
     let archive_file = working_dir.join(format!("{cef_distribution}.tar.bz2"));
     download_to_file(&client, &archive_url, &archive_file)?;
 
@@ -149,13 +149,17 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     fs_remove(tmp_dest)?;
     std::fs::create_dir_all(tmp_dest)?;
 
-    Command::new("tar")
+    let status =Command::new("tar")
         .arg("-xjvf")
         .arg(get_non_unc_string(archive)?)
         .arg("-C")
         .arg(get_non_unc_string(tmp_dest)?)
         .arg("--strip-components=1")
         .status()?;
+
+    if !status.success() {
+        bail!("Failed to extract CEF sandbox archive at {archive:?}")
+    }
 
     assert!(tmp_dest.exists());
     assert!(tmp_dest.is_dir());

@@ -93,9 +93,6 @@ mod tests {
     #[cfg(target_os = "windows")]
     fn cef_sandbox_vm_options_test() {
         let test = prepare_test_env(LauncherLocation::Standard);
-        let vm_options_name = "xplat64.exe.vmoptions";
-        let vm_options_file = test.dist_root.join("bin").join(vm_options_name);
-
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
         assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={CEF_VERSION}").as_ref());
