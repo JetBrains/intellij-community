@@ -18,7 +18,9 @@ interface RainbowStateChangeListener {
 
   /**
    * Notifies the subscribers that the global editor colors scheme has changes in the semantic markup state.
-   * @param scheme the scheme with the new semantic markup state
+   *
+   * @param scheme the scheme with the new semantic markup state.
+   * @param rainbowOnLanguages The set of languages that have rainbow highlighting enabled.
    */
-  fun onRainbowStateChanged(scheme: EditorColorsScheme)
+  fun onRainbowStateChanged(scheme: EditorColorsScheme, rainbowOnLanguages: Set<String>)
 }
