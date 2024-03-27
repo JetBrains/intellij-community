@@ -118,6 +118,7 @@ open class JKParameter(
     override var name by child(name)
     override var type by child(type)
     override var annotationList by child(annotationList)
+
     override fun accept(visitor: JKVisitor) = visitor.visitParameter(this)
 }
 
@@ -127,6 +128,31 @@ class JKJavaRecordComponent(
     isVarArgs: Boolean,
     annotationList: JKAnnotationList
 ) : JKParameter(type, name, isVarArgs, annotationList = annotationList)
+
+/**
+ * Similar to `KtDestructuringDeclaration`. This class extends `JKParameter` because it's possible to have a list of several parameters,
+ * with one or more containing destructuring declarations, e.g., the JKParameter `index` and the JKKtDestructuringDeclaration `(s1, s2)` in
+ * `listOf<Pair<String, String>>().filterIndexed { index, (s1, s2) -> index < 5 && s1 != s2 }`
+ */
+class JKKtDestructuringDeclaration(entries: List<JKKtDestructuringDeclarationEntry>) :
+    JKParameter(JKTypeElement(JKNoType), JKNameIdentifier("")) {
+    val entries: List<JKKtDestructuringDeclarationEntry> by children(entries)
+
+    override fun accept(visitor: JKVisitor) = visitor.visitDestructuringDeclaration(this)
+}
+
+/**
+ * Analogous to `KtDestructuringDeclarationEntry`. Similar to the PSI version of this class, `JKKtDestructuringDeclarationEntry` is a child
+ * node of a class extending `JKParameter` (`JKKtDestructuringDeclaration`).
+ */
+class JKKtDestructuringDeclarationEntry(type: JKTypeElement, name: JKNameIdentifier) : JKVariable() {
+    override val name: JKNameIdentifier by child(name)
+    override var type: JKTypeElement by child(type)
+    override var initializer: JKExpression by child(JKStubExpression())
+    override var annotationList: JKAnnotationList by child(JKAnnotationList())
+
+    override fun accept(visitor: JKVisitor) = visitor.visitDestructuringDeclarationEntry(this)
+}
 
 class JKEnumConstant(
     name: JKNameIdentifier,

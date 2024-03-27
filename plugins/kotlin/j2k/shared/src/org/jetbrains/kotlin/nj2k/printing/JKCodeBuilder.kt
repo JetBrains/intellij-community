@@ -286,14 +286,29 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             ) {
                 printer.printWithSurroundingSpaces("val")
             }
-            parameter.name.accept(this)
-            if (parameter.type.present() && parameter.type.type !is JKContextType) {
-                printer.print(": ")
-                parameter.type.accept(this)
-            }
+
+            renderVariableDeclarationNameAndType(parameter)
             if (parameter.initializer !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("=")
                 parameter.initializer.accept(this)
+            }
+        }
+
+        override fun visitDestructuringDeclarationRaw(destructuringDeclaration: JKKtDestructuringDeclaration) {
+            printer.par {
+                printer.renderList(destructuringDeclaration.entries) { it.accept(this) }
+            }
+        }
+
+        override fun visitDestructuringDeclarationEntryRaw(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) {
+            renderVariableDeclarationNameAndType(destructuringDeclarationEntry)
+        }
+
+        private fun renderVariableDeclarationNameAndType(variable: JKVariable) {
+            variable.name.accept(this)
+            if (variable.type.present() && variable.type.type !is JKContextType) {
+                printer.print(": ")
+                variable.type.accept(this)
             }
         }
 
@@ -557,11 +572,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.print(" ")
             localVariable.annotationList.accept(this)
             renderModifiersList(localVariable)
-            localVariable.name.accept(this)
-            if (localVariable.type.present() && localVariable.type.type != JKContextType) {
-                printer.print(": ")
-                localVariable.type.accept(this)
-            }
+            renderVariableDeclarationNameAndType(localVariable)
             if (localVariable.initializer !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("=")
                 localVariable.initializer.accept(this)

@@ -368,6 +368,29 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.util.Map.keySet") convertTo Field("kotlin.collections.Map.keys"),
         Method("java.util.Map.size") convertTo Field("kotlin.collections.Map.size"),
         Method("java.util.Map.values") convertTo Field("kotlin.collections.Map.values"),
+        Method("java.util.Map.forEach") convertTo CustomExpression { expression ->
+            val forEachExpression = expression as JKCallExpression
+            val lambdaArgument = forEachExpression.arguments.arguments.singleOrNull()?.value?.safeAs<JKLambdaExpression>()
+                ?: return@CustomExpression expression
+            if (lambdaArgument.parameters.size != 2) return@CustomExpression expression
+
+            // Analogous to changes made by `JavaMapForEachInspection`
+            JKCallExpressionImpl(
+                symbolProvider.provideMethodSymbol("kotlin.collections.Map.forEach"),
+                JKArgumentList(
+                    JKLambdaExpression(
+                        lambdaArgument::statement.detached(),
+                        listOf(
+                            JKKtDestructuringDeclaration(
+                                lambdaArgument.parameters.map {
+                                    JKKtDestructuringDeclarationEntry(it::type.detached(), it::name.detached())
+                                }
+                            )
+                        )
+                    )
+                )
+            )
+        },
         Method("java.util.Collection.size") convertTo Field("kotlin.collections.Collection.size"),
         Method("java.util.Collection.remove") convertTo Method("kotlin.collections.MutableCollection.remove"),
         Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter { it.isEmpty() },

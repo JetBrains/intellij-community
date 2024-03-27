@@ -12,6 +12,8 @@ abstract class JKVisitor {
     open fun visitLocalVariable(localVariable: JKLocalVariable) = visitVariable(localVariable)
     open fun visitForLoopVariable(forLoopVariable: JKForLoopVariable) = visitVariable(forLoopVariable)
     open fun visitParameter(parameter: JKParameter) = visitVariable(parameter)
+    open fun visitDestructuringDeclaration(destructuringDeclaration: JKKtDestructuringDeclaration) = visitVariable(destructuringDeclaration)
+    open fun visitDestructuringDeclarationEntry(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) = visitVariable(destructuringDeclarationEntry)
     open fun visitEnumConstant(enumConstant: JKEnumConstant) = visitVariable(enumConstant)
     open fun visitTypeParameter(typeParameter: JKTypeParameter) = visitDeclaration(typeParameter)
     open fun visitMethod(method: JKMethod) = visitDeclaration(method)
