@@ -32,7 +32,6 @@ def get_stepping_variants(code):
                 stk.pop()
             if not stk:
                 continue
-            print stk[-1]
             yield stk.pop()
         else:
             stk.append(instruction)
