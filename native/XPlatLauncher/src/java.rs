@@ -168,7 +168,7 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     let libjvm = load_libjvm(jre_home, &libjvm_path)?;
 
     debug!("[JVM] Looking for 'JNI_CreateJavaVM' symbol");
-    let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM")? };
+    let create_jvm_call: CreateJvmCall<'_> = unsafe { libjvm.get(b"JNI_CreateJavaVM\0")? };
 
     debug!("[JVM] Constructing JVM init args");
     let mut java_vm: *mut jni::sys::JavaVM = std::ptr::null_mut();

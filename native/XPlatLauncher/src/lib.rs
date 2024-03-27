@@ -209,7 +209,7 @@ struct JvmLaunchScope {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn get_launch_scope_or_launch_subprocess(configuration: &dyn LaunchConfiguration, jre_home: &Path) -> Result<JvmLaunchScope> {
+fn get_launch_scope_or_launch_subprocess(_configuration: &dyn LaunchConfiguration, _jre_home: &Path) -> Result<JvmLaunchScope> {
     Ok(
         JvmLaunchScope {
             cef_sandbox: None,
