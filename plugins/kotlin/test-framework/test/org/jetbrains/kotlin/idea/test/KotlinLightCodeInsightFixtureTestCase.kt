@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.removeKotlinFacet
 import org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider
 import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
@@ -174,6 +175,7 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
     override fun tearDown() {
         runAll(
             { mockLibraryFacility?.tearDown(module) },
+            { KotlinSdkType.removeKotlinSdkInTests() },
             { runCatching { project }.getOrNull()?.let { disableKotlinOfficialCodeStyle(it) } },
             { super.tearDown() },
         )
