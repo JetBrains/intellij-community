@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.CommonBundle
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
@@ -60,7 +61,7 @@ internal data class RecentProjectItem(
 
   companion object {
     fun openProjectAndLogRecent(file: Path, options: OpenProjectTask, projectGroup: ProjectGroup?) {
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
         RecentProjectsManagerBase.getInstanceEx().openProject(file, options)
         for (extension in ProjectDetector.EXTENSION_POINT_NAME.extensions) {
           extension.logRecentProjectOpened(projectGroup)

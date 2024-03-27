@@ -217,6 +217,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
+  protected open fun focusProjectWindow(project: Project) {
+    ProjectUtil.focusProjectWindow(project = project)
+  }
+
   fun getProjectIcon(path: String, isProjectValid: Boolean): Icon {
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
@@ -312,7 +316,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       projectManager.openProjects.firstOrNull { isSameProject(projectFile = projectFile, project = it) }?.let { project ->
         FUSProjectHotStartUpMeasurer.reportAlreadyOpenedProject()
         withContext(Dispatchers.EDT) {
-          ProjectUtil.focusProjectWindow(project = project)
+          focusProjectWindow(project)
         }
         return project
       }
