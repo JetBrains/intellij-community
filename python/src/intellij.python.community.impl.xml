@@ -412,6 +412,9 @@
     <registryKey defaultValue="true" description="Enables the Python debugger Cython speed-ups" restartRequired="false"
                  key="python.debug.enable.cython.speedups"/>
 
+    <registryKey defaultValue="false" description="Enables the Python debugger diagnostic prints" restartRequired="false"
+                 key="python.debug.enable.diagnostic.prints"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
