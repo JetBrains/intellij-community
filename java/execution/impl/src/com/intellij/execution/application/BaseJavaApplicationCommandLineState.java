@@ -63,7 +63,13 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
     if (console == null) {
       return null;
     }
-    return JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(getConfiguration(), getRunnerSettings(), console, executor);
+    return decorate(console, executor);
+  }
+
+  private @NotNull ConsoleView decorate(@NotNull ConsoleView console, @NotNull Executor executor) {
+    ConsoleView baseDecoratedConsole = JavaRunConfigurationExtensionManager.getInstance()
+      .decorateExecutionConsole(getConfiguration(), getRunnerSettings(), console, executor);
+    return JavaConsoleDecorator.decorate(baseDecoratedConsole, getConfiguration(), executor);
   }
 
   @NotNull

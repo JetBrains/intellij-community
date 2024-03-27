@@ -136,6 +136,9 @@
     <extensionPoint qualifiedName="com.intellij.java.programPatcher"
                     interface="com.intellij.execution.runners.JavaProgramPatcher" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.java.consoleDecorator"
+                    interface="com.intellij.execution.application.JavaConsoleDecorator" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
                     dynamic="true">
