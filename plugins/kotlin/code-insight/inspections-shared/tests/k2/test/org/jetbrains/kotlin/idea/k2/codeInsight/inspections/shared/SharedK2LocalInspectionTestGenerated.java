@@ -369,6 +369,16 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/delegationToVarProperty/parameter.kt");
         }
 
+        @TestMetadata("usedForOtherClass.kt")
+        public void testUsedForOtherClass() throws Exception {
+            runTest("../testData/inspectionsLocal/delegationToVarProperty/usedForOtherClass.kt");
+        }
+
+        @TestMetadata("usedInFunction.kt")
+        public void testUsedInFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/delegationToVarProperty/usedInFunction.kt");
+        }
+
         @TestMetadata("valParameter.kt")
         public void testValParameter() throws Exception {
             runTest("../testData/inspectionsLocal/delegationToVarProperty/valParameter.kt");
