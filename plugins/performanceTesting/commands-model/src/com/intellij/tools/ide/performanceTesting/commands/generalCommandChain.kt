@@ -593,6 +593,10 @@ fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean 
   addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
 }
 
+fun <T : CommandChain> T.setMavenDelegatedBuild(delegatedBuild: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}setMavenDelegatedBuild $delegatedBuild")
+}
+
 fun <T : CommandChain> T.unlinkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}unlinkGradleProject ${projectPath}")
 }

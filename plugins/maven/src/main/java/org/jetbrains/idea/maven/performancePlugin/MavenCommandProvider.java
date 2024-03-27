@@ -24,6 +24,7 @@ final class MavenCommandProvider implements CommandProvider {
       put(UpdateMavenFoldersCommand.PREFIX, UpdateMavenFoldersCommand::new);
       put(MavenIndexUpdateCommand.PREFIX, MavenIndexUpdateCommand::new);
       put(CheckIfMavenIndexesHaveArtefactCommand.PREFIX, CheckIfMavenIndexesHaveArtefactCommand::new);
+      put(SetMavenDelegatedBuildCommand.PREFIX, SetMavenDelegatedBuildCommand::new);
     }};
   }
 }
