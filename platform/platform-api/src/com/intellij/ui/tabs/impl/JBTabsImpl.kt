@@ -2508,7 +2508,10 @@ open class JBTabsImpl(
       forcedRelayout = forced
     }
     if (moreToolbar != null) {
-      moreToolbar.component.isVisible = !isHideTabs && effectiveLayout!!.isScrollable
+      moreToolbar.component.isVisible = !isHideTabs && visibleInfos.isNotEmpty() && effectiveLayout!!.isScrollable
+    }
+    if (entryPointToolbar != null) {
+      entryPointToolbar!!.component.isVisible = !isHideTabs && visibleInfos.isNotEmpty()
     }
     revalidateAndRepaint(layoutNow)
   }
@@ -2593,9 +2596,6 @@ open class JBTabsImpl(
     }
 
     this.hideTabs = hideTabs
-    if (entryPointToolbar != null) {
-      entryPointToolbar!!.component.isVisible = !this.hideTabs
-    }
     relayout(forced = true, layoutNow = false)
   }
 
