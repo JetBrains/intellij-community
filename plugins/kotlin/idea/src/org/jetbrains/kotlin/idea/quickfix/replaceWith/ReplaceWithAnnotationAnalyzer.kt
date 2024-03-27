@@ -71,6 +71,7 @@ object ReplaceWithAnnotationAnalyzer {
             emptyList(),
             ::analyzeExpression,
             reformat,
+            replaceWith,
         )
     }
 
@@ -154,13 +155,13 @@ object ReplaceWithAnnotationAnalyzer {
         return ExplicitImportsScope(importedSymbols)
     }
 
-    private fun importFqNames(annotation: ReplaceWithData): List<FqName> {
+    fun importFqNames(annotation: ReplaceWithData): List<FqName> {
         val result = ArrayList<FqName>()
         for (fqName in annotation.imports) {
             if (!FqNameUnsafe.isValid(fqName)) continue
             result += FqNameUnsafe(fqName).takeIf { it.isSafe }?.toSafe() ?: continue
         }
-        return result
+        return result.distinct()
     }
 
     private fun getResolutionScope(
