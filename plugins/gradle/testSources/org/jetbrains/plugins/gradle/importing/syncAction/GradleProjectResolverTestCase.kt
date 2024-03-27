@@ -259,6 +259,10 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       }
     }
 
+    fun touch() {
+      counter.incrementAndGet()
+    }
+
     fun assertListenerFailures() {
       runAll(failures) { throw it }
     }

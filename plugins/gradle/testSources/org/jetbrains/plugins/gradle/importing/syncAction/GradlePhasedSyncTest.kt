@@ -11,7 +11,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 
 class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
@@ -127,17 +126,18 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       importProject()
       assertMultiModuleProjectStructure()
 
+
       projectLoadingAssertion.assertListenerFailures()
-      buildCompletionAssertion.assertListenerFailures()
-      projectModelContributorAssertion.assertListenerFailures()
       projectLoadingAssertion.assertListenerState(1) {
-        "Project loaded phase should be finished only once"
+        "The project loaded phase should be finished only once"
       }
+      buildCompletionAssertion.assertListenerFailures()
       buildCompletionAssertion.assertListenerState(1) {
-        "Build action should be finished only once"
+        "The build action should be finished only once"
       }
+      projectModelContributorAssertion.assertListenerFailures()
       projectModelContributorAssertion.assertListenerState(1) {
-        "Project module contributor should be called only once"
+        "The project module contributor should be called only once"
       }
     }
   }
@@ -148,13 +148,12 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val projectLoadingAssertion = ListenerAssertion()
       val buildCompletionAssertion = ListenerAssertion()
       val projectModelContributorAssertion = ListenerAssertion()
-
       val phaseCompletionAssertion = ListenerAssertion()
-      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
       val allPhases = GradleModelFetchPhase.entries
-      val projectLoadedPhases = allPhases.filter { it <= GradleModelFetchPhase.PROJECT_LOADED_PHASE }
       val phasedModelProviders = allPhases.map { TestModelProvider(it) }
+      val projectLoadedPhases = allPhases.filter { it <= GradleModelFetchPhase.PROJECT_LOADED_PHASE }
+      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
       addModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { resolverContext, phase ->
@@ -213,11 +212,25 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       assertMultiModuleProjectStructure()
 
       projectLoadingAssertion.assertListenerFailures()
+      projectLoadingAssertion.assertListenerState(1) {
+        "The project loaded action should be completed"
+      }
       buildCompletionAssertion.assertListenerFailures()
+      buildCompletionAssertion.assertListenerState(1) {
+        "The build finished action should be completed"
+      }
       projectModelContributorAssertion.assertListenerFailures()
+      projectModelContributorAssertion.assertListenerState(1) {
+        "The model fetch action should be completed"
+      }
       phaseCompletionAssertion.assertListenerFailures()
       phaseCompletionAssertion.assertListenerState(allPhases.size) {
-        "All requested phases should be completed.\n" +
+        "All requested model fetch phases should be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $completedPhases"
+      }
+      Assertions.assertEquals(allPhases, completedPhases) {
+        "All requested model fetch phases should be completed.\n" +
         "Requested phases = $allPhases\n" +
         "Completed phases = $completedPhases"
       }
@@ -227,27 +240,35 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test one-phased Gradle sync cancellation`() {
     Disposer.newDisposable().use { disposable ->
-      val isProjectModelContributorRunned = AtomicBoolean(false)
-      val isSyncCancelled = AtomicBoolean(false)
+      val buildCompletionAssertion = ListenerAssertion()
+      val projectModelContributorAssertion = ListenerAssertion()
+      val syncCancellationAssertion = ListenerAssertion()
 
       whenBuildCompleted(disposable) {
+        buildCompletionAssertion.touch()
         throw ProcessCanceledException()
       }
       addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
-        isProjectModelContributorRunned.set(true)
+        projectModelContributorAssertion.touch()
       })
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
-        isSyncCancelled.set(true)
+        syncCancellationAssertion.touch()
       })
 
-      Assertions.assertTrue(isSyncCancelled.get()) {
-        "Gradle sync should be cancelled during execution."
+      buildCompletionAssertion.assertListenerFailures()
+      buildCompletionAssertion.assertListenerState(1) {
+        "The build finished action should be completed"
       }
-      Assertions.assertFalse(isProjectModelContributorRunned.get()) {
-        "Gradle sync should be cancelled during execution.\n" +
+      projectModelContributorAssertion.assertListenerFailures()
+      projectModelContributorAssertion.assertListenerState(0) {
+        "The Gradle sync should be cancelled during execution.\n" +
         "Therefore the project model contributor shouldn't be runned."
+      }
+      syncCancellationAssertion.assertListenerFailures()
+      syncCancellationAssertion.assertListenerState(1) {
+        "The Gradle sync should be cancelled during execution."
       }
     }
   }
@@ -255,35 +276,44 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
   @Test
   fun `test two-phased Gradle sync cancellation`() {
     Disposer.newDisposable().use { disposable ->
-      val isBuildFinished = AtomicBoolean(false)
-      val isProjectModelContributorRunned = AtomicBoolean(false)
-      val isSyncCancelled = AtomicBoolean(false)
+      val projectLoadingAssertion = ListenerAssertion()
+      val buildCompletionAssertion = ListenerAssertion()
+      val projectModelContributorAssertion = ListenerAssertion()
+      val syncCancellationAssertion = ListenerAssertion()
 
       whenProjectLoaded(disposable) {
+        projectLoadingAssertion.touch()
         throw ProcessCanceledException()
       }
       whenBuildCompleted(disposable) {
-        isBuildFinished.set(true)
+        buildCompletionAssertion.touch()
       }
       addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
-        isProjectModelContributorRunned.set(true)
+        projectModelContributorAssertion.touch()
       })
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
-        isSyncCancelled.set(true)
+        syncCancellationAssertion.touch()
       })
 
-      Assertions.assertTrue(isSyncCancelled.get()) {
-        "Gradle sync should be cancelled during the project loaded action."
+      projectLoadingAssertion.assertListenerFailures()
+      projectLoadingAssertion.assertListenerState(1) {
+        "The Gradle project loaded action should be completed."
       }
-      Assertions.assertFalse(isBuildFinished.get()) {
-        "Gradle sync should be cancelled during the project loaded action.\n" +
-        "Therefore the project build action shouldn't be completed."
+      buildCompletionAssertion.assertListenerFailures()
+      buildCompletionAssertion.assertListenerState(0) {
+        "The Gradle sync should be cancelled during the project loaded action.\n" +
+        "Therefore the build finished action shouldn't be completed."
       }
-      Assertions.assertFalse(isProjectModelContributorRunned.get()) {
-        "Gradle sync should be cancelled during the project loaded action.\n" +
+      projectModelContributorAssertion.assertListenerFailures()
+      projectModelContributorAssertion.assertListenerState(0) {
+        "The Gradle sync should be cancelled during the project loaded action.\n" +
         "Therefore the project model contributor shouldn't be runned."
+      }
+      syncCancellationAssertion.assertListenerFailures()
+      syncCancellationAssertion.assertListenerState(1) {
+        "The Gradle sync should be cancelled during execution."
       }
     }
   }
@@ -300,78 +330,96 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
 
   private fun `test multi-phased Gradle sync cancellation`(cancellationPhase: GradleModelFetchPhase) {
     Disposer.newDisposable().use { disposable ->
-      val isProjectLoaded = AtomicBoolean(false)
-      val isBuildCompleted = AtomicBoolean(false)
-      val isProjectModelContributorRunned = AtomicBoolean(false)
-      val isSyncCancelled = AtomicBoolean(false)
-
-      val completedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
+      val projectLoadingAssertion = ListenerAssertion()
+      val buildCompletionAssertion = ListenerAssertion()
+      val projectModelContributorAssertion = ListenerAssertion()
+      val phaseCompletionAssertion = ListenerAssertion()
+      val syncCancellationAssertion = ListenerAssertion()
 
       val allPhases = GradleModelFetchPhase.entries
       val phasedModelProviders = allPhases.map { TestModelProvider(it) }
+      val expectedCompletedPhases = allPhases.filter { it <= cancellationPhase }
+      val actualCompletedPhases = CopyOnWriteArrayList<GradleModelFetchPhase>()
 
       addModelProviders(disposable, phasedModelProviders)
       whenPhaseCompleted(disposable) { _, phase ->
+        phaseCompletionAssertion.touch()
+        actualCompletedPhases.add(phase)
         if (phase == cancellationPhase) {
           throw ProcessCanceledException()
         }
-        completedPhases.add(phase)
       }
       whenProjectLoaded(disposable) {
-        isProjectLoaded.set(true)
+        projectLoadingAssertion.touch()
       }
       whenBuildCompleted(disposable) {
-        isBuildCompleted.set(true)
+        buildCompletionAssertion.touch()
       }
       addProjectModelContributor(disposable, ProjectModelContributor { _, _ ->
-        isProjectModelContributorRunned.set(true)
+        projectModelContributorAssertion.touch()
       })
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
-        isSyncCancelled.set(true)
+        syncCancellationAssertion.touch()
       })
 
-      Assertions.assertTrue(isSyncCancelled.get()) {
-        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
-        "Requested phases = $allPhases\n" +
-        "Completed phases = $completedPhases"
-      }
-      Assertions.assertFalse(isBuildCompleted.get()) {
-        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
-        "Therefore the project build action shouldn't be completed.\n" +
-        "Requested phases = $allPhases\n" +
-        "Completed phases = $completedPhases"
-      }
-      Assertions.assertFalse(isProjectModelContributorRunned.get()) {
-        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
-        "Therefore the project model contributor shouldn't be runned.\n"
-        "Requested phases = $allPhases\n" +
-        "Completed phases = $completedPhases"
-      }
       if (cancellationPhase <= GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
-        Assertions.assertFalse(isProjectLoaded.get()) {
+        projectLoadingAssertion.assertListenerFailures()
+        projectLoadingAssertion.assertListenerState(0) {
           "Gradle sync should be cancelled during the $cancellationPhase.\n" +
-          "Therefore the project loaded actions shouldn't be completed.\n" +
+          "Therefore the project loaded action shouldn't be completed.\n" +
           "Requested phases = $allPhases\n" +
-          "Completed phases = $completedPhases"
+          "Expected completed phases = $expectedCompletedPhases\n" +
+          "Actual completed phases = $actualCompletedPhases\n"
         }
       }
       else {
-        Assertions.assertTrue(isProjectLoaded.get()) {
+        projectLoadingAssertion.assertListenerFailures()
+        projectLoadingAssertion.assertListenerState(1) {
           "Gradle sync should be cancelled during the $cancellationPhase.\n" +
           "Therefore the project loaded action should be completed.\n" +
           "Requested phases = $allPhases\n" +
-          "Completed phases = $completedPhases"
+          "Expected completed phases = $expectedCompletedPhases\n" +
+          "Actual completed phases = $actualCompletedPhases\n"
         }
       }
-      for (completedPhase in completedPhases) {
-        Assertions.assertTrue(completedPhase < cancellationPhase) {
-          "Gradle sync should be cancelled during the $cancellationPhase.\n" +
-          "Therefore the $completedPhase shouldn't be executed.\n" +
-          "Requested phases = $allPhases\n" +
-          "Completed phases = $completedPhases"
-        }
+      buildCompletionAssertion.assertListenerFailures()
+      buildCompletionAssertion.assertListenerState(0) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Therefore the build finished action shouldn't be completed.\n" +
+        "Requested phases = $allPhases\n" +
+        "Expected completed phases = $expectedCompletedPhases\n" +
+        "Actual completed phases = $actualCompletedPhases\n"
+      }
+      projectModelContributorAssertion.assertListenerFailures()
+      projectModelContributorAssertion.assertListenerState(0) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Therefore the project model contributor shouldn't be runned.\n"
+        "Requested phases = $allPhases\n" +
+        "Completed phases = $actualCompletedPhases\n" +
+        "Expected phases = $expectedCompletedPhases"
+      }
+      syncCancellationAssertion.assertListenerFailures()
+      syncCancellationAssertion.assertListenerState(1) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Requested phases = $allPhases\n" +
+        "Expected completed phases = $expectedCompletedPhases\n" +
+        "Actual completed phases = $actualCompletedPhases\n"
+      }
+      phaseCompletionAssertion.assertListenerFailures()
+      phaseCompletionAssertion.assertListenerState(expectedCompletedPhases.size) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Therefore the earliest model fetch phases should be completed.\n"
+        "Requested phases = $allPhases\n" +
+        "Expected completed phases = $expectedCompletedPhases\n" +
+        "Actual completed phases = $actualCompletedPhases\n"
+      }
+      Assertions.assertEquals(expectedCompletedPhases, actualCompletedPhases) {
+        "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+        "Requested phases = $allPhases\n" +
+        "Expected completed phases = $expectedCompletedPhases\n" +
+        "Actual completed phases = $actualCompletedPhases\n"
       }
     }
   }
