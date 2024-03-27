@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.statistics
 
+import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ExpChooserAction
 import com.intellij.ide.startup.importSettings.chooser.productChooser.JbChooserAction
 import com.intellij.ide.startup.importSettings.chooser.productChooser.OtherOptions
@@ -12,13 +13,14 @@ import com.intellij.openapi.components.SettingsCategory
 
 
 object ImportSettingsEventsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("import.settings", 2)
+  private val GROUP = EventLogGroup("import.settings", 3)
   override fun getGroup(): EventLogGroup = GROUP
   private val UNKNOWN = "UNKNOWN"
   private val FOLDER = "FOLDER"
 
   // Lists/enums:
   private val ALLOWED_JB_IDES: List<String> = IDEData.IDE_MAP.keys.plus(UNKNOWN).toList()
+  private val EXTERNAL_IDES: List<String> = TransferableIdeId.entries.map { it.name }
   private val CATEGORIES: List<SettingsCategory> = SettingsCategory.entries.minus(SettingsCategory.OTHER).toList()
 
   // items supporting 'multiple' (with configure/showAll link)
@@ -72,6 +74,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
 
   private val JB_IDE_VALUES = EventFields.StringList("jbIdeValues", ALLOWED_JB_IDES, "Supported JB IDEs")
+  private val EXTERNAL_IDE_VALUES = EventFields.StringList("externalIdeValues", EXTERNAL_IDES, "Supported external IDEs")
   private val FIRST_PAGE_BUTTONS = EventFields.Enum<ProductPageButton>("productPageButton", "Buttons on the first page")
   private val SECOND_PAGE_BUTTONS = EventFields.Enum<ConfigurePageButton>("configurePageButton", "Buttons on the second page")
   private val IMPORT_TYPES = EventFields.Enum<ImportType>("importTypes", "Import type")
@@ -80,7 +83,11 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
                                                             CATEGORIES.map { it.name },
                                                             "Settings categories when importing from JB or SYNC")
 
-  private val IMPORT_SOURCE = EventFields.String("importSource", ALLOWED_JB_IDES.plus("FOLDER"))
+  private val IMPORT_SOURCE = EventFields.String("importSource",
+                                                 ALLOWED_JB_IDES
+                                                   .plus("FOLDER")
+                                                   .plus(TransferableIdeId.entries.map { it.name })
+  )
 
   // before first page - preparations and performance
 
@@ -89,8 +96,10 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
                                                      "indicates whether initial import settings page was shown to user, if not, then import was skipped completely")
   private val jbIdeActualValues = GROUP.registerEvent("jb.ide.actual.values", JB_IDE_VALUES, "JB IDEs in the main dropdown")
   private val jbIdeOldValues = GROUP.registerEvent("jb.ide.old.values", JB_IDE_VALUES, "JB IDEs in the other dropdown")
+  private val externalIdeValues = GROUP.registerEvent("external.ide.values", EXTERNAL_IDE_VALUES, "external IDEs available for import")
   private val productPageButton = GROUP.registerEvent("page.product.button", FIRST_PAGE_BUTTONS, "Button pressed on the product page")
   private val jbIdeSelectedValue = GROUP.registerEvent("page.product.selected.jb.ide", EventFields.String("jbIde", ALLOWED_JB_IDES), "JB IDE selected")
+  private val externalIdeSelectedValue = GROUP.registerEvent("external.ide.selected.value", EventFields.String("externalIde", EXTERNAL_IDES), "External IDE selected")
   private val productPageTimeSpent = GROUP.registerEvent("page.product.time.spent", EventFields.DurationMs)
 
   private val productPageDropdownClicked = GROUP.registerEvent("page.product.dropdown.clicked",
@@ -99,9 +108,9 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
 
   //second page (configure) - JB IDE - select import details
   private val configurePageShown = GROUP.registerEvent("page.configure.shown", IMPORT_TYPES)
-  private val jbIdeUnselectedOptions = GROUP.registerEvent("page.configure.jb.categories",
-                                                           JB_IMPORT_CATEGORIES,
-                                                           "unselected options when importing from JB IDE")
+  private val jbIdeDisabledOptions = GROUP.registerEvent("page.configure.jb.disabled.categories",
+                                                         JB_IMPORT_CATEGORIES,
+                                                         "unselected options when importing from JB IDE")
   private val jbIdePlugins = GROUP.registerEvent(
     "page.configure.jb.ide.plugins",
     EventFields.Int("totalCount", "Total number of plugins that we've found during scanning"),
@@ -205,6 +214,10 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     configurePageButton.log(ConfigurePageButton.NEXT)
   }
 
+  fun externalIdes(extIdes: List<String>) {
+    externalIdeValues.log(extIdes)
+  }
+
   fun actualJbIdes(jbIdes: List<String>) {
     jbIdeActualValues.log(jbIdes)
   }
@@ -230,6 +243,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
   fun externalSelected(externalId: String) {
     productPageButton.log(ProductPageButton.EXTERNAL)
     configurePageShown.log(ImportType.EXTERNAL)
+    externalIdeSelectedValue.log(externalId)
     changePage(2)
   }
 
@@ -252,7 +266,7 @@ object ImportSettingsEventsCollector : CounterUsagesCollector() {
     importType.log(ImportType.JB, jbIde)
     changePage(3)
     val unselectedCategories = CATEGORIES.minus(selectedCategories.toSet())
-    jbIdeUnselectedOptions.log(unselectedCategories.map { it.name })
+    jbIdeDisabledOptions.log(unselectedCategories.map { it.name })
     val totalPluginsCount = selectedPlugins.size + unselectedPlugins.size
     jbIdePlugins.log(totalPluginsCount, unselectedPlugins.size)
   }
