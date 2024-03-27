@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.LocalizationUtil;
 import com.intellij.util.ReflectionUtil;
@@ -100,10 +101,14 @@ public class DynamicBundle extends AbstractBundle {
         ResourceBundle resourceBundle = resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
         resourceBundles.add(resourceBundle);
       }
-      catch (MissingResourceException e) {
-        LOG.debug(e);
+      catch (MissingResourceException ignored) {
       }
     }
+
+    if (resourceBundles.isEmpty()) {
+      LOG.debug("No bundles found in: " + StringUtil.join(paths, ", "));
+    }
+
     return resourceBundles;
   }
 
