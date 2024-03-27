@@ -24,10 +24,5 @@
     <extensionPoint qualifiedName="com.intellij.platform.ml.impl.approach"
                     interface="com.intellij.platform.ml.impl.MLTaskApproachBuilder"
                     dynamic="true"/>
-
-    <extensionPoint name="mlCompletionCorrectnessSupporter"
-                    beanClass="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporterEP" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.platform.ml.impl.correctness.MLCompletionCorrectnessSupporter"/>
-    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
