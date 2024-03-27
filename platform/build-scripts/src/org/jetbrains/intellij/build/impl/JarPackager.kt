@@ -895,8 +895,7 @@ private suspend fun buildJars(
 
                 override fun updateDigest(digest: HashStream64) {
                   if (layout is PluginLayout) {
-                    val mainModule = layout.mainModule
-                    digest.putString(mainModule)
+                    digest.putString(layout.mainModule)
                   }
                   else {
                     digest.putByte(0)

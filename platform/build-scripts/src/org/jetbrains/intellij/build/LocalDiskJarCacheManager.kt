@@ -29,14 +29,14 @@ fun createMarkFile(file: Path): Boolean {
   }
 }
 
-internal fun createSourceAndCacheStrategyList(sources: List<Source>, classOutDirectory: Path): List<SourceAndCacheStrategy> {
+internal fun createSourceAndCacheStrategyList(sources: List<Source>, productionClassOutDir: Path): List<SourceAndCacheStrategy> {
   return sources
     .map { source ->
       when {
         source is DirSource -> {
           val dir = source.dir
-          if (dir.startsWith(classOutDirectory)) {
-            ModuleOutputSourceAndCacheStrategy(source = source, path = classOutDirectory.relativize(dir).toString())
+          if (dir.startsWith(productionClassOutDir)) {
+            ModuleOutputSourceAndCacheStrategy(source = source, path = productionClassOutDir.relativize(dir).toString())
           }
           else {
             throw UnsupportedOperationException("$source is not supported")

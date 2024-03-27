@@ -12,7 +12,6 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.jarCache.JarCacheManager
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
@@ -87,8 +86,9 @@ class BuildContextImpl(
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   internal val jarCacheManager: JarCacheManager by lazy {
-    options.jarCacheDir?.let { LocalDiskJarCacheManager(cacheDir = it, classOutDirectory = classesOutputDirectory) }
-    ?: NonCachingJarCacheManager
+    options.jarCacheDir?.let {
+      LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = classesOutputDirectory.resolve("production"))
+    } ?: NonCachingJarCacheManager
   }
 
   internal val jarPackagerDependencyHelper: JarPackagerDependencyHelper by lazy { JarPackagerDependencyHelper(this) }

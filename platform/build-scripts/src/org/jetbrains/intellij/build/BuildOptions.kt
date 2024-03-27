@@ -16,22 +16,13 @@ import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
 
 data class BuildOptions(
-  @ApiStatus.Internal
-  @JvmField
-  val jarCacheDir: Path? = null,
-  @ApiStatus.Internal
-  @JvmField
-  val compressZipFiles: Boolean = true,
+  @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
+  @ApiStatus.Internal @JvmField val compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
   val buildDateInSeconds: Long = computeBuildDateInSeconds(),
-  @ApiStatus.Internal
-  @JvmField
-  val printFreeSpace: Boolean = true,
-  @ApiStatus.Internal
-  @JvmField
-  val validateImplicitPlatformModule: Boolean = true,
-  @JvmField
-  var skipDependencySetup: Boolean = false,
+  @ApiStatus.Internal @JvmField val printFreeSpace: Boolean = true,
+  @ApiStatus.Internal @JvmField val validateImplicitPlatformModule: Boolean = true,
+  @JvmField var skipDependencySetup: Boolean = false,
 
   /**
    * If `true`, the build is running in the 'Development mode', i.e., its artifacts aren't supposed to be used in production.
@@ -78,19 +69,20 @@ data class BuildOptions(
   /**
    * If `true`, write all compilation messages into a separate file (`compilation.log`).
    */
-  var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true),
-  val logDir: Path? = System.getProperty("intellij.build.log.root")?.let { Path.of(it) },
+  @JvmField var compilationLogEnabled: Boolean = SystemProperties.getBooleanProperty("intellij.build.compilation.log.enabled", true),
+  @JvmField val logDir: Path? = System.getProperty("intellij.build.log.root")?.let { Path.of(it) },
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
-  val pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) },
+  @JvmField val pathToCompiledClassesArchive: Path? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVE)?.let { Path.of(it) },
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
    * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
    */
-  val pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA),
+  @JvmField val pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA),
+  @JvmField internal val validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false")),
 ) {
   companion object {
     /**
@@ -422,8 +414,6 @@ data class BuildOptions(
    * Enables "fastdebug" runtime.
    */
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
-
-  var validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
 
   @ApiStatus.Internal
   var skipCustomResourceGenerators: Boolean = false

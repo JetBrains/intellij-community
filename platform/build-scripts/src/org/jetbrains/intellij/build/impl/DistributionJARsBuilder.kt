@@ -1320,8 +1320,11 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
 
   val libDir = context.paths.distAllDir.resolve("lib")
   for (entry in lib) {
-    if (libDir.relativize(entry.path).nameCount != 1) {
-      continue
+    if (!(entry is ModuleOutputEntry && entry.reason == ModuleIncludeReasons.PRODUCT_MODULES)) {
+      val relativePath = libDir.relativize(entry.path)
+      if (relativePath.nameCount != 1 && !relativePath.startsWith("modules")) {
+        continue
+      }
     }
 
     when (entry) {

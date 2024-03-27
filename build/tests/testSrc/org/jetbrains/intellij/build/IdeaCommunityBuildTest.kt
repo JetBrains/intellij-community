@@ -18,7 +18,7 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
     runTestBuild(
-      homePath = homePath,
+      homeDir = homePath,
       traceSpanName = testInfo.spanName,
       productProperties = productProperties,
     ) {
@@ -31,7 +31,7 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     runBlocking(Dispatchers.Default) {
       val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
-      val options = createBuildOptionsForTest(productProperties = productProperties, skipDependencySetup = true)
+      val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath, skipDependencySetup = true)
       val context = BuildContextImpl.createContext(
         projectHome = homePath,
         productProperties = productProperties,

@@ -55,7 +55,7 @@ fun buildDevMain(): Collection<Path> {
         BuildRequest(
           platformPrefix = System.getProperty("idea.platform.prefix", "idea"),
           additionalModules = getAdditionalModules()?.toList() ?: emptyList(),
-          homePath = ideaProjectRoot,
+          projectDir = ideaProjectRoot,
           keepHttpClient = false,
           platformClassPathConsumer = { classPath, runDir ->
             newClassPath = classPath

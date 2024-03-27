@@ -27,11 +27,17 @@ import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
 import java.nio.file.Path
 
-fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
+fun createBuildOptionsForTest(
+  productProperties: ProductProperties,
+  homeDir: Path,
+  skipDependencySetup: Boolean = false,
+): BuildOptions {
   val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions(
     cleanOutDir = false,
-    useCompiledClassesFromProjectOutput = true
+    useCompiledClassesFromProjectOutput = true,
+    // todo enable once sync issues will be fixed
+    //jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
   )
   customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup)
   return options
@@ -41,8 +47,12 @@ fun createTestBuildOutDir(productProperties: ProductProperties): Path {
   return FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
 }
 
-private inline fun createBuildOptionsForTest(productProperties: ProductProperties, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties = productProperties)
+private inline fun createBuildOptionsForTest(
+  productProperties: ProductProperties,
+  homeDir: Path,
+  customizer: (BuildOptions) -> Unit,
+): BuildOptions {
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir)
   customizer(options)
   return options
 }
@@ -71,7 +81,7 @@ suspend inline fun createBuildContext(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
-  val options = createBuildOptionsForTest(productProperties)
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(
     projectHome = homePath,
@@ -90,7 +100,7 @@ fun runTestBuild(
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
   runTestBuild(
-    homePath = homePath,
+    homeDir = homePath,
     productProperties = productProperties,
     buildTools = buildTools,
     traceSpanName = traceSpanName,
@@ -100,7 +110,7 @@ fun runTestBuild(
 }
 
 fun runTestBuild(
-  homePath: Path,
+  homeDir: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   traceSpanName: String,
@@ -114,11 +124,11 @@ fun runTestBuild(
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
         val buildContext = BuildContextImpl.createContext(
-          projectHome = homePath,
+          projectHome = homeDir,
           productProperties = productProperties,
           proprietaryBuildTools = buildTools,
           setupTracer = false,
-          options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
+          options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, customizer = buildOptionsCustomizer).also {
             reproducibilityTest.configure(it)
           },
         )
@@ -138,11 +148,11 @@ fun runTestBuild(
   else {
     doRunTestBuild(
       context = BuildContextImpl.createContext(
-        projectHome = homePath,
+        projectHome = homeDir,
         productProperties = productProperties,
         proprietaryBuildTools = buildTools,
         setupTracer = false,
-        options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer),
+        options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, customizer = buildOptionsCustomizer),
       ),
       writeTelemetry = true,
       traceSpanName = traceSpanName,

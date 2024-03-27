@@ -20,6 +20,7 @@ import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions.Companion.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -44,10 +45,11 @@ import kotlin.time.Duration.Companion.seconds
 data class BuildRequest(
   @JvmField val platformPrefix: String,
   @JvmField val additionalModules: List<String>,
-  @JvmField val homePath: Path,
-  @JvmField val devRootPath: Path = homePath.normalize().toAbsolutePath().resolve("out/dev-run"),
+  @JvmField val projectDir: Path,
+  @JvmField val devRootDir: Path = projectDir.normalize().toAbsolutePath().resolve("out/dev-run"),
+  @JvmField val jarCacheDir: Path = devRootDir.resolve("jar-cache"),
   @JvmField val productionClassOutput: Path = Path.of(System.getenv("CLASSES_DIR")
-                                                      ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
+                                                      ?: projectDir.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
   /**
@@ -57,7 +59,9 @@ data class BuildRequest(
    */
   @JvmField val generateRuntimeModuleRepository: Boolean = false,
 
-  @JvmField val isUnpackedDist: Boolean = System.getProperty("idea.dev.build.unpacked").toBoolean()
+  @JvmField val isUnpackedDist: Boolean = System.getProperty("idea.dev.build.unpacked").toBoolean(),
+
+  @JvmField val buildOptionsTemplate: BuildOptions? = null,
 ) {
   override fun toString(): String {
     return "BuildRequest(platformPrefix='$platformPrefix', " +
@@ -69,9 +73,9 @@ data class BuildRequest(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest): Path {
+internal suspend fun buildProduct(request: BuildRequest, createProductProperties: suspend () -> ProductProperties): Path {
   val rootDir = withContext(Dispatchers.IO) {
-    val rootDir = request.devRootPath
+    val rootDir = request.devRootDir
     // if symlinked to ram disk, use a real path for performance reasons and avoid any issues in ant/other code
     if (Files.exists(rootDir)) {
       // toRealPath must be called only on existing file
@@ -109,11 +113,11 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
 
   val runDir = buildDir.resolve(productDirNameWithoutClassifier)
   val context = createBuildContext(
-    createProductProperties = { createProductProperties(productConfiguration = productConfiguration, request = request) },
+    createProductProperties = createProductProperties,
     request = request,
     runDir = runDir,
     buildDir = buildDir,
-    jarCacheDir = rootDir.resolve("jar-cache"),
+    jarCacheDir = request.jarCacheDir,
   )
   compileIfNeeded(context)
 
@@ -138,7 +142,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").useWithScope {
         layoutPlatform(runDir = runDir, platformLayout = platformLayout.await(), context = context)
       }
-      
+
       launch(Dispatchers.IO) {
         Files.writeString(runDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
       }
@@ -148,7 +152,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
     }
 
     val artifactTask = launch {
-      val artifactOutDir = request.homePath.resolve("out/classes/artifacts").toString()
+      val artifactOutDir = request.projectDir.resolve("out/classes/artifacts").toString()
       for (artifact in JpsArtifactService.getInstance().getArtifacts(context.project)) {
         artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
       }
@@ -190,7 +194,7 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
         platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
         pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
         runDir = runDir,
-        homePath = request.homePath,
+        homePath = request.projectDir,
       )
     }
   }
@@ -315,9 +319,11 @@ private suspend fun buildPlugins(
       .distinct()
       .filter { it == plugin.mainModule || !context.findRequiredModule(it).contentRootsList.urls.isEmpty() }
       .toList()
-    val pluginBuildDescriptor = PluginBuildDescriptor(dir = pluginRootDir.resolve(plugin.directoryName),
-                                                      layout = plugin,
-                                                      moduleNames = modules)
+    val pluginBuildDescriptor = PluginBuildDescriptor(
+      dir = pluginRootDir.resolve(plugin.directoryName),
+      layout = plugin,
+      moduleNames = modules,
+    )
     for (name in modules) {
       moduleNameToPluginBuildDescriptor.put(name, pluginBuildDescriptor)
     }
@@ -330,14 +336,16 @@ private suspend fun buildPlugins(
 
   artifactTask.join()
 
-  val pluginEntries = buildPlugins(pluginBuildDescriptors, platformLayout = platformLayout.await(), context)
-
+  val pluginEntries = buildPlugins(
+    pluginBuildDescriptors = pluginBuildDescriptors,
+    platformLayout = platformLayout.await(),
+    context = context,
+  )
   val additionalPlugins = copyAdditionalPlugins(context)
-
   return pluginEntries to additionalPlugins
 }
 
-private suspend fun createBuildContext(
+internal suspend fun createBuildContext(
   createProductProperties: suspend () -> ProductProperties,
   request: BuildRequest,
   runDir: Path,
@@ -347,22 +355,27 @@ private suspend fun createBuildContext(
   return coroutineScope {
     // ~1 second
     val productProperties = async {
-      withTimeout(30.seconds) {
-        createProductProperties()
-      }
+      createProductProperties()
     }
 
     // load project is executed as part of compilation context creation - ~1 second
     val compilationContext = async {
       spanBuilder("create build context").useWithScope {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
+        val buildOptionsTemplate = request.buildOptionsTemplate
         val options = BuildOptions(
           jarCacheDir = jarCacheDir,
           buildDateInSeconds = getBuildDateInSeconds(),
           printFreeSpace = false,
           validateImplicitPlatformModule = false,
           skipDependencySetup = true,
-          useCompiledClassesFromProjectOutput = true,
+
+          useCompiledClassesFromProjectOutput = buildOptionsTemplate?.useCompiledClassesFromProjectOutput ?: true,
+          pathToCompiledClassesArchivesMetadata = buildOptionsTemplate?.pathToCompiledClassesArchivesMetadata,
+          pathToCompiledClassesArchive = buildOptionsTemplate?.pathToCompiledClassesArchive,
+          classOutDir = buildOptionsTemplate?.classOutDir ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
+
+          validateModuleStructure = false,
           cleanOutDir = false,
           outRootDir = runDir,
           compilationLogEnabled = false,
@@ -382,7 +395,7 @@ private suspend fun createBuildContext(
         options.generateRuntimeModuleRepository = options.generateRuntimeModuleRepository && request.generateRuntimeModuleRepository
 
         CompilationContextImpl.createCompilationContext(
-          projectHome = request.homePath,
+          projectHome = request.projectDir,
           buildOutputRootEvaluator = { _ -> runDir },
           setupTracer = false,
           // will be enabled later in [com.intellij.platform.ide.bootstrap.enableJstack] instead
@@ -421,11 +434,11 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin, OsFamily.currentOs, JvmArchitecture.currentJvmArch, context) ||
-         satisfiesBundlingRequirements(plugin, osFamily = null, JvmArchitecture.currentJvmArch, context)
+  return satisfiesBundlingRequirements(plugin = plugin, osFamily = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, context = context) ||
+         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
-private suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
+internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
   val classPathFiles = getBuildModules(productConfiguration).map { request.productionClassOutput.resolve(it) }.toList()
 
   val classLoader = spanBuilder("create product properties classloader").useWithScope {
@@ -450,7 +463,7 @@ private suspend fun createProductProperties(productConfiguration: ProductConfigu
     catch (_: NoSuchMethodException) {
       lookup
         .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.homePath) else request.homePath)
+        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.projectDir) else request.projectDir)
     } as ProductProperties
   }
 }
@@ -459,14 +472,18 @@ private fun getBuildModules(productConfiguration: ProductConfiguration): Sequenc
   return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 }
 
-private suspend fun layoutPlatform(runDir: Path,
-                                   platformLayout: PlatformLayout,
-                                   context: BuildContext): Pair<List<DistributionFileEntry>, Set<Path>> {
-  val entries = layoutPlatformDistribution(moduleOutputPatcher = ModuleOutputPatcher(),
-                                           targetDirectory = runDir,
-                                           platform = platformLayout,
-                                           context = context,
-                                           copyFiles = true)
+private suspend fun layoutPlatform(
+  runDir: Path,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
+): Pair<List<DistributionFileEntry>, Set<Path>> {
+  val entries = layoutPlatformDistribution(
+    moduleOutputPatcher = ModuleOutputPatcher(),
+    targetDirectory = runDir,
+    platform = platformLayout,
+    context = context,
+    copyFiles = true,
+  )
   lateinit var sortedClassPath: Set<Path>
   coroutineScope {
     launch(Dispatchers.IO) {
@@ -514,7 +531,6 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   else {
     val hash = Hashing.komihash5_0().hashStream()
     hash.putUnorderedIterable(additionalModules, HashFunnel.forString(), Hashing.komihash5_0())
-
     return "-" + additionalModules.joinToString(separator = "-") { it.removePrefix("intellij.").take(4) } + "-" +
            java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
   }

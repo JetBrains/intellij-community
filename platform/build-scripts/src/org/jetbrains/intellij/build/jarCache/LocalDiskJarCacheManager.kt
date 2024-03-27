@@ -5,12 +5,11 @@ package org.jetbrains.intellij.build.jarCache
 
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.util.io.DigestUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -19,6 +18,7 @@ import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
+import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -31,7 +31,10 @@ private const val metaSuffix = ".bin"
 
 private const val cacheVersion: Byte = 8
 
-internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val classOutDirectory: Path) : JarCacheManager {
+internal class LocalDiskJarCacheManager(
+  private val cacheDir: Path,
+  private val productionClassOutDir: Path,
+) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
   }
@@ -42,12 +45,14 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     }
   }
 
-  override suspend fun computeIfAbsent(sources: List<Source>,
-                                       targetFile: Path,
-                                       nativeFiles: MutableMap<ZipSource, List<String>>?,
-                                       span: Span,
-                                       producer: SourceBuilder): Path {
-    val items = createSourceAndCacheStrategyList(sources = sources, classOutDirectory = classOutDirectory)
+  override suspend fun computeIfAbsent(
+    sources: List<Source>,
+    targetFile: Path,
+    nativeFiles: MutableMap<ZipSource, List<String>>?,
+    span: Span,
+    producer: SourceBuilder,
+  ): Path {
+    val items = createSourceAndCacheStrategyList(sources = sources, productionClassOutDir = productionClassOutDir)
 
     val hash = Hashing.komihash5_0().hashStream()
     hashCommonMeta(hash = hash, items = items, targetFile = targetFile)
@@ -72,12 +77,14 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
     val cacheFile = cacheDir.resolve(cacheFileName)
     val cacheMetadataFile = cacheDir.resolve((cacheName + metaSuffix).takeLast(255))
-    if (checkCache(cacheMetadataFile = cacheMetadataFile,
-                   cacheFile = cacheFile,
-                   sources = sources,
-                   items = items,
-                   span = span,
-                   nativeFiles = nativeFiles)) {
+    if (checkCache(
+        cacheMetadataFile = cacheMetadataFile,
+        cacheFile = cacheFile,
+        sources = sources,
+        items = items,
+        span = span,
+        nativeFiles = nativeFiles
+      )) {
       if (!producer.useCacheAsTargetFile) {
         Files.createDirectories(targetFile.parent)
         Files.copy(cacheFile, targetFile)
@@ -96,12 +103,18 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       return if (producer.useCacheAsTargetFile) cacheFile else targetFile
     }
 
-    val tempFile = cacheDir.resolve("$cacheName.temp-${java.lang.Long.toUnsignedString(System.currentTimeMillis(), Character.MAX_RADIX)}"
-                                      .takeLast(255))
+    val tempFile = cacheDir.resolve(
+      "$cacheName.temp-${java.lang.Long.toUnsignedString(DigestUtil.random.nextLong(), Character.MAX_RADIX)}".takeLast(255)
+    )
     var fileMoved = false
     try {
       producer.produce(tempFile)
-      Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING)
+      try {
+        Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+      }
+      catch (e: AtomicMoveNotSupportedException) {
+        Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING)
+      }
       fileMoved = true
     }
     finally {
@@ -119,22 +132,14 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       )
     }
 
-    coroutineScope {
-      if (!producer.useCacheAsTargetFile) {
-        launch {
-          Files.createDirectories(targetFile.parent)
-          Files.copy(cacheFile, targetFile)
-        }
-      }
-
-      launch {
-        Files.write(cacheMetadataFile, ProtoBuf.encodeToByteArray(JarCacheItem(sources = sourceCacheItems)))
-      }
-
-      launch(Dispatchers.Default) {
-        notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles)
-      }
+    if (!producer.useCacheAsTargetFile) {
+      Files.createDirectories(targetFile.parent)
+      Files.copy(cacheFile, targetFile)
     }
+
+    Files.write(cacheMetadataFile, ProtoBuf.encodeToByteArray(JarCacheItem(sources = sourceCacheItems)))
+
+    notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles)
 
     return if (producer.useCacheAsTargetFile) cacheFile else targetFile
   }
@@ -146,9 +151,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
   }
 }
 
-private fun hashCommonMeta(hash: HashStream64,
-                      items: List<SourceAndCacheStrategy>,
-                      targetFile: Path) {
+private fun hashCommonMeta(hash: HashStream64, items: List<SourceAndCacheStrategy>, targetFile: Path) {
   hash.putByte(cacheVersion)
   hash.putInt(items.size)
   hash.putString(targetFile.fileName.toString())
@@ -174,16 +177,16 @@ private fun checkCache(cacheMetadataFile: Path,
       AttributeKey.stringKey("error"), e.toString(),
     ))
 
-    Files.deleteIfExists(cacheFile)
     Files.deleteIfExists(cacheMetadataFile)
+    Files.deleteIfExists(cacheFile)
     return false
   }
 
   if (!checkSavedAndActualSources(metadata = metadata, sources = sources, items = items)) {
     span.addEvent("metadata $metadataBytes not equal to $sources")
 
-    Files.deleteIfExists(cacheFile)
     Files.deleteIfExists(cacheMetadataFile)
+    Files.deleteIfExists(cacheFile)
     return false
   }
 

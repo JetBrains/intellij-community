@@ -58,10 +58,15 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
 /** Returns IDE installation directory */
 suspend fun buildProductInProcess(request: BuildRequest): Path {
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope {
-    val configuration = createConfiguration(homePath = request.homePath, productionClassOutput = request.productionClassOutput)
-    val productConfiguration = getProductConfiguration(configuration, request.platformPrefix)
     try {
-      buildProduct(productConfiguration = productConfiguration, request = request)
+      buildProduct(
+        request = request,
+        createProductProperties = {
+          val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
+          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix)
+          createProductProperties(productConfiguration = productConfiguration, request = request)
+        },
+      )
     }
     finally {
       // otherwise, a thread leak in tests
@@ -76,7 +81,10 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
 
 private fun createConfiguration(productionClassOutput: Path, homePath: Path): Configuration {
   // for compatibility with local runs and runs on CI
-  System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
+  if (System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) == null) {
+    System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
+  }
+
   val projectPropertiesPath = getProductPropertiesPath(homePath)
   return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
 }
