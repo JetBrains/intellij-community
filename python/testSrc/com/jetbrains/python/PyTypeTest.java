@@ -1114,6 +1114,17 @@ public class PyTypeTest extends PyTestCase {
            "(a, (_, expr)) = (1, xs) ");
   }
 
+  // PY-38928
+  public void testIterateListOfTuples() {
+    doTest(
+      "str",
+      """
+        for ((_, expr)) in [(1, 'foo')]:
+            pass
+        """
+    );
+  }
+
   public void testConstructorUnification() {
     doTest("C[int]",
            """
