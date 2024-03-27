@@ -156,7 +156,7 @@ struct TestEnvironmentShared {
 
 fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
     INIT.call_once(|| {
-        let shared = init_test_environment_once().expect("Failed to init shared test environment");
+        let shared = init_test_environment_once().context("Failed to init shared test environment").unwrap();
         unsafe {
             SHARED = Some(shared)
         }

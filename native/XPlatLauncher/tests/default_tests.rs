@@ -10,6 +10,9 @@ mod tests {
     use xplat_launcher::jvm_property;
     use crate::utils::*;
 
+    #[cfg(target_os = "windows")]
+    use xplat_launcher::cef_generated::CEF_VERSION;
+
     #[test]
     fn correct_launcher_startup_test() {
         run_launcher(LauncherRunSpec::standard().assert_status());
@@ -79,8 +82,25 @@ mod tests {
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
         assert_eq!(vm_options_file.canonicalize().unwrap(), path.canonicalize().unwrap());
 
+        // hardcoded vmoptions
+        assert_vm_option_presence(&dump, "-Dide.native.launcher=true");
+
         dump.vmOptions.iter().find(|s| s.starts_with("-XX:ErrorFile="))
             .unwrap_or_else(|| panic!("'-XX:ErrorFile=' is not in {:?}", dump.vmOptions));
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn cef_sandbox_vm_options_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let vm_options_name = "xplat64.exe.vmoptions";
+        let vm_options_file = test.dist_root.join("bin").join(vm_options_name);
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_vm_option_presence(&dump, format!("-Djcef.sandbox.cefVersion={CEF_VERSION}").as_ref());
+        dump.vmOptions.iter().find(|s| s.starts_with("-Djcef.sandbox.ptr="))
+            .unwrap_or_else(|| panic!("'-Djcef.sandbox.ptr=' is not in {:?}", dump.vmOptions));
     }
 
     #[test]
