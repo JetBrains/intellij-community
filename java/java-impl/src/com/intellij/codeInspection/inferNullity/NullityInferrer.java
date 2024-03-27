@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+@SuppressWarnings("DuplicatedCode") // there is a partial copy in org.jetbrains.kotlin.nj2k.J2KNullityInferrer
 public class NullityInferrer {
   private static final int MAX_PASSES = 10;
   public static final String NOTHING_FOUND_TO_INFER = "Nothing found to infer";
