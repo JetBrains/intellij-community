@@ -80,5 +80,5 @@ public interface StubInconsistencyReporter {
    */
   enum StubTreeAndIndexDoNotMatchSource {FileTreesPsiReconciliation, WrongPsiFileClassInNonPsiStub, ZeroStubIdList, StubPsiCheck}
 
-  void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @Nullable StubTreeAndIndexDoNotMatchSource source);
+  void reportStubTreeAndIndexDoNotMatch(@NotNull Project project, @NotNull StubTreeAndIndexDoNotMatchSource source);
 }

@@ -68,7 +68,7 @@ public abstract class StubTreeLoader {
     @Nullable ObjectStubTree<?> stubTree,
     @NotNull PsiFileWithStubSupport psiFile,
     @Nullable Throwable cause,
-    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
   ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source).doCreateCompleteException();
@@ -84,7 +84,7 @@ public abstract class StubTreeLoader {
     @Nullable ObjectStubTree<?> stubTree,
     @NotNull PsiFileWithStubSupport psiFile,
     @Nullable Throwable cause,
-    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
   ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source);
@@ -95,7 +95,7 @@ public abstract class StubTreeLoader {
     @Nullable ObjectStubTree<?> stubTree,
     @NotNull PsiFileWithStubSupport psiFile,
     @Nullable Throwable cause,
-    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
   ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();

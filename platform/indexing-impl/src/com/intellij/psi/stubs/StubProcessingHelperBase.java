@@ -84,7 +84,7 @@ public abstract class StubProcessingHelperBase {
 
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, @Nullable PsiElement psiElement,
                                                      @NotNull Computable<String> debugOperationName, @NotNull StubIdList debugStubIdList,
-                                                     @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source) {
+                                                     @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source) {
     if (requiredClass.isInstance(psiElement)) return true;
 
     String extraMessage = "psiElement is not instance of requiredClass.\n" +
@@ -161,7 +161,7 @@ public abstract class StubProcessingHelperBase {
     @Nullable ObjectStubTree<?> stubTree,
     @NotNull PsiFileWithStubSupport psiFile,
     @NotNull String extraMessage,
-    @Nullable StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
   ) {
     try {
       StubTextInconsistencyException.checkStubTextConsistency(psiFile, SourceOfCheck.WrongTypePsiInStubHelper);
