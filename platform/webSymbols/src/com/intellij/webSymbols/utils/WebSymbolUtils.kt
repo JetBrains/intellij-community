@@ -30,8 +30,6 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-val Project.psiModificationCount get() = PsiModificationTracker.getInstance(this).modificationCount
-
 @OptIn(ExperimentalContracts::class)
 inline fun <T : Any, P : Any> T.applyIfNotNull(param: P?, block: T.(P) -> T): T {
   contract {
