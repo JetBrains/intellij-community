@@ -6,13 +6,12 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 /**
@@ -34,39 +33,36 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
     val targetFile = file as? KtFile ?: return
     val token = file.findElementAt(startOffset)
 
-    val (temporaryPrefix, temporarySuffix) = when {
-        token?.parent is KDocName -> "" to ""
-
-        // add temporary suffix for type in the receiver type position, in order for it to be resolved and shortened correctly
-        token?.isIdentifierInReceiverTypeOwner() == true -> "" to ".f"
-
-        // if a context receiver has no owner declaration then its type reference is not resolved and therefore cannot be shortened
-        token?.isContextReceiverWithoutOwnerDeclaration() == true -> "" to ") fun"
-
-        // if there is no reference in the current context and the position is not receiver type position,
-        // add temporary prefix and suffix
-        token?.parent !is KtNameReferenceExpression -> "$;val v:" to "$"
-
-        caretInTheMiddleOfElement(context = this) -> "" to " "
-
-        else -> "" to ""
+    val suffixToAffectParsingIfNecessary = token?.let {
+        CompletionDummyIdentifierProviderService.getInstance().provideSuffixToAffectParsingIfNecessary(it)
     }
 
-    document.replaceString(startOffset, tailOffset, temporaryPrefix + string + temporarySuffix)
+    val temporarySuffix = when {
+        token?.parent is KDocName -> ""
+
+        suffixToAffectParsingIfNecessary?.isNotEmpty() == true -> suffixToAffectParsingIfNecessary
+
+        // if a context receiver has no owner declaration, then its type reference is not resolved and therefore cannot be shortened
+        token?.isContextReceiverWithoutOwnerDeclaration() == true -> ") fun"
+
+        caretInTheMiddleOfElement(context = this) -> " "
+
+        else -> ""
+    }
+
+    document.replaceString(startOffset, tailOffset, string + temporarySuffix)
     commitDocument()
 
-    val fqNameStartOffset = startOffset + temporaryPrefix.length
-    val fqNameEndOffset = fqNameStartOffset + string.length
+    val fqNameEndOffset = startOffset + string.length
 
     val rangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset + temporarySuffix.length)
-    val fqNameRangeMarker = document.createRangeMarker(fqNameStartOffset, fqNameEndOffset)
+    val fqNameRangeMarker = document.createRangeMarker(startOffset, fqNameEndOffset)
 
-    shortenReferencesInRange(targetFile, TextRange(fqNameStartOffset, fqNameEndOffset))
+    shortenReferencesInRange(targetFile, TextRange(startOffset, fqNameEndOffset))
     commitDocument()
     psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
 
-    if (rangeMarker.isValid && fqNameRangeMarker.isValid) {
-        document.deleteString(rangeMarker.startOffset, fqNameRangeMarker.startOffset)
+    if (temporarySuffix.isNotEmpty() && rangeMarker.isValid && fqNameRangeMarker.isValid) {
         document.deleteString(fqNameRangeMarker.endOffset, rangeMarker.endOffset)
     }
 }
@@ -76,9 +72,6 @@ private fun caretInTheMiddleOfElement(context: InsertionContext): Boolean {
     val element = context.file.findElementAt(caretOffset) ?: return false
     return element.startOffset < caretOffset && caretOffset < element.endOffset
 }
-
-private fun PsiElement.isIdentifierInReceiverTypeOwner(): Boolean =
-    elementType == KtTokens.IDENTIFIER && parent is KtCallableDeclaration && parent !is KtParameter
 
 private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
     val contextReceiver = parentOfType<KtContextReceiver>()

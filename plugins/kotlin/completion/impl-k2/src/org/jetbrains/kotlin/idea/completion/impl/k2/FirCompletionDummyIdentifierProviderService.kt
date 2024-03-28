@@ -2,17 +2,16 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.completion.implCommon.AbstractCompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
 
 class FirCompletionDummyIdentifierProviderService : AbstractCompletionDummyIdentifierProviderService() {
-    override fun handleDefaultCase(context: CompletionInitializationContext): String? {
-        val elementAtOffset = context.file.findElementAt(context.startOffset) ?: return null
+    override fun handleDefaultCase(tokenBefore: PsiElement): String? {
         return when {
-            elementAtOffset.parentOfType<KtWhenEntry>() != null -> ""
+            tokenBefore.parentOfType<KtWhenEntry>() != null -> ""
             else -> null
         }
     }

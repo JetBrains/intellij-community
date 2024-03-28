@@ -64,33 +64,36 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         val offset = context.startOffset
         val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
 
-        val suffixToAffectParsingIfNecessary = when {
+        val suffix = when {
             tokenBefore == null || context.completionType == CompletionType.SMART -> DEFAULT_PARSING_BREAKER
-
-            // TODO package completion
-
-            isInClassHeader(tokenBefore) -> EMPTY_SUFFIX // do not add '$' to not interrupt class declaration parsing
-
-            isInUnclosedSuperQualifier(tokenBefore) -> ">"
-
-            isInSimpleStringTemplate(tokenBefore) -> EMPTY_SUFFIX
-
-            else -> specialLambdaSignatureDummyIdentifierSuffix(tokenBefore)
-                ?: specialExtensionReceiverDummyIdentifierSuffix(tokenBefore)
-                ?: specialInTypeArgsDummyIdentifierSuffix(tokenBefore)
-                ?: specialInArgumentListDummyIdentifierSuffix(tokenBefore)
-                ?: specialInNameWithQuotes(tokenBefore)
-                ?: specialInBinaryExpressionDummyIdentifierSuffix(tokenBefore)
-                ?: isInValueOrTypeParametersList(tokenBefore)
-                ?: handleDefaultCase(context)
-                ?: isInAnnotationEntry(tokenBefore)
-                ?: isInEndOfTypeReference(tokenBefore)
-                ?: isInEndOfStatement(tokenBefore)
-                ?: isInKDocName(tokenBefore)
-                ?: DEFAULT_PARSING_BREAKER
+            else -> provideSuffixToAffectParsingIfNecessary(tokenBefore)
         }
 
-        return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + suffixToAffectParsingIfNecessary
+        return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + suffix
+    }
+
+    override fun provideSuffixToAffectParsingIfNecessary(element: PsiElement): String = when {
+        // TODO package completion
+
+        isInClassHeader(element) -> EMPTY_SUFFIX // do not add '$' to not interrupt class declaration parsing
+
+        isInUnclosedSuperQualifier(element) -> ">"
+
+        isInSimpleStringTemplate(element) -> EMPTY_SUFFIX
+
+        else -> specialLambdaSignatureDummyIdentifierSuffix(element)
+            ?: specialExtensionReceiverDummyIdentifierSuffix(element)
+            ?: specialInTypeArgsDummyIdentifierSuffix(element)
+            ?: specialInArgumentListDummyIdentifierSuffix(element)
+            ?: specialInNameWithQuotes(element)
+            ?: specialInBinaryExpressionDummyIdentifierSuffix(element)
+            ?: isInValueOrTypeParametersList(element)
+            ?: handleDefaultCase(element)
+            ?: isInAnnotationEntry(element)
+            ?: isInEndOfTypeReference(element)
+            ?: isInEndOfStatement(element)
+            ?: isInKDocName(element)
+            ?: DEFAULT_PARSING_BREAKER
     }
 
     private fun isInAnnotationEntry(tokenBefore: PsiElement): String? {
@@ -117,7 +120,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
     private fun isInKDocName(tokenBefore: PsiElement): String? = if (tokenBefore.parent is KDocName) EMPTY_SUFFIX else null
 
-    protected open fun handleDefaultCase(context: CompletionInitializationContext): String? = null
+    protected open fun handleDefaultCase(tokenBefore: PsiElement): String? = null
 
     private fun isInValueOrTypeParametersList(tokenBefore: PsiElement): String? {
         if (tokenBefore.parents.any { it is KtTypeParameterList || it is KtParameterList || it is KtContextReceiverList }) {

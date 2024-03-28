@@ -550,6 +550,16 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         public void testSecondTypeArgNested() throws Exception {
             runTest("../completion/testData/handlers/basic/incompleteCode/SecondTypeArgNested.kt");
         }
+
+        @TestMetadata("typeReference-KTIJ-28442.kt")
+        public void testTypeReference_KTIJ_28442() throws Exception {
+            runTest("../completion/testData/handlers/basic/incompleteCode/typeReference-KTIJ-28442.kt");
+        }
+
+        @TestMetadata("typeReference-KTIJ-29241.kt")
+        public void testTypeReference_KTIJ_29241() throws Exception {
+            runTest("../completion/testData/handlers/basic/incompleteCode/typeReference-KTIJ-29241.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
