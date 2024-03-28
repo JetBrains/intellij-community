@@ -45,22 +45,24 @@ private fun getTargetCallExpression(element: KtElement): KtCallExpression? {
 private fun KtSimpleNameExpression.referenceNameOfElement(): Boolean = getReferencedNameElementType() == KtTokens.IDENTIFIER
 
 internal fun buildRequestsAndActions(callExpression: KtCallExpression): List<IntentionAction> {
-    val methodRequests = buildRequests(callExpression)
-    val extensions = EP_NAME.extensions
-    return methodRequests.flatMap { (targetClass, request) ->
-        extensions.flatMap { ext ->
-            ext.createAddMethodActions(targetClass, request)
-        }
-    }.groupActionsByType(KotlinLanguage.INSTANCE)
+    analyze(callExpression) {
+        val methodRequests = buildRequests(callExpression)
+        val extensions = EP_NAME.extensions
+        return methodRequests.flatMap { (targetClass, request) ->
+            extensions.flatMap { ext ->
+                ext.createAddMethodActions(targetClass, request)
+            }
+        }.groupActionsByType(KotlinLanguage.INSTANCE)
+    }
 }
 
+context(KtAnalysisSession)
 internal fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass, CreateMethodRequest>> {
     val calleeExpression = callExpression.calleeExpression as? KtSimpleNameExpression ?: return emptyList()
     val requests = mutableListOf<Pair<JvmClass, CreateMethodRequest>>()
     val receiverExpression = calleeExpression.getReceiverExpression()
 
     // Register default create-from-usage request.
-    analyze(callExpression) {
         // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
         val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
         val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass(defaultContainerPsi)
@@ -116,7 +118,6 @@ internal fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass
                 isForCompanion = false
             ))
         }
-    }
     return requests
 }
 

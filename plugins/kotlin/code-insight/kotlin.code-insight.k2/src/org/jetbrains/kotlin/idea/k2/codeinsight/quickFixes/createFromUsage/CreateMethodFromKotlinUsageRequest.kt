@@ -6,7 +6,6 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -17,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
  * A request to create Kotlin callable from the usage in Kotlin.
  */
 internal class CreateMethodFromKotlinUsageRequest (
-    private val functionCall: KtCallExpression,
+    functionCall: KtCallExpression,
     modifiers: Collection<JvmModifier>,
     val receiverExpression: KtExpression?,
     val receiverType: KtType?, // (in case receiverExpression is null) it can be notnull when there's implicit receiver: `blah { unknownFunc() }`
@@ -25,19 +24,16 @@ internal class CreateMethodFromKotlinUsageRequest (
     val isAbstractClassOrInterface: Boolean,
     val isForCompanion: Boolean
 ) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
-    private val returnType = mutableListOf<ExpectedType>()
+    private val returnType:List<ExpectedType> = initializeReturnType(functionCall)
 
-    init {
-      analyze(functionCall) {
-          initializeReturnType()
-      }
-    }
-
-    context (KtAnalysisSession)
-    private fun initializeReturnType() {
-        val returnJvmType = functionCall.getExpectedKotlinType() ?: return
-        (returnJvmType.theType as? JvmReferenceType)?.let { if (it.resolve() == null) return }
-        returnType.add(returnJvmType)
+    private fun initializeReturnType(functionCall: KtCallExpression): List<ExpectedType> {
+        return analyze(functionCall) {
+            val returnJvmType = functionCall.getExpectedKotlinType() ?: return emptyList()
+            if (returnJvmType !is ExpectedKotlinType) {
+                (returnJvmType.theType as? JvmReferenceType)?.let { if (it.resolve() == null) return emptyList() }
+            }
+            listOf(returnJvmType)
+        }
     }
 
     override fun isValid(): Boolean = super.isValid() && getReferenceName() != null

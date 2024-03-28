@@ -8,7 +8,7 @@ import com.intellij.psi.PsiTypeVisitor
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.search.GlobalSearchScope
 
-class ExpectedTypeWithNullability(val type: JvmType, val nullability: Nullability) : ExpectedType {
+open class ExpectedTypeWithNullability(val type: JvmType, val nullability: Nullability) : ExpectedType {
     override fun getTheType(): JvmType = type
 
     override fun getTheKind(): ExpectedType.Kind = ExpectedType.Kind.EXACT

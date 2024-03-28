@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
@@ -38,16 +39,16 @@ internal class CreateKotlinCallableAction(
     private val myText: String,
     pointerToContainer: SmartPsiElementPointer<*>,
 ) : CreateKotlinElementAction(request, pointerToContainer), JvmGroupIntentionAction {
-    data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
-    private val parameterCandidates: List<ParamCandidate> = renderCandidatesOfParameterTypes()
-    private val candidatesOfRenderedReturnType: List<String> = renderCandidatesOfReturnType()
-    private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
-
     private val call: PsiElement? = when (request) {
         is CreateMethodFromKotlinUsageRequest -> request.call
         is CreateExecutableFromJavaUsageRequest<*> -> request.call
         else -> null
     }
+    data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
+    private val parameterCandidates: List<ParamCandidate> = renderCandidatesOfParameterTypes()
+    private val candidatesOfRenderedReturnType: List<String> = renderCandidatesOfReturnType()
+    private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
+
     private val isForCompanion: Boolean = (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion == true
 
     // Note that this property must be initialized after initializing above properties, because it has dependency on them.
@@ -96,19 +97,12 @@ internal class CreateKotlinCallableAction(
     }
 
     private fun renderCandidatesOfParameterTypes(): List<ParamCandidate> {
-        request.expectedParameters.map { it.semanticNames }
         val container = getContainer()
         return request.expectedParameters.map { expectedParameter ->
             val types = if (container == null) listOf("Any") else
-                analyze(container) {
+                analyze(call as? KtElement ?: container) {
                     expectedParameter.expectedTypes.map {
-                        val parameterType =
-                            if (it is ExpectedTypeWithNullability) {
-                                toKtTypeWithNullability(it, container)
-                            } else {
-                                it.theType.toKtType(container)
-                            }
-                        parameterType?.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT) ?: "Any"
+                        renderTypeName(it, container) ?: "Any"
                     }
                 }
             ParamCandidate(expectedParameter.semanticNames, types)
@@ -117,17 +111,24 @@ internal class CreateKotlinCallableAction(
 
     private fun renderCandidatesOfReturnType(): List<String> {
         val container = getContainer() ?: return emptyList()
-        return analyze(container) {
+        return analyze(call as? KtElement ?: container) {
             request.returnType.mapNotNull { returnType ->
-                val returnKtType = if (returnType is ExpectedTypeWithNullability) toKtTypeWithNullability(returnType, container) else returnType.theType.toKtType(container)
-                if (returnKtType == null || returnKtType == builtinTypes.UNIT) null
-                else returnKtType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+                renderTypeName(returnType, container)
             }
         }
     }
 
+    context (KtAnalysisSession)
+    private fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
+        val returnKtType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
+        if (returnKtType == null || returnKtType == builtinTypes.UNIT) return null
+        if (!isAccessibleInCreationPlace(returnKtType, (request as? CreateMethodFromKotlinUsageRequest)?.call)) return null
+        return returnKtType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+    }
+
     private fun buildCallableAsString(): String? {
-        if (call == null || getContainer() == null) return null
+        val container = getContainer()
+        if (call == null || container == null) return null
         val modifierListAsString =
             request.modifiers.filter{it != JvmModifier.PUBLIC}.joinToString(
                 separator = " ",
@@ -143,7 +144,7 @@ internal class CreateKotlinCallableAction(
             append(" ")
 
             val (receiver, receiverTypeText) = if (request is CreateMethodFromKotlinUsageRequest) CreateKotlinCallableActionTextBuilder.renderReceiver(request) else "" to ""
-            append(renderTypeParameterDeclarations(request, receiver, receiverTypeText))
+            append(renderTypeParameterDeclarations(request, container, receiver, receiverTypeText))
             append(request.methodName)
             append("(")
             append(renderParameterList())
@@ -153,10 +154,15 @@ internal class CreateKotlinCallableAction(
         }
     }
 
-    private fun renderTypeParameterDeclarations(request: CreateMethodRequest, receiver:String, receiverTypeText: String): String {
+    private fun renderTypeParameterDeclarations(
+        request: CreateMethodRequest,
+        container: KtElement,
+        receiver: String,
+        receiverTypeText: String
+    ): String {
         if (request is CreateMethodFromKotlinUsageRequest && request.receiverExpression != null && request.isExtension) {
             val t = if (receiver.isNotEmpty()) "$receiver " else receiver
-            analyze (request.receiverExpression) {
+            analyze (call as? KtElement ?: container) {
                 val receiverSymbol = request.receiverExpression.resolveExpression()
                 if (receiverSymbol is KtCallableSymbol && receiverSymbol.returnType is KtTypeParameterType) {
                     return ("<$receiverTypeText> $t")

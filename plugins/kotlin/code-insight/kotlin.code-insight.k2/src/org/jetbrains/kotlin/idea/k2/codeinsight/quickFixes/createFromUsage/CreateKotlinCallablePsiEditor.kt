@@ -60,7 +60,7 @@ internal class CreateKotlinCallablePsiEditor(
         val passedContainerElement = pointerToContainer.element
         if (passedContainerElement == null) return
         val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile
-        else passedContainerElement.getContainer() == anchor.getContainer()
+            else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             (anchor.getExtractionContainers().firstOrNull() ?: return)
         } else {

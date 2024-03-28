@@ -82,10 +82,10 @@ object CreateFromUsageUtil {
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-              (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
+                (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
             }
 
-          declaration is KtProperty && container !is KtBlockExpression -> {
+            declaration is KtProperty && container !is KtBlockExpression -> {
                 val sibling = actualContainer.getChildOfType<KtProperty>() ?: when (actualContainer) {
                     is KtClassBody -> actualContainer.declarations.firstOrNull() ?: actualContainer.rBrace
                     is KtFile -> actualContainer.declarations.first()
@@ -126,7 +126,7 @@ object CreateFromUsageUtil {
                     sibling = container.body?.lBrace
                 }
 
-              org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat(null, container, declaration, sibling)
+                org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat(null, container, declaration, sibling)
             }
             else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
                 .withPsiAttachment("container", container)
