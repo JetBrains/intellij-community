@@ -5,8 +5,13 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import org.intellij.lang.annotations.Language
 
+/** Locates JList element */
 fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JList']",
                                                               JListUiComponent::class.java)
+
+/** Locates JBList element */
+fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JBList']",
+                                                                JListUiComponent::class.java)
 
 class JListUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy { driver.new(JListFixtureRef::class, robotService.robot, component) }
