@@ -20,6 +20,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -75,7 +76,8 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
 
       List<AnAction> branchActionGroups = new ArrayList<>();
       for (VcsRef ref : branchRefs) {
-        branchActionGroups.add(createBranchGroup(project, ref, root, allRepositories, commonBranches, settings, showBranchesPopup));
+        AnAction group = createBranchGroup(project, ref, root, allRepositories, commonBranches, settings, showBranchesPopup);
+        ContainerUtil.addIfNotNull(branchActionGroups, group);
       }
 
       DefaultActionGroup branchesGroup = new DefaultActionGroup(GitBundle.message("branches.branches"), branchActionGroups);
@@ -99,13 +101,13 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return groups.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static @NotNull AnAction createBranchGroup(@NotNull Project project,
-                                                     @NotNull VcsRef ref,
-                                                     @NotNull GitRepository repository,
-                                                     @NotNull List<? extends GitRepository> allRepositories,
-                                                     @NotNull Set<GitBranch> commonBranches,
-                                                     @NotNull GitVcsSettings settings,
-                                                     boolean showBranchesPopup) {
+  private static @Nullable AnAction createBranchGroup(@NotNull Project project,
+                                                      @NotNull VcsRef ref,
+                                                      @NotNull GitRepository repository,
+                                                      @NotNull List<? extends GitRepository> allRepositories,
+                                                      @NotNull Set<GitBranch> commonBranches,
+                                                      @NotNull GitVcsSettings settings,
+                                                      boolean showBranchesPopup) {
     // ref.getName() for GitRefManager.REMOTE_BRANCH is GitRemoteBranch.getNameForLocalOperations
     GitBranch branch = ref.getType() == GitRefManager.LOCAL_BRANCH
                        ? new GitLocalBranch(ref.getName())
@@ -118,13 +120,16 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
                            commonBranches.contains(branch);
     if (isSyncBranch) {
       ActionGroup allReposActions = createBranchActions(project, allRepositories, branch, repository);
-      allReposActions.getTemplatePresentation().setText(GitBundle.message("in.branches.all.repositories"));
-      allReposActions.setPopup(true);
-      actions.add(allReposActions);
-      actions.add(Separator.getInstance());
+      if (allReposActions != null) {
+        allReposActions.getTemplatePresentation().setText(GitBundle.message("in.branches.all.repositories"));
+        allReposActions.setPopup(true);
+        actions.add(allReposActions);
+        actions.add(Separator.getInstance());
+      }
     }
 
     ActionGroup singleRepoActions = createBranchActions(project, Collections.singletonList(repository), branch, repository);
+    if (singleRepoActions == null) return null;
     singleRepoActions.setPopup(false);
     actions.add(singleRepoActions);
 
@@ -149,18 +154,26 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     return group;
   }
 
-  private static @NotNull ActionGroup createBranchActions(@NotNull Project project,
-                                                          @NotNull List<? extends GitRepository> repositories,
-                                                          @NotNull GitBranch branch,
-                                                          @NotNull GitRepository selectedRepository) {
+  private static @Nullable ActionGroup createBranchActions(@NotNull Project project,
+                                                           @NotNull List<? extends GitRepository> repositories,
+                                                           @NotNull GitBranch branch,
+                                                           @NotNull GitRepository selectedRepository) {
     if (branch instanceof GitLocalBranch) {
+      for (GitRepository repository : repositories) {
+        if (!repository.getBranches().getLocalBranches().contains(branch)) return null;
+      }
+
       return new LocalBranchActions(project, repositories, (GitLocalBranch)branch, selectedRepository);
     }
     else if (branch instanceof GitRemoteBranch) {
+      for (GitRepository repository : repositories) {
+        if (!repository.getBranches().getRemoteBranches().contains(branch)) return null;
+      }
+
       return new RemoteBranchActions(project, repositories, (GitRemoteBranch)branch, selectedRepository);
     }
     else {
-      throw new IllegalArgumentException("Invalid branch type: " + branch);
+      return null;
     }
   }
 
