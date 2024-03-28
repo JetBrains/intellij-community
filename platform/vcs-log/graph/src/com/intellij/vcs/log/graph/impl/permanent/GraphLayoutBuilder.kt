@@ -25,13 +25,11 @@ object GraphLayoutBuilder {
     val sortedHeads = IntArrayList(allHeads).sortCatching(comparator)
 
     val layoutIndex = IntArray(graph.nodesCount())
-    val startLayoutIndexForHead = IntArray(sortedHeads.size)
     var currentLayoutIndex = 1
     for (i in sortedHeads.indices) {
-      startLayoutIndexForHead[i] = currentLayoutIndex
       currentLayoutIndex = dfs(graph, sortedHeads.getInt(i), currentLayoutIndex, layoutIndex)
     }
-    return GraphLayoutImpl(layoutIndex, sortedHeads, startLayoutIndexForHead)
+    return GraphLayoutImpl(layoutIndex, sortedHeads)
   }
 
   /**

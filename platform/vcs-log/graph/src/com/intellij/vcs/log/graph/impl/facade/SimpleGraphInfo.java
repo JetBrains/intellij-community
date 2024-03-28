@@ -92,12 +92,7 @@ public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<Commi
     }
 
     ContainerUtil.sort(headNodeIndexes, Comparator.comparingInt(o -> layoutIndexes[o]));
-    int[] starts = new int[headNodeIndexes.size()];
-    for (int i = 0; i < starts.length; i++) {
-      starts[i] = layoutIndexes[headNodeIndexes.getInt(i)];
-    }
-
-    GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes, starts);
+    GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes);
 
     return new SimpleGraphInfo<>(newLinearGraph, newLayout, commitIdMapping, timestampGetter,
                                  LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds));
