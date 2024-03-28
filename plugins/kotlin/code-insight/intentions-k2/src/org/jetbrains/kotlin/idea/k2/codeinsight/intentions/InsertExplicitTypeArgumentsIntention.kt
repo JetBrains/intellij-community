@@ -26,11 +26,11 @@ internal class InsertExplicitTypeArgumentsIntention :
     override fun prepareContext(element: KtCallExpression): String? = getRenderedTypeArguments(element)
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallExpression,
-        elementContext: String,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallExpression,
+      elementContext: String,
+      updater: ModPsiUpdater,
     ) {
-        addTypeArguments(element, elementContext, context.project)
+        addTypeArguments(element, elementContext, actionContext.project)
     }
 }

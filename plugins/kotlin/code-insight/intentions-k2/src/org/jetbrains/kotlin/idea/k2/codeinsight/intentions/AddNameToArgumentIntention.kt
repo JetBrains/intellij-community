@@ -29,9 +29,9 @@ internal class AddNameToArgumentIntention :
     override fun getFamilyName(): String = KotlinBundle.message("add.name.to.argument")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtValueArgument,
-        elementContext: Context,
+      actionContext: ActionContext,
+      element: KtValueArgument,
+      elementContext: Context,
     ): String = KotlinBundle.message("add.0.to.argument", elementContext.argumentName)
 
     override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =
@@ -56,7 +56,7 @@ internal class AddNameToArgumentIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtValueArgument,
         elementContext: Context,
         updater: ModPsiUpdater,

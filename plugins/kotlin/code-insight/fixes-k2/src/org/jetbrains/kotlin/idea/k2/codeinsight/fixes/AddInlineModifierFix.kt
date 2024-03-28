@@ -44,7 +44,7 @@ internal object AddInlineModifierFix {
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtParameter, ElementContext>(parameter, context) {
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtParameter,
             elementContext: ElementContext,
             updater: ModPsiUpdater,
@@ -55,7 +55,7 @@ internal object AddInlineModifierFix {
             }
         }
 
-        override fun getActionName(context: ActionContext, element: KtParameter, elementContext: ElementContext): String {
+        override fun getActionName(actionContext: ActionContext, element: KtParameter, elementContext: ElementContext): String {
             return KotlinBundle.message("fix.add.modifier.inline.parameter.text", elementContext.modifier, element.name.toString())
         }
 

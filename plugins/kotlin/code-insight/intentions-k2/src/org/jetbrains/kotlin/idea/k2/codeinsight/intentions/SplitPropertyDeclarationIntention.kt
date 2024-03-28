@@ -42,10 +42,10 @@ internal class SplitPropertyDeclarationIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtProperty,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtProperty,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         val parent = element.parent
 

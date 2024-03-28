@@ -27,10 +27,10 @@ internal class RemoveExplicitTypeArgumentsIntention :
         areTypeArgumentsRedundant(element).asUnit
 
     override fun invoke(
-        context: ActionContext,
-        element: KtTypeArgumentList,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtTypeArgumentList,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         RemoveExplicitTypeArgumentsUtils.applyTo(element)
     }

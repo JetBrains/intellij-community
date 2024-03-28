@@ -40,9 +40,9 @@ internal class SpecifyTypeExplicitlyIntention:
     override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtCallableDeclaration,
-        elementContext: TypeInfo,
+      actionContext: ActionContext,
+      element: KtCallableDeclaration,
+      elementContext: TypeInfo,
     ): String = when (element) {
         is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
         else -> KotlinBundle.message("specify.type.explicitly")
@@ -54,7 +54,7 @@ internal class SpecifyTypeExplicitlyIntention:
         else getTypeInfo(element).takeUnless { it.defaultType.isError }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtCallableDeclaration,
         elementContext: TypeInfo,
         updater: ModPsiUpdater,

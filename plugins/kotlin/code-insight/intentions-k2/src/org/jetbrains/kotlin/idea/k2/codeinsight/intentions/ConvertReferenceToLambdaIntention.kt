@@ -30,10 +30,10 @@ internal class ConvertReferenceToLambdaIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallableReferenceExpression,
-        elementContext: String,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallableReferenceExpression,
+      elementContext: String,
+      updater: ModPsiUpdater,
     ) {
         ConvertReferenceToLambdaUtil.convertReferenceToLambdaExpression(element, elementContext)
     }

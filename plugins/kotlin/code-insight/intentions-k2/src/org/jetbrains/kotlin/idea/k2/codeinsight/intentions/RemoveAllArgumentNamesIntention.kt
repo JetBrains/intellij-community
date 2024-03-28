@@ -42,10 +42,10 @@ internal class RemoveAllArgumentNamesIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallElement,
-        elementContext: ArgumentsDataContext,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallElement,
+      elementContext: ArgumentsDataContext,
+      updater: ModPsiUpdater,
     ) {
         val oldArguments = elementContext.sortedArguments.map { it.element ?: return }
         val varargElement = elementContext.vararg?.let { it.element ?: return }

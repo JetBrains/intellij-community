@@ -73,12 +73,12 @@ internal object SuperClassNotInitializedFactories {
         )
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtSuperTypeEntry,
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            val withParenthesis = element.replaced(KtPsiFactory(context.project).createSuperTypeCallEntry(element.text + "()"))
+            val withParenthesis = element.replaced(KtPsiFactory(actionContext.project).createSuperTypeCallEntry(element.text + "()"))
             if (elementContext.moveCaretIntoParenthesis) {
                 withParenthesis.valueArgumentList?.leftParenthesis?.endOffset?.let { offset ->
                     updater.moveCaretTo(offset)

@@ -28,10 +28,10 @@ internal class UnfoldFunctionCallToIfIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         unfold<KtIfExpression>(element)
     }

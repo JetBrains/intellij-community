@@ -42,9 +42,9 @@ internal class ImportAllMembersIntention :
     override fun getFamilyName(): String = KotlinBundle.message("import.members.with")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtExpression,
-        elementContext: Context,
+      actionContext: ActionContext,
+      element: KtExpression,
+      elementContext: Context,
     ): String = KotlinBundle.message("import.members.from.0", elementContext.fqName.asString())
 
     override fun isApplicableByPsi(element: KtExpression): Boolean =
@@ -94,7 +94,7 @@ internal class ImportAllMembersIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtExpression,
         elementContext: Context,
         updater: ModPsiUpdater,

@@ -119,10 +119,10 @@ internal class WhenToIfIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtWhenExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtWhenExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         val subject = element.subjectExpression
         val temporaryNameForWhenSubject =

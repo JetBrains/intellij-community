@@ -28,10 +28,10 @@ internal class FoldIfToFunctionCallIntention :
     override fun prepareContext(element: KtIfExpression): Context? = getFoldingContext(element)
 
     override fun invoke(
-        context: ActionContext,
-        element: KtIfExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtIfExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         fold(element, elementContext)
     }

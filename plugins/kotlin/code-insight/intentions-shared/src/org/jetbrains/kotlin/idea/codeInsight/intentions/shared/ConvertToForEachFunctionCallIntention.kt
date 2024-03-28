@@ -25,9 +25,9 @@ internal class ConvertToForEachFunctionCallIntention :
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtForExpression,
-        elementContext: Unit,
+      actionContext: ActionContext,
+      element: KtForExpression,
+      elementContext: Unit,
     ): String {
         val callExpression = element.loopRange?.getPossiblyQualifiedCallExpression()
         return KotlinBundle.message(
@@ -68,7 +68,7 @@ internal class ConvertToForEachFunctionCallIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtForExpression,
         elementContext: Unit,
         updater: ModPsiUpdater,

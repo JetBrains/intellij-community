@@ -30,12 +30,12 @@ object InitializePropertyQuickFixFactories {
         override fun getFamilyName(): String = KotlinBundle.message("add.initializer")
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtProperty,
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            val expression = KtPsiFactory(context.project)
+            val expression = KtPsiFactory(actionContext.project)
                 .createExpression(elementContext.initializerText)
             val initializer = element.setInitializer(expression)!!
             updater.select(TextRange(initializer.startOffset, initializer.endOffset))

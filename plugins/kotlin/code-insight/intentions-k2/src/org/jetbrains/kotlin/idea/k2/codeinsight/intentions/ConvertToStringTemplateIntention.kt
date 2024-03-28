@@ -50,10 +50,10 @@ internal class ConvertToStringTemplateIntention :
             null
 
     override fun invoke(
-        context: ActionContext,
-        element: KtBinaryExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtBinaryExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         elementContext.replacement.element?.let { element.replaced(updater.getWritable(it)) }
     }

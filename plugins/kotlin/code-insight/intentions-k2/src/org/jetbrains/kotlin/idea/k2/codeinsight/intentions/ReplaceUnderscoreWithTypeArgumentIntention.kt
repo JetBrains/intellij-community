@@ -56,10 +56,10 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtTypeProjection,
-        elementContext: Context,
-        updater: ModPsiUpdater
+      actionContext: ActionContext,
+      element: KtTypeProjection,
+      elementContext: Context,
+      updater: ModPsiUpdater
     ) {
         val updatedTypeProjection = elementContext.updatedTypeProjection.dereference() ?: return
         val replacedElement = element.replace(updatedTypeProjection) as? KtElement ?: return

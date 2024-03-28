@@ -106,10 +106,10 @@ internal class ConvertForEachToForLoopIntention
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         val qualifiedExpression = element.getQualifiedExpressionForSelector()
         val receiverExpression = qualifiedExpression?.receiverExpression

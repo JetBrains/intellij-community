@@ -23,12 +23,12 @@ internal class ToRawStringLiteralIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtStringTemplateExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtStringTemplateExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
-        convertToStringLiteral(element, context, updater)
+        convertToStringLiteral(element, actionContext, updater)
     }
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.canBeConvertedToStringLiteral()

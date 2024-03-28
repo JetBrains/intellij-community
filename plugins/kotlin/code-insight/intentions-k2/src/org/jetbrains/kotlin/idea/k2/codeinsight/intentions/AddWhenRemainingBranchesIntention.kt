@@ -27,10 +27,10 @@ internal class AddWhenRemainingBranchesIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtWhenExpression,
-        elementContext: AddRemainingWhenBranchesUtils.Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtWhenExpression,
+      elementContext: AddRemainingWhenBranchesUtils.Context,
+      updater: ModPsiUpdater,
     ) {
         addRemainingWhenBranches(element, elementContext)
     }

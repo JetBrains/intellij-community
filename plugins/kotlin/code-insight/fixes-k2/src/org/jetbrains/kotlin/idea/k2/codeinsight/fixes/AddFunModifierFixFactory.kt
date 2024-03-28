@@ -55,7 +55,7 @@ internal object AddFunModifierFixFactory {
         KotlinPsiUpdateModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtClass,
             elementContext: ElementContext,
             updater: ModPsiUpdater,

@@ -26,10 +26,10 @@ internal class SpecifyExplicitLambdaSignatureIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtLambdaExpression,
-        elementContext: String,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtLambdaExpression,
+      elementContext: String,
+      updater: ModPsiUpdater,
     ) {
         specifyExplicitLambdaSignature(element, elementContext)
     }

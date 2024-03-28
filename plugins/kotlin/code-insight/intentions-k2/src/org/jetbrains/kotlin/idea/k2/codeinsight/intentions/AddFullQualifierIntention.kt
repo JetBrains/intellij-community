@@ -34,7 +34,7 @@ internal class AddFullQualifierIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtNameReferenceExpression,
         elementContext: Context,
         updater: ModPsiUpdater,

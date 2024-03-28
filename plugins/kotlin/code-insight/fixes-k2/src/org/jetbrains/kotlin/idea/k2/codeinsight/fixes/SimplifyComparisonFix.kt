@@ -38,7 +38,7 @@ object SimplifyComparisonFixFactory {
     ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, ElementContext>(psiElement, context) {
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtExpression,
             elementContext: ElementContext,
             updater: ModPsiUpdater,

@@ -29,7 +29,7 @@ sealed class ChangeVisibilityModifierIntention(
 ) : KotlinApplicableModCommandAction<KtDeclaration, Unit>(KtDeclaration::class) {
 
     override fun getActionName(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtDeclaration,
         elementContext: Unit,
     ): String {
@@ -117,7 +117,7 @@ sealed class ChangeVisibilityModifierIntention(
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtDeclaration,
         elementContext: Unit,
         updater: ModPsiUpdater,

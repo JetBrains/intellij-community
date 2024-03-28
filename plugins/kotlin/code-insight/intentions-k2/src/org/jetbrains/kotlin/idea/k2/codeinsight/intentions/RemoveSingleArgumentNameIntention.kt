@@ -74,10 +74,10 @@ internal class RemoveSingleArgumentNameIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtValueArgument,
-        elementContext: SingleArgumentContext,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtValueArgument,
+      elementContext: SingleArgumentContext,
+      updater: ModPsiUpdater,
     ) {
         val argumentList = element.parent as? KtValueArgumentList ?: return
 

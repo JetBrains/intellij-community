@@ -31,7 +31,12 @@ internal class IfToWhenIntention : KotlinApplicableModCommandAction<KtIfExpressi
     override fun prepareContext(element: KtIfExpression) {
     }
 
-    override fun invoke(context: ActionContext, element: KtIfExpression, elementContext: Unit, updater: ModPsiUpdater) {
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtIfExpression,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
         val ifExpression = element.topmostIfExpression()
         val parent = ifExpression.parent
 

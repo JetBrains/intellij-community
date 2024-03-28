@@ -57,10 +57,10 @@ internal class AddNamesToFollowingArgumentsIntention :
             ?.let(::Context)
 
     override fun invoke(
-        context: ActionContext,
-        element: KtValueArgument,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtValueArgument,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         addArgumentNames(elementContext.argumentNames.dereferenceValidKeys())
     }

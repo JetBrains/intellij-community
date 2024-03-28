@@ -35,13 +35,13 @@ internal class PutExpressionsOnSeparateLinesIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtOperationReferenceExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtOperationReferenceExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         val rootBinaryExpression = element.topmostBinaryExpression() ?: return
-        val project = context.project
+        val project = actionContext.project
         val psiFactory = KtPsiFactory(project)
         rootBinaryExpression.visitOperations { operationReference ->
             val whiteSpace = operationReference.nextSibling as? PsiWhiteSpace

@@ -21,9 +21,9 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     override fun getFamilyName(): String = KotlinBundle.message("demorgan.law")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtBinaryExpression,
-        elementContext: DemorgansLawUtils.Context,
+      actionContext: ActionContext,
+      element: KtBinaryExpression,
+      elementContext: DemorgansLawUtils.Context,
     ): String = when (element.topmostBinaryExpression().operationToken) {
         KtTokens.ANDAND -> KotlinBundle.message("replace.&&.with.||")
         KtTokens.OROR -> KotlinBundle.message("replace.||.with.&&")
@@ -44,7 +44,7 @@ internal class ConvertBinaryExpressionWithDemorgansLawIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtBinaryExpression,
         elementContext: DemorgansLawUtils.Context,
         updater: ModPsiUpdater,

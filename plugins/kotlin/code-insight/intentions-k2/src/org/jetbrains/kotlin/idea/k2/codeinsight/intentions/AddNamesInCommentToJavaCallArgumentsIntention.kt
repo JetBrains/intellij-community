@@ -35,10 +35,10 @@ internal class AddNamesInCommentToJavaCallArgumentsIntention :
     override fun prepareContext(element: KtCallElement): Context? = getArgumentNameComments(element)?.let { Context(it) }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallElement,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallElement,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         val nameCommentsMap = elementContext.nameCommentsByArgument.dereferenceValidKeys()
         val psiFactory = KtPsiFactory(element)

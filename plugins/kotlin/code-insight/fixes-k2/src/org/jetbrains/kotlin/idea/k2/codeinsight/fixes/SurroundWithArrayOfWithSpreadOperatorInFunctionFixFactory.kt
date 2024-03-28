@@ -32,13 +32,13 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
         override fun getFamilyName(): String = KotlinBundle.message("surround.with.array.of")
 
         override fun getActionName(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtExpression,
             elementContext: ElementContext,
         ): String = KotlinBundle.getMessage("surround.with.0", elementContext.shortArrayOfCall)
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtExpression,
             elementContext: ElementContext,
             updater: ModPsiUpdater,

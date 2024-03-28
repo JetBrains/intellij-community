@@ -68,7 +68,7 @@ object WrapWithSafeLetCallFixFactories {
         override fun getFamilyName(): String = KotlinBundle.message("wrap.with.let.call")
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtExpression,
             elementContext: ElementContext,
             updater: ModPsiUpdater,

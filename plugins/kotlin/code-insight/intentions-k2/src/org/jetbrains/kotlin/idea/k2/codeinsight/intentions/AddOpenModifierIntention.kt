@@ -54,10 +54,10 @@ internal class AddOpenModifierIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallableDeclaration,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallableDeclaration,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         element.addModifier(KtTokens.OPEN_KEYWORD)
     }

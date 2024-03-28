@@ -52,13 +52,13 @@ internal class PutCallsOnSeparateLinesIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtQualifiedExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtQualifiedExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         val rootQualifierExpression = element.topmostQualifierExpression() ?: return
-        val project = context.project
+        val project = actionContext.project
         val psiFactory = KtPsiFactory(project)
         rootQualifierExpression.visitOperations(transformation = callChainTransformation(element)) { qualifierExpression ->
             val operationReference = qualifierExpression.operationTokenNode as? PsiElement ?: return@visitOperations

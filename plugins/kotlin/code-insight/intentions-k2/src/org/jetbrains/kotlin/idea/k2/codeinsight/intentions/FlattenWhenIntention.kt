@@ -19,10 +19,10 @@ internal class FlattenWhenIntention : KotlinApplicableModCommandAction<KtWhenExp
         KotlinBundle.message("flatten.when.expression")
 
     override fun invoke(
-        context: ActionContext,
-        element: KtWhenExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtWhenExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         val commentSaver = CommentSaver(element)
         val nestedWhen = element.elseExpression as KtWhenExpression

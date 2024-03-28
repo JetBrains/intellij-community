@@ -53,10 +53,10 @@ internal class AddNamesToCallArgumentsIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtCallElement,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtCallElement,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         addArgumentNames(elementContext.argumentNames.dereferenceValidKeys())
     }

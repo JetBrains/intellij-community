@@ -38,7 +38,7 @@ object ChangeVisibilityFixFactories {
         )
 
         override fun getActionName(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtDeclaration,
             elementContext: ElementContext,
         ): String = KotlinBundle.message(
@@ -48,7 +48,7 @@ object ChangeVisibilityFixFactories {
         )
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: KtDeclaration,
             elementContext: ElementContext,
             updater: ModPsiUpdater,

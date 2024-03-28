@@ -41,10 +41,10 @@ internal class ConvertPropertyGetterToInitializerIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtPropertyAccessor,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtPropertyAccessor,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         val property = element.parent as? KtProperty ?: return
         val commentSaver = CommentSaver(property)

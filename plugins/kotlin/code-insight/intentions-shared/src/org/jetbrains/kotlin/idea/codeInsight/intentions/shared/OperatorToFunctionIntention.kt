@@ -124,10 +124,10 @@ internal class OperatorToFunctionIntention :
     override fun getFamilyName(): String = KotlinBundle.message("replace.overloaded.operator.with.function.call")
 
     override fun invoke(
-        context: ActionContext,
-        element: KtExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         OperatorToFunctionConverter.convert(element)
     }

@@ -26,10 +26,10 @@ internal class ConvertStringTemplateToBuildStringIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtStringTemplateExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtStringTemplateExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         val buildStringCall = convertStringTemplateToBuildStringCall(element)
         shortenReferences(buildStringCall)

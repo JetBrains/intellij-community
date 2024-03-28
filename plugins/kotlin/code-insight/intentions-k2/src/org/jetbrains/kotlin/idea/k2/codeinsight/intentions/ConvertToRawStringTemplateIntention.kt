@@ -36,12 +36,12 @@ internal class ConvertToRawStringTemplateIntention :
         element.descendantsOfType<KtStringTemplateExpression>().all { it.canBeConvertedToStringLiteral() }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtBinaryExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtBinaryExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         val replaced = elementContext.replacement.element?.let { element.replaced(it) } ?: return
-        convertToStringLiteral(replaced, context, updater)
+        convertToStringLiteral(replaced, actionContext, updater)
     }
 }

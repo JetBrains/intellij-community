@@ -37,7 +37,7 @@ object CastExpressionFixFactories {
         override fun getFamilyName(): String = KotlinBundle.message("fix.cast.expression.family")
 
         override fun getActionName(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: PsiElement,
             elementContext: ElementContext,
         ): String = KotlinBundle.message(
@@ -47,12 +47,12 @@ object CastExpressionFixFactories {
         )
 
         override fun invoke(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: PsiElement,
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            val expressionToInsert = KtPsiFactory(context.project)
+            val expressionToInsert = KtPsiFactory(actionContext.project)
                 .createExpressionByPattern(
                     "$0 as $1",
                     element,

@@ -33,9 +33,9 @@ internal class LambdaToAnonymousFunctionIntention :
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("convert.lambda.expression.to.anonymous.function")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtLambdaExpression,
-        elementContext: LambdaToFunctionContext,
+      actionContext: ActionContext,
+      element: KtLambdaExpression,
+      elementContext: LambdaToFunctionContext,
     ): String = KotlinBundle.message("convert.to.anonymous.function")
 
     context(KtAnalysisSession)
@@ -68,7 +68,7 @@ internal class LambdaToAnonymousFunctionIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtLambdaExpression,
         elementContext: LambdaToFunctionContext,
         updater: ModPsiUpdater,

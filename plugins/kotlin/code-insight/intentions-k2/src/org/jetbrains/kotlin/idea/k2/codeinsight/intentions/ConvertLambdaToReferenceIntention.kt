@@ -40,9 +40,9 @@ internal class ConvertLambdaToReferenceIntention :
     override fun getFamilyName(): String = KotlinBundle.message("convert.lambda.to.reference.before.text")
 
     override fun getActionName(
-        context: ActionContext,
-        element: KtLambdaExpression,
-        elementContext: Context,
+      actionContext: ActionContext,
+      element: KtLambdaExpression,
+      elementContext: Context,
     ): String = KotlinBundle.message("convert.lambda.to.reference")
 
     override fun isApplicableByPsi(element: KtLambdaExpression): Boolean {
@@ -136,7 +136,7 @@ internal class ConvertLambdaToReferenceIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtLambdaExpression,
         elementContext: Context,
         updater: ModPsiUpdater,
@@ -153,7 +153,7 @@ internal class ConvertLambdaToReferenceIntention :
         val outerCallExpression = parent.getStrictParentOfType<KtCallExpression>()
         if (outerCallExpression != null) {
             elementContext.renderedTypeArguments?.let {
-                addTypeArguments(outerCallExpression, it, context.project)
+                addTypeArguments(outerCallExpression, it, actionContext.project)
                 outerCallExpression.typeArgumentList?.let(::shortenReferences)
             }
         }

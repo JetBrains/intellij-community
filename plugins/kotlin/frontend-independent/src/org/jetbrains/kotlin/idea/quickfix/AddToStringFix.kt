@@ -31,7 +31,7 @@ class AddToStringFix(
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.tostring.call.family")
 
     override fun getActionName(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtExpression,
         elementContext: ElementContext,
     ): String = KotlinBundle.message(
@@ -39,7 +39,7 @@ class AddToStringFix(
     )
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtExpression,
         elementContext: ElementContext,
         updater: ModPsiUpdater,

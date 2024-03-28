@@ -165,10 +165,10 @@ internal class RemoveExplicitTypeIntention :
     override fun getFamilyName(): String = KotlinBundle.message("remove.explicit.type.specification")
 
     override fun invoke(
-        context: ActionContext,
-        element: KtDeclaration,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtDeclaration,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         element.removeTypeReference()
     }

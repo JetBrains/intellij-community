@@ -84,10 +84,10 @@ internal class InvertIfConditionIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtIfExpression,
-        elementContext: Context,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtIfExpression,
+      elementContext: Context,
+      updater: ModPsiUpdater,
     ) {
         val rBrace = parentBlockRBrace(element)
         if (rBrace != null) element.nextEolCommentOnSameLine()?.delete()

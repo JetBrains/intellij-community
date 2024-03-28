@@ -23,10 +23,10 @@ internal class MovePropertyToConstructorIntention
     override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? = MovePropertyToConstructorInfo.create(element)
 
     override fun invoke(
-        context: ActionContext,
-        element: KtProperty,
-        elementContext: MovePropertyToConstructorInfo,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtProperty,
+      elementContext: MovePropertyToConstructorInfo,
+      updater: ModPsiUpdater,
     ) {
         element.moveToConstructor(elementContext.toWritable(updater))
     }

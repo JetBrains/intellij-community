@@ -26,10 +26,10 @@ internal class ConvertToBlockBodyIntention :
         ConvertToBlockBodyUtils.createContext(element, ShortenReferencesFacility.getInstance(), reformat = true)
 
     override fun invoke(
-        context: ActionContext,
-        element: KtDeclarationWithBody,
-        elementContext: ConvertToBlockBodyContext,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtDeclarationWithBody,
+      elementContext: ConvertToBlockBodyContext,
+      updater: ModPsiUpdater,
     ) {
         ConvertToBlockBodyUtils.convert(element, elementContext)
     }

@@ -46,19 +46,19 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private co
      */
     @RequiresBackgroundThread
     protected abstract fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: E,
         elementContext: C,
         updater: ModPsiUpdater,
     )
 
     protected abstract fun getElementContext(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: E,
     ): C?
 
     protected open fun getActionName(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: E,
         elementContext: C,
     ): @IntentionName String = familyName
@@ -76,7 +76,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private co
     ) : KotlinPsiUpdateModCommandAction<E, C>(element, null) {
 
         final override fun getElementContext(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: E,
         ): C = elementContext
     }
@@ -87,7 +87,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private co
         ContextProvider<E, C> {
 
         final override fun getElementContext(
-            context: ActionContext,
+            actionContext: ActionContext,
             element: E,
         ): C? = getElementContext(element)
     }

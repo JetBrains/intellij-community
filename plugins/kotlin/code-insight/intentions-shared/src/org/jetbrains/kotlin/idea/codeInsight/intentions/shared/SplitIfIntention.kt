@@ -26,7 +26,7 @@ internal class SplitIfIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
+        actionContext: ActionContext,
         element: KtExpression,
         elementContext: Unit,
         updater: ModPsiUpdater,

@@ -32,10 +32,10 @@ internal class ConvertConcatenationToBuildStringIntention :
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtBinaryExpression,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtBinaryExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         val buildStringCall = convertConcatenationToBuildStringCall(element)
         shortenReferences(buildStringCall)

@@ -65,10 +65,10 @@ internal abstract class AbstractAddAccessorIntention(
     }
 
     override fun invoke(
-        context: ActionContext,
-        element: KtProperty,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
+      actionContext: ActionContext,
+      element: KtProperty,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
     ) {
         addAccessors(element, addGetter, addSetter, updater::moveCaretTo)
     }
