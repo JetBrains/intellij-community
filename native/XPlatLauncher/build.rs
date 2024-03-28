@@ -21,8 +21,20 @@ use {
     winresource::WindowsResource,
 };
 
+macro_rules! trace {
+    ($($arg:tt)*) => {
+        println!("TRACE: {}", format_args!($($arg)*));
+    };
+}
+
+macro_rules! cargo {
+    ($($arg:tt)*) => {
+        println!("cargo:{}", format_args!($($arg)*));
+    };
+}
+
 fn main() {
-    println!("cargo:rerun-if-changed=build.rs");
+    cargo!("rerun-if-changed=build.rs");
     main_os_specific()
         .expect("Failed to execute buildscript");
 }
@@ -46,7 +58,7 @@ fn write_cef_version(cef_version: &str) -> Result<()> {
 
 #[cfg(target_os = "windows")]
 fn main_os_specific() -> Result<()> {
-    println!("cargo:rustc-link-lib=legacy_stdio_definitions");
+    cargo!("rustc-link-lib=legacy_stdio_definitions");
 
     let cef_arch_string = match env::var("CARGO_CFG_TARGET_ARCH")?.as_str() {
         "x86_64" => "windows64",
@@ -109,34 +121,51 @@ pub fn download_cef(version: &str, platform: &str, working_dir: &Path) -> Result
 }
 
 #[cfg(target_os = "windows")]
-fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<u64> {
-    fs_remove(dest)?;
+fn download_to_file(client: &Client, src: &str, dest: &Path) -> Result<()> {
+        fs_remove(dest)?;
 
+    trace!("Downloading {src} to {dest:?}");
     let mut response = client.get(src).send()?.error_for_status()?;
+
+    let code = response.status();
+    trace!("Got response from {src}, code {code}");
+
     let mut file = File::create(dest)
         .context(format!("Failed to create file at {dest:?}"))?;
 
+    trace!("Writing response from {src} to {dest:?}");
     std::io::copy(&mut response, &mut file)
-        .context(format!("Failed to copy response from {src} to {dest:?}"))
+        .context(format!("Failed to copy response from {src} to {dest:?}"))?;
+    trace!("Written response from {src} to {dest:?}");
+
+    Ok(())
 }
 
 #[cfg(target_os = "windows")]
 fn verify_sha1_checksum(file: &Path, expected: &str) -> Result<()> {
+    trace!("Verifying checksum of {file:?}");
+
     let mut file = File::open(file)?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
+    trace!("Written {file:?} to buffer to calculate digest");
 
     let digest = Sha1::digest(&buffer);
     let actual = format!("{digest:x}");
+
     if actual != expected {
         bail!("Checksum mismatch. Expected: '{expected}', actual: '{actual}'");
     }
+
+    trace!("{file:?} has the expected checksum {expected}");
 
     Ok(())
 }
 
 #[cfg(target_os = "windows")]
 fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result<()> {
+    trace!("Will extract {archive:?} to {dest:?}");
+
     assert!(!extract_marker.exists());
     assert!(!dest.exists());
 
@@ -149,13 +178,16 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     fs_remove(tmp_dest)?;
     std::fs::create_dir_all(tmp_dest)?;
 
-    let status =Command::new("tar")
+    trace!("Extracting to temp destination {tmp_dest:?}");
+    let status = Command::new("tar")
         .arg("-xjvf")
         .arg(get_non_unc_string(archive)?)
         .arg("-C")
         .arg(get_non_unc_string(tmp_dest)?)
         .arg("--strip-components=1")
         .status()?;
+
+    trace!("Extraction command finished successfully");
 
     if !status.success() {
         bail!("Failed to extract CEF sandbox archive at {archive:?}")
@@ -167,6 +199,8 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
     std::fs::rename(tmp_dest, dest)?;
     File::create(extract_marker)?;
 
+    trace!("Created extraction marker at {extract_marker:?}");
+
     Ok(())
 }
 
@@ -174,7 +208,7 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
 fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     let cef_lib_search_path = &cef_dir.join("Release").canonicalize()?;
     let cef_lib_search_path_string = get_non_unc_string(cef_lib_search_path)?;
-    println!("cargo:rustc-link-search=native={cef_lib_search_path_string}");
+    cargo!("rustc-link-search=native={cef_lib_search_path_string}");
 
     let lib_name_without_extension = "cef_sandbox";
     let lib_name = format!("{lib_name_without_extension}.lib");
@@ -185,7 +219,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
     // the default is -whole-archive until it becomes +whole-archive...
     // which happens in "some cases for backward compatibility, but it is not guaranteed"
     // (in our case that happens when running `cargo test` and linker blows up after that)
-    println!("cargo:rustc-link-lib=static:-whole-archive={lib_name_without_extension}");
+    cargo!("rustc-link-lib=static:-whole-archive={lib_name_without_extension}");
 
     let cef_sandbox_dependencies = [
         "Advapi32",
@@ -210,7 +244,7 @@ fn link_cef_sandbox(cef_dir: &Path) -> Result<()> {
 
     // Link each of the standard libraries
     for lib in cef_sandbox_dependencies.iter() {
-        println!("cargo:rustc-link-lib={}", lib);
+        cargo!("rustc-link-lib={}", lib);
     }
 
     Ok(())
@@ -233,16 +267,16 @@ fn embed_metadata() -> Result<()> {
     let cargo_root = PathBuf::from(cargo_root_env_var);
 
     let manifest_relative_to_root = "resources/windows/WinLauncher.manifest";
-    println!("cargo:rerun-if-changed={manifest_relative_to_root}");
+    cargo!("rerun-if-changed={manifest_relative_to_root}");
 
     let manifest_file = cargo_root.join(manifest_relative_to_root);
     assert_exists_and_file(&manifest_file)?;
 
-    println!("cargo:rustc-link-arg-bins=/MANIFEST:EMBED");
-    println!("cargo:rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_to_root}");
+    cargo!("rustc-link-arg-bins=/MANIFEST:EMBED");
+    cargo!("rustc-link-arg-bins=/MANIFESTINPUT:{manifest_relative_to_root}");
 
     let rc_template_relative_to_root = "resources/windows/WinLauncher.rc";
-    println!("cargo:rerun-if-changed={rc_template_relative_to_root}");
+    cargo!("rerun-if-changed={rc_template_relative_to_root}");
 
     let rc_template_file = PathBuf::from(rc_template_relative_to_root);
     assert_exists_and_file(&rc_template_file)?;
@@ -316,12 +350,17 @@ fn get_non_unc_string(path: &Path) -> Result<String> {
 
 #[cfg(target_os = "windows")]
 fn fs_remove(path: &Path) -> Result<()> {
+    trace!("Will remove {path:?}");
+
     if path.exists() {
+        trace!("Removing {path:?}");
         if path.is_dir() {
             std::fs::remove_dir_all(path)?;
         } else {
             std::fs::remove_file(path)?;
         }
+    } else {
+        trace!("{path:?} does not exist");
     }
 
     Ok(())

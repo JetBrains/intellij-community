@@ -39,7 +39,6 @@ deny = [ ]
 skip = [ ]
 skip-tree = [
     { name = "reqwest" }, # build-time dependency
-    { name = "tar" }, # build-time dependency
 ]
 
 [sources]
