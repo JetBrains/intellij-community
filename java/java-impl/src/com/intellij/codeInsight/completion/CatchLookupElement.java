@@ -23,7 +23,7 @@ import static com.intellij.psi.CommonClassNames.*;
 
 final class CatchLookupElement extends LookupItem<PsiCatchSection> {
 
-  private static final int MAX_LIMIT_SIZE = 300;
+  private static final int MAX_LIMIT_SIZE = 200;
   private static final List<String> DEFAULT_EXCEPTIONS = List.of(JAVA_LANG_THROWABLE, JAVA_LANG_EXCEPTION, JAVA_LANG_RUNTIME_EXCEPTION);
   private static final int MAX_LOOKUP_SIZE = 2;
 
@@ -67,7 +67,9 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     element = PsiTreeUtil.getParentOfType(element, PsiCatchSection.class, false);
     if (element != null) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      codeStyleManager.shortenClassReferences(element);
+      PsiElement finalElement = element;
+      DumbService.getInstance(project)
+        .runWithAlternativeResolveEnabled(() -> codeStyleManager.shortenClassReferences(finalElement));
     }
   }
 
@@ -83,44 +85,46 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
       return List.of();
     }
     Project project = tryStatement.getProject();
-    if (DumbService.isDumb(project)) {
-      return List.of();
-    }
+
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiStatement[] statements = block.getStatements();
 
     PsiCatchSection[] sections = tryStatement.getCatchSections();
-    Set<PsiClass> existedExceptionClasses = new HashSet<>();
+    Set<PsiType> existedExceptionTypes = new HashSet<>();
     List<String> stringExceptions = new ArrayList<>();
 
     for (PsiCatchSection section : sections) {
       PsiType catchType = section.getCatchType();
-      PsiClass existedException = PsiUtil.resolveClassInClassTypeOnly(catchType);
-      if (existedException != null) {
-        existedExceptionClasses.add(existedException);
-      }
+      existedExceptionTypes.add(catchType);
     }
 
     //if block is big enough, analyze can take a lot of time, let's use hardcoded exception
-    if (block.getTextLength() > MAX_LIMIT_SIZE || existedExceptionClasses.size() > MAX_LOOKUP_SIZE) {
-      stringExceptions = getHardcodedExceptions(existedExceptionClasses);
+    if (block.getTextLength() > MAX_LIMIT_SIZE || existedExceptionTypes.size() > MAX_LOOKUP_SIZE) {
+      stringExceptions.addAll(getHardcodedExceptions(existedExceptionTypes));
     }
     else {
-      List<PsiClassType> exceptionTypes = getUnhandledExceptionTypes(statements);
-      if (exceptionTypes.size() <= MAX_LOOKUP_SIZE) {
-        for (PsiClassType exceptionType : exceptionTypes) {
-          PsiClass thrownException = PsiUtil.resolveClassInClassTypeOnly(exceptionType);
-          if (thrownException != null && !ContainerUtil.or(existedExceptionClasses,
-                                                           existed-> InheritanceUtil.isInheritorOrSelf(thrownException, existed, true))) {
-            String qualifiedName = thrownException.getQualifiedName();
-            if (qualifiedName != null) {
-              stringExceptions.add(qualifiedName);
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+        List<PsiClassType> exceptionTypes = getUnhandledExceptionTypes(statements);
+        if (exceptionTypes.size() <= MAX_LOOKUP_SIZE) {
+          List<@NotNull PsiClass> existedExceptionClasses =
+            ContainerUtil.mapNotNull(existedExceptionTypes, exist -> PsiUtil.resolveClassInClassTypeOnly(exist));
+          for (PsiClassType exceptionType : exceptionTypes) {
+            PsiClass thrownException = PsiUtil.resolveClassInClassTypeOnly(exceptionType);
+            if (thrownException != null &&
+                !ContainerUtil.or(existedExceptionClasses,
+                                  existed ->
+                                    InheritanceUtil.isInheritorOrSelf(thrownException, existed, true))) {
+              String qualifiedName = thrownException.getQualifiedName();
+              if (qualifiedName != null) {
+                stringExceptions.add(qualifiedName);
+              }
             }
           }
         }
-      }
+      });
+
       if (stringExceptions.isEmpty() || stringExceptions.size() > MAX_LOOKUP_SIZE) {
-        stringExceptions = getHardcodedExceptions(existedExceptionClasses);
+        stringExceptions.addAll(getHardcodedExceptions(existedExceptionTypes));
       }
     }
 
@@ -139,7 +143,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
         }
         int offset = rParenth.getTextRangeInParent().getEndOffset();
         String catchSectionText = catchSection.getText().substring(0, offset);
-        lookupElements.add(new CatchLookupElement(catchSection, catchSectionText));
+        lookupElements.add( new CatchLookupElement(catchSection, catchSectionText));
         if (lookupElements.size() >= MAX_LOOKUP_SIZE) {
           break;
         }
@@ -153,10 +157,10 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
   }
 
   @NotNull
-  private static List<String> getHardcodedExceptions(@NotNull Set<PsiClass> existedExceptions) {
+  private static List<String> getHardcodedExceptions(@NotNull Set<PsiType> existedExceptions) {
     ArrayList<String> exceptions = new ArrayList<>();
     for (String defaultException : DEFAULT_EXCEPTIONS) {
-      if (ContainerUtil.exists(existedExceptions, t -> defaultException.equals(t.getQualifiedName()))) {
+      if (ContainerUtil.exists(existedExceptions, t -> defaultException.equals(t.getCanonicalText()))) {
         break;
       }
       exceptions.add(defaultException);
