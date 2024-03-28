@@ -1,40 +1,41 @@
 package org.jetbrains.plugins.textmate.language.preferences
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.textmate.bundles.TextRuleDeserializer
 
 
+@Serializable
 enum class IndentAction {
-  @JsonProperty("none")
+  @SerialName("none")
   NONE,
 
-  @JsonProperty("indent")
+  @SerialName("indent")
   INDENT,
 
   @Suppress("unused")
-  @JsonProperty("outdent")
+  @SerialName("outdent")
   OUTDENT,
 
   @Suppress("unused")
-  @JsonProperty("indentOutdent")
+  @SerialName("indentOutdent")
   INDENT_OUTDENT
 }
 
+@Serializable
 data class OnEnterRule(
   val beforeText: TextRule,
-  val afterText: TextRule?,
-  val previousLineText: TextRule?,
+  val afterText: TextRule? = null,
+  val previousLineText: TextRule? = null,
   val action: Action
 )
 
+@Serializable
 data class Action(
   val indent: IndentAction,
-  val appendText: String?,
-  val removeText: Int?
+  val appendText: String? = null,
+  val removeText: Int? = null
 )
 
-@JsonDeserialize(using = TextRuleDeserializer::class)
-data class TextRule(
-  val text: String
-)
+@Serializable(with = TextRuleDeserializer::class)
+data class TextRule(val text: String)

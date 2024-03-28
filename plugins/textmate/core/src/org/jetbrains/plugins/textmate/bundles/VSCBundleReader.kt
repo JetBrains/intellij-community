@@ -1,19 +1,16 @@
 package org.jetbrains.plugins.textmate.bundles
 
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.*
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateStandardTokenType
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
-import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
@@ -21,17 +18,19 @@ import java.util.*
 
 private typealias VSCodeExtensionLanguageId = String
 
-private val vsCodeExtensionJsonReader by lazy {
-  JsonPlistReader.createJsonReader().registerKotlinModule().readerFor(VSCodeExtension::class.java)
+@OptIn(ExperimentalSerializationApi::class)
+private val textmateJson by lazy {
+  Json {
+    isLenient = true
+    allowTrailingComma = true
+    ignoreUnknownKeys = true
+  }
 }
 
-private val vsCodeExtensionLanguageConfigurationJsonReader by lazy {
-  JsonPlistReader.createJsonReader().registerKotlinModule().readerFor(VSCodeExtensionLanguageConfiguration::class.java)
-}
-
+@OptIn(ExperimentalSerializationApi::class)
 fun readVSCBundle(resourceLoader: (relativePath: String) -> InputStream?): TextMateBundleReader? {
   return resourceLoader(Constants.PACKAGE_JSON_NAME)?.let { packageJsonStream ->
-    val extension = vsCodeExtensionJsonReader.readValue(packageJsonStream, VSCodeExtension::class.java)
+    val extension = textmateJson.decodeFromStream(VSCodeExtension.serializer(), packageJsonStream)
     VSCBundleReader(extension = extension, resourceLoader = resourceLoader)
   }
 }
@@ -83,8 +82,10 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
         resourceLoader(path)?.let { inputStream ->
-          val configuration = vsCodeExtensionLanguageConfigurationJsonReader
-            .readValue(inputStream, VSCodeExtensionLanguageConfiguration::class.java)
+          val configuration = inputStream.reader(Charsets.UTF_8).useLines { lineSequence ->
+            textmateJson.decodeFromString(VSCodeExtensionLanguageConfiguration.serializer(), lineSequence.removeJsonComments())
+          }
+
           val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
           val smartTypingPairs = configuration.autoClosingPairs
             .mapTo(LinkedHashSet(configuration.autoClosingPairs.size)) {
@@ -176,103 +177,122 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
   }
 }
 
+@Serializable
 internal data class VSCodeExtensionLanguage(
-  @JvmField val id: VSCodeExtensionLanguageId,
-  @JvmField val filenames: List<String> = emptyList(),
-  @JvmField val extensions: List<String> = emptyList(),
-  @JvmField val aliases: List<String> = emptyList(),
-  @JvmField val filenamePatterns: List<String> = emptyList(),
-  @JvmField val configuration: String?,
-  @JvmField val firstLine: String?,
+  val id: VSCodeExtensionLanguageId,
+  val filenames: List<String> = emptyList(),
+  val extensions: List<String> = emptyList(),
+  val aliases: List<String> = emptyList(),
+  val filenamePatterns: List<String> = emptyList(),
+  val configuration: String? = null,
+  val firstLine: String? = null,
 )
 
+@Serializable
 internal data class VSCodeExtensionGrammar(
-  @JvmField val language: VSCodeExtensionLanguageId?,
-  @JvmField val scopeName: String,
-  @JvmField val path: String,
-  @JvmField val embeddedLanguages: Map<TextMateScopeName, VSCodeExtensionLanguageId> = emptyMap(),
+  val language: VSCodeExtensionLanguageId? = null,
+  val scopeName: String,
+  val path: String,
+  val embeddedLanguages: Map<TextMateScopeName, VSCodeExtensionLanguageId> = emptyMap(),
 )
 
-internal data class VSCodeExtensionSnippet(@JvmField val language: VSCodeExtensionLanguageId, @JvmField val path: String)
+@Serializable
+internal data class VSCodeExtensionSnippet(val language: VSCodeExtensionLanguageId, val path: String)
 
+@Serializable
 internal data class VSCodeExtensionContributes(
-  @JvmField val languages: List<VSCodeExtensionLanguage> = emptyList(),
-  @JvmField val grammars: List<VSCodeExtensionGrammar> = emptyList(),
-  @JvmField val snippets: List<VSCodeExtensionSnippet> = emptyList(),
+  val languages: List<VSCodeExtensionLanguage> = emptyList(),
+  val grammars: List<VSCodeExtensionGrammar> = emptyList(),
+  val snippets: List<VSCodeExtensionSnippet> = emptyList(),
 )
 
-internal data class VSCodeExtension(@JvmField val name: String, @JvmField val contributes: VSCodeExtensionContributes)
+@Serializable
+internal data class VSCodeExtension(val name: String, val contributes: VSCodeExtensionContributes)
 
+@Serializable
 internal data class VSCodeExtensionLanguageConfiguration(
-  @JvmField val brackets: List<List<String>> = emptyList(),
-  @JvmField val autoClosingPairs: List<VSCodeExtensionAutoClosingPairs> = emptyList(),
-  @JvmField val autoCloseBefore: String?,
-  @JvmField val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
-  @JvmField val comments: VSCodeExtensionComments,
-  @JvmField val indentationRules: VSCodeExtensionIndentationRules?,
-  @JvmField val onEnterRules: List<OnEnterRule> = emptyList(),
+  val brackets: List<List<String>> = emptyList(),
+  val autoClosingPairs: List<VSCodeExtensionAutoClosingPairs> = emptyList(),
+  val autoCloseBefore: String? = null,
+  val surroundingPairs: List<VSCodeExtensionSurroundingPairs> = emptyList(),
+  val comments: VSCodeExtensionComments,
+  val indentationRules: VSCodeExtensionIndentationRules? = null,
+  val onEnterRules: List<OnEnterRule> = emptyList(),
 )
 
-@JsonDeserialize(using = VSCodeExtensionSurroundingPairsDeserializer::class)
+@Serializable(with = VSCodeExtensionSurroundingPairsDeserializer::class)
 data class VSCodeExtensionSurroundingPairs(val open: String, val close: String)
 
-class VSCodeExtensionSurroundingPairsDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionSurroundingPairs>(vc) {
-  @Suppress("unused")
-  constructor() : this(null)
-
-  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): VSCodeExtensionSurroundingPairs {
-    return when (val node: JsonNode = p.codec.readTree(p)) {
-      is ArrayNode -> VSCodeExtensionSurroundingPairs(node.get(0).asText(), node.get(1).asText())
-      is ObjectNode -> VSCodeExtensionSurroundingPairs(node["open"].asText(), node["close"].asText())
-      else -> error("unexpected surroundingPairs node")
+class VSCodeExtensionSurroundingPairsDeserializer : KSerializer<VSCodeExtensionSurroundingPairs> {
+  override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
+  override fun deserialize(decoder: Decoder): VSCodeExtensionSurroundingPairs {
+    return when (val json = (decoder as JsonDecoder).decodeJsonElement()) {
+      is JsonArray -> VSCodeExtensionSurroundingPairs(json[0].jsonPrimitive.content, json[1].jsonPrimitive.content)
+      is JsonObject -> VSCodeExtensionSurroundingPairs(json["open"]!!.jsonPrimitive.content, json["close"]!!.jsonPrimitive.content)
+      else -> error("cannot deserialize $json")
     }
+  }
+
+  override fun serialize(encoder: Encoder, value: VSCodeExtensionSurroundingPairs) {
+    (encoder as JsonEncoder).encodeJsonElement(JsonArray(listOf(JsonPrimitive(value.open), JsonPrimitive(value.close))))
   }
 }
 
-@JsonDeserialize(using = VSCodeExtensionAutoClosingPairsDeserializer::class)
+@Serializable(with = VSCodeExtensionAutoClosingPairsDeserializer::class)
 internal data class VSCodeExtensionAutoClosingPairs(
-  @JvmField val open: String,
-  @JvmField val close: String,
-  @JvmField val notIn: EnumSet<TextMateStandardTokenType>?,
+  val open: String,
+  val close: String,
+  val notIn: EnumSet<TextMateStandardTokenType>? = null,
 )
 
-internal class VSCodeExtensionAutoClosingPairsDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionAutoClosingPairs>(vc) {
-  @Suppress("unused")
-  constructor() : this(null)
+internal class VSCodeExtensionAutoClosingPairsDeserializer : KSerializer<VSCodeExtensionAutoClosingPairs> {
+  override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
 
-  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): VSCodeExtensionAutoClosingPairs {
-    return when (val node: JsonNode = p.codec.readTree(p)) {
-      is ArrayNode -> VSCodeExtensionAutoClosingPairs(node.get(0).asText(), node.get(1).asText(), null)
-      is ObjectNode -> VSCodeExtensionAutoClosingPairs(open = node["open"].asText(),
-                                                       close = node["close"].asText(),
-                                                       notIn = (node["notIn"] as? ArrayNode)?.mapNotNull {
-                                                         when (it.asText()) {
-                                                           "string" -> TextMateStandardTokenType.STRING
-                                                           "comment" -> TextMateStandardTokenType.COMMENT
-                                                           else -> null
-                                                         }
-                                                       }?.let { EnumSet.copyOf(it) })
-      else -> error("unexpected autoClosingPairs node")
+  override fun deserialize(decoder: Decoder): VSCodeExtensionAutoClosingPairs {
+    require(decoder is JsonDecoder)
+    return when (val json = decoder.decodeJsonElement()) {
+      is JsonArray -> VSCodeExtensionAutoClosingPairs(json[0].jsonPrimitive.content, json[1].jsonPrimitive.content, null)
+      is JsonObject -> VSCodeExtensionAutoClosingPairs(
+        open = json["open"]!!.jsonPrimitive.content,
+        close = json["close"]!!.jsonPrimitive.content,
+        notIn = (json["notIn"] as? JsonArray)?.mapNotNull {
+          when (it.jsonPrimitive.content) {
+            "string" -> TextMateStandardTokenType.STRING
+            "comment" -> TextMateStandardTokenType.COMMENT
+            else -> null
+          }
+        }?.let { EnumSet.copyOf(it) })
+      else -> error("cannot deserialize $json")
     }
+  }
+
+  override fun serialize(encoder: Encoder, value: VSCodeExtensionAutoClosingPairs) {
+    val json = JsonObject(mapOf(
+      "open" to JsonPrimitive(value.open),
+      "close" to JsonPrimitive(value.close),
+      "notIn" to JsonArray(value.notIn?.map { JsonPrimitive(it.name.lowercase()) } ?: emptyList())
+    ))
+    (encoder as JsonEncoder).encodeJsonElement(json)
   }
 }
 
-internal data class VSCodeExtensionComments(@JvmField val lineComment: String?, @JvmField val blockComment: List<String> = emptyList())
+@Serializable
+internal data class VSCodeExtensionComments(val lineComment: String? = null, val blockComment: List<String> = emptyList())
 
-@JsonDeserialize(using = VSCodeExtensionIndentationRulesDeserializer::class)
+@Serializable(with = VSCodeExtensionIndentationRulesDeserializer::class)
 internal data class VSCodeExtensionIndentationRules(
-  @JvmField val increaseIndentPattern: String?,
-  @JvmField val decreaseIndentPattern: String?,
-  @JvmField val indentNextLinePattern: String?,
-  @JvmField val unIndentedLinePattern: String?,
+  val increaseIndentPattern: String? = null,
+  val decreaseIndentPattern: String? = null,
+  val indentNextLinePattern: String? = null,
+  val unIndentedLinePattern: String? = null,
 )
 
-internal class VSCodeExtensionIndentationRulesDeserializer(vc: Class<*>?) : StdDeserializer<VSCodeExtensionIndentationRules>(vc) {
-  @Suppress("unused")
-  constructor() : this(null)
+internal class VSCodeExtensionIndentationRulesDeserializer : KSerializer<VSCodeExtensionIndentationRules> {
+  override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
 
-  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): VSCodeExtensionIndentationRules {
-    val node: JsonNode = p.codec.readTree(p)
+  override fun deserialize(decoder: Decoder): VSCodeExtensionIndentationRules {
+    require(decoder is JsonDecoder)
+    val node = decoder.decodeJsonElement() as? JsonObject
     return VSCodeExtensionIndentationRules(
       increaseIndentPattern = readPattern(node, "increaseIndentPattern"),
       decreaseIndentPattern = readPattern(node, "decreaseIndentPattern"),
@@ -280,24 +300,82 @@ internal class VSCodeExtensionIndentationRulesDeserializer(vc: Class<*>?) : StdD
       unIndentedLinePattern = readPattern(node, "unIndentedLinePattern"))
   }
 
-  private fun readPattern(node: JsonNode, name: String): String? {
-    return when (val child = node.get(name)) {
-      is TextNode -> child.asText()
-      is ObjectNode -> child.get("pattern").asText()
+  override fun serialize(encoder: Encoder, value: VSCodeExtensionIndentationRules) {
+    val map = buildMap {
+      value.increaseIndentPattern?.let { put("increaseIndentPattern", JsonPrimitive(it)) }
+      value.decreaseIndentPattern?.let { put("decreaseIndentPattern", JsonPrimitive(it)) }
+      value.indentNextLinePattern?.let { put("indentNextLinePattern", JsonPrimitive(it)) }
+      value.unIndentedLinePattern?.let { put("unIndentedLinePattern", JsonPrimitive(it)) }
+    }
+    (encoder as JsonEncoder).encodeJsonElement(JsonObject(map))
+  }
+
+  private fun readPattern(node: JsonObject?, name: String): String? {
+    return when (val child = node?.get(name)) {
+      is JsonPrimitive -> child.content
+      is JsonObject -> child["pattern"]!!.jsonPrimitive.content
       null -> null
       else -> error("unexpected indentationRules node")
     }
   }
 }
 
-internal class TextRuleDeserializer(vc: Class<*>?) : StdDeserializer<TextRule>(vc) {
-  @Suppress("unused")
-  constructor() : this(null)
-  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): TextRule {
-    return when (val node: JsonNode = p.codec.readTree(p)) {
-      is TextNode -> TextRule(node.asText())
-      is ObjectNode -> TextRule(node["pattern"].asText())
-      else -> error("unexpected TextRule node")
-    }
+internal class TextRuleDeserializer : KSerializer<TextRule> {
+  override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
+
+  override fun deserialize(decoder: Decoder): TextRule {
+    require(decoder is JsonDecoder)
+    return TextRule(when (val json = decoder.decodeJsonElement()) {
+                      is JsonObject -> json["pattern"]!!.jsonPrimitive.content
+                      is JsonPrimitive -> json.content
+                      else -> error("cannot deserialize $json")
+                    })
   }
+
+  override fun serialize(encoder: Encoder, value: TextRule) {
+    encoder.encodeString(value.text)
+  }
+}
+
+private fun Sequence<String>.removeJsonComments(): String {
+  return map { line ->
+    val commentIndex = lineCommentIndex(line)
+    if (commentIndex >= 0) {
+      line.substring(0, commentIndex)
+    }
+    else {
+      line
+    }
+  }.joinToString(separator = "\n")
+}
+
+private fun lineCommentIndex(line: String): Int {
+  var i = 0
+  var quote: Char? = null
+  while (i < line.length) {
+    val c = line[i]
+    if (quote != null) {
+      when (c) {
+        '\\' -> {
+          i++
+        }
+        quote -> {
+          quote = null
+        }
+      }
+    }
+    else {
+      when (c) {
+        '\'' -> quote = c
+        '"' -> quote = c
+        '/' -> {
+          if (i + 1 < line.length && line[i + 1] == '/') {
+            return i
+          }
+        }
+      }
+    }
+    i++
+  }
+  return -1
 }

@@ -27,7 +27,7 @@ interface TextMateBundleReader {
   fun readSnippets(): Sequence<TextMateSnippet>
 }
 
-typealias TextMateScopeName = CharSequence
+typealias TextMateScopeName = String
 
 data class TextMateGrammar(val fileNameMatchers: Collection<TextMateFileNameMatcher>,
                            val firstLinePattern: String?,
