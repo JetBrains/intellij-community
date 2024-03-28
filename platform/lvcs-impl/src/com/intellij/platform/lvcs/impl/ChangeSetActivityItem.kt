@@ -43,8 +43,14 @@ private fun ChangeSet.presentableNameFromPaths(): @NlsContexts.Label String? {
 }
 
 internal class LabelActivityItem(changeSet: ChangeSet) : ChangeSetActivityItem(changeSet) {
-  override val name = changeSet.label ?: changeSet.name
+  override val name = shorten(changeSet.label ?: changeSet.name)
   val color = changeSet.labelColor
+
+  private fun shorten(name: String?): String? {
+    if (name == null) return null
+    if (name.contains("\n")) return name.substringBefore("\n") + "..."
+    return name
+  }
 }
 
 fun ChangeSet.toActivityItem(scope: ActivityScope): ActivityItem {
