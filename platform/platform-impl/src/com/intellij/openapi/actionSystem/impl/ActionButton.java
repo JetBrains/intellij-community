@@ -25,7 +25,6 @@ import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
@@ -317,12 +316,12 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (!myUpdateThreadOnDirectUpdateChecked) {
       myUpdateThreadOnDirectUpdateChecked = true;
       if (myAction.getActionUpdateThread() == ActionUpdateThread.BGT &&
-          !(myAction instanceof OverridingAction) && // todo workaround BackendDelegatingAction
-          !AnAction.class.equals(ReflectionUtil.getMethodDeclaringClass(myAction.getClass(), "update", AnActionEvent.class))) {
-        String name = myAction.getClass().getName();
+          !ActionClassMetaData.isDefaultUpdate(myAction)) {
+        ActionManager actionManager = ActionManager.getInstance();
         LOG.error(PluginException.createByClass(
-          myAction.getActionUpdateThread() + " action " + StringUtil.getShortName(name) + " (" + name + ") is not allowed. " +
-          "Only EDT actions are allowed.", null, myAction.getClass()));
+          "BGT operation " + Utils.operationName(
+            myAction, "update", myPlace, o -> o instanceof AnAction a ? actionManager.getId(a) : null) +
+          " is not allowed on EDT", null, myAction.getClass()));
       }
     }
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
