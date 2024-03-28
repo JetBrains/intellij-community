@@ -3,6 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,9 @@ public abstract class WindowStateService {
    * @return an instance of the service for the specified project
    */
   public static WindowStateService getInstance(@NotNull Project project) {
-    return project.getService(WindowStateService.class);
+    return Registry.is("ui.app.wide.dimension.service", false)
+           ? getInstance()
+           : project.getService(WindowStateService.class);
   }
 
 
