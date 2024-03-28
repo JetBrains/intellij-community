@@ -24,12 +24,7 @@ object GraphLayoutBuilder {
     val allHeads = branches + graph.getHeads()
     val sortedHeads = IntArrayList(allHeads).sortCatching(comparator)
 
-    val layoutIndex = IntArray(graph.nodesCount())
-    var currentLayoutIndex = 1
-    for (i in sortedHeads.indices) {
-      currentLayoutIndex = dfs(graph, sortedHeads.getInt(i), currentLayoutIndex, layoutIndex)
-    }
-    return GraphLayoutImpl(layoutIndex, sortedHeads)
+    return build(graph, sortedHeads)
   }
 
   /**
@@ -58,21 +53,26 @@ object GraphLayoutBuilder {
     return heads
   }
 
-  private fun dfs(graph: LinearGraph, startNodeIndex: Int, startLayoutIndex: Int, layoutIndex: IntArray): Int {
-    var currentLayoutIndex = startLayoutIndex
+  private fun build(graph: LinearGraph, sortedHeads: IntList): GraphLayoutImpl {
+    val layoutIndex = IntArray(graph.nodesCount())
 
-    walk(startNodeIndex) { currentNode: Int ->
-      val firstVisit = layoutIndex[currentNode] == 0
-      if (firstVisit) layoutIndex[currentNode] = currentLayoutIndex
+    var currentLayoutIndex = 1
+    for (i in sortedHeads.indices) {
+      val head = sortedHeads.getInt(i)
 
-      val childWithoutLayoutIndex = LinearGraphUtils.getDownNodes(graph, currentNode).firstOrNull { layoutIndex[it] == 0 }
-      if (childWithoutLayoutIndex == null) {
-        if (firstVisit) currentLayoutIndex++
-        return@walk Dfs.NextNode.NODE_NOT_FOUND
+      walk(head) { currentNode: Int ->
+        val firstVisit = layoutIndex[currentNode] == 0
+        if (firstVisit) layoutIndex[currentNode] = currentLayoutIndex
+
+        val childWithoutLayoutIndex = LinearGraphUtils.getDownNodes(graph, currentNode).firstOrNull { layoutIndex[it] == 0 }
+        if (childWithoutLayoutIndex == null) {
+          if (firstVisit) currentLayoutIndex++
+          return@walk Dfs.NextNode.NODE_NOT_FOUND
+        }
+        return@walk childWithoutLayoutIndex
       }
-      return@walk childWithoutLayoutIndex
     }
 
-    return currentLayoutIndex
+    return GraphLayoutImpl(layoutIndex, sortedHeads)
   }
 }
