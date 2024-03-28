@@ -8,6 +8,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
@@ -217,10 +218,6 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   protected open fun getProjectDisplayName(project: Project): String? = null
 
-  protected open fun focusProjectWindow(project: Project) {
-    ProjectUtil.focusProjectWindow(project = project)
-  }
-
   fun getProjectIcon(path: String, isProjectValid: Boolean): Icon {
     return projectIconHelper.getProjectIcon(path, isProjectValid)
   }
@@ -316,7 +313,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       projectManager.openProjects.firstOrNull { isSameProject(projectFile = projectFile, project = it) }?.let { project ->
         FUSProjectHotStartUpMeasurer.reportAlreadyOpenedProject()
         withContext(Dispatchers.EDT) {
-          focusProjectWindow(project)
+          project.service<ProjectUtilService>().focusProjectWindow()
         }
         return project
       }
