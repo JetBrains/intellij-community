@@ -7,25 +7,31 @@ import com.intellij.webSymbols.patterns.ComplexPatternOptions
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.patterns.WebSymbolsPatternFactory
 import com.intellij.webSymbols.patterns.WebSymbolsPatternReferenceResolver
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A utility [WebSymbol], which allows to reference
  * symbols from other namespace or kind.
  */
-class ReferencingWebSymbol(
+class ReferencingWebSymbol
+@ApiStatus.ScheduledForRemoval @Deprecated("Use overload with WebSymbolQualifiedKind parameter")
+constructor(
   override val namespace: SymbolNamespace,
   override val kind: SymbolKind,
   override val name: String,
   override val origin: WebSymbolOrigin,
   vararg references: WebSymbolQualifiedKind,
-  override val priority: WebSymbol.Priority? = null,
+  override val priority: WebSymbol.Priority?,
 ) : WebSymbol {
 
+  @Suppress("DEPRECATION")
+  @JvmOverloads
   constructor(qualifiedKind: WebSymbolQualifiedKind,
               name: String,
               origin: WebSymbolOrigin,
-              vararg qualifiedKinds: WebSymbolQualifiedKind)
-    : this(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *qualifiedKinds)
+              vararg qualifiedKinds: WebSymbolQualifiedKind,
+              priority: WebSymbol.Priority? = null)
+    : this(qualifiedKind.namespace, qualifiedKind.kind, name, origin, *qualifiedKinds, priority = priority)
 
   override val pattern: WebSymbolsPattern =
     WebSymbolsPatternFactory.createComplexPattern(
