@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import java.io.IOException;
 import java.util.Properties;
 
-import static com.intellij.psi.util.PointersKt.createSmartPointer;
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
 public class AddMethodFix extends GroovyFix {
   private static final Logger LOG = Logger.getInstance(AddMethodFix.class);

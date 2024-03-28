@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.k2.navigation
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule

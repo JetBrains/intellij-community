@@ -18,7 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.concurrency.ThreadingAssertions
 

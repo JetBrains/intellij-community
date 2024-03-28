@@ -3,12 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.parents
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt

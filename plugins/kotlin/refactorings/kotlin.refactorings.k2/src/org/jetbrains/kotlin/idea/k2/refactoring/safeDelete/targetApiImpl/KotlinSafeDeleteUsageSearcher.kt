@@ -7,11 +7,11 @@ import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.walkUp
 import com.intellij.refactoring.safeDelete.api.*
 import com.intellij.refactoring.safeDelete.impl.DefaultPsiSafeDeleteUsage
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query

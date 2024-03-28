@@ -16,8 +16,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter
 import com.jetbrains.jsonSchema.impl.JsonCachedValues
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker

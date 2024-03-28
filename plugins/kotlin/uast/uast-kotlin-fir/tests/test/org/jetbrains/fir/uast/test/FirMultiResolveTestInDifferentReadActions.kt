@@ -3,7 +3,7 @@ package org.jetbrains.fir.uast.test
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase

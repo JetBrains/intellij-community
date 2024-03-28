@@ -8,7 +8,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.util.parents
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith

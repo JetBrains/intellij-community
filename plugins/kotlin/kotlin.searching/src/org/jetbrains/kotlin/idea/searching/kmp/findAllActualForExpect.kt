@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.searching.kmp
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import kotlin.collections.any
-import kotlin.let
 
 @RequiresBackgroundThread(generateAssertion = false)
 fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadAction { useScope }): Sequence<SmartPsiElementPointer<KtDeclaration>> {

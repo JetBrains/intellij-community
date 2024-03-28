@@ -4,8 +4,8 @@ import com.intellij.cce.core.*
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.jetbrains.python.psi.*
 
 class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {

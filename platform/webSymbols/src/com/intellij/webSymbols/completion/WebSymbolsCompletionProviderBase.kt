@@ -9,7 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
 import com.intellij.webSymbols.FrameworkId
 import com.intellij.webSymbols.WebSymbolQualifiedKind

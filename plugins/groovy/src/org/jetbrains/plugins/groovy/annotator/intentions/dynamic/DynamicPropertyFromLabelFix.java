@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicEleme
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicPropertyDialog;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 
-import static com.intellij.psi.util.PointersKt.createSmartPointer;
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
 public class DynamicPropertyFromLabelFix extends DynamicPropertyFix {
 

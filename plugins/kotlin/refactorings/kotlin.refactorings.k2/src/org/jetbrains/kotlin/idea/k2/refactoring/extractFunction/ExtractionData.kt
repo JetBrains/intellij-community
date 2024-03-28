@@ -7,21 +7,18 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ResolveResult
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.encodeReferences
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.unmarkReferencesInside
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.substringContextOrThis
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 data class ExtractionData(
     override val originalFile: KtFile,

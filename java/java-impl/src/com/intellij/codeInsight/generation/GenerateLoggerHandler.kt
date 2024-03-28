@@ -20,9 +20,9 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.endOffset
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.introduce.PsiIntroduceTarget
-import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.logging.JvmLoggingSettingsStorage
 import org.jetbrains.java.generate.GenerationUtil

@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner

@@ -12,8 +12,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDefinition
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkLabel

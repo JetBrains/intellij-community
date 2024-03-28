@@ -8,8 +8,8 @@ package org.toml.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentsOfType
-import com.intellij.refactoring.suggested.endOffset
 import org.toml.TomlBundle
 import org.toml.lang.psi.*
 

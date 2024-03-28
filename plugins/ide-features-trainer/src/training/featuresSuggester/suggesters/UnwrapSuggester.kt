@@ -1,8 +1,8 @@
 package training.featuresSuggester.suggesters
 
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import training.featuresSuggester.*
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.BeforeEditorTextRemovedAction

@@ -7,7 +7,6 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.util.createSmartPointer
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.VisibilityUtil
@@ -31,7 +30,7 @@ class CreateEventHandlerRequest(element: XmlAttributeValue) : CreateMethodReques
 
   private val myProject = element.project
   private val myVisibility = getVisibility(element)
-  private val myPointer = element.createSmartPointer(myProject)
+  private val myPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element)
 
   override fun isValid(): Boolean = myPointer.element.let {
     it != null && it.value.let { value ->

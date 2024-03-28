@@ -5,13 +5,11 @@ import com.intellij.cce.core.*
 import com.intellij.cce.util.CompletionGolfTextUtil.isValuableString
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.*
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import kotlin.math.min
 
-
 interface LineCompletionEvaluationVisitor : EvaluationVisitor
-
 
 interface LineCompletionAllEvaluationVisitor : LineCompletionEvaluationVisitor {
   val processor: Processor
@@ -72,7 +70,6 @@ interface LineCompletionAllEvaluationVisitor : LineCompletionEvaluationVisitor {
       }
     }
   }
-
 
   class Default(override val feature: String, override val language: Language = Language.ANOTHER)
     : LineCompletionAllEvaluationVisitor, PsiRecursiveElementVisitor() {

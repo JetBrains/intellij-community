@@ -18,9 +18,9 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.resolve.FileContextUtil
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.tail

@@ -8,8 +8,8 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze

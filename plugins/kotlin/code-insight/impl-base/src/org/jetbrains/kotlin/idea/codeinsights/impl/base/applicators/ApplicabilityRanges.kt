@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.TokenSet
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

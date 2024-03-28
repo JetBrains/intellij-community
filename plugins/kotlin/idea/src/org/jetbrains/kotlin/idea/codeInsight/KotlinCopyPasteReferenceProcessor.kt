@@ -71,6 +71,7 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Callable
+import com.intellij.psi.createSmartPointer
 
 class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinReferenceTransferableData>() {
 

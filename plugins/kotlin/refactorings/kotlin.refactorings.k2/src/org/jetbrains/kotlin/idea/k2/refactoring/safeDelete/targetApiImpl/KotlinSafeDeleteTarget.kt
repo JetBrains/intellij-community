@@ -5,10 +5,10 @@ import com.intellij.find.usages.api.PsiUsage
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteDeclarationUsage
 import com.intellij.refactoring.safeDelete.api.SafeDeleteTarget
 import com.intellij.refactoring.safeDelete.impl.DefaultPsiSafeDeleteDeclarationUsage
-import com.intellij.refactoring.suggested.createSmartPointer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamed
 

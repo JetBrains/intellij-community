@@ -88,6 +88,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
+import com.intellij.psi.createSmartPointer
 
 class UnusedSymbolInspection : AbstractKotlinInspection() {
     companion object {

@@ -32,12 +32,9 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SyntaxTraverser
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.*
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import java.lang.reflect.Type
 import java.nio.file.Paths
 import java.util.*

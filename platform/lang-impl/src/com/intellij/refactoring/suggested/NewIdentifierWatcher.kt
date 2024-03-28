@@ -93,4 +93,10 @@ class NewIdentifierWatcher(private val maxIdentifiers: Int) {
 
   private fun SuggestedRefactoringSupport.isIdentifierLike(text: CharSequence) =
     text.isNotEmpty() && isIdentifierStart(text[0]) && text.all { isIdentifierPart(it) }
+
+  private val DocumentEvent.oldRange: TextRange
+    get() = TextRange(offset, offset + oldLength)
+
+  private val DocumentEvent.newRange: TextRange
+    get() = TextRange(offset, offset + newLength)
 }

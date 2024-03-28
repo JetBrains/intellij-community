@@ -33,6 +33,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue

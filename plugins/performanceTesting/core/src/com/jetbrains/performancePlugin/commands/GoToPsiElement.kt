@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import kotlin.math.max
 import kotlin.math.min
 

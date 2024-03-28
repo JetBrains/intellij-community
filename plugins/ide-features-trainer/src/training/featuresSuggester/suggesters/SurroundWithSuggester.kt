@@ -2,7 +2,7 @@ package training.featuresSuggester.suggesters
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import training.featuresSuggester.FeatureSuggesterBundle
 import training.featuresSuggester.NoSuggestion
 import training.featuresSuggester.SuggesterSupport

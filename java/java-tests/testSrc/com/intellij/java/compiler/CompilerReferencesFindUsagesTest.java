@@ -18,7 +18,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PointersKt;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
 @SkipSlowTestLocally
 public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
@@ -113,8 +114,8 @@ public class CompilerReferencesFindUsagesTest extends DaemonAnalyzerTestCase {
   private void assertSameUsageAfterRebuild(PsiElement target) {
     PsiReference ref1 = assertOneElement(searchReferences(target));
 
-    SmartPsiElementPointer<PsiElement> pRef = PointersKt.createSmartPointer(ref1.getElement());
-    SmartPsiElementPointer<PsiElement> pTarget = PointersKt.createSmartPointer(target);
+    SmartPsiElementPointer<PsiElement> pRef = createSmartPointer(ref1.getElement());
+    SmartPsiElementPointer<PsiElement> pTarget = createSmartPointer(target);
     myCompilerTester.rebuild();
 
     PsiReference ref2 = assertOneElement(searchReferences(pTarget.getElement()));

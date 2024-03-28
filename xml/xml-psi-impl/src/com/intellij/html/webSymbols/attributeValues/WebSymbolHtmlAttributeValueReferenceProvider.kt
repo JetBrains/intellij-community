@@ -3,9 +3,9 @@ package com.intellij.html.webSymbols.attributeValues
 import com.intellij.html.webSymbols.attributes.WebSymbolAttributeDescriptor
 import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbolNameSegment

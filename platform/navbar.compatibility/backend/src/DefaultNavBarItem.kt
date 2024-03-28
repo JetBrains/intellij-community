@@ -30,7 +30,6 @@ import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.pom.Navigatable
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.*
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.*
 import com.intellij.util.IconUtil

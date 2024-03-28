@@ -1,6 +1,6 @@
 package org.intellij.plugins.markdown.model
 
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.JUnitSoftAssertions

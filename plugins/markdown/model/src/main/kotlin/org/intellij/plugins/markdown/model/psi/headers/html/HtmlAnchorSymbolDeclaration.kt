@@ -4,8 +4,8 @@ import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.startOffset
 import com.intellij.psi.xml.XmlAttributeValue
-import com.intellij.refactoring.suggested.startOffset
 
 internal class HtmlAnchorSymbolDeclaration(
   private val element: XmlAttributeValue,

@@ -9,6 +9,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 import com.intellij.util.asSafely
 import com.intellij.util.keyFMap.KeyFMap
 import org.jetbrains.annotations.Nls
+import com.intellij.psi.createSmartPointer
 
 private var nextFeatureUsageId = 0
 

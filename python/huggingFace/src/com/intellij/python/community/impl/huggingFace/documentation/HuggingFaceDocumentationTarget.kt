@@ -8,6 +8,7 @@ import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
@@ -18,9 +19,7 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsC
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.jetbrains.python.psi.PyTargetExpression
-
 
 internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement) : DocumentationTarget {
 
