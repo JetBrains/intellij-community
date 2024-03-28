@@ -7,6 +7,7 @@ import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
@@ -144,65 +145,53 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     var storageChanged = false
     modulesToCheck.forEach { (moduleEntity, sourceRoot), pathToPackages ->
       val isTestModule = sourceRoot.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
+
+      fun generateForSpecificModule(processAbstractTypes: Boolean, beforeGeneration: (ModifiableRootModel) -> Unit,
+                                    afterGeneration: (ModifiableRootModel) -> Unit) {
+        runWriteActionAndWait {
+          val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+          beforeGeneration(modifiableModel)
+          modifiableModel.commit()
+        }
+        val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, processAbstractTypes, false, isTestModule)
+        storageChanged = storageChanged || projectModelUpdateResult
+        runWriteActionAndWait {
+          val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+          afterGeneration(modifiableModel)
+          modifiableModel.commit()
+        }
+      }
+
       when (moduleEntity.name) {
         "intellij.platform.workspace.storage"-> {
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
-            removeWorkspaceStorageLibrary(modifiableModel)
-            modifiableModel.commit()
-          }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, true, isTestModule)
-          storageChanged = storageChanged || projectModelUpdateResult
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
-            addWorkspaceStorageLibrary(modifiableModel)
-            modifiableModel.commit()
-          }
+          generateForSpecificModule(false, { modifiableModel -> removeWorkspaceStorageLibrary(modifiableModel) },
+                                    { modifiableModel -> addWorkspaceStorageLibrary(modifiableModel) })
         }
         "intellij.platform.workspace.jps"-> {
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
-            removeWorkspaceJpsEntitiesLibrary(modifiableModel)
-            modifiableModel.commit()
-          }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
-          storageChanged = storageChanged || projectModelUpdateResult
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
-            addWorkspaceJpsEntitiesLibrary(modifiableModel)
-            modifiableModel.commit()
-          }
+          generateForSpecificModule(false, { modifiableModel -> removeWorkspaceJpsEntitiesLibrary(modifiableModel) },
+                                    { modifiableModel -> addWorkspaceJpsEntitiesLibrary(modifiableModel) })
         }
         "intellij.javaee.platform", "intellij.javaee.ejb", "intellij.javaee.web" -> {
           // For these modules we need to have reference to `ConfigFileItem` thus we added its module as library
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
-            addIntellijJavaLibrary(modifiableModel)
-            modifiableModel.commit()
-          }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
-          storageChanged = storageChanged || projectModelUpdateResult
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
-            removeIntellijJavaLibrary(modifiableModel)
-            modifiableModel.commit()
-          }
+          generateForSpecificModule(false, { modifiableModel -> addIntellijJavaLibrary(modifiableModel) },
+                                    { modifiableModel -> removeIntellijJavaLibrary(modifiableModel) })
+        }
+        "intellij.rider.plugins.unity" -> {
+          generateForSpecificModule(true, { modifiableModel -> addRiderPluginLibrary(modifiableModel) },
+                                    { modifiableModel -> removeRiderPluginLibrary(modifiableModel) })
+        }
+        "intellij.rider.rdclient.dotnet" -> {
+          generateForSpecificModule(true, { modifiableModel -> addRiderModelLibrary(modifiableModel) },
+                                    { modifiableModel -> removeRiderModelLibrary(modifiableModel) })
         }
         "kotlin.base.facet" -> {
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+          generateForSpecificModule(false, { modifiableModel ->
             addIntellijJavaLibrary(modifiableModel)
             addKotlinJpsCommonJar(modifiableModel)
-            modifiableModel.commit()
-          }
-          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false, isTestModule)
-          storageChanged = storageChanged || projectModelUpdateResult
-          runWriteActionAndWait {
-            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+          }, { modifiableModel ->
             removeIntellijJavaLibrary(modifiableModel)
             removeKotlinJpsCommonJar(modifiableModel)
-            modifiableModel.commit()
-          }
+          })
         }
         in modulesWithAbstractTypes -> {
           val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false, isTestModule)

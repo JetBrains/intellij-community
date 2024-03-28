@@ -223,6 +223,22 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
       addJarDirectoryBaseOnClass(model, "kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
     }
 
+    internal fun addRiderPluginLibrary(model: ModifiableRootModel) {
+      addLibraryBaseOnPath(model, "rider-plugin", "intellij.rider.plugins.unity")
+    }
+
+    internal fun removeRiderPluginLibrary(model: ModifiableRootModel) {
+      removeLibraryByName(model, "rider-plugin")
+    }
+
+    internal fun addRiderModelLibrary(model: ModifiableRootModel) {
+      addLibraryBaseOnPath(model, "rider-model", "intellij.rider.model.generated")
+    }
+
+    internal fun removeRiderModelLibrary(model: ModifiableRootModel) {
+      removeLibraryByName(model, "rider-model")
+    }
+
     private fun removeLibraryByName(model: ModifiableRootModel, libraryName: String) {
       val moduleLibraryTable = model.moduleLibraryTable
       val modifiableModel = model.moduleLibraryTable.modifiableModel
@@ -232,25 +248,45 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
 
     private fun addLibraryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
-      addDependencyBaseOnClass(model, libraryName, baseClass) {
+      addDependencyFromCompilationOutput(model, libraryName, baseClass) {
+        addRoot(it, OrderRootType.CLASSES)
+      }
+    }
+
+    private fun addLibraryBaseOnPath(model: ModifiableRootModel, libraryName: String, classpath: String) {
+      addDependencyFromCompilationOutput(model, libraryName, classpath) {
         addRoot(it, OrderRootType.CLASSES)
       }
     }
 
     private fun addJarDirectoryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
-      addDependencyBaseOnClass(model, libraryName, baseClass) {
+      addDependencyFromCompilationOutput(model, libraryName, baseClass) {
         addJarDirectory(it, true)
       }
     }
 
-    private fun addDependencyBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>, addDependency: ModifiableModel.(VirtualFile) -> Unit) {
+    private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>, addDependency: ModifiableModel.(VirtualFile) -> Unit) {
       val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
       val modifiableModel = library.modifiableModel
-      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(baseClass))
-      val workspaceStorageClassesRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(workspaceStorageClassesPath)
-      assertNotNull("Cannot find $workspaceStorageClassesPath", workspaceStorageClassesRoot)
-      VfsUtil.markDirtyAndRefresh(false, true, true, workspaceStorageClassesRoot)
-      modifiableModel.addDependency(workspaceStorageClassesRoot!!)
+      val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(baseClass))
+      val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
+      assertNotNull("Cannot find $classesPathUrl", classesRootVirtualFile)
+      VfsUtil.markDirtyAndRefresh(false, true, true, classesRootVirtualFile)
+      modifiableModel.addDependency(classesRootVirtualFile!!)
+      modifiableModel.commit()
+    }
+
+    private fun addDependencyFromCompilationOutput(model: ModifiableRootModel, libraryName: String, classpathFolder: String, addDependency: ModifiableModel.(VirtualFile) -> Unit) {
+      val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
+      val modifiableModel = library.modifiableModel
+
+      val classesPathUrl = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+      val classesRootVirtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(classesPathUrl)
+
+      val classpathFolderVirtualFile = classesRootVirtualFile?.parent?.children?.find { it.name == classpathFolder }
+      assertNotNull("Cannot find $classpathFolder in $classesRootVirtualFile. Possibly, project was partially compiled", classpathFolderVirtualFile)
+      VfsUtil.markDirtyAndRefresh(false, true, true, classpathFolderVirtualFile)
+      modifiableModel.addDependency(classpathFolderVirtualFile!!)
       modifiableModel.commit()
     }
   }
