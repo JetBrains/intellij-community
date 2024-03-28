@@ -9,7 +9,7 @@ import org.assertj.swing.core.Robot
 import org.assertj.swing.fixture.JTreeFixture
 import javax.swing.JTree
 
-class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
+open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixture(robot, component) {
   private val cellReader = JTreeTextCellReader()
 
   init {
@@ -34,5 +34,9 @@ class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeFixtur
       result.add(TreePathToRow(path.filterNotNull().filter { it.isNotEmpty() }, index))
     }
     return result
+  }
+
+  fun expandAll(timeoutMs: Int) {
+    TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
   }
 }

@@ -31,16 +31,17 @@ internal class RobotService {
     return TextParser.parseComponent(component, TextToKeyCache).let { TextDataList().apply { addAll(it) } }
   }
 
-  fun saveHierarchy(path: String) {
+  fun saveHierarchy(folderPath: String, fileName: String = "ui.html") {
     val html = xpathSearcher.modelCreator.create(null).convertToHtml()
-    Paths.get(path).resolve("ui.html").toFile().writeText(html)
+    Paths.get(folderPath).resolve(fileName).toFile().writeText(html)
 
     staticFiles.forEach { staticFilePath ->
       this::class.java.classLoader.getResource(staticFilePath)?.let { resource ->
-        Paths.get(path).resolve(staticFilePath).toFile().apply { resolve("..").mkdirs() }.writeBytes(resource.readBytes())
+        Paths.get(folderPath).resolve(staticFilePath).toFile().apply { resolve("..").mkdirs() }.writeBytes(resource.readBytes())
       }
     }
   }
+
   private val staticFiles = listOf(
     "static/scripts.js",
     "static/styles.css",

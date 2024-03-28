@@ -190,6 +190,14 @@ internal class SmoothRobot : Robot {
     basicRobot.pressKey(p0)
   }
 
+  fun doubleKey(p0:Int) {
+    fastRobot.keyPress(p0)
+    fastRobot.keyRelease(p0)
+    Thread.sleep(10)
+    fastRobot.keyPress(p0)
+    fastRobot.keyRelease(p0)
+  }
+
   override fun settings(): Settings = basicRobot.settings()
 
   override fun enterText(text: String) {
@@ -458,5 +466,18 @@ internal class SmoothRobot : Robot {
       }
     }
     return unified
+  }
+
+  fun selectAndDrag(component: Component, from: Point, to: Point, delayMs: Int) {
+    moveMouse(component, from)
+
+    click(component, from)
+    pressMouse(RemoteMouseButton.LEFT)
+
+    Thread.sleep(delayMs.toLong())
+    moveMouse(component, to)
+
+    Thread.sleep(delayMs.toLong())
+    releaseMouse(RemoteMouseButton.LEFT)
   }
 }

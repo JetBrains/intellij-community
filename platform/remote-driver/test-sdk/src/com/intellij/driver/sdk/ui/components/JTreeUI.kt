@@ -17,7 +17,8 @@ fun Finder.tree(@Language("xpath") xpath: String? = null) = x(xpath ?: Locators.
                                                               JTreeUiComponent::class.java)
 
 open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
-  protected val fixture by lazy { driver.new(JTreeFixtureRef::class, robotService.robot, component) }
+  protected val fixture: JTreeFixtureRef
+    get() = driver.new(JTreeFixtureRef::class, robotService.robot, component)
 
   fun clickRow(row: Int) = fixture.clickRow(row)
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
@@ -41,6 +42,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     findExpandedPath(*path, fullMatch = fullMatch)?.let {
       doubleClickRow(it.row)
     } ?: throw PathNotFoundException(path.toList())
+  }
+
+  fun expandAll(timeoutMs: Int) {
+    fixture.expandAll(timeoutMs)
   }
 
   private fun expandPath(vararg path: String, fullMatch: Boolean = true) = waitFor(10.seconds, errorMessage = "Failed find ${path.toList()}") {
@@ -107,4 +112,5 @@ interface JTreeFixtureRef : Component {
   fun valueAt(path: String): String
   fun collectExpandedPaths(): TreePathToRowList
   fun selectRow(row: Int): JTreeFixtureRef?
+  fun expandAll(timeoutMs: Int)
 }

@@ -168,4 +168,14 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun hasFocus(): Boolean {
     return component.isFocusOwner()
   }
+
+  fun mousePressMoveRelease(from: Point, to: Point) {
+    robotService.robot.apply {
+      moveMouse(component, from)
+      pressMouse(RemoteMouseButton.LEFT)
+
+      moveMouse(component, to)
+      releaseMouse(RemoteMouseButton.LEFT)
+    }
+  }
 }

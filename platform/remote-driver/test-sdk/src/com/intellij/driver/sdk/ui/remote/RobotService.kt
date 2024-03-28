@@ -13,5 +13,5 @@ interface RobotService {
   fun findAll(@Language("xpath") xpath: String): List<Component>
   fun findAll(@Language("xpath") xpath: String, component: Component): List<Component>
   fun findAllText(component: Component): TextDataList
-  fun saveHierarchy(path: String)
+  fun saveHierarchy(folderPath: String, fileName: String = "ui")
 }

@@ -18,6 +18,7 @@ class JComboBoxUiComponent(data: ComponentData) : UiComponent(data) {
     }
     fixture.select(fixture.listValues().single { it.contains(text) })
   }
+  fun listValues() = fixture.listValues()
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JComboBoxTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)

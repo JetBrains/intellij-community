@@ -23,6 +23,10 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   private val caretPosition
     get() = editor.getCaretModel().getLogicalPosition()
 
+  fun selectAndDrag(from: Point, to: Point, delayMs: Int) {
+    robotService.robot.selectAndDrag(component, to, from, delayMs)
+  }
+
   var text: String
     get() = document.getText()
     set(value) {
