@@ -7,6 +7,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBSwingUtilities;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -825,6 +826,11 @@ public class Splitter extends JPanel implements Splittable {
     @Override
     public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
       mySwitchOrientationEnabled = switchOrientationEnabled;
+    }
+
+    @Override
+    protected Graphics getComponentGraphics(Graphics g) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
     }
   }
 }
