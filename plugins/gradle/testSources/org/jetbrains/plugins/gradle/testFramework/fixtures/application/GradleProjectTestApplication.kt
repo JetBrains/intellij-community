@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
  * orchestrate Gradle project with different configuration. These project instances are shared between tests.
  * They can be closed and opened at any time between the tests.
  *
+ * @see GradleTestApplication
  * @see com.intellij.testFramework.junit5.TestApplication
  */
 @Target(AnnotationTarget.CLASS)

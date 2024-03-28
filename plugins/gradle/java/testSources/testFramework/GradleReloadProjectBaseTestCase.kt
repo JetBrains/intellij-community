@@ -7,19 +7,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.vfs.createDirectory
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixture.GradleExecutionTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 
-@TestApplication
+@GradleTestApplication
 abstract class GradleReloadProjectBaseTestCase {
 
   private lateinit var testInfo: TestInfo

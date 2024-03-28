@@ -8,15 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.junit5.TestApplication
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 
-@TestApplication
+@GradleTestApplication
 abstract class GradleBaseTestCase {
 
   private lateinit var testDisposable: Disposable

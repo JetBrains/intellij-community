@@ -23,7 +23,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ExternalSystemListenerLeakTracker
 import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
@@ -35,7 +34,6 @@ class GradleTestFixtureImpl(
   override val gradleVersion: GradleVersion,
 ) : GradleTestFixture {
 
-  private lateinit var listenerLeakTracker: ExternalSystemListenerLeakTracker
   private lateinit var reloadLeakTracker: OperationLeakTracker
 
   private lateinit var testDisposable: Disposable
@@ -48,9 +46,6 @@ class GradleTestFixtureImpl(
   override lateinit var gradleJvm: String
 
   override fun setUp() {
-    listenerLeakTracker = ExternalSystemListenerLeakTracker()
-    listenerLeakTracker.setUp()
-
     reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
     reloadLeakTracker.setUp()
 
@@ -76,8 +71,7 @@ class GradleTestFixtureImpl(
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
-      { reloadLeakTracker.tearDown() },
-      { listenerLeakTracker.tearDown() }
+      { reloadLeakTracker.tearDown() }
     )
   }
 
