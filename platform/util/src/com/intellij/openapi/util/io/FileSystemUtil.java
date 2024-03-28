@@ -37,6 +37,7 @@ public final class FileSystemUtil {
 
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
 
+  // Used in IJPL-841
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
 
   @ApiStatus.Internal
