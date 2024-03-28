@@ -60,6 +60,22 @@ abstract class JKVisitorWithCommentsPrinting : JKVisitor() {
 
     open fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) = visitVariableRaw(forLoopVariable)
 
+    override fun visitDestructuringDeclaration(destructuringDeclaration: JKKtDestructuringDeclaration) {
+        printLeftNonCodeElements(destructuringDeclaration)
+        visitDestructuringDeclarationEntryRaw(destructuringDeclaration)
+        printRightNonCodeElements(destructuringDeclaration)
+    }
+
+    open fun visitDestructuringDeclarationEntryRaw(destructuringDeclaration: JKKtDestructuringDeclaration) = visitTreeElement(destructuringDeclaration)
+
+    override fun visitDestructuringDeclarationEntry(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) {
+        printLeftNonCodeElements(destructuringDeclarationEntry)
+        visitDestructuringDeclarationEntryRaw(destructuringDeclarationEntry)
+        printRightNonCodeElements(destructuringDeclarationEntry)
+    }
+
+    open fun visitDestructuringDeclarationEntryRaw(destructuringDeclarationEntry: JKKtDestructuringDeclarationEntry) = visitTreeElement(destructuringDeclarationEntry)
+
     override fun visitParameter(parameter: JKParameter) {
         printLeftNonCodeElements(parameter)
         visitParameterRaw(parameter)
