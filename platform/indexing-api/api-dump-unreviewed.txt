@@ -240,6 +240,9 @@ c:com.intellij.lang.findUsages.LanguageFindUsages
 - a:getElement():com.intellij.psi.PsiElement
 - a:getOffsetInElement():I
 - s:of(com.intellij.psi.PsiElement,I):com.intellij.model.search.TextOccurrence
+com.intellij.platform.indexing.BinaryFileSourceProvider
+- sf:EP:com.intellij.openapi.extensions.ExtensionPointName
+- a:findSourceFile(com.intellij.psi.PsiBinaryFile):com.intellij.psi.PsiFile
 com.intellij.psi.impl.cache.CacheManager
 - a:getFilesWithWord(java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.psi.PsiFile[]
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.cache.CacheManager

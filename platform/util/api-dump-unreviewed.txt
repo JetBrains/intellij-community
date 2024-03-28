@@ -1973,6 +1973,7 @@ c:com.intellij.openapi.util.text.StringUtil
 - s:isEmptyOrSpaces(java.lang.String):Z
 - s:isEscapedBackslash(java.lang.CharSequence,I,I):Z
 - s:isHexDigit(C):Z
+- s:isJavaIdentifier(java.lang.CharSequence,I,I):Z
 - s:isJavaIdentifier(java.lang.String):Z
 - s:isJavaIdentifierPart(C):Z
 - s:isJavaIdentifierStart(C):Z

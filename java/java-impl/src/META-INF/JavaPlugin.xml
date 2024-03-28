@@ -306,6 +306,8 @@
     <notificationGroup id="Infer Nullity" displayType="TOOL_WINDOW" toolWindowId="Infer Nullity" bundle="messages.JavaBundle" key="dialog.title.infer.nullity"/>
     <notificationGroup id="JDK Arch Check" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.arch.checker"/>
 
+    <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true" description="Index ids from class files instead of source files in JARs" restartRequired="false"/>
+    
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <registryKey key="java.jps.backward.ref.index.builder.fs.case.sensitive"  defaultValue="BY_ROOT"
                  description="Case sensitivity of the project file system for compiler references. Available values: SENSITIVE, INSENSITIVE, BY_OS (Defined by OS or VM options), BY_ROOT (Defined by first root)"/>
@@ -1007,6 +1009,7 @@
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.JavaRainbowVisitor"/>
     <problemHighlightFilter implementation="com.intellij.codeInsight.daemon.JavaProblemHighlightFilter"/>
     <todoIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaTodoIndexer"/>
+    <idIndexer filetype="CLASS" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <idIndexer filetype="JAVA" implementationClass="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexer"/>
     <fileIconPatcher id="javaFileIconPatcher" implementation="com.intellij.ide.JavaFileIconPatcher"/>
     <basicWordSelectionFilter implementation="com.intellij.codeInsight.editorActions.wordSelection.JavaBasicWordSelectionFilter"/>
@@ -1267,6 +1270,7 @@
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterInTextBlockHandler"/>
     <breadcrumbsInfoProvider implementation="com.intellij.lang.java.JavaBreadcrumbsInfoProvider"/>
     <editorFileSwapper implementation="com.intellij.codeEditor.JavaEditorFileSwapper"/>
+    <binaryFileSourceProvider implementation="com.intellij.codeEditor.JavaBinaryFileSourceProvider" />
     <flipCommaIntention.flipper language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaFlipper"/>
     <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinArgumentsContext"/>
     <listSplitJoinContext language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
@@ -2515,8 +2519,8 @@
 
     <pluginSuggestionProvider implementation="com.intellij.ide.ant.AntSuggestionProvider"/>
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
-      <statistics.counterUsagesCollector
-              implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -2550,6 +2554,8 @@
   <applicationListeners>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.psi.impl.cache.impl.idCache.JavaIdIndexRegistryValueListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener" />
   </applicationListeners>
 
   <projectListeners>

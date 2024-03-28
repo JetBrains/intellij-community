@@ -11,6 +11,7 @@ import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
+import kotlin.jvm.internal.Ref;
 import org.jetbrains.annotations.*;
 import org.jetbrains.annotations.ApiStatus.NonExtendable;
 
@@ -2275,6 +2276,9 @@ public class StringUtil {
     return cp >= '0' && cp <= '9' || cp >= 'a' && cp <= 'z' || cp >= 'A' && cp <= 'Z' || Character.isJavaIdentifierPart(cp);
   }
 
+  /**
+   * @return true iff the string is a valid java identifier (according to JLS 3.8)
+   */
   @Contract(pure = true)
   public static boolean isJavaIdentifier(@NotNull String text) {
     int len = text.length();
@@ -2287,6 +2291,58 @@ public class StringUtil {
       point = text.codePointAt(i);
       if (!isJavaIdentifierPart(point)) return false;
       i += Character.charCount(point);
+    }
+    return true;
+  }
+
+  /**
+   * Checks if the char sequence slice is a valid java identifier (according to JLS 3.8)
+   * @return true exactly iff {@code isJavaIdentifier(str.subSequence(startIncl, endExcl)) == true }
+   */
+  public static boolean isJavaIdentifier(@NotNull CharSequence str, int startIncl, int endExcl) {
+    if (str.length() == 0) return false;
+    Ref.BooleanRef isFirst = new Ref.BooleanRef();
+    isFirst.element = true;
+    return processCodePoints(str, startIncl, endExcl, codePoint -> {
+      if (isFirst.element) {
+        isFirst.element = false;
+        if (!isJavaIdentifierStart(codePoint)) {
+          return false;
+        }
+      } else {
+        if (!isJavaIdentifierPart(codePoint)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  private interface CodePointProcessor {
+    /**
+     * @return true iff should continue
+     */
+    boolean acceptCodePoint(int codePoint);
+  }
+
+
+  private static boolean processCodePoints(@NotNull CharSequence str, int startIncl, int endExcl, CodePointProcessor processor) {
+    int i = startIncl;
+    while (i < endExcl) {
+      char c1 = str.charAt(i++);
+      if (!Character.isHighSurrogate(c1) || i >= endExcl) {
+        if (!processor.acceptCodePoint(c1)) return false;
+      }
+      else {
+        char c2 = str.charAt(i);
+        if (Character.isLowSurrogate(c2)) {
+          i++;
+          if (!processor.acceptCodePoint(Character.toCodePoint(c1, c2))) return false;
+        }
+        else {
+          if (!processor.acceptCodePoint(c2)) return false;
+        }
+      }
     }
     return true;
   }
