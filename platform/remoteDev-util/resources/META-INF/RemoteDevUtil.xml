@@ -19,7 +19,5 @@
                  description="Specify a positive value to make a client process started from an IDE listen for debug connections on that port."/>
     <registryKey key="rdct.embedded.client.debug.suspend" defaultValue="false" 
                  description="Enable this option to suspend a client process started from an IDE until a debugger connects to it."/>
-    <registryKey key="rdct.launch.embedded.client.from.separate.bundle.on.macos" defaultValue="false"
-                 description="Launches embedded client on macOS from a separate bundle so it's treated as a different application (RDCT-921). Currently causes crashes of JCEF (JBR-6629, JBR-6624)."/>
   </extensions>
 </idea-plugin>

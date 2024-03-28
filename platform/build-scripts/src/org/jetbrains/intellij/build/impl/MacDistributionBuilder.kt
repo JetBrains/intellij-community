@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
-import org.jetbrains.intellij.build.impl.client.generateJetBrainsClientAppBundleForMacOs
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.io.*
 import java.io.File
@@ -253,8 +252,6 @@ class MacDistributionBuilder(override val context: BuildContext,
     val jetBrainsClientContext = createJetBrainsClientContextForLaunchers(context)
     if (jetBrainsClientContext != null) {
       writeMacOsVmOptions(macBinDir, jetBrainsClientContext)
-      generateJetBrainsClientAppBundleForMacOs(macDistDir, arch, jetbrainsClientBuildContext = jetBrainsClientContext,
-                                               mainIdeBuildContext = context)
     }
 
     substitutePlaceholdersInInfoPlist(macDistDir, docTypes, arch, macCustomizer, context)
@@ -531,7 +528,7 @@ private fun writeMacOsVmOptions(distBinDir: Path, context: BuildContext): Path {
   return vmOptionsPath
 }
 
-internal fun substitutePlaceholdersInInfoPlist(
+private fun substitutePlaceholdersInInfoPlist(
   macAppDir: Path,
   docTypes: String?,
   arch: JvmArchitecture,
@@ -630,5 +627,5 @@ internal fun substitutePlaceholdersInInfoPlist(
   }
 }
 
-internal val ProductProperties.targetIcnsFileName: String
+private val ProductProperties.targetIcnsFileName: String
   get() = "$baseFileName.icns"

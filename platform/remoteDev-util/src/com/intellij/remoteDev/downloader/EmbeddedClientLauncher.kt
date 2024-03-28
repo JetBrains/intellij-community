@@ -138,14 +138,8 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
           return null
         }
         
-        val helpers = homePath.resolve("Helpers")
-        //todo locate proper directory if there are several entries
-        val separateClientBundle = if (helpers.isDirectory()) helpers.listDirectoryEntries("*.app").singleOrNull() else null
-        val appPath = 
-          separateClientBundle?.takeIf { Registry.`is`("rdct.launch.embedded.client.from.separate.bundle.on.macos") } ?:
-          homePath.parent.takeIf { it.fileName.toString().endsWith(".app") }
-        
-        if (appPath != null) {
+        val appPath = homePath.parent 
+        if (appPath != null && appPath.name.endsWith(".app")) {
           CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
         }
         else {
