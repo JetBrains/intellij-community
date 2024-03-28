@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -36,8 +36,7 @@ import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -56,13 +55,11 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -101,12 +98,12 @@ import java.util.function.Predicate;
 @ApiStatus.Internal
 public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextImpl.class);
+
   @SuppressWarnings("StaticNonFinalField")
   @TestOnly
   public static volatile boolean TESTING_VIEW;
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager
-    .getInstance()
-    .getNotificationGroup("Inspection Results");
+
+  public static final String NOTIFICATION_GROUP = "Inspection Results";
 
   private final NotNullLazyValue<? extends ContentManager> myContentManager;
   private volatile InspectionResultsView myView;
@@ -123,17 +120,21 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   protected @NotNull InspectListener getInspectionEventPublisher() {
-    return getProject().getMessageBus().syncPublisher(GlobalInspectionContextEx.INSPECT_TOPIC);
+    return getProject().getMessageBus().syncPublisher(INSPECT_TOPIC);
   }
 
   private @NotNull ContentManager getContentManager() {
     return myContentManager.getValue();
   }
 
-  public void addView(@NotNull InspectionResultsView view,
-                      @NotNull @NlsContexts.TabTitle String title,
-                      boolean isOffline) {
-    LOG.assertTrue(myContent == null, "GlobalInspectionContext is busy under other view now");
+  public void addView(
+    @NotNull InspectionResultsView view,
+    @NotNull @NlsContexts.TabTitle String title,
+    boolean isOffline
+  ) {
+    if (myContent != null) {
+      LOG.error("GlobalInspectionContext is busy under other view: " + myContent.getDisplayName());
+    }
     myView = view;
     if (!isOffline) {
       myView.setUpdating(true);
@@ -160,9 +161,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(getProject());
     ToolWindow toolWindow = toolWindowManager.getToolWindow(ProblemsView.ID);
-    if (toolWindow == null) { // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
-      toolWindow = toolWindowManager.getToolWindow(ToolWindowId.INSPECTION);
-    }
     if (toolWindow != null) {
       view.initAdditionalGearActions(toolWindow);
       toolWindow.activate(null);
@@ -228,6 +226,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   protected @NotNull PerformInBackgroundOption createOption() {
     return new PerformAnalysisInBackgroundOption(getProject());
   }
@@ -248,7 +247,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       .nonBlocking(() -> (oldView == null ? newView : oldView).hasProblems())
       .finishOnUiThread(ModalityState.any(), hasProblems -> {
         if (!hasProblems) {
-          showNoProblemsNotification(scope, newView);
+          showNoProblemNotification(scope, newView);
         }
         else if (newView != null && !newView.isDisposed() && getCurrentScope() != null) {
           addView(newView);
@@ -262,12 +261,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private void showNoProblemsNotification(@NotNull AnalysisScope scope, InspectionResultsView newView) {
+  private void showNoProblemNotification(@NotNull AnalysisScope scope, InspectionResultsView newView) {
     int totalFiles = getStdJobDescriptors().BUILD_GRAPH.getTotalAmount(); // do not use invalidated scope
 
-    var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                                       totalFiles,
-                                                                                       scope.getShortenName()), MessageType.INFO);
+    var notification = new Notification(
+      NOTIFICATION_GROUP,
+      InspectionsBundle.message("inspection.no.problems.message", totalFiles, scope.getShortenName()),
+      NotificationType.INFORMATION);
     if (!scope.isIncludeTestSource()) addRepeatWithTestsAction(scope, notification, () -> doInspections(scope));
     notification.notify(getProject());
 
@@ -324,7 +324,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Map<String, InspectionToolWrapper<?, ?>> map = getInspectionWrappersMap(localTools);
 
     BlockingQueue<VirtualFile> filesToInspect = new ArrayBlockingQueue<>(1000);
-    // use original progress indicator here since we don't want it to cancel on write action start
+    // use the original progress indicator here since we don't want it to cancel on write action start
     ProgressIndicator fileScanningIndicator = new SensitiveProgressWrapper(progressIndicator);
     Future<?> future = startIterateScopeInBackground(scope, fileScanningIndicator, headlessEnvironment, localScopeFiles, filesToInspect);
 
@@ -458,6 +458,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     };
   }
 
+  @SuppressWarnings("deprecation")
   private static void setupCancelOnWriteProgress(@NotNull Disposable disposable, @NotNull ProgressIndicator progressIndicator) {
     // avoid "attach listener"/"write action" race
     ReadAction.run(() -> {
@@ -926,20 +927,21 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return enabledInspectionsProvider.getEnabledTools(file, includeDoNotShow);
   }
 
-
-  public @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
-                                                                                                @NotNull PsiFile file,
-                                                                                                boolean includeDoNotShow) {
+  public @NotNull <T extends @NotNull InspectionToolWrapper<?, ?>> List<T> getWrappersFromTools(
+    @NotNull List<? extends Tools> localTools,
+    @NotNull PsiFile file,
+    boolean includeDoNotShow
+  ) {
     return ContainerUtil.mapNotNull(localTools, tool -> {
-      InspectionToolWrapper<?, ?> enabledTool = tool.getEnabledTool(file, includeDoNotShow);
-      if (enabledTool == null) return null;
-      //noinspection unchecked
-      return (T)enabledTool;
+      @SuppressWarnings({"unchecked", "DataFlowIssue"}) T enabledTool = (T)tool.getEnabledTool(file, includeDoNotShow);
+      return enabledTool;
     });
   }
 
-  private @NotNull ProblemDescriptionsProcessor getProblemDescriptionProcessor(@NotNull GlobalInspectionToolWrapper toolWrapper,
-                                                                               @NotNull Map<String, InspectionToolWrapper<?, ?>> wrappersMap) {
+  private @NotNull ProblemDescriptionsProcessor getProblemDescriptionProcessor(
+    @NotNull GlobalInspectionToolWrapper toolWrapper,
+    @NotNull Map<String, InspectionToolWrapper<?, ?>> wrappersMap
+  ) {
     return new ProblemDescriptionsProcessor() {
       @Override
       public void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
@@ -1028,13 +1030,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   @Override
-  public void codeCleanup(@NotNull AnalysisScope scope,
-                          @NotNull InspectionProfile profile,
-                          @Nullable String commandName,
-                          @Nullable Runnable postRunnable,
-                          boolean modal,
-                          @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix) {
-    String title = LangBundle.message("progress.title.inspect.code", profile.getName());
+  @SuppressWarnings("LoggingSimilarMessage")
+  public void codeCleanup(
+    @NotNull AnalysisScope scope,
+    @NotNull InspectionProfile profile,
+    @Nullable String commandName,
+    @Nullable Runnable postRunnable,
+    boolean modal,
+    @NotNull Predicate<? super ProblemDescriptor> shouldApplyFix
+  ) {
+    @SuppressWarnings("DialogTitleCapitalization") String title = LangBundle.message("progress.title.inspect.code", profile.getName());
     if (LOG.isDebugEnabled()) {
       LOG.debug("Starting code cleanup");
     }
@@ -1268,13 +1273,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       }
 
       if (commandName != null) {
-        var notification = NOTIFICATION_GROUP.createNotification(InspectionsBundle.message("inspection.no.problems.message",
-                                                                                           scope.getFileCount(),
-                                                                                           scope.getDisplayName()), MessageType.INFO);
+        var notification = new Notification(
+          NOTIFICATION_GROUP,
+          InspectionsBundle.message("inspection.no.problems.message", scope.getFileCount(), scope.getDisplayName()),
+          NotificationType.INFORMATION);
         if (!scope.isIncludeTestSource()) {
-          addRepeatWithTestsAction(scope, notification,
-                                   () -> codeCleanup(scope, profile, commandName, postRunnable, modal,
-                                                     shouldApplyFix));
+          addRepeatWithTestsAction(scope, notification, () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix));
         }
         notification.notify(getProject());
       }
@@ -1296,9 +1300,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
   }
 
-  private static void addRepeatWithTestsAction(@NotNull AnalysisScope scope,
-                                               @NotNull Notification notification,
-                                               @NotNull Runnable analysisRepeater) {
+  @SuppressWarnings("IdentifierGrammar")
+  private static void addRepeatWithTestsAction(
+    @NotNull AnalysisScope scope,
+    @NotNull Notification notification,
+    @NotNull Runnable analysisRepeater
+  ) {
     notification.addAction(new NotificationAction(InspectionsBundle.message("inspection.no.problems.repeat.with.tests")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
