@@ -1,4 +1,4 @@
 def func():
-    var: [object]
+    var: [str]
     (var) = 'spam'
     var

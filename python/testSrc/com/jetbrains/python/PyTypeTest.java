@@ -4566,6 +4566,11 @@ public class PyTypeTest extends PyTestCase {
              expr = c.get()""");
   }
 
+  // PY-28076
+  public void testAssignmentParens() {
+    doTest("int", "((expr)) = 42");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
