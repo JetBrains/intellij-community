@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -103,8 +104,16 @@ abstract class LineStatusMarkerRenderer internal constructor(
       scheduleValidateHighlighter()
     }
 
-    repaintGutter()
-    updateErrorStripeHighlighters()
+    try {
+      repaintGutter()
+      updateErrorStripeHighlighters()
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      throw RuntimeException("Error in $this", e)
+    }
   }
 
   private fun repaintGutter() {
