@@ -510,10 +510,11 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     else if (is("ide.tree.experimental.preferred.width", true)) {
       Rectangle paintBounds = tree.getVisibleRect();
       Insets insets = tree.getInsets();
+      int visibleRowCount = tree.getVisibleRowCount();
       if (paintBounds.isEmpty()) {
         // no valid bounds yet, fall back to something that will work at least, mimic DefaultTreeUI
         paintBounds.width = 1 + insets.left + insets.right;
-        paintBounds.height = tree.getRowHeight() * tree.getVisibleRowCount() + insets.top + insets.bottom;
+        paintBounds.height = tree.getRowHeight() * visibleRowCount + insets.top + insets.bottom;
       }
       JScrollPane pane = UIUtil.getParentOfType(JScrollPane.class, tree);
       if (pane != null) {
@@ -529,6 +530,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
         Rectangle buffer = new Rectangle();
         int maxPaintX = paintBounds.x + paintBounds.width;
         int maxPaintY = paintBounds.y + paintBounds.height;
+        int rowsUsed = 0;
         for (; path != null; path = cache.getPathForRow(++row)) {
           Rectangle bounds = cache.getBounds(path, buffer);
           if (bounds == null) {
@@ -537,7 +539,13 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
             continue;
           }
           width = Math.max(width, bounds.x + bounds.width);
-          if ((bounds.y + bounds.height) >= maxPaintY) break;
+          ++rowsUsed;
+          if (
+            (bounds.y + bounds.height) >= maxPaintY &&
+            (visibleRowCount <= 0 || rowsUsed >= visibleRowCount)
+          ) {
+            break;
+          }
         }
         width += insets.left + insets.right;
         if (width < maxPaintX) {
