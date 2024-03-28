@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.permanent
 
 import com.intellij.vcs.log.graph.api.GraphLayout
@@ -22,6 +22,6 @@ class GraphLayoutImpl(layoutIndex: IntArray,
 
   private fun getHeadOrder(layoutIndex: Int): Int {
     val i = Arrays.binarySearch(startLayoutIndexForHead, layoutIndex)
-    return if (i < 0) max(0.0, (-i - 2).toDouble()).toInt() else i
+    return if (i < 0) max(0, (-i - 2)) else i
   }
 }
