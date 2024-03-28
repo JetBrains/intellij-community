@@ -25,7 +25,7 @@ import java.nio.charset.Charset;
 public interface AirContentRevision {
   boolean isBinary();
 
-  @Nullable
+  @NotNull
   String getContentAsString() throws VcsException;
 
   byte @Nullable [] getContentAsBytes() throws VcsException;
