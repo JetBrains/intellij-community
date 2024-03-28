@@ -42,12 +42,14 @@ class WizardServiceTest : StartupWizardService {
 class ThemeServiceImpl : ThemeService {
 
   private var vs: @NlsSafe String = "Visual Studio"
+  private var vsa: @NlsSafe String = "Visual Assist"
   private var rider: @NlsSafe String = "Rider"
   private var IDEA: @NlsSafe String = "IDEA"
 
   private val map = mapOf(
-    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews_stub/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
     vs to WizardScheme(vs, vs, IconLoader.getIcon("wizardPreviews_stub/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
+    rider to WizardScheme(rider, rider, IconLoader.getIcon("wizardPreviews_stub/rider.png", this.javaClass), JBColor(0xFFFFFF, 0x262626)),
+    vsa to WizardScheme(vsa, vsa, IconLoader.getIcon("wizardPreviews_stub/vs.png", this.javaClass), JBColor(0xFFFFFF, 0x1E1E1E)),
     IDEA to WizardScheme(IDEA, IDEA, IconLoader.getIcon("wizardPreviews_stub/ij.png", this.javaClass), JBColor(0xFFFFFF, 0x2B2B2B))
   )
 

@@ -68,7 +68,7 @@ class SchemePane(val scheme: WizardScheme) {
 
       add(JLabel(scheme.name).apply {
         font = JBFont.label().asBold()
-        border = JBUI.Borders.empty(13, 0, 10, 0)
+        border = JBUI.Borders.empty(9, 0, 5, 0)
       }, gbc)
 
       gbc.gridy = 1

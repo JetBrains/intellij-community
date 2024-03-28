@@ -11,8 +11,10 @@ import com.intellij.ide.startup.importSettings.data.ThemeService
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
@@ -36,6 +38,7 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private var activeScheme: SchemePane
 
   private val buttonGroup = ButtonGroup()
+  private lateinit var schemePreview: SchemePreview
 
   init {
 
@@ -61,10 +64,12 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       pages.add(pane)
       schemesPane.add(pane.pane, gbc)
       buttonGroup.add(pane.jRadioButton)
+      schemePreview = SchemePreview(pane.scheme)
       pane.jRadioButton.addActionListener {
         activePane(pane)
       }
     }
+
 
     val centralPane = JPanel(BorderLayout(0, 0)).apply parentPanel@{
       val pane = panel {
@@ -91,8 +96,13 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
         }
       }
 
-      add(pane, BorderLayout.NORTH)
-      add(schemesPane, BorderLayout.CENTER)
+      add(JPanel(VerticalLayout(0)).apply {
+        add(pane)
+        add(schemesPane)
+        schemesPane.preferredSize = JBDimension(schemesPane.preferredSize.width, 93)
+      }, BorderLayout.NORTH)
+
+      add(schemePreview.pane, BorderLayout.CENTER)
 
       border = UiUtils.CARD_BORDER
     }
@@ -126,6 +136,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     activeScheme.active = false
     activeScheme = schemePane
     activeScheme.active = true
+
+    schemePreview.scheme = schemePane.scheme
 
     service.updateScheme(schemePane.scheme.id)
   }

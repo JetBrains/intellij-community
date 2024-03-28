@@ -2,6 +2,8 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ui.JBColor
+import com.intellij.ui.util.height
+import com.intellij.ui.util.width
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import java.awt.*
@@ -37,7 +39,10 @@ class RoundedPanel private constructor(unscaledRadius: Int = RADIUS) : JPanel(Bo
     override fun paintComponent(g: Graphics) {
       val g2d = g as Graphics2D
       val config = GraphicsUtil.setupAAPainting(g)
-      g2d.clip(RoundRectangle2D.Double(0.0, 0.0, width.toDouble(), height.toDouble(), radius.toDouble(), radius.toDouble()))
+
+      val ins = insets
+
+      g2d.clip(RoundRectangle2D.Double(ins.left.toDouble(), ins.top.toDouble(), (width - ins.width).toDouble(), (height - ins.height).toDouble(), radius.toDouble(), radius.toDouble()))
       super.paintComponent(g2d)
 
       config.restore()
@@ -59,16 +64,16 @@ open class RoundedBorder(unscaledAreaThickness: Int,
     g as Graphics2D
 
     val config = GraphicsUtil.setupAAPainting(g)
-    val area = createArea(x, y, width, height, arcSize, 0.0)
-
-    val bkgArea = createArea(x, y, width, height, arcSize, thickness.toDouble()/2)
 
     g.color = backgroundColor()
-    g.fill(bkgArea)
+    g.fillRect(x, y, width, height)
 
+    val gap = max(areaThickness - thickness, 0).toDouble()
+
+    val area = createArea(x, y, width, height, arcSize, gap)
 
     g.color = color
-    val innerArea = createArea(x, y, width, height, arcSize, thickness.toDouble())
+    val innerArea = createArea(x, y, width, height, arcSize, areaThickness.toDouble())
 
     area.subtract(innerArea)
     g.fill(area)
@@ -79,8 +84,8 @@ open class RoundedBorder(unscaledAreaThickness: Int,
   private fun createArea(x: Int, y: Int, width: Int, height: Int, arcSize: Int, th: Double): Area {
     val innerArc = max((arcSize - th), 0.0).toInt()
     return Area(RoundRectangle2D.Double((x + th), (y + th),
-                                   (width - 2 * th), (height - 2 * th),
-                                   innerArc.toDouble(), innerArc.toDouble()))
+                                        (width - (2 * th)), (height - (2 * th)),
+                                        innerArc.toDouble(), innerArc.toDouble()))
   }
 
   override fun getBorderInsets(c: Component?): Insets {

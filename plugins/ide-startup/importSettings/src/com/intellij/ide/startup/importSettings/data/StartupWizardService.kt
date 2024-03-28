@@ -82,7 +82,8 @@ data class WizardScheme (
   val id: String,
   val name: @Nls String,
   val icon: Icon,
-  val backgroundColor: Color
+  val backgroundColor: Color,
+  val previewIcon: Icon? = null,
   )
 
 interface PluginService {
