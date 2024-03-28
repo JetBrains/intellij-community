@@ -192,20 +192,17 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
                 ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
 
         fun eraseTypeArguments(type: KotlinType): KotlinType {
-            val erasedArguments = type.arguments.mapNotNull {
-                val upperBound = upperBoundIfTypeParameter(it.type) ?: return@mapNotNull null
-                it.replaceType(upperBound)
+            val erasedArguments = type.arguments.map {
+                val erasedType = upperBoundIfTypeParameter(it.type) ?: eraseTypeArguments(it.type)
+                if (it.isStarProjection) it else it.replaceType(erasedType)
             }
-            if (erasedArguments.size == type.arguments.size) {
-                return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+            return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
                     type.attributes,
                     type.constructor,
                     erasedArguments,
                     type.isMarkedNullable,
                     type.memberScope
                 )
-            }
-            return type
         }
 
         fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)

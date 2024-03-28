@@ -1640,6 +1640,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
             }
 
+            @TestMetadata("nestedGenerics.kt")
+            public void testNestedGenerics() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/nestedGenerics.kt");
+            }
+
             @TestMetadata("nestedInlineArguments.kt")
             public void testNestedInlineArguments() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/nestedInlineArguments.kt");
