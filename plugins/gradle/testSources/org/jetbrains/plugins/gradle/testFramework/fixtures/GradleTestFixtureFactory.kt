@@ -30,16 +30,6 @@ interface GradleTestFixtureFactory {
     configure: FileTestFixture.Builder.() -> Unit
   ): GradleProjectTestFixture
 
-  fun createGradleCodeInsightTestFixture(
-    projectName: String,
-    gradleVersion: GradleVersion,
-    configure: FileTestFixture.Builder.() -> Unit
-  ): GradleCodeInsightTestFixture
-
-  fun createGradleCodeInsightTestFixture(
-    gradleProjectTestFixture: GradleProjectTestFixture
-  ): GradleCodeInsightTestFixture
-
   companion object {
     private val ourInstance = GradleTestFixtureFactoryImpl()
 

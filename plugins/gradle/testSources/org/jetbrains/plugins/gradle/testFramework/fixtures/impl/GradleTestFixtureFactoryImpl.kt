@@ -35,18 +35,4 @@ internal class GradleTestFixtureFactoryImpl : GradleTestFixtureFactory {
   ): GradleProjectTestFixture {
     return GradleProjectTestFixtureImpl(projectName, gradleVersion, configure)
   }
-
-  override fun createGradleCodeInsightTestFixture(
-    projectName: String,
-    gradleVersion: GradleVersion,
-    configure: FileTestFixture.Builder.() -> Unit
-  ): GradleCodeInsightTestFixture {
-    return createGradleCodeInsightTestFixture(
-      createGradleProjectTestFixture(projectName, gradleVersion, configure)
-    )
-  }
-
-  override fun createGradleCodeInsightTestFixture(gradleProjectTestFixture: GradleProjectTestFixture): GradleCodeInsightTestFixture {
-    return GradleCodeInsightTestFixtureImpl(gradleProjectTestFixture)
-  }
 }
