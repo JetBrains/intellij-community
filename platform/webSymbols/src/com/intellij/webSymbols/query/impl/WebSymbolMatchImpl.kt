@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query.impl
 
-import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.openapi.project.Project
@@ -15,6 +13,7 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
@@ -141,14 +140,22 @@ internal open class WebSymbolMatchImpl private constructor(
       }
 
   override val searchTarget: WebSymbolSearchTarget?
-    get() = if (nameSegments.filter { it.start != it.end }
-        .takeIf { it.size == 1 }
-        ?.get(0)
-        ?.symbols
-        ?.all { it is SearchTarget || it is SearchTargetSymbol || it.searchTarget != null } == true)
-      WebSymbolSearchTarget.create(this)
-    else
-      null
+    get() = nameSegments.filter { it.start != it.end }
+      .takeIf { it.size == 1 }
+      ?.get(0)
+      ?.symbols
+      ?.takeIf { it.size == 1 }
+      ?.get(0)
+      ?.searchTarget
+
+  override val renameTarget: WebSymbolRenameTarget?
+    get() = nameSegments.filter { it.start != it.end }
+      .takeIf { it.size == 1 }
+      ?.get(0)
+      ?.symbols
+      ?.takeIf { it.size == 1 }
+      ?.get(0)
+      ?.renameTarget
 
   override fun equals(other: Any?): Boolean =
     other is WebSymbolMatch
