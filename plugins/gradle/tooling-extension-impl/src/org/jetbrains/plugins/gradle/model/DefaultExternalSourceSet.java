@@ -37,7 +37,7 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
     name = sourceSet.getName();
     isPreview = sourceSet.isPreview();
-    isPreview = sourceSet.isPreview();
+    javaToolchainHome = sourceSet.getJavaToolchainHome();
     sourceCompatibility = sourceSet.getSourceCompatibility();
     targetCompatibility = sourceSet.getTargetCompatibility();
     artifacts = copyArtifacts(sourceSet.getArtifacts());
