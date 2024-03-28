@@ -55,10 +55,14 @@ object GraphLayoutBuilder {
 
   private fun build(graph: LinearGraph, sortedHeads: IntList): GraphLayoutImpl {
     val layoutIndex = IntArray(graph.nodesCount())
+    val importantHeads = IntArrayList()
 
     var currentLayoutIndex = 1
     for (i in sortedHeads.indices) {
       val head = sortedHeads.getInt(i)
+      if (layoutIndex[head] != 0) continue
+
+      importantHeads.add(head)
 
       walk(head) { currentNode: Int ->
         val firstVisit = layoutIndex[currentNode] == 0
@@ -73,6 +77,6 @@ object GraphLayoutBuilder {
       }
     }
 
-    return GraphLayoutImpl(layoutIndex, sortedHeads)
+    return GraphLayoutImpl(layoutIndex, importantHeads)
   }
 }
