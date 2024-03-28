@@ -111,7 +111,7 @@ internal open class ToggleableScrollBarAnimationBehaviorDecorator(private val de
     if (isOn == null) decoratedBehavior.onThumbHover(hovered)
   }
   override fun onThumbMove() {
-    decoratedBehavior.onThumbMove()
+    if (isOn == null) decoratedBehavior.onThumbMove()
   }
 
   override fun onUninstall() {

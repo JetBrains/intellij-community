@@ -387,7 +387,7 @@ open class JBTabsImpl(
       }
 
       override fun mouseMoved(component: Component, x: Int, y: Int) {
-        toggleScrollBar(isInsideTabsArea(x, y))
+        toggleScrollBar(isInsideTabsArea(x, y) || isScrollBarAdjusting())
       }
 
       override fun mouseExited(component: Component) {
@@ -1848,7 +1848,10 @@ open class JBTabsImpl(
   }
 
   private fun updateTabsOffsetFromScrollBar() {
-    if (!isScrollBarAdjusting()) setRecentlyActive()
+    if (!isScrollBarAdjusting()) {
+      setRecentlyActive()
+      toggleScrollBar(isMouseInsideTabsArea)
+    }
     val currentUnitsOffset = effectiveLayout!!.scrollOffset
     val updatedOffset = scrollBarModel.value
     effectiveLayout!!.scroll(updatedOffset - currentUnitsOffset)
