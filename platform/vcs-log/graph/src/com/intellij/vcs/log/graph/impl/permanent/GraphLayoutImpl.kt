@@ -7,20 +7,20 @@ import it.unimi.dsi.fastutil.ints.IntList
 import java.util.*
 import kotlin.math.max
 
-class GraphLayoutImpl(layoutIndex: IntArray, private val headNodeIndex: IntList) : GraphLayout {
-  private val startLayoutIndexForHead = getLayoutIndexesForHeads(layoutIndex, headNodeIndex)
+class GraphLayoutImpl(layoutIndex: IntArray, private val headNodes: IntList) : GraphLayout {
+  private val layoutIndexForHeadNodes = getLayoutIndexesForHeads(layoutIndex, headNodes)
   private val layoutIndex = CompressedIntList.newInstance(layoutIndex)
 
   override fun getLayoutIndex(nodeIndex: Int) = layoutIndex[nodeIndex]
 
   override fun getOneOfHeadNodeIndex(nodeIndex: Int) = getHeadNodeIndex(getLayoutIndex(nodeIndex))
 
-  private fun getHeadNodeIndex(layoutIndex: Int) = headNodeIndex.getInt(getHeadOrder(layoutIndex))
+  private fun getHeadNodeIndex(layoutIndex: Int) = headNodes.getInt(getHeadOrder(layoutIndex))
 
-  override fun getHeadNodeIndex() = headNodeIndex
+  override fun getHeadNodeIndex() = headNodes
 
   private fun getHeadOrder(layoutIndex: Int): Int {
-    val i = Arrays.binarySearch(startLayoutIndexForHead, layoutIndex)
+    val i = Arrays.binarySearch(layoutIndexForHeadNodes, layoutIndex)
     return if (i < 0) max(0, (-i - 2)) else i
   }
 }
