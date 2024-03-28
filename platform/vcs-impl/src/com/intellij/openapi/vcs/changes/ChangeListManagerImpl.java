@@ -939,6 +939,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   public boolean isFileAffected(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return false;
     synchronized (myDataLock) {
       return myWorker.getStatus(file) != null;
     }
@@ -1129,6 +1130,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   @Nullable
   public Change getChange(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return null;
     return getChange(VcsUtil.getFilePath(file));
   }
 
@@ -1149,6 +1151,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @NotNull
   @Override
   public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return Collections.emptyList();
     synchronized (myDataLock) {
       Change change = myWorker.getChangeForPath(VcsUtil.getFilePath(file));
       if (change == null) return Collections.emptyList();
@@ -1178,6 +1181,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   public boolean isUnversioned(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return false;
     VcsRoot vcsRoot;
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322445, EA-857508")) {
       vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file);
@@ -1200,6 +1204,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   @NotNull
   public FileStatus getStatus(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return FileStatus.NOT_CHANGED;
     return getStatus(VcsUtil.getFilePath(file), file);
   }
 
@@ -1230,6 +1235,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   @NotNull
   public Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
+    if (!dir.isInLocalFileSystem()) return Collections.emptySet();
     return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
@@ -1381,6 +1387,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return false;
     return isIgnoredFile(VcsUtil.getFilePath(file));
   }
 
@@ -1445,6 +1452,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   @Override
   @Nullable
   public String getSwitchedBranch(@NotNull VirtualFile file) {
+    if (!file.isInLocalFileSystem()) return null;
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         return myComposite.getSwitchedFileHolder().getBranchForFile(file);
