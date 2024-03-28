@@ -63,27 +63,18 @@ class ScrollableContentBorder private constructor(
 
     @JvmStatic
     @JvmOverloads
-    fun setup(scrollPane: JScrollPane,
-              side: Side,
-              targetComponent: JComponent = scrollPane) {
+    fun setup(scrollPane: JScrollPane, side: Side, targetComponent: JComponent = scrollPane) {
       setup(scrollPane, setOf(side), targetComponent)
     }
 
     @JvmStatic
     @JvmOverloads
-    fun setup(scrollPane: JScrollPane,
-              sides: Set<Side>,
-              targetComponent: JComponent = scrollPane) {
-
+    fun setup(scrollPane: JScrollPane, sides: Set<Side>, targetComponent: JComponent = scrollPane) {
       ClientProperty.put(scrollPane, TARGET_COMPONENT, WeakReference(targetComponent))
-
-      val borders = sides.associateWith { side -> ScrollableContentBorder(side.toMask()) }
-
+      val borders = installBorders(targetComponent, sides)
       val tracker = ScrollPaneScrolledStateTracker(scrollPane) { scrollPaneState ->
         updateBorderVisibility(targetComponent, borders, scrollPaneState.state)
       }
-
-      targetComponent.border = if (borders.size == 1) borders.values.single() else JBUI.Borders.compound(*borders.values.toTypedArray())
       targetComponent.addPropertyChangeListener("border", object : PropertyChangeListener {
         override fun propertyChange(evt: PropertyChangeEvent?) {
           targetComponent.removePropertyChangeListener("border", this)
@@ -100,11 +91,16 @@ class ScrollableContentBorder private constructor(
 
     @JvmStatic
     fun setup(container: JComponent, sides: Set<Side>) {
-      val borders = sides.associateWith { side -> ScrollableContentBorder(side.toMask()) }
-      container.border = if (borders.size == 1) borders.values.single() else JBUI.Borders.compound(*borders.values.toTypedArray())
+      val borders = installBorders(container, sides)
       ScrollPaneTracker(container, { true }) { tracker ->
         updateScrollPaneStates(container, borders, tracker)
       }
+    }
+
+    private fun installBorders(targetComponent: JComponent, sides: Set<Side>): Map<Side, ScrollableContentBorder> {
+      val borders = sides.associateWith { side -> ScrollableContentBorder(side.toMask()) }
+      targetComponent.border = if (borders.size == 1) borders.values.single() else JBUI.Borders.compound(*borders.values.toTypedArray())
+      return borders
     }
 
     private fun updateScrollPaneStates(
