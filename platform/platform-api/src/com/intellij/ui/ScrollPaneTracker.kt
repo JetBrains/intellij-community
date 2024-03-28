@@ -19,6 +19,11 @@ import javax.swing.JScrollPane
 @Internal
 data class ScrollPaneScrolledState(
   val scrollPane: JScrollPane,
+  val state: ScrolledState,
+)
+
+@Internal
+data class ScrolledState(
   val isHorizontalAtStart: Boolean,
   val isHorizontalAtEnd: Boolean,
   val isVerticalAtStart: Boolean,
@@ -47,7 +52,7 @@ data class ScrollPaneScrolledState(
 class ScrollPaneTracker(
   container: Component,
   private val filter: (JScrollPane) -> Boolean,
-  private val callback: () -> Unit,
+  private val callback: (ScrollPaneTracker) -> Unit,
 ) {
 
   val scrollPaneStates: List<ScrollPaneScrolledState>
@@ -75,9 +80,9 @@ class ScrollPaneTracker(
 
   private fun registerScrollPane(scrollPane: JScrollPane) {
     myTrackers.add(ScrollPaneScrolledStateTracker(scrollPane) {
-      callback()
+      callback(this)
     })
-    callback()
+    callback(this)
   }
 
   private fun unregisterScrollPane(scrollPane: JScrollPane) {
@@ -113,10 +118,12 @@ class ScrollPaneScrolledStateTracker(val scrollPane: JScrollPane, private val ca
 
   var state: ScrollPaneScrolledState = ScrollPaneScrolledState(
     scrollPane,
-    isHorizontalAtStart = true,
-    isHorizontalAtEnd = true,
-    isVerticalAtStart = true,
-    isVerticalAtEnd = true,
+    ScrolledState(
+      isHorizontalAtStart = true,
+      isHorizontalAtEnd = true,
+      isVerticalAtStart = true,
+      isVerticalAtEnd = true,
+    )
   ); private set
 
   private val scrollBarListener = PropertyChangeListener { e ->
@@ -149,10 +156,12 @@ class ScrollPaneScrolledStateTracker(val scrollPane: JScrollPane, private val ca
   private fun fireCallback(fireAnyway: Boolean) {
     val newState = ScrollPaneScrolledState(
       scrollPane,
-      isHorizontalAtStart = horizontalListener.isAtStart,
-      isHorizontalAtEnd = horizontalListener.isAtEnd,
-      isVerticalAtStart = verticalListener.isAtStart,
-      isVerticalAtEnd = verticalListener.isAtEnd,
+      ScrolledState(
+        isHorizontalAtStart = horizontalListener.isAtStart,
+        isHorizontalAtEnd = horizontalListener.isAtEnd,
+        isVerticalAtStart = verticalListener.isAtStart,
+        isVerticalAtEnd = verticalListener.isAtEnd,
+      )
     )
     if (fireAnyway || newState != state) {
       state = newState

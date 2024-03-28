@@ -239,7 +239,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     var newState = false
     for (scrollPaneState in tracker.scrollPaneStates) {
       val scrollPane = scrollPaneState.scrollPane
-      if (isTouchingHeader(scrollPane) && !scrollPaneState.isVerticalAtStart) {
+      if (isTouchingHeader(scrollPane) && !scrollPaneState.state.isVerticalAtStart) {
         newState = true
       }
     }

@@ -69,7 +69,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     });
 
     if (ExperimentalUI.isNewUI()) {
-      myScrollPaneTracker = new ScrollPaneTracker(this, this::isInContent, () -> {
+      myScrollPaneTracker = new ScrollPaneTracker(this, this::isInContent, tracker -> {
         updateScrolledState();
         return Unit.INSTANCE;
       });
@@ -223,7 +223,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     var newState = false;
     for (ScrollPaneScrolledState scrollPaneState : myScrollPaneTracker.getScrollPaneStates()) {
       var scrollPane = scrollPaneState.getScrollPane();
-      boolean scrolled = myVertical ? !scrollPaneState.isVerticalAtStart() : !scrollPaneState.isHorizontalAtStart();
+      boolean scrolled = myVertical ? !scrollPaneState.getState().isVerticalAtStart() : !scrollPaneState.getState().isHorizontalAtStart();
       if (isTouchingToolbar(scrollPane) && scrolled) {
         newState = true;
         break;
