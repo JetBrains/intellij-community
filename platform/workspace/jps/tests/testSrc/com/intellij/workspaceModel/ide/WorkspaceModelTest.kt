@@ -18,13 +18,15 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import junit.framework.Assert.*
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertFalse
 import org.junit.Assert
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertContains
+import kotlin.test.assertTrue
 
 class WorkspaceModelTest {
   companion object {
@@ -54,20 +56,21 @@ class WorkspaceModelTest {
 
   @Test
   fun `async model update`() {
-    val model = WorkspaceModel.getInstance(projectModel.project)
-    val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
-    builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
+    // Run write action on root to prevent parallel tests to affect the workspace model
+    runWriteActionAndWait {
+      val model = WorkspaceModel.getInstance(projectModel.project)
+      val builderSnapshot = (model as WorkspaceModelInternal).getBuilderSnapshot()
+      builderSnapshot.builder addEntity ModuleEntity("MyModule", emptyList(), object : EntitySource {})
 
-    val replacement = builderSnapshot.getStorageReplacement()
+      val replacement = builderSnapshot.getStorageReplacement()
 
-    val updated = runWriteActionAndWait {
-      (model as WorkspaceModelInternal).replaceProjectModel(replacement)
+      val updated = model.replaceProjectModel(replacement)
+
+      assertTrue(updated)
+
+      val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
+      assertEquals("MyModule", moduleEntity.name)
     }
-
-    assertTrue(updated)
-
-    val moduleEntity = WorkspaceModel.getInstance(projectModel.project).currentSnapshot.entities(ModuleEntity::class.java).single()
-    assertEquals("MyModule", moduleEntity.name)
   }
 
   @Test
