@@ -29,10 +29,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
     diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
     invisibleMemberDiagnosticBasedProcessing(MakeVisibleFactory, Errors.INVISIBLE_MEMBER),
 
-    diagnosticBasedProcessing(Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { element: KtDotQualifiedExpression, _ ->
-        val parent = element.parent as? KtImportDirective ?: return@diagnosticBasedProcessing
-        parent.delete()
-    },
     diagnosticBasedProcessing(
         UnsafeCallExclExclFixFactory,
         Errors.UNSAFE_CALL,
