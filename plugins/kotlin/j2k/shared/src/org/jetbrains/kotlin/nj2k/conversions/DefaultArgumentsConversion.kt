@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.nj2k.conversions
 
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.j2k.Nullability
+import org.jetbrains.kotlin.j2k.Nullability.*
 import org.jetbrains.kotlin.load.java.propertyNameByGetMethodName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.*
@@ -15,7 +17,9 @@ import org.jetbrains.kotlin.nj2k.tree.Modality.ABSTRACT
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.*
 import org.jetbrains.kotlin.nj2k.tree.Visibility.INTERNAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
+import org.jetbrains.kotlin.nj2k.types.JKClassType
 import org.jetbrains.kotlin.nj2k.types.JKNoType
+import org.jetbrains.kotlin.nj2k.types.JKType
 
 /**
  * This conversion tries to merge sets of overloaded methods or constructors into a single method/constructor
@@ -142,6 +146,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveCon
         if (calledMethod.parent != method.parent) return false
         if (calledMethod.name.value != method.name.value) return false
         if (calledMethod.returnType.type != method.returnType.type) return false
+
         if (arguments.size <= method.parameters.size) return false
         // `calledMethod` has a varargs parameter or call expression has errors
         if (arguments.size < calledMethod.parameters.size) return false
@@ -153,7 +158,7 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveCon
             val argument = arguments[i].value
 
             if (parameter.name.value != targetParameter.name.value) return false
-            if (parameter.type.type != targetParameter.type.type) return false
+            if (!parameter.type.type.isCompatible(targetParameter.type.type)) return false
             if (argument !is JKFieldAccessExpression || argument.identifier.target != parameter) return false
 
             // parameter default values must be identical
@@ -164,6 +169,21 @@ class DefaultArgumentsConversion(context: NewJ2kConverterContext) : RecursiveCon
         }
 
         return true
+    }
+
+    private fun JKType.isCompatible(other: JKType): Boolean {
+        fun Nullability.isCompatible(other: Nullability): Boolean =
+            // If the source is not-null, target nullability can be anything.
+            // Otherwise, the source may be null, so the target should _not_ be non-null.
+            this == NotNull || other != NotNull
+
+        if (this is JKClassType && other is JKClassType) {
+            return classReference == other.classReference &&
+                    parameters == other.parameters &&
+                    nullability.isCompatible(other.nullability)
+        }
+
+        return this == other
     }
 
     private fun migrateParameterDefaultValues(method: JKMethod, calledMethod: JKMethod) {
