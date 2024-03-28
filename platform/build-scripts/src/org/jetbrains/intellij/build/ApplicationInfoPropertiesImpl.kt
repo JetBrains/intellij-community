@@ -145,11 +145,9 @@ internal class ApplicationInfoPropertiesImpl(
 internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoProperties): String {
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
   val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
-/* Android Studio: temporarily disable version checks
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
     "'major=${appInfo.majorVersion}' and 'minor=${appInfo.minorVersion}' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
   }
-Android Studio: temporarily disable version checks */
 
   val artifactServer = context.proprietaryBuildTools.artifactsServer
   var builtinPluginsRepoUrl = ""
