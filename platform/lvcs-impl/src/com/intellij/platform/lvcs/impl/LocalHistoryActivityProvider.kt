@@ -11,6 +11,7 @@ import com.intellij.history.core.processContents
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lvcs.impl.diff.createDiffData
@@ -50,9 +51,15 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
       }
     }
     else {
+      val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
       for (changeSet in facade.changes) {
         if (changeSet.isSystemLabelOnly) continue
-        if (changeSet.isLabelOnly && !changeSet.changes.any { it.affectsProject(projectId) }) continue
+        if (changeSet.isLabelOnly) {
+          if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
+        }
+        else {
+          if (!changeSet.changes.any { change -> paths.any { path -> change.affectsPath(path) } }) continue
+        }
         result.add(changeSet.toActivityItem(scope))
       }
     }
