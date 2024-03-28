@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.ide.util.DirectoryChooser
@@ -131,6 +131,11 @@ sealed interface K2MoveTargetModel {
                 fileChooser.addDocumentListener(object : DocumentAdapter() {
                     override fun textChanged(e: DocumentEvent) {
                         fileName = fileChooser.text
+                        if (!fileName.isValidKotlinFile()) {
+                            onError(KotlinBundle.message("refactoring.move.non.kotlin.file"), fileChooser)
+                        } else {
+                            onError(null, fileChooser)
+                        }
                         revalidateButtons()
                     }
                 })
