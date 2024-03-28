@@ -55,7 +55,7 @@ public class MissedTestsDialog extends DialogWrapper {
     mySourceClass = sourceClass;
     myTestClass = testClass;
     myDescriptor = descriptor;
-    setTitle(JavaBundle.message("dialog.title.create.missed.tests"));
+    setTitle(JavaBundle.message("dialog.title.create.missing.tests"));
     init();
   }
 

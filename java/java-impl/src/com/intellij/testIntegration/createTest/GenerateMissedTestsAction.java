@@ -32,7 +32,7 @@ public final class GenerateMissedTestsAction extends PsiElementBaseIntentionActi
   @Override
   @NotNull
   public String getText() {
-    return JavaBundle.message("intention.text.generate.missed.test.methods");
+    return JavaBundle.message("intention.text.generate.missing.test.methods");
   }
 
   @Override
