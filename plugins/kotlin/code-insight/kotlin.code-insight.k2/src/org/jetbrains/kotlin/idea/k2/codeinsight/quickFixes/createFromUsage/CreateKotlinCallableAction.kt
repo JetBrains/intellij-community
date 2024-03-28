@@ -87,7 +87,7 @@ internal class CreateKotlinCallableAction(
             require(call != null)
             CreateKotlinCallablePsiEditor(
                 project, pointerToContainer, callableInfo,
-            ).execute(call)
+            ).execute(call, request)
         }
     }
 
@@ -120,10 +120,9 @@ internal class CreateKotlinCallableAction(
 
     context (KtAnalysisSession)
     private fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
-        val returnKtType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
-        if (returnKtType == null || returnKtType == builtinTypes.UNIT) return null
-        if (!isAccessibleInCreationPlace(returnKtType, (request as? CreateMethodFromKotlinUsageRequest)?.call)) return null
-        return returnKtType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
+        val ktType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
+        if (ktType == null || ktType == builtinTypes.UNIT) return null
+        return ktType.render(renderer = WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 
     private fun buildCallableAsString(): String? {

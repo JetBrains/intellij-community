@@ -6,7 +6,9 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.ExpectedType
 import com.intellij.lang.jvm.types.JvmReferenceType
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -22,8 +24,16 @@ internal class CreateMethodFromKotlinUsageRequest (
     val receiverType: KtType?, // (in case receiverExpression is null) it can be notnull when there's implicit receiver: `blah { unknownFunc() }`
     val isExtension: Boolean,
     val isAbstractClassOrInterface: Boolean,
-    val isForCompanion: Boolean
+    val isForCompanion: Boolean,
 ) : CreateExecutableFromKotlinUsageRequest<KtCallExpression>(functionCall, modifiers), CreateMethodRequest {
+    internal val targetClass: PsiElement? = initializeTargetClass(receiverExpression, functionCall)
+
+    private fun initializeTargetClass(receiverExpression: KtExpression?, functionCall: KtCallExpression): PsiElement? {
+        return analyze(functionCall) {
+            (receiverExpression?.resolveExpression() as? KtClassLikeSymbol)?.psi
+        }
+    }
+
     private val returnType:List<ExpectedType> = initializeReturnType(functionCall)
 
     private fun initializeReturnType(functionCall: KtCallExpression): List<ExpectedType> {

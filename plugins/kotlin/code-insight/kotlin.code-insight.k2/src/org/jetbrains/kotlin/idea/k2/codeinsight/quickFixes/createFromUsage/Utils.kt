@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.api.types.KtIntersectionType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -106,6 +108,9 @@ internal fun KtElement.getExpectedKotlinType(): ExpectedType? {
         }
     }
     if (expectedType == null) return null
+    if (!isAccessibleInCreationPlace(expectedType, this)) {
+        return null
+    }
     val jvmType = expectedType.convertToJvmType(this) ?: return null
     return ExpectedKotlinType(expectedType, jvmType)
 }
@@ -287,10 +292,24 @@ fun isAccessibleInCreationPlace(ktType: KtType, call: KtElement?): Boolean {
             // having `<T> caller(T t) { unknownMethod(t); }` the type `T` is not accessible in created method unknownMethod(t)
             val owner = (ktLeaf.symbol.psi as? KtTypeParameter)?.getOwningTypeParameterOwner()
             // todo must have been "insertion point" instead of `call`
-            owner == null || PsiTreeUtil.isAncestor(owner, call, false)
+            if (owner == null) true
+            else if (owner is KtCallableDeclaration) false
+            else PsiTreeUtil.isAncestor(owner, call, false)
         } else {
             // KtErrorType means this type is unresolved in the context of container
             ktLeaf !is KtErrorType
         }
+    }
+}
+
+fun JvmClass.toKtClassOrFile(): KtElement? = if (this is JvmClassWrapperForKtClass<*>) {
+    ktClassOrFile
+} else {
+    when (val psi = sourceElement) {
+        is KtClassOrObject -> psi
+        is KtLightClassForFacade -> psi.files.firstOrNull()
+        is KtLightElement<*, *> -> psi.kotlinOrigin
+        is KtFile -> psi
+        else -> null
     }
 }

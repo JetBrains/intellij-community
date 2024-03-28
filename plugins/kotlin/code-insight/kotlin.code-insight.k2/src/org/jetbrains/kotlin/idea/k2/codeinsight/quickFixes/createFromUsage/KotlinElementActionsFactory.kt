@@ -7,29 +7,14 @@ import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.JvmElementActionsFactory
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class KotlinElementActionsFactory : JvmElementActionsFactory() {
-    private fun JvmClass.toKtClassOrFile(): KtElement? = if (this is JvmClassWrapperForKtClass<*>) {
-        ktClassOrFile
-    } else {
-        when (val psi = sourceElement) {
-            is KtClassOrObject -> psi
-            is KtLightClassForFacade -> psi.files.firstOrNull()
-            is KtLightElement<*, *> -> psi.kotlinOrigin
-            is KtFile -> psi
-            else -> null
-        }
-    }
-
     override fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> {
         if (targetClass is PsiElement && !BaseIntentionAction.canModify(targetClass)) return emptyList()
         var container = targetClass.toKtClassOrFile() ?: return emptyList()

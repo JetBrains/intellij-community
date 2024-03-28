@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.ide.util.EditorHelper
+import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -54,7 +55,7 @@ internal class CreateKotlinCallablePsiEditor(
     private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun execute(anchor: PsiElement) {
+    fun execute(anchor: PsiElement, request: CreateMethodRequest) {
         val factory = KtPsiFactory(project)
         var function = factory.createFunction(callableInfo.definitionAsString)
         val passedContainerElement = pointerToContainer.element
@@ -67,13 +68,26 @@ internal class CreateKotlinCallablePsiEditor(
             passedContainerElement
         }
 
-        val containerMaybeCompanion = if (insertContainer is KtClass && callableInfo.isForCompanion) {
-            insertContainer.getOrCreateCompanionObject()
-        } else insertContainer
+        val containerMaybeCompanion = if (callableInfo.isForCompanion) {
+            if (insertContainer is KtClass) {
+                insertContainer.getOrCreateCompanionObject()
+            } else {
+                val targetClass = (request as? CreateMethodFromKotlinUsageRequest)?.targetClass
+                val ktClass = targetClass as? KtClass
+                if (ktClass != null) {
+                    val hasCompanionObject = ktClass.companionObjects.isNotEmpty()
+                    val companion = ktClass.getOrCreateCompanionObject()
+                    if (!hasCompanionObject && request.isExtension) {
+                        companion.body?.delete()
+                    }
+                }
+                insertContainer
+            }
+        }
+        else insertContainer
 
         function = CreateFromUsageUtil.placeDeclarationInContainer(function, containerMaybeCompanion, anchor)
 
-        //function = function.addToContainer(container) as? KtNamedFunction ?: return
         function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function) ?: return
         runTemplate(function)
     }
