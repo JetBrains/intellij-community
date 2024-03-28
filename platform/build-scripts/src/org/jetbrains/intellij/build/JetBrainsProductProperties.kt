@@ -20,7 +20,6 @@ abstract class JetBrainsProductProperties : ProductProperties() {
   init {
     scrambleMainJar = true
     includeIntoSourcesArchiveFilter = BiPredicate(::isCommunityModule)
-    embeddedJetBrainsClientMainModule = "intellij.cwm.guest"
     sbomOptions.creator = "Organization: ${Suppliers.JETBRAINS}"
     sbomOptions.copyrightText = "Copyright 2000-2023 ${Suppliers.JETBRAINS} and contributors"
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
