@@ -24,10 +24,7 @@ internal fun LocalHistoryFacade.createDiffData(gateway: IdeaGateway,
 }
 
 private fun Difference.toDiffObject(gateway: IdeaGateway, scope: ActivityScope, selection: ChangeSetSelection, isOldContentUsed: Boolean): DifferenceObject? {
-  val targetFilePath = if (scope is ActivityScope.File) {
-    filePath ?: scope.filePath
-  }
-  else filePath
+  val targetFilePath = filePath ?: (scope as? ActivityScope.File)?.filePath
   if (targetFilePath == null) return null
   return DifferenceObject(gateway, scope, selection, this, targetFilePath, isOldContentUsed)
 }
