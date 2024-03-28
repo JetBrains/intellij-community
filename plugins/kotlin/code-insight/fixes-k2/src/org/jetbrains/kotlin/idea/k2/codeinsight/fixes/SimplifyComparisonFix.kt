@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic.SenselessComparison
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.areThereExpressionsToBeSimplified
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SimplifyBooleanWithConstantsUtils.performSimplification
@@ -35,7 +35,7 @@ object SimplifyComparisonFixFactory {
     private class SimplifyComparisonFix(
         psiElement: KtExpression,
         context: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtExpression, ElementContext>(psiElement, context) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, ElementContext>(psiElement, context) {
 
         override fun invoke(
             context: ActionContext,

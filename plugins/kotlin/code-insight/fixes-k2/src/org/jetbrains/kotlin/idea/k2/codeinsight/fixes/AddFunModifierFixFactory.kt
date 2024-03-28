@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -52,7 +52,7 @@ internal object AddFunModifierFixFactory {
     )
 
     private class AddFunModifierFix(ktClass: KtClass, private val elementName: String, context: ElementContext) :
-        KotlinModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
+        KotlinPsiUpdateModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
 
         override fun invoke(
             context: ActionContext,

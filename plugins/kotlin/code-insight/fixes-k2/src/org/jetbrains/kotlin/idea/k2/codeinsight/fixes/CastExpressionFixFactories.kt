@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.psi.KtExpression
@@ -32,7 +32,7 @@ object CastExpressionFixFactories {
     private class CastExpressionModCommandAction(
         element: PsiElement,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<PsiElement, ElementContext>(element, elementContext) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<PsiElement, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("fix.cast.expression.family")
 

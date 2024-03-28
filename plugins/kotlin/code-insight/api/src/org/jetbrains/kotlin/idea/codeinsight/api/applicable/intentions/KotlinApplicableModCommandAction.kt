@@ -16,7 +16,7 @@ import kotlin.reflect.KClass
  */
 abstract class KotlinApplicableModCommandAction<E : KtElement, C : Any>(
     elementClass: KClass<E>,
-) : KotlinModCommandAction.ClassBased<E, C>(elementClass),
+) : KotlinPsiUpdateModCommandAction.ClassBased<E, C>(elementClass),
     ApplicableRangesProvider<E> {
 
     override fun stopSearchAt(

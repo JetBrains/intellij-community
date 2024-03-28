@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -59,7 +59,7 @@ internal object AddDataModifierFixFactory {
     private class AddDataModifierFix(
         ktClass: KtClass,
         private val context: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtClass, ElementContext>(ktClass, context) {
 
         override fun invoke(
             context: ActionContext,

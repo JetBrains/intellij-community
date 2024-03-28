@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -34,7 +34,7 @@ internal object AddSuspendModifierFixFactory {
     private class AddSuspendModifierFix(
         element: KtModifierListOwner,
         private val context: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtModifierListOwner, ElementContext>(element, context) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtModifierListOwner, ElementContext>(element, context) {
 
         override fun invoke(
             context: ActionContext,

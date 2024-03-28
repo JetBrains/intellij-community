@@ -7,7 +7,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtProperty
@@ -25,7 +25,7 @@ object InitializePropertyQuickFixFactories {
     private class InitializePropertyModCommandAction(
         element: KtProperty,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtProperty, ElementContext>(element, elementContext) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("add.initializer")
 
@@ -83,7 +83,7 @@ object InitializePropertyQuickFixFactories {
     context(KtAnalysisSession)
     private fun createFixes(
         element: KtProperty,
-    ): List<KotlinModCommandAction<KtProperty, *>> {
+    ): List<KotlinPsiUpdateModCommandAction<KtProperty, *>> {
         // An extension property cannot be initialized because it has no backing field
         if (element.receiverTypeReference != null) return emptyList()
 

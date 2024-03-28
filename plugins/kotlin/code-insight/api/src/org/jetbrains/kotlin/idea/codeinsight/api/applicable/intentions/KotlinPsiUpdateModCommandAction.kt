@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.getElementContext
 import org.jetbrains.kotlin.psi.KtElement
 import kotlin.reflect.KClass
 
-sealed class KotlinModCommandAction<E : PsiElement, C : Any> private constructor(
+sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any> private constructor(
     element: E?,
     elementClass: KClass<E>?,
 ) : PsiBasedModCommandAction<E>(element, elementClass?.java) {
@@ -73,7 +73,7 @@ sealed class KotlinModCommandAction<E : PsiElement, C : Any> private constructor
     abstract class ElementBased<E : PsiElement, C : Any>(
         element: E,
         @FileModifier.SafeFieldForPreview private val elementContext: C,
-    ) : KotlinModCommandAction<E, C>(element, null) {
+    ) : KotlinPsiUpdateModCommandAction<E, C>(element, null) {
 
         final override fun getElementContext(
             context: ActionContext,
@@ -83,7 +83,7 @@ sealed class KotlinModCommandAction<E : PsiElement, C : Any> private constructor
 
     abstract class ClassBased<E : KtElement, C : Any>(
         elementClass: KClass<E>,
-    ) : KotlinModCommandAction<E, C>(null, elementClass),
+    ) : KotlinPsiUpdateModCommandAction<E, C>(null, elementClass),
         ContextProvider<E, C> {
 
         final override fun getElementContext(

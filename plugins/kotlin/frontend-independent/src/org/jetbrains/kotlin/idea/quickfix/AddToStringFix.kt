@@ -7,7 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 class AddToStringFix(
     element: KtExpression,
     elementContext: ElementContext,
-) : KotlinModCommandAction.ElementBased<KtExpression, AddToStringFix.ElementContext>(element, elementContext),
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, AddToStringFix.ElementContext>(element, elementContext),
     LowPriorityAction {
 
     data class ElementContext(

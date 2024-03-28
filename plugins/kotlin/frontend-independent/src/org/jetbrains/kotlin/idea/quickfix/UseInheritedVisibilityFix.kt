@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 class UseInheritedVisibilityFix(
     element: KtModifierListOwner,
     elementContext: ElementContext
-) : KotlinModCommandAction.ElementBased<KtModifierListOwner, UseInheritedVisibilityFix.ElementContext>(element, elementContext) {
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtModifierListOwner, UseInheritedVisibilityFix.ElementContext>(element, elementContext) {
 
     override fun getFamilyName() = KotlinBundle.message("use.inherited.visibility")
 

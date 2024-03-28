@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
- * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction.ClassBased]
+ * A common base interface for [org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiBasedModCommandAction.ClassBased]
  * and [org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase].
  */
 interface ContextProvider<E : KtElement, C> {

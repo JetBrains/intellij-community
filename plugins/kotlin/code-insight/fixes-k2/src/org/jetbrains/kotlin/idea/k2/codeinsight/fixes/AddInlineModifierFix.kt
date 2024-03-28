@@ -6,7 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.findParameterWithName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -41,7 +41,7 @@ internal object AddInlineModifierFix {
     private class AddInlineModifierFix(
         parameter: KtParameter,
         private val context: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtParameter, ElementContext>(parameter, context) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtParameter, ElementContext>(parameter, context) {
 
         override fun invoke(
             context: ActionContext,

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -63,7 +63,7 @@ object WrapWithSafeLetCallFixFactories {
     private class WrapWithSafeLetCallModCommandAction(
         element: KtExpression,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtExpression, ElementContext>(element, elementContext) {
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, ElementContext>(element, elementContext) {
 
         override fun getFamilyName(): String = KotlinBundle.message("wrap.with.let.call")
 

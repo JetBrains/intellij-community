@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -61,7 +61,7 @@ internal object SuperClassNotInitializedFactories {
     private class AddParenthesisFix(
         element: KtSuperTypeEntry,
         elementContext: ElementContext,
-    ) : KotlinModCommandAction.ElementBased<KtSuperTypeEntry, ElementContext>(element, elementContext),
+    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtSuperTypeEntry, ElementContext>(element, elementContext),
         HighPriorityAction {
 
         constructor(
