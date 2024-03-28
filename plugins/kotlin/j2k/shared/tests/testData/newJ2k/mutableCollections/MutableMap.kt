@@ -2,7 +2,7 @@ class J {
     fun foo(
         m1: MutableMap<String?, String?>,
         m2: MutableMap<String?, String?>,
-        m3: MutableMap<String?, String>,
+        m3: MutableMap<String?, String?>,
         m4: MutableMap<String?, String?>,
         m5: MutableMap<String?, String?>,
         m6: MutableMap<String?, String?>,

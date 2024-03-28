@@ -2,6 +2,10 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.nj2k.*
@@ -12,10 +16,9 @@ import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
-import org.jetbrains.kotlin.nj2k.types.JKContextType
-import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
-import org.jetbrains.kotlin.nj2k.types.isInterface
-import org.jetbrains.kotlin.nj2k.types.isUnit
+import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
@@ -213,7 +216,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
                 val primaryConstructor = thisClass.primaryConstructor()
                 val delegationCall = primaryConstructor?.delegationCall.safeAs<JKDelegationConstructorCall>()
                 if (delegationCall != null) {
-                    printer.par { delegationCall.arguments.accept(this) }
+                    delegationCall.arguments.accept(this)
                 } else if (!superTypeElement.type.isInterface() && (primaryConstructor != null || thisClass.isObjectOrCompanionObject)) {
                     printer.print("()")
                 }
@@ -250,9 +253,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             enumConstant.annotationList.accept(this)
             enumConstant.name.accept(this)
             if (enumConstant.arguments.arguments.isNotEmpty()) {
-                printer.par {
-                    renderArgumentList(enumConstant.arguments)
-                }
+                enumConstant.arguments.accept(this)
             }
             if (enumConstant.body.declarations.isNotEmpty()) {
                 enumConstant.body.accept(this)
@@ -457,23 +458,95 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitArgumentListRaw(argumentList: JKArgumentList) {
-            renderArgumentList(argumentList)
+            val arguments = argumentList.arguments
+            val parent = argumentList.parent
+            val lastArgument = arguments.lastOrNull()
+            val lastArgumentValue = lastArgument?.value
+
+            // If the last argument is a lambda expression, we'll try to print it outside the parentheses. The logic below is similar to
+            // `MoveLambdaOutsideParenthesesProcessing` but less comprehensive, especially where functional interfaces are concerned
+            if (lastArgumentValue !is JKLambdaExpression || (parent !is JKCallExpressionImpl && parent !is JKNewExpression)) {
+                return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
+            }
+
+            // If a node has the `canExtractLastArgumentIfLambda` field set to true, we can bypass the remaining checks. This flag is useful
+            // when a JKElement doesn't resolve to a method/constructor implementation whose signature we can examine
+            if ((parent is JKCallExpressionImpl && parent.canExtractLastArgumentIfLambda) ||
+                (parent is JKNewExpression && parent.canExtractLastArgumentIfLambda)
+            ) {
+                return renderArgumentListWithLastLambdaOutsideParentheses(arguments)
+            }
+
+            if (lastArgumentValue.functionalType.present()) {
+                return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
+            }
+
+            val parentPsi = parent.psi
+            val methodDefinition = when {
+                parentPsi is PsiMethodCallExpression -> parentPsi.resolveMethod()
+                parentPsi is PsiNewExpression -> parentPsi.resolveMethod()
+                parent is JKCallExpressionImpl -> parent.identifier.target
+                else ->
+                    return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
+            }
+
+            if (!(methodDefinition is KtNamedFunction && methodDefinition.valueParameters.size == arguments.size &&
+                        methodDefinition.valueParameters.none { it.isVarArg } && methodDefinition.valueParameters.lastOrNull()
+                    ?.hasFunctionalType() == true) &&
+                !(methodDefinition is PsiMethod && methodDefinition.parameterList.parametersCount == arguments.size &&
+                        methodDefinition.parameterList.parameters.none { it.isVarArgs } && methodDefinition.parameterList.parameters.lastOrNull()?.type?.isFunctionalType() == true) &&
+                !(methodDefinition is JKMethod && methodDefinition.parameters.size == arguments.size && !methodDefinition.parameters.last().isVarArgs)
+            ) {
+                return renderArgumentList(argumentList.arguments, argumentList.hasTrailingComma)
+            }
+
+            renderArgumentListWithLastLambdaOutsideParentheses(arguments)
         }
 
-        private fun renderArgumentList(argumentList: JKArgumentList) {
-            for ((i, argument) in argumentList.arguments.withIndex()) {
-                printLeftNonCodeElements(argument)
+        private fun renderArgumentListWithLastLambdaOutsideParentheses(arguments: List<JKArgument>) {
+            if (arguments.size > 1) {
+                renderArgumentList(arguments.subList(0, arguments.lastIndex), false)
+            }
+            printer.print(" ")
+            renderLambdaExpressionWithoutFunctionalType(arguments.last().value as JKLambdaExpression)
+            printer.print(" ")
+        }
 
-                if (argument is JKNamedArgument) {
-                    visitNamedArgumentRaw(argument)
-                } else {
-                    visitArgumentRaw(argument)
-                }
+        private fun PsiType.isFunctionalType(): Boolean {
+            if (isKotlinFunctionalType) return true
+            val fqn = canonicalText.substringBefore("<")
+            return fqn in setOf(
+                "java.util.function.Function",
+                "java.util.function.BiFunction",
+                "java.util.function.BiConsumer",
+                "java.util.function.Consumer",
+                "java.util.function.Predicate",
+                "java.util.function.UnaryOperator",
+                "java.util.function.BinaryOperator",
+                "java.util.function.Supplier"
+            )
+        }
 
-                if (i < argumentList.arguments.lastIndex || argumentList.hasTrailingComma) {
-                    printer.print(", ")
+        private fun KtParameter.hasFunctionalType(): Boolean =
+            isLambdaParameter || isFunctionTypeParameter || ") -> " in typeReference?.text.orEmpty()
+
+
+        private fun renderArgumentList(arguments: List<JKArgument>, hasTrailingComma: Boolean) {
+            printer.par {
+                for ((i, argument) in arguments.withIndex()) {
+                    printLeftNonCodeElements(argument)
+
+                    if (argument is JKNamedArgument) {
+                        visitNamedArgumentRaw(argument)
+                    } else {
+                        visitArgumentRaw(argument)
+                    }
+
+                    if (i < arguments.lastIndex || hasTrailingComma) {
+                        printer.print(", ")
+                    }
+                    printRightNonCodeElements(argument)
                 }
-                printRightNonCodeElements(argument)
             }
         }
 
@@ -491,9 +564,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderSymbol(callExpression.identifier, callExpression)
             if (callExpression.identifier.isAnnotationMethod()) return
             callExpression.typeArgumentList.accept(this)
-            printer.par {
-                callExpression.arguments.accept(this)
-            }
+            callExpression.arguments.accept(this)
         }
 
         override fun visitTypeArgumentListRaw(typeArgumentList: JKTypeArgumentList) {
@@ -574,9 +645,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             printer.renderSymbol(newExpression.classSymbol, newExpression)
             newExpression.typeArgumentList.accept(this)
             if (!newExpression.classSymbol.isInterface() || newExpression.arguments.arguments.isNotEmpty()) {
-                printer.par(ParenthesisKind.ROUND) {
-                    newExpression.arguments.accept(this)
-                }
+                newExpression.arguments.accept(this)
             }
             if (newExpression.isAnonymousClass) {
                 newExpression.classBody.accept(this)
@@ -715,9 +784,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitDelegationConstructorCallRaw(delegationConstructorCall: JKDelegationConstructorCall) {
             delegationConstructorCall.expression.accept(this)
-            printer.par {
-                delegationConstructorCall.arguments.accept(this)
-            }
+            delegationConstructorCall.arguments.accept(this)
         }
 
         private fun renderParameterList(method: JKMethod) {
@@ -774,6 +841,10 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
                 printer.print(" ")
             }
 
+            renderLambdaExpressionWithoutFunctionalType(lambdaExpression)
+        }
+
+        private fun renderLambdaExpressionWithoutFunctionalType(lambdaExpression: JKLambdaExpression) {
             printer.par(ParenthesisKind.CURVED) {
                 val isMultiStatement = lambdaExpression.statement.statements.size > 1
                 if (isMultiStatement) printer.println()
@@ -808,20 +879,20 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitAssignmentChainAlsoLinkRaw(assignmentChainAlsoLink: JKAssignmentChainAlsoLink) {
             assignmentChainAlsoLink.receiver.accept(this)
-            printer.print(".also({ ")
+            printer.print(".also { ")
             assignmentChainAlsoLink.assignmentStatement.accept(this)
             printer.print(" ")
-            printer.print("})")
+            printer.print("}")
         }
 
         override fun visitAssignmentChainLetLinkRaw(assignmentChainLetLink: JKAssignmentChainLetLink) {
             assignmentChainLetLink.receiver.accept(this)
-            printer.print(".let({ ")
+            printer.print(".let { ")
             assignmentChainLetLink.assignmentStatement.accept(this)
             printer.print("; ")
             assignmentChainLetLink.field.accept(this)
             printer.print(" ")
-            printer.print("})")
+            printer.print("}")
         }
 
         override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {

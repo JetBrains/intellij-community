@@ -195,17 +195,30 @@ class JKDelegationConstructorCall(
     override fun accept(visitor: JKVisitor) = visitor.visitDelegationConstructorCall(this)
 }
 
+/**
+ * @param canExtractLastArgumentIfLambda - Useful during the printing phase for rendering lambda arguments when the method's full signature
+ * can't be determined (e.g. when a node is created midway through conversion for a reference to a Kotlin method like `map`). If
+ * `canExtractLastArgumentIfLambda` isn't set, the printing phase will still try to determine whether the last argument should be printed
+ * outside parentheses
+ */
 class JKCallExpressionImpl(
     override var identifier: JKMethodSymbol,
     arguments: JKArgumentList = JKArgumentList(),
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     override val expressionType: JKType? = null,
+    val canExtractLastArgumentIfLambda: Boolean = false
 ) : JKCallExpression() {
     override var typeArgumentList by child(typeArgumentList)
     override var arguments by child(arguments)
     override fun accept(visitor: JKVisitor) = visitor.visitCallExpressionImpl(this)
 }
 
+/**
+ * @param canExtractLastArgumentIfLambda - Useful during the printing phase for rendering lambda arguments when the method's full signature
+ * can't be determined (e.g. when a node is created midway through conversion for a reference to an `Array` constructor). If
+ * `canExtractLastArgumentIfLambda` isn't set, the printing phase will still try to determine whether the last argument should be printed
+ * outside parentheses
+ */
 class JKNewExpression(
     val classSymbol: JKClassSymbol,
     arguments: JKArgumentList,
@@ -213,6 +226,7 @@ class JKNewExpression(
     classBody: JKClassBody = JKClassBody(),
     val isAnonymousClass: Boolean = false,
     override val expressionType: JKType? = null,
+    val canExtractLastArgumentIfLambda: Boolean = false
 ) : JKExpression() {
     var typeArgumentList by child(typeArgumentList)
     var arguments by child(arguments)

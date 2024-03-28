@@ -105,7 +105,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     private inner class MethodBuilder(
         private val fqName: String,
         private val parameterTypesFqNames: List<String>?,
-        private val argumentsProvider: (JKArgumentList) -> JKArgumentList
+        private val argumentsProvider: (JKArgumentList) -> JKArgumentList,
+        private val canExtractLastArgumentIfLambda: Boolean = false
     ) : ResultBuilder {
         context(KtAnalysisSession)
         override fun build(from: JKExpression): JKExpression {
@@ -119,7 +120,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
-                        from::typeArgumentList.detached()
+                        from::typeArgumentList.detached(),
+                        canExtractLastArgumentIfLambda = canExtractLastArgumentIfLambda
                     )
                 }
 
@@ -135,7 +137,8 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
                     JKCallExpressionImpl(
                         methodSymbol,
                         argumentsProvider(from::arguments.detached()),
-                        JKTypeArgumentList()
+                        JKTypeArgumentList(),
+                        canExtractLastArgumentIfLambda = canExtractLastArgumentIfLambda
                     )
 
                 else -> error("Bad conversion")
@@ -187,7 +190,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveConve
     }
 
     private fun Conversion.createBuilder(): ResultBuilder = when (to) {
-        is Method -> MethodBuilder(to.fqName, to.parameterTypesFqNames, argumentsProvider ?: { it })
+        is Method -> MethodBuilder(to.fqName, to.parameterTypesFqNames, argumentsProvider ?: { it }, to.canExtractLastArgumentIfLambda)
         is Field -> FieldBuilder(to.fqName)
         is ExtensionMethod -> ExtensionMethodBuilder(to.fqName)
         is CustomExpression -> CustomExpressionBuilder(to.expressionBuilder)
@@ -234,7 +237,7 @@ private interface SymbolInfo : Info {
     infix fun convertTo(to: Info): Conversion = Conversion(this, to)
 }
 
-private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null) : SymbolInfo
+private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null, val canExtractLastArgumentIfLambda: Boolean = false) : SymbolInfo
 
 private data class NewExpression(override val fqName: String) : SymbolInfo
 
@@ -364,12 +367,22 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     )
 
     private val collectionConversions: List<Conversion> = listOf(
+        Method("java.util.Iterable.forEach") convertTo Method("kotlin.collections.Iterable.forEach", canExtractLastArgumentIfLambda = true),
+
         Method("java.util.Map.entrySet") convertTo Field("kotlin.collections.Map.entries"),
         Method("java.util.Map.keySet") convertTo Field("kotlin.collections.Map.keys"),
         Method("java.util.Map.size") convertTo Field("kotlin.collections.Map.size"),
         Method("java.util.Map.values") convertTo Field("kotlin.collections.Map.values"),
+        Method("java.util.Map.compute") convertTo Method("kotlin.collections.Map.compute", canExtractLastArgumentIfLambda = true),
+        Method("java.util.Map.computeIfAbsent") convertTo Method("kotlin.collections.Map.computeIfAbsent", canExtractLastArgumentIfLambda = true),
+        Method("java.util.Map.computeIfPresent") convertTo Method("kotlin.collections.Map.computeIfPresent", canExtractLastArgumentIfLambda = true),
+        Method("java.util.Map.forEach") convertTo Method("kotlin.collections.Map.forEach", canExtractLastArgumentIfLambda = true),
+        Method("java.util.Map.merge") convertTo Method("kotlin.collections.Map.merge", canExtractLastArgumentIfLambda = true),
+        Method("java.util.Map.replaceAll") convertTo Method("kotlin.collections.Map.replaceAll", canExtractLastArgumentIfLambda = true),
+
         Method("java.util.Collection.size") convertTo Field("kotlin.collections.Collection.size"),
         Method("java.util.Collection.remove") convertTo Method("kotlin.collections.MutableCollection.remove"),
+        Method("java.util.Collection.removeIf") convertTo Method("kotlin.collections.MutableCollection.removeIf", canExtractLastArgumentIfLambda = true),
         Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter { it.isEmpty() },
         Method("java.util.Collection.toArray") convertTo Method("kotlin.collections.toTypedArray") withByArgumentsFilter {
             it.singleOrNull()?.let { parameter ->
@@ -378,6 +391,7 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         } withArgumentsProvider { JKArgumentList() },
 
         Method("java.util.List.remove") convertTo Method("kotlin.collections.MutableCollection.removeAt"),
+        Method("java.util.List.replaceAll") convertTo Method("kotlin.collections.MutableCollection.replaceAll", canExtractLastArgumentIfLambda = true),
         Method("java.util.Map.Entry.getKey") convertTo Field("kotlin.collections.Map.Entry.key"),
         Method("java.util.Map.Entry.getValue") convertTo Field("kotlin.collections.Map.Entry.value"),
 
@@ -555,14 +569,15 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                                 symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
                             ).asStatement()
                         )
-                    )
+                    ),
+                    canExtractLastArgumentIfLambda = true
                 )
             } else {
                 expression
             }.castToTypedArray()
         },
 
-        Method("java.lang.String.trim") convertTo Method("kotlin.text.trim") withArgumentsProvider {
+        Method("java.lang.String.trim") convertTo Method("kotlin.text.trim", canExtractLastArgumentIfLambda = true) withArgumentsProvider {
             JKArgumentList(
                 JKLambdaExpression(
                     JKExpressionStatement(

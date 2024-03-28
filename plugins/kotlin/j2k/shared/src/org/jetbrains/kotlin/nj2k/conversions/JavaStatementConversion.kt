@@ -56,7 +56,8 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
             referencedVariable.initializer = JKCallExpressionImpl(
                 checkNotNullSymbol,
                 arguments,
-                expressionType = initializerType?.updateNullability(NotNull)
+                expressionType = initializerType?.updateNullability(NotNull),
+                canExtractLastArgumentIfLambda = true
             )
 
             // effectively delete the original statement, since the assertion was merged into the variable declaration above
@@ -66,7 +67,8 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
         // Otherwise, leave the variable declaration untouched and do an inplace replacement of the assertion
         return JKCallExpressionImpl(
             checkNotNullSymbol,
-            arguments = listOfNotNull(expressionComparedToNull.detached(assertion), messageExpression).toArgumentList()
+            arguments = listOfNotNull(expressionComparedToNull.detached(assertion), messageExpression).toArgumentList(),
+            canExtractLastArgumentIfLambda = true
         ).asStatement().withFormattingFrom(element)
     }
 
@@ -102,7 +104,8 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveConver
         return JKExpressionStatement(
             JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.synchronized"),
-                JKArgumentList(element.lockExpression, lambdaBody)
+                JKArgumentList(element.lockExpression, lambdaBody),
+                canExtractLastArgumentIfLambda = true
             ).withFormattingFrom(element)
         )
     }
