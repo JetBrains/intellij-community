@@ -361,7 +361,7 @@ class IdeaPluginDescriptorImpl(
       )
 
       if (subDescriptor.isIncomplete == null) {
-        processOldDependencies(
+        subDescriptor.processOldDependencies(
           descriptor = subDescriptor,
           context = context,
           pathResolver = pathResolver,
