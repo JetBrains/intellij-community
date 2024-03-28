@@ -4,6 +4,7 @@ package git4idea.repo;
 import com.intellij.dvcs.repo.RepositoryImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -54,9 +55,8 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
    */
   private GitRepositoryImpl(@NotNull VirtualFile rootDir,
                             @NotNull VirtualFile gitDir,
-                            @NotNull Project project,
-                            @NotNull Disposable parentDisposable) {
-    super(project, rootDir, parentDisposable);
+                            @NotNull Project project) {
+    super(project, rootDir);
     myVcs = GitVcs.getInstance(project);
     myGitDir = gitDir;
     myRepositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir);
@@ -112,9 +112,15 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
                                                @NotNull Project project,
                                                @NotNull Disposable parentDisposable) {
     ProgressManager.checkCanceled();
-    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable);
+    GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project);
     repository.setupUpdater();
     GitRepositoryManager.getInstance(project).notifyListenersAsync(repository);
+
+    ReadAction.run(() -> {
+      if (!Disposer.tryRegister(parentDisposable, repository)) {
+        Disposer.dispose(repository);
+      }
+    });
     return repository;
   }
 
