@@ -473,6 +473,22 @@ public class PyIntentionTest extends PyTestCase {
     doMultiFileTest("Remove 'pkg.mod' qualifier");
   }
 
+  public void testRelativeFromImportOfModuleItselfToRelativeFromImportOfItsAttributes() {
+    doMultiFileTest("Convert to 'from .mod import ...'");
+  }
+
+  public void testRelativeFromImportOfMultipleModulesToRelativeFromImportOfOnesAttributes() {
+    doMultiFileTest("Convert to 'from .mod import ...'");
+  }
+
+  public void testImportOfMultipleModulesToFromImportOfOnesAttributes() {
+    doMultiFileTest("Convert to 'from mod import ...'");
+  }
+
+  public void testImportToFromImportKeepingOriginalImport() {
+    doMultiFileTest("Convert to 'from mod import ...'");
+  }
+
   public void testTypeInDocstring() {
     getIndentOptions().INDENT_SIZE = 2;
     doDocParamTypeTest(DocStringFormat.REST);
