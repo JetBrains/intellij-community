@@ -92,6 +92,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.*;
@@ -802,7 +803,7 @@ public final class DiffUtil {
 
   @NotNull
   public static JComponent createStackedComponents(@NotNull List<? extends JComponent> components, @NotNull JBValue vGap) {
-    JPanel panel = new JPanel(new VerticalLayout(vGap, VerticalLayout.FILL));
+    JPanel panel = new JBPanel<>(new VerticalLayout(vGap, VerticalLayout.FILL));
     for (JComponent component : components) {
       panel.add(component);
     }
