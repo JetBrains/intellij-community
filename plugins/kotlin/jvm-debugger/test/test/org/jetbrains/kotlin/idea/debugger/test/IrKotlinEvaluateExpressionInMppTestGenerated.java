@@ -1815,6 +1815,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/thisFromStaticLambdaWithUnnamed.kt");
             }
 
+            @TestMetadata("typeParameterOutOfScope.kt")
+            public void testTypeParameterOutOfScope() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/typeParameterOutOfScope.kt");
+            }
+
             @TestMetadata("typeParameterRef.kt")
             public void testTypeParameterRef() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");
