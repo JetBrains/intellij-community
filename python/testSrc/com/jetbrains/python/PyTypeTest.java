@@ -1125,6 +1125,27 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-52760
+  public void testTupleLiteralDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        expr["a"], _ = (1, 2)
+        """
+    );
+  }
+
+  public void testListLiteralDestructuringAssignmentToDict() {
+    doTest(
+      "Dict[str, int]",
+      """
+        expr = {}
+        expr["a"], _ = [1, 2]
+        """
+    );
+  }
+
   public void testConstructorUnification() {
     doTest("C[int]",
            """

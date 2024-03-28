@@ -11,7 +11,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import com.jetbrains.python.pyi.PyiUtil
 
 object PyCollectionTypeUtil {
 
@@ -360,9 +359,8 @@ object PyCollectionTypeUtil {
       }
 
       var rightValue = assignment.assignedValue
-      if (tupleParent != null && rightValue is PyTupleExpression) {
-        val rightTuple = rightValue as PyTupleExpression?
-        val rightElements = rightTuple!!.elements
+      if (tupleParent != null) {
+        val rightElements = PyUtil.flattenedParensAndLists(rightValue)
         val indexInAssignment = tupleParent.elements.indexOf(node)
         if (indexInAssignment < rightElements.size) {
           rightValue = rightElements[indexInAssignment]
