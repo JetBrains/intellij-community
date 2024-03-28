@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.createHighlightingManager
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.generateJavadoc
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualSupport
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -304,7 +305,18 @@ private fun findKDoc(symbol: KtSymbol): KDocContent? {
             }
         }
     }
-    return null
+
+    if (symbol is KtValueParameterSymbol) {
+        val containingSymbol = symbol.getContainingSymbol() as? KtFunctionSymbol
+        if (containingSymbol != null) {
+            val idx = containingSymbol.valueParameters.indexOf(symbol)
+            containingSymbol.getExpectsForActual().filterIsInstance<KtFunctionSymbol>().mapNotNull { expectFunction ->
+                findKDoc(expectFunction.valueParameters[idx])
+            }.firstOrNull()?.let { return it }
+        }
+    }
+
+    return (symbol as? KtDeclarationSymbol)?.getExpectsForActual()?.mapNotNull { declarationSymbol -> findKDoc(declarationSymbol) }?.firstOrNull()
 }
 
 context(KtAnalysisSession)
