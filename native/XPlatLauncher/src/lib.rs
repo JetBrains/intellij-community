@@ -72,11 +72,11 @@ const CLASS_PATH_SEPARATOR: &str = ":";
 pub fn main_lib() {
     let exe_path = env::current_exe().unwrap_or_else(|_| PathBuf::from(env::args().next().unwrap()));
     let remote_dev = exe_path.file_name().unwrap().to_string_lossy().starts_with("remote-dev-server");
-    if remote_dev {
-        attach_console();
-    }
 
     let debug_mode = remote_dev || env::var(DEBUG_MODE_ENV_VAR).is_ok();
+    if debug_mode {
+        attach_console();
+    }
 
     if let Err(e) = main_impl(exe_path, remote_dev, debug_mode) {
         ui::show_error(!debug_mode, e);

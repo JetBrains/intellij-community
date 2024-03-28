@@ -507,8 +507,8 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
     debug!("Starting '{}'\n  with args {:?}\n  in '{}'",
            test_env.launcher_path.display(), run_spec.args, test_env.test_root_dir.path().display());
 
-    let stdout_file_path = test_env.test_root_dir.path().join("out.txt");
-    let stderr_file_path = test_env.test_root_dir.path().join("err.txt");
+    let stdout_file_path = &test_env.test_root_dir.path().join("out.txt");
+    let stderr_file_path = &test_env.test_root_dir.path().join("err.txt");
     let project_dir = test_env.project_dir.to_str().unwrap();
     let dump_file_path = test_env.test_root_dir.path().join("output.json");
     let dump_file_path_str = dump_file_path.strip_ns_prefix()?.to_string_checked()?;
@@ -544,11 +544,17 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
         full_env.insert(k, v);
     }
 
+    let stdout_file = File::create(stdout_file_path)
+        .context(format!("Failed to create stdout file at {stdout_file_path:?}"))?;
+
+    let stderr_file = File::create(stderr_file_path)
+        .context(format!("Failed to create stderr file at {stderr_file_path:?}"))?;
+
     let mut launcher_process = Command::new(&test_env.launcher_path)
         .current_dir(test_env.test_root_dir.path())
         .args(full_args)
-        .stdout(Stdio::from(File::create(&stdout_file_path)?))
-        .stderr(Stdio::from(File::create(&stderr_file_path)?))
+        .stdout(Stdio::from(stdout_file))
+        .stderr(Stdio::from(stderr_file))
         .envs(full_env)
         .spawn()
         .context("Failed to spawn launcher process")?;
