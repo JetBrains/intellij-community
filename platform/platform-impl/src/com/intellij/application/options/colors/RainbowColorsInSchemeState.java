@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.awt.*;
 import java.util.Collections;
@@ -48,7 +49,7 @@ public final class RainbowColorsInSchemeState {
 
   private static void updateRainbowMarkup(@NotNull EditorColorsScheme scheme) {
     Set<String> languagesWithRainbowHighlighting = getRainbowOnLanguageIds(scheme);
-    RainbowCollector.getRAINBOW_HIGHLIGHTER_CHANGED_EVENT().log(languagesWithRainbowHighlighting.stream().toList());
+    reportStatistic(languagesWithRainbowHighlighting);
 
     RainbowHighlighter.resetRainbowGeneratedColors(scheme);
     ApplicationManager
@@ -69,8 +70,16 @@ public final class RainbowColorsInSchemeState {
     }
   }
 
+  private static void reportStatistic(@NotNull Set<String> languagesWithRainbowHighlighting) {
+    Set<String> logCopy = new TreeSet<>(languagesWithRainbowHighlighting);
+    boolean rainbowOnByDefault = logCopy.remove(DEFAULT_LANGUAGE_NAME);
+    RainbowCollector.getRAINBOW_HIGHLIGHTER_CHANGED_EVENT().log(
+      rainbowOnByDefault,
+      logCopy.stream().toList());
+  }
+
   @NotNull
-  private static Set<String> getRainbowOnLanguageIds(@NotNull EditorColorsScheme scheme) {
+  private static @UnmodifiableView Set<String> getRainbowOnLanguageIds(@NotNull EditorColorsScheme scheme) {
     TreeSet<String> rainbowOnLanguages = new TreeSet<>();
     ColorSettingsPage.EP_NAME.forEachExtensionSafe(
       it -> {
