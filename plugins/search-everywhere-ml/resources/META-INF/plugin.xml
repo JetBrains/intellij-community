@@ -22,6 +22,7 @@
     <module name="intellij.searchEverywhereMl.semantics"/>
     <module name="intellij.searchEverywhereMl.semantics.java"/>
     <module name="intellij.searchEverywhereMl.semantics.kotlin"/>
+    <module name="intellij.searchEverywhereMl.semantics.python"/>
     <module name="intellij.searchEverywhereMl.semantics.testCommands"/>
   </content>
 

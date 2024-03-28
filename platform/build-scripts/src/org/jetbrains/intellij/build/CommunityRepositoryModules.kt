@@ -292,6 +292,7 @@ object CommunityRepositoryModules {
     )) { spec ->
       spec.withModule("intellij.searchEverywhereMl.semantics.java")
       spec.withModule("intellij.searchEverywhereMl.semantics.kotlin")
+      spec.withModule("intellij.searchEverywhereMl.semantics.python")
       spec.withModule("intellij.searchEverywhereMl.semantics.testCommands")
     },
     plugin("intellij.platform.testFramework.ui") { spec ->
