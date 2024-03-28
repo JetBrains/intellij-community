@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,7 +72,7 @@ public final class LanguageLevelUtil {
 
   static {
     for (LanguageLevel level : LanguageLevel.values()) {
-      if (level.ordinal() > LanguageLevel.HIGHEST.ordinal()) break;
+      if (level.ordinal() >= LanguageLevel.HIGHEST.ordinal()) break;
       int feature = level.feature() + 1;
       ourPresentableShortMessage.put(level, feature >= 9 ? String.valueOf(feature) : "1." + feature);
     }
