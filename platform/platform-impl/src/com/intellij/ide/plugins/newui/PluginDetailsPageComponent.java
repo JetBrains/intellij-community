@@ -13,7 +13,6 @@ import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
-import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1152,16 +1151,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     }
 
     showLicensePanel();
+    String homepage = MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId());
 
     if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()
         || !isPluginFromMarketplace()
-        || !MarketplaceCustomizationService.getInstance().pluginHomepageSupported()) {
+        || homepage == null) {
       myHomePage.hide();
     } else {
       myHomePage.showWithBrowseUrl(
         IdeBundle.message("plugins.configurable.plugin.homepage.link"),
         true,
-        () -> MarketplaceUrls.getPluginHomepage(myPlugin.getPluginId())
+        () -> homepage
       );
     }
 

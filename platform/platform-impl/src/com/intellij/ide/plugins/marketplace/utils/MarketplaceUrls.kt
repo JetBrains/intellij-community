@@ -10,9 +10,10 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.Nullable
 import java.net.URL
 
-internal object MarketplaceUrls {
+object MarketplaceUrls {
   private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
 
   const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
@@ -69,7 +70,8 @@ internal object MarketplaceUrls {
   }
 
   @JvmStatic
-  fun getPluginHomepage(pluginId: PluginId) = "${getPluginManagerUrl()}/plugin/index?xmlId=${pluginId.urlEncode()}"
+  @Nullable
+  fun getPluginHomepage(pluginId: PluginId) = if (MarketplaceCustomizationService.getInstance().pluginHomepageSupported()) "${getPluginManagerUrl()}/plugin/index?xmlId=${pluginId.urlEncode()}" else null
 
   @JvmStatic
   fun getPluginReviewNoteUrl() = "https://plugins.jetbrains.com/docs/marketplace/reviews-policy.html"
