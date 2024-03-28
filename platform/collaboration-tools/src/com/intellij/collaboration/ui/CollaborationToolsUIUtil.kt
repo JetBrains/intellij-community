@@ -109,7 +109,9 @@ object CollaborationToolsUIUtil {
       validatorDisposable = Disposer.newDisposable("Component validator")
       validator = ComponentValidator(validatorDisposable!!).withValidator(Supplier {
         errorValue.value?.let { ValidationInfo(it, component) }
-      }).installOn(component)
+      }).installOn(component).also {
+        it.revalidate()
+      }
     }
 
     override fun hideNotify() {
