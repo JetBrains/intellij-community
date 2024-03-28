@@ -143,7 +143,12 @@ internal class CreateKotlinCallableAction(
             append(" ")
 
             val (receiver, receiverTypeText) = if (request is CreateMethodFromKotlinUsageRequest) CreateKotlinCallableActionTextBuilder.renderReceiver(request) else "" to ""
-            append(renderTypeParameterDeclarations(request, container, receiver, receiverTypeText))
+            append(renderTypeParameterDeclarations(request, container, receiverTypeText))
+            if ((request as? CreateMethodFromKotlinUsageRequest)?.isExtension == true) {
+                if (receiver.isNotEmpty()) {
+                    append("$receiver ")
+                }
+            }
             append(request.methodName)
             append("(")
             append(renderParameterList())
@@ -156,18 +161,15 @@ internal class CreateKotlinCallableAction(
     private fun renderTypeParameterDeclarations(
         request: CreateMethodRequest,
         container: KtElement,
-        receiver: String,
         receiverTypeText: String
     ): String {
         if (request is CreateMethodFromKotlinUsageRequest && request.receiverExpression != null && request.isExtension) {
-            val t = if (receiver.isNotEmpty()) "$receiver " else receiver
             analyze (call as? KtElement ?: container) {
                 val receiverSymbol = request.receiverExpression.resolveExpression()
                 if (receiverSymbol is KtCallableSymbol && receiverSymbol.returnType is KtTypeParameterType) {
-                    return ("<$receiverTypeText> $t")
+                    return ("<$receiverTypeText>")
                 }
             }
-            return t
         }
         return ""
     }
