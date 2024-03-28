@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnboardingBackgroundImageProvider
@@ -14,6 +13,7 @@ import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Image
+import java.io.IOException
 import java.net.URL
 
 @Internal
@@ -23,21 +23,21 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
   override fun getImage(): Image? {
     val imageUrl = getImageUrl()?.takeIf { isAvailable && it.path.endsWith(".svg"); } ?: return null
 
-    var image: Image? = null
-    BackgroundTaskUtil.executeAndTryWait(
-      { indicator: ProgressIndicator ->
-        val loadedImage = SVGLoader.load(imageUrl, 1f)
-
-        Runnable {
-          if (indicator.isCanceled) return@Runnable
-          image = loadedImage
+    val image: Image? = BackgroundTaskUtil.tryComputeFast(
+      { progressIndicator ->
+        try {
+          return@tryComputeFast SVGLoader.load(imageUrl, 1f)
         }
-      },
-      {
-        LOG.warn("Onboarding image loading failed (> $LOADING_TIMEOUT_MILLIS ms): ")
-      },
-      LOADING_TIMEOUT_MILLIS,
-      false)
+        catch (e: IOException) {
+          LOG.warn("Onboarding image loading failed: $e")
+          return@tryComputeFast null
+        }
+        finally {
+          if (progressIndicator.isCanceled) {
+            LOG.warn("Onboarding image loading failed: it took longer than $LOADING_TIMEOUT_MILLIS ms")
+          }
+        }
+      }, LOADING_TIMEOUT_MILLIS)
 
     return image
   }
