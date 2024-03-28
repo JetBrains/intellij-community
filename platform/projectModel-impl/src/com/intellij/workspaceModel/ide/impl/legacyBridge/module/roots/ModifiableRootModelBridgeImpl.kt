@@ -24,7 +24,6 @@ import com.intellij.platform.workspace.jps.CustomModuleEntitySource
 import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntitySource
@@ -46,6 +45,7 @@ import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.ConcurrentHashMap
+import com.intellij.platform.workspace.jps.entities.DependencyScope as EntitiesDependencyScope
 
 class ModifiableRootModelBridgeImpl(
   diff: MutableEntityStorage,
@@ -104,7 +104,7 @@ class ModifiableRootModelBridgeImpl(
 
   // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
   private val changedLibraryDependency = mutableSetOf<LibraryId>()
-  private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
+  private val moduleLibraryTable by lazy { ModifiableModuleLibraryTableBridge(this) }
 
   /**
    * Contains instances of OrderEntries edited via [ModifiableRootModel] interfaces; we need to keep references to them to update their indices;
