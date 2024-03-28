@@ -249,25 +249,59 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
     for (scrollPaneState in tracker.scrollPaneStates) {
       val targetComponent = ScrollableContentBorder.getTargetComponent(scrollPaneState.scrollPane) ?: continue
-      val hadHeaderWithBorder = ClientProperty.isTrue(targetComponent, ScrollableContentBorder.HEADER_WITH_BORDER_ABOVE)
-      val hasHeaderWithBorder = isTouchingHeader(targetComponent) && (anchor == ToolWindowAnchor.BOTTOM || newState)
-      if (hasHeaderWithBorder != hadHeaderWithBorder) {
-        ClientProperty.put(targetComponent, ScrollableContentBorder.HEADER_WITH_BORDER_ABOVE, hasHeaderWithBorder)
-        targetComponent.repaint()
-      }
+      updateEdgeProperty(
+        targetComponent,
+        ScrollableContentBorder.HEADER_WITH_BORDER_ABOVE,
+        isTouchingHeader(targetComponent) && (anchor == ToolWindowAnchor.BOTTOM || newState)
+      )
+      updateEdgeProperty(targetComponent, ScrollableContentBorder.TOOL_WINDOW_EDGE_LEFT, isTouchingLeftEdge(targetComponent))
+      updateEdgeProperty(targetComponent, ScrollableContentBorder.TOOL_WINDOW_EDGE_RIGHT, isTouchingRightEdge(targetComponent))
+      updateEdgeProperty(targetComponent, ScrollableContentBorder.TOOL_WINDOW_EDGE_BOTTOM, isTouchingBottomEdge(targetComponent))
+    }
+  }
+
+  private fun updateEdgeProperty(targetComponent: JComponent, property: Key<Boolean>, newValue: Boolean) {
+    val oldValue = ClientProperty.isTrue(targetComponent, property)
+    if (newValue != oldValue) {
+      ClientProperty.put(targetComponent, property, newValue)
+      targetComponent.repaint()
     }
   }
 
   private fun isTouchingHeader(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, decorator ->
+      val header = decorator.header
+      val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+      componentBounds.y == headerBounds.y + headerBounds.height
+    }
+  }
+
+  private fun isTouchingLeftEdge(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, _ ->
+      componentBounds.x == 0
+    }
+  }
+
+  private fun isTouchingRightEdge(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, decorator ->
+      componentBounds.x + componentBounds.width == decorator.width
+    }
+  }
+
+  private fun isTouchingBottomEdge(component: JComponent): Boolean {
+    return componentBoundsSatisfy(component) { componentBounds, decorator ->
+      componentBounds.y + componentBounds.height == decorator.height
+    }
+  }
+
+  private inline fun componentBoundsSatisfy(component: JComponent, predicate: (Rectangle, InternalDecoratorImpl) -> Boolean): Boolean {
     val decorator = this.decorator
     if (decorator == null || !component.isShowing) {
       return false
     }
     else {
-      val header = decorator.header
-      val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
-      val paneLocation = SwingUtilities.convertPoint(component.parent, component.location, decorator)
-      return paneLocation.y == headerBounds.y + headerBounds.height
+      val componentBounds = SwingUtilities.convertRectangle(component.parent, component.bounds, decorator)
+      return predicate(componentBounds, decorator)
     }
   }
 

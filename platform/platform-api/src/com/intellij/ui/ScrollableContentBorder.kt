@@ -37,7 +37,9 @@ class ScrollableContentBorder private constructor(
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val alreadyHasBorder = when (mySideMask) {
       TOP -> ClientProperty.isTrue(c, HEADER_WITH_BORDER_ABOVE) || ClientProperty.isTrue(c, TOOLBAR_WITH_BORDER_ABOVE)
-      LEFT -> ClientProperty.isTrue(c, TOOLBAR_WITH_BORDER_LEFT)
+      LEFT -> ClientProperty.isTrue(c, TOOLBAR_WITH_BORDER_LEFT) || ClientProperty.isTrue(c, TOOL_WINDOW_EDGE_LEFT)
+      RIGHT -> ClientProperty.isTrue(c, TOOL_WINDOW_EDGE_RIGHT)
+      BOTTOM -> ClientProperty.isTrue(c, TOOL_WINDOW_EDGE_BOTTOM)
       else -> false
     }
     if (!alreadyHasBorder) {
@@ -50,6 +52,18 @@ class ScrollableContentBorder private constructor(
     @ApiStatus.Internal
     @JvmField
     val HEADER_WITH_BORDER_ABOVE: Key<Boolean> = Key.create("HEADER_WITH_BORDER_ABOVE")
+
+    @ApiStatus.Internal
+    @JvmField
+    val TOOL_WINDOW_EDGE_LEFT: Key<Boolean> = Key.create("TOOL_WINDOW_EDGE_LEFT")
+
+    @ApiStatus.Internal
+    @JvmField
+    val TOOL_WINDOW_EDGE_RIGHT: Key<Boolean> = Key.create("TOOL_WINDOW_EDGE_RIGHT")
+
+    @ApiStatus.Internal
+    @JvmField
+    val TOOL_WINDOW_EDGE_BOTTOM: Key<Boolean> = Key.create("TOOL_WINDOW_EDGE_BOTTOM")
 
     @ApiStatus.Internal
     @JvmField
