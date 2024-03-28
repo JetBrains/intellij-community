@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.openapi.Disposable
@@ -98,14 +98,14 @@ internal class ActivityList(presentationFunction: (item: ActivityItem) -> Activi
     override fun keyPressed(e: KeyEvent) {
       if (KeyEvent.VK_ENTER != e.keyCode || e.modifiers != 0) return
       if (selectedIndices.isEmpty()) return
-      if (eventDispatcher.listeners.first { it.onEnter() } != null) e.consume()
+      if (eventDispatcher.listeners.firstOrNull { it.onEnter() } != null) e.consume()
     }
   }
 
   private inner class MyDoubleClickListener : DoubleClickListener() {
     override fun onDoubleClick(e: MouseEvent): Boolean {
       if (selectedIndices.isEmpty()) return false
-      return eventDispatcher.listeners.first { it.onDoubleClick() } != null
+      return eventDispatcher.listeners.firstOrNull { it.onDoubleClick() } != null
     }
   }
 }
