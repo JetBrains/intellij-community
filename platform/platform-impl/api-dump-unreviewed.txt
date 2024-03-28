@@ -9695,7 +9695,6 @@ f:com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo
 - <init>():V
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.ide.ui.laf.darcula.DarculaNewUIUtilsKt
 f:com.intellij.ide.ui.laf.darcula.DarculaTableHeaderBorder
 - javax.swing.border.Border
 - javax.swing.plaf.UIResource
