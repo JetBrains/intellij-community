@@ -62,7 +62,7 @@ public final class ScrollableSingleRowLayout extends SingleRowLayout {
   }
 
   private void doScrollToSelectedTab(SingleRowPassInfo passInfo) {
-    if (myTabs.isMouseInsideTabsArea() || myTabs.isScrollBarAdjusting()) {
+    if (myTabs.isMouseInsideTabsArea() || myTabs.isScrollBarAdjusting() || myTabs.isRecentlyActive()) {
       return;
     }
     int offset = -myScrollOffset;

@@ -91,7 +91,7 @@ private const val LAYOUT_DONE: @NonNls String = "Layout.done"
 @DirtyUI
 open class JBTabsImpl(
   private var project: Project?,
-  parentDisposable: Disposable,
+  private val parentDisposable: Disposable,
 ) : JComponent(), JBTabsEx, PropertyChangeListener, TimerListener, DataProvider,
     PopupMenuListener, JBTabsPresentation, Queryable, UISettingsListener,
     QuickActionProvider, MorePopupAware, Accessible {
@@ -154,7 +154,8 @@ open class JBTabsImpl(
     }
   }
 
-  private final val RELAYOUT_DELAY = 5000
+  private val RELAYOUT_DELAY = 2000
+  private val relayoutAlarm = Alarm(parentDisposable)
 
   private val visibleInfos = ArrayList<TabInfo>()
   private val infoToPage = HashMap<TabInfo, AccessibleTabPage>()
@@ -208,6 +209,8 @@ open class JBTabsImpl(
   private var hideTabs = false
   private var isRequestFocusOnLastFocusedComponent = false
   private var listenerAdded = false
+  var isRecentlyActive: Boolean = false
+    private set
 
   @JvmField
   internal val attractions: MutableSet<TabInfo> = HashSet()
@@ -395,11 +398,21 @@ open class JBTabsImpl(
     scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
+  private fun setRecentlyActive() {
+    relayoutAlarm.cancelAllRequests()
+    isRecentlyActive = true
+    relayoutAlarm.addRequest({
+                               isRecentlyActive = false
+                               relayout(false, false)
+                             }, RELAYOUT_DELAY)
+
+  }
+
   fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
     StartupUiUtil.addAwtListener(object : AWTEventListener {
-      val afterScroll = Alarm(parentDisposable)
+
 
       override fun eventDispatched(event: AWTEvent) {
         val tabRectangle = lastLayoutPass?.headerRectangle ?: return
@@ -417,13 +430,9 @@ open class JBTabsImpl(
         }
 
         isMouseInsideTabsArea = inside
-        afterScroll.cancelAllRequests()
+        relayoutAlarm.cancelAllRequests()
         if (!inside) {
-          afterScroll.addRequest({
-                                   if (!isMouseInsideTabsArea) {
-                                     relayout(false, false)
-                                   }
-                                 }, RELAYOUT_DELAY)
+          setRecentlyActive()
         }
       }
     }, AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable)
@@ -543,10 +552,8 @@ open class JBTabsImpl(
   fun unHover(label: TabLabel) {
     if (tabLabelAtMouse === label) {
       tabLabelAtMouse = null
-      Alarm().addRequest({
-                           label.revalidate()
-                           label.repaint()
-                         }, RELAYOUT_DELAY)
+      label.revalidate()
+      label.repaint()
     }
   }
 
@@ -1841,6 +1848,7 @@ open class JBTabsImpl(
   }
 
   private fun updateTabsOffsetFromScrollBar() {
+    if (!isScrollBarAdjusting()) setRecentlyActive()
     val currentUnitsOffset = effectiveLayout!!.scrollOffset
     val updatedOffset = scrollBarModel.value
     effectiveLayout!!.scroll(updatedOffset - currentUnitsOffset)
