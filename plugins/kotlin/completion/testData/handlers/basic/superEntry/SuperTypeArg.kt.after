@@ -6,6 +6,6 @@ class C : java.io.BufferedReader() {
     }
 }
 
-// IGNORE_K2
+// FIR_COMPARISON
 // INVOCATION_COUNT: 2
 // ELEMENT: BufferedReader
