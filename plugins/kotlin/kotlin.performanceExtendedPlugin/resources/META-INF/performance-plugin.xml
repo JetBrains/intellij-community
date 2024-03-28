@@ -2,5 +2,4 @@
     <extensions defaultExtensionNs="com.jetbrains">
         <performancePlugin.commandProvider implementation="com.intellij.performance.performancePlugin.KotlinPluginCommandProvider"/>
     </extensions>
-    <depends>com.jetbrains.performancePlugin</depends>
 </idea-plugin>
