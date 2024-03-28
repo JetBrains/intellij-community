@@ -110,6 +110,8 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     }
     debug!("Current directory: {:?}", env::current_dir());
 
+    ensure_env_vars_set()?;
+
     debug!("** Preparing launch configuration");
     let configuration = get_configuration(remote_dev, &exe_path.strip_ns_prefix()?).context("Cannot detect a launch configuration")?;
 
@@ -127,6 +129,21 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool) -> Result<()
     let args = configuration.get_args();
     java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode).context("Cannot start the runtime")?;
 
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn ensure_env_vars_set() -> Result<()> {
+    let app_data = get_known_folder_path(&Shell::FOLDERID_RoamingAppData, "FOLDERID_RoamingAppData")?;
+    env::set_var("APPDATA", &app_data.strip_ns_prefix()?.to_string_checked()?);
+
+    let local_app_data = get_known_folder_path(&Shell::FOLDERID_LocalAppData, "FOLDERID_LocalAppData")?;
+    env::set_var("LOCALAPPDATA", &local_app_data.strip_ns_prefix()?.to_string_checked()?);
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn ensure_env_vars_set() -> Result<()>  {
     Ok(())
 }
 
