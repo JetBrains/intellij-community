@@ -146,6 +146,9 @@ interface JpsProjectSerializers {
   @TestOnly
   fun saveAllEntities(storage: EntityStorage, writer: JpsFileContentWriter)
 
+  @TestOnly
+  fun saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, writer: JpsFileContentWriter)
+
   fun saveEntities(storage: EntityStorage, unloadedEntityStorage: EntityStorage, affectedSources: Set<EntitySource>,
                    writer: JpsFileContentWriter)
   

@@ -43,6 +43,7 @@ import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.CoroutineScope
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
@@ -129,9 +130,19 @@ internal fun loadProject(configLocation: JpsProjectConfigLocation,
   }
 }
 
+@TestOnly
 fun JpsProjectSerializersImpl.saveAllEntities(storage: EntityStorage, configLocation: JpsProjectConfigLocation) {
   val writer = JpsFileContentWriterImpl(configLocation)
   saveAllEntities(storage, writer)
+  val modulePathMapping = this.moduleSerializers.keys.filterIsInstance<ExternalModuleImlFileEntitiesSerializer>()
+    .associate { it.fileUrl.url to it.modulePath.path }
+  writer.writeFiles(modulePathMapping)
+}
+
+@TestOnly
+fun JpsProjectSerializersImpl.saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, configLocation: JpsProjectConfigLocation) {
+  val writer = JpsFileContentWriterImpl(configLocation)
+  saveAffectedEntities(storage, affectedEntitySources, writer)
   val modulePathMapping = this.moduleSerializers.keys.filterIsInstance<ExternalModuleImlFileEntitiesSerializer>()
     .associate { it.fileUrl.url to it.modulePath.path }
   writer.writeFiles(modulePathMapping)

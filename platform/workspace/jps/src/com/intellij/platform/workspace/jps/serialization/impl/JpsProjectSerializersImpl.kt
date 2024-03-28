@@ -485,6 +485,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     saveEntities(storage, ImmutableEntityStorage.empty(), allSources, writer)
   }
 
+  @TestOnly
+  override fun saveAffectedEntities(storage: EntityStorage, affectedEntitySources: Set<EntitySource>, writer: JpsFileContentWriter) {
+    moduleListSerializersByUrl.values.forEach {
+      saveModulesList(it, storage, ImmutableEntityStorage.empty(), writer)
+    }
+    saveEntities(storage, ImmutableEntityStorage.empty(), affectedEntitySources, writer)
+  }
+
   internal fun getActualFileUrl(source: EntitySource): String? {
     val actualFileSource = getActualFileSource(source) ?: return null
     return when (actualFileSource) {

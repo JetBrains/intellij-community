@@ -32,7 +32,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
-import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
+import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAffectedEntities
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
@@ -215,7 +215,8 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
       }
     }
     if (storageChanged) {
-      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAllEntities(storage, createProjectConfigLocation())
+      val affectedEntitySources = modulesToCheck.map { it.key.first.entitySource }.toSet()
+      (jpsProjectSerializer as JpsProjectSerializersImpl).saveAffectedEntities(storage, affectedEntitySources, createProjectConfigLocation())
     }
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
