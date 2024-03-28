@@ -12,12 +12,8 @@
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinDirectInheritorsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeKotlinDirectInheritorsProvider"/>
 
-    <projectService
-            serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService"/>
-
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirAnalysisEventSubscriptionProjectActivity"/>
   </extensions>
 
   <projectListeners>

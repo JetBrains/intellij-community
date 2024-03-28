@@ -7,9 +7,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
-            serviceImplementation="org.jetbrains.kotlin.references.fe10.base.KtFe10KotlinReferenceProviderContributor"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtFe10ReferenceResolutionHelperImpl"/>

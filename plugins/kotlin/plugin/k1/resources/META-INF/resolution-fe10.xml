@@ -1,14 +1,6 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.declarationAttributeAltererExtension"
-            interface="org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension"
-            area="IDEA_PROJECT"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.syntheticScopeProviderExtension"
-            interface="org.jetbrains.kotlin.synthetic.SyntheticScopeProviderExtension"
-            area="IDEA_PROJECT"/>
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.resolveScopeEnlarger"
             interface="org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger"
             dynamic="true"/>
