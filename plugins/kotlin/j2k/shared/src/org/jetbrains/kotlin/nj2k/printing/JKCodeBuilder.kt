@@ -165,6 +165,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitImportStatementRaw(importStatement: JKImportStatement) {
+            if (JKImportStorage.IMPLICIT_IMPORTS.any { it.matches(importStatement.name.value) }) return
             printer.print("import ")
             val importNameEscaped =
                 importStatement.name.value.escapedAsQualifiedName()
