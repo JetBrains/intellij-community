@@ -493,7 +493,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     mainPanel.uiSettingsChanged(uiSettings)
   }
 
-  private class InfoAndProgressPanelImpl(private val host: InfoAndProgressPanel) : JBPanel<JBPanel<*>?>(), UISettingsListener {
+  private class InfoAndProgressPanelImpl(private val host: InfoAndProgressPanel) : JBPanel<InfoAndProgressPanelImpl>(), UISettingsListener {
     val refreshIcon: JLabel = JLabel(AnimatedIcon.FS())
     val statusPanel: StatusPanel = StatusPanel()
     private val refreshAndInfoPanel = JPanel()

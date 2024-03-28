@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public final class JBSlidingPanel extends JBPanel {
+public final class JBSlidingPanel extends JBPanel<JBSlidingPanel> {
 
   public JBSlidingPanel() {
     setLayout(new JBCardLayout());

@@ -195,7 +195,7 @@ internal class VcsLogNewUiTableCellRenderer(
       return 0
     }
 
-    private fun createEmptyPanel() = JBPanel<JBPanel<*>>(null).andTransparent().withPreferredSize(additionalGap, 0)
+    private fun createEmptyPanel() = JBPanel(null).andTransparent().withPreferredSize(additionalGap, 0)
 
     private const val ROOT_COLUMN_INDEX = 0
   }

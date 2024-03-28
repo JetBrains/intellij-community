@@ -200,7 +200,7 @@ internal class ProjectTypeList(
     val link = ActionLink(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.advertiser")) { showInstallPluginDialog() }
     link.toolTipText = null
 
-    val languagePluginAdvertiserLink = JBPanel<JBPanel<*>>(BorderLayout())
+    val languagePluginAdvertiserLink = JBPanel(BorderLayout())
     languagePluginAdvertiserLink.border = JBUI.CurrentTheme.Advertiser.border()
     languagePluginAdvertiserLink.foreground = JBUI.CurrentTheme.Advertiser.foreground()
     languagePluginAdvertiserLink.background = JBUI.CurrentTheme.Advertiser.background()
@@ -248,7 +248,7 @@ internal class ProjectTypeList(
     val link = ActionLink(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.name")) { showInstallPluginPopup() }
     link.toolTipText = UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.description")
 
-    languagePluginFooterLink = JBPanel<JBPanel<*>>(BorderLayout())
+    languagePluginFooterLink = JBPanel(BorderLayout())
     languagePluginFooterLink.border = JBUI.CurrentTheme.Advertiser.border()
     languagePluginFooterLink.withMinimumHeight(JBUI.scale(40))
     languagePluginFooterLink.withPreferredHeight(JBUI.scale(40))
