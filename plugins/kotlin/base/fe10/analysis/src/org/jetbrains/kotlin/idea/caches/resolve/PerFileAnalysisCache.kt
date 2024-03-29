@@ -593,18 +593,23 @@ private object KotlinResolveDataProvider {
         bindingTrace: BindingTrace?,
         callback: DiagnosticSink.DiagnosticsCallback?
     ): AnalysisResult {
+        println("In PerFileAnalysisCache::analyze")
         try {
             if (analyzableElement is KtCodeFragment) {
+                println("  analyzableElement is KtCodeFragment")
                 val bodyResolveMode = BodyResolveMode.PARTIAL_FOR_COMPLETION
                 val trace: BindingTrace = codeFragmentAnalyzer.analyzeCodeFragment(analyzableElement, bodyResolveMode)
                 val bindingContext = trace.bindingContext
                 return AnalysisResult.success(bindingContext, moduleDescriptor)
             }
 
+            println("  analyzableElement is NOT KtCodeFragment")
             val trace = bindingTrace ?: BindingTraceForBodyResolve(
                 resolveSession.bindingContext,
                 "Trace for resolution of $analyzableElement"
             )
+            println("  BEFORE trace.bindingContext.diagnostics = ${trace.bindingContext.diagnostics.all().forEach { println("    ${it.factoryName}") }}")
+            Thread.sleep(100)
 
             val moduleInfo = analyzableElement.containingKtFile.moduleInfo
 
@@ -639,14 +644,15 @@ private object KotlinResolveDataProvider {
                     absentDescriptorHandler = IdeaAbsentDescriptorHandler(pluginDeclarationProviderFactory),
                     optimizingOptions = null
                 ).get<LazyTopDownAnalyzer>()
-
+                println("  analyzableElement = $analyzableElement")
                 lazyTopDownAnalyzer.analyzeDeclarations(TopDownAnalysisMode.TopLevelDeclarations, listOf(analyzableElement))
             } finally {
                 if (callbackSet) {
                     trace.resetCallback()
                 }
             }
-
+            println("  AFTER trace.bindingContext.diagnostics = ${trace.bindingContext.diagnostics.all().forEach { println("    ${it.factoryName}") }}")
+            trace.bindingContext.diagnostics
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
         } catch (e: ProcessCanceledException) {
             throw e

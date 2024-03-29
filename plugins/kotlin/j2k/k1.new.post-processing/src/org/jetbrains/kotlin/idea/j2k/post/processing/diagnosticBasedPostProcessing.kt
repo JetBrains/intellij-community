@@ -106,6 +106,7 @@ internal fun diagnosticBasedProcessing(fixFactory: QuickFixFactory, vararg diagn
     object : DiagnosticBasedProcessing {
         override val diagnosticFactories = diagnosticFactory.toList()
         override fun fix(diagnostic: Diagnostic) {
+            println("IN diagnosticBasedProcessing, calling fix with diagnostic arg $diagnostic ${diagnostic.javaClass.name} ${diagnosticFactories.first().name}")
             val actionFactory = fixFactory.asKotlinIntentionActionsFactory()
             val fix = runReadAction { actionFactory.createActions(diagnostic).singleOrNull() } ?: return
             runUndoTransparentActionInEdt(inWriteAction = true) {

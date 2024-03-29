@@ -90,10 +90,13 @@ class TypeMappingConversion(
                 )
 
             is JKVarianceTypeParameterType ->
+            {
+                //println("TypeMappingConversion, JKType.mapType called on ${(this.boundType as JKTypeParameterType).identifier.name} for ${typeElement}")
                 JKVarianceTypeParameterType(
                     variance,
                     boundType.mapType(null)
                 )
+            }
 
             is JKCapturedType -> {
                 JKCapturedType(

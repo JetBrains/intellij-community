@@ -140,11 +140,11 @@ private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
 private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
     KotlinNJ2KServicesBundle.message("processing.step.cleaning.up.code"),
     listOf(
-        DiagnosticBasedPostProcessingGroup(
+        /*DiagnosticBasedPostProcessingGroup(
             // We need to remove the redundant projection before `ConvertGettersAndSettersToPropertyProcessing`,
             // so that the property and accessor types wouldn't differ in projections.
             diagnosticBasedProcessing(RemoveModifierFixBase.createRemoveProjectionFactory(isRedundant = true), Errors.REDUNDANT_PROJECTION),
-        ),
+        ),*/
         ConvertGettersAndSettersToPropertyProcessing(),
         InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
         MergePropertyWithConstructorParameterProcessing(),

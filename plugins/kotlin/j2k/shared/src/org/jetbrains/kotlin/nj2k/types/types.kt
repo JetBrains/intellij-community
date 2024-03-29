@@ -48,6 +48,9 @@ data class JKVarianceTypeParameterType(
 ) : JKWildCardType {
     override val nullability: Nullability
         get() = Nullability.Default
+    init {
+     println("In types.kt JKVarianceTypeParameterType, ${boundType.toString()}, ${variance.name}")
+    }
 
     enum class Variance {
         IN, OUT
