@@ -769,7 +769,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
       if (options.isDedicatedTestRuntime == "class") {
         fun runOneClass(testClassName: String) {
-          blockAndSpan("running test class '$testClassName'") {
+          val exitCode = blockAndSpan("running test class '$testClassName'") {
             runJUnit5Engine(
               systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
@@ -781,6 +781,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
               methodName = null
             )
           }
+          if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
         }
 
         if (testClassesJUnit5.isNotEmpty()) {
@@ -803,7 +804,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
           val packageName = entry.key
           val classes = entry.value
 
-          blockAndSpan("running tests in package '$packageName'") {
+          val exitCode = blockAndSpan("running tests in package '$packageName'") {
             runJUnit5Engine(
               systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
@@ -815,6 +816,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
               methodName = classes.joinToString(";")
             )
           }
+          if (exitCode == NO_TESTS_ERROR) throw NoTestsFound()
         }
 
         if (testClassesJUnit5.isNotEmpty()) {
