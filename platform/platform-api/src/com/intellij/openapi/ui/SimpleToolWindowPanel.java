@@ -257,7 +257,8 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     if (toolbar == null || !toolbar.isVisible() || !component.isShowing()) {
       return false;
     }
-    var expectedCoordinate = (myVertical ? toolbar.getHeight() : toolbar.getWidth()) + GAP;
+    var toolbarBounds = SwingUtilities.convertRectangle(toolbar.getParent(), toolbar.getBounds(), this);
+    var expectedCoordinate = (myVertical ? toolbarBounds.y + toolbarBounds.height : toolbarBounds.x + toolbarBounds.width) + GAP;
     var paneLocation = SwingUtilities.convertPoint(component.getParent(), component.getLocation(), this);
     var actualCoordinate = myVertical ? paneLocation.y : paneLocation.x;
     return expectedCoordinate == actualCoordinate;
