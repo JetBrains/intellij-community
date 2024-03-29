@@ -124,8 +124,9 @@ __jetbrains_intellij_command_terminated() {
   __jetbrains_intellij_report_prompt_state
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
+    builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
     __jetbrains_intellij_debug_log 'initialized'
-    builtin printf '\e]1341;initialized\a'
+    builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode $shell_info)"
     builtin local hist="$(builtin history)"
     builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode "$hist")"
   else
@@ -156,6 +157,39 @@ __jetbrains_intellij_report_prompt_state() {
     "$(__jetbrains_intellij_encode "${git_branch}")" \
     "$(__jetbrains_intellij_encode "${virtual_env}")" \
     "$(__jetbrains_intellij_encode "${conda_env}")"
+}
+
+__jetbrains_intellij_collect_shell_info() {
+  builtin local is_oh_my_bash='false'
+  if [ -n "${OSH_THEME:-}" ] || [ -n "${OSH:-}" ] || [ -n "${OSH_CACHE_DIR:-}" ]; then
+    is_oh_my_bash='true'
+  fi
+  builtin local is_starship='false'
+  if [ -n "${STARSHIP_START_TIME:-}" ] || [ -n "${STARSHIP_SHELL:-}" ] || [ -n "${STARSHIP_SESSION_KEY:-}" ]; then
+    is_starship='true'
+  fi
+  builtin local is_bash_it='false'
+  if [ -n "${BASH_IT_THEME:-}" ] || [ -n "${BASH_IT:-}" ] || [ -n "${BASH_IT_BASHRC:-}" ]; then
+    is_bash_it='true'
+  fi
+
+  builtin local oh_my_bash_theme="${OSH_THEME:-}"
+  builtin local bash_it_theme="${BASH_IT_THEME:-}"
+  builtin local oh_my_posh_theme=''
+  if [ -n "${POSH_THEME:-}" ] || [ -n "${POSH_PID:-}" ] || [ -n "${POSH_SHELL_VERSION:-}" ]; then
+    oh_my_posh_theme="${POSH_THEME:-default}"
+  fi
+
+  builtin local content_json="{"\
+"\"shellVersion\": \"$(__jetbrains_intellij_escape_json "${BASH_VERSION:-}")\", "\
+"\"isOhMyBash\": \"$is_oh_my_bash\", "\
+"\"isStarship\": \"$is_starship\", "\
+"\"isBashIt\": \"$is_bash_it\", "\
+"\"ohMyBashTheme\": \"$(__jetbrains_intellij_escape_json $oh_my_bash_theme)\", "\
+"\"ohMyPoshTheme\": \"$(__jetbrains_intellij_escape_json $oh_my_posh_theme)\", "\
+"\"bashItTheme\": \"$(__jetbrains_intellij_escape_json $bash_it_theme)\""\
+"}"
+  builtin printf '%s' $content_json
 }
 
 # override clear behaviour to handle it on IDE side and remove the blocks

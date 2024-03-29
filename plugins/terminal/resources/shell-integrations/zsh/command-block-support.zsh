@@ -127,6 +127,50 @@ __jetbrains_intellij_report_prompt_state() {
     "$(__jetbrains_intellij_encode "${conda_env}")"
 }
 
+__jetbrains_intellij_collect_shell_info() {
+  builtin local is_oh_my_zsh='false'
+  if [ -n "${ZSH_THEME:-}" ] || [ -n "${ZSH_COMPDUMP:-}" ] || [ -n "${ZSH_CACHE_DIR:-}" ]; then
+    is_oh_my_zsh='true'
+  fi
+  builtin local is_p10k='false'
+  if [ -n "${P9K_VERSION:-}" ] || [ -n "${POWERLEVEL9K_INSTANT_PROMPT:-}" ]; then
+    is_p10k='true'
+  fi
+  builtin local is_starship='false'
+  if [ -n "${STARSHIP_START_TIME:-}" ] || [ -n "${STARSHIP_SHELL:-}" ] || [ -n "${STARSHIP_SESSION_KEY:-}" ]; then
+    is_starship='true'
+  fi
+  builtin local is_spaceship='false'
+  if [ -n "${SPACESHIP_CONFIG_PATH:-}" ] || [ -n "${SPACESHIP_PROMPT_ORDER:-}" ]; then
+    is_spaceship='true'
+  fi
+  builtin local is_prezto='false'
+  if [ -n "${ZPREZTODIR:-}" ]; then
+    is_prezto='true'
+  fi
+
+  builtin local oh_my_zsh_theme="${ZSH_THEME:-}"
+  builtin local oh_my_posh_theme=''
+  if [ -n "${POSH_THEME:-}" ] || [ -n "${POSH_PID:-}" ] || [ -n "${POSH_SHELL_VERSION:-}" ]; then
+    oh_my_posh_theme="${POSH_THEME:-default}"
+  fi
+  builtin local prezto_theme=''
+  zstyle -s ':prezto:module:prompt' theme prezto_theme
+
+  builtin local content_json="{"\
+"\"shellVersion\": \"$(__jetbrains_intellij_escape_json "${ZSH_VERSION:-}")\", "\
+"\"isOhMyZsh\": \"$is_oh_my_zsh\", "\
+"\"isP10K\": \"$is_p10k\", "\
+"\"isStarship\": \"$is_starship\", "\
+"\"isSpaceship\": \"$is_spaceship\", "\
+"\"isPrezto\": \"$is_prezto\", "\
+"\"ohMyZshTheme\": \"$(__jetbrains_intellij_escape_json $oh_my_zsh_theme)\", "\
+"\"ohMyPoshTheme\": \"$(__jetbrains_intellij_escape_json $oh_my_posh_theme)\", "\
+"\"preztoTheme\": \"$(__jetbrains_intellij_escape_json $prezto_theme)\""\
+"}"
+  builtin printf '%s' $content_json
+}
+
 # override clear behaviour to handle it on IDE side and remove the blocks
 clear() {
   builtin printf '\e]1341;clear_invoked\a'
@@ -145,6 +189,7 @@ __jetbrains_intellij_report_prompt_state
 builtin local hist="$(builtin history 1)"
 builtin printf '\e]1341;command_history;history_string=%s\a' "$(__jetbrains_intellij_encode_large "${hist}")"
 
+builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
 # This script is sourced from inside a `precmd` hook, i.e. right before the first prompt.
-builtin printf '\e]1341;initialized\a'
+builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode_large $shell_info)"
 builtin print "${JETBRAINS_INTELLIJ_COMMAND_END_MARKER:-}"
