@@ -30,7 +30,7 @@ public final class JavaPsiConstructorUtil {
       if (body == null) return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
       Ref<PsiMethodCallExpression> result = new Ref<>();
       PsiTreeUtil.processElements(body, PsiMethodCallExpression.class, call -> {
-        if (isConstructorCall(call)) {
+        if (isConstructorCall(call) && PsiTreeUtil.getParentOfType(call, PsiMethod.class) == constructor) {
           result.set(call);
           return false;
         }
