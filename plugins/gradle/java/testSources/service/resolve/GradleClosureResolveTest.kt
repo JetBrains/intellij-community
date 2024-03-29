@@ -134,6 +134,28 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
     }
   }
 
+  // Despite the presence of an overloaded method with Action<? super T>, it's not possible to resolve T to use it as a delegate
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `return null when type parameter is not resolvable`(gradleVersion: GradleVersion) {
+    val buildScript = """
+      |class FooClass {
+      |    void method(Closure block) {};
+      |    <T> void method(Action<? super T> block) {};
+      |}
+      |new FooClass().method { <caret> }
+      |""".trimMargin()
+    testEmptyProject(gradleVersion) {
+      testBuildscript(buildScript) {
+        val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
+        val methodCall = closableBlock.parent as GrMethodCall
+        assertCalledMethodHasClosureParameter(methodCall)
+        val delegatesToInfo = getDelegatesToInfo(closableBlock)
+        assertNull(delegatesToInfo, "It's not expected to resolve a delegate for a Closure")
+      }
+    }
+  }
+
   private fun assertCalledMethodHasClosureParameter(call: GrMethodCall) {
     val lastParameter = call.resolveMethod()?.parameters?.lastOrNull()
     assertNotNull(lastParameter)

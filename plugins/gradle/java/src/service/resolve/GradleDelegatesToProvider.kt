@@ -49,10 +49,11 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     val generatedClosureInfo: DelegatesToInfo? = getDelegateIfGeneratedClosure(resolvedCall)
     if (generatedClosureInfo != null) return generatedClosureInfo
 
-    val argumentMapping = resolvedCall.candidate?.argumentMapping ?: return null
+    val candidate = resolvedCall.candidate ?: return null
+    val argumentMapping = candidate.argumentMapping ?: return null
     val type = argumentMapping.expectedType(ExpressionArgument(expression)) as? PsiClassType ?: return null
     val clazz = type.resolve() ?: return null
-    val delegate = getDelegateFromAction(clazz, type, resolvedCall.substitutor)
+    val delegate = getDelegateFromAction(clazz, type, candidate.method, resolvedCall.substitutor)
                    ?: getDelegateFromClosure(clazz, resolvedCall)
                    ?: return null
     val optionallyWrapped = replaceWithProjectAwareType(delegate, expression, resolvedCall)
@@ -95,7 +96,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
    * It also works for other classes with @HasImplicitReceiver and single generic parameter.
    * But currently only Action has this annotation in Gradle sources.
    */
-  private fun getDelegateFromAction(clazz: PsiClass, type: PsiClassType, substitutor: PsiSubstitutor): PsiType? {
+  private fun getDelegateFromAction(clazz: PsiClass, type: PsiClassType, psiMethod: PsiMethod, substitutor: PsiSubstitutor): PsiType? {
     if (clazz.qualifiedName != GRADLE_API_ACTION
         && !clazz.hasAnnotation("org.gradle.api.HasImplicitReceiver")) {
       return null
@@ -108,7 +109,20 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     else {
       genericParameter
     }
-    return substitutor.substitute(specificType)
+    val substituted = substitutor.substitute(specificType)
+    if (typeParameterIsNotResolved(psiMethod, substituted)) {
+      return null
+    }
+    return substituted
+  }
+
+  /**
+   * I.e., returns `true` if method signature looks like `<T> void foo(Action<? super T>)` and nothing meaningful was substituted in the
+   * type parameter `T`: [resolvedType] still equals `T` after substitution.
+   * */
+  private fun typeParameterIsNotResolved(psiMethod: PsiMethod, resolvedType: PsiType): Boolean {
+    val typeParameterNames = psiMethod.typeParameters.map(PsiTypeParameter::getName)
+    return typeParameterNames.contains(resolvedType.canonicalText)
   }
 
   /**
@@ -136,6 +150,6 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     val lastParam = psiMethod.parameters.lastOrNull() ?: return null
     val paramType = lastParam.type.asSafely<PsiClassType>() ?: return null
     val resolvedClass = paramType.resolve() ?: return null
-    return getDelegateFromAction(resolvedClass, paramType, substitutor)
+    return getDelegateFromAction(resolvedClass, paramType, psiMethod, substitutor)
   }
 }
