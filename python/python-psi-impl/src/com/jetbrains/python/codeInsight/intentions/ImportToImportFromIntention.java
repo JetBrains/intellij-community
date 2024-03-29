@@ -6,7 +6,6 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,32 +32,33 @@ import java.util.*;
  */
 public final class ImportToImportFromIntention extends PsiBasedModCommandAction<PyReferenceExpression> {
   private static class IntentionState {
-    private String myModuleName = null;
     private final @NotNull PyImportElement myImportElement;
     private final @Nullable QualifiedName myQualifiedName;
     private final @NotNull List<PyReferenceExpression> myReferences = new ArrayList<>();
+    private final @NotNull String myNewImportSource;
+    // if anything that resolves to our imported module is just an exact reference to that module
     private boolean myHasModuleReference = false;
-      // is anything that resolves to our imported module is just an exact reference to that module
-    private int myRelativeLevel; // true if "from ... import"
 
     IntentionState(@NotNull PyImportElement importElement, @Nullable QualifiedName qualifiedName) {
+      int relativeLevel = 0;
       boolean available = false;
       myImportElement = importElement;
       myQualifiedName = qualifiedName;
       final PsiElement parent = myImportElement.getParent();
       if (parent instanceof PyImportStatement) {
-        myRelativeLevel = 0;
         available = true;
       }
       else if (parent instanceof PyFromImportStatement fromImport) {
-        final int relativeLevel = fromImport.getRelativeLevel();
+        relativeLevel = fromImport.getRelativeLevel();
         if (relativeLevel > 0 && fromImport.getImportSource() == null) {
-          myRelativeLevel = relativeLevel;
           available = true;
         }
       }
+      PyReferenceExpression oldImportSource = myImportElement.getImportReferenceExpression();
+      assert oldImportSource != null;
+      myNewImportSource = StringUtil.repeat(".", relativeLevel) + PyPsiUtils.toPath(oldImportSource);
       if (available) {
-        collectReferencesAndOtherData(importElement.getContainingFile()); // this will cache data for the invocation
+        collectReferencesAndOtherData(oldImportSource); // this will cache data for the invocation
       }
     }
 
@@ -66,34 +66,28 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       return !myReferences.isEmpty();
     }
 
-    private void collectReferencesAndOtherData(PsiFile file) {
-      // usages of imported name are qualifiers; what they refer to?
-      final PyReferenceExpression importReference = myImportElement.getImportReferenceExpression();
-      if (importReference != null) {
-        myModuleName = PyPsiUtils.toPath(importReference);
-        String qualifierName = getQualifierName(myImportElement);
-        PsiElement referee = importReference.getReference().resolve();
-        myHasModuleReference = false;
-        if (referee != null && qualifierName != null) {
-          PsiTreeUtil.processElements(file, new PsiElementProcessor<>() {
-            @Override
-            public boolean execute(@NotNull PsiElement element) {
-              if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
-                if (qualifierName.equals(PyPsiUtils.toPath(ref))) {  // filter out other names that might resolve to our target
-                  final PsiElement parentElt = ref.getParent();
-                  if (parentElt instanceof PyReferenceExpression) { // really qualified by us, not just referencing?
-                    final PsiElement resolved = ref.getReference().resolve();
-                    if (resolved == referee) myReferences.add(ref);
-                  }
-                  else {
-                    myHasModuleReference = true;
-                  }
+    private void collectReferencesAndOtherData(@NotNull PyReferenceExpression oldImportSource) {
+      String qualifierName = getQualifierName(myImportElement);
+      PsiElement referee = oldImportSource.getReference().resolve();
+      myHasModuleReference = false;
+      if (referee != null && qualifierName != null) {
+        PsiTreeUtil.processElements(oldImportSource.getContainingFile(), new PsiElementProcessor<>() {
+          @Override
+          public boolean execute(@NotNull PsiElement element) {
+            if (element instanceof PyReferenceExpression ref && PsiTreeUtil.getParentOfType(element, PyImportElement.class) == null) {
+              if (qualifierName.equals(PyPsiUtils.toPath(ref))) {  // filter out other names that might resolve to our target
+                if (ref.getParent() instanceof PyReferenceExpression) { // really qualified by us, not just referencing?
+                  final PsiElement resolved = ref.getReference().resolve();
+                  if (resolved == referee) myReferences.add(ref);
+                }
+                else {
+                  myHasModuleReference = true;
                 }
               }
-              return true;
             }
-          });
-        }
+            return true;
+          }
+        });
       }
     }
 
@@ -144,7 +138,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
           throw new IncorrectOperationException("Not an import at all");
         }
         final PyFromImportStatement newImportStatement =
-          generator.createFromImportStatement(languageLevel, getDots() + myModuleName, StringUtil.join(usedNames, ", "), null);
+          generator.createFromImportStatement(languageLevel, myNewImportSource, StringUtil.join(usedNames, ", "), null);
         final PsiElement parent = importStatement.getParent();
         boolean canRemoveImport = !myHasModuleReference && referencesToUpdate.size() == myReferences.size();
         if (importElements.length == 1) {
@@ -171,16 +165,11 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
 
     public @NotNull @IntentionName String getText() {
       if (myQualifiedName == null) {
-        String moduleName = Optional.ofNullable(myModuleName).orElse("?");
-        return PyPsiBundle.message("INTN.convert.to.from.import", getDots() + moduleName, "...");
+        return PyPsiBundle.message("INTN.convert.to.from.import", myNewImportSource, "...");
       }
       else {
         return PyPsiBundle.message("INTN.remove.qualifier", getQualifierName(myImportElement));
       }
-    }
-
-    private @NotNull String getDots() {
-      return StringUtil.repeat(".", myRelativeLevel);
     }
 
     private static @Nullable String getQualifierName(@NotNull PyImportElement importElement) {
