@@ -58,6 +58,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
     Assertions.assertArrayEquals(new int[]{0, extracted.length()}, extracted.markupOffsets());
   }
 
+  public void testMarkdownShortRefLink() {
+    TextContent extracted = extractText("a.md", "go to [link] and validate\n[link] : http://localhost", 3);
+    assertEquals("go to link and validate\nlink : http://localhost", unknownOffsets(extracted));
+    Assertions.assertArrayEquals(new int[]{6, 10, 24, 28}, extracted.markupOffsets());
+  }
+
   public void testMarkdownIndent() {
     TextContent extracted = extractText("a.md", "* first line \n  second line", 3);
     assertEquals("first line\nsecond line", unknownOffsets(extracted));

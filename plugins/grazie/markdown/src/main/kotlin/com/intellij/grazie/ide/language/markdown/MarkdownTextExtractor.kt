@@ -22,7 +22,7 @@ class MarkdownTextExtractor : TextExtractor() {
         .withUnknown { it.node.isMarkdownCodeType() }
         .withMarkup { e ->
           e.elementType in markup ||
-          e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e)
+          e.firstChild == null && e.parent.node.isMarkdownLinkType() && !isLinkText(e) && !isShortRefLinkLabel(e)
         }
         .excluding { it.elementType == MarkdownElementTypes.IMAGE }
         .removingIndents(" \t").removingLineSuffixes(" \t")
@@ -34,4 +34,9 @@ class MarkdownTextExtractor : TextExtractor() {
   private fun isLinkText(e: PsiElement) =
     (e.elementType == MarkdownTokenTypes.TEXT || e.elementType == MarkdownTokenTypes.GFM_AUTOLINK || e is PsiWhiteSpace) &&
     e.parent.elementType == MarkdownElementTypes.LINK_TEXT
+
+  private fun isShortRefLinkLabel(e: PsiElement) =
+    e.parent.parent.elementType == MarkdownElementTypes.SHORT_REFERENCE_LINK &&
+    e.parent.elementType == MarkdownElementTypes.LINK_LABEL &&
+    (e.elementType == MarkdownTokenTypes.TEXT || e is PsiWhiteSpace)
 }
