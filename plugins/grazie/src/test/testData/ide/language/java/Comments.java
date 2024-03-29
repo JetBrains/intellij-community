@@ -72,4 +72,8 @@ class ForMultiLanguageSupport {
   int foo() {
     return 1;
   }
+
+  // Some legitimate English comment
+  // to be checked.
+  // noinspection ConstantValue
 }

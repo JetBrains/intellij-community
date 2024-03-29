@@ -62,3 +62,7 @@ specialDelivery:  >
 # requests:
 #   cpu: 100m
 #   memory: 128Mi
+
+# Some legitimate English comment
+# to be checked.
+# noinspection ConstantValue
