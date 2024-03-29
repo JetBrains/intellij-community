@@ -259,7 +259,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     }
     var expectedCoordinate = (myVertical ? toolbar.getHeight() : toolbar.getWidth()) + GAP;
     var paneLocation = SwingUtilities.convertPoint(component.getParent(), component.getLocation(), this);
-    var actualCoordinate = myVertical ? paneLocation.getY() : paneLocation.getX();
+    var actualCoordinate = myVertical ? paneLocation.y : paneLocation.x;
     return expectedCoordinate == actualCoordinate;
   }
 
