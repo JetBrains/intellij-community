@@ -203,7 +203,8 @@ public final class FormatDecode {
 
       final Validator allowed;
       if (isAllVerifier) {
-        allowed = new AllValidatorWithRange(TextRange.create(matcher.start(), matcher.end()));
+        allowed = new AllValidatorWithRange(TextRange.create(matcher.start(), matcher.end()),
+                                            new Spec(posSpec, flags, width, precision, dateSpec, conversion));
       }
       else if (dateSpec != null) {  // a t or T
         checkFlags(flagBits, LEFT_JUSTIFY | PREVIOUS, specifier);
@@ -414,9 +415,16 @@ public final class FormatDecode {
 
   private static class AllValidatorWithRange extends AllValidator {
     private final @NotNull TextRange myRange;
+    private final @NotNull Spec mySpec;
 
-    AllValidatorWithRange(@NotNull TextRange range) {
+    AllValidatorWithRange(@NotNull TextRange range, @NotNull Spec spec) {
       myRange = range;
+      mySpec = spec;
+    }
+
+    @Override
+    public @NotNull Spec getSpec() {
+      return mySpec;
     }
 
     @Override
@@ -528,7 +536,7 @@ public final class FormatDecode {
     }
   }
 
-  static class MultiValidator extends Validator {
+  public static class MultiValidator extends Validator {
     private final Set<Validator> validators = new HashSet<>(3);
 
     @Nullable
@@ -556,7 +564,7 @@ public final class FormatDecode {
       return true;
     }
 
-    Set<Validator> getValidators() {
+    public Set<Validator> getValidators() {
       return validators;
     }
 
@@ -589,6 +597,19 @@ public final class FormatDecode {
     public @Nullable TextRange getRange() {
       return null;
     }
+
+    public @Nullable Spec getSpec() {
+      return null;
+    }
+  }
+
+  public record Spec(@Nullable String posSpec ,
+                     @Nullable String flags,
+                     @Nullable String width,
+                     @Nullable String precision,
+                     @Nullable String dateSpec,
+                     @Nullable String conversion){
+
   }
 
   public static class FormatArgument {
@@ -608,13 +629,15 @@ public final class FormatDecode {
       return myExpression;
     }
 
-    public static FormatArgument extract(@NotNull PsiCallExpression expression, List<String> methodNames, List<String> classNames) {
+    @Nullable
+    public static FormatArgument extract(@NotNull PsiCallExpression expression, @NotNull List<String> methodNames, @NotNull List<String> classNames) {
       return extract(expression, methodNames, classNames, false);
     }
 
+    @Nullable
     public static FormatArgument extract(@NotNull PsiCallExpression expression,
-                                         List<String> methodNames,
-                                         List<String> classNames,
+                                         @NotNull List<String> methodNames,
+                                         @NotNull List<String> classNames,
                                          boolean allowNotConstant) {
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) return null;

@@ -38,7 +38,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
 
       """
       package org.slf4j;\s
-      public class LoggerFactory {
+      public final class LoggerFactory {
         public static Logger getLogger(Class clazz) {
           return null;\s
         }
@@ -55,7 +55,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
 
       """
       package org.apache.logging.log4j;
-      public class LogManager {
+      public final class LogManager {
         public static Logger getLogger() {
           return null;
         }
@@ -69,6 +69,11 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
       public interface LogBuilder {
         void log(String format, Object p0);
         void log(String format, Object... params);
+      }""",
+      """
+      package java.text;
+      public final class MessageFormat {
+        public static String format(String format, Object... params);
       }"""
     };
   }
@@ -81,7 +86,7 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
                  Logger logger = LoggerFactory.getLogger(X.class);
                  final String CONST = "const";
                  String var = "var";
-                 logger./*Non-constant string concatenation as argument to 'debug()' logging call*/debug/**/("string " + var + CONST);
+                 logger./*Evaluated string as argument to 'debug()' logging call*/debug/**/("string " + var + CONST);
                }
              }"""
            );
@@ -104,8 +109,8 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              class Logging {
                private static final Logger LOG = LogManager.getLogger();
                void m(int i) {
-                 LOG./*Non-constant string concatenation as argument to 'info()' logging call*/info/**/("hello? " + i);
-                 LOG./*Non-constant string concatenation as argument to 'fatal()' logging call*/fatal/**/("you got me " + i);
+                 LOG./*Evaluated string as argument to 'info()' logging call*/info/**/("hello? " + i);
+                 LOG./*Evaluated string as argument to 'fatal()' logging call*/fatal/**/("you got me " + i);
                }
              }""");
   }
@@ -114,12 +119,12 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
     doTest("""
              import org.apache.logging.log4j.*;
              
-             class Log4JFormatted {
+             final class Log4JFormatted {
              
                private static final Logger logger = LogManager.getFormattedLogger();
              
                public static void m(String a) {
-                 logger./*Non-constant string concatenation as argument to 'info()' logging call*/info/**/("1" + "2" + a);
+                 logger./*Evaluated string as argument to 'info()' logging call*/info/**/("1" + "2" + a);
                                        }
              }""");
   }
@@ -130,9 +135,35 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              class Logging {
                private static final Logger LOG = LogManager.getLogger();
                void m(int i) {
-                 LOG.atDebug()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/("hello? " + i);
-                 LOG.atInfo()./*Non-constant string concatenation as argument to 'log()' logging call*/log/**/("you got me " + i);
+                 LOG.atDebug()./*Evaluated string as argument to 'log()' logging call*/log/**/("hello? " + i);
+                 LOG.atInfo()./*Evaluated string as argument to 'log()' logging call*/log/**/("you got me " + i);
                }
              }""");
+  }
+
+
+  public void testSlfStringFormat() {
+    doTest("""
+             import org.slf4j.*;
+             class X {
+               void foo() {
+                 Logger log = LoggerFactory.getLogger(X.class);
+                 log./*Evaluated string as argument to 'info()' logging call*/info/**/(String.format("%s %d", "1", 1));
+               }
+             }"""
+    );
+  }
+  public void testSlfMessageFormat() {
+    doTest("""
+             import org.slf4j.*;
+             import java.text.MessageFormat;
+
+             class X {
+               void foo() {
+                 Logger log = LoggerFactory.getLogger(X.class);
+                 log./*Evaluated string as argument to 'info()' logging call*/info/**/(MessageFormat.format("{1}, {0}", "1", 2));
+               }
+             }"""
+    );
   }
 }

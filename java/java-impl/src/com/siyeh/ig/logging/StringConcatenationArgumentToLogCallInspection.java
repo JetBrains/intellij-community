@@ -7,16 +7,22 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.bugs.message.MessageFormatUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.format.FormatDecode;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.EntryStream;
@@ -27,11 +33,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
+import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
+import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
  * @author Bas Leijdekkers
@@ -51,6 +57,10 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   private static final String LOG4J_LOGGER = "org.apache.logging.log4j.Logger";
   private static final String LOG4J_BUILDER = "org.apache.logging.log4j.LogBuilder";
   private static final String GET_LOGGER = "getLogger";
+  private static final CallMatcher MESSAGE_FORMAT_FORMAT = anyOf(
+    staticCall("java.text.MessageFormat", "format").parameterCount(2)
+  );
+  private static final String SLF4J_LOGGER = "org.slf4j.Logger";
 
   @SuppressWarnings("PublicField") public int warnLevel = 0;
 
@@ -86,16 +96,26 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
   @Nullable
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
+    if (!(infos[0] instanceof ProblemType problemType)) {
+      return null;
+    }
+
     if (!(infos[1] instanceof PsiMethodCallExpression logCall)) {
+      return null;
+    }
+
+    if (!(infos[2] instanceof PsiExpression targetExpression)) {
       return null;
     }
 
     if (isFormattedLog4J(logCall)) return null;
 
-    if (!StringConcatenationArgumentToLogCallFix.isAvailable((PsiExpression)infos[0])) {
-      return null;
-    }
-    return new StringConcatenationArgumentToLogCallFix();
+    return switch (problemType) {
+      case CONCATENATION ->
+        StringConcatenationArgumentToLogCallFix.isAvailable(targetExpression) ? new StringConcatenationArgumentToLogCallFix() : null;
+      case STRING_FORMAT -> StringFormatArgumentToLogCallFix.create(targetExpression);
+      case MESSAGE_FORMAT -> MessageFormatArgumentToLogCallFix.create(targetExpression);
+    };
   }
 
   private static boolean isFormattedLog4J(@NotNull PsiMethodCallExpression logCall) {
@@ -331,6 +351,218 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
   }
 
+  private static abstract class FormatArgumentToLogCallFix extends PsiUpdateModCommandQuickFix {
+
+    @NotNull
+    private final Map<TextRange, Integer> myTextMapping;
+
+    @NotNull
+    private final String format;
+
+    private FormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> textMapping,
+                                       @NotNull String format) {
+      myTextMapping = textMapping;
+      this.format = format;
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element.getParent() instanceof PsiReferenceExpression referenceExpression &&
+            referenceExpression.getParent() instanceof PsiMethodCallExpression callExpression)) {
+        return;
+      }
+      PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
+      if (expressions.length != 1) {
+        return;
+      }
+
+      PsiExpression expression = expressions[0];
+      if (!(expression instanceof PsiMethodCallExpression formatCallExpression)) {
+        return;
+      }
+
+      StringBuilder builder = new StringBuilder();
+      CommentTracker tracker = new CommentTracker();
+      for (PsiElement child : callExpression.getChildren()) {
+        if (child instanceof PsiExpressionList) {
+          builder.append(createNewArgumentsFromCall(formatCallExpression, tracker));
+        }
+        else {
+          builder.append(tracker.text(child));
+        }
+      }
+
+      tracker.replace(callExpression, builder.toString());
+    }
+
+    @NotNull
+    private String createNewArgumentsFromCall(@NotNull PsiMethodCallExpression formatCallExpression,
+                                              @NotNull CommentTracker tracker) {
+      List<String> arguments = new ArrayList<>();
+      List<Map.Entry<TextRange, Integer>> placeholders =
+        myTextMapping.entrySet()
+          .stream()
+          .sorted(Comparator.<Map.Entry<TextRange, Integer>>comparingInt(t -> t.getKey().getStartOffset()).reversed())
+          .toList();
+      String formatWithPlaceholders = format;
+      PsiExpression[] expressions = formatCallExpression.getArgumentList().getExpressions();
+      for (Map.Entry<TextRange, Integer> placeholder : placeholders) {
+        formatWithPlaceholders = formatWithPlaceholders.substring(0, placeholder.getKey().getStartOffset()) + "{}" +
+                                 formatWithPlaceholders.substring(placeholder.getKey().getEndOffset());
+
+        arguments.add(tracker.text(expressions[placeholder.getValue()]));
+      }
+      arguments.add(formatWithPlaceholders);
+      Collections.reverse(arguments);
+      return "(" + String.join(", ", arguments) + ")";
+    }
+  }
+
+  private static class MessageFormatArgumentToLogCallFix extends FormatArgumentToLogCallFix {
+
+    private MessageFormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> result,
+                                              @NotNull String format) {
+      super(result, format);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.message.format.call.quickfix");
+    }
+
+
+    @Nullable
+    static LocalQuickFix create(@NotNull PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression callExpression)) {
+        return null;
+      }
+      PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
+      if (!(arguments[0] instanceof PsiLiteralExpression literalExpression && literalExpression.getValue() instanceof String pattern)) {
+        return null;
+      }
+
+      MessageFormatUtil.MessageFormatResult result = MessageFormatUtil.checkFormat(pattern);
+      if (!result.valid()) {
+        return null;
+      }
+
+      Map<TextRange, Integer> mapping = new HashMap<>();
+
+      List<MessageFormatUtil.MessageFormatPlaceholder> placeholders = result.placeholders();
+      for (MessageFormatUtil.MessageFormatPlaceholder placeholder : placeholders) {
+        if (!placeholder.isString()) {
+          return null;
+        }
+
+        if (placeholder.index() + 1 >= arguments.length) {
+          return null;
+        }
+
+        TextRange actualRange = ExpressionUtils.findStringLiteralRange(literalExpression, placeholder.range().getStartOffset(),
+                                                                 placeholder.range().getEndOffset());
+        if (actualRange == null) {
+          return null;
+        }
+
+        mapping.put(actualRange, placeholder.index() + 1);
+      }
+      Set<Integer> argumentIndexes = new HashSet<>(mapping.values());
+      if (argumentIndexes.size() != arguments.length - 1) {
+        return null;
+      }
+      return new MessageFormatArgumentToLogCallFix(mapping, literalExpression.getText());
+    }
+  }
+
+  private static class StringFormatArgumentToLogCallFix extends FormatArgumentToLogCallFix {
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.string.format.call.quickfix");
+    }
+
+    private StringFormatArgumentToLogCallFix(@NotNull Map<TextRange, Integer> result,
+                                             @NotNull String format) {
+      super(result, format);
+    }
+
+    @Nullable
+    static LocalQuickFix create(@NotNull PsiExpression originalExpression) {
+      if (!(originalExpression instanceof PsiMethodCallExpression callExpression)) {
+        return null;
+      }
+
+      FormatDecode.FormatArgument formatArgument =
+        FormatDecode.FormatArgument.extract(callExpression, List.of("format"), List.of("String"), true);
+      if (formatArgument == null || formatArgument.getIndex() != 1) {
+        return null;
+      }
+      PsiExpression expression = formatArgument.getExpression();
+      if (!(expression instanceof PsiLiteralExpression literalExpression && literalExpression.getText() != null)) {
+        return null;
+      }
+      PsiExpression[] arguments = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
+      int argumentCount = arguments.length - formatArgument.getIndex();
+      if (!(literalExpression.getValue() instanceof String formatterString)) {
+        return null;
+      }
+      FormatDecode.Validator[] validators;
+      try {
+        validators = FormatDecode.decodeNoVerify(formatterString, argumentCount);
+      }
+      catch (FormatDecode.IllegalFormatException e) {
+        return null;
+      }
+
+      if (argumentCount != validators.length) return null;
+      Map<TextRange, Integer> result = new HashMap<>();
+      for (int i = 0; i < validators.length; i++) {
+        int index = formatArgument.getIndex() + i;
+        if (index >= arguments.length) return null;
+
+        FormatDecode.Validator metaValidator = validators[i];
+        if (metaValidator == null) continue;
+        Collection<FormatDecode.Validator> unpacked = metaValidator instanceof FormatDecode.MultiValidator multi ?
+                                                      multi.getValidators() : List.of(metaValidator);
+        if (unpacked.size() != 1) return null;
+        FormatDecode.Validator validator = unpacked.iterator().next();
+        if (validator == null) return null;
+        PsiExpression argument = arguments[index];
+        if (!possibleToConvert(validator, argument)) return null;
+        TextRange stringRange = validator.getRange();
+        if (stringRange == null) return null;
+        TextRange range = ExpressionUtils.findStringLiteralRange(expression, stringRange.getStartOffset(),
+                                                                 stringRange.getEndOffset());
+        if (range == null) return null;
+        result.put(range, index);
+      }
+
+      return new StringFormatArgumentToLogCallFix(result, literalExpression.getText());
+    }
+
+    private static boolean possibleToConvert(@NotNull FormatDecode.Validator validator, PsiExpression argument) {
+      FormatDecode.Spec spec = validator.getSpec();
+      if (spec == null) return false;
+      if (spec.conversion() == null ||
+          !StringUtil.isEmpty(spec.width()) ||
+          !StringUtil.isEmpty(spec.dateSpec()) ||
+          !StringUtil.isEmpty(spec.flags()) ||
+          !StringUtil.isEmpty(spec.precision())) {
+        return false;
+      }
+      return switch (spec.conversion()) {
+        case "s" -> true;
+        case "b" -> argument.getType() != null && TypeConversionUtil.isBooleanType(argument.getType());
+        case "d" -> argument.getType() != null && TypeConversionUtil.isIntegralNumberType(argument.getType());
+        default -> false;
+      };
+    }
+  }
+
+  private enum ProblemType {
+    CONCATENATION, STRING_FORMAT, MESSAGE_FORMAT
+  }
+
   private class StringConcatenationArgumentToLogCallVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -356,7 +588,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (!InheritanceUtil.isInheritor(containingClass, "org.slf4j.Logger") &&
+      if (!InheritanceUtil.isInheritor(containingClass, SLF4J_LOGGER) &&
           !InheritanceUtil.isInheritor(containingClass, LOG4J_LOGGER) &&
           !InheritanceUtil.isInheritor(containingClass, LOG4J_BUILDER)) {
         return;
@@ -365,6 +597,19 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
         return;
+      }
+      if (arguments.length == 1 && arguments[0] instanceof PsiMethodCallExpression callExpression) {
+        FormatDecode.FormatArgument formatArgument =
+          FormatDecode.FormatArgument.extract(callExpression, List.of("format"), List.of("String"), true);
+        if (formatArgument != null) {
+          registerMethodCallError(expression, ProblemType.STRING_FORMAT, expression, callExpression);
+          return;
+        }
+
+        if (MESSAGE_FORMAT_FORMAT.test(callExpression)) {
+          registerMethodCallError(expression, ProblemType.MESSAGE_FORMAT, expression, callExpression);
+          return;
+        }
       }
       PsiExpression argument = arguments[0];
       if (!ExpressionUtils.hasStringType(argument)) {
@@ -379,7 +624,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (!containsNonConstantConcatenation(argument)) {
         return;
       }
-      registerMethodCallError(expression, argument, expression);
+      registerMethodCallError(expression, ProblemType.CONCATENATION, expression, argument);
     }
 
     private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
