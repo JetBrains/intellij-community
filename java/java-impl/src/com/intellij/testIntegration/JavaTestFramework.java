@@ -6,13 +6,16 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,9 +30,13 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class JavaTestFramework implements JvmTestFramework {
+
+  private static final Logger LOG = Logger.getInstance(JavaTestFramework.class);
+
   @Override
   public boolean isLibraryAttached(@NotNull Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
@@ -65,13 +72,26 @@ public abstract class JavaTestFramework implements JvmTestFramework {
 
   protected static boolean isFrameworkApplicable(@NotNull PsiElement clazz, String markerClassFQName) {
     if (markerClassFQName == null) return true;
-    return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
-      var project = clazz.getProject();
-      return new CachedValueProvider.Result<>(
-        ConcurrentFactoryMap.createMap(
-          markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
-        ProjectRootManager.getInstance(project));
-    }).get(markerClassFQName) != null;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      return CachedValuesManager.<ConcurrentMap<String, PsiClass>>getCachedValue(clazz, () -> {
+        var project = clazz.getProject();
+        return new CachedValueProvider.Result<>(
+          ConcurrentFactoryMap.createMap(
+            markerInterfaceName -> JavaPsiFacade.getInstance(project).findClass(markerInterfaceName, clazz.getResolveScope())),
+          ProjectRootManager.getInstance(project));
+      }).get(markerClassFQName) != null;
+    }, false);
+  }
+
+  protected static <T> T callWithAlternateResolver(Project project, Callable<? extends T> callable, T defaultValue) {
+    try {
+      return DumbService.getInstance(project)
+        .computeWithAlternativeResolveEnabled((ThrowableComputable<T, Throwable>)() -> callable.call());
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return defaultValue;
+    }
   }
 
   @Override

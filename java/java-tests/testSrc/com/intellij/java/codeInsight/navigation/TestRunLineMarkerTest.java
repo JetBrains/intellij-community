@@ -19,7 +19,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
 import com.intellij.util.containers.ContainerUtil;
@@ -166,5 +169,20 @@ public class TestRunLineMarkerTest extends LineMarkerTestCase {
     RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
     myTempSettings.add(selectedConfiguration);
     assertEquals("MainTest", selectedConfiguration.getName());
+  }
+
+  public void testClassInDumbMode() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    PsiFile file = myFixture.configureByText("MyTest.java", """
+      public class My<caret>Test extends junit.framework.TestCase {
+          public void testFoo() {
+          }
+      }""");
+    PsiClass psiClass = ((PsiJavaFile)file).getClasses()[0];
+    TestRunLineMarkerProvider provider = new TestRunLineMarkerProvider();
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
+      RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
+      assertNotNull(info);
+    });
   }
 }

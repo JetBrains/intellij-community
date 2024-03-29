@@ -10,6 +10,7 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
@@ -22,7 +23,9 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringJoiner;
 
-public final class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
+public final class UniqueIdConfigurationProducer extends JUnitConfigurationProducer
+  implements DumbAware {
+
   @Override
   protected boolean setupConfigurationFromContext(@NotNull JUnitConfiguration configuration,
                                                   @NotNull ConfigurationContext context,

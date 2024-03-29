@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -16,7 +17,8 @@ import com.theoryinpractice.testng.model.TestNGTestObject;
 import icons.TestngIcons;
 import org.jetbrains.annotations.NotNull;
 
-public final class TestNGConfigurationType extends SimpleConfigurationType {
+public final class TestNGConfigurationType extends SimpleConfigurationType
+  implements DumbAware {
   public TestNGConfigurationType() {
     super("TestNG", "TestNG", null, NotNullLazyValue.createValue(() -> TestngIcons.TestNG));
   }

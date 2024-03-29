@@ -23,7 +23,11 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.testDiscovery.TestDiscoverySearchHelper;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.theoryinpractice.testng.configuration.SearchingForTestsTask;
@@ -38,6 +42,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
+
+  private static final Logger LOG = Logger.getInstance(TestNGTestDiscoveryRunnableState.class);
+
 
   public TestNGTestDiscoveryRunnableState(ExecutionEnvironment environment,
                                           TestNGConfiguration configuration) {
@@ -64,17 +71,35 @@ public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
     return new SearchingForTestsTask(getServerSocket(), getConfiguration(), myTempFile) {
       @Override
       protected void search() throws CantRunException {
-        myClasses.clear();
-        final TestData data = getConfiguration().getPersistantData();
-        final Pair<String, String> position = data.TEST_OBJECT.equals(TestType.SOURCE.getType())
-                                              ? Pair.create(data.getMainClassName(), data.getMethodName()) : null;
-        final Set<String> patterns = TestDiscoverySearchHelper
-          .search(getProject(), position, data.getChangeList(), getConfiguration().getTestFrameworkId());
-        final Module module = getConfiguration().getConfigurationModule().getModule();
-        final GlobalSearchScope searchScope =
-          module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(getProject());
-        TestNGTestPattern.fillTestObjects(myClasses, patterns, TestSearchScope.MODULE_WITH_DEPENDENCIES,
-                                          getConfiguration(), searchScope);
+        Project project = getProject();
+        if (project == null) return;
+        try {
+          CantRunException exception = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+            myClasses.clear();
+            final TestData data = getConfiguration().getPersistantData();
+            final Pair<String, String> position = data.TEST_OBJECT.equals(TestType.SOURCE.getType())
+                                                  ? Pair.create(data.getMainClassName(), data.getMethodName()) : null;
+            final Set<String> patterns = TestDiscoverySearchHelper
+              .search(project, position, data.getChangeList(), getConfiguration().getTestFrameworkId());
+            final Module module = getConfiguration().getConfigurationModule().getModule();
+            final GlobalSearchScope searchScope =
+              module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(project);
+            try {
+              TestNGTestPattern.fillTestObjects(myClasses, patterns, TestSearchScope.MODULE_WITH_DEPENDENCIES,
+                                                getConfiguration(), searchScope);
+            }
+            catch (CantRunException e) {
+              return e;
+            }
+            return null;
+          });
+          if (exception != null) {
+            throw exception;
+          }
+        }
+        catch (IndexNotReadyException e) {
+          LOG.error(e);
+        }
       }
 
       @Override

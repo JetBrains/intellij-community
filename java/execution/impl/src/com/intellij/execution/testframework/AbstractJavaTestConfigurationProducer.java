@@ -13,14 +13,18 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -37,6 +41,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestConfigurationBase> extends JavaRunConfigurationProducerBase<T> {
+
+  private static final Logger LOG = Logger.getInstance(AbstractJavaTestConfigurationProducer.class);
+
   protected AbstractJavaTestConfigurationProducer() {
   }
 
@@ -138,7 +145,13 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
 
 
   public Module findModule(ModuleBasedConfiguration configuration, Module contextModule, Set<String> patterns) {
-    return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), psiClass -> isTestClass(psiClass));
+    try {
+      return JavaExecutionUtil.findModule(contextModule, patterns, configuration.getProject(), psiClass -> isTestClass(psiClass));
+    }
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
   public void collectTestMembers(PsiElement[] psiElements,
@@ -146,8 +159,19 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                  boolean checkIsTest,
                                  PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
-      if (psiElement instanceof PsiDirectory) {
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+      if (psiElement instanceof PsiDirectory directory) {
+        Project project = directory.getProject();
+        DumbService dumbService = DumbService.getInstance(project);
+
+        PsiPackage aPackage;
+        try {
+          aPackage = dumbService.computeWithAlternativeResolveEnabled(
+            (ThrowableComputable<PsiPackage, Throwable>)() -> JavaDirectoryService.getInstance().getPackage((PsiDirectory)directory));
+        }
+        catch (IndexNotReadyException e) {
+          LOG.error(e);
+          aPackage = null;
+        }
         if (aPackage != null && !collectingProcessor.execute(aPackage)) {
           return;
         }
@@ -368,42 +392,52 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   public static PsiPackage checkPackage(final PsiElement element) {
     if (element == null || !element.isValid()) return null;
     final Project project = element.getProject();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (element instanceof PsiPackage aPackage) {
-      final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
-      for (final PsiDirectory directory : directories) {
-        if (isSource(directory, fileIndex)) return aPackage;
-      }
-      return null;
-    }
-    else if (element instanceof PsiDirectory) {
-      final PsiDirectory directory = (PsiDirectory)element;
-      if (isSource(directory, fileIndex)) {
-        return JavaDirectoryService.getInstance().getPackage(directory);
-      }
-      else {
-        final VirtualFile virtualFile = directory.getVirtualFile();
-        //choose default package when selection on content root
-        if (virtualFile.equals(fileIndex.getContentRootForFile(virtualFile))) {
-          final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
-          if (module != null) {
-            for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
-              if (virtualFile.equals(entry.getFile())) {
-                final SourceFolder[] folders = entry.getSourceFolders();
-                Set<String> packagePrefixes = new HashSet<>();
-                for (SourceFolder folder : folders) {
-                  packagePrefixes.add(folder.getPackagePrefix());
+    DumbService dumbService = DumbService.getInstance(project);
+    try {
+      return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<PsiPackage, Throwable>)() -> {
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+        if (element instanceof PsiPackage aPackage) {
+          final PsiDirectory[] directories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
+          for (final PsiDirectory directory : directories) {
+            if (isSource(directory, fileIndex)) return aPackage;
+          }
+          return null;
+        }
+        else if (element instanceof PsiDirectory) {
+          final PsiDirectory directory = (PsiDirectory)element;
+          if (isSource(directory, fileIndex)) {
+            return JavaDirectoryService.getInstance().getPackage(directory);
+          }
+          else {
+            final VirtualFile virtualFile = directory.getVirtualFile();
+            //choose default package when selection on content root
+            if (virtualFile.equals(fileIndex.getContentRootForFile(virtualFile))) {
+              final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+              if (module != null) {
+                for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
+                  if (virtualFile.equals(entry.getFile())) {
+                    final SourceFolder[] folders = entry.getSourceFolders();
+                    Set<String> packagePrefixes = new HashSet<>();
+                    for (SourceFolder folder : folders) {
+                      packagePrefixes.add(folder.getPackagePrefix());
+                    }
+                    if (packagePrefixes.size() > 1) return null;
+                    return JavaPsiFacade.getInstance(project)
+                      .findPackage(packagePrefixes.isEmpty() ? "" : packagePrefixes.iterator().next());
+                  }
                 }
-                if (packagePrefixes.size() > 1) return null;
-                return JavaPsiFacade.getInstance(project).findPackage(packagePrefixes.isEmpty() ? "" : packagePrefixes.iterator().next());
               }
             }
+            return null;
           }
         }
-        return null;
-      }
+        else {
+          return null;
+        }
+      });
     }
-    else {
+    catch (IndexNotReadyException e) {
+      LOG.error(e);
       return null;
     }
   }

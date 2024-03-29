@@ -4,7 +4,9 @@ package com.theoryinpractice.testng.configuration;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.info.LocationUtil;
-import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.java.library.JavaLibraryUtil;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
@@ -13,13 +15,17 @@ import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractTestNGPackageConfigurationProducer extends TestNGConfigurationProducer {
+import static com.theoryinpractice.testng.util.TestNGUtil.MAVEN_TEST_NG;
+
+public class AbstractTestNGPackageConfigurationProducer extends TestNGConfigurationProducer
+  implements DumbAware {
+
   @Override
   protected boolean setupConfigurationFromContext(@NotNull TestNGConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
     final PsiElement element = context.getPsiLocation();
-    PsiPackage aPackage = AbstractJavaTestConfigurationProducer.checkPackage(element);
+    PsiPackage aPackage = checkPackage(element);
     if (aPackage == null) {
       return false;
     }
@@ -27,7 +33,9 @@ public class AbstractTestNGPackageConfigurationProducer extends TestNGConfigurat
     if (location == null) {
       return false;
     }
-    if (!LocationUtil.isJarAttached(location, aPackage, TestNGUtil.TEST_ANNOTATION_FQN)) {
+    boolean dumb = DumbService.isDumb(configuration.project);
+    if ((!dumb && !LocationUtil.isJarAttached(location, aPackage, TestNGUtil.TEST_ANNOTATION_FQN)) ||
+        (dumb && !JavaLibraryUtil.hasLibraryJar(aPackage.getProject(), MAVEN_TEST_NG))) {
       return false;
     }
     final TestData data = configuration.data;

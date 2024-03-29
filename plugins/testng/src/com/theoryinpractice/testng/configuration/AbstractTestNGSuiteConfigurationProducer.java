@@ -3,7 +3,10 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -13,7 +16,11 @@ import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class AbstractTestNGSuiteConfigurationProducer extends TestNGConfigurationProducer {
+import static com.theoryinpractice.testng.util.TestNGUtil.MAVEN_TEST_NG;
+
+public class AbstractTestNGSuiteConfigurationProducer extends TestNGConfigurationProducer
+  implements DumbAware {
+
   @Override
   protected boolean setupConfigurationFromContext(@NotNull TestNGConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
@@ -21,7 +28,9 @@ public class AbstractTestNGSuiteConfigurationProducer extends TestNGConfiguratio
     final PsiElement element = context.getPsiLocation();
     final PsiFile containingFile = element != null ? element.getContainingFile() : null;
     if (containingFile == null) return false;
-    if (JavaPsiFacade.getInstance(configuration.project).findPackage(TestNGUtil.TESTNG_PACKAGE) == null) {
+    boolean dumb = DumbService.isDumb(configuration.project);
+    if ((dumb && !JavaLibraryUtil.hasLibraryJar(configuration.project, MAVEN_TEST_NG)) ||
+        (!dumb && JavaPsiFacade.getInstance(configuration.project).findPackage(TestNGUtil.TESTNG_PACKAGE) == null)) {
       return false;
     }
     final VirtualFile virtualFile = containingFile.getVirtualFile();

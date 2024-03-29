@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -19,7 +20,7 @@ import javax.swing.*;
  * 
  * Also is used in multiple inspections, intentions, etc. when test framework should be detected. 
  */
-public interface TestFramework {
+public interface TestFramework extends PossiblyDumbAware {
   ExtensionPointName<TestFramework> EXTENSION_NAME = ExtensionPointName.create("com.intellij.testFramework");
 
   /**
