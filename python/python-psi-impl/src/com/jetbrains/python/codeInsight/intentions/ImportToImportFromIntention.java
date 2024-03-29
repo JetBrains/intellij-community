@@ -158,12 +158,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
         else {
           if (canRemoveImport) {
             // cut the module out of import, add a from-import.
-            for (PyImportElement pie : importElements) {
-              if (pie == myImportElement) {
-                pie.delete();
-                break;
-              }
-            }
+            myImportElement.delete();
           }
           parent.addAfter(newImportStatement, importStatement);
         }
