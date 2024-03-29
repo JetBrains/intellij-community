@@ -14,15 +14,18 @@ import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
 import com.intellij.util.PathUtil
 import java.util.*
+import kotlin.time.Duration
 
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 19)
+  private val GROUP = EventLogGroup(GROUP_ID, 20)
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
   private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
+  private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
+  private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
 
   private val sshExecEvent = GROUP.registerEvent("ssh.exec")
   private val terminalSmartCommandExecutedEvent = GROUP.registerVarargEvent("terminal.smart.command.executed",
@@ -36,10 +39,18 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                    EventFields.String("shell", KNOWN_SHELLS.toList()),
                                                    BLOCK_TERMINAL_FIELD)
 
-  private val commandExecutedEvent = GROUP.registerEvent("terminal.command.executed",
-                                                         TerminalCommandUsageStatistics.commandExecutableField,
-                                                         TerminalCommandUsageStatistics.subCommandField,
-                                                         BLOCK_TERMINAL_FIELD)
+  private val commandStartedEvent = GROUP.registerEvent("terminal.command.executed",
+                                                        TerminalCommandUsageStatistics.commandExecutableField,
+                                                        TerminalCommandUsageStatistics.subCommandField,
+                                                        BLOCK_TERMINAL_FIELD,
+                                                        "Fired each time when command is started")
+
+  private val commandFinishedEvent = GROUP.registerVarargEvent("terminal.command.finished",
+                                                               "Fired each time when command is finished. New Terminal only.",
+                                                               TerminalCommandUsageStatistics.commandExecutableField,
+                                                               TerminalCommandUsageStatistics.subCommandField,
+                                                               EXIT_CODE_FIELD,
+                                                               EXECUTION_TIME_FIELD)
 
   private val promotionShownEvent = GROUP.registerEvent("promotion.shown")
   private val promotionGotItClickedEvent = GROUP.registerEvent("promotion.got.it.clicked")
@@ -55,9 +66,18 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   fun triggerSshShellStarted(project: Project) = sshExecEvent.log(project)
 
   @JvmStatic
-  fun triggerCommandExecuted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
+  fun triggerCommandStarted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandExecutedEvent.log(project, commandData?.command, commandData?.subCommand, isBlockTerminal)
+    commandStartedEvent.log(project, commandData?.command, commandData?.subCommand, isBlockTerminal)
+  }
+
+  fun triggerCommandFinished(project: Project, userCommandLine: String, exitCode: Int, executionTime: Duration) {
+    val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
+    commandFinishedEvent.log(project,
+                             TerminalCommandUsageStatistics.commandExecutableField with commandData?.command,
+                             TerminalCommandUsageStatistics.subCommandField with commandData?.subCommand,
+                             EXIT_CODE_FIELD with exitCode,
+                             EXECUTION_TIME_FIELD with executionTime.inWholeMilliseconds)
   }
 
   @JvmStatic
