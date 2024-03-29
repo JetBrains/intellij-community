@@ -250,12 +250,6 @@ object CommunityRepositoryModules {
       "intellij.grazie.yaml",
     )),
     plugin(listOf(
-      "intellij.toml",
-      "intellij.toml.core",
-      "intellij.toml.json",
-      "intellij.toml.grazie",
-    )),
-    plugin(listOf(
       "intellij.markdown",
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
