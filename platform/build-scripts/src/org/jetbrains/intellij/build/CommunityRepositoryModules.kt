@@ -267,33 +267,11 @@ object CommunityRepositoryModules {
       "intellij.markdown.spellchecker"
     )),
     plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
-    plugin(listOf(
-      "intellij.sh",
-      "intellij.sh.core",
-      "intellij.sh.terminal",
-      "intellij.sh.copyright",
-      "intellij.sh.python",
-      "intellij.sh.markdown",
-    )),
     plugin("intellij.featuresTrainer") { spec ->
       spec.withModule("intellij.vcs.git.featuresTrainer")
       spec.withProjectLibrary("assertJ")
       spec.withProjectLibrary("assertj-swing")
       spec.withProjectLibrary("git-learning-project")
-    },
-    plugin(listOf(
-      "intellij.searchEverywhereMl",
-      "intellij.searchEverywhereMl.ranking.ext",
-      "intellij.searchEverywhereMl.ranking.core",
-      "intellij.searchEverywhereMl.ranking.yaml",
-      "intellij.searchEverywhereMl.ranking.vcs",
-      "intellij.searchEverywhereMl.typos",
-      "intellij.searchEverywhereMl.semantics"
-    )) { spec ->
-      spec.withModule("intellij.searchEverywhereMl.semantics.java")
-      spec.withModule("intellij.searchEverywhereMl.semantics.kotlin")
-      spec.withModule("intellij.searchEverywhereMl.semantics.python")
-      spec.withModule("intellij.searchEverywhereMl.semantics.testCommands")
     },
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
@@ -326,12 +304,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
       spec.withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
     },
-    plugin("intellij.protoeditor") { spec ->
-      spec.withModule("intellij.protoeditor.core")
-      spec.withModule("intellij.protoeditor.go")
-      spec.withModule("intellij.protoeditor.jvm")
-      spec.withModule("intellij.protoeditor.python")
-    },
     plugin("intellij.serial.monitor") { spec ->
       spec.withProjectLibrary("io.github.java.native.jssc", LibraryPackMode.STANDALONE_SEPARATE)
     },
@@ -351,7 +323,6 @@ object CommunityRepositoryModules {
       if (mainModuleName != "intellij.android.design-plugin.descriptor") {
         spec.withModule("intellij.android.design-plugin.descriptor")
       }
-      @Suppress("SpellCheckingInspection")
       spec.withModule("intellij.android.designer.customview")
       spec.withModule("intellij.android.designer")
       spec.withModule("intellij.android.glance-designer")
