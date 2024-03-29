@@ -1,22 +1,30 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.FileIconPatcher;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.LastComputedIconCache;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.ui.icons.IconWithOverlay;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -112,5 +120,45 @@ public class IconUtilTest extends HeavyPlatformTestCase {
     PsiTestUtil.addSourceRoot(getModule(), sourceRoot);
 
     assertJustOneLockedIcon(file);
+  }
+
+  public void testIconPatchersWorkForPsiItems() throws IOException {
+    FileIconPatcher.EP_NAME.getPoint().registerExtension(new FileIconPatcher() {
+      @Override
+      public @NotNull Icon patchIcon(@NotNull Icon icon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
+        return new IconWithOverlay(icon, AllIcons.Actions.Scratch) {
+          @Override
+          public @Nullable Shape getOverlayShape(int x, int y) {
+            return null;
+          }
+        };
+      }
+    }, getTestRootDisposable());
+
+    File dir = createTempDir("my");
+
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    VirtualFile vFile = createChildData(vDir, "X.txt");
+
+    PsiDirectory psiDir = PsiManager.getInstance(getProject()).findDirectory(vDir);
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+
+    int flags = 0;
+
+    Icon psiDirIcon = psiDir.getIcon(flags);
+    Icon psiFileIcon = psiFile.getIcon(flags);
+
+    Icon vDirIcon = IconUtil.computeFileIcon(vDir, flags, getProject());
+    Icon vFileIcon = IconUtil.computeFileIcon(vFile, flags, getProject());
+
+    IconTestUtil.renderDeferredIcon(psiDirIcon);
+    IconTestUtil.renderDeferredIcon(psiFileIcon);
+
+    assertSameElements("dir icons do not match",
+                       IconTestUtil.renderDeferredIcon(vDirIcon),
+                       IconTestUtil.renderDeferredIcon(psiDirIcon));
+    assertSameElements("file icons do not match",
+                       IconTestUtil.renderDeferredIcon(vFileIcon),
+                       IconTestUtil.renderDeferredIcon(psiFileIcon));
   }
 }

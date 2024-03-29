@@ -2,14 +2,10 @@
 package com.intellij.util
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.FileIconPatcher
-import com.intellij.ide.FileIconProvider
 import com.intellij.ide.TypePresentationService
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.fileTypes.DirectoryFileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.filterIcon
@@ -560,18 +556,10 @@ private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int
   }
 
   @Suppress("NAME_SHADOWING") val flags = filterFileIconFlags(file, flags)
-  val providerIcon = getProviderIcon(file, flags, project)
+  val providerIcon = FileIconUtil.getIconFromProviders(file, flags, project)
   var icon = providerIcon ?: computeFileTypeIcon(vFile = file, onlyFastChecks = false)
-  val dumb = project != null && DumbService.getInstance(project).isDumb
-  for (patcher in FileIconPatcher.EP_NAME.extensionList) {
-    try {
-      // render without a locked icon patch since we are going to apply it later anyway
-      icon = patcher.patchIcon(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
-    }
-    catch (_: IndexNotReadyException) {
-
-    }
-  }
+  // render without a locked icon patch since we are going to apply it later anyway
+  icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags and Iconable.ICON_FLAG_READ_STATUS.inv(), project)
   if (file.`is`(VFileProperty.SYMLINK)) {
     icon = PredefinedIconOverlayService.getInstanceOrNull()?.createSymlinkIcon(icon) ?: icon
   }
@@ -582,10 +570,6 @@ private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int
   }
   LastComputedIconCache.put(file, icon, flags)
   return icon
-}
-
-private fun getProviderIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon? {
-  return FileIconProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getIcon(file, flags, project) }
 }
 
 private fun computeFileTypeIcon(vFile: VirtualFile, onlyFastChecks: Boolean): Icon {

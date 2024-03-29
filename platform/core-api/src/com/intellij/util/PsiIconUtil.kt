@@ -2,31 +2,32 @@
 package com.intellij.util
 
 import com.intellij.ide.IconProvider
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Iconable.IconFlags
 import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
 object PsiIconUtil {
+
   @JvmStatic
-  @Suppress("IdentifierGrammar")
-  fun getProvidersIcon(element: PsiElement, @IconFlags flags: Int): Icon? {
-    val isDumb = DumbService.getInstance(element.getProject()).isDumb
-    for (provider in IconProvider.EXTENSION_POINT_NAME.getIterable()) {
-      if (provider == null || (isDumb && !isDumbAware(provider))) {
-        continue
-      }
+  fun getIconFromProviders(element: PsiElement, @IconFlags flags: Int): Icon? {
+    for (provider in IconProvider.EXTENSION_POINT_NAME.extensionList) {
       try {
-        provider.getIcon(element, flags)?.let {
-          return it
+        val icon = provider.getIcon(element, flags)
+        if (icon != null) {
+          return icon
         }
       }
       catch (_: IndexNotReadyException) {
-
       }
     }
     return null
+  }
+
+  @JvmStatic
+  @Suppress("IdentifierGrammar")
+  @Deprecated("Use `getIconFromProviders` instead", ReplaceWith("getIconFromProviders"))
+  fun getProvidersIcon(element: PsiElement, @IconFlags flags: Int): Icon? {
+    return getIconFromProviders(element, flags)
   }
 }

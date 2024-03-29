@@ -15,16 +15,15 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
+import com.intellij.util.FileIconUtil;
 import com.intellij.util.PsiIconUtil;
 import com.intellij.util.ui.EDT;
 import kotlin.jvm.functions.Function1;
@@ -95,16 +94,35 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
-    Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
-    if (providersIcon != null) {
-      if (providersIcon instanceof RowIcon) {
-        return providersIcon;
-      }
-      else {
-        return IconManager.getInstance().createLayeredIcon(element, providersIcon, flags);
-      }
+    if (!(element instanceof ElementBase)) {
+      throw new AssertionError(element.getClass().getName() + " is not ElementBase");
     }
-    return ((ElementBase)element).getElementIcon(flags);
+    Icon icon = PsiIconUtil.getIconFromProviders(element, flags);
+    if (element instanceof PsiFileSystemItem) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      if (file != null && icon == null) {
+        icon = FileIconUtil.getIconFromProviders(file, flags, element.getProject());
+      }
+      if (icon == null) {
+        icon = ((ElementBase)element).getElementIcon(flags);
+      }
+      else if (!(icon instanceof RowIcon)) {
+        icon = IconManager.getInstance().createLayeredIcon(element, icon, flags);
+      }
+      if (file != null && icon != null) {
+        icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags, element.getProject());
+      }
+      return icon;
+    }
+    else if (icon == null) {
+      return ((ElementBase)element).getElementIcon(flags);
+    }
+    else if (icon instanceof RowIcon) {
+      return icon;
+    }
+    else {
+      return IconManager.getInstance().createLayeredIcon(element, icon, flags);
+    }
   }
 
   protected @Nullable Icon computeBaseIcon(@Iconable.IconFlags int flags) {
