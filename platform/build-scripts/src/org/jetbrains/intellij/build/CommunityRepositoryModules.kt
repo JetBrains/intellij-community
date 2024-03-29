@@ -240,16 +240,6 @@ object CommunityRepositoryModules {
     },
     plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
     plugin(listOf(
-      "intellij.grazie",
-      "intellij.grazie.core",
-      "intellij.grazie.java",
-      "intellij.grazie.json",
-      "intellij.grazie.markdown",
-      "intellij.grazie.properties",
-      "intellij.grazie.xml",
-      "intellij.grazie.yaml",
-    )),
-    plugin(listOf(
       "intellij.markdown",
       "intellij.markdown.fenceInjection",
       "intellij.markdown.frontmatter",
