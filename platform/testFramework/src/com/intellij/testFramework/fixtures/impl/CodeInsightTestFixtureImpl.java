@@ -1032,7 +1032,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
     EdtTestUtil.runInEdtAndWait(() -> {
       myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      FindUsagesManager.waitForAsyncTaskCompletion(getProject());
     });
     Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());

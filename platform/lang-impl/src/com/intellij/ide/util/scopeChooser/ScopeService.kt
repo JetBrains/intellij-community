@@ -8,16 +8,39 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.job
+import kotlinx.coroutines.joinAll
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @Service(Service.Level.PROJECT)
 class ScopeService(
   private val project: Project,
-  private val scope: CoroutineScope,
+  val scope: CoroutineScope,
 ) {
+
+  @TestOnly
+  fun waitForAsyncTaskCompletion() {
+    val future = scope.future { coroutineContext.job.children.toList().joinAll() }
+    // mimic com.intellij.openapi.application.impl.NonBlockingReadActionImpl.waitForAsyncTaskCompletion
+    var iteration = 0
+    while (iteration++ < 60_000) {
+      UIUtil.dispatchAllInvocationEvents()
+      try {
+        future.get(1, TimeUnit.MILLISECONDS)
+      }
+      catch (e: TimeoutException) {
+        continue
+      }
+    }
+  }
 
   fun createModel(options: Set<ScopeOption>): AbstractScopeModel =
     if (Registry.`is`("coroutine.scope.model", true))
