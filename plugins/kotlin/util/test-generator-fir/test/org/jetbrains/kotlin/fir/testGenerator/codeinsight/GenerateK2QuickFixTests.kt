@@ -17,6 +17,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addExclExclCall", pattern = pattern)
             model("$idea/quickfix/addInitializer", pattern = pattern)
             model("$idea/quickfix/addPropertyAccessors", pattern = pattern)
+            model("$idea/quickfix/addValVar", pattern = pattern)
             model("$idea/quickfix/autoImports", pattern = KT_WITHOUT_DOTS, isRecursive = true)
             model("$idea/quickfix/checkArguments", pattern = pattern, isRecursive = false)
             model("$idea/quickfix/conflictingImports", pattern = pattern)

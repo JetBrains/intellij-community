@@ -2038,6 +2038,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             public void testExpectAnnotation() throws Exception {
                 runTest("testData/quickfix/addValVar/expectAnnotation.kt");
             }
+
+            @TestMetadata("library.kt")
+            public void testLibrary() throws Exception {
+                runTest("testData/quickfix/addValVar/library.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
