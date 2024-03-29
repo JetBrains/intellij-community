@@ -201,3 +201,19 @@ class InnerClassRefInsideAnonymous {
       class AFoo extends Foo {} 
     }
 }
+
+interface MarkerInterface { }
+
+class Enclosing {
+  class Inner { }
+
+  Enclosing() {
+    Inner inner = new Inner();
+
+    class MyLocal implements MarkerInterface {
+      MyLocal() {
+        super();
+      }
+    }
+  }
+}
