@@ -401,7 +401,6 @@ def py_line_callback(code, line_number):
                             and not py_db.in_project_scope(filename)):
                         # ignore library files while stepping
                         return monitoring.DISABLE
-                    stop = step_cmd != CMD_STEP_OVER
 
             if stop:
                 py_db.set_suspend(
