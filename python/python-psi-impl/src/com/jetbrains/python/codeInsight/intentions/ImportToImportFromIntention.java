@@ -130,15 +130,15 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
 
         // create a separate import stmt for the module
         final PsiElement importer = myImportElement.getParent();
-        final PyStatement importStatement;
+        final PyImportStatementBase importStatement;
         final PyImportElement[] importElements;
-        if (importer instanceof PyImportStatement) {
-          importStatement = (PyImportStatement)importer;
-          importElements = ((PyImportStatement)importStatement).getImportElements();
+        if (importer instanceof PyImportStatement qualifiedImportStatement) {
+          importStatement = qualifiedImportStatement;
+          importElements = importStatement.getImportElements();
         }
-        else if (importer instanceof PyFromImportStatement) {
-          importStatement = (PyFromImportStatement)importer;
-          importElements = ((PyFromImportStatement)importStatement).getImportElements();
+        else if (importer instanceof PyFromImportStatement fromImportStatement) {
+          importStatement = fromImportStatement;
+          importElements = importStatement.getImportElements();
         }
         else {
           throw new IncorrectOperationException("Not an import at all");
