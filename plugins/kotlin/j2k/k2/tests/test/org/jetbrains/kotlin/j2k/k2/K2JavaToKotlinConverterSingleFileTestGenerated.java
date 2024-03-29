@@ -305,6 +305,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("assignment.java")
+        public void testAssignment() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/arrayAccessExpression/assignment.java");
+        }
+
         @TestMetadata("expressionIndex.java")
         public void testExpressionIndex() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/arrayAccessExpression/expressionIndex.java");

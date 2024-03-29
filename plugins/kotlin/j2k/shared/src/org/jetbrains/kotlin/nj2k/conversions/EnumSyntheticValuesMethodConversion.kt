@@ -26,7 +26,6 @@ class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : Rec
         val identifier = element.selector().identifier ?: return recurse(element)
         if (identifier.name != ENUM_VALUES_METHOD_NAME) return recurse(element)
         if (identifier.target !is SyntheticElement) return recurse(element)
-
         return if (element.isReceiverEnumType()) recurse(convert(element)) else recurse(element)
     }
 
@@ -70,6 +69,7 @@ class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : Rec
     private fun canChangeReturnTypeFromArrayToList(element: JKTreeElement): Boolean {
         if (element.parent is JKForInStatement) return true
         if (element.isUsedAsAssignmentTarget()) return false
+        if (element.parent is JKArrayAccessExpression) return true
         val nextCall = element.getNextCall() ?: return false
         return nextCall.isArrayGetCall() || nextCall.isArraySizeCall()
     }
@@ -82,6 +82,7 @@ class EnumSyntheticValuesMethodConversion(context: NewJ2kConverterContext) : Rec
     private fun JKTreeElement.getNextCall(): JKExpression? =
         parent.safeAs<JKQualifiedExpression>()?.selector
 
+    // TODO remove in K2
     private fun JKExpression.isArrayGetCall(): Boolean =
         this is JKCallExpression && identifier.fqName == "kotlin.Array.get"
 

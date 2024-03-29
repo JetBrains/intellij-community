@@ -1,1 +1,5 @@
-myArray.get(10)
+class J {
+    fun test(array: IntArray) {
+        val i = array[0]
+    }
+}

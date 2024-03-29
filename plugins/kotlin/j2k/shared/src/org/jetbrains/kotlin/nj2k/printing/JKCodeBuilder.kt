@@ -464,6 +464,13 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             qualifiedExpression.selector.accept(this)
         }
 
+        override fun visitArrayAccessExpressionRaw(arrayAccessExpression: JKArrayAccessExpression) {
+            arrayAccessExpression.receiver.accept(this)
+            printer.print("[")
+            arrayAccessExpression.indexExpression.accept(this)
+            printer.print("]")
+        }
+
         override fun visitArgumentListRaw(argumentList: JKArgumentList) {
             renderArgumentList(argumentList)
         }
