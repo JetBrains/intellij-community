@@ -14,7 +14,6 @@ import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
@@ -50,8 +49,7 @@ sealed interface K2MoveTargetModel {
         context(Panel)
         override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project
-            row {
-                label(KotlinBundle.message("label.text.package")).align(AlignX.LEFT)
+            row(KotlinBundle.message("label.text.package")) {
                 pkgChooser = cell(
                     PackageNameReferenceEditorCombo(
                         "",
@@ -61,15 +59,14 @@ sealed interface K2MoveTargetModel {
                     )
                 ).align(AlignX.FILL).component
                 pkgChooser.prependItem(pkgName.asString())
-            }.layout(RowLayout.PARENT_GRID)
-            row {
-                label(KotlinBundle.message("label.text.destination")).align(AlignX.LEFT)
+            }
+            row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
                     override fun getTargetPackage(): String {
                         return pkgChooser.text
                     }
                 }).align(AlignX.FILL).component
-            }.layout(RowLayout.PARENT_GRID)
+            }
 
             fun updateDirectory() {
                 directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: directory
@@ -105,8 +102,7 @@ sealed interface K2MoveTargetModel {
         override fun buildPanel(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             super.buildPanel(onError, revalidateButtons)
             val project = directory.project
-            row {
-                label(KotlinBundle.message("label.text.file")).align(AlignX.LEFT)
+            row(KotlinBundle.message("label.text.file")) {
                 fileChooser = cell(TextFieldWithBrowseButton()).align(AlignX.FILL).component
                 fileChooser.text = fileName
                 fileChooser.addActionListener {
@@ -139,7 +135,7 @@ sealed interface K2MoveTargetModel {
                         revalidateButtons()
                     }
                 })
-            }.layout(RowLayout.PARENT_GRID)
+            }
         }
     }
 
