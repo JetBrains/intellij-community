@@ -62,3 +62,5 @@ das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <GRAMMAR_E
 Indices are up-to-date.
 Indices are up to date.
 This is an <GRAMMAR_ERROR descr="UP_TO_DATE_HYPHEN">up to date</GRAMMAR_ERROR> product.
+
+Spellcheck doesn’t mind right single quotation mark.

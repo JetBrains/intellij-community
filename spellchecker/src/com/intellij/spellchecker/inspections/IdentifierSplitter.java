@@ -102,7 +102,8 @@ public class IdentifierSplitter extends BaseSplitter {
           type == Character.OTHER_LETTER ||
           type == Character.MODIFIER_LETTER ||
           type == Character.NON_SPACING_MARK ||
-          type == Character.OTHER_PUNCTUATION
+          type == Character.OTHER_PUNCTUATION ||
+          ch == '\u2019' // right single quotation mark
       ) {
         //letter
         if (s < 0) {
