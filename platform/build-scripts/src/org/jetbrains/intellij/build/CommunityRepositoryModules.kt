@@ -266,7 +266,6 @@ object CommunityRepositoryModules {
       "intellij.markdown.model",
       "intellij.markdown.spellchecker"
     )),
-    plugin(listOf("intellij.settingsSync", "intellij.settingsSync.git")),
     plugin("intellij.featuresTrainer") { spec ->
       spec.withModule("intellij.vcs.git.featuresTrainer")
       spec.withProjectLibrary("assertJ")
