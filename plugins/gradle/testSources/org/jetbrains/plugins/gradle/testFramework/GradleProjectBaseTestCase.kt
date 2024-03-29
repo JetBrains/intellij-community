@@ -4,11 +4,11 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.testFramework.common.runAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.junit.jupiter.api.AfterAll
 
-@GradleTestApplication
+@GradleProjectTestApplication
 abstract class GradleProjectBaseTestCase {
 
   private var fixture: GradleProjectTestFixture? = null
