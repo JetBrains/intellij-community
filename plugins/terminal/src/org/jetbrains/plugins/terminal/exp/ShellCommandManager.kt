@@ -25,7 +25,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     session.controller.addCustomCommandListener(TerminalCustomCommandListener {
       try {
         when (it.getOrNull(0)) {
-          "initialized" -> processInitialized()
+          "initialized" -> processInitialized(it)
           "prompt_shown" -> firePromptShown()
           "command_started" -> processCommandStartedEvent(it)
           "command_finished" -> processCommandFinishedEvent(it)
@@ -42,15 +42,16 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     })
   }
 
-  private fun processInitialized() {
+  private fun processInitialized(event: List<String>) {
+    val shellInfo = Param.SHELL_INFO.getDecodedValueOrNull(event.getOrNull(1)) ?: "{}"
     if (session.commandBlockIntegration.commandEndMarker != null) {
       debug { "Received initialized event, waiting for command end marker" }
       ShellCommandEndMarkerListener(session) {
-        fireInitialized()
+        fireInitialized(shellInfo)
       }
     }
     else {
-      fireInitialized()
+      fireInitialized(shellInfo)
     }
   }
 
@@ -125,10 +126,10 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     }
   }
 
-  private fun fireInitialized() {
-    debug { "Shell event: initialized" }
+  private fun fireInitialized(rawShellInfo: String) {
+    debug { "Shell event: initialized. Shell info: $rawShellInfo" }
     for (listener in listeners) {
-      listener.initialized()
+      listener.initialized(rawShellInfo)
     }
     clearTerminal()
   }
@@ -224,7 +225,10 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
     CURRENT_DIRECTORY,
     GIT_BRANCH,
     VIRTUAL_ENV,
-    CONDA_ENV;
+    CONDA_ENV,
+
+    /** Json with the following content [org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics.ShellInfo] */
+    SHELL_INFO;
 
     private val paramNameWithSeparator: String = "${paramName()}="
 
@@ -250,7 +254,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
 }
 
 interface ShellCommandListener {
-  fun initialized() {}
+  fun initialized(rawShellInfo: String) {}
 
   /**
    * Fired each time when prompt is printed.
