@@ -226,6 +226,10 @@ object PluginManagerCore {
         result = descriptor
         break
       }
+      else if (runCatching { Class.forName(className, false, classLoader) }.isSuccess) {
+        result = descriptor
+        break
+      }
     }
     if (result == null) {
       return null
