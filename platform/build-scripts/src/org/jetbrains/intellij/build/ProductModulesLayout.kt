@@ -37,6 +37,9 @@ class ProductModulesLayout {
    * These are the names of the main modules (which contain META-INF/plugin.xml).
    * They belong to the plugins that need to be included with the product.
    * You can find the layouts of these bundled plugins in the [pluginLayouts] list.
+   * 
+   * This property can be used for writing only. 
+   * If you need to read the list of plugins which should be bundled, use [BuildContext.bundledPluginModules] instead.  
    */
   var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
 

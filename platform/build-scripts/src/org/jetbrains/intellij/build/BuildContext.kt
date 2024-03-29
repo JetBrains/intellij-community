@@ -81,6 +81,12 @@ interface BuildContext : CompilationContext {
    * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
    */
   val generateRuntimeModuleRepository: Boolean
+
+  /**
+   * Returns main modules' names of plugins bundled with the product.
+   * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
+   */
+  val bundledPluginModules: List<String>
   
   /**
    * see BuildTasksImpl.buildProvidedModuleList

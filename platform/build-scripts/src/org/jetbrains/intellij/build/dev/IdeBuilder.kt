@@ -306,7 +306,7 @@ private suspend fun buildPlugins(
   platformLayout: Deferred<PlatformLayout>,
   artifactTask: Job
 ): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
-  val bundledMainModuleNames = getBundledMainModuleNames(context.productProperties, request.additionalModules)
+  val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
 
@@ -527,8 +527,8 @@ private suspend fun layoutPlatform(
   return entries to sortedClassPath
 }
 
-private fun getBundledMainModuleNames(productProperties: ProductProperties, additionalModules: List<String>): Set<String> {
-  return LinkedHashSet(productProperties.productLayout.bundledPluginModules) + additionalModules
+private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
+  return LinkedHashSet(context.bundledPluginModules) + additionalModules
 }
 
 fun getAdditionalModules(): Sequence<String>? {

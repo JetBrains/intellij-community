@@ -97,7 +97,7 @@ class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
       platform = distState.platform,
       enabledPluginModules = getEnabledPluginModules(
         pluginsToPublish = distState.pluginsToPublish,
-        productProperties = context.productProperties
+        context = context
       ),
       compilationTasks = compilationTasks,
       context = context,
@@ -638,7 +638,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
   val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = productLayout.pluginModulesToPublish, productLayout = productLayout)
   filterPluginsToPublish(pluginsToPublish, context)
 
-  var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
+  var enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   // computed only based on a bundled and plugins to publish lists, compatible plugins are not taken in an account by intention
   val projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context)
   val addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
@@ -696,7 +696,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
       filterPluginsToPublish(pluginsToPublish, context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
-      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
+      enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
     }
   }
 
@@ -813,7 +813,7 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
     if (mavenArtifacts.forIdeModules) {
       moduleNames.addAll(distributionState.platformModules)
       val productLayout = context.productProperties.productLayout
-      collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules, product = productLayout, result = moduleNames)
+      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = moduleNames)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
@@ -1371,7 +1371,7 @@ private fun crossPlatformZip(
 
 fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
   val productLayout = context.productProperties.productLayout
-  collectIncludedPluginModules(enabledPluginModules = productLayout.bundledPluginModules, product = productLayout, result = result)
+  collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = result)
   collectPlatformModules(result)
   result.addAll(productLayout.productApiModules)
   result.addAll(productLayout.productImplementationModules)

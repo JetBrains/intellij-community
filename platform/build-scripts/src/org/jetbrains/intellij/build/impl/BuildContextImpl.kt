@@ -182,6 +182,9 @@ class BuildContextImpl(
     distFiles.add(file)
   }
 
+  override val bundledPluginModules: List<String>
+    get() = productProperties.productLayout.bundledPluginModules
+
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
     val result = distFiles.filterTo(mutableListOf()) {
       (os == null && arch == null) ||
@@ -296,7 +299,7 @@ class BuildContextImpl(
   override fun includeBreakGenLibraries() = isJavaSupportedInProduct
 
   private val isJavaSupportedInProduct: Boolean
-    get() = productProperties.productLayout.bundledPluginModules.contains(JavaPluginLayout.MAIN_MODULE_NAME)
+    get() = bundledPluginModules.contains(JavaPluginLayout.MAIN_MODULE_NAME)
 
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead

@@ -149,7 +149,7 @@ private fun addModule(relativeJarPath: String,
 }
 
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
-  val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, productProperties = context.productProperties)
+  val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   val productLayout = context.productProperties.productLayout
   return createPlatformLayout(
     addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
@@ -372,9 +372,9 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
   return result
 }
 
-internal fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, productProperties: ProductProperties): Set<String> {
+internal fun getEnabledPluginModules(pluginsToPublish: Set<PluginLayout>, context: BuildContext): Set<String> {
   val result = LinkedHashSet<String>()
-  result.addAll(productProperties.productLayout.bundledPluginModules)
+  result.addAll(context.bundledPluginModules)
   pluginsToPublish.mapTo(result) { it.mainModule }
   return result
 }

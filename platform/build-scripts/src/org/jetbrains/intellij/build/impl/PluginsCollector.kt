@@ -111,7 +111,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
   }
 
-  val allBundledPlugins = HashSet(productLayout.bundledPluginModules)
+  val allBundledPlugins = HashSet(context.bundledPluginModules)
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name
     if ((skipBundledPlugins && allBundledPlugins.contains(moduleName)) ||

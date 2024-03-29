@@ -354,7 +354,7 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open fun addRemoteDevelopmentLibraries(): Boolean = productLayout.bundledPluginModules.contains("intellij.remoteDevServer")
+  open fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean = buildContext.bundledPluginModules.contains("intellij.remoteDevServer")
 
   /**
    * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.

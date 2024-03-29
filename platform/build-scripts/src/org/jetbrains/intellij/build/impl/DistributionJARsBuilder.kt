@@ -80,7 +80,7 @@ internal suspend fun buildDistribution(
     }
 
     val pluginLayouts = getPluginLayoutsByJpsModuleNames(
-      modules = context.productProperties.productLayout.bundledPluginModules,
+      modules = context.bundledPluginModules,
       productLayout = context.productProperties.productLayout,
     )
     val moduleOutputPatcher = ModuleOutputPatcher()
@@ -506,7 +506,7 @@ internal suspend fun generateProjectStructureMapping(
     }
 
     val allPlugins = getPluginLayoutsByJpsModuleNames(
-      modules = context.productProperties.productLayout.bundledPluginModules,
+      modules = context.bundledPluginModules,
       productLayout = context.productProperties.productLayout,
     )
     val entries = mutableListOf<DistributionFileEntry>()
