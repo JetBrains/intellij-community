@@ -11,28 +11,26 @@ import org.junit.jupiter.api.AfterAll
 @GradleProjectTestApplication
 abstract class GradleProjectBaseTestCase {
 
-  private var fixture: GradleProjectTestFixture? = null
-
+  private var _gradleFixture: GradleProjectTestFixture? = null
   val gradleFixture: GradleProjectTestFixture
-    get() = requireNotNull(fixture) {
-      "Gradle fixture isn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    get() = requireNotNull(_gradleFixture) {
+      "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
   open fun setUp() = Unit
 
   open fun tearDown() = Unit
 
-  open fun patchFixtureBuilder(fixtureBuilder: GradleTestFixtureBuilder): GradleTestFixtureBuilder = fixtureBuilder
-
   open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-    val patchedBuilder = patchFixtureBuilder(fixtureBuilder)
-    fixture = getOrCreateGradleTestFixture(gradleVersion, patchedBuilder)
-    setUp()
     runAll(
-      { test() },
+      {
+        _gradleFixture = getOrCreateGradleTestFixture(gradleVersion, fixtureBuilder)
+        setUp()
+        test()
+      },
       { tearDown() },
-      { rollbackOrDestroyGradleTestFixture(gradleFixture) },
-      { fixture = null }
+      { _gradleFixture?.let { rollbackOrDestroyGradleTestFixture(it) } },
+      { _gradleFixture = null }
     )
   }
 

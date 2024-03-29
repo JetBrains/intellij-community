@@ -15,7 +15,11 @@ import org.junit.jupiter.api.AfterEach
 
 abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
-  private lateinit var executionFixture: GradleExecutionTestFixture
+  private var _executionFixture: GradleExecutionTestFixture? = null
+  private val executionFixture: GradleExecutionTestFixture
+    get() = requireNotNull(_executionFixture) {
+      "Gradle execution fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
 
   fun getExecutionEnvironment(): ExecutionEnvironment {
     return executionFixture.getExecutionEnvironment()
@@ -30,13 +34,14 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
     cleanupProjectBuildDirectory()
 
-    executionFixture = GradleExecutionTestFixtureImpl(project, projectRoot)
+    _executionFixture = GradleExecutionTestFixtureImpl(project, projectRoot)
     executionFixture.setUp()
   }
 
   override fun tearDown() {
     runAll(
-      { executionFixture.tearDown() },
+      { _executionFixture?.tearDown() },
+      { _executionFixture = null },
       { cleanupProjectBuildDirectory() },
       { super.tearDown() },
     )

@@ -32,12 +32,18 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override val fileFixture: FileTestFixture
 ) : GradleProjectTestFixture {
 
-  private lateinit var _project: Project
+  private var _testDisposable: Disposable? = null
+  private val testDisposable: Disposable
+    get() = requireNotNull(_testDisposable) {
+      "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
 
-  private lateinit var testDisposable: Disposable
-
+  private var _project: Project? = null
   override val project: Project
-    get() = _project
+    get() = requireNotNull(_project) {
+      "Gradle fixture wasn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
+    }
+
   override val module: Module
     get() = project.modules.single { it.name == project.name }
 
@@ -57,7 +63,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
   )
 
   override fun setUp() {
-    testDisposable = Disposer.newDisposable()
+    _testDisposable = Disposer.newDisposable()
 
     sdkFixture.setUp()
     fileFixture.setUp()
@@ -65,21 +71,15 @@ internal class GradleProjectTestFixtureImpl private constructor(
     installGradleProjectReloadWatcher()
 
     _project = runBlocking { openProjectAsync(fileFixture.root) }
-    IndexingTestUtil.waitUntilIndexesAreReady(_project)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   override fun tearDown() {
     runAll(
       { ApplicationManager.getApplication().serviceIfCreated<FileBasedIndexEx>()?.waitUntilIndicesAreInitialized() },
       { runBlocking { fileFixture.root.refreshAndAwait() } },
-      {
-        runBlocking {
-          if (this@GradleProjectTestFixtureImpl::_project.isInitialized) {
-            _project.closeProjectAsync()
-          }
-        }
-      },
-      { Disposer.dispose(testDisposable) },
+      { runBlocking { _project?.closeProjectAsync() } },
+      { _testDisposable?.let { Disposer.dispose(it) } },
       { fileFixture.tearDown() },
       { sdkFixture.tearDown() }
     )
