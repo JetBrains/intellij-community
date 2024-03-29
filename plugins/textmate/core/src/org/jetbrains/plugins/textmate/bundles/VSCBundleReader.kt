@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.bundles
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -11,6 +10,7 @@ import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateStandardTokenType
 import org.jetbrains.plugins.textmate.language.preferences.*
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader
 import org.jetbrains.plugins.textmate.plist.Plist
 import org.jetbrains.plugins.textmate.plist.PlistValueType
 import java.io.InputStream
@@ -18,19 +18,12 @@ import java.util.*
 
 private typealias VSCodeExtensionLanguageId = String
 
-@OptIn(ExperimentalSerializationApi::class)
-private val textmateJson by lazy {
-  Json {
-    isLenient = true
-    allowTrailingComma = true
-    ignoreUnknownKeys = true
-  }
-}
-
-@OptIn(ExperimentalSerializationApi::class)
 fun readVSCBundle(resourceLoader: (relativePath: String) -> InputStream?): TextMateBundleReader? {
   return resourceLoader(Constants.PACKAGE_JSON_NAME)?.let { packageJsonStream ->
-    val extension = textmateJson.decodeFromStream(VSCodeExtension.serializer(), packageJsonStream)
+    val extension = packageJsonStream.reader(Charsets.UTF_8).useLines { lineSequence ->
+      JsonPlistReader.textmateJson.decodeFromString(VSCodeExtension.serializer(), lineSequence.removeJsonComments())
+    }
+
     VSCBundleReader(extension = extension, resourceLoader = resourceLoader)
   }
 }
@@ -82,37 +75,7 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
     return extension.contributes.languages.asSequence().flatMap { language ->
       language.configuration?.let { path ->
         resourceLoader(path)?.let { inputStream ->
-          val configuration = inputStream.reader(Charsets.UTF_8).useLines { lineSequence ->
-            textmateJson.decodeFromString(VSCodeExtensionLanguageConfiguration.serializer(), lineSequence.removeJsonComments())
-          }
-
-          val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
-          val smartTypingPairs = configuration.autoClosingPairs
-            .mapTo(LinkedHashSet(configuration.autoClosingPairs.size)) {
-              TextMateAutoClosingPair(it.open, it.close, it.notIn)
-            }
-            .takeIf { it.isNotEmpty() }
-          val surroundingPairs = configuration.surroundingPairs
-            .mapTo(LinkedHashSet(configuration.surroundingPairs.size)) {
-              TextMateBracePair(it.open, it.close)
-            }
-            .takeIf { it.isNotEmpty() }
-          val indentationRules = IndentationRules(configuration.indentationRules?.increaseIndentPattern,
-                                                  configuration.indentationRules?.decreaseIndentPattern,
-                                                  configuration.indentationRules?.indentNextLinePattern,
-                                                  configuration.indentationRules?.unIndentedLinePattern)
-          scopesForLanguage(language.id).map { scopeName ->
-            val variables = readComments(scopeName, configuration.comments)
-            TextMatePreferences(scopeName = scopeName,
-                                variables = variables,
-                                highlightingPairs = highlightingPairs,
-                                smartTypingPairs = smartTypingPairs,
-                                autoCloseBefore = configuration.autoCloseBefore,
-                                surroundingPairs = surroundingPairs,
-                                indentationRules = indentationRules,
-                                customHighlightingAttributes = null,
-                                onEnterRules = configuration.onEnterRules.toSet())
-          }
+          readPreferencesImpl(inputStream, scopesForLanguage(language.id))
         }
       } ?: emptySequence()
     }
@@ -154,25 +117,59 @@ private class VSCBundleReader(private val extension: VSCodeExtension,
       embeddedLanguages[languageId]?.let { yieldAll(it) }
     }
   }
+}
 
-  private fun readBrackets(pairs: List<List<String>>): Set<TextMateBracePair> {
-    return pairs.mapNotNull { pair ->
-      pair.takeIf { it.size == 2 }?.let {
-        TextMateBracePair(it[0], it[1])
-      }
-    }.toSet()
+internal fun readPreferencesImpl(inputStream: InputStream, scopeNames: Sequence<TextMateScopeName>): Sequence<TextMatePreferences> {
+  val configuration = inputStream.reader(Charsets.UTF_8).useLines { lineSequence ->
+    JsonPlistReader.textmateJson.decodeFromString(VSCodeExtensionLanguageConfiguration.serializer(), lineSequence.removeJsonComments())
   }
 
-  private fun readComments(scopeName: TextMateScopeName, comments: VSCodeExtensionComments): List<TextMateShellVariable> {
-    return buildList {
-      comments.lineComment?.let {
-        add(TextMateShellVariable(scopeName, Constants.COMMENT_START_VARIABLE, "${it.trim()} "))
-      }
-      comments.blockComment.takeIf { it.size == 2 }?.let {
-        val suffix = if (comments.lineComment != null) "_2" else ""
-        add(TextMateShellVariable(scopeName, Constants.COMMENT_START_VARIABLE + suffix, "${it[0].trim()} "))
-        add(TextMateShellVariable(scopeName, Constants.COMMENT_END_VARIABLE + suffix, " ${it[1].trim()}"))
-      }
+  val highlightingPairs = readBrackets(configuration.brackets).takeIf { it.isNotEmpty() }
+  val smartTypingPairs = configuration.autoClosingPairs
+    .mapTo(LinkedHashSet(configuration.autoClosingPairs.size)) {
+      TextMateAutoClosingPair(it.open, it.close, it.notIn)
+    }
+    .takeIf { it.isNotEmpty() }
+  val surroundingPairs = configuration.surroundingPairs
+    .mapTo(LinkedHashSet(configuration.surroundingPairs.size)) {
+      TextMateBracePair(it.open, it.close)
+    }
+    .takeIf { it.isNotEmpty() }
+  val indentationRules = IndentationRules(configuration.indentationRules?.increaseIndentPattern,
+                                          configuration.indentationRules?.decreaseIndentPattern,
+                                          configuration.indentationRules?.indentNextLinePattern,
+                                          configuration.indentationRules?.unIndentedLinePattern)
+  return scopeNames.map { scopeName ->
+    val variables = readComments(scopeName, configuration.comments)
+    TextMatePreferences(scopeName = scopeName,
+                        variables = variables,
+                        highlightingPairs = highlightingPairs,
+                        smartTypingPairs = smartTypingPairs,
+                        autoCloseBefore = configuration.autoCloseBefore,
+                        surroundingPairs = surroundingPairs,
+                        indentationRules = indentationRules,
+                        customHighlightingAttributes = null,
+                        onEnterRules = configuration.onEnterRules.toSet())
+  }
+}
+
+private fun readBrackets(pairs: List<List<String>>): Set<TextMateBracePair> {
+  return pairs.mapNotNull { pair ->
+    pair.takeIf { it.size == 2 }?.let {
+      TextMateBracePair(it[0], it[1])
+    }
+  }.toSet()
+}
+
+private fun readComments(scopeName: TextMateScopeName, comments: VSCodeExtensionComments): List<TextMateShellVariable> {
+  return buildList {
+    comments.lineComment?.let {
+      add(TextMateShellVariable(scopeName, Constants.COMMENT_START_VARIABLE, "${it.trim()} "))
+    }
+    comments.blockComment.takeIf { it.size == 2 }?.let {
+      val suffix = if (comments.lineComment != null) "_2" else ""
+      add(TextMateShellVariable(scopeName, Constants.COMMENT_START_VARIABLE + suffix, "${it[0].trim()} "))
+      add(TextMateShellVariable(scopeName, Constants.COMMENT_END_VARIABLE + suffix, " ${it[1].trim()}"))
     }
   }
 }
@@ -337,6 +334,7 @@ internal class TextRuleDeserializer : KSerializer<TextRule> {
   }
 }
 
+// todo: remove when comments are supported in kotlin-serialization
 private fun Sequence<String>.removeJsonComments(): String {
   return map { line ->
     val commentIndex = lineCommentIndex(line)

@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.textmate.bundles;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.plist.JsonPlistReader;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
@@ -63,7 +66,7 @@ public class VSCBundle extends Bundle {
     if (!grammarToExtensions.isEmpty()) return;
     File packageJson = new File(bundleFile, "package.json");
     try {
-      Object json = JsonPlistReader.createJsonReader().readValue(new FileReader(packageJson, StandardCharsets.UTF_8), Object.class);
+      Object json = createJsonReader().readValue(new FileReader(packageJson, StandardCharsets.UTF_8), Object.class);
       if (json instanceof Map) {
         Object contributes = ((Map<?, ?>)json).get("contributes");
         if (contributes instanceof Map) {
@@ -166,7 +169,7 @@ public class VSCBundle extends Bundle {
   @NotNull
   private static Plist loadLanguageConfig(File languageConfig) throws IOException {
     try {
-      Object json = JsonPlistReader.createJsonReader().readValue(new FileReader(languageConfig, StandardCharsets.UTF_8), Object.class);
+      Object json = createJsonReader().readValue(new FileReader(languageConfig, StandardCharsets.UTF_8), Object.class);
       Plist settings = new Plist();
       if (json instanceof Map) {
         settings.setEntry(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
@@ -241,5 +244,15 @@ public class VSCBundle extends Bundle {
     variable.setEntry(NAME_KEY, string(name));
     variable.setEntry(VALUE_KEY, string(value));
     return dict(variable);
+  }
+
+  private static ObjectMapper createJsonReader() {
+    var factory = JsonFactory.builder()
+      .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+      .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+      .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+      .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+      .build();
+    return new ObjectMapper(factory).configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 }

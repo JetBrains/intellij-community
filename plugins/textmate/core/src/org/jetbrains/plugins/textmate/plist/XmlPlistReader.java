@@ -91,7 +91,7 @@ public final class XmlPlistReader implements PlistReader {
       return value(Boolean.FALSE, PlistValueType.BOOLEAN);
     }
     else if ("integer".equals(type) && content != null) {
-      return value(Long.parseLong(content), PlistValueType.INTEGER);
+      return value(Integer.parseInt(content), PlistValueType.INTEGER);
     }
     else if ("real".equals(type) && content != null) {
       return value(Double.parseDouble(content), PlistValueType.REAL);
