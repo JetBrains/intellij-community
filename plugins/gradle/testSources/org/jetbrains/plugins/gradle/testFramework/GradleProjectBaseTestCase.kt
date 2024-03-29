@@ -63,7 +63,7 @@ abstract class GradleProjectBaseTestCase {
       return fixtures[fixtureId]!!
     }
 
-    private fun destroyAllGradleFixtures() {
+    fun destroyAllGradleFixtures() {
       runAll(fixtures.values.reversed(), ::destroyGradleFixture)
     }
 

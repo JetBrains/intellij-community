@@ -17,7 +17,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 @TestOnly
-internal class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
+class TestApplicationExtension : BeforeAllCallback, AfterEachCallback {
   override fun beforeAll(context: ExtensionContext) {
     context.testApplication().getOrThrow()
   }

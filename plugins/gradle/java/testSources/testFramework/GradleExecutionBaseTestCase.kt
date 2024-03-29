@@ -11,6 +11,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole
 import org.jetbrains.plugins.gradle.testFramework.fixture.*
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
+import org.junit.jupiter.api.AfterEach
 
 abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
 
@@ -39,6 +40,15 @@ abstract class GradleExecutionBaseTestCase : GradleProjectTestCase() {
       { cleanupProjectBuildDirectory() },
       { super.tearDown() },
     )
+  }
+
+  /**
+   * Forces a project closing after each Gradle execution test.
+   * The BuildViewTestFixture cannot release all editors in console view after the test.
+   */
+  @AfterEach
+  fun destroyAllGradleFixturesAfterEachTest() {
+    destroyAllGradleFixtures()
   }
 
   // '--rerun-tasks' corrupts gradle build caches fo gradle versions before 4.0 (included)
