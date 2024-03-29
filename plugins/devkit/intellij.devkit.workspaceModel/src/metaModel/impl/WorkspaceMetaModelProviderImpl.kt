@@ -138,7 +138,7 @@ internal class WorkspaceMetaModelProviderImpl(
 
       val blobType = ValueType.Blob<Any>(javaClassFqn, superTypes)
       val inheritors = descriptor.inheritors(javaPsiFacade, allScope)
-        .filter { it.packageName == module.name }
+        .filter { it.module == moduleDescriptor }
         .map { it.toValueType(hashMapOf(javaClassFqn to blobType), true) }
 
       if (inheritors.isNotEmpty()) {
