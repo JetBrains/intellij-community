@@ -14,6 +14,12 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.reflect.KClass
 
+val PsiElement.startOffset: Int
+  get() = textRange.startOffset
+
+val PsiElement.endOffset: Int
+  get() = textRange.endOffset
+
 fun PsiElement.validOrNull(): PsiElement? = if (isValid) this else null
 
 // ----------- Walking children/siblings/parents -------------------------------------------------------------------------------------------
