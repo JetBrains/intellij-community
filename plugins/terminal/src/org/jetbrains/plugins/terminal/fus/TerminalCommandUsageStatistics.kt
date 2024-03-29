@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.terminal.fus
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.AllowedItemsResourceWeakRefStorage
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
@@ -13,10 +11,10 @@ import java.util.Set.copyOf
 
 internal object TerminalCommandUsageStatistics {
 
-  private val emptyCommand = TerminalCommandEventData("<empty>", null)
-  private val whitespacesCommand = TerminalCommandEventData("<whitespaces>", null)
-  private val relativePathCommand = TerminalCommandEventData("<relative path>", null)
-  private val absolutePathCommand = TerminalCommandEventData("<absolute path>", null)
+  private val emptyCommand = CommandData("<empty>", null)
+  private val whitespacesCommand = CommandData("<whitespaces>", null)
+  private val relativePathCommand = CommandData("<relative path>", null)
+  private val absolutePathCommand = CommandData("<absolute path>", null)
   private val knownCommandToSubCommandsMap: Map<String, Set<String>> = buildKnownCommandToSubCommandMap()
 
   internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command,
@@ -24,13 +22,11 @@ internal object TerminalCommandUsageStatistics {
                                                                      + knownCommandToSubCommandsMap.keys)
   internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
-  fun triggerCommandExecuted(commandExecutedEvent: EventId3<String?, String?, Boolean>,
-                             project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
-    val eventData = toEventData(userCommandLine)
-    commandExecutedEvent.log(project, eventData?.command, eventData?.subCommand, isBlockTerminal)
-  }
-
-  private fun toEventData(userCommandLine: String): TerminalCommandEventData? {
+  /**
+   * Parses the provided [userCommandLine] and returns [CommandData] if command line contains known command or pattern,
+   * that we are able to log in the statistics. Returns null otherwise.
+   */
+  fun getLoggableCommandData(userCommandLine: String): CommandData? {
     if (userCommandLine.isEmpty()) {
       return emptyCommand
     }
@@ -55,13 +51,13 @@ internal object TerminalCommandUsageStatistics {
     return executable.startsWith("./") || SystemInfo.isWindows && executable.startsWith(".\\")
   }
 
-  private fun toKnownCommand(userCommand: List<String>): TerminalCommandEventData? {
+  private fun toKnownCommand(userCommand: List<String>): CommandData? {
     val executable: String = (userCommand.getOrNull(0) ?: return null).let {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
     }
     val knownSubCommands: Set<String> = knownCommandToSubCommandsMap[executable] ?: return null
     val subCommand = userCommand.getOrNull(1)?.takeIf { knownSubCommands.contains(it) }
-    return TerminalCommandEventData(executable, subCommand)
+    return CommandData(executable, subCommand)
   }
 
   private fun buildKnownCommandToSubCommandMap(): Map<String, Set<String>> {
@@ -74,5 +70,5 @@ internal object TerminalCommandUsageStatistics {
     return result.map { it.key to copyOf(it.value.filterNotNull()) }.associateTo(HashMap(result.size)) { it }
   }
 
-  private class TerminalCommandEventData(val command: String, val subCommand: String?)
+  class CommandData(val command: String, val subCommand: String?)
 }
