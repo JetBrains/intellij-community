@@ -34,16 +34,16 @@ private val LOG = logger<WorkspaceModelGenerator>()
 class WorkspaceModelGenerator(private val project: Project, private val coroutineScope: CoroutineScope) {
 
   fun generate(module: Module) {
+    LOG.info("Selected module ${module.name}")
     coroutineScope.launch {
       onModule(module)
     }
-    println("Selected module ${module.name}")
   }
 
   fun generate(modules: Array<Module>) {
     coroutineScope.launch {
       modules.forEachIndexed { index, module ->
-        println("Updating ${module.name}, $index")
+        LOG.info("Updating ${module.name}, $index")
         onModule(module)
       }
     }

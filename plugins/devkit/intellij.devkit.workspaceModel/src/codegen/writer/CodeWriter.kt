@@ -245,7 +245,7 @@ object CodeWriter {
       processAbstractTypes = processAbstractTypes,
       module.project
     )
-    return packages.map { metaModelProvider.getObjModule(it, module) }
+    return packages.filter { it != "" }.map { metaModelProvider.getObjModule(it, module) }
   }
 
   private fun generate(codeGenerator: CodeGenerator, objModules: List<CompiledObjModule>,
