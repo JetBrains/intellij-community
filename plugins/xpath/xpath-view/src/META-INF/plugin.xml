@@ -156,7 +156,7 @@
                              bundle="messages.XPathBundle"
                              key="configurable.xslt.display.name"/>
 
-    <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>
+    <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconPatcher"/>
     <gotoSymbolContributor implementation="org.intellij.lang.xpath.xslt.impl.XsltChooseByNameContributor"/>
     <annotator language="XPath" implementationClass="org.intellij.lang.xpath.xslt.validation.XsltAnnotator"/>
     <annotator language="XML" implementationClass="org.intellij.lang.xpath.xslt.validation.XsltXmlAnnotator"/>

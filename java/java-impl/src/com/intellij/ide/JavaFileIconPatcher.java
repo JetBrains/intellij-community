@@ -10,15 +10,17 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 
 public final class JavaFileIconPatcher implements FileIconPatcher {
   @Override
-  public Icon patchIcon(final Icon baseIcon, final VirtualFile file, final int flags, final Project project) {
+  public @NotNull Icon patchIcon(@NotNull Icon icon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
     if (project == null) {
-      return baseIcon;
+      return icon;
     }
 
     FileType fileType = file.getFileType();
@@ -31,10 +33,10 @@ public final class JavaFileIconPatcher implements FileIconPatcher {
       PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
       if (classes.length > 0) {
         // prefer icon of the class named after file
-        final String fileName = file.getNameWithoutExtension();
+        String fileName = file.getNameWithoutExtension();
         for (PsiClass aClass : classes) {
           if (aClass instanceof SyntheticElement) {
-            return baseIcon;
+            return icon;
           }
           if (Comparing.strEqual(aClass.getName(), fileName)) {
             return aClass.getIcon(flags);
@@ -43,6 +45,6 @@ public final class JavaFileIconPatcher implements FileIconPatcher {
         return classes[classes.length - 1].getIcon(flags);
       }
     }
-    return baseIcon;
+    return icon;
   }
 }

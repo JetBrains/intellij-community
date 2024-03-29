@@ -346,11 +346,11 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     }
 
     @Override
-    public Icon patchIcon(Icon baseIcon, VirtualFile file, int flags, @Nullable Project project) {
-      if (project == null) return baseIcon;
+    public @NotNull Icon patchIcon(@NotNull Icon icon, @NotNull VirtualFile file, int flags, @Nullable Project project) {
+      if (project == null) return icon;
       RootType rootType = ScratchFileService.getInstance().getRootType(file);
-      if (rootType == null) return baseIcon;
-      return rootType.patchIcon(baseIcon, file, flags, project);
+      if (rootType == null) return icon;
+      return rootType.patchIcon(icon, file, flags, project);
     }
 
     @Override

@@ -1,8 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author max
- */
 package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
@@ -15,10 +12,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-final class FileIconPatcherImpl implements FileIconProvider {
+final class PsiBasedFileIconProvider implements FileIconProvider {
   @Override
-  public @Nullable Icon getIcon(@NotNull VirtualFile file, int flags, Project project) {
+  public @Nullable Icon getIcon(@NotNull VirtualFile file, int flags, @Nullable Project project) {
     PsiFileSystemItem psiFile = PsiUtilCore.findFileSystemItem(project, file);
-    return psiFile == null ? null : PsiIconUtil.getProvidersIcon(psiFile, flags);
+    return psiFile == null ? null : PsiIconUtil.getIconFromProviders(psiFile, flags);
   }
 }
