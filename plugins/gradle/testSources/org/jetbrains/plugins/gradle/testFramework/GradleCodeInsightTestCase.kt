@@ -19,12 +19,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 
 abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), ExpressionTest {
 
-  fun testBuildscript(decorator: String, expression: String, test: () -> Unit) {
-    if (decorator.isEmpty()) {
+  fun testBuildscript(context: String, expression: String, test: () -> Unit) {
+    if (context.isEmpty()) {
       testBuildscript(expression, test)
     }
     else {
-      testBuildscript("$decorator { $expression }", test)
+      testBuildscript("$context { $expression }", test)
     }
   }
 
@@ -145,12 +145,15 @@ abstract class GradleCodeInsightTestCase : GradleCodeInsightBaseTestCase(), Expr
   }
 
   companion object {
-    const val DECORATORS = """
+    const val PROJECT_CONTEXTS = """
       "",
       project(':'), 
       allprojects, 
       subprojects, 
-      configure(project(':'))
+      configure(project(':')),
+      configure([project(':')]),
+      beforeEvaluate,
+      afterEvaluate
     """
   }
 }

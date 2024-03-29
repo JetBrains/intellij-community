@@ -18,7 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest
 
 class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test Project#allprojects call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
       @Suppress("SpellCheckingInspection")
@@ -33,7 +33,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test DomainObjectCollection#all call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>configurations.all {}") {
@@ -47,7 +47,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test DomainObjectCollection#withType call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>plugins.withType(JavaPlugin) {}") {

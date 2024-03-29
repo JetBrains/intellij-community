@@ -39,7 +39,7 @@ class GradleArtifactsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test unresolved reference`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "artifacts { <caret>foo }") {

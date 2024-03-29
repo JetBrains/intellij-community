@@ -15,7 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleProjectTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve explicit getter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>getGroup()") {
@@ -29,7 +29,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve property`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>group") {
@@ -43,7 +43,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve explicit setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>setGroup(1)") {
@@ -57,7 +57,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve explicit setter without argument`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>setGroup()") {
@@ -71,7 +71,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve property setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>group = 42") {
@@ -85,7 +85,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve implicit setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>group(42)") {
@@ -95,7 +95,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test resolve implicit setter without argument`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>group()") {
@@ -105,7 +105,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test property vs task`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>dependencies") {

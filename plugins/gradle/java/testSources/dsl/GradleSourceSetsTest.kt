@@ -14,7 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleSourceSetsTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test sourceSets closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets { <caret> }") {
@@ -24,7 +24,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set via unqualified property reference`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets { <caret>main }") {
@@ -36,7 +36,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set via unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets { <caret>main {} }") {
@@ -48,7 +48,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set closure delegate in unqualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets { main { <caret> } }") {
@@ -58,7 +58,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set member via unqualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets { main { <caret>getJarTaskName() } }") {
@@ -70,7 +70,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set via qualified property reference`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets.<caret>main") {
@@ -82,7 +82,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set via qualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets.<caret>main {}") {
@@ -94,7 +94,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set closure delegate in qualified method call`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets.main { <caret> }") {
@@ -104,7 +104,7 @@ class GradleSourceSetsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test source set member via qualified method call closure delegate`(gradleVersion: GradleVersion, decorator: String) {
     testJavaProject(gradleVersion) {
       testBuildscript(decorator, "sourceSets.main { <caret>getJarTaskName() }") {

@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest
 class GradleJavaExtensionsTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS, """
+  @AllGradleVersionsSource(PROJECT_CONTEXTS, """
     java."<caret>docsDir",
     "project.java.<caret>docsDir"
   """)
@@ -26,7 +26,7 @@ class GradleJavaExtensionsTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test property write`(gradleVersion: GradleVersion, decorator: String) {
     assumeThatJavaConventionsBlockIsSupported(gradleVersion)
     testJavaProject(gradleVersion) {
@@ -38,7 +38,7 @@ class GradleJavaExtensionsTest : GradleCodeInsightTestCase() {
 
   // this test is wrong and exists only to preserve current behaviour and to fail when behaviour changes
   @ParameterizedTest
-  @AllGradleVersionsSource(DECORATORS)
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
   fun `test setter method`(gradleVersion: GradleVersion, decorator: String) {
     assumeThatJavaConventionsBlockIsSupported(gradleVersion)
     testJavaProject(gradleVersion) {
