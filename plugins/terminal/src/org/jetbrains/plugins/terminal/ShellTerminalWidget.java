@@ -93,7 +93,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
       }
       if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
-        TerminalUsageTriggerCollector.triggerCommandExecuted(project, getTypedShellCommand(), false);
+        TerminalUsageTriggerCollector.triggerCommandStarted(project, getTypedShellCommand(), false);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
         }

@@ -58,7 +58,7 @@ class BlockTerminalController(
       }
     }
     // report event even if it is an empty command, because it will be reported as a separate command type
-    TerminalUsageTriggerCollector.triggerCommandExecuted(project, command, isBlockTerminal = true)
+    TerminalUsageTriggerCollector.triggerCommandStarted(project, command, isBlockTerminal = true)
   }
 
   @RequiresEdt(generateAssertion = false)
@@ -85,6 +85,7 @@ class BlockTerminalController(
 
   override fun commandFinished(event: CommandFinishedEvent) {
     finishCommandBlock(event.exitCode)
+    TerminalUsageTriggerCollector.triggerCommandFinished(project, event.command, event.exitCode, event.duration)
   }
 
   private fun finishCommandBlock(exitCode: Int) {
