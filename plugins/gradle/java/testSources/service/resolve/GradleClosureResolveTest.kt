@@ -100,9 +100,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
-        val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
-        val methodCall = closableBlock.parent as GrMethodCall
-        assertCalledMethodHasClosureParameter(methodCall)
+        assertCalledMethodHasClosureParameter()
         closureDelegateTest(GradleCommonClassNames.GRADLE_API_CONFIGURATION, 1)
       }
     }
@@ -126,9 +124,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
-        val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
-        val methodCall = closableBlock.parent as GrMethodCall
-        assertCalledMethodHasClosureParameter(methodCall)
+        assertCalledMethodHasClosureParameter()
         closureDelegateTest("ClassForDelegation", 1)
       }
     }
@@ -148,16 +144,18 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
         val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
-        val methodCall = closableBlock.parent as GrMethodCall
-        assertCalledMethodHasClosureParameter(methodCall)
+        assertCalledMethodHasClosureParameter()
         val delegatesToInfo = getDelegatesToInfo(closableBlock)
+        //
         assertNull(delegatesToInfo, "It's not expected to resolve a delegate for a Closure")
       }
     }
   }
 
-  private fun assertCalledMethodHasClosureParameter(call: GrMethodCall) {
-    val lastParameter = call.resolveMethod()?.parameters?.lastOrNull()
+  private fun assertCalledMethodHasClosureParameter() {
+    val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
+    val methodCall = closableBlock.parent as GrMethodCall
+    val lastParameter = methodCall.resolveMethod()?.parameters?.lastOrNull()
     assertNotNull(lastParameter)
     val type = lastParameter?.type?.asSafely<PsiClassType>()
     assertNotNull(type)
