@@ -57,12 +57,12 @@ public class PyIntentionTest extends PyTestCase {
 
   private void doMultiFileTest(@NotNull String hint) {
     final String directoryPath = "intentions/" + getTestName(false);
-    final String filesPathPrefix = directoryPath + "/" + getTestName(true);
+    final String filesPathPrefix = getTestName(true);
     myFixture.copyDirectoryToProject(directoryPath, "");
     myFixture.configureByFile(filesPathPrefix + ".py");
     final IntentionAction action = myFixture.findSingleIntention(hint);
     myFixture.launchAction(action);
-    myFixture.checkResultByFile(filesPathPrefix + ".py", filesPathPrefix + "_after.py", false);
+    myFixture.checkResultByFile(filesPathPrefix + ".py", directoryPath + "/" + filesPathPrefix + "_after.py", false);
   }
 
   /**
