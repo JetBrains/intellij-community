@@ -152,8 +152,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
             parent.addAfter(newImportStatement, importStatement); // add 'import from': we need the module imported as is
           }
           else { // replace entire existing import
-            parent.getNode().replaceChild(importStatement.getNode(), newImportStatement.getNode());
-            // import_statement.replace(from_import_stmt);
+            importStatement.replace(newImportStatement);
           }
         }
         else {
