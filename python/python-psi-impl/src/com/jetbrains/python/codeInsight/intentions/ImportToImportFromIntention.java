@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.psi.PyUtil.sure;
-
 /**
  * Converts {@code import foo} to {@code from foo import names} or {@code from ... import module} to {@code from ...module import names}.
  * Module names used as qualifiers are removed.
@@ -54,8 +52,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
       }
       else if (parent instanceof PyFromImportStatement fromImport) {
         final int relativeLevel = fromImport.getRelativeLevel();
-        PyPsiUtils.assertValid(fromImport);
-        if (fromImport.isValid() && relativeLevel > 0 && fromImport.getImportSource() == null) {
+        if (relativeLevel > 0 && fromImport.getImportSource() == null) {
           myRelativeLevel = relativeLevel;
           available = true;
         }
@@ -112,7 +109,6 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
     }
 
     public void invoke(boolean unqualifyAll) {
-      sure(myImportElement.getImportReferenceExpression());
       final Project project = myImportElement.getProject();
 
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
@@ -150,15 +146,13 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
         final PyFromImportStatement newImportStatement =
           generator.createFromImportStatement(languageLevel, getDots() + myModuleName, StringUtil.join(usedNames, ", "), null);
         final PsiElement parent = importStatement.getParent();
-        sure(parent);
-        sure(parent.isValid());
         boolean canRemoveImport = !myHasModuleReference && referencesToUpdate.size() == myReferences.size();
         if (importElements.length == 1) {
           if (!canRemoveImport) {
             parent.addAfter(newImportStatement, importStatement); // add 'import from': we need the module imported as is
           }
           else { // replace entire existing import
-            sure(parent.getNode()).replaceChild(sure(importStatement.getNode()), sure(newImportStatement.getNode()));
+            parent.getNode().replaceChild(importStatement.getNode(), newImportStatement.getNode());
             // import_statement.replace(from_import_stmt);
           }
         }
