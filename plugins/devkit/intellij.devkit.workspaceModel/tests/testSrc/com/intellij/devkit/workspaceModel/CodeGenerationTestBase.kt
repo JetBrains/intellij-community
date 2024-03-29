@@ -147,8 +147,10 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
         project, module, srcRoot,
         processAbstractTypes = processAbstractTypes,
         explicitApiEnabled = explicitApiEnabled,
-        isTestModule = isTestModule
-      ) { genRoot }
+        isTestModule = isTestModule,
+        targetFolderGenerator = { genRoot },
+        existingTargetFolder = { genRoot }
+      )
       FileDocumentManager.getInstance().saveAllDocuments()
     }
     return srcRoot to genRoot

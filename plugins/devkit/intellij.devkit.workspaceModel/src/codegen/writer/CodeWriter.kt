@@ -46,7 +46,8 @@ object CodeWriter {
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
     processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
-    targetFolderGenerator: () -> VirtualFile?
+    targetFolderGenerator: () -> VirtualFile?,
+    existingTargetFolder: () -> VirtualFile?
   ) {
     val sourceFilePerObjModule = HashMap<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClass>()
@@ -91,6 +92,11 @@ object CodeWriter {
 
         if (generatedCode.isEmpty() || problems.any { it.level == GenerationProblem.Level.ERROR }) {
           LOG.info("Not found types for generation")
+          val genFolder = existingTargetFolder.invoke()
+          if (genFolder != null) {
+            indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
+            removeGeneratedCode(ktClasses, genFolder)
+          }
           return@runWriteActionWithCancellableProgressInDispatchThread
         }
 
@@ -101,8 +107,6 @@ object CodeWriter {
         }
 
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
-        val psiFactory = KtPsiFactory(project)
-
         removeGeneratedCode(ktClasses, genFolder)
 
         val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
@@ -113,6 +117,7 @@ object CodeWriter {
         indicator.isIndeterminate = false
 
         generatedCode.forEachIndexed { i, code ->
+          val psiFactory = KtPsiFactory(project)
           indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
           when (code) {
             is ObjModuleFileGeneratedCode ->

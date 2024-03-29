@@ -62,10 +62,10 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
           project, module, sourceRoot.file!!,
           processAbstractTypes = module.withAbstractTypes,
           explicitApiEnabled = module.explicitApiEnabled,
-          isTestModule = module.isTestModule // TODO(It doesn't work for all modules)
-        ) {
-          createGeneratedSourceFolder(module, sourceRoot)
-        }
+          isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
+          targetFolderGenerator = { createGeneratedSourceFolder(module, sourceRoot) },
+          existingTargetFolder = { sourceRoot.file?.parent?.children?.find { it.name == GENERATED_FOLDER_NAME } }
+        )
       }
     }
   }
