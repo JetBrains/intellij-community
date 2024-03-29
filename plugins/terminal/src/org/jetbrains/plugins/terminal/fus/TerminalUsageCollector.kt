@@ -23,6 +23,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
 
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
+  private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
+  private val SHELL_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
   private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
   private val EXECUTION_TIME_FIELD = EventFields.Long("execution_time", "Time in milliseconds")
@@ -35,9 +37,25 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
                                                                                TERMINAL_COMMAND_HANDLER_FIELD,
                                                                                RUN_ANYTHING_PROVIDER_FIELD)
   private val localExecEvent = GROUP.registerEvent("local.exec",
-                                                   EventFields.StringValidatedByRegexpReference("os-version", "version"),
-                                                   EventFields.String("shell", KNOWN_SHELLS.toList()),
+                                                   OS_VERSION_FIELD,
+                                                   SHELL_FIELD,
                                                    BLOCK_TERMINAL_FIELD)
+
+  /** New Terminal only event with additional information about shell version and plugins */
+  private val shellStartedEvent = GROUP.registerVarargEvent("local.shell.started",
+                                                            OS_VERSION_FIELD,
+                                                            SHELL_FIELD,
+                                                            TerminalShellInfoStatistics.shellVersionField,
+                                                            TerminalShellInfoStatistics.promptThemeField,
+                                                            TerminalShellInfoStatistics.isOhMyZshField,
+                                                            TerminalShellInfoStatistics.isOhMyPoshField,
+                                                            TerminalShellInfoStatistics.isP10KField,
+                                                            TerminalShellInfoStatistics.isStarshipField,
+                                                            TerminalShellInfoStatistics.isSpaceshipField,
+                                                            TerminalShellInfoStatistics.isPreztoField,
+                                                            TerminalShellInfoStatistics.isOhMyBashField,
+                                                            TerminalShellInfoStatistics.isBashItField)
+
 
   private val commandStartedEvent = GROUP.registerEvent("terminal.command.executed",
                                                         TerminalCommandUsageStatistics.commandExecutableField,
@@ -113,6 +131,24 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
       propertiesComponent.setValue(BLOCK_TERMINAL_LAST_USED_VERSION, version)
       propertiesComponent.setValue(BLOCK_TERMINAL_LAST_USED_DATE, (System.currentTimeMillis() / 1000).toInt(), 0)
     }
+  }
+
+  /** New Terminal only event with additional information about shell version and plugins */
+  internal fun triggerLocalShellStarted(project: Project, shellName: String, shellInfo: TerminalShellInfoStatistics.LoggableShellInfo) {
+    val osVersion = Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown"
+    shellStartedEvent.log(project,
+                          OS_VERSION_FIELD with osVersion,
+                          SHELL_FIELD with shellName.lowercase(),
+                          TerminalShellInfoStatistics.shellVersionField with shellInfo.shellVersion,
+                          TerminalShellInfoStatistics.promptThemeField with shellInfo.promptTheme,
+                          TerminalShellInfoStatistics.isOhMyZshField with shellInfo.isOhMyZsh,
+                          TerminalShellInfoStatistics.isOhMyPoshField with shellInfo.isOhMyPosh,
+                          TerminalShellInfoStatistics.isP10KField with shellInfo.isP10K,
+                          TerminalShellInfoStatistics.isStarshipField with shellInfo.isStarship,
+                          TerminalShellInfoStatistics.isSpaceshipField with shellInfo.isSpaceship,
+                          TerminalShellInfoStatistics.isPreztoField with shellInfo.isPrezto,
+                          TerminalShellInfoStatistics.isOhMyBashField with shellInfo.isOhMyBash,
+                          TerminalShellInfoStatistics.isBashItField with shellInfo.isBashIt)
   }
 
   internal fun triggerPromotionShown(project: Project) {

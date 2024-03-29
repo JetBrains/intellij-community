@@ -32,7 +32,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
 
   init {
     commandManager.addListener(object : ShellCommandListener {
-      override fun initialized() {
+      override fun initialized(rawShellInfo: String) {
         lock.withLock { withoutLock ->
           isInitialized = true
           cancelGenerators(withoutLock, "initialized")
