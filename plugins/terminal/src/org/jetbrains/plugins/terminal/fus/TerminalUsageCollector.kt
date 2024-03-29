@@ -56,7 +56,8 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
 
   @JvmStatic
   fun triggerCommandExecuted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
-    TerminalCommandUsageStatistics.triggerCommandExecuted(commandExecutedEvent, project, userCommandLine, isBlockTerminal)
+    val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
+    commandExecutedEvent.log(project, commandData?.command, commandData?.subCommand, isBlockTerminal)
   }
 
   @JvmStatic
