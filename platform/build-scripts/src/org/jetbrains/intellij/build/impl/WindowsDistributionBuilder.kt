@@ -41,7 +41,7 @@ internal class WindowsDistributionBuilder(
       copyDir(sourceBinDir.resolve(arch.dirName), distBinDir)
 
       FileSet(sourceBinDir)
-        .includeAll()
+        .include("*.*") // N.B. non-recursive, unlike .includeAll()
         .also {
           if (!context.includeBreakGenLibraries()) {
             @Suppress("SpellCheckingInspection")
