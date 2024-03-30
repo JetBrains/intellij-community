@@ -67,6 +67,8 @@ interface Driver : AutoCloseable {
    */
   val isConnected: Boolean
 
+  val isRemoteIdeMode: Boolean
+
   /**
    * @return information about the product under test
    */
@@ -91,24 +93,28 @@ interface Driver : AutoCloseable {
    * @return new remote proxy for a [Remote] application service interface
    */
   @Contract(pure = true)
-  fun <T : Any> service(clazz: KClass<T>): T
+  fun <T : Any> service(clazz: KClass<T>, forceRunOnBackend: Boolean = false): T
 
   /**
    * @return new remote proxy for a [Remote] project service interface
    */
   @Contract(pure = true)
-  fun <T : Any> service(clazz: KClass<T>, project: ProjectRef): T
+  fun <T : Any> service(clazz: KClass<T>, project: ProjectRef?, forceRunOnBackend: Boolean = false): T
 
   /**
    * @return new remote proxy for a utility class or a class with static methods
    */
   @Contract(pure = true)
-  fun <T : Any> utility(clazz: KClass<T>): T
+  fun <T : Any> utility(clazz: KClass<T>, forceRunOnBackend: Boolean = false): T
 
   /**
    * @return proxy reference for a newly created remote object
    */
-  fun <T : Any> new(clazz: KClass<T>, vararg args: Any?): T
+  fun <T : Any> new(clazz: KClass<T>, vararg args: Any?): T {
+    return new(clazz, *args, forceRunOnBackend = false)
+  }
+
+  fun <T : Any> new(clazz: KClass<T>, vararg args: Any?, forceRunOnBackend: Boolean = false): T
 
   /**
    * Assumes that the remote reference corresponds to another type. Performs unsafe cast.
@@ -140,8 +146,8 @@ interface Driver : AutoCloseable {
      */
     @JvmStatic
     @Contract(pure = true)
-    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777")): Driver {
-      return DriverImpl(host)
+    fun create(host: JmxHost? = JmxHost(null, null, "localhost:7777"), isRemoteIdeMode: Boolean = false): Driver {
+      return DriverImpl(host, isRemoteIdeMode)
     }
   }
 }
@@ -154,20 +160,20 @@ interface ProjectRef
 /**
  * @return new remote proxy for a [Remote] application service interface
  */
-inline fun <reified T : Any> Driver.service(): T {
-  return service(T::class)
+inline fun <reified T : Any> Driver.service(forceRunOnBackend: Boolean = false): T {
+  return service(T::class, forceRunOnBackend)
 }
 
 /**
  * @return new remote proxy for a [Remote] application service interface
  */
-inline fun <reified T : Any> Driver.service(project: ProjectRef): T {
-  return service(T::class, project)
+inline fun <reified T : Any> Driver.service(project: ProjectRef, forceRunOnBackend: Boolean = false): T {
+  return service(T::class, project, forceRunOnBackend)
 }
 
 /**
  * @return new remote proxy for a utility class or a class with static methods
  */
-inline fun <reified T : Any> Driver.utility(): T {
-  return utility(T::class)
+inline fun <reified T : Any> Driver.utility(forceRunOnBackend: Boolean = false): T {
+  return utility(T::class, forceRunOnBackend)
 }

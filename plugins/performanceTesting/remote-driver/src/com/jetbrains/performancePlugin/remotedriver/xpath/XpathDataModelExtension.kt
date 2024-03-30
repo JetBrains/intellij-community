@@ -6,11 +6,11 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 import java.awt.Component
 
-interface XpathDataModelSubTreeProvider {
+interface XpathDataModelExtension {
   companion object {
-    val EP_NAME = ExtensionPointName<XpathDataModelSubTreeProvider>("com.jetbrains.performancePlugin.remoteDriver.xpathDataModelExtension")
+    val EP_NAME = ExtensionPointName.create<XpathDataModelExtension>("com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension")
   }
 
-  fun shouldOverrideSubtree(component: Component): Boolean
-  fun overrideSubtree(doc: Document, parentElement: Element, component: Component)
+  fun acceptComponent(component: Component): Boolean
+  fun processComponent(doc: Document, parentElement: Element, component: Component)
 }

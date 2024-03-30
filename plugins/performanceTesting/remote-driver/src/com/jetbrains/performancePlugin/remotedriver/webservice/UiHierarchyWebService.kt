@@ -1,10 +1,7 @@
 package com.jetbrains.performancePlugin.remotedriver.webservice
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
-import com.jetbrains.performancePlugin.jmxDriver.InvokerService
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.CantFindRouteException
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.Routing
 import com.jetbrains.performancePlugin.remotedriver.webservice.routing.StaticFile
@@ -16,8 +13,6 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
-import org.jsoup.helper.W3CDom
-import java.awt.Component
 
 internal class UiHierarchyWebService : RestService() {
   init {
@@ -38,33 +33,11 @@ internal class UiHierarchyWebService : RestService() {
     get("/") {
       hierarchy()
     }
-    get("/raw") {
-      rawHierarchy()
-    }
-    get("/{id}") {
-      val id = pathParameters["id"] ?: throw IllegalStateException("id parameter is not found")
-      val component = UiHierarchyWebServiceExtension.EP_NAME.extensionList.firstNotNullOf { it.getComponentById(id) }
-      partialHierarchy(component)
-    }
     static("/static")
   }
 
-  private fun partialHierarchy(component: Component): String {
-    val doc = XpathDataModelCreator(TextToKeyCache) { c, e ->
-      val ref = InvokerService.getInstance().invoker!!.putAdhocReference(c)
-      e.setAttribute("remoteId", ref.id)
-      e.setAttribute("hashCode", ref.identityHashCode.toString())
-    }.create(component)
-    return W3CDom().asString(doc)
-  }
-
-  private fun rawHierarchy(): String {
-    val doc = XpathDataModelCreator(TextToKeyCache).create(null)
-    return W3CDom().asString(doc)
-  }
-
   private fun hierarchy(): String {
-    val doc = XpathDataModelCreator(TextToKeyCache).create(null)
+    val doc = XpathDataModelCreator.create(null)
     return doc.convertToHtml()
   }
 
@@ -83,12 +56,4 @@ internal class UiHierarchyWebService : RestService() {
     }
     return null
   }
-}
-
-interface UiHierarchyWebServiceExtension {
-  companion object {
-    val EP_NAME = ExtensionPointName<UiHierarchyWebServiceExtension>("com.jetbrains.performancePlugin.remoteDriver.uiHierarchyExtension")
-  }
-
-  fun getComponentById(id: String): Component?
 }

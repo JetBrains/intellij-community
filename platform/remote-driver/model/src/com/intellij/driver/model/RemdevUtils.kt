@@ -13,3 +13,9 @@ fun <T : Any> RefDelegate<T>.unwrap(): T = when (this) {
 }
 
 fun <T : Any> List<RefDelegate<T>>.unwrap(): List<T> = map { it.unwrap() }
+
+enum class RdTarget {
+  FRONTEND_FIRST,
+  FRONTEND_ONLY,
+  BACKEND_ONLY,
+}

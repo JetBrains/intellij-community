@@ -2,12 +2,15 @@ package com.jetbrains.performancePlugin.jmxDriver
 
 import com.intellij.driver.impl.Invoker
 import com.intellij.driver.impl.InvokerMBean
+import com.intellij.driver.model.transport.Ref
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.PlatformUtils
 import io.opentelemetry.context.Context
+import java.awt.Component
 import java.lang.management.ManagementFactory
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -26,10 +29,17 @@ class InvokerService {
     private val jmxBackendPort = System.getProperty(BACKEND_JMX_PORT_PROPERTY)
     private val log = Logger.getInstance(InvokerService::class.java)
   }
-  var invoker: InvokerMBean? = null
-    private set
 
-  fun isReady(): Boolean = invoker != null
+  private var myInvoker: InvokerMBean? = null
+
+  val invoker: InvokerMBean
+    get() = myInvoker ?: throw IllegalStateException("Invoker is not registered")
+
+  fun isReady(): Boolean = myInvoker != null
+
+  fun putReference(c: Component): Ref {
+    return invoker.putAdhocReference(c)
+  }
 
   @Throws(JMException::class)
   fun register(tracerSupplier: Supplier<out IJTracer?>,
@@ -38,15 +48,21 @@ class InvokerService {
     val objectName = ObjectName("com.intellij.driver:type=Invoker")
     val server = ManagementFactory.getPlatformMBeanServer()
 
-    val localInvoker = Invoker("v", tracerSupplier, timedContextSupplier, screenshotAction)
+    val prefix = when {
+      PlatformUtils.isJetBrainsClient() -> Ref.FRONTEND_REFERENCE_PREFIX
+      AppMode.isRemoteDevHost() -> Ref.BACKEND_REFERENCE_PREFIX
+      else -> ""
+    }
+
+    val localInvoker = Invoker(prefix, tracerSupplier, timedContextSupplier, screenshotAction)
 
     val remoteJmxAddress = jmxBackendPort?.let { "$JMX_BACKEND_IP:$it" }
 
     if (PlatformUtils.isJetBrainsClient() && remoteJmxAddress != null) {
-      log.info("Remote Dev Mode")
-      invoker = RemoteDevInvoker(localInvoker, remoteJmxAddress)
+      log.info("Remote Dev Mode, $remoteJmxAddress")
+      myInvoker = RemoteDevInvoker(localInvoker, remoteJmxAddress)
     } else {
-      invoker = localInvoker
+      myInvoker = localInvoker
     }
     server.registerMBean(invoker, objectName)
   }

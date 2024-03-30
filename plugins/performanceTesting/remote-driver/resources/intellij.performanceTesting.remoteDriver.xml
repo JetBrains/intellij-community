@@ -1,10 +1,9 @@
 <idea-plugin package="com.jetbrains.performancePlugin.remotedriver">
   <extensionPoints>
-    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelSubTreeProvider"
-                    qualifiedName="com.jetbrains.performancePlugin.remoteDriver.xpathDataModelExtension" dynamic="true"/>
-    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.webservice.UiHierarchyWebServiceExtension"
-                    qualifiedName="com.jetbrains.performancePlugin.remoteDriver.uiHierarchyExtension" dynamic="true"/>
+    <extensionPoint interface="com.jetbrains.performancePlugin.remotedriver.xpath.XpathDataModelExtension"
+                    qualifiedName="com.jetbrains.performancePlugin.remotedriver.xpathDataModelExtension" dynamic="true"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="expose.ui.hierarchy.url"
                  defaultValue="false"

@@ -6,15 +6,13 @@ import com.intellij.driver.model.LocalRefDelegate
 import com.intellij.driver.model.RefDelegate
 import com.intellij.driver.model.RemoteRefDelegate
 import com.intellij.driver.model.transport.Ref
-import com.jetbrains.performancePlugin.remotedriver.dataextractor.TextToKeyCache
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 import java.awt.Component
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
-internal class XpathSearcher(textToKeyCache: TextToKeyCache) {
-  val modelCreator = XpathDataModelCreator(textToKeyCache)
+internal class XpathSearcher {
   private val xPath = XPathFactory.newInstance().newXPath()
 
   fun findComponent(xpathExpression: String, component: Component?): RefDelegate<Component> {
@@ -29,7 +27,7 @@ internal class XpathSearcher(textToKeyCache: TextToKeyCache) {
   }
 
   fun findComponents(xpathExpression: String, component: Component?): List<RefDelegate<Component>> {
-    val model = modelCreator.create(component)
+    val model = XpathDataModelCreator.create(component)
     val result = xPath.compile(xpathExpression).evaluate(model, XPathConstants.NODESET) as NodeList
     return (0 until result.length).mapNotNull { result.item(it) }.filterIsInstance<Element>().mapNotNull {
       if (it.hasAttribute("remoteId")) {

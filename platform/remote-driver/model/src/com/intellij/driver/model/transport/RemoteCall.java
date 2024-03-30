@@ -2,7 +2,9 @@ package com.intellij.driver.model.transport;
 
 import com.intellij.driver.model.LockSemantics;
 import com.intellij.driver.model.OnDispatcher;
+import com.intellij.driver.model.RdTarget;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.io.Serial;
@@ -15,6 +17,8 @@ public abstract class RemoteCall implements Serializable {
   @Serial
   private static final long serialVersionUID = 1L;
 
+  private final RdTarget rdTarget;
+
   private final int sessionId;
   private final String pluginId;
   private final String timedSpan;
@@ -23,8 +27,6 @@ public abstract class RemoteCall implements Serializable {
   private final LockSemantics lockSemantics;
   private final String className;
   private final String methodName;
-  private final Object[] args;
-
   public RemoteCall(int sessionId,
                     String timedSpan,
                     String pluginId,
@@ -32,6 +34,7 @@ public abstract class RemoteCall implements Serializable {
                     LockSemantics lockSemantics,
                     String className,
                     String methodName,
+                    RdTarget rdTarget,
                     Object[] args) {
     this.sessionId = sessionId;
     this.pluginId = pluginId;
@@ -40,7 +43,13 @@ public abstract class RemoteCall implements Serializable {
     this.lockSemantics = lockSemantics;
     this.className = className;
     this.methodName = methodName;
+    this.rdTarget = rdTarget;
     this.args = args;
+  }
+  private final Object[] args;
+
+  public @NotNull RdTarget getRdTarget() {
+    return rdTarget;
   }
 
   public int getSessionId() {

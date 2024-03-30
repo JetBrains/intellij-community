@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
+import com.intellij.driver.model.RdTarget
 
 @Remote("com.intellij.openapi.roots.ProjectRootManager")
 interface ProjectRootManager {
@@ -30,7 +31,9 @@ interface Sdk {
   fun getHomePath(): String?
 }
 
-@Remote(value = "com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil", plugin = "com.jetbrains.performancePlugin")
+@Remote(value = "com.jetbrains.performancePlugin.commands.SetupProjectSdkUtil",
+        plugin = "com.jetbrains.performancePlugin",
+        rdTarget = RdTarget.BACKEND_ONLY)
 interface SetupProjectSdkUtil {
   fun setupOrDetectSdk(project: Project, name: String, type: String, home: String)
 
