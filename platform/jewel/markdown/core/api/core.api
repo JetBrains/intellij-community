@@ -325,8 +325,8 @@ public abstract interface class org/jetbrains/jewel/markdown/extensions/Markdown
 public final class org/jetbrains/jewel/markdown/processing/MarkdownProcessor {
 	public static final field $stable I
 	public fun <init> ()V
-	public fun <init> (Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Z)V
+	public synthetic fun <init> (Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun <init> ([Lorg/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension;)V
 	public final fun processChildren (Lorg/commonmark/node/Node;)Ljava/util/List;
 	public final fun processMarkdownDocument (Ljava/lang/String;)Ljava/util/List;
