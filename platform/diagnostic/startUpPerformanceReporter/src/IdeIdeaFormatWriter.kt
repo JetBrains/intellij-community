@@ -67,23 +67,22 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
   override fun writeExtraData(writer: JsonGenerator) {
     val stats = getClassAndResourceLoadingStats()
     // empty stats means we don't have PathClassLoader, so it's not possible to get stats
-    if (stats.isNotEmpty()) {
-      writer.obj("classLoading") {
-        val time = stats.getValue("classLoadingTime")
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(time))
-        val defineTime = stats.getValue("classDefineTime")
-        writer.writeNumberField("searchTime", TimeUnit.NANOSECONDS.toMillis(time - defineTime))
-        writer.writeNumberField("defineTime", TimeUnit.NANOSECONDS.toMillis(defineTime))
-        writer.writeNumberField("count", stats.getValue("classRequests"))
-      }
-      writer.obj("resourceLoading") {
-        writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getValue("resourceLoadingTime")))
-        writer.writeNumberField("count", stats.getValue("resourceRequests"))
-      }
-      writer.obj("langLoading") {
-        val allTypes = IElementType.enumerate(IElementType.TRUE)
-        writer.writeNumberField("elementTypeCount", allTypes.size)
-      }
+
+    writer.obj("classLoading") {
+      val time = stats.getOrDefault("classLoadingTime", 0)
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(time))
+      val defineTime = stats.getOrDefault("classDefineTime", 0)
+      writer.writeNumberField("searchTime", TimeUnit.NANOSECONDS.toMillis(time - defineTime))
+      writer.writeNumberField("defineTime", TimeUnit.NANOSECONDS.toMillis(defineTime))
+      writer.writeNumberField("count", stats.getOrDefault("classRequests", 0))
+    }
+    writer.obj("resourceLoading") {
+      writer.writeNumberField("time", TimeUnit.NANOSECONDS.toMillis(stats.getOrDefault("resourceLoadingTime", 0)))
+      writer.writeNumberField("count", stats.getOrDefault("resourceRequests", 0))
+    }
+    writer.obj("langLoading") {
+      val allTypes = IElementType.enumerate(IElementType.TRUE)
+      writer.writeNumberField("elementTypeCount", allTypes.size)
     }
 
     writer.obj("jvm") {
@@ -101,7 +100,7 @@ internal class IdeIdeaFormatWriter(activities: Map<String, MutableList<ActivityI
       MethodHandles.lookup().findVirtual(classLoader::class.java, "getLoadingStats", MethodType.methodType(Map::class.java))
     }.onFailure {
       if (it !is IllegalAccessException) {
-        logger.error("Failed to get MethodHandle for getLoadingStats", it)
+        logger.info("Failed to get MethodHandle for getLoadingStats", it)
       }
       return emptyMap()
     }.getOrThrow()
