@@ -65,8 +65,8 @@ public class ObjectEquality {
   // The interface 'java.util.Collection' does not require 'equals' and 'hashCode'
   // to implement a value-based comparison.
   void compareCollections(Collection<String> coll1, Collection<String> coll2) {
-    test(coll1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> coll2);
-    test(coll1 <warning descr="Object values are compared using '!=', not 'equals()'">!=</warning> coll2);
+    test(coll1 <warning descr="Object values are compared using 'equals()', not '=='">==</warning> coll2);
+    test(coll1 <warning descr="Object values are compared using 'equals()', not '!='">!=</warning> coll2);
     test(coll1 == null);
     test(coll1 != null);
     test(null == coll2);
@@ -76,8 +76,8 @@ public class ObjectEquality {
   // The interface 'java.util.List' defines a contract for its 'equals' and 'hashCode' methods,
   // therefore comparing lists with '==' is unusual.
   void compareLists(List<String> list1, List<String> list2) {
-    test(list1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> list2);
-    test(list1 <warning descr="Object values are compared using '!=', not 'equals()'">!=</warning> list2);
+    test(list1 <warning descr="Object values are compared using 'equals()', not '=='">==</warning> list2);
+    test(list1 <warning descr="Object values are compared using 'equals()', not '!='">!=</warning> list2);
     test(list1 == null);
     test(list1 != null);
     test(null == list2);
@@ -87,8 +87,8 @@ public class ObjectEquality {
   // The interface 'java.util.Set' defines a contract for its 'equals' and 'hashCode' methods,
   // therefore comparing sets with '==' is unusual.
   void compareSets(Set<String> set1, Set<String> set2) {
-    test(set1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> set2);
-    test(set1 <warning descr="Object values are compared using '!=', not 'equals()'">!=</warning> set2);
+    test(set1 <warning descr="Object values are compared using 'equals()', not '=='">==</warning> set2);
+    test(set1 <warning descr="Object values are compared using 'equals()', not '!='">!=</warning> set2);
     test(set1 == null);
     test(set1 != null);
     test(null == set2);
@@ -98,8 +98,8 @@ public class ObjectEquality {
   // The interface 'java.util.Map' defines a contract for its 'equals' and 'hashCode' methods,
   // therefore comparing maps with '==' is unusual.
   void compareMaps(Map<String, Object> map1, Map<String, Object> map2) {
-    test(map1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> map2);
-    test(map1 <warning descr="Object values are compared using '!=', not 'equals()'">!=</warning> map2);
+    test(map1 <warning descr="Object values are compared using 'equals()', not '=='">==</warning> map2);
+    test(map1 <warning descr="Object values are compared using 'equals()', not '!='">!=</warning> map2);
     test(null == map2);
     test(null != map2);
     test(map1 == null);
@@ -134,17 +134,17 @@ public class ObjectEquality {
   void compareOrder(MyFinal fin, MyClass cls, Object obj) {
     test(fin == obj);
     test(obj == fin);
-    test(cls <warning descr="Object values are compared using '==', not 'equals()'">==</warning> obj);
-    test(obj <warning descr="Object values are compared using '==', not 'equals()'">==</warning> cls);
+    test(cls <warning descr="Object values are compared using 'equals()', not '=='">==</warning> obj);
+    test(obj <warning descr="Object values are compared using 'equals()', not '!='">==</warning> cls);
   }
 
   // When comparing two expressions whose declared type is an interface,
   // it is generally unknown whether the dynamic types may be compared using '==' or not.
   void compareInterface(MyFinalInterface fini1, MyFinalInterface fini2, Object obj, MyFinal fin) {
-    test(fini1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> fini2);
+    test(fini1 <warning descr="Object values are compared using 'equals()', not '=='">==</warning> fini2);
 
-    test(fini1 <warning descr="Object values are compared using '==', not 'equals()'">==</warning> obj);
-    test(obj <warning descr="Object values are compared using '==', not 'equals()'">==</warning> fini2);
+    test(fini1 <warning descr="Object values are compared using 'equals()', not '=='">==</warning> obj);
+    test(obj <warning descr="Object values are compared using 'equals()', not '=='">==</warning> fini2);
 
     test(fini1 == fin);
     test(fin == fini2);
@@ -161,7 +161,7 @@ public class ObjectEquality {
     MyFinal fin
   ) {
     // There may be subclasses of MyNonFinal that implement MyFinalInterface.
-    test(fini <warning descr="Object values are compared using '==', not 'equals()'">==</warning> nfin);
+    test(fini <warning descr="Object values are compared using 'equals()', not '=='">==</warning> nfin);
 
     test(uni == fini);
 
@@ -220,8 +220,8 @@ public class ObjectEquality {
 
     // In methods other than 'equals', comparing 'this' by reference is suspicious.
     void notEquals(Object obj) {
-      test(this <warning descr="Object values are compared using '==', not 'equals()'">==</warning> obj);
-      test(obj <warning descr="Object values are compared using '==', not 'equals()'">==</warning> this);
+      test(this <warning descr="Object values are compared using 'equals()', not '=='">==</warning> obj);
+      test(obj <warning descr="Object values are compared using 'equals()', not '=='">==</warning> this);
     }
 
     @Override
@@ -238,7 +238,7 @@ public class ObjectEquality {
       if (obj == null || getClass() != obj.getClass()) return false;
       MyBean other = (MyBean)obj;
       // In the 'equals' method, comparing fields is no different than anywhere else.
-      return field <warning descr="Object values are compared using '==', not 'equals()'">==</warning> other.field;
+      return field <warning descr="Object values are compared using 'equals()', not '=='">==</warning> other.field;
     }
 
     @Override
