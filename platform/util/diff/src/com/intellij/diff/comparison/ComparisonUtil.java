@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -12,6 +12,9 @@ import static com.intellij.diff.comparison.TrimUtil.trimEnd;
 import static com.intellij.diff.comparison.TrimUtil.trimStart;
 
 public final class ComparisonUtil {
+
+  private ComparisonUtil() { }
+
   public static boolean isEquals(@Nullable CharSequence text1, @Nullable CharSequence text2, @NotNull ComparisonPolicy policy) {
     if (text1 == text2) return true;
     if (text1 == null || text2 == null) return false;

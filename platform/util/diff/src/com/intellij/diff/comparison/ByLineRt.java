@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
@@ -21,6 +21,9 @@ import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.Strings.isWhiteSpace;
 
 public final class ByLineRt {
+
+  private ByLineRt() { }
+
   @NotNull
   public static FairDiffIterable compare(@NotNull List<? extends CharSequence> lines1,
                                          @NotNull List<? extends CharSequence> lines2,

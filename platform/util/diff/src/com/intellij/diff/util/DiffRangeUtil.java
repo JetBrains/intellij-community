@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.diff.tools.util.text.LineOffsets;
@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class DiffRangeUtil {
+
+  private DiffRangeUtil() { }
+
   @NotNull
   public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2) {
     return getLinesContent(sequence, lineOffsets, line1, line2, false);
