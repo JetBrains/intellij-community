@@ -121,7 +121,6 @@ class PluginLayout private constructor(
       return layout
     }
 
-    @JvmStatic
     fun plugin(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first())
       layout.withModules(moduleNames)
@@ -132,14 +131,12 @@ class PluginLayout private constructor(
      * Project-level library is included in the plugin by default, if not yet included in the platform.
      * Direct main module dependencies in the same module group are included automatically.
      */
-    @Experimental
     fun pluginAuto(moduleNames: List<String>): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
       return layout
     }
 
-    @Experimental
     fun pluginAuto(moduleNames: List<String>, body: (SimplePluginLayoutSpec) -> Unit): PluginLayout {
       val layout = PluginLayout(mainModule = moduleNames.first(), auto = true)
       layout.withModules(moduleNames)
@@ -147,7 +144,6 @@ class PluginLayout private constructor(
       return layout
     }
 
-    @JvmStatic
     fun plugin(mainModule: String): PluginLayout {
       val layout = PluginLayout(mainModule = mainModule)
       layout.withModule(mainModule)
