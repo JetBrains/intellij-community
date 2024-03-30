@@ -1,15 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.help.impl
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,21 +21,21 @@ import kotlin.system.exitProcess
 
 private val LOG = logger<KeymapGenerator>()
 
-private val LEVELS = sequenceOf(1, 4).map { i ->
+private val LEVELS = (1..3).map { i ->
   " ".repeat(i * 2)
 }.toList()
 
-private class KeymapGenerator : ApplicationStarter {
+private class KeymapGenerator : ModernApplicationStarter() {
   @Suppress("OVERRIDE_DEPRECATION")
   override val commandName: String
     get() = "keymap"
 
-  override fun main(args: List<String>) {
+  override suspend fun start(args: List<String>) {
     val xml = StringBuilder()
-    xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n").append("<Keymaps>\n")
+    xml.append("""<?xml version="1.0" encoding="UTF-8"?>""").append("\n<Keymaps>\n")
 
     val keyManager = KeymapManagerEx.getInstanceEx()
-    val actionManager = ActionManagerEx.getInstanceEx()
+    val actionManager = serviceAsync<ActionManager>() as ActionManagerEx
     val boundActions = actionManager.getBoundActions()
 
     for (keymap in keyManager.allKeymaps) {
@@ -42,7 +46,7 @@ private class KeymapGenerator : ApplicationStarter {
         renderAction(id = id, asId = null, shortcuts = keymap.getShortcuts(id), dest = xml, actionManager = actionManager)
       }
 
-      //We need to inject bound actions under their real names in every keymap that doesn't already have them.
+      // we need to inject bound actions under their real names in every keymap that doesn't already have them
       for (id in boundActions) {
         val binding = actionManager.getActionBinding(id)
         if (binding != null && !alreadyMapped.contains(id)) {
@@ -58,8 +62,10 @@ private class KeymapGenerator : ApplicationStarter {
       .resolve("keymap-%s.xml".format(ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()))
 
     try {
-      Files.createDirectories(targetFilePath.parent)
-      Files.writeString(targetFilePath, xml.toString())
+      withContext(Dispatchers.IO) {
+        Files.createDirectories(targetFilePath.parent)
+        Files.writeString(targetFilePath, xml)
+      }
       LOG.info("Keymaps saved to: $targetFilePath")
     }
     catch (e: IOException) {
@@ -97,7 +103,7 @@ private fun renderAction(
   if (action != null) {
     val text = action.templatePresentation.text
     if (text != null) {
-      dest.append(LEVELS[2]).append("<Text>").append(StringUtil.escapeXmlEntities(text)).append("</Text>\n")
+      dest.append(LEVELS[2]).append("<Text>").append(Strings.escapeXmlEntities(text)).append("</Text>\n")
     }
   }
   dest.append(LEVELS[1]).append("</Action>\n")
