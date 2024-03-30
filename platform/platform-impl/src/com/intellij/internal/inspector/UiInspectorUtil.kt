@@ -1,222 +1,203 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.inspector;
+package com.intellij.internal.inspector
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.ui.ClientProperty
+import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.NonNls
+import java.awt.Component
+import javax.swing.JComponent
 
-import javax.swing.*;
-import java.awt.*;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+private val PROPERTY_KEY = Key.create<UiInspectorContextProvider>("UiInspectorContextProvider.Key")
 
-public final class UiInspectorUtil {
-  private static final String PROPERTY_KEY = "UiInspectorContextProvider.Key";
+object UiInspectorUtil {
 
-  public static void registerProvider(@NotNull JComponent component, @NotNull UiInspectorContextProvider provider) {
-    component.putClientProperty(PROPERTY_KEY, provider);
+  @JvmStatic
+  fun registerProvider(component: JComponent, provider: UiInspectorContextProvider) {
+    ClientProperty.put(component, PROPERTY_KEY, provider)
   }
 
-  public static UiInspectorContextProvider getProvider(@NotNull Object component) {
-    if (component instanceof UiInspectorContextProvider) {
-      return ((UiInspectorContextProvider)component);
+  @JvmStatic
+  fun getProvider(component: Any): UiInspectorContextProvider? {
+    return when (component) {
+      is UiInspectorContextProvider -> component
+      is JComponent -> ClientProperty.get(component, PROPERTY_KEY)
+      else -> null
     }
-    if (component instanceof JComponent) {
-      return ObjectUtils.tryCast(((JComponent)component).getClientProperty(PROPERTY_KEY), UiInspectorContextProvider.class);
-    }
-    return null;
   }
 
-  private static @Nullable String getRawActionId(@NotNull AnAction action) {
-    return ActionManager.getInstance().getId(action);
+  private fun getRawActionId(action: AnAction): String? {
+    return ActionManager.getInstance().getId(action)
   }
 
-  public static @Nullable String getActionId(@NotNull AnAction action) {
-    AnAction delegate = ActionUtil.getDelegateChainRootAction(action);
-    return getRawActionId(delegate);
+  @JvmStatic
+  fun getActionId(action: AnAction): String? {
+    return getRawActionId(getDelegateChainRootAction(action))
   }
 
-  public static @NotNull List<PropertyBean> collectActionGroupInfo(@NotNull @NonNls String prefix,
-                                                                   @NotNull ActionGroup group,
-                                                                   @Nullable String place) {
-    List<PropertyBean> result = new ArrayList<>();
-
+  @JvmStatic
+  fun collectActionGroupInfo(prefix: @NonNls String,
+                             group: ActionGroup,
+                             place: String?): List<PropertyBean> {
+    val result = ArrayList<PropertyBean>()
     if (place != null) {
-      result.add(new PropertyBean(prefix + " Place", place, true));
+      result.add(PropertyBean("$prefix Place", place, true))
     }
-
-    String groupId = getActionId(group);
-    Set<String> ids = new HashSet<>();
-    recursiveCollectGroupIds(group, ids);
-    ContainerUtil.addIfNotNull(ids, groupId);
-    if (ids.size() > 1 ||
-        ids.size() == 1 && groupId == null) {
-      result.add(new PropertyBean("All " + prefix + " Groups", StringUtil.join(ids, ", "), true));
+    val groupId = getActionId(group)
+    val ids = HashSet<String>()
+    recursiveCollectGroupIds(group, ids)
+    ContainerUtil.addIfNotNull(ids, groupId)
+    if (ids.size > 1 || ids.size == 1 && groupId == null) {
+      result.add(PropertyBean("All $prefix Groups", StringUtil.join(ids, ", "), true))
     }
-
-    result.addAll(collectAnActionInfo(group));
-
-    return result;
+    result.addAll(collectAnActionInfo(group))
+    return result
   }
 
-  public static @NotNull List<PropertyBean> collectAnActionInfo(@NotNull AnAction action) {
-    List<PropertyBean> result = new ArrayList<>();
-
-    Class<? extends AnAction> clazz = action.getClass();
-    boolean isGroup = action instanceof ActionGroup;
-    String prefix = isGroup ? "Group" : "Action";
-
-    result.add(new PropertyBean(prefix + " ID", getActionId(action), true));
-    if (clazz != DefaultActionGroup.class) {
-      result.add(new PropertyBean(prefix + " Class", clazz.getName(), true));
-    }
-
-    final ClassLoader classLoader = clazz.getClassLoader();
-    if (classLoader instanceof PluginAwareClassLoader) {
-      result.add(new PropertyBean(prefix + " Plugin ID", ((PluginAwareClassLoader)classLoader).getPluginId().getIdString(), true));
-    }
-
-    int depth = 1;
-    Object object = action;
-    while (object instanceof ActionWithDelegate<?>) {
-      String suffix = " (" + depth + ")";
-      Object delegate = ((ActionWithDelegate<?>)object).getDelegate();
-      if (delegate instanceof AnAction) {
-        result.add(new PropertyBean(prefix + " Delegate Class" + suffix, delegate.getClass().getName()));
-        result.add(new PropertyBean(prefix + " Delegate ID" + suffix, getRawActionId((AnAction)delegate)));
-      }
-      result.add(new PropertyBean(prefix + " Delegate toString" + suffix, delegate));
-      object = delegate;
-      depth++;
-    }
-    return result;
-  }
-
-  private static void recursiveCollectGroupIds(@NotNull ActionGroup group, @NotNull Set<? super String> result) {
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof ActionGroup child) {
-        ContainerUtil.addIfNotNull(result, getActionId(child));
-        recursiveCollectGroupIds(child, result);
+  private fun recursiveCollectGroupIds(group: ActionGroup, result: HashSet<String>) {
+    for (action in group.getChildren(null)) {
+      if (action is ActionGroup) {
+        ContainerUtil.addIfNotNull(result, getActionId(action))
+        recursiveCollectGroupIds(action, result)
       }
     }
   }
 
-  public static @NotNull String getComponentName(@NotNull Component component) {
-    String name = getClassName(component);
+  @JvmStatic
+  fun collectAnActionInfo(action: AnAction): List<PropertyBean> {
+    val result = ArrayList<PropertyBean>()
+    val clazz = action.javaClass
+    val isGroup = action is ActionGroup
+    val prefix = if (isGroup) "Group" else "Action"
+    result.add(PropertyBean("$prefix ID", getActionId(action), true))
+    if (clazz != DefaultActionGroup::class.java) {
+      result.add(PropertyBean("$prefix Class", clazz.name, true))
+    }
+    val classLoader = clazz.classLoader
+    if (classLoader is PluginAwareClassLoader) {
+      result.add(PropertyBean("$prefix Plugin ID", classLoader.pluginId.idString, true))
+    }
+    var depth = 1
+    var obj: Any? = action
+    while (obj is ActionWithDelegate<*>) {
+      val suffix = " ($depth)"
+      val delegate = obj.delegate
+      if (delegate is AnAction) {
+        result.add(PropertyBean("$prefix Delegate Class$suffix", delegate.javaClass.name))
+        result.add(PropertyBean("$prefix Delegate ID$suffix", getRawActionId(delegate)))
+      }
+      result.add(PropertyBean("$prefix Delegate toString$suffix", delegate))
+      obj = delegate
+      depth++
+    }
+    return result
+  }
 
-    String componentName = component.getName();
+  @JvmStatic
+  fun getComponentName(component: Component): String {
+    var name = getClassName(component)
+    val componentName = component.name
     if (StringUtil.isNotEmpty(componentName)) {
-      name += " \"" + componentName + "\"";
+      name += " \"$componentName\""
     }
-    return name;
+    return name
   }
 
-  public static @NotNull String getClassName(@NotNull Object value) {
-    Class<?> clazz0 = value.getClass();
-    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
-    return clazz.getSimpleName();
+  @JvmStatic
+  fun getClassName(value: Any): String {
+    val clazz0 = value.javaClass
+    val clazz = if (clazz0.isAnonymousClass) clazz0.superclass else clazz0
+    return clazz.simpleName
   }
 
-  public static @NotNull String getClassPresentation(@Nullable Object value) {
-    if (value == null) return "[null]";
-    return getClassPresentation(value.getClass());
+  @JvmStatic
+  fun getClassPresentation(value: Any?): String {
+    if (value == null) return "[null]"
+    return getClassPresentation(value.javaClass)
   }
 
-  public static @NotNull String getClassPresentation(@NotNull Class<?> clazz0) {
-    Class<?> clazz = clazz0.isAnonymousClass() ? clazz0.getSuperclass() : clazz0;
-    String simpleName = clazz.getSimpleName();
-    return simpleName + " (" + clazz.getPackageName() + ")";
+  fun getClassPresentation(clazz0: Class<*>): String {
+    val clazz = if (clazz0.isAnonymousClass) clazz0.superclass else clazz0
+    val simpleName = clazz.simpleName
+    return simpleName + " (" + clazz.packageName + ")"
   }
 
-  public static void openClassByFqn(@Nullable Project project, @NotNull String jvmFqn, boolean requestFocus) {
-    PsiElement classElement = findClassByFqn(project, jvmFqn);
-    if (classElement != null) {
-      PsiElement navigationElement = classElement.getNavigationElement();
-      if (navigationElement instanceof Navigatable) {
-        ((Navigatable)navigationElement).navigate(requestFocus);
-      }
-      else {
-        PsiNavigateUtil.navigate(classElement, requestFocus);
-      }
+  @JvmStatic
+  fun openClassByFqn(project: Project?, jvmFqn: String, requestFocus: Boolean) {
+    val classElement = findClassByFqn(project, jvmFqn) ?: return
+    val element = classElement.navigationElement
+    if (element is Navigatable) {
+      element.navigate(requestFocus)
+    }
+    else {
+      PsiNavigateUtil.navigate(classElement, requestFocus)
     }
   }
 
-  public static @Nullable PsiElement findClassByFqn(@Nullable Project project, @NotNull String jvmFqn) {
-    if (project == null) return null;
-
+  @JvmStatic
+  fun findClassByFqn(project: Project?, jvmFqn: String): PsiElement? {
+    if (project == null) return null
     try {
-      String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
-      PluginId pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn);
-      Class<?> facade = null;
-      if (pluginId != null) {
-        IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
+      val javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade"
+      val pluginId = PluginManager.getPluginByClassNameAsNoAccessToClass(javaPsiFacadeFqn)
+      val facade = if (pluginId != null) {
+        val plugin = PluginManager.getInstance().findEnabledPlugin(pluginId)
         if (plugin != null) {
-          facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
+          Class.forName(javaPsiFacadeFqn, false, plugin.pluginClassLoader)
+        }
+        else {
+          null
         }
       }
       else {
-        facade = Class.forName(javaPsiFacadeFqn);
+        Class.forName(javaPsiFacadeFqn)
       }
-      if (facade != null) {
-        Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
-        Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
-        String ourFqn = jvmFqn.replace('$', '.');
-        Object result = findClass.invoke(getInstance.invoke(null, project), ourFqn, GlobalSearchScope.allScope(project));
-        if (result == null) {
-          // if provided jvmFqn is anonymous class, try to find containing class and then find anonymous class inside
-          String[] parts = jvmFqn.split("\\$\\d+");
-          String containingClassJvmFqn = parts[0];
-          String containingClassOurFqn = containingClassJvmFqn.replace('$', '.');
-          Object containingClass = findClass.invoke(getInstance.invoke(null, project),
-                                                    containingClassOurFqn, GlobalSearchScope.allScope(project));
-          if (containingClass instanceof PsiElement) {
-            result = findAnonymousClass((PsiElement)containingClass, jvmFqn);
-            if (result == null) {
-              result = containingClass;
-            }
-          }
+      if (facade == null) return null
+      val getInstance = facade.getDeclaredMethod("getInstance", Project::class.java)
+      val findClass = facade.getDeclaredMethod("findClass", String::class.java, GlobalSearchScope::class.java)
+      val ourFqn = jvmFqn.replace('$', '.')
+      val result = findClass.invoke(getInstance.invoke(null, project), ourFqn, GlobalSearchScope.allScope(project)) ?: run {
+        // if provided jvmFqn is an anonymous class, try to find a containing class and then find anonymous class inside
+        val parts = jvmFqn.split("\\$\\d+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val containingClassJvmFqn = parts[0]
+        val containingClassOurFqn = containingClassJvmFqn.replace('$', '.')
+        val containingClass = findClass.invoke(getInstance.invoke(null, project),
+                                               containingClassOurFqn, GlobalSearchScope.allScope(project))
+        if (containingClass is PsiElement) {
+          findAnonymousClass(containingClass, jvmFqn) ?: containingClass
         }
-        if (result instanceof PsiElement) {
-          return (PsiElement)result;
+        else {
+          null
         }
       }
+      return result as? PsiElement
     }
-    catch (Exception ignore) {
+    catch (_: Exception) {
     }
-    return null;
+    return null
   }
 
-  private static @Nullable PsiElement findAnonymousClass(@NotNull PsiElement containingClass, @NotNull String jvmFqn) {
+  private fun findAnonymousClass(containingClass: PsiElement, jvmFqn: String): PsiElement? {
     try {
-      Class<?> searchContributor = Class.forName("com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor");
-      Method getPathToAnonymousClass = searchContributor.getDeclaredMethod("pathToAnonymousClass", String.class);
-      getPathToAnonymousClass.setAccessible(true);
-      String path = (String)getPathToAnonymousClass.invoke(null, jvmFqn);
-      if (path == null) {
-        return null;
-      }
-      Method getElement = searchContributor.getDeclaredMethod("getElement", PsiElement.class, String.class);
-      return (PsiElement)getElement.invoke(null, containingClass, path);
+      val clazz = Class.forName("com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor")
+      val method = clazz.getDeclaredMethod("pathToAnonymousClass", String::class.java)
+      method.isAccessible = true
+      val path = method.invoke(null, jvmFqn) as? String ?: return null
+      val getElement = clazz.getDeclaredMethod("getElement", PsiElement::class.java, String::class.java)
+      return getElement.invoke(null, containingClass, path) as PsiElement
     }
-    catch (Exception ignore) {
+    catch (_: Exception) {
     }
-    return null;
+    return null
   }
 }
