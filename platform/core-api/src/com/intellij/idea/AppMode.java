@@ -68,7 +68,7 @@ public final class AppMode {
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
+    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
