@@ -135,7 +135,7 @@ public class ObjectEquality {
     test(fin == obj);
     test(obj == fin);
     test(cls <warning descr="Object values are compared using 'equals()', not '=='">==</warning> obj);
-    test(obj <warning descr="Object values are compared using 'equals()', not '!='">==</warning> cls);
+    test(obj <warning descr="Object values are compared using 'equals()', not '=='">==</warning> cls);
   }
 
   // When comparing two expressions whose declared type is an interface,
