@@ -187,11 +187,11 @@
         "type": "string"
       }
     },
-    "modulesV2": {
+    "layout": {
       "description": "IDs of product modules (non-removable bundled plugins)",
       "type": "array",
       "items": {
-        "type": "string"
+        "type": "object"
       }
     },
     "flavors": {
@@ -199,14 +199,27 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id"],
         "additionalProperties": false,
         "minItems": 0,
         "properties": {
-          "id": {
+          "name": {
             "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "classPath": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 0
+            }
           }
-        }
+        },
+        "required": [
+          "name",
+          "kind"
+        ]
       }
     }
   }

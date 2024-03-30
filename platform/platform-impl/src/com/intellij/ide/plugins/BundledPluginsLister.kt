@@ -12,6 +12,7 @@ import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import java.io.OutputStreamWriter
 import java.io.Writer
 import java.nio.charset.StandardCharsets
@@ -41,18 +42,29 @@ private class BundledPluginsLister : ModernApplicationStarter() {
       }
       JsonFactory().createGenerator(out).use { writer ->
         val plugins = PluginManagerCore.getPluginSet().enabledPlugins
-        val modules = HashSet<ModuleDescriptor>()
+        val layout = HashSet<LayoutItemDescriptor>()
         val pluginIds = ArrayList<String>(plugins.size)
         val homeDir = Path.of(PathManager.getHomePath())
         for (plugin in plugins) {
+          layout.add(LayoutItemDescriptor(
+            name = plugin.pluginId.idString,
+            kind = ProductInfoLayoutItemKind.plugin,
+            classPath = plugin.jarFiles?.map { it.relativeTo(homeDir).invariantSeparatorsPathString } ?: emptyList()
+          ))
+
           pluginIds.add(plugin.pluginId.idString)
-          plugin.pluginAliases.mapTo(modules) {
-            ModuleDescriptor(name = it.idString, isAlias = true, classPath = emptyList())
+          plugin.pluginAliases.mapTo(layout) {
+            LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
           }
-          plugin.content.modules.mapTo(modules) {
-            ModuleDescriptor(
+          plugin.content.modules.mapTo(layout) {
+            LayoutItemDescriptor(
               name = it.name,
-              isAlias = false,
+              kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
+                ProductInfoLayoutItemKind.productModuleV2
+              }
+              else {
+                ProductInfoLayoutItemKind.moduleV2
+              },
               classPath = it.requireDescriptor().jarFiles?.map {
                 file -> file.relativeTo(homeDir).invariantSeparatorsPathString
               } ?: emptyList(),
@@ -72,13 +84,11 @@ private class BundledPluginsLister : ModernApplicationStarter() {
         extensions.sort()
 
         writer.obj {
-          writer.array("modules") {
-            for (module in modules.sortedBy { it.name }) {
+          writer.array("layout") {
+            for (module in layout.sortedBy { it.name }) {
               writer.obj {
                 writer.writeStringField("name", module.name)
-                if (module.isAlias) {
-                  writer.writeBooleanField("isAlias", module.isAlias)
-                }
+                writer.writeStringField("kind", module.kind.name)
                 if (module.classPath.isNotEmpty()) {
                   writeList(writer, "classPath", module.classPath)
                 }
@@ -103,11 +113,17 @@ private class BundledPluginsLister : ModernApplicationStarter() {
   }
 }
 
-private class ModuleDescriptor(
+private class LayoutItemDescriptor(
   @JvmField val name: String,
-  @JvmField val isAlias: Boolean = false,
+  @JvmField val kind: ProductInfoLayoutItemKind,
   @JvmField val classPath: List<String> = emptyList(),
 )
+
+@Suppress("EnumEntryName")
+@Serializable
+private enum class ProductInfoLayoutItemKind {
+  plugin, pluginAlias, productModuleV2, moduleV2
+}
 
 private fun writeList(writer: JsonGenerator, name: String, elements: Collection<String>) {
   writer.array(name) {

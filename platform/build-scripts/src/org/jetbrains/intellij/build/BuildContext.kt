@@ -153,16 +153,22 @@ suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
 @Serializable
 class BuiltinModulesFileData(
   @JvmField val plugins: MutableList<String> = mutableListOf(),
-  @JvmField var modules: List<ModuleDescriptor> = emptyList(),
+  @JvmField var layout: List<ProductInfoLayoutItem> = emptyList(),
   @JvmField val fileExtensions: MutableList<String> = mutableListOf(),
 )
 
 @Serializable
-class ModuleDescriptor(
+data class ProductInfoLayoutItem(
   @JvmField val name: String,
-  @JvmField val isAlias: Boolean = false,
+  @JvmField val kind: ProductInfoLayoutItemKind,
   @JvmField val classPath: List<String> = emptyList(),
 )
+
+@Suppress("EnumEntryName")
+@Serializable
+enum class ProductInfoLayoutItemKind {
+  plugin, pluginAlias, productModuleV2, moduleV2
+}
 
 sealed interface DistFileContent {
   fun readAsStringForDebug(): String

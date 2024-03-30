@@ -144,7 +144,11 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       launch(Dispatchers.IO) {
-        Files.writeString(runDir.resolve("core-classpath.txt"), classPath.joinToString(separator = "\n"))
+        val cp = classPath
+          .asSequence()
+          .filter { !excludedLibJars.contains(it.fileName.toString()) }
+          .joinToString(separator = "\n")
+        Files.writeString(runDir.resolve("core-classpath.txt"), cp)
       }
 
       request.platformClassPathConsumer?.invoke(classPath, runDir)
@@ -363,6 +367,13 @@ internal suspend fun createBuildContext(
       spanBuilder("create build context").useWithScope {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val buildOptionsTemplate = request.buildOptionsTemplate
+        val useCompiledClassesFromProjectOutput = buildOptionsTemplate?.useCompiledClassesFromProjectOutput ?: true
+        val classOutDir = if (useCompiledClassesFromProjectOutput) {
+          request.productionClassOutput.parent.toString()
+        }
+        else {
+          buildOptionsTemplate?.classOutDir ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+        }
         val options = BuildOptions(
           jarCacheDir = jarCacheDir,
           buildDateInSeconds = getBuildDateInSeconds(),
@@ -370,10 +381,10 @@ internal suspend fun createBuildContext(
           validateImplicitPlatformModule = false,
           skipDependencySetup = true,
 
-          useCompiledClassesFromProjectOutput = buildOptionsTemplate?.useCompiledClassesFromProjectOutput ?: true,
-          pathToCompiledClassesArchivesMetadata = buildOptionsTemplate?.pathToCompiledClassesArchivesMetadata,
-          pathToCompiledClassesArchive = buildOptionsTemplate?.pathToCompiledClassesArchive,
-          classOutDir = buildOptionsTemplate?.classOutDir ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY),
+          useCompiledClassesFromProjectOutput = useCompiledClassesFromProjectOutput,
+          pathToCompiledClassesArchivesMetadata = buildOptionsTemplate?.pathToCompiledClassesArchivesMetadata?.takeIf { !useCompiledClassesFromProjectOutput },
+          pathToCompiledClassesArchive = buildOptionsTemplate?.pathToCompiledClassesArchive?.takeIf { !useCompiledClassesFromProjectOutput },
+          classOutDir = classOutDir,
 
           validateModuleStructure = false,
           cleanOutDir = false,

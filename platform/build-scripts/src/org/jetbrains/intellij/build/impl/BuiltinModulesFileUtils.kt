@@ -8,7 +8,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuiltinModulesFileData
-import org.jetbrains.intellij.build.ModuleDescriptor
+import org.jetbrains.intellij.build.ProductInfoLayoutItemKind
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -18,24 +18,24 @@ fun readBuiltinModulesFile(file: Path): BuiltinModulesFileData {
 
 fun customizeBuiltinModulesAllowOnlySpecified(
   builtinModulesFile: Path,
-  moduleNames: List<String>?,
+  pluginAliases: Set<String>?,
   pluginNames: List<String>?,
   fileExtensions: List<String>?,
 ) {
   Span.current().addEvent("File $builtinModulesFile before modification:\n" + Files.readString(builtinModulesFile))
 
   val root = readBuiltinModulesFile(builtinModulesFile)
-  if (moduleNames != null) {
-    val existingValues = root.modules.associateByTo(HashMap(root.modules.size)) { it.name }
-    val newList = ArrayList<ModuleDescriptor>(moduleNames.size)
-    for (name in moduleNames) {
+  if (pluginAliases != null) {
+    val existingValues = root.layout.associateByTo(HashMap(root.layout.size)) { it.name }
+    for (name in pluginAliases) {
       val item = existingValues.get(name)
       requireNotNull(item) {
-        "Value '$name' in '$moduleNames' was not found across existing values in $builtinModulesFile:\n" + Files.readString(builtinModulesFile)
+        "Value '$name' in '$pluginAliases' was not found across existing values in $builtinModulesFile:\n" + Files.readString(builtinModulesFile)
       }
-      newList.add(item)
     }
-    root.modules = newList
+    root.layout = root.layout.filter {
+      if (it.kind == ProductInfoLayoutItemKind.pluginAlias) pluginAliases.contains(it.name) else true
+    }
   }
 
   if (pluginNames != null) {

@@ -16,10 +16,9 @@ import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
-fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
-  val availableModulesAndPlugins = HashSet<String>(builtinModuleData.modules.size + builtinModuleData.plugins.size)
-  availableModulesAndPlugins.addAll(builtinModuleData.plugins)
-  builtinModuleData.modules.mapTo(availableModulesAndPlugins) { it.name }
+internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
+  val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
+  builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
   val descriptorMap = collectPluginDescriptors(skipImplementationDetailPlugins = true,
                                                skipBundledPlugins = true,

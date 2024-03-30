@@ -7,6 +7,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
+import org.jetbrains.intellij.build.ProductInfoLayoutItem
+import org.jetbrains.intellij.build.ProductInfoLayoutItemKind
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
@@ -55,10 +57,8 @@ internal fun generateProductInfoJson(
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
     fileExtensions = builtinModules?.fileExtensions ?: emptyList(),
 
-    modules = (builtinModules?.modules?.asSequence() ?: emptySequence()).filter { it.isAlias }.map { it.name }.toList(),
-    modulesV2 = (builtinModules?.modules?.asSequence() ?: emptySequence()).filter { !it.isAlias }.map {
-      ProductInfoModuleV2(name = it.name, classPath = it.classPath)
-    }.toList(),
+    modules = (builtinModules?.layout?.asSequence() ?: emptySequence()).filter { it.kind == ProductInfoLayoutItemKind.pluginAlias }.map { it.name }.toList(),
+    layout = builtinModules?.layout ?: emptyList(),
 
     flavors = jbrFlavors + productFlavors,
   )
@@ -90,15 +90,9 @@ data class ProductInfoData(
   val bundledPlugins: List<String>,
   // it is not modules, but plugin aliases
   val modules: List<String>,
-  val modulesV2: List<ProductInfoModuleV2>,
+  val layout: List<ProductInfoLayoutItem>,
   val fileExtensions: List<String>,
   val flavors: List<ProductFlavorData> = emptyList(),
-)
-
-@Serializable
-data class ProductInfoModuleV2(
-  @JvmField val name: String,
-  @JvmField val classPath: List<String> = emptyList(),
 )
 
 @Serializable
