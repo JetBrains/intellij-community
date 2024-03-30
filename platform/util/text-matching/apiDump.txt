@@ -1,0 +1,69 @@
+f:com.intellij.psi.codeStyle.AllOccurrencesMatcher
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- s:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
+- getPattern():java.lang.String
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.FixingLayoutMatcher
+- <init>(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):V
+- s:fixLayout(java.lang.String):java.lang.String
+a:com.intellij.psi.codeStyle.MinusculeMatcher
+- com.intellij.util.text.Matcher
+- p:<init>():V
+- a:getPattern():java.lang.String
+- s:isStartMatch(java.lang.Iterable):Z
+- isStartMatch(java.lang.String):Z
+- matches(java.lang.String):Z
+- matchingDegree(java.lang.String):I
+- matchingDegree(java.lang.String,Z):I
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.NameUtil
+- s:buildMatcher(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- s:buildMatcher(java.lang.String,I,Z,Z):com.intellij.util.text.Matcher
+- s:buildMatcher(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildMatcherWithFallback(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildRegexp(java.lang.String,I,Z,Z):java.lang.String
+- s:buildRegexp(java.lang.String,I,Z,Z,Z,Z):java.lang.String
+- s:capitalizeAndUnderscore(java.lang.String):java.lang.String
+- s:getSuggestionsByName(java.lang.String,java.lang.String,java.lang.String,Z,Z,Z):java.util.List
+- s:nameToWords(java.lang.String):java.lang.String[]
+- s:nameToWordsLowerCase(java.lang.String):java.util.List
+- s:splitNameIntoWords(java.lang.String):java.lang.String[]
+- s:splitWords(java.lang.String,C,java.util.function.Function):java.lang.String
+f:com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- <init>(java.lang.String):V
+- allOccurrences():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- build():com.intellij.psi.codeStyle.MinusculeMatcher
+- preferringStartMatches():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- typoTolerant():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- withCaseSensitivity(com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- withSeparators(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+e:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- java.lang.Enum
+- sf:ALL:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- sf:FIRST_LETTER:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- sf:NONE:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
+- s:values():com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity[]
+f:com.intellij.psi.codeStyle.PinyinMatcher
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- getPattern():java.lang.String
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.PreferStartMatchMatcherWrapper
+- com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:START_MATCH_WEIGHT:I
+- <init>(com.intellij.psi.codeStyle.MinusculeMatcher):V
+- getPattern():java.lang.String
+- matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.WordPrefixMatcher
+- com.intellij.util.text.Matcher
+- <init>(java.lang.String):V
+- matches(java.lang.String):Z
+f:com.intellij.util.text.matching.KeyboardLayoutUtil
+- <init>():V
+- s:getAsciiForChar(C):java.lang.Character
+- s:storeAsciiForChar(I,C,I,I):V
