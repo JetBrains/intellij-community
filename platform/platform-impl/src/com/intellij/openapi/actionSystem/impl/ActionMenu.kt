@@ -162,7 +162,7 @@ class ActionMenu constructor(private val context: DataContext?,
       popupListener = createWinListener(specialMenu)
       ReflectionUtil.setField(JMenu::class.java, this, JPopupMenu::class.java, "popupMenu", specialMenu)
       UiInspectorUtil.registerProvider(specialMenu, UiInspectorContextProvider {
-        UiInspectorUtil.collectActionGroupInfo("Menu", group.getAction(), place)
+        UiInspectorUtil.collectActionGroupInfo("Menu", group.getAction(), place, presentationFactory)
       })
     }
     return super.getPopupMenu()

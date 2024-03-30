@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getDelegateChainRootAction
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
@@ -13,7 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.ClientProperty
 import com.intellij.util.PsiNavigateUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import javax.swing.JComponent
@@ -48,29 +48,19 @@ object UiInspectorUtil {
   @JvmStatic
   fun collectActionGroupInfo(prefix: @NonNls String,
                              group: ActionGroup,
-                             place: String?): List<PropertyBean> {
+                             place: String?,
+                             presentationFactory: PresentationFactory?): List<PropertyBean> {
     val result = ArrayList<PropertyBean>()
-    if (place != null) {
-      result.add(PropertyBean("$prefix Place", place, true))
-    }
-    val groupId = getActionId(group)
-    val ids = HashSet<String>()
-    recursiveCollectGroupIds(group, ids)
-    ContainerUtil.addIfNotNull(ids, groupId)
-    if (ids.size > 1 || ids.size == 1 && groupId == null) {
-      result.add(PropertyBean("All $prefix Groups", StringUtil.join(ids, ", "), true))
-    }
+    result.add(PropertyBean("$prefix Place", place, true))
     result.addAll(collectAnActionInfo(group))
-    return result
-  }
-
-  private fun recursiveCollectGroupIds(group: ActionGroup, result: HashSet<String>) {
-    for (action in group.getChildren(null)) {
-      if (action is ActionGroup) {
-        ContainerUtil.addIfNotNull(result, getActionId(action))
-        recursiveCollectGroupIds(action, result)
+    if (presentationFactory != null) {
+      val groupId = getActionId(group)
+      val ids = presentationFactory.actions.filter { it is ActionGroup }.mapNotNull { getActionId(it) }.toSortedSet()
+      if (ids.size > 1 || ids.size == 1 && groupId == null) {
+        result.add(PropertyBean("All $prefix Groups", StringUtil.join(ids, ", "), true))
       }
     }
+    return result
   }
 
   @JvmStatic
