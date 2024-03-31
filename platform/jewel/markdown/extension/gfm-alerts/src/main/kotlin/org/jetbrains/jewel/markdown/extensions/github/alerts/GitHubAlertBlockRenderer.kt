@@ -19,7 +19,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
-import org.jetbrains.jewel.markdown.MarkdownBlock.Extension
+import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.Alert.Caution
 import org.jetbrains.jewel.markdown.extensions.github.alerts.Alert.Important
@@ -37,12 +37,12 @@ public class GitHubAlertBlockRenderer(
     private val rootStyling: MarkdownStyling,
 ) : MarkdownBlockRendererExtension {
 
-    override fun canRender(block: Extension): Boolean =
+    override fun canRender(block: CustomBlock): Boolean =
         block is Alert
 
     @Composable
     override fun render(
-        block: Extension,
+        block: CustomBlock,
         blockRenderer: MarkdownBlockRenderer,
         inlineRenderer: InlineMarkdownRenderer,
     ) {

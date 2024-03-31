@@ -52,14 +52,18 @@ public class MarkdownStyling(
         public val h6: H6,
     ) {
 
+        public interface HN : WithInlinesStyling, WithUnderline {
+            public val padding: PaddingValues
+        }
+
         @GenerateDataFunctions
         public class H1(
             override val inlinesStyling: InlinesStyling,
             override val underlineWidth: Dp,
             override val underlineColor: Color,
             override val underlineGap: Dp,
-            public val padding: PaddingValues,
-        ) : WithInlinesStyling, WithUnderline {
+            override val padding: PaddingValues,
+        ) : HN {
 
             public companion object
         }
@@ -70,8 +74,8 @@ public class MarkdownStyling(
             override val underlineWidth: Dp,
             override val underlineColor: Color,
             override val underlineGap: Dp,
-            public val padding: PaddingValues,
-        ) : WithInlinesStyling, WithUnderline {
+            override val padding: PaddingValues,
+        ) : HN {
 
             public companion object
         }
@@ -82,8 +86,8 @@ public class MarkdownStyling(
             override val underlineWidth: Dp,
             override val underlineColor: Color,
             override val underlineGap: Dp,
-            public val padding: PaddingValues,
-        ) : WithInlinesStyling, WithUnderline {
+            override val padding: PaddingValues,
+        ) : HN {
 
             public companion object
         }
@@ -94,8 +98,8 @@ public class MarkdownStyling(
             override val underlineWidth: Dp,
             override val underlineColor: Color,
             override val underlineGap: Dp,
-            public val padding: PaddingValues,
-        ) : WithInlinesStyling, WithUnderline {
+            override val padding: PaddingValues,
+        ) : HN {
 
             public companion object
         }
@@ -106,8 +110,8 @@ public class MarkdownStyling(
             override val underlineWidth: Dp,
             override val underlineColor: Color,
             override val underlineGap: Dp,
-            public val padding: PaddingValues,
-        ) : WithInlinesStyling, WithUnderline {
+            override val padding: PaddingValues,
+        ) : HN {
 
             public companion object
         }
@@ -118,8 +122,8 @@ public class MarkdownStyling(
             override val underlineWidth: Dp,
             override val underlineColor: Color,
             override val underlineGap: Dp,
-            public val padding: PaddingValues,
-        ) : WithInlinesStyling, WithUnderline {
+            override val padding: PaddingValues,
+        ) : HN {
 
             public companion object
         }

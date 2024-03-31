@@ -2,7 +2,7 @@ package org.jetbrains.jewel.markdown.extensions.github.alerts
 
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
-public sealed interface Alert : MarkdownBlock.Extension {
+public sealed interface Alert : MarkdownBlock.CustomBlock {
 
     public val content: List<MarkdownBlock>
 

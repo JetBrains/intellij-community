@@ -40,7 +40,7 @@ public object GitHubAlertProcessorExtension : MarkdownProcessorExtension {
 
         override fun canProcess(block: CustomBlock): Boolean = block is AlertBlock
 
-        override fun processMarkdownBlock(block: CustomBlock, processor: MarkdownProcessor): MarkdownBlock.Extension? {
+        override fun processMarkdownBlock(block: CustomBlock, processor: MarkdownProcessor): MarkdownBlock.CustomBlock? {
             val children = processor.processChildren(block)
 
             if (children.isEmpty()) return null

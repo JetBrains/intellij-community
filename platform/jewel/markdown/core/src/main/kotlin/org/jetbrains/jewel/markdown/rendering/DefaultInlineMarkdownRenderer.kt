@@ -7,19 +7,6 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
-import org.commonmark.node.Block
-import org.commonmark.node.Code
-import org.commonmark.node.Emphasis
-import org.commonmark.node.HardLineBreak
-import org.commonmark.node.HtmlInline
-import org.commonmark.node.Image
-import org.commonmark.node.Link
-import org.commonmark.node.Node
-import org.commonmark.node.Paragraph
-import org.commonmark.node.SoftLineBreak
-import org.commonmark.node.StrongEmphasis
-import org.commonmark.node.Text
-import org.commonmark.parser.Parser
 import org.commonmark.renderer.text.TextContentRenderer
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.markdown.InlineMarkdown
@@ -30,78 +17,73 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
 
     public constructor(vararg extensions: MarkdownProcessorExtension) : this(extensions.toList())
 
-    private val commonMarkParser =
-        Parser.builder().extensions(rendererExtensions.map { it.parserExtension }).build()
-
     private val plainTextRenderer =
         TextContentRenderer.builder()
             .extensions(rendererExtensions.map { it.textRendererExtension })
             .build()
 
     public override fun renderAsAnnotatedString(
-        inlineMarkdown: InlineMarkdown,
+        inlineMarkdown: List<InlineMarkdown>,
         styling: InlinesStyling,
     ): AnnotatedString =
         buildAnnotatedString {
-            val node = commonMarkParser.parse(inlineMarkdown.content)
-            appendInlineMarkdownFrom(node, styling)
+            appendInlineMarkdownFrom(inlineMarkdown.iterator(), styling)
         }
 
     @OptIn(ExperimentalTextApi::class)
-    private fun Builder.appendInlineMarkdownFrom(node: Node, styling: InlinesStyling) {
-        var child = node.firstChild
-
-        while (child != null) {
+    private fun Builder.appendInlineMarkdownFrom(inlineMarkdown: Iterator<InlineMarkdown>, styling: InlinesStyling) {
+        for (child in inlineMarkdown) {
             when (child) {
-                is Paragraph -> appendInlineMarkdownFrom(child, styling)
-                is Image -> {
+                is InlineMarkdown.Paragraph -> {
+                    appendInlineMarkdownFrom(child.children, styling)
+                }
+
+                is InlineMarkdown.Text -> append(child.value.literal)
+
+                is InlineMarkdown.Emphasis -> {
+                    withStyles(styling.emphasis, child) { appendInlineMarkdownFrom(it.children, styling) }
+                }
+
+                is InlineMarkdown.StrongEmphasis -> {
+                    withStyles(styling.strongEmphasis, child) { appendInlineMarkdownFrom(it.children, styling) }
+                }
+
+                is InlineMarkdown.Link -> {
+                    withStyles(styling.link, child) {
+                        pushUrlAnnotation(UrlAnnotation(it.value.destination))
+                        appendInlineMarkdownFrom(it.children, styling)
+                    }
+                }
+
+                is InlineMarkdown.Code -> {
+                    withStyles(styling.inlineCode, child) { append(it.value.literal) }
+                }
+
+                is InlineMarkdown.HardLineBreak,
+                is InlineMarkdown.SoftLineBreak,
+                -> appendLine()
+
+                is InlineMarkdown.HtmlInline -> {
+                    if (styling.renderInlineHtml) {
+                        withStyles(styling.inlineHtml, child) { append(it.value.literal.trim()) }
+                    }
+                }
+
+                is InlineMarkdown.Image -> {
                     appendInlineContent(
                         INLINE_IMAGE,
-                        child.destination + "\n" + plainTextRenderer.render(child),
+                        child.value.destination + "\n" + plainTextRenderer.render(child.value),
                     )
                 }
 
-                is Text -> append(child.literal)
-                is Emphasis -> {
-                    withStyles(styling.emphasis, child) { appendInlineMarkdownFrom(it, styling) }
-                }
-
-                is StrongEmphasis -> {
-                    withStyles(styling.strongEmphasis, child) { appendInlineMarkdownFrom(it, styling) }
-                }
-
-                is Code -> {
-                    withStyles(styling.inlineCode, child) { append(it.literal) }
-                }
-
-                is Link -> {
-                    withStyles(styling.link, child) {
-                        pushUrlAnnotation(UrlAnnotation(it.destination))
-                        appendInlineMarkdownFrom(it, styling)
-                    }
-                }
-
-                is HardLineBreak,
-                is SoftLineBreak,
-                -> appendLine()
-
-                is HtmlInline -> {
-                    if (styling.renderInlineHtml) {
-                        withStyles(styling.inlineHtml, child) { append(it.literal.trim()) }
-                    }
-                }
-
-                is Block -> {
-                    error("Only inline Markdown can be rendered to an AnnotatedString. Found: $child")
-                }
+                is InlineMarkdown.CustomNode -> error("InlineMarkdown.CustomNode render is not implemented")
             }
-            child = child.next
         }
     }
 
     // The T type parameter is needed to avoid issues with capturing lambdas
     // making smart cast of the child local variable impossible.
-    private inline fun <T : Node> Builder.withStyles(
+    private inline fun <T : InlineMarkdown> Builder.withStyles(
         spanStyle: SpanStyle,
         node: T,
         action: Builder.(T) -> Unit,

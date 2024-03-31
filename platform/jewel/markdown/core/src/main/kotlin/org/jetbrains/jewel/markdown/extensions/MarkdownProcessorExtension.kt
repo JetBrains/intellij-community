@@ -27,7 +27,7 @@ public interface MarkdownProcessorExtension {
      * An extension for
      * [`MarkdownParser`][org.jetbrains.jewel.markdown.parsing.MarkdownParser]
      * that will transform a supported [CustomBlock] into the corresponding
-     * [MarkdownBlock.Extension].
+     * [MarkdownBlock.CustomBlock].
      */
     public val processorExtension: MarkdownBlockProcessorExtension
 }

@@ -1,51 +1,10 @@
 package org.jetbrains.jewel.markdown
 
-import org.intellij.lang.annotations.Language
-
 public sealed interface MarkdownBlock {
-
-    public data class Paragraph(override val inlineContent: InlineMarkdown) :
-        MarkdownBlock, BlockWithInlineMarkdown
-
-    public sealed interface Heading : MarkdownBlock, BlockWithInlineMarkdown {
-
-        public data class H1(override val inlineContent: InlineMarkdown) : Heading
-
-        public data class H2(override val inlineContent: InlineMarkdown) : Heading
-
-        public data class H3(override val inlineContent: InlineMarkdown) : Heading
-
-        public data class H4(override val inlineContent: InlineMarkdown) : Heading
-
-        public data class H5(override val inlineContent: InlineMarkdown) : Heading
-
-        public data class H6(override val inlineContent: InlineMarkdown) : Heading
-    }
 
     public data class BlockQuote(val content: List<MarkdownBlock>) : MarkdownBlock
 
-    public sealed interface ListBlock : MarkdownBlock {
-
-        public val items: List<ListItem>
-        public val isTight: Boolean
-
-        public data class OrderedList(
-            override val items: List<ListItem>,
-            override val isTight: Boolean,
-            val startFrom: Int,
-            val delimiter: Char,
-        ) : ListBlock
-
-        public data class UnorderedList(
-            override val items: List<ListItem>,
-            override val isTight: Boolean,
-            val bulletMarker: Char,
-        ) : ListBlock
-    }
-
-    public data class ListItem(
-        val content: List<MarkdownBlock>,
-    ) : MarkdownBlock
+    public interface CustomBlock : MarkdownBlock
 
     public sealed interface CodeBlock : MarkdownBlock {
 
@@ -61,23 +20,43 @@ public sealed interface MarkdownBlock {
         ) : CodeBlock
     }
 
-    public data class Image(val url: String, val altString: String?) : MarkdownBlock
-
-    public object ThematicBreak : MarkdownBlock
+    public data class Heading(
+        override val inlineContent: List<InlineMarkdown>,
+        val level: Int,
+    ) : MarkdownBlock, BlockWithInlineMarkdown
 
     public data class HtmlBlock(val content: String) : MarkdownBlock
 
-    public interface Extension : MarkdownBlock
+    public sealed interface ListBlock : MarkdownBlock {
+
+        public val items: List<ListItem>
+        public val isTight: Boolean
+
+        public data class BulletList(
+            override val items: List<ListItem>,
+            override val isTight: Boolean,
+            val bulletMarker: String,
+        ) : ListBlock
+
+        public data class OrderedList(
+            override val items: List<ListItem>,
+            override val isTight: Boolean,
+            val startFrom: Int,
+            val delimiter: String,
+        ) : ListBlock
+    }
+
+    public data class ListItem(
+        val content: List<MarkdownBlock>,
+    ) : MarkdownBlock
+
+    public object ThematicBreak : MarkdownBlock
+
+    public data class Paragraph(override val inlineContent: List<InlineMarkdown>) :
+        MarkdownBlock, BlockWithInlineMarkdown
 }
 
 public interface BlockWithInlineMarkdown {
 
-    public val inlineContent: InlineMarkdown
+    public val inlineContent: List<InlineMarkdown>
 }
-
-/**
- * A run of inline Markdown used as content for
- * [block-level elements][MarkdownBlock].
- */
-@JvmInline
-public value class InlineMarkdown(@Language("Markdown") public val content: String)

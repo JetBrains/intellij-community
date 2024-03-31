@@ -1,4 +1,4 @@
-public abstract interface class org/jetbrains/jewel/markdown/extensions/github/alerts/Alert : org/jetbrains/jewel/markdown/MarkdownBlock$Extension {
+public abstract interface class org/jetbrains/jewel/markdown/extensions/github/alerts/Alert : org/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock {
 	public abstract fun getContent ()Ljava/util/List;
 }
 
@@ -115,8 +115,8 @@ public final class org/jetbrains/jewel/markdown/extensions/github/alerts/Caution
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertBlockRenderer : org/jetbrains/jewel/markdown/extensions/MarkdownBlockRendererExtension {
 	public static final field $stable I
 	public fun <init> (Lorg/jetbrains/jewel/markdown/extensions/github/alerts/AlertStyling;Lorg/jetbrains/jewel/markdown/rendering/MarkdownStyling;)V
-	public fun canRender (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Extension;)Z
-	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$Extension;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;Landroidx/compose/runtime/Composer;I)V
+	public fun canRender (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;)Z
+	public fun render (Lorg/jetbrains/jewel/markdown/MarkdownBlock$CustomBlock;Lorg/jetbrains/jewel/markdown/rendering/MarkdownBlockRenderer;Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/jetbrains/jewel/markdown/extensions/github/alerts/GitHubAlertProcessorExtension : org/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension {

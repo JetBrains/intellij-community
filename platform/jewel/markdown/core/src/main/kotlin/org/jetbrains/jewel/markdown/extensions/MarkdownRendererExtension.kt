@@ -10,7 +10,7 @@ public interface MarkdownRendererExtension {
      * An extension for
      * [`MarkdownBlockRenderer`][org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer]
      * that will render a supported
-     * [`Extension`][org.jetbrains.jewel.markdown.MarkdownBlock.Extension] into
+     * [`CustomBlock`][org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock] into
      * a native Jewel UI.
      */
     public val blockRenderer: MarkdownBlockRendererExtension
