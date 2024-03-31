@@ -272,7 +272,7 @@ class JarPackager private constructor(
     // for now, check only direct dependencies of the main plugin module
     val childPrefix = "${layout.mainModule}."
     for (name in helper.getModuleDependencies(layout.mainModule)) {
-      if (!name.startsWith(childPrefix) || addedModules.contains(name)) {
+      if ((!name.startsWith(childPrefix) && name != "intellij.platform.commercial.verifier") || addedModules.contains(name)) {
         continue
       }
 
@@ -288,6 +288,24 @@ class JarPackager private constructor(
         layout = layout,
         moduleWithSearchableOptions = moduleWithSearchableOptions,
       )
+    }
+
+    // check verifier in all included modules
+    for (includedModule in layout.includedModules) {
+      for (name in helper.getModuleDependencies(includedModule.moduleName)) {
+        if (name != "intellij.platform.commercial.verifier" || addedModules.contains(name)) {
+          continue
+        }
+
+        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+        addedModules.add(name)
+        computeSourcesForModule(
+          item = moduleItem,
+          moduleOutputPatcher = moduleOutputPatcher,
+          layout = layout,
+          moduleWithSearchableOptions = moduleWithSearchableOptions,
+        )
+      }
     }
 
     if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter") {
