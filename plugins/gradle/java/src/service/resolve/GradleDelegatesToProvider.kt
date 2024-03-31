@@ -70,7 +70,9 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
       return delegate
     }
     val fqClassName = delegate.canonicalText
-    if (fqClassName != GRADLE_API_ARTIFACT_HANDLER) {
+    if (fqClassName != GRADLE_API_ARTIFACT_HANDLER
+        && fqClassName != GRADLE_API_PROJECT
+    ) {
       return delegate
     }
     val type = createType(fqClassName, expression)

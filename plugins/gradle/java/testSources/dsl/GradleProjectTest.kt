@@ -3,8 +3,9 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
+import groovy.lang.Closure.DELEGATE_FIRST
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
+import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -110,6 +111,70 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>dependencies") {
         methodTest(resolveTest(PsiMethod::class.java), "getDependencies", GRADLE_API_PROJECT)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource("""
+    "project(':') {<caret>}", 
+    "allprojects {<caret>}", 
+    "subprojects {<caret>}", 
+    "configure(project(':')) {<caret>}",
+    "configure([project(':')]) {<caret>}",
+    "beforeEvaluate {<caret>}",
+    "afterEvaluate {<caret>}"
+  """)
+  fun `resolve a delegate in Closures of methods providing Project's context`(
+    gradleVersion: GradleVersion,
+    expression: String
+  ) {
+    testEmptyProject(gradleVersion) {
+      testBuildscript(expression) {
+        closureDelegateTest(GRADLE_API_PROJECT, DELEGATE_FIRST)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource(PROJECT_CONTEXTS, """
+    "copy{<caret>}",
+    "copySpec{<caret>}"
+  """)
+  fun `resolve a delegate in copy and copySpec Closures`(gradleVersion: GradleVersion, decorator: String, expression: String) {
+    testEmptyProject(gradleVersion) {
+      testBuildscript(decorator, expression) {
+        closureDelegateTest(GRADLE_API_FILE_COPY_SPEC, DELEGATE_FIRST)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
+  fun `resolve a delegate in fileTree Closure`(gradleVersion: GradleVersion, decorator: String) {
+    testEmptyProject(gradleVersion) {
+      testBuildscript(decorator, "fileTree('baseDir'){<caret>}") {
+        closureDelegateTest(GRADLE_API_FILE_CONFIGURABLE_FILE_TREE, DELEGATE_FIRST)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
+  fun `resolve a delegate in files Closure`(gradleVersion: GradleVersion, decorator: String) {
+    testEmptyProject(gradleVersion) {
+      testBuildscript(decorator, "files('paths'){<caret>}") {
+        closureDelegateTest(GRADLE_API_FILE_CONFIGURABLE_FILE_COLLECTION, DELEGATE_FIRST)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource(PROJECT_CONTEXTS)
+  fun `resolve a delegate in exec Closure`(gradleVersion: GradleVersion, decorator: String) {
+    testEmptyProject(gradleVersion) {
+      testBuildscript(decorator, "exec{<caret>}") {
+        closureDelegateTest(GRADLE_PROCESS_EXEC_SPEC, DELEGATE_FIRST)
       }
     }
   }
