@@ -16,6 +16,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Actions {
+    /** 16x16 */ public static final @NotNull Icon AddFile = load("expui/actions/addFile.svg", 184315993, 2);
     /** 16x16 */ public static final @NotNull Icon BuildAutoReloadChanges = load("expui/actions/buildAutoReloadChanges.svg", -1677381169, 2);
     /** 16x16 */ public static final @NotNull Icon ClearCash = load("expui/actions/clearCash.svg", 1918690860, 2);
     /** 16x16 */ public static final @NotNull Icon Deploy = load("expui/actions/deploy.svg", 313246547, 2);
