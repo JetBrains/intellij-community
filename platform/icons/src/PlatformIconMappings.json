@@ -1,6 +1,7 @@
 {
   "expui": {
     "actions": {
+      "addFile.svg": "actions/addFile.svg",
       "buildAutoReloadChanges.svg": "actions/buildAutoReloadChanges.svg",
       "deploy.svg": "nodes/deploy.svg",
       "diagramDiff.svg": "actions/diagramDiff.svg",
