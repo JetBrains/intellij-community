@@ -61,7 +61,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
   }
 
   /**
-   * Allows some [NonCodeMembersContributor]'s like [GradleArtifactHandlerContributor] adding additional resolve logic for PSI elements
+   * Allows some NonCodeMembersContributor's like [GradleArtifactHandlerContributor] adding additional resolve logic for PSI elements
    * inside the closable block for which we determine a delegate. For such cases it creates a delegate as [GradleProjectAwareType].
    */
   private fun replaceWithProjectAwareType(delegate: PsiType, expression: GrClosableBlock, resolvedCall: GroovyMethodResult): PsiType {
@@ -75,9 +75,9 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     ) {
       return delegate
     }
-    val type = createType(fqClassName, expression)
-    // propagate GradleProjectAwareType wrap from receiver class to delegate
-    val result: GradleProjectAwareType = projectAwareReceiver.setType(type)
+    val psiClassType = delegate as? PsiClassType
+                       ?: createType(fqClassName, expression)
+    val result: GradleProjectAwareType = projectAwareReceiver.setType(psiClassType)
     return result
   }
 
