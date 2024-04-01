@@ -1,4 +1,4 @@
-// "Create method 'test'" "true-preview"
+// "Create @interface method 'test()'" "true-preview"
 public class Test {
     @Attr(test= "")
     public Test() {
