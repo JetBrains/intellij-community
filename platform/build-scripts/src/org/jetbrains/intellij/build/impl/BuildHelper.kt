@@ -76,7 +76,7 @@ suspend fun runIdea(context: CompilationContext,
                     onError: (() -> Unit)? = null) {
   runJava(mainClass = mainClass,
           args = args,
-          jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs + listOf("-Dij.dir.lock.debug=true"),
+          jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs + listOf("-Dij.dir.lock.debug=true", "-Dintellij.log.to.json.stdout=true"),
           classPath = classPath,
           javaExe = context.stableJavaExecutable,
           timeout = timeout,

@@ -33,13 +33,13 @@ suspend fun runJava(mainClass: String,
                     workingDir: Path? = null,
                     customOutputFile: Path? = null,
                     onError: (() -> Unit)? = null) {
-  val jvmArgsWithJson = jvmArgs + "-Dintellij.log.to.json.stdout=true"
   @Suppress("NAME_SHADOWING")
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
+  val useJsonOutput = jvmArgs.any { arg -> arg == "-Dintellij.log.to.json.stdout=true" } == true
   spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
     .setAttribute(AttributeKey.stringArrayKey("args"), args)
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgsWithJson)
+    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("workingDir", "$workingDir")
     .setAttribute("timeoutMillis", timeout.toString())
     .useWithScope(Dispatchers.IO) { span ->
@@ -50,7 +50,7 @@ suspend fun runJava(mainClass: String,
         val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
         val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
         val processArgs = createProcessArgs(javaExe = javaExe,
-                                            jvmArgs = jvmArgsWithJson,
+                                            jvmArgs = jvmArgs,
                                             classpathFile = classpathFile,
                                             mainClass = mainClass,
                                             args = args)
@@ -73,14 +73,16 @@ suspend fun runJava(mainClass: String,
           span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
           val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
           val output = runCatching { Files.readString(outputFile) }.getOrNull()
+          val errorMessage = StringBuilder("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
+                                           "\n--- error output ---\n" +
+                                           "$errorOutput")
+          if (!useJsonOutput) {
+            errorMessage.append("\n--- output ---\n$output\n")
+          }
+          errorMessage.append("\n--- ---")
           span.setAttribute("errorOutput", errorOutput ?: "error output file doesn't exist")
           onError?.invoke()
-          throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
-                                 "\n--- error output ---\n" +
-                                 "$errorOutput" +
-                                 "\n--- output ---" +
-                                 "$output\n" +
-                                 "\n--- ---")
+          throw RuntimeException(errorMessage.toString())
         }
 
         try {
@@ -107,7 +109,7 @@ suspend fun runJava(mainClass: String,
           javaRunFailed("exitCode=$exitCode")
         }
 
-        if (customOutputFile == null) {
+        if (useJsonOutput) {
           checkOutput(outputFile = outputFile, span = span, errorConsumer = ::javaRunFailed)
         }
       }
@@ -128,7 +130,7 @@ private fun checkOutput(outputFile: Path, span: Span, errorConsumer: (String) ->
       Files.readString(outputFile, Charsets.ISO_8859_1)
     }
   }
-  catch (e: NoSuchFieldException) {
+  catch (_: NoSuchFieldException) {
     span.setAttribute("output", "output file doesn't exist")
     return
   }
@@ -268,13 +270,6 @@ suspend fun runProcess(args: List<String>,
           if (exitCode != 0) {
             errorOccurred()
             throw RuntimeException("Process $pid finished with exitCode $exitCode)")
-          }
-
-          if (!inheritOut) {
-            checkOutput(outputFile!!, span) {
-              errorOccurred()
-              throw RuntimeException(it)
-            }
           }
         }
         finally {
