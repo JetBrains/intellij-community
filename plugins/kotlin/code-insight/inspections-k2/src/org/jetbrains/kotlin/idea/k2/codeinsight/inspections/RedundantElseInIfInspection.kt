@@ -86,11 +86,16 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
         if (element.elseKeyword == null || element.isElseIf()) return false
         element.lastSingleElseKeyword() ?: return false
 
-        return element.hasRedundantElse()
+        return true
     }
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtIfExpression) {
+    override fun prepareContext(element: KtIfExpression): Unit? {
+        if (element.hasRedundantElse()) {
+            return Unit
+        }
+
+        return null
     }
 
     private fun KtExpression.isElseIf() = parent.node.elementType == KtNodeTypes.ELSE
@@ -103,9 +108,10 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
         return ifExpression.elseKeyword
     }
 
+    context(KtAnalysisSession)
     private fun KtIfExpression.hasRedundantElse(): Boolean {
         var ifExpression = this
-        if (analyze(ifExpression) { ifExpression.isUsedAsExpression() }) {
+        if (ifExpression.isUsedAsExpression()) {
             return false
         }
 
