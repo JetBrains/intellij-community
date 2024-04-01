@@ -55,7 +55,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
       LOG.info("Acceptable module source roots not found")
       return
     }
-    acceptedSourceRoots.map { sourceRoot ->
+    acceptedSourceRoots.forEach { sourceRoot ->
       withContext(Dispatchers.EDT) {
         DumbService.getInstance(project).completeJustSubmittedTasks() // Waiting for smart mode
         CodeWriter.generate(
@@ -64,8 +64,18 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
           explicitApiEnabled = module.explicitApiEnabled,
           isTestModule = module.isTestModule, // TODO(It doesn't work for all modules)
           targetFolderGenerator = { createGeneratedSourceFolder(module, sourceRoot) },
-          existingTargetFolder = { sourceRoot.file?.parent?.children?.find { it.name == GENERATED_FOLDER_NAME } }
+          existingTargetFolder = { calculateExistingGenFolder(sourceRoot) }
         )
+      }
+    }
+  }
+
+  private fun calculateExistingGenFolder(sourceFolder: SourceFolder): VirtualFile? {
+    return sourceFolder.file?.parent?.children?.find {
+      if (sourceFolder.isTestSource) {
+        it.name == TEST_GENERATED_FOLDER_NAME
+      } else {
+        it.name == GENERATED_FOLDER_NAME
       }
     }
   }
@@ -73,7 +83,11 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
   private fun createGeneratedSourceFolder(module: Module, sourceFolder: SourceFolder): VirtualFile? {
     // Create gen folder if it doesn't exist
     val generatedFolder = WriteAction.compute<VirtualFile, RuntimeException> {
-      VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, GENERATED_FOLDER_NAME)
+      if (sourceFolder.isTestSource) {
+        VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, TEST_GENERATED_FOLDER_NAME)
+      } else {
+        VfsUtil.createDirectoryIfMissing(sourceFolder.file?.parent, GENERATED_FOLDER_NAME)
+      }
     }
 
     val moduleRootManager = ModuleRootManager.getInstance(module)
@@ -112,6 +126,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     //}
     return contentEntries.flatMap { it.sourceFolders.asIterable() }.filter {
       if (it.file == null) return@filter false
+      if (it.rootType !is JavaSourceRootType)  return@filter false
       val javaSourceRootProperties = it.jpsElement.properties as? JavaSourceRootProperties
       if (javaSourceRootProperties == null) return@filter true
       return@filter !javaSourceRootProperties.isForGeneratedSources
@@ -130,6 +145,8 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
 
   companion object {
     const val GENERATED_FOLDER_NAME = "gen"
+
+    const val TEST_GENERATED_FOLDER_NAME = "testGen"
 
     private const val RIDER_MODULES_PREFIX = "intellij.rider"
 
