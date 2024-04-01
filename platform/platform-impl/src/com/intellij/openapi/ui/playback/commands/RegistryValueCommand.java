@@ -19,7 +19,7 @@ public final class RegistryValueCommand extends AbstractCommand {
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final String[] keyValue = getText().substring(PREFIX.length()).trim().split("=");
     if (keyValue.length != 2) {
-      context.error("Expected expresstion: " + PREFIX + " key=value", getLine());
+      context.error("Expected expression: " + PREFIX + " key=value", getLine());
       return Promises.rejectedPromise();
     }
 
