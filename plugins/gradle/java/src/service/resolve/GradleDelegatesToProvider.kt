@@ -144,6 +144,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     val classProvidingMethod = resolvedCall.candidate?.receiverType.resolve() ?: return null
     val methodOverloads = classProvidingMethod.findMethodsAndTheirSubstitutorsByName(methodName, true)
     for (method in methodOverloads) {
+      // TODO maybe skip a method if parameters before Action are not the same as in the resolved method
       val delegate = getDelegateFromMethodSignature(psiMethod = method.first, substitutor = method.second)
       if (delegate != null) return delegate
     }
