@@ -28,7 +28,7 @@ fun String.packageName(): String {
   }
 }
 
-internal fun String.dottedClassName(): String {
+fun String.dottedClassName(): String {
   return replace('/', '.')
 }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.apiDump
 
+import org.objectweb.asm.Type
+
 class API(
   val publicApi: List<ApiClass>,
   val privateApi: Set<String>,
@@ -20,6 +22,8 @@ data class ApiMember(
   val ref: ApiRef,
   val flags: ApiFlags,
 )
+
+val ApiMember.isMethod: Boolean get() = Type.getType(ref.descriptor).sort == Type.METHOD
 
 data class ApiRef(
   val name: String,
