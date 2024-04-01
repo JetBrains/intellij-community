@@ -36,6 +36,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.GraphicsEnvironment
 import java.io.IOException
+import java.lang.invoke.MethodHandle
+import java.lang.invoke.MethodHandles
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -126,6 +128,13 @@ object PluginManagerCore {
   @Volatile
   private var initFuture: Deferred<PluginSet>? = null
   private var ourBuildNumber: BuildNumber? = null
+
+
+  private val findLoadedClassHandle : MethodHandle by lazy {
+    val method = ClassLoader::class.java.getDeclaredMethod("findLoadedClass", String::class.java)
+    method.isAccessible = true
+    MethodHandles.lookup().unreflect(method)
+  }
 
   /**
    * Returns a list of all available plugin descriptors (bundled and custom, including disabled ones).
@@ -228,7 +237,7 @@ object PluginManagerCore {
           break
         }
       }
-      else if (runCatching { Class.forName(className, false, classLoader) }.isSuccess) {
+      else if (findLoadedClassHandle.invoke(classLoader, className) != null) {
         result = descriptor
         break
       }
