@@ -799,5 +799,7 @@ class QuickFixRegistrar : QuickFixContributor {
         NON_DATA_CLASS_JVM_RECORD.registerFactory(AddModifierFixFE10.createFactory(DATA_KEYWORD))
 
         RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY.registerFactory(ConvertToBlockBodyFixFactory)
+
+        VOLATILE_ON_VALUE.registerFactory(ChangeVariableMutabilityFix.VOLATILE_ON_VALUE_FACTORY)
     }
 }

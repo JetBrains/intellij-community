@@ -109,5 +109,13 @@ class ChangeVariableMutabilityFix(
                 if (getter.hasBlockBody() && property.typeReference == null) return@quickFixesPsiBasedFactory emptyList()
                 listOf(ChangeVariableMutabilityFix(property, makeVar = false))
             }
+
+        val VOLATILE_ON_VALUE_FACTORY: QuickFixesPsiBasedFactory<KtAnnotationEntry> =
+            quickFixesPsiBasedFactory { annotationEntry: KtAnnotationEntry ->
+                val modifierList = annotationEntry.parent as? KtDeclarationModifierList ?: return@quickFixesPsiBasedFactory emptyList()
+                val property = modifierList.parent as? KtProperty ?: return@quickFixesPsiBasedFactory emptyList()
+                if (!property.isWritable || property.isLocal) return@quickFixesPsiBasedFactory emptyList()
+                listOf(ChangeVariableMutabilityFix(property, makeVar = true))
+            }
     }
 }
