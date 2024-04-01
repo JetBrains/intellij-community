@@ -17640,6 +17640,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 public void testVarAnnotationParameter() throws Exception {
                     runTest("testData/quickfix/variables/changeMutability/varAnnotationParameter.kt");
                 }
+
+                @TestMetadata("volatileOnValue.kt")
+                public void testVolatileOnValue() throws Exception {
+                    runTest("testData/quickfix/variables/changeMutability/volatileOnValue.kt");
+                }
+
+                @TestMetadata("volatileOnValueLocal.kt")
+                public void testVolatileOnValueLocal() throws Exception {
+                    runTest("testData/quickfix/variables/changeMutability/volatileOnValueLocal.kt");
+                }
             }
         }
 

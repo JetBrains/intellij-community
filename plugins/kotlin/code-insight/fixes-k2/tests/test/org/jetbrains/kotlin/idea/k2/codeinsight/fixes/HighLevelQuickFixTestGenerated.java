@@ -2908,6 +2908,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         public void testVarAnnotationParameter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/variables/changeMutability/varAnnotationParameter.kt");
         }
+
+        @TestMetadata("volatileOnValue.kt")
+        public void testVolatileOnValue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/variables/changeMutability/volatileOnValue.kt");
+        }
+
+        @TestMetadata("volatileOnValueLocal.kt")
+        public void testVolatileOnValueLocal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/variables/changeMutability/volatileOnValueLocal.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
