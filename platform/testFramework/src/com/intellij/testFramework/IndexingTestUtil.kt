@@ -50,7 +50,8 @@ class IndexingTestUtil(private val project: Project) {
         at com.intellij.openapi.application.WriteAction.compute(WriteAction.java:95)
         ...
        */
-      // non-volatile: only updated on writing thread
+      // Volatile: any thread could be write thread
+      @Volatile
       private var nested: Int = 1 // 1 because at least one write action is currently happenings
 
       override fun beforeWriteActionStart(action: Any) {
