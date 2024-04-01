@@ -80,7 +80,7 @@ class IndexingTestUtil(private val project: Project) {
       thisLogger().info("waitNow will be waiting, thread=${Thread.currentThread()}", Throwable())
     }
 
-    if (ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+    if (ApplicationManager.getApplication().isDispatchThread) {
       val scope = GlobalScope.namedChildScope("Indexing waiter", Dispatchers.IO)
       val waiting = scope.launch { suspendUntilIndexesAreReady() }
       try {
