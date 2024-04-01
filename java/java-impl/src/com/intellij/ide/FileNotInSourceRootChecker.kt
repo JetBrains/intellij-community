@@ -10,8 +10,8 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -27,7 +27,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import java.util.concurrent.ForkJoinPool
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private class FileNotInSourceRootChecker : ProjectActivity {
   override suspend fun execute(project: Project) {
@@ -35,11 +39,14 @@ private class FileNotInSourceRootChecker : ProjectActivity {
   }
 }
 
-private const val GROUP : Int = 1234
-private const val JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES : String = "com.intellij.ide.FileNotInSourceRootChecker.no.check"
+private const val GROUP: Int = 1234
+private const val JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES: String = "com.intellij.ide.FileNotInSourceRootChecker.no.check"
 
 @Service(Service.Level.PROJECT)
-class FileNotInSourceRootService(val project: Project) : Disposable {
+internal class FileNotInSourceRootService(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope
+) : Disposable {
 
   fun init() {
     if (PropertiesComponent.getInstance(project).getBoolean(JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES, false)) return
@@ -56,28 +63,44 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
     if (editor.project !== project) return
     if (PropertiesComponent.getInstance(project).getBoolean(JAVA_DONT_CHECK_OUT_OF_SOURCE_FILES, false)) return
     val virtualFile = editor.virtualFile ?: return
-    ReadAction.nonBlocking { 
-      highlightEditorInBackground(virtualFile, editor)
-    }.submit(ForkJoinPool.commonPool())
+
+    coroutineScope.launch {
+      val infoAndFile = readAction {
+        highlightEditorInBackground(virtualFile, editor)
+      }
+
+      if (infoAndFile != null) {
+        withContext(Dispatchers.EDT) {
+          if (!infoAndFile.second.isValid) return@withContext
+
+          DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, infoAndFile.first, infoAndFile.second, null)
+        }
+      }
+    }
   }
 
-  private fun highlightEditorInBackground(virtualFile: VirtualFile, editor: Editor) {
-    if (project.isDisposed) return
-    if (!JavaFileType.INSTANCE.equals(virtualFile.fileType)) return
+  @RequiresReadLock
+  private fun highlightEditorInBackground(virtualFile: VirtualFile, editor: Editor): Pair<HighlightInfo, PsiFile>? {
+    if (project.isDisposed || editor.isDisposed) return null
+    if (!JavaFileType.INSTANCE.equals(virtualFile.fileType)) return null
+
     val fileIndex = ProjectFileIndex.getInstance(project)
-    if (fileIndex.isInSource(virtualFile) || fileIndex.isExcluded(virtualFile) || fileIndex.isUnderIgnored(virtualFile)) return
-    if (fileIndex.getOrderEntriesForFile(virtualFile).isNotEmpty()) return
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as? PsiJavaFile ?: return
+    if (fileIndex.isInSource(virtualFile) || fileIndex.isExcluded(virtualFile) || fileIndex.isUnderIgnored(virtualFile)) return null
+    if (fileIndex.getOrderEntriesForFile(virtualFile).isNotEmpty()) return null
+
+    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) as? PsiJavaFile ?: return null
     val packageName = psiFile.packageName
-    val module = fileIndex.getModuleForFile(virtualFile) ?: return
+    val module = fileIndex.getModuleForFile(virtualFile) ?: return null
     val rootModel = DefaultModulesProvider.createForProject(project).getRootModel(module)
     val roots = rootModel.sourceRoots
-    if (roots.isEmpty()) return
+    if (roots.isEmpty()) return null
+
     var root = roots[0]
     if (packageName.isNotEmpty()) {
       root = VfsUtil.findRelativeFile(root, *packageName.split('.').toTypedArray()) ?: root
     }
-    if (root.findChild(virtualFile.name) != null) return
+    if (root.findChild(virtualFile.name) != null) return null
+
     val moveFileFix = MoveFileToSourceRootFix(virtualFile, root)
     val info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(psiFile)
@@ -86,11 +109,8 @@ class FileNotInSourceRootService(val project: Project) : Disposable {
       .group(GROUP)
       .registerFix(moveFileFix, listOf(DismissFix(), IgnoreForThisProjectFix()), null, null, null)
       .create()
-    if (info != null) {
-      ApplicationManager.getApplication().invokeLater({
-        DaemonCodeAnalyzerEx.getInstanceEx(project).addFileLevelHighlight(GROUP, info, psiFile, null)
-      }, project.disposed)
-    }
+
+    return info?.let { Pair(info, psiFile) }
   }
 
   override fun dispose() {
