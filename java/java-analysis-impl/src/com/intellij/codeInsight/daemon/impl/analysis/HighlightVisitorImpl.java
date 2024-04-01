@@ -1917,7 +1917,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDeconstructionPattern(@NotNull PsiDeconstructionPattern deconstructionPattern) {
     super.visitDeconstructionPattern(deconstructionPattern);
-    add(PatternHighlightingModel.checkReferenceTypeIsNotAnnotated(deconstructionPattern.getTypeElement()));
+    PsiTreeUtil.processElements(deconstructionPattern.getTypeElement(), PsiAnnotation.class, annotation -> {
+      add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(annotation)
+            .descriptionAndTooltip(JavaErrorBundle.message("deconstruction.pattern.type.contain.annotation")));
+      return true;
+    });
     PsiElement parent = deconstructionPattern.getParent();
     if (parent instanceof PsiForeachPatternStatement forEach) {
       add(checkFeature(deconstructionPattern, JavaFeature.RECORD_PATTERNS_IN_FOR_EACH));

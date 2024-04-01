@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -329,32 +329,6 @@ final class PatternHighlightingModel {
     String description = JavaErrorBundle.message("pattern.is.not.exhaustive", JavaHighlightUtil.formatType(patternType),
                                                  JavaHighlightUtil.formatType(itemType));
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(description);
-  }
-
-  private static final PsiTypeVisitor<Boolean> HAS_ANNOTATION_TYPE_VISITOR = new PsiTypeVisitor<>() {
-    @Override
-    public Boolean visitClassType(@NotNull PsiClassType classType) {
-      for (PsiType p : classType.getParameters()) {
-        if (p == null) continue;
-        if (p.accept(this)) return true;
-      }
-      return super.visitClassType(classType);
-    }
-
-    @Override
-    public Boolean visitType(@NotNull PsiType type) {
-      return type.getAnnotations().length != 0;
-    }
-  };
-  static HighlightInfo.Builder checkReferenceTypeIsNotAnnotated(@NotNull PsiTypeElement typeElement) {
-    Boolean hasAnnotation = typeElement.getType().accept(HAS_ANNOTATION_TYPE_VISITOR);
-    if (hasAnnotation) {
-      String message = JavaErrorBundle.message("deconstruction.pattern.type.contain.annotation");
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-        .range(typeElement)
-        .descriptionAndTooltip(message);
-    }
-    return null;
   }
 
   static void checkForEachPatternApplicable(@NotNull PsiDeconstructionPattern pattern,
