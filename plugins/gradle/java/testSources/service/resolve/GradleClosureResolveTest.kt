@@ -133,7 +133,7 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
   // Despite the presence of an overloaded method with Action<? super T>, it's not possible to resolve T to use it as a delegate
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `return null when type parameter is not resolvable`(gradleVersion: GradleVersion) {
+  fun `return null when method type parameter is not resolvable`(gradleVersion: GradleVersion) {
     val buildScript = """
       |class FooClass {
       |    void method(Closure block) {};
@@ -143,13 +143,33 @@ class GradleClosureResolveTest : GradleCodeInsightTestCase() {
       |""".trimMargin()
     testEmptyProject(gradleVersion) {
       testBuildscript(buildScript) {
-        val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
-        assertCalledMethodHasClosureParameter()
-        val delegatesToInfo = getDelegatesToInfo(closableBlock)
-        //
-        assertNull(delegatesToInfo, "It's not expected to resolve a delegate for a Closure")
+        assertDelegateNotFound()
       }
     }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `return null when class type parameter is not resolvable`(gradleVersion: GradleVersion) {
+    val buildScript = """
+      |class FooClass <T> {
+      |    void method(Closure block) {};
+      |    void method(Action<? super T> block) {};
+      |}
+      |new FooClass().method { <caret> }
+      |""".trimMargin()
+    testEmptyProject(gradleVersion) {
+      testBuildscript(buildScript) {
+        assertDelegateNotFound()
+      }
+    }
+  }
+
+  private fun assertDelegateNotFound() {
+    val closableBlock = elementUnderCaret(GrClosableBlock::class.java)
+    assertCalledMethodHasClosureParameter()
+    val delegatesToInfo = getDelegatesToInfo(closableBlock)
+    assertNull(delegatesToInfo, "It's not expected to resolve a delegate for this Closure")
   }
 
   private fun assertCalledMethodHasClosureParameter() {

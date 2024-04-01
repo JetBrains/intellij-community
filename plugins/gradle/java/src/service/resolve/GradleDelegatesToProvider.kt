@@ -112,7 +112,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
       genericParameter
     }
     val substituted = substitutor.substitute(specificType)
-    if (typeParameterIsNotResolved(psiMethod, substituted)) {
+    if (typeParameterIsNotResolved(clazz, psiMethod, substituted)) {
       return null
     }
     return substituted
@@ -122,8 +122,10 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
    * I.e., returns `true` if method signature looks like `<T> void foo(Action<? super T>)` and nothing meaningful was substituted in the
    * type parameter `T`: [resolvedType] still equals `T` after substitution.
    * */
-  private fun typeParameterIsNotResolved(psiMethod: PsiMethod, resolvedType: PsiType): Boolean {
-    val typeParameterNames = psiMethod.typeParameters.map(PsiTypeParameter::getName)
+  private fun typeParameterIsNotResolved(clazz: PsiClass, psiMethod: PsiMethod, resolvedType: PsiType): Boolean {
+    val typeParameterNames = clazz.typeParameters
+      .plus(psiMethod.typeParameters)
+      .map(PsiTypeParameter::getName)
     return typeParameterNames.contains(resolvedType.canonicalText)
   }
 
