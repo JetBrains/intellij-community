@@ -45,6 +45,7 @@ internal open class CallableImportCandidatesProvider(
             }
 
             addAll(indexProvider.getTopLevelExtensionCallableSymbolsByName(unresolvedName, receiverTypes, ::acceptsKotlinCallable))
+            addAll(indexProvider.getDeclaredInObjectExtensionCallableSymbolsByName(unresolvedName, receiverTypes, ::acceptsKotlinCallable))
         }
 
         return candidates.filter { it.isVisible(fileSymbol) && it.callableIdIfNonLocal != null }

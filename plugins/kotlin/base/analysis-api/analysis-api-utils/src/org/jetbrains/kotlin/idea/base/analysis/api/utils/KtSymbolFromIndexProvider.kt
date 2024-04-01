@@ -202,13 +202,30 @@ class KtSymbolFromIndexProvider private constructor(
         name: Name,
         receiverTypes: List<KtType>,
         psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+    ): Sequence<KtCallableSymbol> =
+        getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinTopLevelExtensionsByReceiverTypeIndex)
+
+    context(KtAnalysisSession)
+    fun getDeclaredInObjectExtensionCallableSymbolsByName(
+        name: Name,
+        receiverTypes: List<KtType>,
+        psiFilter: (KtCallableDeclaration) -> Boolean = { true }
+    ): Sequence<KtCallableSymbol> =
+        getExtensionCallableSymbolsByName(name, receiverTypes, psiFilter, KotlinExtensionsInObjectsByReceiverTypeIndex)
+
+    context(KtAnalysisSession)
+    private fun getExtensionCallableSymbolsByName(
+        name: Name,
+        receiverTypes: List<KtType>,
+        psiFilter: (KtCallableDeclaration) -> Boolean,
+        indexHelper: KotlinExtensionsByReceiverTypeStubIndexHelper,
     ): Sequence<KtCallableSymbol> {
         val receiverTypeNames = receiverTypes.flatMapTo(hashSetOf()) { findAllNamesForType(it) }
         if (receiverTypeNames.isEmpty()) return emptySequence()
 
-        val keys = receiverTypeNames.map { KotlinTopLevelExtensionsByReceiverTypeIndex.buildKey(receiverTypeName = it, name.asString()) }
+        val keys = receiverTypeNames.map { indexHelper.buildKey(receiverTypeName = it, name.asString()) }
         val valueFilter: (KtCallableDeclaration) -> Boolean = { psiFilter(it) && useSiteFilter(it) && !it.isKotlinBuiltins() }
-        val values = keys.flatMap { key -> KotlinTopLevelExtensionsByReceiverTypeIndex.getAllElements(key, project, scope, valueFilter) }
+        val values = keys.flatMap { key -> indexHelper.getAllElements(key, project, scope, valueFilter) }
 
         return sequence {
             for (extension in values) {
