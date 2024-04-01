@@ -222,9 +222,11 @@ object PluginManagerCore {
     var result: IdeaPluginDescriptorImpl? = null
     for (descriptor in pluginSet.getEnabledModules()) {
       val classLoader = descriptor.getPluginClassLoader()
-      if (classLoader is UrlClassLoader && classLoader.hasLoadedClass(className)) {
-        result = descriptor
-        break
+      if (classLoader is UrlClassLoader) {
+        if (classLoader.hasLoadedClass(className)) {
+          result = descriptor
+          break
+        }
       }
       else if (runCatching { Class.forName(className, false, classLoader) }.isSuccess) {
         result = descriptor
