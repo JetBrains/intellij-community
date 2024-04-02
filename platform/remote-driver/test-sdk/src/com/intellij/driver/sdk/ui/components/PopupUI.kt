@@ -2,6 +2,7 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.should
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
@@ -30,7 +31,18 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
   fun itemsList() = menuItems.list().map { it.getText() }
 }
 
-open class PopupUiComponent(data: ComponentData) : UiComponent(data)
+open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
+  private val popupComponent by lazy {
+    driver.cast(component, Window::class)
+  }
+
+  fun isFocused() = popupComponent.isFocused()
+
+  @Remote("java.awt.Window")
+  interface Window: Component {
+    fun isFocused(): Boolean
+  }
+}
 
 @Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")
 interface PopupItemRef {

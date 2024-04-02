@@ -4,12 +4,15 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
+import java.awt.Point
 
 @Remote("com.intellij.openapi.editor.Editor")
 interface Editor {
   fun getDocument(): Document
   fun getProject(): Project
   fun getCaretModel(): CaretModel
+  fun logicalPositionToXY(position: LogicalPosition): Point
+  fun getVirtualFile(): VirtualFile
 }
 
 @Remote("com.intellij.openapi.editor.Document")

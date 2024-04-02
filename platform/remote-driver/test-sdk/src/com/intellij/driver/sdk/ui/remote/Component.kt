@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.remote
 
 import com.intellij.driver.client.Remote
+import java.awt.Point
 
 @Remote("java.awt.Component")
 interface Component {
@@ -12,4 +13,5 @@ interface Component {
   fun isShowing(): Boolean
   fun isEnabled(): Boolean
   fun isFocusOwner(): Boolean
+  fun getLocationOnScreen(): Point
 }

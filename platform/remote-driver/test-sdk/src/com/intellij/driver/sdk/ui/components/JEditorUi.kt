@@ -48,8 +48,8 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     if (it.size < line) "" else it[line - 1]
   }
 
-  fun interact(block: Editor.() -> Unit) {
-    driver.withContext(OnDispatcher.EDT) {
+  fun <T> interact(block: Editor.() -> T): T {
+    return driver.withContext(OnDispatcher.EDT) {
       block.invoke(editor)
     }
   }
