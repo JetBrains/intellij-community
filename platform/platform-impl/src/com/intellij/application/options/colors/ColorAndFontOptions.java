@@ -73,9 +73,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
 
-  private Map<String, MyColorScheme> mySchemes;
-  private MyColorScheme mySelectedScheme;
-  private @Nullable String myPreselectedSchemeName;
+  private final ColorAndFontOptionsModel myModel = ColorAndFontOptionsModel.getInstance();
+  ColorAndFontOptionsModelListener modelListener = new ColorAndFontOptionsModelListener() {
+    @Override
+    public void onChanged() {
+      if (myInitResetCompleted) resetSchemesCombo(myModel);
+    }
+  };
 
   private boolean mySomeSchemesDeleted = false;
   private Map<ColorAndFontPanelFactory, InnerSearchableConfigurable> mySubPanelFactories;
@@ -96,6 +100,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   private MessageBusConnection myEditorColorSchemeConnection;
   private boolean myShouldChangeLafIfNecessary = true;
+
+  public ColorAndFontOptions() {
+    myModel.addListener(modelListener);
+  }
 
   public void addListener(@NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
@@ -122,12 +130,34 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return listModified;
   }
 
+  private Iterable<MyColorScheme> getMySchemes() {
+    return myModel.allSchemes().stream().filter((scheme) -> {
+      return scheme instanceof MyColorScheme;
+    }).map((scheme -> {
+      return (MyColorScheme) scheme;
+    })).toList();
+  }
+
+  private @Nullable MyColorScheme getMyScheme(@NotNull String name) {
+    Scheme scheme = myModel.getScheme(name);
+    if (scheme instanceof MyColorScheme) return (MyColorScheme)scheme;
+    else return null;
+  }
+
+  private MyColorScheme getMySelectedScheme() {
+    Scheme scheme = myModel.getSelectedScheme();
+    if (scheme instanceof MyColorScheme) return (MyColorScheme)scheme;
+    else return null;
+  }
+
   private boolean isSchemeListModified() {
     if (mySomeSchemesDeleted) return true;
 
-    if (!mySelectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
+    EditorColorsScheme selectedScheme = myModel.getSelectedScheme();
+    if (selectedScheme == null ||
+        !selectedScheme.getName().equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) return true;
 
-    for (MyColorScheme scheme : mySchemes.values()) {
+    for (MyColorScheme scheme : getMySchemes()) {
       if (scheme.isNew()) return true;
     }
 
@@ -135,34 +165,32 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private boolean isSomeSchemeModified() {
-    for (MyColorScheme scheme : mySchemes.values()) {
+    for (MyColorScheme scheme : getMySchemes()) {
       if (scheme.isModified()) return true;
     }
     return false;
   }
 
   public EditorColorsScheme selectScheme(@NotNull String name) {
-    MyColorScheme schemeToSelect = getScheme(name);
+    MyColorScheme schemeToSelect = getMyScheme(name);
     if (schemeToSelect != null) {
-      mySelectedScheme = schemeToSelect;
+      myModel.setSelectedScheme(schemeToSelect, this);
     }
     else {
-      LOG.warn("Scheme " + name + " can not be selected. Schemes: " + mySchemes.keySet());
+      LOG.warn("Scheme " + name + " can not be selected. Schemes: " + myModel.schemesKeySet());
     }
 
-    return mySelectedScheme;
-  }
-
-  MyColorScheme getScheme(String name) {
-    return mySchemes.get(name);
+    return myModel.getSelectedScheme();
   }
 
   public EditorColorsScheme getSelectedScheme() {
-    return mySelectedScheme;
+    return myModel.getSelectedScheme();
   }
 
   public EditorSchemeAttributeDescriptor[] getCurrentDescriptions() {
-    return mySelectedScheme.getDescriptors();
+    MyColorScheme selectedScheme = getMySelectedScheme();
+    if (selectedScheme != null) return selectedScheme.getDescriptors();
+    return new EditorSchemeAttributeDescriptor[0];
   }
 
   @Override
@@ -198,7 +226,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public boolean containsScheme(@NotNull String name, boolean projectScheme) {
     assert !projectScheme;
-    return mySchemes.get(name) != null || mySchemes.get(Scheme.EDITABLE_COPY_PREFIX + name) != null;
+    return myModel.getScheme(name) != null || myModel.getScheme(Scheme.EDITABLE_COPY_PREFIX + name) != null;
   }
 
   @Override
@@ -246,11 +274,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   public @NotNull Groups<EditorColorsScheme> getOrderedSchemes() {
-    return EditorColorSchemesSorter.getInstance().getOrderedSchemes(mySchemes);
+    return myModel.getOrderedSchemes();
   }
 
   public @NotNull Collection<EditorColorsScheme> getSchemes() {
-    return new ArrayList<>(mySchemes.values());
+    return new ArrayList<>(myModel.allSchemes());
   }
 
   public boolean saveSchemeAs(@NotNull EditorColorsScheme editorScheme, @NotNull String name) {
@@ -267,8 +295,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       newScheme.setIsNew();
 
-      mySchemes.put(name, newScheme);
-      selectScheme(newScheme.getName());
+      myModel.runBatchedUpdate(this, () -> {
+        myModel.putScheme(name, newScheme, this);
+        selectScheme(newScheme.getName());
+      });
       resetSchemesCombo(null);
       return true;
     }
@@ -280,27 +310,30 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     MyColorScheme newScheme = new MyColorScheme(imported);
     initScheme(newScheme);
 
-    mySchemes.put(imported.getName(), newScheme);
-    selectScheme(newScheme.getName());
+    myModel.runBatchedUpdate(this, () -> {
+      myModel.putScheme(imported.getName(), newScheme, this);
+      selectScheme(newScheme.getName());
+    });
     resetSchemesCombo(null);
   }
 
   @Override
   public void removeScheme(@NotNull EditorColorsScheme scheme) {
     String schemeName = scheme.getName();
-    if (mySelectedScheme.getName().equals(schemeName)) {
+    EditorColorsScheme selectedScheme = getSelectedScheme();
+    if (selectedScheme != null && selectedScheme.getName().equals(schemeName)) {
       selectDefaultScheme();
     }
 
     boolean deletedNewlyCreated = false;
 
-    MyColorScheme toDelete = mySchemes.get(schemeName);
+    MyColorScheme toDelete = getMyScheme(schemeName);
 
     if (toDelete != null) {
       deletedNewlyCreated = toDelete.isNew();
     }
 
-    mySchemes.remove(schemeName);
+    myModel.removeScheme(schemeName, this);
     resetSchemesCombo(null);
     mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
   }
@@ -313,8 +346,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
 
   void resetSchemeToOriginal(@NotNull String name) {
-    MyColorScheme schemeToReset = mySchemes.get(name);
-    schemeToReset.resetToOriginal();
+    MyColorScheme schemeToReset = getMyScheme(name);
+    if (schemeToReset != null) schemeToReset.resetToOriginal();
     selectScheme(name);
     resetSchemesCombo(null);
     ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
@@ -331,10 +364,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       SchemeManager<EditorColorsScheme> schemeManager = ((EditorColorsManagerImpl)editorColorManager).getSchemeManager();
       EditorColorsScheme oldScheme = editorColorManager.getGlobalScheme();
 
-      List<EditorColorsScheme> result = new ArrayList<>(mySchemes.values().size());
+      List<EditorColorsScheme> result = new ArrayList<>(myModel.allSchemes().size());
       boolean activeSchemeModified = false;
-      EditorColorsScheme activeOriginalScheme = mySelectedScheme.getParentScheme();
-      for (MyColorScheme scheme : mySchemes.values()) {
+      MyColorScheme selectedScheme = getMySelectedScheme();
+      if (selectedScheme == null) return;
+
+      EditorColorsScheme activeOriginalScheme = selectedScheme.getParentScheme();
+      for (MyColorScheme scheme : getMySchemes()) {
         boolean isModified = scheme.apply();
         if (isModified && !activeSchemeModified && activeOriginalScheme == scheme.getParentScheme()) {
           activeSchemeModified = true;
@@ -374,17 +410,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
   @ApiStatus.Internal
   public void preselectScheme(@NotNull String schemeName) {
-    if (mySchemes.containsKey(schemeName)) {
-      selectScheme(schemeName);
+    myModel.runBatchedUpdate(this, () -> {
+      if (myModel.getScheme(schemeName) != null) {
+        selectScheme(schemeName);
 
-      if (myInitResetCompleted) {
-        resetSchemesCombo(this);
+        if (myInitResetCompleted) {
+          resetSchemesCombo(this);
+        }
       }
-    }
 
-    if (!myInitResetCompleted) {
-      myPreselectedSchemeName = schemeName;
-    }
+      if (!myInitResetCompleted) {
+        myModel.setPreselectedSchemeName(schemeName, this);
+      }
+    });
   }
 
   private void resetSchemesCombo(Object source) {
@@ -578,32 +616,34 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   private void initAll() {
     EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
 
-    mySchemes = new HashMap<>();
-    for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
-      MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
-      initScheme(schemeDelegate);
-      mySchemes.put(schemeDelegate.getName(), schemeDelegate);
-    }
-
-    EditorColorsScheme schemeToSelect = null;
-    if (myPreselectedSchemeName != null) {
-      schemeToSelect = mySchemes.get(myPreselectedSchemeName);
-      myPreselectedSchemeName = null;
-    }
-
-    if (schemeToSelect == null) {
-      schemeToSelect = globalScheme;
-
-      if (EditorColorsManagerImpl.Companion.isTempScheme(schemeToSelect)) {
-        MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)schemeToSelect);
+    myModel.runBatchedUpdate(this, () -> {
+      myModel.dropSchemes(this);
+      for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
+        MyColorScheme schemeDelegate = new MyColorScheme(allScheme);
         initScheme(schemeDelegate);
-        mySchemes.put(schemeDelegate.getName(), schemeDelegate);
+        myModel.putScheme(schemeDelegate.getName(), schemeDelegate, this);
       }
-    }
 
-    mySelectedScheme = mySchemes.get(schemeToSelect.getName());
+      EditorColorsScheme schemeToSelect = null;
+      String preselectedSchemeName = myModel.getPreselectedSchemeName();
+      if (preselectedSchemeName != null) {
+        schemeToSelect = myModel.getScheme(preselectedSchemeName);
+        myModel.setPreselectedSchemeName(null, this);
+      }
 
-    assert mySelectedScheme != null : schemeToSelect.getName() + "; myschemes=" + mySchemes;
+      if (schemeToSelect == null) {
+        schemeToSelect = globalScheme;
+
+        if (EditorColorsManagerImpl.Companion.isTempScheme(schemeToSelect)) {
+          MyColorScheme schemeDelegate = new MyTempColorScheme((AbstractColorsScheme)schemeToSelect);
+          initScheme(schemeDelegate);
+          myModel.putScheme(schemeDelegate.getName(), schemeDelegate, this);
+        }
+      }
+
+      myModel.setSelectedScheme(myModel.getScheme(schemeToSelect.getName()), this);
+      assert myModel.getSelectedScheme() != null : schemeToSelect.getName() + "; myschemes=" + myModel.allSchemes();
+    });
   }
 
   private static void initScheme(@NotNull MyColorScheme scheme) {
@@ -713,9 +753,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   }
 
   private void editorColorSchemeChanged(@Nullable EditorColorsScheme scheme) {
-    if (mySelectedScheme == null || scheme == null) return;
-    if (mySelectedScheme.getName().equals(scheme.getName()) ||
-        Scheme.getBaseName(mySelectedScheme.getName()).equals(scheme.getName())) return;
+    if (myModel.getSelectedScheme() == null || scheme == null) return;
+    if (myModel.getSelectedScheme().getName().equals(scheme.getName()) ||
+        Scheme.getBaseName(myModel.getSelectedScheme().getName()).equals(scheme.getName())) return;
 
     reset();
   }
@@ -851,6 +891,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       myApplyCompleted = false;
       myRootSchemesPanel = null;
+
+      myModel.removeListener(modelListener);
     }
   }
 
@@ -905,6 +947,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
+      if (scheme == null) return;
       boolean skip = scheme instanceof EditorColorsSchemeImpl && isInherited() && myIsInheritedInitial;
       if (!skip) {
         // IDEA-162844 set only if previously was not inherited (and, so, we must mark it as inherited)
@@ -1085,6 +1128,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
+      if (scheme == null) return;
       boolean skip = scheme instanceof EditorColorsSchemeImpl && isInherited() && myIsInheritedInitial;
       if (!skip) {
         scheme.setColor(myColorKey, isInherited() ? AbstractColorsScheme.INHERITED_COLOR_MARKER : myColor);
@@ -1247,7 +1291,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         if (parentScheme instanceof AbstractColorsScheme) {
           TextAttributes ownAttrs = ((AbstractColorsScheme)parentScheme).getDirectlyDefinedAttributes(key);
           if (ownAttrs != null) {
-            return ownAttrs == AbstractColorsScheme.INHERITED_ATTRS_MARKER;
+            return ownAttrs == INHERITED_ATTRS_MARKER;
           }
         }
         TextAttributes attributes = getAttributes(key);
@@ -1265,7 +1309,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         if (parentScheme instanceof AbstractColorsScheme) {
           Color ownAttrs = ((AbstractColorsScheme)parentScheme).getDirectlyDefinedColor(key);
           if (ownAttrs != null) {
-            return ownAttrs == AbstractColorsScheme.INHERITED_COLOR_MARKER;
+            return ownAttrs == INHERITED_COLOR_MARKER;
           }
         }
         Color attributes = getColor(key);
@@ -1489,7 +1533,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public boolean isModified() {
       createPanel();
-      for (MyColorScheme scheme : mySchemes.values()) {
+      for (MyColorScheme scheme : getMySchemes()) {
         if (mySubPanel.containsFontOptions()) {
           if (scheme.isFontModified() || scheme.isConsoleFontModified()) {
             myRevertChangesCompleted = false;
