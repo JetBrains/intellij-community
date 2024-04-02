@@ -2,8 +2,12 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
@@ -679,20 +683,30 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   private NamesByExprInfo suggestVariableNameByExpressionOnly(@NotNull PsiExpression expr,
                                                               @Nullable VariableKind variableKind,
                                                               boolean useAllMethodNames) {
-    if (expr instanceof PsiMethodCallExpression) {
-      PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
+    if (expr instanceof PsiMethodCallExpression call) {
+      List<? extends MethodContract> contracts = DumbService.isDumb(call.getProject()) ? 
+                                                 List.of() : JavaMethodContractUtil.getMethodCallContracts(call);
+      ContractReturnValue returnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
+      if (returnValue instanceof ContractReturnValue.ParameterReturnValue parameter) {
+        int number = parameter.getParameterNumber();
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length > number) {
+          return suggestVariableNameByExpressionOnly(args[number], variableKind, useAllMethodNames);
+        }
+      }
+      PsiReferenceExpression methodExpr = call.getMethodExpression();
       String methodName = methodExpr.getReferenceName();
       if (methodName != null) {
         if ("of".equals(methodName) || "ofNullable".equals(methodName)) {
-          if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
-            PsiExpression[] expressions = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
+          if (isJavaUtilMethodCall(call)) {
+            PsiExpression[] expressions = call.getArgumentList().getExpressions();
             if (expressions.length > 0) {
               return suggestVariableNameByExpressionOnly(expressions[0], variableKind, useAllMethodNames);
             }
           }
         }
         if ("map".equals(methodName) || "flatMap".equals(methodName) || "filter".equals(methodName)) {
-          if (isJavaUtilMethodCall((PsiMethodCallExpression)expr)) {
+          if (isJavaUtilMethodCall(call)) {
             return NamesByExprInfo.EMPTY;
           }
         }

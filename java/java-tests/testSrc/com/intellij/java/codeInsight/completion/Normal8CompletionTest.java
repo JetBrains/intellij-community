@@ -2,6 +2,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.psi.PsiClass;
@@ -568,4 +569,32 @@ public class Normal8CompletionTest extends NormalCompletionTestCase {
         import java.util.ArrayList;
         import java.util.List;class UseClass {void test() {List<String> list = new ArrayList<>()}}""");
   }
+
+
+  @NeedsIndex.SmartMode(reason = "Resolve-based name suggestions are not shown in dumb mode")
+  public void testNameFromRequireNonNullArg() {
+    myFixture.configureByText("Test.java", """
+      import java.util.Objects;
+      
+      public class Test {
+        void test() {
+          String su<caret> = Objects.requireNonNull(superMessage(), "Ooops");
+        }
+      
+        native String superMessage();
+      }""");
+    myFixture.complete(CompletionType.BASIC, 0);
+    myFixture.type("\n");
+    myFixture.checkResult("""
+                            import java.util.Objects;
+                            
+                            public class Test {
+                              void test() {
+                                String superMessage = Objects.requireNonNull(superMessage(), "Ooops");
+                              }
+
+                              native String superMessage();
+                            }""");
+  }
+
 }
