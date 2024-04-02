@@ -6,7 +6,6 @@ import com.intellij.openapi.util.use
 import org.jetbrains.plugins.gradle.importing.TestModel
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.service.project.GradlePartialResolverPolicy
-import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
@@ -18,7 +17,7 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
 
       lateinit var resultResolverContext: ProjectResolverContext
-      val projectModelContributorAssertion = ListenerAssertion()
+      val modelFetchCompletionAssertion = ListenerAssertion()
 
       val defaultModelClass = TestModel.Model1::class.java
       val partialModelClass = TestModel.Model2::class.java
@@ -28,21 +27,21 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
       addProjectResolverExtension(TestPartialProjectResolverExtension::class.java, disposable) {
         addModelProviders(disposable, TestModelProvider(partialModelClass))
       }
-      addProjectModelContributor(disposable, ProjectModelContributor { resolverContext ->
-        projectModelContributorAssertion.trace {
+      whenModelFetchCompleted(disposable) { resolverContext ->
+        modelFetchCompletionAssertion.trace {
           resultResolverContext = resolverContext
         }
-      })
+      }
 
       initMultiModuleProject()
       importProject()
       assertMultiModuleProjectStructure()
 
-      projectModelContributorAssertion.assertListenerFailures()
-      projectModelContributorAssertion.assertListenerState(1) {
-        "Project module contributor should be called only once during the default Gradle sync"
+      modelFetchCompletionAssertion.assertListenerFailures()
+      modelFetchCompletionAssertion.assertListenerState(1) {
+        "The model fetch action should be completed only once during the default Gradle sync"
       }
-      projectModelContributorAssertion.reset()
+      modelFetchCompletionAssertion.reset()
 
       Assertions.assertNull(resultResolverContext.policy) {
         "Unexpected Gradle resolver policy for the default Gradle sync.\n" +
@@ -69,11 +68,11 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
         })
       })
 
-      projectModelContributorAssertion.assertListenerFailures()
-      projectModelContributorAssertion.assertListenerState(1) {
-        "Project module contributor should be called only once during the partial Gradle sync"
+      modelFetchCompletionAssertion.assertListenerFailures()
+      modelFetchCompletionAssertion.assertListenerState(1) {
+        "The model fetch action should be completed only once during the partial Gradle sync"
       }
-      projectModelContributorAssertion.reset()
+      modelFetchCompletionAssertion.reset()
 
       Assertions.assertInstanceOf(GradlePartialResolverPolicy::class.java, resultResolverContext.policy) {
         "Expected Gradle partial resolver policy for the partial Gradle sync"

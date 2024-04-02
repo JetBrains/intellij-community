@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemOperati
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Ref
 import org.jetbrains.plugins.gradle.importing.syncAction.GradleProjectResolverTestCase
-import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
 
@@ -15,9 +14,9 @@ class GradleOperationDescriptorPropagationTest : GradleProjectResolverTestCase()
   @Test
   fun testProjectImport() {
     val externalSystemTaskId = Ref<ExternalSystemTaskId>()
-    addProjectModelContributor(testRootDisposable, ProjectModelContributor { resolverContext ->
+    whenModelFetchCompleted(testRootDisposable) { resolverContext ->
       externalSystemTaskId.set(resolverContext.externalSystemTaskId)
-    })
+    }
 
     createSettingsFile("")
     importProject()

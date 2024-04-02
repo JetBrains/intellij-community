@@ -355,8 +355,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     extractExternalProjectModels(resolverCtx.getModels(), useCustomSerialization);
 
-    applyProjectModelContributors(resolverCtx);
-
     ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectPath, projectPath);
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
     DataNode<ExternalSystemOperationDescriptor> descriptorDataNode = new DataNode<>(ExternalSystemOperationDescriptor.OPERATION_DESCRIPTOR_KEY,
@@ -487,22 +485,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     myLibraryNamesMixer.mixNames(libraries);
 
     return projectDataNode;
-  }
-
-  private static void applyProjectModelContributors(
-    @NotNull DefaultProjectResolverContext resolverCtx
-  ) {
-    ProjectModelContributor.EP_NAME.forEachExtensionSafe(extension -> {
-      resolverCtx.checkCancelled();
-      final long starResolveTime = System.currentTimeMillis();
-      String modelContributorName = extension.getClass().getSimpleName();
-      ExternalSystemTelemetryUtil.runWithSpan(GradleConstants.SYSTEM_ID, "ExternalSystemProjectModelContributor", (span) -> {
-        span.setAttribute("contributor.name", modelContributorName);
-        extension.accept(resolverCtx);
-      });
-      final long resolveTimeInMs = (System.currentTimeMillis() - starResolveTime);
-      LOG.debug(String.format("Project model contributed by `" + modelContributorName + "` in %d ms", resolveTimeInMs));
-    });
   }
 
   private static @Nullable DataNode<ModuleData> createModuleData(@Nullable IdeaModule gradleModule,

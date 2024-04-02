@@ -20,10 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
-  fun addProjectModelContributor(parentDisposable: Disposable, contributor: ProjectModelContributor) {
-    ProjectModelContributor.EP_NAME.point.registerExtension(contributor, parentDisposable)
-  }
-
   fun whenPhaseCompleted(parentDisposable: Disposable, action: (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
       override fun onModelFetchPhaseCompleted(resolverContext: ProjectResolverContext, phase: GradleModelFetchPhase) {
