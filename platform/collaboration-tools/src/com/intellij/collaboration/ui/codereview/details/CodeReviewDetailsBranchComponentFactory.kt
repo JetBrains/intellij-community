@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindTooltipTextIn
 import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 import com.intellij.collaboration.ui.util.popup.showAndAwait
@@ -50,6 +51,7 @@ object CodeReviewDetailsBranchComponentFactory {
       addActionListener { branchesVm.showBranches() }
       setDropDownLinkIcon()
       bindTextIn(scope, branchesVm.sourceBranch)
+      bindTooltipTextIn(scope, branchesVm.sourceBranch)
       minimumSize = Dimension(0,0)
     }
 
