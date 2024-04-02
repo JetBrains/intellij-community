@@ -11,11 +11,10 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings.GradleProject
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 
 @Internal
 class GradleProjectReference(
-  private val myElement: GrLiteral,
+  private val myElement: PsiElement,
   private val myRange: TextRange,
   private val myQualifiedName: List<String>
 ) : SingleTargetReference(), PsiCompletableReference {

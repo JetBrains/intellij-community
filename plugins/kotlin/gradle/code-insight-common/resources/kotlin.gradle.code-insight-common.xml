@@ -14,6 +14,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinGradleProjectReferenceProvider"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeABICompatibilityChecker"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeRunConfigurationProducer"/>
 
