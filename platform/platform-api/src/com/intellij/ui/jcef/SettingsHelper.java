@@ -59,7 +59,7 @@ final class SettingsHelper {
       settings.log_file = null;
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
-    int port = Registry.intValue("ide.browser.jcef.debug.port");
+    int port = Registry.intValue("ide.browser.jcef.debug.port", -1);
     if (ApplicationManager.getApplication().isInternal() && port > 0) {
       settings.remote_debugging_port = port;
     }
@@ -220,7 +220,7 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
     }
 
-    if (settings.remote_debugging_port == 0 && Registry.intValue("ide.browser.jcef.debug.port") == 0) {
+    if (settings.remote_debugging_port == 0 && Registry.intValue("ide.browser.jcef.debug.port", -1) == 0) {
       args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
     }
 
