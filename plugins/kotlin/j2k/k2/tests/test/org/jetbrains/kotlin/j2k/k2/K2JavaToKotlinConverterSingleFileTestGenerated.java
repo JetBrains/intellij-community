@@ -4768,6 +4768,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/FieldInitializedWithNull.java");
         }
 
+        @TestMetadata("FieldWithTypeUseAnnotationAndInitializer.java")
+        public void testFieldWithTypeUseAnnotationAndInitializer() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/FieldWithTypeUseAnnotationAndInitializer.java");
+        }
+
         @TestMetadata("IndirectOverride.java")
         public void testIndirectOverride() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/IndirectOverride.java");
