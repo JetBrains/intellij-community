@@ -77,6 +77,11 @@ abstract class ProductLoadingStrategy {
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
   /**
+   * Returns the path to a JAR or directory containing classes from [moduleName] registered as a content module in the product. 
+   */
+  abstract fun findProductContentModuleClassesRoot(moduleName: String): Path
+
+  /**
    * Returns `true` if the loader should search for META-INF/plugin.xml files in the core application classpath and load them.
    */
   abstract val shouldLoadDescriptorsFromCoreClassPath: Boolean
@@ -229,6 +234,10 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   }
 
   override fun isOptionalProductModule(moduleName: String): Boolean = false
+  
+  override fun findProductContentModuleClassesRoot(moduleName: String): Path {
+    return Paths.get(PathManager.getLibPath(), "modules", "$moduleName.jar")
+  } 
 
   override val shouldLoadDescriptorsFromCoreClassPath: Boolean
     get() = true

@@ -699,6 +699,7 @@ private fun loadCoreProductPlugin(
   val moduleDir = libDir.resolve("modules")
   val moduleDirExists = Files.isDirectory(moduleDir)
 
+  val loadingStrategy = ProductLoadingStrategy.strategy
   for (module in descriptor.content.modules) {
     check(module.configFile == null) {
       "product module must not use `/` notation for module descriptor file (configFile=${module.configFile})"
@@ -709,7 +710,7 @@ private fun loadCoreProductPlugin(
     val subDescriptorFile = "$moduleName.xml"
 
     if (moduleDirExists && !pathResolver.isRunningFromSources && moduleName.startsWith("intellij.")) {
-      val jarFile = Paths.get(PathManager.getLibPath(), "modules", "$moduleName.jar")
+      val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName)
       val resolver = pool.load(jarFile)
       try {
         moduleRaw = resolver.loadZipEntry(subDescriptorFile)?.let {
