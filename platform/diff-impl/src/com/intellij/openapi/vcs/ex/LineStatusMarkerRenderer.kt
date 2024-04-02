@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffUtil
+import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -46,12 +47,17 @@ abstract class LineStatusMarkerRenderer internal constructor(
       disposed = true
       destroyHighlighters()
     })
-    ApplicationManager.getApplication().getMessageBus().connect(disposable)
-      .subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    val busConnection = ApplicationManager.getApplication().getMessageBus().connect(disposable)
+    busConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
           scheduleValidateHighlighter()
         }
       })
+    busConnection.subscribe(PowerSaveMode.TOPIC, object : PowerSaveMode.Listener {
+      override fun powerSaveStateChanged() {
+        scheduleValidateHighlighter()
+      }
+    })
     scheduleUpdate()
   }
 
