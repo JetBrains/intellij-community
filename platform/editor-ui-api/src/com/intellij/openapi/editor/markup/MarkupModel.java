@@ -10,6 +10,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Provides services for highlighting ranges of text in a document, painting markers on the
  * gutter and so on, and for retrieving information about highlighted ranges.
+ * <p>
+ * Users of the {@link #addRangeHighlighter} methods shall be ready that the highlighter
+ * can be removed by {@link #removeAllHighlighters()} method at any given moment.
+ * Such events may be triggered by {@link com.intellij.codeInsight.daemon.DaemonCodeAnalyzer}
+ * on {@link com.intellij.ide.plugins.DynamicPluginListener} and {@link com.intellij.ide.PowerSaveMode.Listener}.
  *
  * @see com.intellij.openapi.editor.Editor#getMarkupModel()
  * @see com.intellij.openapi.editor.impl.DocumentMarkupModel#forDocument(Document, com.intellij.openapi.project.Project, boolean)
@@ -95,6 +100,10 @@ public interface MarkupModel extends UserDataHolder {
 
   /**
    * Removes all highlighter instances.
+   * <p>
+   * To avoid affecting unrelated subsystems (that is almost impossible to debug),
+   * it is advised not to use the method on editors and documents that are created and controlled by someone else.
+   * Especially so, on the global {@link com.intellij.openapi.fileEditor.TextEditor}.
    */
   void removeAllHighlighters();
 
