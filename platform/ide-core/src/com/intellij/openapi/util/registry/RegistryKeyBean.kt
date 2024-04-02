@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -6,6 +6,7 @@ package com.intellij.openapi.util.registry
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -39,7 +40,7 @@ class RegistryKeyBean private constructor() {
       Registry.setKeys(HashMap<String, RegistryKeyDescriptor>().let { mutator ->
         point.processUnsortedWithPluginDescriptor { bean, pluginDescriptor ->
           val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
-          mutator.put(descriptor.name, descriptor)
+          putNewDescriptorConsideringOverrides(mutator, descriptor)
         }
         java.util.Map.copyOf(mutator)
       })
@@ -50,7 +51,7 @@ class RegistryKeyBean private constructor() {
           Registry.mutateContributedKeys { oldMap ->
             val newMap = HashMap<String, RegistryKeyDescriptor>(oldMap.size + 1)
             newMap.putAll(oldMap)
-            newMap.put(descriptor.name, descriptor)
+            putNewDescriptorConsideringOverrides(newMap, descriptor)
             java.util.Map.copyOf(newMap)
           }
         }
@@ -62,6 +63,7 @@ class RegistryKeyBean private constructor() {
         }
       }, false, null)
 
+      // TODO: Process key removal properly: if override is removed then the overridden value should be re-instantiated
       ApplicationManager.getApplication().messageBus.connect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
         override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
           Registry.mutateContributedKeys { oldMap ->
@@ -83,7 +85,46 @@ class RegistryKeyBean private constructor() {
       return RegistryKeyDescriptor(extension.key,
                                    StringUtil.unescapeStringCharacters(extension.description.replace(CONSECUTIVE_SPACES_REGEX, " ")),
                                    extension.defaultValue, extension.restartRequired,
+                                   extension.overrides,
                                    pluginId)
+    }
+
+    private fun putNewDescriptorConsideringOverrides(map: MutableMap<String, RegistryKeyDescriptor>, newDescriptor: RegistryKeyDescriptor) {
+      val oldDescriptor = map[newDescriptor.name]
+      if (oldDescriptor == null) {
+        // no override
+        map.put(newDescriptor.name, newDescriptor)
+        return
+      }
+
+      when (oldDescriptor.isOverrides to newDescriptor.isOverrides) {
+        false to true -> { // typical normal override, just allow it
+          // TODO: Check dependencies?
+          map.put(newDescriptor.name, newDescriptor)
+          // TODO: Check loading order if the descriptor requires restart?
+          // TODO: ↑ this should only be a concern for dynamically-loaded plugins;
+          //       the others we can process in one batch and don't allow anybody to see changes in the registry keys that require restartF
+        }
+        true to false -> {
+          // TODO: Check dependencies?
+          // The overriding plugin was loaded first, so no action is required.
+        }
+        false to false -> {
+          // For now, preserve the legacy behavior but report an error.
+          map.put(newDescriptor.name, newDescriptor)
+          logger<RegistryKeyBean>().error(
+            "Conflicting registry key definition for key ${oldDescriptor.name}:" +
+            " it was defined by plugin ${oldDescriptor.pluginId}" +
+            " but redefined by plugin ${newDescriptor.pluginId}."
+          )
+        }
+        true to true -> {
+          logger<RegistryKeyBean>().error(
+            "Incorrect registry key override for key ${oldDescriptor.name}:" +
+            " both plugins ${oldDescriptor.pluginId} and ${newDescriptor.pluginId} claim to override it."
+          )
+        }
+      }
     }
   }
 
@@ -102,4 +143,12 @@ class RegistryKeyBean private constructor() {
 
   @Attribute("restartRequired")
   @JvmField var restartRequired: Boolean = false
+
+  /**
+   * Whether this property overrides a property defined somewhere else with the same key.
+   *
+   * Note we only support **one override** for each registry property. Several conflicting overrides for same key are not supported.
+   */
+  @Attribute("overrides")
+  @JvmField var overrides: Boolean = false
 }
