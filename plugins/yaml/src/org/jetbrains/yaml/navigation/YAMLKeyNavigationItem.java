@@ -5,6 +5,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +20,19 @@ public class YAMLKeyNavigationItem implements NavigationItem {
   private final @NotNull String myName;
   private final @NotNull VirtualFile myFile;
   private final int myPosition;
+  private final @NotNull @NlsSafe String myLocation;
 
-  YAMLKeyNavigationItem(@NotNull Project project, @NotNull String name, @NotNull VirtualFile file, int position) {
+  YAMLKeyNavigationItem(@NotNull Project project,
+                        @NotNull String name,
+                        @NotNull VirtualFile file,
+                        int position,
+                        @NotNull @NlsSafe String location) {
     myNavigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, position);
     myProject = project;
     myName = name;
     myFile = file;
     myPosition = position;
+    myLocation = location;
   }
 
   @Override
@@ -66,7 +73,7 @@ public class YAMLKeyNavigationItem implements NavigationItem {
 
       @Override
       public @NotNull String getLocationString() {
-        return myFile.toString();
+        return myLocation;
       }
 
       @Override

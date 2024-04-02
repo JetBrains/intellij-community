@@ -42,7 +42,6 @@
     <stripTrailingSpacesFilterFactory implementation="org.jetbrains.yaml.formatter.YamlStripTrailingSpacesFilterFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
-    <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
     <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
