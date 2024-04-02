@@ -13,6 +13,8 @@ import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.Change
@@ -210,8 +212,9 @@ class PostCommitChecksHandler(val project: Project) {
   }
 
   private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {
+    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.br(), problems.map { HtmlChunk.text(it.text) })
     postCommitCheckErrorNotifications.notify(VcsBundle.message("post.commit.checks.failed.notification.title"),
-                                             problems.joinToString("<br/>") { it.text },
+                                             content.toString(),
                                              project) { notification ->
       notification.setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
 
@@ -244,6 +247,7 @@ class PostCommitChecksHandler(val project: Project) {
         .mapNotNull { vcs -> vcs.checkinEnvironment?.postCommitChangeConverter }
       if (changeConverters.none { it.isFailureUpToDate(commitContexts) }) return null
 
+      // Do not escape XML - EditorNotificationPanel does not support it
       val text = StringUtil.shortenTextWithEllipsis(problems.joinToString(", ") { it.text }, 100, 0)
       val panel = EditorNotificationPanel(EditorNotificationPanel.Status.Error)
         .text(VcsBundle.message("post.commit.checks.failed.push.dialog.notification.text", text))
