@@ -50,7 +50,7 @@ public final class EndUserAgreement {
     return getDocumentContentFile(getDocumentName());
   }
 
-  public static @NotNull Path getDocumentContentFile(@NotNull String docName) {
+  private static @NotNull Path getDocumentContentFile(@NotNull String docName) {
     return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? PRIVACY_POLICY_CONTENT_FILE_NAME : (docName + ".cached"));
   }
 
@@ -139,8 +139,11 @@ public final class EndUserAgreement {
     }
   }
 
-  public static void update(@NotNull String docName, @NotNull String text) {
+  public static void updateContent(@NotNull String docName, @NotNull String text) {
     writeToFile(getDocumentContentFile(docName), text);
+  }
+
+  public static void updateActiveDocumentName(@NotNull String docName) {
     writeToFile(getDocumentNameFile(), docName);
   }
 
