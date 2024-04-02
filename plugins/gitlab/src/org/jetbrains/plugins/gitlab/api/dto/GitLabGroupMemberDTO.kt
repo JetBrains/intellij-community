@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 data class GitLabGroupMemberDTO(
   val group: GroupDTO
 ) {
-  val projectMemberships: List<GitLabProjectMemberDTO> = group.projects.nodes
+  val projectMemberships: List<GitLabProjectDTO> = group.projects.nodes
 
-  data class GroupDTO(val projects: GitLabUserDetailedDTO.ProjectMemberConnection)
+  data class GroupDTO(val projects: GitLabProjectsDTO)
 }
