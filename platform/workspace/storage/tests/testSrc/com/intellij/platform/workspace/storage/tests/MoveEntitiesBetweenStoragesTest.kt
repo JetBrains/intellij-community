@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
@@ -18,7 +19,7 @@ class MoveEntitiesBetweenStoragesTest {
     }.toSnapshot()
 
     val target = createEmptyBuilder().also {
-      it.addEntity(snapshot.singleSampleEntity())
+      it.addEntity(snapshot.singleSampleEntity().createEntityTreeCopy(true))
     }.toSnapshot()
     val entity = target.singleSampleEntity()
     assertEquals("to copy", entity.stringProperty)
@@ -39,7 +40,7 @@ class MoveEntitiesBetweenStoragesTest {
     }.toSnapshot()
 
     val target = createEmptyBuilder().also {
-      it.addEntity(snapshot.entities(XParentEntity::class.java).single())
+      it.addEntity(snapshot.entities(XParentEntity::class.java).single().createEntityTreeCopy(true))
     }.toSnapshot()
     val entity = target.entities(XParentEntity::class.java).single()
     assertEquals("parent", entity.parentProperty)
@@ -67,7 +68,7 @@ class MoveEntitiesBetweenStoragesTest {
     }.toSnapshot()
 
     val target = createEmptyBuilder().also {
-      it.addEntity(snapshot.entities(XParentEntity::class.java).single())
+      it.addEntity(snapshot.entities(XParentEntity::class.java).single().createEntityTreeCopy(true))
     }.toSnapshot()
     val entity = target.entities(XParentEntity::class.java).single()
     assertEquals("parent", entity.parentProperty)

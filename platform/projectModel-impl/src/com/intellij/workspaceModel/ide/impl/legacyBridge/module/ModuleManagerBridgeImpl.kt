@@ -36,7 +36,6 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
-import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.map
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -410,9 +409,9 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
       builder.removeEntity(entity)
     }
     for (entity in entitiesToAdd) {
-      (builder as MutableEntityStorageInstrumentation).addEntity(entity)
+      builder.addEntity(entity.createEntityTreeCopy(true))
       entity.getModuleLevelLibraries(storageContainingEntitiesToAdd).forEach { libraryEntity ->
-        builder.addEntity(libraryEntity)
+        builder.addEntity(libraryEntity.createEntityTreeCopy(true))
       }
     }
   }

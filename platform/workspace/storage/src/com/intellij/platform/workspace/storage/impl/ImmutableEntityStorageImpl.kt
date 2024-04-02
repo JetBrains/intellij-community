@@ -238,32 +238,6 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  @Suppress("UNCHECKED_CAST")
-  override fun <T : WorkspaceEntity> addEntity(entity: T): T = addEntityTimeMs.addMeasuredTime {
-    try {
-      lockWrite()
-      val entityToAdd = if (entity is ModifiableWorkspaceEntityBase<*, *>) {
-        entity as ModifiableWorkspaceEntityBase<T, *>
-      }
-      else {
-        if ((entity as WorkspaceEntityBase).snapshot === this) { // We don't re-add entity from the same store
-          return@addMeasuredTime entity
-        }
-
-        @Suppress("USELESS_CAST") //this is needed to work around a bug in Kotlin compiler (KT-55555)
-        entity.createEntityTreeCopy(true) as ModifiableWorkspaceEntityBase<T, *>
-      }
-
-      entityToAdd.applyToBuilder(this)
-      entityToAdd.changedProperty.clear()
-    }
-    finally {
-      unlockWrite()
-    }
-
-    return@addMeasuredTime entity
-  }
-
   // This should be removed or not extracted into the interface
   fun <T : WorkspaceEntity, E : WorkspaceEntityData<T>, D : ModifiableWorkspaceEntityBase<T, E>> putEntity(entity: D) = putEntityTimeMs.addMeasuredTime {
     try {

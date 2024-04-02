@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.impl.EntityId
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.asParent
 import com.intellij.util.containers.FList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * via [com.intellij.platform.workspace.storage.MutableEntityStorage.addEntity] function.
  */
 @Experimental
+@ApiStatus.Internal
 public fun <T : WorkspaceEntity> T.createEntityTreeCopy(requireTopLevelEntity: Boolean = false): WorkspaceEntity.Builder<T> {
   //copying entity from another snapshot
   val originalSnapshot = (this as WorkspaceEntityBase).snapshot as AbstractEntityStorage

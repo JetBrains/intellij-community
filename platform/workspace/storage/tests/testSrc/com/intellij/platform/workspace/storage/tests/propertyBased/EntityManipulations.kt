@@ -5,6 +5,7 @@ package com.intellij.platform.workspace.storage.tests.propertyBased
 
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.createEntityTreeCopy
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.exceptions.SymbolicIdAlreadyExistsException
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
@@ -91,7 +92,7 @@ private class AddDetachedToStorage(private val storage: MutableEntityStorageImpl
     val entityIndex = env.generateValue(Generator.integers(0, entities.size - 1), null)
     val someEntity = entities.removeAt(entityIndex)
     if (someEntity is ModifiableWorkspaceEntityBase<*, *> && someEntity.diff == null) {
-      storage.addEntity(someEntity as WorkspaceEntity)
+      storage.addEntity(someEntity.createEntityTreeCopy(true))
       env.logMessage("Added ${someEntity.id.asString()} to storage")
     }
     else {
