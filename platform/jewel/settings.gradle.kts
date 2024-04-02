@@ -36,6 +36,7 @@ include(
     ":int-ui:int-ui-decorated-window",
     ":int-ui:int-ui-standalone",
     ":markdown:core",
+    ":markdown:extension:autolink",
     ":markdown:extension:gfm-alerts",
     ":markdown:int-ui-standalone-styling",
     ":markdown:ide-laf-bridge-styling",

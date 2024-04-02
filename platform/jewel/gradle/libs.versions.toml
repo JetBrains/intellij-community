@@ -16,6 +16,7 @@ poko = "0.13.1"
 
 [libraries]
 commonmark-core = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
+commonmark-ext-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
 
 filePicker = { module = "com.darkrockstudios:mpfilepicker", version = "3.1.0" }
 

@@ -189,7 +189,7 @@ public class MarkdownProcessor(
             is ThematicBreak -> MarkdownBlock.ThematicBreak
             is HtmlBlock -> toMarkdownHtmlBlockOrNull()
             is CustomBlock -> {
-                extensions.find { it.processorExtension.canProcess(this) }
+                extensions.find { it.processorExtension?.canProcess(this) == true }
                     ?.processorExtension?.processMarkdownBlock(this, this@MarkdownProcessor)
             }
             else -> null

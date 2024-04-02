@@ -31,6 +31,7 @@ import org.jetbrains.jewel.intui.markdown.styling.extension.github.alerts.dark
 import org.jetbrains.jewel.intui.markdown.styling.extension.github.alerts.light
 import org.jetbrains.jewel.intui.markdown.styling.light
 import org.jetbrains.jewel.markdown.MarkdownBlock
+import org.jetbrains.jewel.markdown.extension.autolink.AutolinkProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
@@ -43,14 +44,17 @@ import java.awt.Desktop
 import java.net.URI
 
 @Composable
-internal fun MarkdownPreview(rawMarkdown: String, modifier: Modifier = Modifier) {
+internal fun MarkdownPreview(
+    rawMarkdown: String,
+    modifier: Modifier = Modifier,
+) {
     val isDark = JewelTheme.isDark
 
     val markdownStyling =
         remember(isDark) { if (isDark) MarkdownStyling.dark() else MarkdownStyling.light() }
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
-    val extensions = listOf(GitHubAlertProcessorExtension)
+    val extensions = listOf(GitHubAlertProcessorExtension, AutolinkProcessorExtension)
     val processor = remember { MarkdownProcessor(extensions) }
 
     LaunchedEffect(rawMarkdown) {
