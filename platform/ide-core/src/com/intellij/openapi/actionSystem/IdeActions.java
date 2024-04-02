@@ -56,6 +56,7 @@ public interface IdeActions {
   String ACTION_EDITOR_ESCAPE = "EditorEscape";
   String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
+  String ACTION_EDITOR_MATCH_BRACE = "EditorMatchBrace";
   String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
   String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
   String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION= "EditorCreateRectangularSelection";
