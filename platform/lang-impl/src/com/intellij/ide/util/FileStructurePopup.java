@@ -374,7 +374,17 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       editorOffset = -1;
     }
     var state = new StructureViewSelectVisitorState();
-    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, state);
+    TreeVisitor visitor = new TreeVisitor() {
+      @Override
+      public @NotNull TreeVisitor.VisitThread visitThread() {
+        return VisitThread.BGT;
+      }
+
+      @Override
+      public @NotNull Action visit(@NotNull TreePath path) {
+        return StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, state);
+      }
+    };
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
