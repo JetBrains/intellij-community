@@ -147,9 +147,17 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                    packMode = LibraryPackMode.MERGED,
-                                                    reason = "withProjectLibrary"))
+    includedProjectLibraries.add(
+      ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
+    )
+  }
+
+  internal fun withProjectLibraries(libraryNames: List<String>) {
+    for (libraryName in libraryNames) {
+      includedProjectLibraries.add(
+        ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
+      )
+    }
   }
 
   fun withProjectLibraries(libraryNames: Iterable<String>) {

@@ -213,6 +213,16 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   layout.withProjectLibrary(libraryName = "ktor-client-logging")
   layout.withProjectLibrary(libraryName = "ktor-serialization-kotlinx-json")
 
+  // https://jetbrains.team/p/ij/reviews/67104/timeline
+  // https://youtrack.jetbrains.com/issue/IDEA-179784
+  // https://youtrack.jetbrains.com/issue/IDEA-205600
+  layout.withProjectLibraries(listOf(
+    "javax.annotation-api",
+    "javax.activation",
+    "jaxb-runtime",
+    "jaxb-api",
+  ))
+
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)
   // platform-loader.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
