@@ -550,9 +550,6 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitParenthesizedExpressionRaw(parenthesizedExpression: JKParenthesizedExpression) {
-            if (parenthesizedExpression.shouldBePreserved) {
-                printExplicitLabel(parenthesizedExpression)
-            }
             printer.par {
                 parenthesizedExpression.expression.accept(this)
             }
@@ -980,12 +977,11 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun printExplicitLabel(element: JKElement) {
+        private fun printExplicitLabel(thisExpression: JKThisExpression) {
             // TODO: Currently disabled for K2 J2K, but may have to be enabled
-            // if we don't figure out how to accurately preserve original `this` expressions
-            // and parentheses without a post-processing
+            // if we don't figure out how to accurately preserve original `this` expressions without a post-processing
             if (KotlinPluginModeProvider.isK2Mode()) return
-            val label = elementInfoStorage.getOrCreateExplicitLabelForElement(element)
+            val label = elementInfoStorage.getOrCreateExplicitLabelForElement(thisExpression)
             printer.print(label.render())
         }
 

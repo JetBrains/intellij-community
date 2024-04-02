@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.IndentRawStringIntention
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.RemoveUnnecessaryParenthesesIntention
-import org.jetbrains.kotlin.idea.inspections.*
+import org.jetbrains.kotlin.idea.inspections.FoldInitializerAndIfToElvisInspection
+import org.jetbrains.kotlin.idea.inspections.NullChecksToSafeCallInspection
+import org.jetbrains.kotlin.idea.inspections.ReplacePutWithAssignmentInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
@@ -19,7 +20,10 @@ import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup
 import org.jetbrains.kotlin.j2k.NamedPostProcessingGroup
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
 private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPostProcessingGroup(
@@ -100,10 +104,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     // it fixes red code of the form `array.get(0) = 42`
     inspectionBasedProcessing(ReplaceGetOrSetInspection(), checkInspectionIsEnabled = false),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
-    intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
-        // skip parentheses that were originally present in Java code
-        it.getExplicitLabelComment() == null
-    },
     DestructureForLoopParameterProcessing(),
     LiftReturnInspectionBasedProcessing(),
     LiftAssignmentInspectionBasedProcessing(),

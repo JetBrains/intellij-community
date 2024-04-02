@@ -26,9 +26,10 @@ internal object J {
                 - 0x1234) and (0x1234 ushr 1)
         println(insideMultiline)
 
-        val insideMultiline2 = (1
+        val insideMultiline2 = ((1
                 + 1
-                - 0x1234) and (0x1234 ushr 1)
+                - 0x1234)
+                and (0x1234 ushr 1))
         println(insideMultiline2)
     }
 }

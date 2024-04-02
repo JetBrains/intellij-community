@@ -5064,6 +5064,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testParenthesized3() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/parenthesized3.java");
         }
+
+        @TestMetadata("removeUnnecessaryParentheses.java")
+        public void testRemoveUnnecessaryParentheses() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/parenthesizedExpression/removeUnnecessaryParentheses.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

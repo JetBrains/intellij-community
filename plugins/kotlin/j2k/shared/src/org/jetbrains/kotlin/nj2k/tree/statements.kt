@@ -31,6 +31,7 @@ class JKForInStatement(variable: JKForLoopVariable, iterationExpression: JKExpre
     var variable: JKForLoopVariable by child(variable)
     var iterationExpression: JKExpression by child(iterationExpression)
     var body: JKStatement by child(body)
+
     override fun accept(visitor: JKVisitor) = visitor.visitForInStatement(this)
 }
 
