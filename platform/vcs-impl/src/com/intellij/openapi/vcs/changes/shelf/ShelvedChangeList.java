@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
@@ -32,6 +31,8 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   @NonNls private static final String ATTRIBUTE_TOBE_DELETED_CHANGELIST = "toDelete";
   @NonNls private static final String ATTRIBUTE_DELETED_CHANGELIST = "deleted";
   @NonNls private static final String ELEMENT_BINARY = "binary";
+  @NonNls private static final String PATH_FIELD_NAME = "PATH";
+  @NonNls private static final String DESCRIPTION_FIELD_NAME = "DESCRIPTION";
 
   private Path myPath;
   /**
@@ -80,14 +81,17 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
     myPath = null;
-    for (Element child : element.getChildren()) {
-      if (child.getName().equals(Constants.OPTION) && "PATH".equals(child.getAttributeValue(Constants.NAME))) {
-        String value = child.getAttributeValue(Constants.VALUE, "");
+    DESCRIPTION = null;
+    for (Map.Entry<String, String> field : readFields(element).entrySet()) {
+      if (PATH_FIELD_NAME.equals(field.getKey())) {
+        String value = field.getValue();
         if (!value.isEmpty()) {
           myPath = Paths.get(value);
         }
+      }
+      else if (DESCRIPTION_FIELD_NAME.equals(field.getKey())) {
+        DESCRIPTION = field.getValue();
       }
     }
 
@@ -112,11 +116,9 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
 
   private static void writeExternal(@NotNull Element element, @NotNull ShelvedChangeList shelvedChangeList) {
     if (shelvedChangeList.myPath != null) {
-      element.addContent(new Element(Constants.OPTION)
-                           .setAttribute(Constants.NAME, "PATH")
-                           .setAttribute(Constants.VALUE, shelvedChangeList.myPath.toString().replace(File.separatorChar, '/')));
+      writeField(element, PATH_FIELD_NAME, shelvedChangeList.myPath.toString().replace(File.separatorChar, '/'));
     }
-    DefaultJDOMExternalizer.writeExternal(shelvedChangeList, element);
+    writeField(element, DESCRIPTION_FIELD_NAME, shelvedChangeList.DESCRIPTION);
     element.setAttribute(NAME_ATTRIBUTE, shelvedChangeList.getName());
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(shelvedChangeList.myDate.getTime()));
     element.setAttribute(ATTRIBUTE_RECYCLED_CHANGELIST, Boolean.toString(shelvedChangeList.isRecycled()));
@@ -276,5 +278,26 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
    */
   public void updateDate() {
     myDate = new Date(System.currentTimeMillis());
+  }
+
+  static void writeField(@NotNull Element element, @NotNull String name, @Nullable String value) {
+    if (value == null) return;
+    element.addContent(new Element(Constants.OPTION)
+                         .setAttribute(Constants.NAME, name)
+                         .setAttribute(Constants.VALUE, value));
+  }
+
+  static @NotNull Map<String, String> readFields(@NotNull Element element) {
+    Map<String, String> result = new HashMap<>();
+    for (Element child : element.getChildren()) {
+      if (child.getName().equals(Constants.OPTION)) {
+        String fieldName = child.getAttributeValue(Constants.NAME);
+        String fieldValue = child.getAttributeValue(Constants.VALUE);
+        if (fieldName != null && fieldValue != null) {
+          result.put(fieldName, fieldValue);
+        }
+      }
+    }
+    return result;
   }
 }

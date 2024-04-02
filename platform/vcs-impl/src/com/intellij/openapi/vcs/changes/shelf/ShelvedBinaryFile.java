@@ -2,10 +2,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -23,11 +20,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Objects;
 
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.readFields;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.writeField;
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
 public final class ShelvedBinaryFile implements JDOMExternalizable {
+  private static final String BEFORE_PATH_FIELD_NAME = "BEFORE_PATH";
+  private static final String AFTER_PATH_FIELD_NAME = "AFTER_PATH";
+  private static final String SHELVED_PATH_FIELD_NAME = "SHELVED_PATH";
+
   public String BEFORE_PATH;
   public String AFTER_PATH;
   @Nullable public String SHELVED_PATH;         // null if binary file was deleted
@@ -56,14 +60,27 @@ public final class ShelvedBinaryFile implements JDOMExternalizable {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, element);
+  public void readExternal(@NotNull Element element) {
+    for (Map.Entry<String, String> field : readFields(element).entrySet()) {
+      String value = Objects.requireNonNull(field.getValue());
+      if (field.getKey().equals(BEFORE_PATH_FIELD_NAME)) {
+        BEFORE_PATH = value;
+      }
+      else if (field.getKey().equals(AFTER_PATH_FIELD_NAME)) {
+        AFTER_PATH = value;
+      }
+      else if (field.getKey().equals(SHELVED_PATH_FIELD_NAME)) {
+        SHELVED_PATH = value;
+      }
+    }
     convertPathsToSystemIndependent();
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    DefaultJDOMExternalizer.writeExternal(this, element);
+  public void writeExternal(@NotNull Element element) {
+    writeField(element, BEFORE_PATH_FIELD_NAME, BEFORE_PATH);
+    writeField(element, AFTER_PATH_FIELD_NAME, AFTER_PATH);
+    writeField(element, SHELVED_PATH_FIELD_NAME, SHELVED_PATH);
   }
 
   public FileStatus getFileStatus() {
@@ -108,7 +125,7 @@ public final class ShelvedBinaryFile implements JDOMExternalizable {
   @NotNull
   ShelvedBinaryContentRevision createBinaryContentRevision(@NotNull Project project) {
     final FilePath file = VcsUtil.getFilePath(new File(project.getBasePath(), AFTER_PATH), false);
-   return new ShelvedBinaryContentRevision(file, SHELVED_PATH);
+    return new ShelvedBinaryContentRevision(file, SHELVED_PATH);
   }
 
   @Override
