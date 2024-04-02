@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.javadoc;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.java.codeInsight.JavaExternalDocumentationTest;
 import com.intellij.lang.java.JavaDocumentationProvider;
@@ -20,14 +21,14 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Flow;
@@ -59,7 +60,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     super.setUpModule();
     if (!getTestName(false).equals("HideNonDocumentedFlowAnnotations")) {
       ModuleRootModificationUtil.updateModel(
-        myModule, model -> DefaultLightProjectDescriptor.addJetBrainsAnnotations(model));
+        myModule, model -> MavenDependencyUtil.addFromMaven(
+          model, "org.jetbrains:annotations:" + JetBrainsAnnotationsExternalLibraryResolver.getVersion()));
     }
   }
 
@@ -90,6 +92,10 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInitializerWithReference() { doTestField(); }
   public void testAnnotations() { doTestField(); }
   public void testAnnotationsInParams() { doTestMethod(); }
+  public void testInferredAnnotationsOnArray() { doTestMethod(); }
+  public void testInferredAnnotationsOnArrayMethod() { doTestMethod(); }
+  public void testInferredAnnotationsOnArray2d() { doTestMethod(); }
+  public void testTypeAnnoMultiDimArray() { doTestMethod(); }
   public void testApiNotes() { doTestMethod(); }
   public void testLiteral() { doTestField(); }
   public void testEscapingInLiteral() { doTestField(); }

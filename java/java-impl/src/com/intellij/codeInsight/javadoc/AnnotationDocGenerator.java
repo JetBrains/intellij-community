@@ -79,6 +79,10 @@ public final class AnnotationDocGenerator {
   public String getAnnotationQualifiedName() {
     return myAnnotation.getQualifiedName();
   }
+  
+  boolean isNonCodeTypeUseAnnotation() {
+    return (isExternal() || isInferred()) && AnnotationTargetUtil.isTypeAnnotation(myAnnotation);
+  }
 
   public boolean isInferred() {
     return AnnotationUtil.isInferredAnnotation(myAnnotation);
@@ -291,12 +295,25 @@ public final class AnnotationDocGenerator {
   }
 
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiAnnotationOwner owner, @NotNull PsiElement context) {
-    if (owner instanceof PsiModifierList) {
-      return getAnnotationsToShow(((PsiModifierListOwner)((PsiModifierList)owner).getParent()));
+    if (owner instanceof PsiModifierList modifierList) {
+      return getAnnotationsToShow(((PsiModifierListOwner)modifierList.getParent()));
     }
     Set<String> shownAnnotations = new HashSet<>();
-    return ContainerUtil.mapNotNull(owner.getAnnotations(),
-                                    annotation -> forAnnotation(context, shownAnnotations, annotation));
+    List<AnnotationDocGenerator> generators = ContainerUtil.mapNotNull(
+      owner.getAnnotations(), annotation -> forAnnotation(context, shownAnnotations, annotation));
+    if (owner instanceof PsiArrayType type) {
+      PsiType contextType = getContextType(context);
+      if (type.equals(contextType)) {
+        return StreamEx.of(getAnnotationsToShow((PsiModifierListOwner)context)).filter(anno -> anno.isNonCodeTypeUseAnnotation())
+          .append(generators).toList();
+      }
+    }
+    return generators;
+  }
+
+  static @Nullable PsiType getContextType(@NotNull PsiElement context) {
+    return context instanceof PsiVariable var ? var.getType() :
+           context instanceof PsiMethod method ? method.getReturnType() : null;
   }
 
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiModifierListOwner owner) {

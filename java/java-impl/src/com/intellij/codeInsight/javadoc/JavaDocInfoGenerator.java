@@ -1384,6 +1384,7 @@ public class JavaDocInfoGenerator {
     AnnotationFormat format = place == SignaturePlace.Javadoc ? AnnotationFormat.JavaDocShort : AnnotationFormat.ToolTip;
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
       if (ignoreNonSourceAnnotations && (anno.isInferred() || anno.isExternal())) continue;
+      if (anno.isNonCodeTypeUseAnnotation() && AnnotationDocGenerator.getContextType(owner) instanceof PsiArrayType) continue;
       anno.generateAnnotation(buffer, format, generateLink, isRendered(), doHighlightSignatures());
 
       buffer.append(NBSP);
@@ -1621,7 +1622,7 @@ public class JavaDocInfoGenerator {
       buffer.append(StringUtil.repeatSymbol(' ', indent));
       PsiParameter parm = parameters[i];
       generateAnnotations(buffer, parm, place, false, false, true);
-      generateType(buffer, parm.getType(), method, generateLink, isTooltip);
+      generateType(buffer, parm.getType(), parm, generateLink, isTooltip);
       if (!isTooltip) {
         buffer.append(NBSP);
         appendStyledSpan(buffer, getHighlightingManager().getParameterAttributes(), parm.getName());
@@ -2898,18 +2899,24 @@ public class JavaDocInfoGenerator {
    * @return Length of the generated label.
    */
   public int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink, boolean useShortNames) {
-    if (type instanceof PsiArrayType) {
-      int rest = generateType(buffer, ((PsiArrayType)type).getComponentType(), context, generateLink, useShortNames);
+    if (type instanceof PsiArrayType arrayType) {
+      int len = generateType(buffer, arrayType.getDeepComponentType(), context, generateLink, useShortNames);
 
-      int len = generateTypeAnnotations(buffer, type, context, generateLink, true);
-      if (type instanceof PsiEllipsisType) {
-        buffer.append("...");
-        return len + rest + 3;
+      int dimensions = arrayType.getArrayDimensions();
+      PsiType curType = arrayType;
+      for (int i = 0; i < dimensions; i++) {
+        len += generateTypeAnnotations(buffer, curType, context, generateLink, true);
+        if (i == dimensions - 1 && type instanceof PsiEllipsisType) {
+          buffer.append("...");
+          len += 3;
+        }
+        else {
+          appendStyledSpan(buffer, getHighlightingManager().getBracketsAttributes(), "[]");
+          len += 2;
+        }
+        curType = ((PsiArrayType)curType).getComponentType();
       }
-      else {
-        appendStyledSpan(buffer, getHighlightingManager().getBracketsAttributes(), "[]");
-        return len + rest + 2;
-      }
+      return len;
     }
 
     int typAnnoLength = generateTypeAnnotations(buffer, type, context, generateLink, false);
