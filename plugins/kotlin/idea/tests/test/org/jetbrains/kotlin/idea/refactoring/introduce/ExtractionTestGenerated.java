@@ -1065,6 +1065,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/selectedConstructor.kt");
             }
 
+            @TestMetadata("selectedFunction.kt")
+            public void testSelectedFunction() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/selectedFunction.kt");
+            }
+
             @TestMetadata("selectedParameter.kt")
             public void testSelectedParameter() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/selectedParameter.kt");

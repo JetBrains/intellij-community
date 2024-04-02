@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
 abstract class AbstractExtractionDataAnalyzer<KotlinType, P : IMutableParameter<KotlinType>>(private val data: IExtractionData) {
     abstract val typeDescriptor: TypeDescriptor<KotlinType>

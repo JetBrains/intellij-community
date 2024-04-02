@@ -113,7 +113,7 @@ fun calculateAnchorForExpressions(commonParent: PsiElement, commonContainer: Psi
 }
 
 fun validateExpressionElements(elements: List<PsiElement>): String? {
-    if (elements.any { it is KtConstructor<*> || it is KtParameter || it is KtTypeAlias || it is KtPropertyAccessor }) {
+    if (elements.any { it is KtConstructor<*> || it is KtParameter || it is KtTypeAlias || it is KtPropertyAccessor || it is KtFunction && !it.isLocal && it.parent?.parent !is KtScript }) {
         return KotlinBundle.message("text.refactoring.is.not.applicable.to.this.code.fragment")
     }
     return null

@@ -286,6 +286,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/selectedConstructor.kt");
         }
 
+        @TestMetadata("selectedFunction.kt")
+        public void testSelectedFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/selectedFunction.kt");
+        }
+
         @TestMetadata("selectedParameter.kt")
         public void testSelectedParameter() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/selectedParameter.kt");
