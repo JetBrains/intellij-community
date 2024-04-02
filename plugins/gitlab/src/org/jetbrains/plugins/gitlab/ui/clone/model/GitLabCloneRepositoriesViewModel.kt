@@ -187,8 +187,7 @@ internal class GitLabCloneRepositoriesViewModelImpl(
           )
         }
         with(currentUser) {
-          (projectMemberships + groupMemberships.flatMap(GitLabGroupMemberDTO::projectMemberships))
-            .mapNotNull(GitLabProjectMemberDTO::project)
+          (projectMemberships.mapNotNull { it.project } + groupMemberships.flatMap(GitLabGroupMemberDTO::projectMemberships))
             .map { project -> GitLabCloneListItem.Repository(account, project) }
             .distinctBy { repository -> repository.project.fullPath }
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
