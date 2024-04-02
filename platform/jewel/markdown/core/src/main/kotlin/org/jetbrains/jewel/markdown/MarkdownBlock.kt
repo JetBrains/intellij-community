@@ -2,9 +2,7 @@ package org.jetbrains.jewel.markdown
 
 public sealed interface MarkdownBlock {
 
-    public data class BlockQuote(val content: List<MarkdownBlock>) : MarkdownBlock
-
-    public interface CustomBlock : MarkdownBlock
+    public data class BlockQuote(val children: List<MarkdownBlock>) : MarkdownBlock
 
     public sealed interface CodeBlock : MarkdownBlock {
 
@@ -20,6 +18,8 @@ public sealed interface MarkdownBlock {
         ) : CodeBlock
     }
 
+    public interface CustomBlock : MarkdownBlock
+
     public data class Heading(
         override val inlineContent: List<InlineMarkdown>,
         val level: Int,
@@ -29,25 +29,25 @@ public sealed interface MarkdownBlock {
 
     public sealed interface ListBlock : MarkdownBlock {
 
-        public val items: List<ListItem>
+        public val children: List<ListItem>
         public val isTight: Boolean
 
-        public data class BulletList(
-            override val items: List<ListItem>,
-            override val isTight: Boolean,
-            val bulletMarker: String,
-        ) : ListBlock
-
         public data class OrderedList(
-            override val items: List<ListItem>,
+            override val children: List<ListItem>,
             override val isTight: Boolean,
             val startFrom: Int,
             val delimiter: String,
         ) : ListBlock
+
+        public data class UnorderedList(
+            override val children: List<ListItem>,
+            override val isTight: Boolean,
+            val marker: String,
+        ) : ListBlock
     }
 
     public data class ListItem(
-        val content: List<MarkdownBlock>,
+        val children: List<MarkdownBlock>,
     ) : MarkdownBlock
 
     public object ThematicBreak : MarkdownBlock

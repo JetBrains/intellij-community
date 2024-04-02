@@ -9,8 +9,8 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
-import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.BulletList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
+import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 
 @ExperimentalJewelApi
@@ -41,7 +41,7 @@ public interface MarkdownBlockRenderer {
     public fun render(block: OrderedList, styling: MarkdownStyling.List.Ordered)
 
     @Composable
-    public fun render(block: BulletList, styling: MarkdownStyling.List.Unordered)
+    public fun render(block: UnorderedList, styling: MarkdownStyling.List.Unordered)
 
     @Composable
     public fun render(block: ListItem)

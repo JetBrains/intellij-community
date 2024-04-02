@@ -38,7 +38,7 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
                     appendInlineMarkdownFrom(child.children, styling)
                 }
 
-                is InlineMarkdown.Text -> append(child.value.literal)
+                is InlineMarkdown.Text -> append(child.nativeNode.literal)
 
                 is InlineMarkdown.Emphasis -> {
                     withStyles(styling.emphasis, child) { appendInlineMarkdownFrom(it.children, styling) }
@@ -50,13 +50,13 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
 
                 is InlineMarkdown.Link -> {
                     withStyles(styling.link, child) {
-                        pushUrlAnnotation(UrlAnnotation(it.value.destination))
+                        pushUrlAnnotation(UrlAnnotation(it.nativeNode.destination))
                         appendInlineMarkdownFrom(it.children, styling)
                     }
                 }
 
                 is InlineMarkdown.Code -> {
-                    withStyles(styling.inlineCode, child) { append(it.value.literal) }
+                    withStyles(styling.inlineCode, child) { append(it.nativeNode.literal) }
                 }
 
                 is InlineMarkdown.HardLineBreak,
@@ -65,14 +65,14 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
 
                 is InlineMarkdown.HtmlInline -> {
                     if (styling.renderInlineHtml) {
-                        withStyles(styling.inlineHtml, child) { append(it.value.literal.trim()) }
+                        withStyles(styling.inlineHtml, child) { append(it.nativeNode.literal.trim()) }
                     }
                 }
 
                 is InlineMarkdown.Image -> {
                     appendInlineContent(
                         INLINE_IMAGE,
-                        child.value.destination + "\n" + plainTextRenderer.render(child.value),
+                        child.nativeNode.destination + "\n" + plainTextRenderer.render(child.nativeNode),
                     )
                 }
 

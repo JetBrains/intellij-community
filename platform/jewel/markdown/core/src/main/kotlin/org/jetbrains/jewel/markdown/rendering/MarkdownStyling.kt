@@ -52,7 +52,7 @@ public class MarkdownStyling(
         public val h6: H6,
     ) {
 
-        public interface HN : WithInlinesStyling, WithUnderline {
+        public sealed interface HN : WithInlinesStyling, WithUnderline {
             public val padding: PaddingValues
         }
 

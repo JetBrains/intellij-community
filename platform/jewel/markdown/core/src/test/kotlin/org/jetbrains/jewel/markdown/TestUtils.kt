@@ -16,8 +16,8 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
-import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.BulletList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
+import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
@@ -72,13 +72,13 @@ private fun MarkdownBlock.findDifferenceWith(
 
     return when (this) {
         is Paragraph -> diffParagraph(this, expected, indent)
-        is BlockQuote -> content.findDifferences((expected as BlockQuote).content, indentSize)
+        is BlockQuote -> children.findDifferences((expected as BlockQuote).children, indentSize)
         is HtmlBlock -> diffHtmlBlock(this, expected, indent)
         is FencedCodeBlock -> diffFencedCodeBlock(this, expected, indent)
         is IndentedCodeBlock -> diffIndentedCodeBlock(this, expected, indent)
         is Heading -> diffHeading(this, expected, indent)
         is ListBlock -> diffList(this, expected, indentSize, indent)
-        is ListItem -> content.findDifferences((expected as ListItem).content, indentSize)
+        is ListItem -> children.findDifferences((expected as ListItem).children, indentSize)
         is ThematicBreak -> emptyList() // They can only differ in their node
         else -> error("Unsupported MarkdownBlock: ${this.javaClass.name}")
     }
@@ -89,7 +89,7 @@ private var htmlRenderer = HtmlRenderer.builder().build()
 fun BlockWithInlineMarkdown.toHtml() = buildString {
     for (node in this@toHtml.inlineContent) {
         // new lines are rendered as spaces in tests
-        append(htmlRenderer.render(node.value).replace("\n", " "))
+        append(htmlRenderer.render(node.nativeNode).replace("\n", " "))
     }
 }
 
@@ -159,7 +159,7 @@ private fun diffHeading(actual: Heading, expected: MarkdownBlock, indent: String
 
 private fun diffList(actual: ListBlock, expected: MarkdownBlock, indentSize: Int, indent: String) =
     buildList {
-        addAll(actual.items.findDifferences((expected as ListBlock).items, indentSize))
+        addAll(actual.children.findDifferences((expected as ListBlock).children, indentSize))
 
         if (actual.isTight != expected.isTight) {
             add(
@@ -188,12 +188,12 @@ private fun diffList(actual: ListBlock, expected: MarkdownBlock, indentSize: Int
                 }
             }
 
-            is BulletList -> {
-                if (actual.bulletMarker != (expected as BulletList).bulletMarker) {
+            is UnorderedList -> {
+                if (actual.marker != (expected as UnorderedList).marker) {
                     add(
                         "$indent * List bulletMarker mismatch.\n\n" +
-                            "$indent     Actual:   ${actual.bulletMarker}\n" +
-                            "$indent     Expected: ${expected.bulletMarker}",
+                            "$indent     Actual:   ${actual.marker}\n" +
+                            "$indent     Expected: ${expected.marker}",
                     )
                 }
             }
@@ -247,8 +247,8 @@ fun blockQuote(vararg contents: MarkdownBlock) = BlockQuote(contents.toList())
 fun unorderedList(
     vararg items: ListItem,
     isTight: Boolean = true,
-    bulletMarker: String = "-",
-) = BulletList(items.toList(), isTight, bulletMarker)
+    marker: String = "-",
+) = UnorderedList(items.toList(), isTight, marker)
 
 fun orderedList(
     vararg items: ListItem,
@@ -260,3 +260,5 @@ fun orderedList(
 fun listItem(vararg items: MarkdownBlock) = ListItem(items.toList())
 
 fun htmlBlock(content: String) = HtmlBlock(content)
+
+fun thematicBreak() = ThematicBreak

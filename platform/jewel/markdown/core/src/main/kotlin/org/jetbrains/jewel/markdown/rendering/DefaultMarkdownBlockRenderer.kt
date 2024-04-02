@@ -59,8 +59,8 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CustomBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
-import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.BulletList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
+import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListItem
 import org.jetbrains.jewel.markdown.MarkdownBlock.Paragraph
 import org.jetbrains.jewel.markdown.MarkdownBlock.ThematicBreak
@@ -96,7 +96,7 @@ public open class DefaultMarkdownBlockRenderer(
             is Heading -> render(block, rootStyling.heading)
             is HtmlBlock -> render(block, rootStyling.htmlBlock)
             is OrderedList -> render(block, rootStyling.list.ordered)
-            is BulletList -> render(block, rootStyling.list.unordered)
+            is UnorderedList -> render(block, rootStyling.list.unordered)
             is ListItem -> render(block)
             is Paragraph -> render(block, rootStyling.paragraph)
             ThematicBreak -> renderThematicBreak(rootStyling.thematicBreak)
@@ -182,7 +182,7 @@ public open class DefaultMarkdownBlockRenderer(
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
             CompositionLocalProvider(LocalContentColor provides styling.textColor) {
-                render(block.content)
+                render(block.children)
             }
         }
     }
@@ -191,7 +191,7 @@ public open class DefaultMarkdownBlockRenderer(
     override fun render(block: ListBlock, styling: MarkdownStyling.List) {
         when (block) {
             is OrderedList -> render(block, styling.ordered)
-            is BulletList -> render(block, styling.unordered)
+            is UnorderedList -> render(block, styling.unordered)
         }
     }
 
@@ -208,7 +208,7 @@ public open class DefaultMarkdownBlockRenderer(
             modifier = Modifier.padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(itemSpacing),
         ) {
-            for ((index, item) in block.items.withIndex()) {
+            for ((index, item) in block.children.withIndex()) {
                 Row {
                     val number = block.startFrom + index
                     Text(
@@ -228,7 +228,7 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: BulletList, styling: MarkdownStyling.List.Unordered) {
+    override fun render(block: UnorderedList, styling: MarkdownStyling.List.Unordered) {
         val itemSpacing =
             if (block.isTight) {
                 styling.itemVerticalSpacingTight
@@ -240,7 +240,7 @@ public open class DefaultMarkdownBlockRenderer(
             modifier = Modifier.padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(itemSpacing),
         ) {
-            for (item in block.items) {
+            for (item in block.children) {
                 Row {
                     Text(
                         text = styling.bullet.toString(),
@@ -259,7 +259,7 @@ public open class DefaultMarkdownBlockRenderer(
     @Composable
     override fun render(block: ListItem) {
         Column(verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing)) {
-            render(block.content)
+            render(block.children)
         }
     }
 
