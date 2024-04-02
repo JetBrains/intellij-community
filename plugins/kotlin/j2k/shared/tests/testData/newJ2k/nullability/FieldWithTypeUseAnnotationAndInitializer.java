@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.lang.annotation.*;
 
 @Target({ElementType.FIELD, ElementType.TYPE_USE})

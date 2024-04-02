@@ -65,5 +65,6 @@ internal fun getK2J2KConversions(context: NewJ2kConverterContext): List<Conversi
     RemoveRedundantQualifiersForCallsConversion(context),
     FunctionalInterfacesConversion(context),
     FilterImportsConversion(context),
+    AddConstModifierConversion(context),
     EnumSyntheticValuesMethodConversion(context)
 )

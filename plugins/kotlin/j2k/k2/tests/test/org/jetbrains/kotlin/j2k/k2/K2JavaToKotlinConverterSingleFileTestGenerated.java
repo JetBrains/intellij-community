@@ -2282,6 +2282,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/field/needInitializer.java");
         }
 
+        @TestMetadata("nonConstInitializer.java")
+        public void testNonConstInitializer() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/field/nonConstInitializer.java");
+        }
+
         @TestMetadata("privateField.java")
         public void testPrivateField() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/field/privateField.java");
