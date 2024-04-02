@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.asExpression
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
+import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.idea.references.canBeResolvedViaImport
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -166,7 +166,7 @@ class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
         }
 
         if (!needToAddParameterTypes(lambdaExpr, resolutionFacade)) return
-        SpecifyExplicitLambdaSignatureIntention.Holder.applyWithParameters(lambdaExpr, parameters)
+        specifyExplicitLambdaSignature(lambdaExpr, parameters)
     }
 
     private fun needToAddParameterTypes(

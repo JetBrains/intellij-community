@@ -7,8 +7,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
-import org.jetbrains.kotlin.idea.k2.refactoring.util.getExplicitLambdaSignature
-import org.jetbrains.kotlin.idea.k2.refactoring.util.specifyExplicitLambdaSignature
+import org.jetbrains.kotlin.idea.refactoring.util.getExplicitLambdaSignature
+import org.jetbrains.kotlin.idea.refactoring.util.specifyExplicitLambdaSignature
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 
 internal class SpecifyExplicitLambdaSignatureIntention :
