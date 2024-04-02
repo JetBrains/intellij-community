@@ -9,22 +9,8 @@ import com.intellij.psi.PsiElement
 @JvmField
 internal val LOG: Logger = Logger.getInstance("#com.intellij.lang.documentation.psi")
 
-fun psiLookupElementDocumentationTargets(element: PsiElement, originalElement: PsiElement?): List<DocumentationTarget> =
-  psiDocumentationTargetsImpl(
-    element,
-    originalElement,
-    PsiDocumentationTargetProvider.LOOKUP_ELEMENT_EP_NAME.extensionList + PsiDocumentationTargetProvider.EP_NAME.extensionList
-  )
-
-fun psiDocumentationTargets(element: PsiElement, originalElement: PsiElement?): List<DocumentationTarget> =
-  psiDocumentationTargetsImpl(
-    element,
-    originalElement,
-    PsiDocumentationTargetProvider.EP_NAME.extensionList
-  )
-
-private fun psiDocumentationTargetsImpl(element: PsiElement, originalElement: PsiElement?, providers: List<PsiDocumentationTargetProvider>): List<DocumentationTarget> {
-  for (ext in providers) {
+fun psiDocumentationTargets(element: PsiElement, originalElement: PsiElement?): List<DocumentationTarget> {
+  for (ext in PsiDocumentationTargetProvider.EP_NAME.extensionList) {
     val targets = ext.documentationTargets(element, originalElement)
     if (targets.isNotEmpty()) return targets
   }

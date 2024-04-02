@@ -28,11 +28,6 @@ public interface PsiDocumentationTargetProvider {
     "com.intellij.platform.backend.documentation.psiTargetProvider"
   );
 
-  @Internal
-  ExtensionPointName<PsiDocumentationTargetProvider> LOOKUP_ELEMENT_EP_NAME = ExtensionPointName.create(
-    "com.intellij.platform.backend.lookupElement.documentation.psiTargetProvider"
-  );
-
   /**
    * @return target to handle documentation actions which are invoked on the given {@code element},
    * or {@code null} if this provider is not aware of the given element
