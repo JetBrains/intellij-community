@@ -27,7 +27,6 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MimeType
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
-import org.jetbrains.jewel.markdown.toInlineNode
 import org.commonmark.node.ListBlock as CMListBlock
 
 /**
@@ -180,13 +179,13 @@ public class MarkdownProcessor(
     private fun Node.tryProcessMarkdownBlock(): MarkdownBlock? =
         // Non-Block children are ignored
         when (this) {
-            is Paragraph -> toMarkdownParagraphOrNull()
+            is Paragraph -> MarkdownBlock.Paragraph(this)
             is Heading -> toMarkdownHeadingOrNull()
             is BulletList -> toMarkdownListOrNull()
             is OrderedList -> toMarkdownListOrNull()
+            is BlockQuote -> toMarkdownBlockQuote()
             is FencedCodeBlock -> toMarkdownCodeBlockOrNull()
             is IndentedCodeBlock -> toMarkdownCodeBlockOrNull()
-            is BlockQuote -> toMarkdownBlockQuote()
             is ThematicBreak -> MarkdownBlock.ThematicBreak
             is HtmlBlock -> toMarkdownHtmlBlockOrNull()
             is CustomBlock -> {
@@ -202,14 +201,7 @@ public class MarkdownProcessor(
 
     private fun Heading.toMarkdownHeadingOrNull(): MarkdownBlock.Heading? {
         if (level < 1 || level > 6) return null
-        return MarkdownBlock.Heading(contentsAsInlineMarkdown(), level)
-    }
-
-    private fun Paragraph.toMarkdownParagraphOrNull(): MarkdownBlock.Paragraph? {
-        val inlineMarkdown = contentsAsInlineMarkdown()
-
-        if (inlineMarkdown.isEmpty()) return null
-        return MarkdownBlock.Paragraph(inlineMarkdown)
+        return MarkdownBlock.Heading(this)
     }
 
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
@@ -263,11 +255,5 @@ public class MarkdownProcessor(
     private fun HtmlBlock.toMarkdownHtmlBlockOrNull(): MarkdownBlock.HtmlBlock? {
         if (literal.isBlank()) return null
         return MarkdownBlock.HtmlBlock(content = literal.trimEnd('\n'))
-    }
-
-    private fun Node.contentsAsInlineMarkdown() = buildList {
-        forEachChild {
-            add(it.toInlineNode())
-        }
     }
 }

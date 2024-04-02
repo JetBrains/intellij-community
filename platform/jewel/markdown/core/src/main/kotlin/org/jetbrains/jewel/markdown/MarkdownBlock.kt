@@ -1,5 +1,9 @@
 package org.jetbrains.jewel.markdown
 
+import org.commonmark.node.Block
+import org.commonmark.node.Heading as CMHeading
+import org.commonmark.node.Paragraph as CMParagraph
+
 public sealed interface MarkdownBlock {
 
     public data class BlockQuote(val children: List<MarkdownBlock>) : MarkdownBlock
@@ -20,10 +24,17 @@ public sealed interface MarkdownBlock {
 
     public interface CustomBlock : MarkdownBlock
 
-    public data class Heading(
-        override val inlineContent: List<InlineMarkdown>,
-        val level: Int,
-    ) : MarkdownBlock, BlockWithInlineMarkdown
+    @JvmInline
+    public value class Heading(
+        private val nativeBlock: CMHeading,
+    ) : MarkdownBlock, BlockWithInlineMarkdown {
+
+        override val inlineContent: Iterable<InlineMarkdown>
+            get() = nativeBlock.inlineContent()
+
+        public val level: Int
+            get() = nativeBlock.level
+    }
 
     public data class HtmlBlock(val content: String) : MarkdownBlock
 
@@ -52,11 +63,34 @@ public sealed interface MarkdownBlock {
 
     public object ThematicBreak : MarkdownBlock
 
-    public data class Paragraph(override val inlineContent: List<InlineMarkdown>) :
-        MarkdownBlock, BlockWithInlineMarkdown
+    @JvmInline
+    public value class Paragraph(private val nativeBlock: CMParagraph) : MarkdownBlock, BlockWithInlineMarkdown {
+
+        override val inlineContent: Iterable<InlineMarkdown>
+            get() = nativeBlock.inlineContent()
+    }
 }
 
 public interface BlockWithInlineMarkdown {
 
-    public val inlineContent: List<InlineMarkdown>
+    public val inlineContent: Iterable<InlineMarkdown>
 }
+
+private fun Block.inlineContent(): Iterable<InlineMarkdown> =
+    object : Iterable<InlineMarkdown> {
+        override fun iterator(): Iterator<InlineMarkdown> =
+            object : Iterator<InlineMarkdown> {
+                var current = this@inlineContent.firstChild
+
+                override fun hasNext(): Boolean = current != null
+
+                override fun next(): InlineMarkdown =
+                    if (hasNext()) {
+                        current.toInlineNode().also {
+                            current = current.next
+                        }
+                    } else {
+                        throw NoSuchElementException()
+                    }
+            }
+    }

@@ -18,7 +18,6 @@ import org.commonmark.node.HardLineBreak as CMHardLineBreak
 import org.commonmark.node.HtmlInline as CMHtmlInline
 import org.commonmark.node.Image as CMImage
 import org.commonmark.node.Link as CMLink
-import org.commonmark.node.Paragraph as CMParagraph
 import org.commonmark.node.SoftLineBreak as CMSoftLineBreak
 import org.commonmark.node.StrongEmphasis as CMStrongEmphasis
 import org.commonmark.node.Text as CMText
@@ -53,9 +52,6 @@ public sealed interface InlineMarkdown {
     public value class Link(override val nativeNode: CMLink) : InlineMarkdown
 
     @JvmInline
-    public value class Paragraph(override val nativeNode: CMParagraph) : InlineMarkdown
-
-    @JvmInline
     public value class SoftLineBreak(override val nativeNode: CMSoftLineBreak) : InlineMarkdown
 
     @JvmInline
@@ -64,19 +60,22 @@ public sealed interface InlineMarkdown {
     @JvmInline
     public value class Text(override val nativeNode: CMText) : InlineMarkdown
 
-    public val children: Iterator<InlineMarkdown>
-        get() = object : Iterator<InlineMarkdown> {
-            var current = this@InlineMarkdown.nativeNode.firstChild
+    public val children: Iterable<InlineMarkdown>
+        get() = object : Iterable<InlineMarkdown> {
+            override fun iterator(): Iterator<InlineMarkdown> =
+                object : Iterator<InlineMarkdown> {
+                    var current = this@InlineMarkdown.nativeNode.firstChild
 
-            override fun hasNext(): Boolean = current != null
+                    override fun hasNext(): Boolean = current != null
 
-            override fun next(): InlineMarkdown =
-                if (hasNext()) {
-                    current.toInlineNode().also {
-                        current = current.next
-                    }
-                } else {
-                    throw NoSuchElementException()
+                    override fun next(): InlineMarkdown =
+                        if (hasNext()) {
+                            current.toInlineNode().also {
+                                current = current.next
+                            }
+                        } else {
+                            throw NoSuchElementException()
+                        }
                 }
         }
 }

@@ -23,21 +23,17 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
             .build()
 
     public override fun renderAsAnnotatedString(
-        inlineMarkdown: List<InlineMarkdown>,
+        inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
     ): AnnotatedString =
         buildAnnotatedString {
-            appendInlineMarkdownFrom(inlineMarkdown.iterator(), styling)
+            appendInlineMarkdownFrom(inlineMarkdown, styling)
         }
 
     @OptIn(ExperimentalTextApi::class)
-    private fun Builder.appendInlineMarkdownFrom(inlineMarkdown: Iterator<InlineMarkdown>, styling: InlinesStyling) {
+    private fun Builder.appendInlineMarkdownFrom(inlineMarkdown: Iterable<InlineMarkdown>, styling: InlinesStyling) {
         for (child in inlineMarkdown) {
             when (child) {
-                is InlineMarkdown.Paragraph -> {
-                    appendInlineMarkdownFrom(child.children, styling)
-                }
-
                 is InlineMarkdown.Text -> append(child.nativeNode.literal)
 
                 is InlineMarkdown.Emphasis -> {

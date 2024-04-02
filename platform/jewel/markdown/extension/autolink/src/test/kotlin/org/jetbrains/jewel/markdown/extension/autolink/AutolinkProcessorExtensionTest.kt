@@ -13,8 +13,8 @@ class AutolinkProcessorExtensionTest {
         val processor = MarkdownProcessor(listOf(AutolinkProcessorExtension))
         val rawMarkDown = "https://commonmark.org"
         val processed = processor.processMarkdownDocument(rawMarkDown)
-        val paragraph = processed[0] as MarkdownBlock.Paragraph
+        val paragraph = processed.first() as MarkdownBlock.Paragraph
 
-        assertTrue(paragraph.inlineContent[0] is InlineMarkdown.Link)
+        assertTrue(paragraph.inlineContent.first() is InlineMarkdown.Link)
     }
 }

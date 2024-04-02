@@ -223,18 +223,18 @@ private fun inlineMarkdowns(content: String): List<InlineMarkdown> {
 private val inlineParser = InlineParserImpl(InlineParserContextImpl(emptyList(), LinkReferenceDefinitions()))
 
 fun paragraph(@Language("Markdown") content: String): Paragraph = Paragraph(
-    object : org.commonmark.node.CustomBlock() {}.let { block ->
+    org.commonmark.node.Paragraph().let { block ->
         inlineParser.parse(SourceLines.of(content.lines().map { SourceLine.of(it, null) }), block)
         block
-    }.children().map { x -> x.toInlineNode() },
+    },
 )
 
 fun heading(level: Int, @Language("Markdown") content: String) = Heading(
-    object : org.commonmark.node.CustomBlock() {}.let { block ->
+    org.commonmark.node.Heading().let { block ->
         inlineParser.parse(SourceLines.of(SourceLine.of(content, null)), block)
+        block.level = level
         block
-    }.children().map { x -> x.toInlineNode() },
-    level,
+    },
 )
 
 fun indentedCodeBlock(content: String) = IndentedCodeBlock(content)
