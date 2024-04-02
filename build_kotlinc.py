@@ -21,7 +21,7 @@ def main():
     assert workspace.joinpath('WORKSPACE').exists(), 'failed to find workspace root'
 
     # Set properties not currently exposed as flags.
-    args.kotlinc_version = '2.0.255-dev-666'  # JetBrains uses this version for local builds.
+    args.kotlinc_version = '2.0.255-dev-255'  # JetBrains uses this version for local builds.
     args.intellij_dir = workspace.joinpath('tools/idea')
     args.kotlinc_dir = workspace.joinpath('external/jetbrains/kotlin')
     args.gradlew = args.kotlinc_dir.joinpath('gradlew')
