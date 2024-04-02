@@ -34,6 +34,8 @@ class RawPluginDescriptor {
   @JvmField internal var implementationDetail: Boolean = false
   @JvmField internal var isRestartRequired: Boolean = false
   @JvmField internal var isLicenseOptional: Boolean = false
+  // makes sense only for product modules for now
+  @JvmField internal var isDependentOnCoreClassLoader: Boolean = true
 
   @JvmField internal var productCode: String? = null
   @JvmField internal var releaseDate: LocalDate? = null

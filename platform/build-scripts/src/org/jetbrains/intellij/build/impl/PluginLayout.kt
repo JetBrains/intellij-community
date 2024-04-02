@@ -98,8 +98,8 @@ class PluginLayout private constructor(
      * @param mainModuleName name of the module containing META-INF/plugin.xml file of the plugin
      */
     @JvmStatic
-    fun plugin(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
-      val layout = PluginLayout(mainModuleName)
+    fun plugin(mainModuleName: String, auto: Boolean = false, body: (PluginLayoutSpec) -> Unit): PluginLayout {
+      val layout = PluginLayout(mainModuleName, auto = auto)
 
       val spec = PluginLayoutSpec(layout)
       body(spec)

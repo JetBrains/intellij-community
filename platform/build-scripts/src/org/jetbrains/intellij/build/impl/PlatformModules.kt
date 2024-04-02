@@ -265,28 +265,53 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   addModule("cds/classesLogAgent.jar", listOf("intellij.platform.cdsAgent"), productLayout = productLayout, layout = layout)
   val productPluginSourceModuleName = context.productProperties.productPluginSourceModuleName
                                       ?: context.productProperties.applicationInfoModule
-  val productPluginContentModules = getProductPluginContentModules(context = context,
-                                                                   productPluginSourceModuleName = productPluginSourceModuleName)
+  val productPluginContentModules = getProductPluginContentModules(
+    context = context,
+    productPluginSourceModuleName = productPluginSourceModuleName,
+  )
   val explicit = mutableListOf<ModuleItem>()
   for (moduleName in productLayout.productImplementationModules) {
     if (productLayout.excludedModuleNames.contains(moduleName)) {
       continue
     }
 
-    explicit.add(ModuleItem(moduleName = moduleName,
-                            relativeOutputFile = when {
-                              isModuleCloseSource(moduleName, context = context) -> {
-                                if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
-                              }
-                              else -> PlatformJarNames.getPlatformModuleJarName(moduleName, context) 
-                            },
-                            reason = "productImplementationModules"))
+    explicit.add(
+      ModuleItem(
+        moduleName = moduleName,
+        relativeOutputFile = when {
+          isModuleCloseSource(moduleName, context = context) -> {
+            if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
+          }
+          else -> PlatformJarNames.getPlatformModuleJarName(moduleName, context)
+        },
+        reason = "productImplementationModules",
+      )
+    )
   }
-  explicit.addAll(toModuleItemSequence(PLATFORM_API_MODULES, productLayout = productLayout, reason = "PLATFORM_API_MODULES", context))
-  explicit.addAll(toModuleItemSequence(PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES",
-                                       context))
-  explicit.addAll(toModuleItemSequence(productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules",
-                                       context))
+  explicit.addAll(
+    toModuleItemSequence(
+      list = PLATFORM_API_MODULES,
+      productLayout = productLayout,
+      reason = "PLATFORM_API_MODULES",
+      context = context,
+    )
+  )
+  explicit.addAll(
+    toModuleItemSequence(
+      list = PLATFORM_IMPLEMENTATION_MODULES,
+      productLayout = productLayout,
+      reason = "PLATFORM_IMPLEMENTATION_MODULES",
+      context = context
+    )
+  )
+  explicit.addAll(
+    toModuleItemSequence(
+      list = productLayout.productApiModules,
+      productLayout = productLayout,
+      reason = "productApiModules",
+      context = context,
+    )
+  )
   if (addPlatformCoverage) {
     explicit.add(ModuleItem(moduleName = "intellij.platform.coverage", relativeOutputFile = APP_JAR, reason = "coverage"))
   }
@@ -490,39 +515,36 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
   withContext(Dispatchers.IO) {
     var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
-      file = context.findFileInModuleSources(moduleName = productPluginSourceModuleName,
-                                             relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+      file = context.findFileInModuleSources(
+        moduleName = productPluginSourceModuleName,
+        relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml",
+      )
       if (file == null) {
         Span.current().addEvent("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
         return@withContext null
       }
     }
 
-    readXmlAsModel(file).getChild("content")
-  }?.let { content ->
-    collectProductModules(content, result)
+    readXmlAsModel(file)
+  }?.let { root ->
+    collectProductModules(root = root, result = result, context = context)
   }
-
 
   withContext(Dispatchers.IO) {
     val file = context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-    file?.let { readXmlAsModel(it).getChild("content") }
+    file?.let { readXmlAsModel(it) }
   }?.let {
-    collectProductModules(it, result)
+    collectProductModules(root = it, result = result, context = context)
   }
 
   return result
 }
 
-private fun collectProductModules(content: XmlElement, result: LinkedHashSet<ModuleItem>) {
-  for (module in content.children("module")) {
+private fun collectProductModules(root: XmlElement, result: LinkedHashSet<ModuleItem>, context: BuildContext) {
+  for (module in (root.getChild("content")?.children("module") ?: emptySequence())) {
     val moduleName = module.attributes.get("name") ?: continue
     result.add(
-      ModuleItem(
-        moduleName = moduleName,
-        relativeOutputFile = "modules/$moduleName.jar",
-        reason = ModuleIncludeReasons.PRODUCT_MODULES
-      ),
+      ModuleItem(moduleName = moduleName, relativeOutputFile = "modules/$moduleName.jar", reason = ModuleIncludeReasons.PRODUCT_MODULES),
     )
   }
 }

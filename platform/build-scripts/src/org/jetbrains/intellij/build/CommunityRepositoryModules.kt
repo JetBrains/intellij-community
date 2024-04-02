@@ -333,7 +333,7 @@ object CommunityRepositoryModules {
                                         additionalModulesToJars: Map<String, String> = emptyMap(),
                                         allPlatforms: Boolean,
                                         addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
-    plugin(mainModuleName) { spec ->
+    plugin(mainModuleName, auto = true) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
       spec.withCustomVersion(object : PluginLayout.VersionEvaluator {
@@ -348,6 +348,8 @@ object CommunityRepositoryModules {
           }
         }
       })
+
+      spec.excludeProjectLibrary("Gradle")
 
       // modules:
       // adt-ui.jar
@@ -379,10 +381,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.kotlin.output.parser", "android-kotlin.jar")
 
       // android-profilers.jar
-      spec. withModule("intellij.android.profilers.atrace", "android-profilers.jar")
-      spec. withModule("intellij.android.profilers.ui", "android-profilers.jar")
-      spec. withModule("intellij.android.profilers", "android-profilers.jar")
-      spec. withModule("intellij.android.transportDatabase", "android-profilers.jar")
+      spec.withModule("intellij.android.profilers.atrace", "android-profilers.jar")
+      spec.withModule("intellij.android.profilers.ui", "android-profilers.jar")
+      spec.withModule("intellij.android.profilers", "android-profilers.jar")
+      spec.withModule("intellij.android.transportDatabase", "android-profilers.jar")
 
       // android-rt.jar
       //tools/adt/idea/rt:intellij.android.rt <= REMOVED

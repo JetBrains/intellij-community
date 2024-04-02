@@ -152,6 +152,7 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
+      "dependent-on-core" -> descriptor.isDependentOnCoreClassLoader = reader.getAttributeAsBoolean(i)
       "version" -> {
         // internalVersionString - why it is not used, but just checked?
         getNullifiedAttributeValue(reader, i)?.let {

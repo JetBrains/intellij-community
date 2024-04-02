@@ -15,10 +15,6 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
-    <orderEntry type="library" name="grpc-core" level="project" />
-    <orderEntry type="library" name="grpc-stub" level="project" />
-    <orderEntry type="library" name="grpc-protobuf" level="project" />
-    <orderEntry type="library" name="grpc-kotlin-stub" level="project" />
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module-library" scope="TEST">
@@ -55,5 +51,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.libraries.grpc" />
   </component>
 </module>

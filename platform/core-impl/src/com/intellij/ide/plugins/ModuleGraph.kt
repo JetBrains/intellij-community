@@ -105,11 +105,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
   }
 
-  return object : ModuleGraphBase(
-    modules,
-    directDependencies,
-    directDependents,
-  ) {}
+  return object : ModuleGraphBase(modules = modules, directDependencies = directDependencies, directDependents = directDependents) {}
 }
 
 private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
@@ -159,8 +155,11 @@ private fun copySorted(
  */
 private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
                                   idMap: Map<String, IdeaPluginDescriptorImpl>): IdeaPluginDescriptorImpl? {
-  // skip our plugins as expected to be up-to-date whether bundled or not
-  if (descriptor.isBundled || descriptor.packagePrefix != null || descriptor.implementationDetail) {
+  // skip our plugins as expected to be up to date whether bundled or not
+  if (descriptor.isBundled ||
+      descriptor.packagePrefix != null ||
+      descriptor.implementationDetail ||
+      descriptor.content.modules.isNotEmpty()) {
     return null
   }
 

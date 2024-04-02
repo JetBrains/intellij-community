@@ -133,7 +133,7 @@ class ClassLoaderConfigurator(
       configureDependenciesInOldFormat(module, mainDependentClassLoader)
     }
     else {
-      if (module.packagePrefix == null) {
+      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID) {
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
 
@@ -200,7 +200,7 @@ class ClassLoaderConfigurator(
         classPath = ClassPath(jarFiles, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false),
         parents = deps,
         pluginDescriptor = module,
-        coreLoader = coreLoader,
+        coreLoader = if (module.isDependentOnCoreClassLoader) coreLoader else coreLoader.parent,
         resolveScopeManager = null,
         packagePrefix = module.packagePrefix,
         libDirectories = ArrayList(),

@@ -84,8 +84,6 @@ private val predefinedMergeRules = HashMap<String, (String, JetBrainsClientModul
   map.put("groovy.jar") { it, _ -> it.startsWith("org.codehaus.groovy:") }
   map.put("jsch-agent.jar") { it, _ -> it.startsWith("jsch-agent") }
   map.put(rdJarName) { it, _ -> it.startsWith("rd-") }
-  // all grpc garbage into one jar
-  map.put("grpc.jar") { it, _ -> it.startsWith("grpc-") }
   // separate file to use in Gradle Daemon classpath
   map.put("opentelemetry.jar") { it, _ -> it == "opentelemetry" || it == "opentelemetry-semconv" || it.startsWith("opentelemetry-exporter-otlp") }
   map.put("bouncy-castle.jar") { it, _ -> it.startsWith("bouncy-castle-") }
@@ -431,7 +429,7 @@ class JarPackager private constructor(
     asset: AssetDescriptor,
   ) {
     val moduleName = module.name
-    val includeProjectLib = layout is PluginLayout && layout.auto
+    val includeProjectLib = if (layout is PluginLayout) layout.auto else item.reason == ModuleIncludeReasons.PRODUCT_MODULES
 
     val excluded = (layout.excludedLibraries.get(moduleName) ?: emptyList()) + (layout.excludedLibraries.get(null) ?: emptyList())
     for (element in helper.getLibraryDependencies(module)) {

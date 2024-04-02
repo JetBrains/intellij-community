@@ -61,13 +61,15 @@ private var logStream: Writer? = null
 private val parentListCacheIdCounter = AtomicInteger()
 
 @ApiStatus.Internal
-class PluginClassLoader(classPath: ClassPath,
-                        private val parents: Array<IdeaPluginDescriptorImpl>,
-                        private val pluginDescriptor: PluginDescriptor,
-                        private val coreLoader: ClassLoader,
-                        resolveScopeManager: ResolveScopeManager?,
-                        packagePrefix: String?,
-                        private val libDirectories: MutableList<String>) : UrlClassLoader(classPath), PluginAwareClassLoader {
+class PluginClassLoader(
+  classPath: ClassPath,
+  private val parents: Array<IdeaPluginDescriptorImpl>,
+  private val pluginDescriptor: PluginDescriptor,
+  private val coreLoader: ClassLoader,
+  resolveScopeManager: ResolveScopeManager?,
+  packagePrefix: String?,
+  private val libDirectories: MutableList<String>,
+) : UrlClassLoader(classPath), PluginAwareClassLoader {
   // cache of a computed list of all parents (not only direct)
   @Volatile
   private var allParents: Array<ClassLoader>? = null

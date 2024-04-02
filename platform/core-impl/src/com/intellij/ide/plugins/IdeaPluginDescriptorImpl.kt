@@ -46,6 +46,7 @@ class IdeaPluginDescriptorImpl(
   id: PluginId?,
   @JvmField val moduleName: String?,
   @JvmField val useCoreClassLoader: Boolean = false,
+  @JvmField var isDependentOnCoreClassLoader: Boolean = true,
 ) : IdeaPluginDescriptor {
   private val id: PluginId = id ?: PluginId.getId(raw.id ?: raw.name ?: throw RuntimeException("Neither id nor name are specified"))
   private val name = raw.name ?: id?.idString ?: raw.id
@@ -208,6 +209,7 @@ class IdeaPluginDescriptorImpl(
       id = id,
       moduleName = moduleName,
       useCoreClassLoader = useCoreClassLoader,
+      isDependentOnCoreClassLoader = raw.isDependentOnCoreClassLoader,
     )
     context.debugData?.recordDescriptorPath(descriptor = result, rawPluginDescriptor = raw, path = descriptorPath)
     result.descriptorPath = descriptorPath
