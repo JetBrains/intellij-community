@@ -38,4 +38,17 @@ public final class UsageHistory {
       return result;
     }
   }
+
+  public @NotNull Map<ConfigurableUsageTarget, String> getAllHistoryData() {
+    synchronized (myHistory) {
+      final Set<ConfigurableUsageTarget> entries = myHistory.keySet();
+      for (Iterator<ConfigurableUsageTarget> iterator = entries.iterator(); iterator.hasNext(); ) {
+        final ConfigurableUsageTarget target = iterator.next();
+        if (!target.isValid()) {
+          iterator.remove();
+        }
+      }
+      return myHistory;
+    }
+  }
 }

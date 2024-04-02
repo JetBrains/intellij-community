@@ -18,10 +18,7 @@ import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public final class ShowRecentFindUsagesAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
@@ -43,8 +40,9 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
   public void actionPerformed(@NotNull AnActionEvent e) {
     UsageView usageView = e.getData(UsageView.USAGE_VIEW_KEY);
     Project project = Objects.requireNonNull(e.getProject());
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    List<ConfigurableUsageTarget> history = new ArrayList<>(findUsagesManager.getHistory().getAll());
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    Map<ConfigurableUsageTarget, String> historyData = findUsagesManager.getHistory().getAllHistoryData();
+    List<ConfigurableUsageTarget> history = new ArrayList<>(historyData.keySet());
 
     if (!history.isEmpty()) {
       // skip most recent find usage, it's under your nose
@@ -68,7 +66,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
           if (data == null) {
             return FindBundle.message("recent.find.usages.action.nothing");
           }
-          return data.getLongDescriptiveName();
+          return historyData.get(data);
         }
 
         @Override
