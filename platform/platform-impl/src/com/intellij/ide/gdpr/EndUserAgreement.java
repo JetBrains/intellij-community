@@ -50,8 +50,8 @@ public final class EndUserAgreement {
     return getDocumentContentFile(getDocumentName());
   }
 
-  private static @NotNull Path getDocumentContentFile(String docName) {
-    return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? PRIVACY_POLICY_CONTENT_FILE_NAME : docName + ".cached");
+  public static @NotNull Path getDocumentContentFile(@NotNull String docName) {
+    return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? PRIVACY_POLICY_CONTENT_FILE_NAME : (docName + ".cached"));
   }
 
   private static @NotNull Path getDocumentNameFile() {
@@ -73,16 +73,18 @@ public final class EndUserAgreement {
 
   public static void setAccepted(@NotNull Document doc) {
     final Version version = doc.getVersion();
+    String versionKey = getAcceptedVersionKey(doc.getName());
     if (version.isUnknown()) {
-      Prefs.remove(getAcceptedVersionKey(doc.getName()));
+      Prefs.remove(versionKey);
     }
     else {
-      Prefs.put(getAcceptedVersionKey(doc.getName()), version.toString());
+      Prefs.put(versionKey, version.toString());
     }
   }
 
-  private static @NotNull Version getAcceptedVersion(String docName) {
-    return Version.fromString(Prefs.get(getAcceptedVersionKey(docName), null));
+  public static @NotNull Version getAcceptedVersion(@NotNull String docName) {
+    String versionKey = getAcceptedVersionKey(docName);
+    return Version.fromString(Prefs.get(versionKey, null));
   }
 
   public static @NotNull Document getLatestDocument() {
@@ -202,7 +204,7 @@ public final class EndUserAgreement {
     return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
-  private static @NotNull String getAcceptedVersionKey(String docName) {
+  private static @NotNull String getAcceptedVersionKey(@NotNull String docName) {
     if (PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)) {
       return "JetBrains.privacy_policy.accepted_version";
     }
