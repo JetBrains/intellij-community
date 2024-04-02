@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.highlighting.HighlightErrorFilter;
@@ -24,16 +23,13 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final boolean myHighlightErrorElements;
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
-  private final AnnotatorStatisticsCollector myAnnotatorStatisticsCollector = new AnnotatorStatisticsCollector();
 
   @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project) {
     this(project, true, false);
   }
 
-  DefaultHighlightVisitor(@NotNull Project project,
-                          boolean highlightErrorElements,
-                          boolean batchMode) {
+  DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean batchMode) {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myBatchMode = batchMode;
@@ -41,7 +37,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {
-    return true;
+    return myHighlightErrorElements;
   }
 
   @Override
@@ -62,8 +58,9 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   @Override
   public void visit(@NotNull PsiElement element) {
-    if (element instanceof PsiErrorElement && myHighlightErrorElements) {
-      visitErrorElement((PsiErrorElement)element);
+    if (element instanceof PsiErrorElement e &&
+        HighlightErrorFilter.EP_NAME.findFirstSafe(myProject, filter -> !filter.shouldHighlightErrorElement(e)) == null) {
+      myHolder.add(createErrorElementInfo(e));
     }
   }
 
@@ -71,14 +68,6 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   public @NotNull HighlightVisitor clone() {
     return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myBatchMode);
-  }
-
-  private void visitErrorElement(@NotNull PsiErrorElement element) {
-    if (HighlightErrorFilter.EP_NAME.findFirstSafe(myProject, filter -> !filter.shouldHighlightErrorElement(element)) != null) {
-      return;
-    }
-
-    myHolder.add(createErrorElementInfo(element));
   }
 
   private static HighlightInfo createErrorElementInfo(@NotNull PsiErrorElement element) {
@@ -102,7 +91,10 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(errorDescription);
+      return HighlightInfo
+        .newHighlightInfo(HighlightInfoType.ERROR)
+        .range(element)
+        .descriptionAndTooltip(errorDescription);
     }
     int offset = range.getStartOffset();
     PsiFile containingFile = element.getContainingFile();
@@ -111,21 +103,17 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     PsiElement elementAtOffset = viewProvider.findElementAt(offset, LanguageUtil.getRootLanguage(element));
     String text = elementAtOffset == null ? null : elementAtOffset.getText();
     if (offset < fileLength && text != null && !StringUtil.startsWithChar(text, '\n') && !StringUtil.startsWithChar(text, '\r')) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(offset, offset + 1)
+      return HighlightInfo
+        .newHighlightInfo(HighlightInfoType.ERROR)
+        .range(offset, offset + 1)
         .descriptionAndTooltip(errorDescription);
     }
-    int start;
-    int end;
-    if (offset > 0) {
-      start = offset/* - 1*/;
-      end = offset;
-    }
-    else {
-      start = offset;
-      end = offset < fileLength ? offset + 1 : offset;
-    }
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element, start, end)
-    .descriptionAndTooltip(errorDescription)
-    .endOfLine();
+    int start = offset;
+    int end = offset == 0 ? Math.min(offset + 1, fileLength) : offset;
+    return HighlightInfo
+      .newHighlightInfo(HighlightInfoType.ERROR)
+      .range(element, start, end)
+      .descriptionAndTooltip(errorDescription)
+      .endOfLine();
   }
 }
