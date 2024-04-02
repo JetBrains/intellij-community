@@ -42,6 +42,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   private var myCalculateDelta = false
   private var myDelta = 0
   private var myCustomWidth = 0
+  private var myCurrentScale = 0f
 
   init {
     myComponent.addMouseListener(object : PopupHandler() {
@@ -89,6 +90,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       val enabled = isShowNames()
       if (enabled) {
         myCustomWidth = getSideCustomWidth(myComponent.anchor)
+        myCurrentScale = UISettings.getInstance().currentIdeScale
         myComponent.add(mySplitter)
       }
       else {
@@ -102,10 +104,10 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     }
     else {
       myCustomWidth = getSideCustomWidth(myComponent.anchor)
+      myCurrentScale = UISettings.getInstance().currentIdeScale
     }
     updateView()
   }
-
 
   override fun setProportion(proportion: Float) {
     if (myIgnoreProportion) {
@@ -124,18 +126,43 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     }
     width += myDelta
 
-    val min = JBUI.scale(if (UISettings.Companion.getInstance().compactMode) 32 else 40)
+    width = checkMinMax(width)
+
+    myCustomWidth = width
+    myCurrentScale = UISettings.getInstance().currentIdeScale
+    setSideCustomWidth(myComponent, width)
+    updateView()
+  }
+
+  private fun checkMinMax(width: Int): Int {
+    val min = JBUI.scale(if (UISettings.getInstance().compactMode) 32 else 40)
     if (width < min) {
-      width = min
+      return min
     }
 
     val max = JBUI.scale(100)
     if (width > max) {
-      width = max
+      return max
     }
 
-    myCustomWidth = width
-    setSideCustomWidth(myComponent, width)
+    return width
+  }
+
+  fun updateNamedState() {
+    val currentScale = UISettings.getInstance().currentIdeScale
+    if (myCustomWidth == 0 && myCurrentScale == 0f) {
+      myCustomWidth = getSideCustomWidth(myComponent.anchor)
+      val width = checkMinMax(myCustomWidth)
+      if (width != myCustomWidth) {
+        myCustomWidth = width
+        setSideCustomWidth(myComponent, width)
+      }
+    }
+    else if (myCurrentScale != currentScale) {
+      myCustomWidth = (myCustomWidth * currentScale / myCurrentScale).toInt()
+      setSideCustomWidth(myComponent, myCustomWidth)
+    }
+    myCurrentScale = currentScale
     updateView()
   }
 
