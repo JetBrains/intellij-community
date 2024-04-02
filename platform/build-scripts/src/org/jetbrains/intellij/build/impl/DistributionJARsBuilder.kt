@@ -452,12 +452,14 @@ private suspend fun validatePlugin(path: Path, context: BuildContext) {
     }
 
     val pluginManager = IdePluginManager.createManager()
-    val id = (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
     val result = pluginManager.createPlugin(path, validateDescriptor = true)
     // todo fix AddStatisticsEventLogListenerTemporary
     val problems = context.productProperties.validatePlugin(result, context)
-      .filter { !it.message.contains("Service preloading is deprecated in the") }
+      .filter {
+        !it.message.contains("Service preloading is deprecated in the") && !it.message.contains("Plugin has no dependencies")
+      }
     if (problems.isNotEmpty()) {
+      val id = (pluginManager.createPlugin(path, validateDescriptor = false) as? PluginCreationSuccess)?.plugin?.pluginId
       context.messages.reportBuildProblem(problems.joinToString(
         prefix = "${id ?: path}: ",
         separator = ". ",

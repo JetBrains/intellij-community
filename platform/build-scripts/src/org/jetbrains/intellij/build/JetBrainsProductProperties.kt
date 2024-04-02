@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
@@ -43,8 +43,10 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     return buildList {
       addAll(super.validatePlugin(result, context))
       if (result is PluginCreationSuccess && result.plugin.vendor?.contains("JetBrains") != true) {
-        add(object : InvalidDescriptorProblem("") {
-          override val detailedMessage = "${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"
+        add(object : InvalidDescriptorProblem(
+          descriptorPath = "",
+          detailedMessage = "${result.plugin.pluginId} is published not by JetBrains: ${result.plugin.vendor}"
+        ) {
           override val level = Level.ERROR
         })
       }

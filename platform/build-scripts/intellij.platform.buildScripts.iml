@@ -173,52 +173,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library name="jetbrains.intellij.plugins.structure" type="repository">
-        <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.262">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.262/structure-intellij-3.262.jar">
-              <sha256sum>d71b06f876f58c014227ddb68e1ff38e2267cf540acb3f6cc0e6a647b417bf20</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.262/structure-base-3.262.jar">
-              <sha256sum>5664c5d04f5c2d4ce5412656b80ef8b839765ac7eb56157ad84404d58a3c83d8</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar">
-              <sha256sum>ac0192fd110a0363732b17ea94fd1ce8cfd85790c8e1551e14f866908b5d80e1</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar">
-              <sha256sum>0b20f45e3a0fd8f0d12cdc5316b06776e902b1365db00118876f9175c60f302c</sha256sum>
-            </artifact>
-          </verification>
-          <exclude>
-            <dependency maven-id="org.jetbrains:annotations" />
-            <dependency maven-id="org.slf4j:slf4j-api" />
-            <dependency maven-id="commons-io:commons-io" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
-            <dependency maven-id="com.fasterxml.jackson.module:jackson-module-kotlin" />
-            <dependency maven-id="org.jetbrains.kotlin:kotlin-reflect" />
-            <dependency maven-id="org.apache.commons:commons-compress" />
-            <dependency maven-id="org.tukaani:xz" />
-            <dependency maven-id="org.jsoup:jsoup" />
-            <dependency maven-id="javax.xml.bind:jaxb-api" />
-            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
-          </exclude>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.262/structure-intellij-3.262.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.262/structure-base-3.262.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.262/structure-intellij-3.262-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.262/structure-base-3.262-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="intellij-plugin-structure" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jaxb-runtime" level="project" />
     <orderEntry type="library" name="tcServiceMessages" level="project" />

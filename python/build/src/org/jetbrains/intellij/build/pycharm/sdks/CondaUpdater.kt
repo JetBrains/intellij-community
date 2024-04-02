@@ -9,13 +9,13 @@ import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
-import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.*
 import org.jetbrains.intellij.build.pycharm.RESOURCE_CACHE
 import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.fileSize
 
@@ -184,12 +184,12 @@ class CondaUpdater {
       val destinationFilePath = Paths.get(tempDirPath, "${System.nanoTime()}-${condaResource.filename}")
       print("Processing ${url} to ${destinationFilePath} ... ")
       return try {
-        if (!destinationFilePath.exists()) {
-          println(" Downloading")
-          HttpRequests.request(url).saveToFile(destinationFilePath.toFile(), null)
+        if (Files.exists(destinationFilePath)) {
+          println(" Already exists")
         }
         else {
-          println(" Already exists")
+          println(" Downloading")
+          HttpRequests.request(url).saveToFile(destinationFilePath.toFile(), null)
         }
         val sha256 = JpsChecksumUtil.getSha256Checksum(destinationFilePath)
         if (sha256 != condaResource.sha256) {
