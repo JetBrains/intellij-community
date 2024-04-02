@@ -115,17 +115,9 @@ public final class EndUserAgreement {
 
       Document bundled = loadContent(docName, getBundledResourcePath(docName));
       if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
-        try {
-          // update content only and not the active document name
-          // active document name can be changed by JBA only
-          writeToFile(getDocumentContentFile(docName), bundled.getText());
-        }
-        catch (NoSuchFileException e) {
-          LOG.info(e.getMessage());
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
+        // update content only and not the active document name
+        // active document name can be changed by JBA only
+        writeToFile(getDocumentContentFile(docName), bundled.getText());
         return true;
       }
     }
@@ -134,15 +126,10 @@ public final class EndUserAgreement {
     return false;
   }
 
-  private static void writeToFile(@NotNull Path file, @NotNull String text) throws IOException {
-    Files.createDirectories(file.getParent());
-    Files.writeString(file, text);
-  }
-
-  public static void update(@NotNull String docName, @NotNull String text) {
+  private static void writeToFile(@NotNull Path file, @NotNull String text) {
     try {
-      writeToFile(getDocumentContentFile(docName), text);
-      writeToFile(getDocumentNameFile(), docName);
+      Files.createDirectories(file.getParent());
+      Files.writeString(file, text);
     }
     catch (NoSuchFileException e) {
       LOG.info(e.getMessage());
@@ -150,6 +137,11 @@ public final class EndUserAgreement {
     catch (IOException e) {
       LOG.info(e);
     }
+  }
+
+  public static void update(@NotNull String docName, @NotNull String text) {
+    writeToFile(getDocumentContentFile(docName), text);
+    writeToFile(getDocumentNameFile(), docName);
   }
 
   private static @NotNull Document loadContent(String docName, String resourcePath) {
