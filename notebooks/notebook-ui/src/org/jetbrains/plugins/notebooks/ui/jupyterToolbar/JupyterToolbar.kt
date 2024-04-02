@@ -1,8 +1,10 @@
 package org.jetbrains.plugins.notebooks.ui.jupyterToolbar
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.Editor
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
@@ -14,23 +16,27 @@ import java.awt.Cursor
 import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.BorderFactory
+import javax.swing.JComponent
 import javax.swing.SwingUtilities
+
 
 /**
  * @See com.intellij.bigdatatools.visualization.inlays.components.FadingToolbar
  * PY-66455
  */
-class JupyterToolbar(actionGroup: ActionGroup) : ActionToolbarImpl(ActionPlaces.EDITOR_INLAY, actionGroup, true) {
+class JupyterToolbar(actionGroup: ActionGroup, target: JComponent) :
+  ActionToolbarImpl(ActionPlaces.EDITOR_INLAY, actionGroup, true)
+{
   init {
     val borderColor = when (NewUiValue.isEnabled()) {
-      true ->JBColor.LIGHT_GRAY
-      else -> JBColor.DARK_GRAY
+      true -> JBColor.LIGHT_GRAY
+      else -> JBColor.GRAY
     }
-
     border = BorderFactory.createCompoundBorder(RoundedLineBorder(borderColor, TOOLBAR_ARC_SIZE, TOOLBAR_BORDER_THICKNESS),
                                                 BorderFactory.createEmptyBorder(OUTER_PADDING, OUTER_PADDING, OUTER_PADDING, OUTER_PADDING))
     isOpaque = false
     cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    targetComponent = target
     setSkipWindowAdjustments(false)
   }
 
@@ -51,6 +57,7 @@ class JupyterToolbar(actionGroup: ActionGroup) : ActionToolbarImpl(ActionPlaces.
     if (!StartupUiUtil.isDarkTheme) {
       background = JBColor.WHITE
     }
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
   }
 
   fun getRespectiveLineNumberInEditor(editor: Editor): Int? {
