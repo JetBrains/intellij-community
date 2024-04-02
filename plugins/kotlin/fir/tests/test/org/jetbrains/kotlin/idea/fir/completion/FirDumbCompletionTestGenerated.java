@@ -38,6 +38,26 @@ public class FirDumbCompletionTestGenerated extends AbstractFirDumbCompletionTes
         runTest("../../completion/testData/dumb/ClassScopeMembers.kt");
     }
 
+    @TestMetadata("ClassSecondaryConstructorParametersCanBeUsed.kt")
+    public void testClassSecondaryConstructorParametersCanBeUsed() throws Exception {
+        runTest("../../completion/testData/dumb/ClassSecondaryConstructorParametersCanBeUsed.kt");
+    }
+
+    @TestMetadata("ClassSecondaryConstructorParametersDoNotLeak.kt")
+    public void testClassSecondaryConstructorParametersDoNotLeak() throws Exception {
+        runTest("../../completion/testData/dumb/ClassSecondaryConstructorParametersDoNotLeak.kt");
+    }
+
+    @TestMetadata("ClassValParametersDoNotLeak.kt")
+    public void testClassValParametersDoNotLeak() throws Exception {
+        runTest("../../completion/testData/dumb/ClassValParametersDoNotLeak.kt");
+    }
+
+    @TestMetadata("ClassValParametersExistInClass.kt")
+    public void testClassValParametersExistInClass() throws Exception {
+        runTest("../../completion/testData/dumb/ClassValParametersExistInClass.kt");
+    }
+
     @TestMetadata("CompanionObjectScopeDoesNotLeak.kt")
     public void testCompanionObjectScopeDoesNotLeak() throws Exception {
         runTest("../../completion/testData/dumb/CompanionObjectScopeDoesNotLeak.kt");

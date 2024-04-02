@@ -222,29 +222,33 @@ class PsiTreeCompletion {
         }
 
         override fun visitDeclaration(dcl: KtDeclaration, data: LookupScope): Void? {
-            if (dcl !is KtNamedFunction) {
-                // This is already recorded in visitNamedFunction
+            if (dcl !is KtNamedFunction && dcl !is KtClassOrObject && dcl !is KtSecondaryConstructor) {
+                // We handle these declarations separately because they need to open a new scope for the
+                // function parameters, so they do not leak to the outside scope.
                 data.recordDeclaration(dcl)
             }
             return super.visitDeclaration(dcl, data)
         }
 
-        override fun visitClassBody(classBody: KtClassBody, data: LookupScope): Void? {
-            val scopeType = if ((classBody.parent as? KtObjectDeclaration)?.isCompanion() == true) {
+        override fun visitClassOrObject(classOrObject: KtClassOrObject, data: LookupScope): Void? {
+            data.recordDeclaration(classOrObject)
+            val scopeType = if ((classOrObject as? KtObjectDeclaration)?.isCompanion() == true) {
                 ScopeType.COMPANION_OBJECT
             } else {
                 ScopeType.CLASS
             }
-            return super.visitClassBody(classBody, data.registerSubScope(classBody.textRange, scopeType))
+            return super.visitClassOrObject(classOrObject, data.registerSubScope(classOrObject.textRange, scopeType))
         }
 
         override fun visitForExpression(expression: KtForExpression, data: LookupScope): Void? {
             return super.visitForExpression(expression, data.registerSubScope(expression.textRange, ScopeType.LOCAL))
         }
 
+        override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor, data: LookupScope): Void? {
+            return super.visitSecondaryConstructor(constructor, data.registerSubScope(constructor.textRange, ScopeType.LOCAL))
+        }
+
         override fun visitNamedFunction(function: KtNamedFunction, data: LookupScope): Void? {
-            // We handle this declaration separately because it needs to open a new scope for the
-            // function parameters, so they do not leak to the outside scope.
             data.recordDeclaration(function)
             return super.visitNamedFunction(function, data.registerSubScope(function.textRange, ScopeType.LOCAL))
         }

@@ -38,6 +38,26 @@ public class DumbCompletionTestGenerated extends AbstractDumbCompletionTest {
         runTest("../testData/dumb/ClassScopeMembers.kt");
     }
 
+    @TestMetadata("ClassSecondaryConstructorParametersCanBeUsed.kt")
+    public void testClassSecondaryConstructorParametersCanBeUsed() throws Exception {
+        runTest("../testData/dumb/ClassSecondaryConstructorParametersCanBeUsed.kt");
+    }
+
+    @TestMetadata("ClassSecondaryConstructorParametersDoNotLeak.kt")
+    public void testClassSecondaryConstructorParametersDoNotLeak() throws Exception {
+        runTest("../testData/dumb/ClassSecondaryConstructorParametersDoNotLeak.kt");
+    }
+
+    @TestMetadata("ClassValParametersDoNotLeak.kt")
+    public void testClassValParametersDoNotLeak() throws Exception {
+        runTest("../testData/dumb/ClassValParametersDoNotLeak.kt");
+    }
+
+    @TestMetadata("ClassValParametersExistInClass.kt")
+    public void testClassValParametersExistInClass() throws Exception {
+        runTest("../testData/dumb/ClassValParametersExistInClass.kt");
+    }
+
     @TestMetadata("CompanionObjectScopeDoesNotLeak.kt")
     public void testCompanionObjectScopeDoesNotLeak() throws Exception {
         runTest("../testData/dumb/CompanionObjectScopeDoesNotLeak.kt");
