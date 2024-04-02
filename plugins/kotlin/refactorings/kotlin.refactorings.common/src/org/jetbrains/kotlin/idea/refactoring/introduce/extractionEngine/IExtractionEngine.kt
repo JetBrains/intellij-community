@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -16,7 +17,7 @@ import com.intellij.ui.awt.RelativePoint
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import javax.swing.event.HyperlinkEvent
 
 abstract class IExtractionEngineHelper<KotlinType,
@@ -30,7 +31,14 @@ abstract class IExtractionEngineHelper<KotlinType,
 
     fun doRefactor(config: Config, onFinish: (Result) -> Unit = {}) {
         val project = config.descriptor.extractionData.project
-        onFinish(project.executeWriteCommand<Result>(operationName) { generateDeclaration(config) })
+        val result = project.executeCommand<Result?>(operationName) {
+            var generatedDeclaration: Result? = null
+            ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("", project, null) {
+                generatedDeclaration = generateDeclaration(config)
+            }
+            generatedDeclaration
+        } ?: return
+        onFinish(result)
     }
 
     /**

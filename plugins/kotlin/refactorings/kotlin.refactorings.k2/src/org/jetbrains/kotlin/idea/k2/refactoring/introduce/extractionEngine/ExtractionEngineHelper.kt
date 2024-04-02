@@ -21,6 +21,7 @@ abstract class ExtractionEngineHelper(@NlsContexts.DialogTitle operationName: St
     ) {
 
 
+    // called under potemkin progress, still in EDT but the progress is visible
     @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     override fun generateDeclaration(config: ExtractionGeneratorConfiguration): ExtractionResult {
         allowAnalysisOnEdt {
