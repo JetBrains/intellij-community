@@ -4698,15 +4698,15 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedChange
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - com.intellij.openapi.options.ExternalizableScheme
 - com.intellij.openapi.util.JDOMExternalizable
-- DATE:java.util.Date
-- DESCRIPTION:java.lang.String
-- path:java.nio.file.Path
 - <init>(java.nio.file.Path,java.lang.String,java.util.List,java.util.List):V
 - getBinaryFiles():java.util.List
 - getChanges():java.util.List
 - getChanges(com.intellij.openapi.project.Project):java.util.List
 - getChangesLoadingError():java.lang.String
+- getDate():java.util.Date
+- getDescription():java.lang.String
 - getName():java.lang.String
+- getPath():java.nio.file.Path
 - isDeleted():Z
 - isMarkedToDelete():Z
 - isRecycled():Z
@@ -4714,6 +4714,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - loadChangesIfNeeded(com.intellij.openapi.project.Project):V
 - markToDelete(Z):V
 - readExternal(org.jdom.Element):V
+- setDate(java.util.Date):V
 - setDeleted(Z):V
 - setName(java.lang.String):V
 - setRecycled(Z):V

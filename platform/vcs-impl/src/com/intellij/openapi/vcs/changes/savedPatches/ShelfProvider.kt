@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -72,7 +72,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
   override fun isEmpty() = mainLists().isEmpty() && deletedLists().isEmpty()
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean) {
-    val shelvesList = mainLists().sortedByDescending { it.DATE }
+    val shelvesList = mainLists().sortedByDescending { it.date }
     val shelvesRoot = if (showRootNode) SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also {
       modelBuilder.insertSubtreeRoot(it)
     } else {
@@ -81,7 +81,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
     modelBuilder.insertShelves(shelvesRoot, shelvesList)
 
-    val deletedShelvesList = deletedLists().sortedByDescending { it.DATE }
+    val deletedShelvesList = deletedLists().sortedByDescending { it.date }
     if (deletedShelvesList.isNotEmpty()) {
       val deletedShelvesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(VcsBundle.message("shelve.recently.deleted.node"),
                                                                                  expandByDefault = false, sortWeight = 20)
@@ -126,7 +126,7 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
 
   class ShelvedChangeListChangesBrowserNode(private val shelf: ShelfObject) : ChangesBrowserNode<ShelfObject>(shelf) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-      val listName = shelf.data.DESCRIPTION.ifBlank { VcsBundle.message("changes.nodetitle.empty.changelist.name") }
+      val listName = shelf.data.description.ifBlank { VcsBundle.message("changes.nodetitle.empty.changelist.name") }
       val attributes = if (shelf.data.isRecycled || shelf.data.isDeleted) {
         SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES
       }
@@ -136,8 +136,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
       renderer.appendTextWithIssueLinks(listName, attributes)
 
       renderer.toolTipText = VcsBundle.message("saved.patch.created.on.date.at.time.tooltip", VcsBundle.message("shelf.tooltip.title"),
-                                               DateFormatUtil.formatDate(shelf.data.DATE),
-                                               DateFormatUtil.formatTime(shelf.data.DATE))
+                                               DateFormatUtil.formatDate(shelf.data.date),
+                                               DateFormatUtil.formatTime(shelf.data.date))
     }
 
     override fun getTextPresentation(): String = shelf.data.toString()
