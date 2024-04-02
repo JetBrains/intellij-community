@@ -8,7 +8,8 @@
         "properties@14x14.svg": "icons/gutter/properties.svg"
       },
       "addSDK.svg": "icons/add_sdk.svg",
-      "sdkClosed.svg": "icons/sdk_closed.svg"
+      "sdkClosed.svg": "icons/sdk_closed.svg",
+      "remoteMapping.svg": "icons/remoteMapping.svg"
     }
   }
 }

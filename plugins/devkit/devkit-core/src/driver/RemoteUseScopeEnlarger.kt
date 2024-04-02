@@ -10,7 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope.allScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.UseScopeEnlarger
 
-internal const val REMOTE_ANNOTATION_FQN = "com.intellij.driver.client.Remote"
+const val REMOTE_ANNOTATION_FQN = "com.intellij.driver.client.Remote"
 
 internal class RemoteUseScopeEnlarger : UseScopeEnlarger() {
     override fun getAdditionalUseScope(element: PsiElement): SearchScope? {

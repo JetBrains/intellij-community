@@ -47,6 +47,7 @@
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection"
                      key="inspection.use.platform.process.await.exit.display.name"/>
 
+    <iconProvider implementation="org.jetbrains.idea.devkit.kotlin.driver.RemoteIconProvider" order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
