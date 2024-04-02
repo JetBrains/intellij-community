@@ -29,6 +29,8 @@ class UnspecifiedLogger : JvmLogger {
 
   override fun createLogger(project: Project, clazz: PsiClass): PsiElement = throw UnsupportedOperationException()
 
+  override fun getLogFieldName(clazz: PsiClass): String? = null
+
   override fun toString(): String = JavaBundle.message("java.configurable.logger.unspecified")
 
   companion object {

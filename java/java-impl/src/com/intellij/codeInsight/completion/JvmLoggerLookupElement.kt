@@ -5,19 +5,15 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.logging.JvmLogger
 import com.intellij.lang.logging.JvmLoggerFieldDelegate
-import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.util.parentOfType
-import com.intellij.ui.logging.JvmLoggingSettingsStorage
 
 class JvmLoggerLookupElement(private val logger: JvmLogger, private val place: PsiClass) : LookupElement(), JavaCompletionStatistician.CustomStatisticsInfoProvider {
   val typeName: String = logger.loggerTypeName
 
   override fun getLookupString(): String {
-    val project = place.project
-    val settings = project.service<JvmLoggingSettingsStorage>().state
-    return settings.loggerName ?: JvmLoggerFieldDelegate.LOGGER_IDENTIFIER
+    return logger.getLogFieldName(place) ?: JvmLoggerFieldDelegate.LOGGER_IDENTIFIER
   }
 
   override fun handleInsert(context: InsertionContext) {
