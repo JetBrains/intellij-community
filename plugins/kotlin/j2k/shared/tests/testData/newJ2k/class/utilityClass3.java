@@ -1,4 +1,3 @@
-// IGNORE_K2
 abstract class Util {
     public static void util1() {}
     public static void util2() {}

@@ -239,20 +239,6 @@ internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessing
     }
 }
 
-internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
-    private val inspection = MayBeConstantInspection()
-
-    override fun isApplicableTo(element: KtProperty, settings: ConverterSettings): Boolean {
-        if (!isInspectionEnabledInCurrentProfile(inspection, element.project)) return false
-        val status = element.getStatus()
-        return status == MayBeConstantInspectionBase.Status.MIGHT_BE_CONST || status == MayBeConstantInspectionBase.Status.JVM_FIELD_MIGHT_BE_CONST
-    }
-
-    override fun apply(element: KtProperty) {
-        AddConstModifierFix.addConstModifier(element)
-    }
-}
-
 internal class RemoveExplicitAccessorInspectionBasedProcessing :
     InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
     override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings): Boolean =

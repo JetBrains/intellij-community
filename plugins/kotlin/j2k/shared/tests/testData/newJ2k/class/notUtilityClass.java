@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Base {
     public static final int CONSTANT = 10;
 }
