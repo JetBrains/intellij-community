@@ -12705,6 +12705,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/asList.kt");
             }
 
+            @TestMetadata("binarySearch.kt")
+            public void testBinarySearch() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/binarySearch.kt");
+            }
+
             @TestMetadata("copyOf.kt")
             public void testCopyOf() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/copyOf.kt");
@@ -12765,6 +12770,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/equalsWithNullOther.kt");
             }
 
+            @TestMetadata("fill.kt")
+            public void testFill() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/fill.kt");
+            }
+
             @TestMetadata("hashCode.kt")
             public void testHashCode() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/hashCode.kt");
@@ -12800,6 +12810,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/qualified.kt");
             }
 
+            @TestMetadata("reverse.kt")
+            public void testReverse() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/reverse.kt");
+            }
+
+            @TestMetadata("reverseImmutableList.kt")
+            public void testReverseImmutableList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/reverseImmutableList.kt");
+            }
+
             @TestMetadata("setOf.kt")
             public void testSetOf() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/setOf.kt");
@@ -12808,6 +12828,51 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("setOf2.kt")
             public void testSetOf2() throws Exception {
                 runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/setOf2.kt");
+            }
+
+            @TestMetadata("shuffle.kt")
+            public void testShuffle() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/shuffle.kt");
+            }
+
+            @TestMetadata("shuffleImmutableList.kt")
+            public void testShuffleImmutableList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/shuffleImmutableList.kt");
+            }
+
+            @TestMetadata("shuffleRandom.kt")
+            public void testShuffleRandom() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/shuffleRandom.kt");
+            }
+
+            @TestMetadata("sort.kt")
+            public void testSort() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/sort.kt");
+            }
+
+            @TestMetadata("sortArrayList.kt")
+            public void testSortArrayList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/sortArrayList.kt");
+            }
+
+            @TestMetadata("sortImmutableList.kt")
+            public void testSortImmutableList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/sortImmutableList.kt");
+            }
+
+            @TestMetadata("sortLinkedList.kt")
+            public void testSortLinkedList() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/sortLinkedList.kt");
+            }
+
+            @TestMetadata("sortVector.kt")
+            public void testSortVector() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/sortVector.kt");
+            }
+
+            @TestMetadata("sortWith.kt")
+            public void testSortWith() throws Exception {
+                runTest("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections/sortWith.kt");
             }
 
             @TestMetadata("toString.kt")

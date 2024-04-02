@@ -92,4 +92,36 @@ abstract class KotlinApplicableInspectionBase<E : KtElement, C> : LocalInspectio
             /* ...fixes = */ createQuickFix(element, context),
         )
     }
+
+    abstract class MultiFixes<E : KtElement, C> : KotlinApplicableInspectionBase<E, C>() {
+
+        protected abstract fun getProblemDescription(
+            element: E,
+            context: C,
+        ): @InspectionMessage String
+
+        protected open fun getProblemHighlightType(
+            element: E,
+            context: C,
+        ): ProblemHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+
+        protected abstract fun createQuickFixes(
+            element: E,
+            context: C,
+        ): Collection<KotlinModCommandQuickFix<E>>
+
+        override fun InspectionManager.createProblemDescriptor(
+            element: E,
+            context: C,
+            rangeInElement: TextRange?,
+            onTheFly: Boolean
+        ): ProblemDescriptor = createProblemDescriptor(
+            /* psiElement = */ element,
+            /* rangeInElement = */ rangeInElement,
+            /* descriptionTemplate = */ getProblemDescription(element, context),
+            /* highlightType = */ getProblemHighlightType(element, context),
+            /* onTheFly = */ onTheFly,
+            /* ...fixes = */ *(createQuickFixes(element, context).toTypedArray()),
+        )
+    }
 }

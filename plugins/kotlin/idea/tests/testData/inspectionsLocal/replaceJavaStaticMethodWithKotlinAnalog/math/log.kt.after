@@ -2,5 +2,5 @@ import kotlin.math.ln
 
 // WITH_STDLIB
 fun test(x: Double) {
-    <caret>ln(x)
+    ln(x)
 }
