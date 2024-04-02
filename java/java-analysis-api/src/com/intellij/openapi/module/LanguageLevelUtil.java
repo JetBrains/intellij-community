@@ -78,6 +78,12 @@ public final class LanguageLevelUtil {
     }
   }
 
+  /**
+   * Retrieves the short language-level name like "17" for Java 17 or "1.5" for Java 1.5.
+   *
+   * @param languageLevel The language level for which to retrieve the short name.
+   * @return The short name associated with the specified language level, or null if the language level is not released yet.
+   */
   @Nullable
   public static String getShortMessage(@NotNull LanguageLevel languageLevel) {
     return ourPresentableShortMessage.get(languageLevel);
@@ -89,11 +95,12 @@ public final class LanguageLevelUtil {
    */
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
-    if (!ourPresentableShortMessage.containsKey(languageLevel)) return null;
+    String message = getShortMessage(languageLevel);
+    if (message == null) return null;
     Reference<Set<String>> ref = ourForbiddenAPI.get(languageLevel);
     Set<String> result = dereference(ref);
     if (result == null) {
-      String fileName = "api" + getShortMessage(languageLevel) + ".txt";
+      String fileName = "api" + message + ".txt";
       URL resource = LanguageLevelUtil.class.getResource(fileName);
       if (resource != null) {
         result = loadSignatureList(resource);
