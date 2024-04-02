@@ -105,11 +105,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   fun present(): Boolean {
-    return searchService.findAll(data.xpath).isNotEmpty()
+    return data.parentSearchContext.findAll(data.xpath).isNotEmpty()
   }
 
   fun notPresent(): Boolean {
-    return searchService.findAll(data.xpath).isEmpty()
+    return data.parentSearchContext.findAll(data.xpath).isEmpty()
   }
 
   fun hasText(predicate: (TextData) -> Boolean): Boolean {
