@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 @Service(Service.Level.PROJECT)
-class BuildManagerVersionChecker(val project: Project, val scope: CoroutineScope) {
+internal class BuildManagerVersionChecker(val project: Project, val scope: CoroutineScope) {
   private var lastWarned: String? = null
 
   fun checkArch(sdkHome: String?) {
