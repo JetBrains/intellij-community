@@ -669,10 +669,15 @@ object Utils {
       x = x.getDelegate()
       c = x.javaClass
     }
-    sb.append(c.getName()
-                .removePrefix("com.intellij.openapi.actionSystem.")
-                .removePrefix("com.intellij.ide.actions."))
-    idProvider?.invoke(x)?.let { sb.append("(id=").append(it).append(')') }
+    if (x is String) {
+      sb.append(x)
+    }
+    else {
+      sb.append(c.getName()
+                  .removePrefix("com.intellij.openapi.actionSystem.")
+                  .removePrefix("com.intellij.ide.actions."))
+      idProvider?.invoke(x)?.let { sb.append("(id=").append(it).append(')') }
+    }
     sb.append(")")
     sb.insert(0, StringUtilRt.getShortName(c.getName()))
     return sb.toString()
