@@ -65,8 +65,9 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
    *  * path to the SVG or PNG file of the icon
    *  * URL of the SVG or PNG icon
    */
+  // do not use Map.of - value is nullable
   @Volatile
-  private var iconCustomizations: Map<String, String?> = java.util.Map.of()
+  private var iconCustomizations: Map<String, String?> = Collections.emptyMap()
   private val lock = Any()
 
   // ordered map, do not use hash map
@@ -182,7 +183,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       for (id in ids) {
         iconCustomizations.putIfAbsent(id, null)
       }
-      this.iconCustomizations = java.util.Map.copyOf(iconCustomizations)
+      this.iconCustomizations = Collections.unmodifiableMap(iconCustomizations)
     }
   }
 
@@ -244,7 +245,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
         isFirstLoadState = false
       }
 
-      this.iconCustomizations = java.util.Map.copyOf(iconCustomizations)
+      this.iconCustomizations = Collections.unmodifiableMap(iconCustomizations)
     }
     coroutineScope?.launch {
       if (!iconCustomizations.isEmpty()) {
