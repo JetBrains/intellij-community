@@ -6747,6 +6747,11 @@ f:com.intellij.ide.gdpr.EndUserAgreement$Document
 - getVersion():com.intellij.ide.gdpr.Version
 - isAccepted():Z
 - isPrivacyPolicy():Z
+f:com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor
+- documentName:java.lang.String
+- productCode:java.lang.String
+- <init>():V
+- s:getDescriptors():java.util.List
 f:com.intellij.ide.gdpr.Version
 - java.lang.Comparable
 - sf:UNKNOWN:com.intellij.ide.gdpr.Version

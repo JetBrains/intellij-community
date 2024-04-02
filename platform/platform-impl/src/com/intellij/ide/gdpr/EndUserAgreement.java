@@ -5,8 +5,10 @@ import com.intellij.ide.Prefs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -264,6 +267,19 @@ public final class EndUserAgreement {
         }
       }
       return Version.UNKNOWN;
+    }
+  }
+
+  public static final class PluginAgreementUpdateDescriptor {
+    private static final ExtensionPointName<PluginAgreementUpdateDescriptor> EP_NAME = ExtensionPointName.create("com.intellij.endUserAgreementUpdater");
+
+    @Attribute("productCode")
+    public String productCode;
+    @Attribute("documentName")
+    public String documentName;
+
+    public static @NotNull List<PluginAgreementUpdateDescriptor> getDescriptors() {
+      return EP_NAME.getExtensionList();
     }
   }
 }
