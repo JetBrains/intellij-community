@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.FileEditorManagerTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -48,7 +49,9 @@ public class EditorLoadTest extends FileEditorManagerTestCase {
       List<FileEditor> editors = manager.openEditor(new OpenFileDescriptor(getProject(), virtualFile, 0), false);
       LOG.debug(i+": "+editors);
       try {
-        assertTrue(loaded.get());
+        while (!loaded.get()) {
+          UIUtil.dispatchAllInvocationEvents();
+        }
         run.set(false);
         testStateInvariant.get().get();
       }
