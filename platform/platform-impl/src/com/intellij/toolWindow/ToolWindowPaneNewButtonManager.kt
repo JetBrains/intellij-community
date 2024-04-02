@@ -34,6 +34,8 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     val visible = showButtons || state.isStripesOverlaid
     left.isVisible = visible
     right.isVisible = visible
+    left.updateNamedState()
+    right.updateNamedState()
     return oldSquareVisible != visible
   }
 
