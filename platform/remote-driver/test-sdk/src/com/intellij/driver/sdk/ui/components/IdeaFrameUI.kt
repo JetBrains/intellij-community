@@ -31,6 +31,7 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
   val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
   val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
   val settingsButton = x("//div[@myicon='settings.svg']")
+  val runActionButton = x("//div[@myicon='run.svg']")
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")
