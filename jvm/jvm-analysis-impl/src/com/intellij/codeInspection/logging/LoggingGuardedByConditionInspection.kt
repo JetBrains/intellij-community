@@ -11,6 +11,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
@@ -144,11 +145,44 @@ class LoggingGuardedByConditionInspection : AbstractBaseUastLocalInspectionTool(
       var currentParent = ifStatementSourcePsi.parent
       var after = ifStatementSourcePsi
       var nextExpression = expressions[0].sourcePsi
-      val lastExpression = expressions.last().sourcePsi ?: return
+
+      var lastExpression = expressions.last().sourcePsi
+
       while (nextExpression?.parent.toUElement()?.sourcePsi == expressions[0].sourcePsi) {
         nextExpression = nextExpression?.parent
       }
+
+      while (lastExpression?.parent.toUElement()?.sourcePsi == expressions.last().sourcePsi) {
+        lastExpression = lastExpression?.parent
+      }
+
+      while (true) {
+        if (nextExpression?.prevSibling is PsiComment) {
+          nextExpression = nextExpression.prevSibling
+          continue
+        }
+        if(nextExpression?.prevSibling is PsiWhiteSpace && nextExpression.prevSibling?.prevSibling is PsiComment) {
+          nextExpression = nextExpression.prevSibling.prevSibling
+          continue
+        }
+        break
+      }
+
+      while (true) {
+        if (lastExpression?.nextSibling is PsiComment) {
+          lastExpression = lastExpression.nextSibling
+          continue
+        }
+        if (lastExpression?.nextSibling is PsiWhiteSpace && lastExpression.nextSibling?.nextSibling is PsiComment) {
+          lastExpression = lastExpression.nextSibling.nextSibling
+          continue
+        }
+        break
+      }
+
       if (nextExpression == null) return
+      if (lastExpression == null) return
+
       while (true) {
         if (nextExpression == null) break
         var newAdded: PsiElement = currentParent.addAfter(nextExpression.copy(), after)

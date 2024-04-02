@@ -238,4 +238,51 @@ class KotlinLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionI
       hint = JvmAnalysisBundle.message("jvm.inspection.log.guarded.fix.family.name")
     )
   }
+
+  fun `test slf4j with comment fix`() {
+    myFixture.testQuickFix(
+      testPreview = true,
+      lang = JvmLanguage.KOTLIN,
+      before = """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal class X {
+          fun n(arg: String) {
+              if (LOG.<caret>isDebugEnabled) {//comment1
+                  //comment2
+                  LOG.debug("test" + arg)
+                  //comment3
+                  
+                  //comment4
+              }
+          }
+      
+          companion object {
+              private val LOG: Logger = LoggerFactory.getLogger()
+          }
+      }
+      """.trimIndent(),
+      after = """
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+      
+      internal class X {
+          fun n(arg: String) {
+              //comment1
+              //comment2
+              LOG.debug("test" + arg)
+              //comment3
+      
+              //comment4
+          }
+      
+          companion object {
+              private val LOG: Logger = LoggerFactory.getLogger()
+          }
+      }
+      """.trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.log.guarded.fix.family.name")
+    )
+  }
 }

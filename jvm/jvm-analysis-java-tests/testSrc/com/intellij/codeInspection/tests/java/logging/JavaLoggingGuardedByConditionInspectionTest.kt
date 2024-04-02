@@ -188,4 +188,43 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
       hint = JvmAnalysisBundle.message("jvm.inspection.log.guarded.fix.family.name")
     )
   }
+
+  fun `test slf4j with comment fix`() {
+    myFixture.testQuickFix(
+      testPreview = true,
+      lang = JvmLanguage.JAVA,
+      before = """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      class X {
+        private static final Logger LOG = LoggerFactory.getLogger(X.class);
+        void n(String arg) {
+          if(<caret>LOG.isDebugEnabled()) {//comment1
+            //comment2
+            LOG.debug("test" + arg);
+            //comment3
+
+            //comment4
+          }
+        }
+      }
+      """.trimIndent(),
+      after = """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      class X {
+        private static final Logger LOG = LoggerFactory.getLogger(X.class);
+        void n(String arg) {
+            //comment1
+            //comment2
+            LOG.debug("test" + arg);
+            //comment3
+
+            //comment4
+        }
+      }
+      """.trimIndent(),
+      hint = JvmAnalysisBundle.message("jvm.inspection.log.guarded.fix.family.name")
+    )
+  }
 }
