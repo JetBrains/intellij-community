@@ -6,10 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorCoreUtil;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -20,6 +17,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -27,6 +25,8 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,9 @@ import java.util.*;
 
 public final class EditorHyperlinkSupport {
   private static final Key<TextAttributes> OLD_HYPERLINK_TEXT_ATTRIBUTES = Key.create("OLD_HYPERLINK_TEXT_ATTRIBUTES");
-  private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("HYPERLINK");
+  private static final Key<HyperlinkInfoTextAttributes> HYPERLINK = Key.create("EDITOR_HYPERLINK_SUPPORT_HYPERLINK");
+  private static final Key<Unit> HIGHLIGHTING = Key.create("EDITOR_HYPERLINK_SUPPORT_HIGHLIGHTING");
+  private static final Key<Unit> INLAY = Key.create("EDITOR_HYPERLINK_SUPPORT_INLAY");
   private static final Key<EditorHyperlinkSupport> EDITOR_HYPERLINK_SUPPORT_KEY = Key.create("EDITOR_HYPERLINK_SUPPORT_KEY");
   private static final Expirable ETERNAL_TOKEN = () -> false;
 
@@ -106,9 +108,35 @@ public final class EditorHyperlinkSupport {
   }
 
   public void clearHyperlinks() {
+    // TODO replace with `clearHyperlinks(0, myEditor.getDocument().getTextLength())`
     for (RangeHighlighter highlighter : getHyperlinks(0, myEditor.getDocument().getTextLength(), myEditor)) {
       removeHyperlink(highlighter);
     }
+  }
+
+  /**
+   * Clears hyperlinks, highlightings and inlays within the specified range in the editor.
+   * TODO make the endOffset exclusive for hyperlinks and highlightings after banning empty hyperlinks and highlightings.
+   * Note the endOffset will still be inclusive for inlays.
+   *
+   * @param startOffset The starting offset of the range, inclusive.
+   * @param endOffset   The ending offset of the range, inclusive.
+   */
+  @ApiStatus.Internal
+  public void clearHyperlinks(int startOffset, int endOffset) {
+    for (RangeHighlighter highlighter : getRangeHighlighters(startOffset, endOffset, true, true, myEditor)) {
+      myEditor.getMarkupModel().removeHighlighter(highlighter);
+    }
+    for (Inlay<?> inlay : getInlays(startOffset, endOffset)) {
+      Disposer.dispose(inlay);
+    }
+  }
+
+  /**
+   * Retrieves the inlays within the specified range in the editor (both offsets are inclusive).
+   */
+  List<Inlay<?>> getInlays(int startOffset, int endOffset) {
+    return myEditor.getInlayModel().getInlineElementsInRange(startOffset, endOffset).stream().filter(INLAY::isIn).toList();
   }
 
   public void waitForPendingFilters(long timeoutMs) {
@@ -164,7 +192,7 @@ public final class EditorHyperlinkSupport {
 
   private @Nullable RangeHighlighter findLinkRangeAt(int offset) {
     Ref<RangeHighlighter> ref = Ref.create();
-    processHyperlinks(offset, offset, myEditor, range -> {
+    processHyperlinksAndHighlightings(offset, offset, myEditor, true, false, range -> {
       ref.set(range);
       return false;
     });
@@ -182,21 +210,41 @@ public final class EditorHyperlinkSupport {
     return getHyperlinks(lineStart, lineEnd, myEditor);
   }
 
+  /**
+   * Retrieves the hyperlinks within the specified range in the editor (both offsets are inclusive).
+   */
   private static @NotNull List<RangeHighlighter> getHyperlinks(int startOffset, int endOffset, @NotNull Editor editor) {
+    return getRangeHighlighters(startOffset, endOffset, true, false, editor);
+  }
+
+  /**
+   * Retrieves hyperlinks / highlightings within the specified range in the editor (both offsets are inclusive).
+   */
+  static @NotNull List<RangeHighlighter> getRangeHighlighters(int startOffset, int endOffset,
+                                                              boolean hyperlinks,
+                                                              boolean highlightings,
+                                                              @NotNull Editor editor) {
     List<RangeHighlighter> result = new ArrayList<>();
     CommonProcessors.CollectProcessor<RangeHighlighter> processor = new CommonProcessors.CollectProcessor<>(result);
-    processHyperlinks(startOffset, endOffset, editor, processor);
+    processHyperlinksAndHighlightings(startOffset, endOffset, editor, hyperlinks, highlightings, processor);
     return result;
   }
 
-  private static void processHyperlinks(int startOffset,
-                                        int endOffset,
-                                        @NotNull Editor editor,
-                                        @NotNull Processor<? super RangeHighlighter> processor) {
+  /**
+   * Processes hyperlinks and highlightings within the specified range in the editor (both offsets are inclusive).
+   */
+  private static void processHyperlinksAndHighlightings(int startOffset,
+                                                        int endOffset,
+                                                        @NotNull Editor editor,
+                                                        @SuppressWarnings("SameParameterValue")
+                                                        boolean hyperlinks,
+                                                        boolean highlightings,
+                                                        @NotNull Processor<? super RangeHighlighter> processor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset,
-      new FilteringProcessor<>(rangeHighlighterEx -> rangeHighlighterEx.isValid() && getHyperlinkInfo(rangeHighlighterEx) != null, processor)
-    );
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new FilteringProcessor<>(
+      highlighter -> highlighter.isValid() &&
+                     ((hyperlinks && getHyperlinkInfo(highlighter) != null) ||
+                      (highlightings && HIGHLIGHTING.isIn(highlighter))), processor));
   }
 
   public void removeHyperlink(@NotNull RangeHighlighter hyperlink) {
@@ -268,8 +316,8 @@ public final class EditorHyperlinkSupport {
    * Starts jobs for highlighting hyperlinks using a custom filter.
    *
    * @param customFilter   the custom filter to apply for highlighting hyperlinks
-   * @param startLine      the starting line index for highlighting hyperlinks
-   * @param endLine        the ending line index for highlighting hyperlinks
+   * @param startLine      the starting line index for highlighting hyperlinks, inclusive
+   * @param endLine        the ending line index for highlighting hyperlinks, inclusive
    * @param expirableToken the token to expire the highlighting job. Expires when new re-highlighting started
    *                       (see {@link  com.intellij.execution.impl.ConsoleViewImpl#rehighlightHyperlinksAndFoldings()})
    */
@@ -288,7 +336,7 @@ public final class EditorHyperlinkSupport {
 
   void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
     int length = myEditor.getDocument().getTextLength();
-    List<InlayProvider> inlays = new SmartList<>();
+    List<InlayProvider> inlayProviders = new SmartList<>();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
       int start = resultItem.getHighlightStartOffset() + offsetDelta;
       int end = resultItem.getHighlightEndOffset() + offsetDelta;
@@ -297,8 +345,8 @@ public final class EditorHyperlinkSupport {
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
-      if (resultItem instanceof InlayProvider) {
-        inlays.add((InlayProvider)resultItem);
+      if (resultItem instanceof InlayProvider inlayProvider) {
+        inlayProviders.add(inlayProvider);
       }
       else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
@@ -309,11 +357,10 @@ public final class EditorHyperlinkSupport {
       }
     }
     // add inlays in a batch if needed
-    if (!inlays.isEmpty()) {
-      myEditor.getInlayModel().execute(inlays.size() > 100, () -> {
-        for (InlayProvider item : inlays) {
-          myEditor.getInlayModel().addInlineElement(((Filter.ResultItem)item).getHighlightEndOffset() + offsetDelta,
-                                                    item.createInlayRenderer(myEditor));
+    if (!inlayProviders.isEmpty()) {
+      myEditor.getInlayModel().execute(inlayProviders.size() > 100, () -> {
+        for (InlayProvider inlayProvider : inlayProviders) {
+          addInlay(((Filter.ResultItem)inlayProvider).getHighlightEndOffset() + offsetDelta, inlayProvider);
         }
       });
     }
@@ -324,8 +371,15 @@ public final class EditorHyperlinkSupport {
   }
 
   public void addHighlighter(int highlightStartOffset, int highlightEndOffset, TextAttributes highlightAttributes, int highlighterLayer) {
-    myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset, highlightEndOffset, highlighterLayer, highlightAttributes,
-                                                  HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter h = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset, highlightEndOffset,
+                                                                       highlighterLayer, highlightAttributes,
+                                                                       HighlighterTargetArea.EXACT_RANGE);
+    HIGHLIGHTING.set(h, Unit.INSTANCE);
+  }
+
+  private void addInlay(int offset, @NotNull InlayProvider inlayProvider) {
+    Inlay<?> inlay = myEditor.getInlayModel().addInlineElement(offset, inlayProvider.createInlayRenderer(myEditor));
+    INLAY.set(inlay, Unit.INSTANCE);
   }
 
   private static @NotNull TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
