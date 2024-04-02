@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## 0.0.21
+- Updated Mermaid.js version to `10.9.0`
+
 ## 0.0.20
 - Updated Mermaid.js version to `10.8.0`
 - [MERMAID-163](https://youtrack.jetbrains.com/issue/MERMAID-163) Updated GitGraph parser to allow cherry-picking of merge commit 
