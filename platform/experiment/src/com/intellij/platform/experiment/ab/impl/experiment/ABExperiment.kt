@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOption
+import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
 import com.intellij.util.MathUtil
 import com.intellij.util.PlatformUtils
 
@@ -76,6 +77,8 @@ class ABExperiment {
   }
 
   internal fun getUserExperimentOption(): ABExperimentOption? {
+    ABExperimentCountCollector.logABExperimentOptionUsed()
+
     val userOptionId = getUserExperimentOptionId()
     return getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
   }
