@@ -47,10 +47,9 @@ internal class MoveLambdaOutsideParenthesesInspection : KotlinApplicableInspecti
         }
     }
 
-    override fun isApplicableByPsi(element: KtCallExpression): Boolean = element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)
-
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtCallExpression) {
+    override fun prepareContext(element: KtCallExpression): Unit? {
+        return if (!element.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) null else Unit
     }
 
     override fun createQuickFix(
