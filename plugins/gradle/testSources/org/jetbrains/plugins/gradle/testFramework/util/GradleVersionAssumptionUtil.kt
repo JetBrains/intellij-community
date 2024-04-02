@@ -45,6 +45,12 @@ fun assumeThatSpockIsSupported(gradleVersion: GradleVersion) {
   }
 }
 
+fun assumeThatRobolectricIsSupported(gradleVersion: GradleVersion) {
+  assumeThatGradleIsAtLeast(gradleVersion, "4.6") {
+    "Gradle ${gradleVersion.version} doesn't support Robolectric."
+  }
+}
+
 fun assumeThatTopLevelJavaConventionsIsSupported(gradleVersion: GradleVersion) {
   assumeThatGradleIsOlderThan(gradleVersion, "8.2") {
     "Gradle ${gradleVersion.version} doesn't support top-level java conventions."
