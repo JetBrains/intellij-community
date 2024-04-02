@@ -31,6 +31,7 @@ import java.awt.event.ContainerListener;
 
 public class JBViewport extends JViewport implements ZoomableViewport {
   public static final Key<Boolean> FORCE_VISIBLE_ROW_COUNT_KEY = Key.create("forceVisibleRowCount");
+  public static final Key<Boolean> ATTACH_STATUS_TEXT = Key.create("attachStatusText");
 
   private static final MethodInvocator ourCanUseWindowBlitterMethod = new MethodInvocator(JViewport.class, "canUseWindowBlitter");
   private static final MethodInvocator ourGetPaintManagerMethod = new MethodInvocator(RepaintManager.class, "getPaintManager");
@@ -81,8 +82,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       @Override
       public void componentAdded(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof JBTable) {
-          myEmptyText = ((ComponentWithEmptyText)child).getEmptyText();
+        if (child instanceof ComponentWithEmptyText t && shouldAttach(child)) {
+          myEmptyText = t.getEmptyText();
           myEmptyText.attachTo(JBViewport.this, child);
         }
       }
@@ -90,10 +91,14 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       @Override
       public void componentRemoved(ContainerEvent e) {
         Component child = e.getChild();
-        if (child instanceof JBTable) {
-          ((ComponentWithEmptyText)child).getEmptyText().attachTo(child);
+        if (child instanceof ComponentWithEmptyText t && shouldAttach(child)) {
+          t.getEmptyText().attachTo(child);
           myEmptyText = null;
         }
+      }
+
+      private static boolean shouldAttach(Component t) {
+        return t instanceof JBTable || Boolean.TRUE.equals(ClientProperty.get(t, ATTACH_STATUS_TEXT));
       }
     });
   }
