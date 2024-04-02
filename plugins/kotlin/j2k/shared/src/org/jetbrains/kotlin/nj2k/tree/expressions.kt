@@ -50,6 +50,7 @@ class JKPrefixExpression(
     override val expressionType: JKType? = null,
 ) : JKUnaryExpression() {
     override var expression by child(expression)
+
     override fun accept(visitor: JKVisitor) = visitor.visitPrefixExpression(this)
 }
 
@@ -59,6 +60,7 @@ class JKPostfixExpression(
     override val expressionType: JKType? = null
 ) : JKUnaryExpression() {
     override var expression by child(expression)
+
     override fun accept(visitor: JKVisitor) = visitor.visitPostfixExpression(this)
 }
 
@@ -413,6 +415,7 @@ class JKJavaAssignmentExpression(
 ) : JKExpression() {
     var field by child(field)
     var expression by child(expression)
+
     override fun accept(visitor: JKVisitor) = visitor.visitJavaAssignmentExpression(this)
 }
 

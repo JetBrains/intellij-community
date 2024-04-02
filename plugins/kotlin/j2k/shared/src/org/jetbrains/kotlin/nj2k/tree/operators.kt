@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.types.JKType
@@ -18,7 +19,10 @@ interface JKOperatorToken {
 
     @Suppress("MemberVisibilityCanBePrivate", "SpellCheckingInspection")
     companion object {
-        fun fromElementType(elementType: IElementType) = elementTypeToToken.getValue(elementType)
+        fun fromElementType(elementType: IElementType) = javaElementTypeToToken.getValue(elementType)
+
+        fun toKtElementType(token: JKOperatorToken): IElementType? = tokenToKotlinElementType[token]
+
 
         val RANGE = JKKtSingleValueOperatorToken(KtTokens.RANGE)
 
@@ -70,7 +74,7 @@ interface JKOperatorToken {
 
         val SHIFT_OPERATORS = listOf(SHL, SHR, USHR)
 
-        private val elementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
+        private val javaElementTypeToToken: Map<IElementType, JKOperatorToken> = mapOf(
             JavaTokenType.DIV to DIV,
             JavaTokenType.MINUS to MINUS,
             JavaTokenType.ANDAND to ANDAND,
@@ -113,6 +117,38 @@ interface JKOperatorToken {
             JavaTokenType.LTLTEQ to LTLTEQ,
             JavaTokenType.GTGTEQ to GTGTEQ,
             JavaTokenType.GTGTGTEQ to GTGTGTEQ
+        )
+
+        private val tokenToKotlinElementType: Map<JKOperatorToken, IElementType> = mapOf(
+          DIV to KtTokens.DIV,
+          MINUS to KtTokens.MINUS,
+          ANDAND to KtTokens.ANDAND,
+          OROR to KtTokens.OROR,
+          PLUS to KtTokens.PLUS,
+          MUL to KtTokens.MUL,
+          GT to KtTokens.GT,
+          GTEQ to KtTokens.GTEQ,
+          LT to KtTokens.LT,
+          LTEQ to KtTokens.LTEQ,
+          PERC to KtTokens.PERC,
+
+          EQ to KtTokens.EQ,
+          EQEQ to KtTokens.EQEQ,
+          EXCLEQ to KtTokens.EXCLEQ,
+
+          PLUSEQ to KtTokens.PLUSEQ,
+          MINUSEQ to KtTokens.MINUSEQ,
+          DIVEQ to KtTokens.DIVEQ,
+          MULTEQ to KtTokens.MULTEQ,
+
+          PLUSPLUS to KtTokens.PLUSPLUS,
+          MINUSMINUS to KtTokens.MINUSMINUS,
+          EXCL to KtTokens.EXCL,
+
+          EQEQEQ to KtTokens.EQEQEQ,
+          EXCLEQEQEQ to KtTokens.EXCLEQEQEQ,
+
+          PERCEQ to KtTokens.PERCEQ,
         )
     }
 }

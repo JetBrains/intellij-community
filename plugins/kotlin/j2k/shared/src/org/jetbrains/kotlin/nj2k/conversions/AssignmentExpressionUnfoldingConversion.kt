@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.nj2k.conversions
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.RecursiveConversion
-import org.jetbrains.kotlin.nj2k.blockStatement
-import org.jetbrains.kotlin.nj2k.parenthesizeIfCompoundExpression
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -118,7 +115,8 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
     }
 
     private fun JKJavaAssignmentExpression.toExpressionChainLink(receiver: JKExpression): JKExpression {
-        val parenthesizedReceiver = receiver.parenthesizeIfCompoundExpression()
+        val correctlyParenthesizedReceiver = if (receiver is JKParenthesizedExpression) receiver.withoutUnnecessaryParentheses()
+        else receiver.parenthesizeIfCompoundExpression()
         val assignment = createKtAssignmentStatement(
             this::field.detached(),
             JKKtItExpression(operator.returnType),
@@ -126,8 +124,8 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
         ).withFormattingFrom(this)
         val field = field.copyTreeAndDetach()
         return when {
-            operator.isSimpleToken() -> JKAssignmentChainAlsoLink(parenthesizedReceiver, assignment, field)
-            else -> JKAssignmentChainLetLink(parenthesizedReceiver, assignment, field)
+            operator.isSimpleToken() -> JKAssignmentChainAlsoLink(correctlyParenthesizedReceiver, assignment, field)
+            else -> JKAssignmentChainLetLink(correctlyParenthesizedReceiver, assignment, field)
         }
     }
 
@@ -168,6 +166,15 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
     }
 
     private fun JKOperator.isOnlyJavaToken() = token in onlyJavaAssignTokensToKotlinOnes
+
+    private fun JKParenthesizedExpression.withoutUnnecessaryParentheses(): JKExpression {
+        if (!this.expression.isAtomic()) return this
+        var current: JKExpression = this.expression
+        while (current is JKParenthesizedExpression && current.expression.isAtomic()) {
+            current = current.expression
+        }
+        return current.detached(checkNotNull(current.parent))
+    }
 
     companion object {
         private val onlyJavaAssignTokensToKotlinOnes = mapOf(

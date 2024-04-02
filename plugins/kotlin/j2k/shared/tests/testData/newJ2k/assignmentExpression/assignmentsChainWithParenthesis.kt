@@ -7,7 +7,7 @@ internal object Test {
         var d = 0
         val e = 0
 
-        (c) = ((e.let { d *= it; d }))
+        c = ((e.let { d *= it; d }))
         b += (c)
         a = b
         //-----
@@ -18,6 +18,6 @@ internal object Test {
         b = (c)
         a += b
         //-----
-        a = (c.let { (b) += it; (b) })
+        a = (c.let { b += it; (b) })
     }
 }
