@@ -36,6 +36,190 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
                  "}");
   }
 
+  private void addSlf4j() {
+    addEnvironmentClass("""
+        package org.slf4j;
+        @SuppressWarnings("ALL") public class LoggerFactory {
+        public static Logger getLogger(Class clazz) { return null; }
+        }
+        public interface Logger {
+           void error(String format, Object... arguments);
+           void info(String format, Object... arguments);
+        }
+    """);
+  }
+
+  private void addMessageFormat() {
+    addEnvironmentClass("""
+        package java.text;
+        public final class MessageFormat{
+          public static String format(String format, Object... arguments) {return format;}
+        }
+        """);
+  }
+
+  public void testSimpleLogFix() {
+    addSlf4j();
+
+    doTest(
+      """
+      class Test{
+        void foo(Object o) {
+            /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println("Something " + o);
+        }
+      }
+      """);
+
+    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+  """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      
+      class Test{
+          private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+          void foo(Object o) {
+              log.info("Something {}", o);
+        }
+      }
+      """);
+  }
+
+  public void testSimpleExistedLogFix() {
+    addSlf4j();
+
+    doTest(
+      """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+
+        void foo(Exception o) {
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println("Something " + o);
+        }
+      }
+      """);
+
+    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+  """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+    
+        void foo(Exception o) {
+            log.info("Something {}", String.valueOf(o));
+        }
+      }
+      """);
+  }
+
+  public void testSimpleExistedLogWithRecordFix() {
+    addSlf4j();
+
+    doTest(
+      """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+        record R(){}
+  
+        void foo(R r) {
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println(r);
+        }
+      }
+      """);
+
+    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+  """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+        record R(){}
+      
+        void foo(R r) {
+          log.info(String.valueOf(r));
+        }
+      }
+      """);
+  }
+
+  public void testSimpleExistedLogWithStringFormatFix() {
+    addSlf4j();
+
+    doTest(
+      """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+        void foo(Object r) {
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println(String.format("test %s test", r));
+        }
+      }
+      """);
+
+    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+  """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+        void foo(Object r) {
+          log.info("test {} test", r);
+        }
+      }
+      """);
+  }
+
+  public void testSimpleExistedLogWithMessageFormatFix() {
+    addSlf4j();
+    addMessageFormat();
+
+    doTest(
+      """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      import java.text.MessageFormat;
+
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+        void foo(Object r) {
+          /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out<caret>/**/.println(MessageFormat.format("test {0} test", r));
+        }
+      }
+      """);
+
+    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+  """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      import java.text.MessageFormat;
+      
+      class Test{
+        private static final Logger log = LoggerFactory.getLogger(Test.class);
+      
+        void foo(Object r) {
+          log.info("test {} test", r);
+        }
+      }
+      """);
+  }
+
   @Override
   protected InspectionProfileEntry getInspection() {
     return new SystemOutErrInspection();

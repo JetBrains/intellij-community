@@ -1412,7 +1412,7 @@
     <!--group.names.code.maturity.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="UseOfSystemOutOrSystemErr" shortName="SystemOutErr" bundle="messages.InspectionGadgetsBundle"
                      key="use.system.out.err.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.maturity.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.maturity.SystemOutErrInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CallToPrintStackTrace" shortName="ThrowablePrintStackTrace" bundle="messages.InspectionGadgetsBundle"
                      key="printstacktrace.call.display.name" groupBundle="messages.InspectionsBundle"

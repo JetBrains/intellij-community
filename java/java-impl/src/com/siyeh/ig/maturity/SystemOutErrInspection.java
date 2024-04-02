@@ -2,28 +2,83 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_SYSTEM;
 
 /**
  * @author Bas Leijdekkers
  */
 public final class SystemOutErrInspection extends BaseInspection {
 
-  @Nullable
+  public ConvertSystemOutToLogCallFix.PopularLogLevel myErrLogLevel = ConvertSystemOutToLogCallFix.PopularLogLevel.ERROR;
+  public ConvertSystemOutToLogCallFix.PopularLogLevel myOutLogLevel = ConvertSystemOutToLogCallFix.PopularLogLevel.INFO;
+
+
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.dropdown(
+        "myErrLogLevel",
+        InspectionGadgetsBundle.message("use.system.out.err.problem.fix.err.option"),
+        ConvertSystemOutToLogCallFix.PopularLogLevel.class,
+        level -> level.toMethodName()),
+      OptPane.dropdown(
+        "myOutLogLevel",
+        InspectionGadgetsBundle.message("use.system.out.err.problem.fix.out.option"),
+        ConvertSystemOutToLogCallFix.PopularLogLevel.class,
+        level -> level.toMethodName())
+    );
+  }
+
+  @Override
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    List<LocalQuickFix> fixes = new ArrayList<>();
+
     final PsiElement context = (PsiElement)infos[0];
-    return SuppressForTestsScopeFix.build(this, context);
+
+    SuppressForTestsScopeFix testsScopeFix = SuppressForTestsScopeFix.build(this, context);
+    if(testsScopeFix != null) {
+      fixes.add(testsScopeFix);
+    }
+
+    if (context instanceof PsiReferenceExpression referenceExpression &&
+        referenceExpression.getParent() instanceof PsiReferenceExpression probablyReferenceToCall &&
+        probablyReferenceToCall.getParent() instanceof PsiMethodCallExpression callExpression) {
+
+      String name = referenceExpression.getReferenceName();
+      String methodName = null;
+      if (HardcodedMethodConstants.OUT.equals(name)) {
+        methodName = myOutLogLevel.name().toLowerCase(Locale.ROOT);
+      }
+      else if (HardcodedMethodConstants.ERR.equals(name)) {
+        methodName = myErrLogLevel.name().toLowerCase(Locale.ROOT);
+      }
+
+      if (methodName != null) {
+        ModCommandAction fix = ConvertSystemOutToLogCallFix.createFix(callExpression, methodName);
+        if (fix != null) {
+          LocalQuickFix localQuickFix = ModCommandService.getInstance().wrapToQuickFix(fix);
+          fixes.add(localQuickFix);
+        }
+      }
+    }
+
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -44,11 +99,28 @@ public final class SystemOutErrInspection extends BaseInspection {
     return new SystemOutErrVisitor();
   }
 
-  private static class SystemOutErrVisitor extends BaseInspectionVisitor {
+  private class SystemOutErrVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      if (methodExpression.getQualifierExpression() instanceof PsiReferenceExpression referenceExpression) {
+        inspectReferenceIfItIsSystemOutErr(referenceExpression);
+      }
+    }
 
     @Override
     public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
+      if (expression.getParent() instanceof PsiReferenceExpression parentReferenceExpression &&
+          parentReferenceExpression.getParent() instanceof PsiMethodCallExpression) {
+        return;
+      }
+      inspectReferenceIfItIsSystemOutErr(expression);
+    }
+
+    private void inspectReferenceIfItIsSystemOutErr(@NotNull PsiReferenceExpression expression) {
       final String name = expression.getReferenceName();
       if (!HardcodedMethodConstants.OUT.equals(name) &&
           !HardcodedMethodConstants.ERR.equals(name)) {
@@ -63,9 +135,23 @@ public final class SystemOutErrInspection extends BaseInspection {
         return;
       }
       final String className = containingClass.getQualifiedName();
-      if (!"java.lang.System".equals(className)) {
+      if (!JAVA_LANG_SYSTEM.equals(className)) {
         return;
       }
+
+      if (expression.getParent() instanceof PsiReferenceExpression probablyReferenceToCall &&
+          probablyReferenceToCall.getParent() instanceof PsiMethodCallExpression callExpression) {
+
+        if (ThrowablePrintedToSystemOutInspection.getExceptionIsPrintedToSystemOutResult(callExpression) != null) {
+          return;
+        }
+
+        boolean informationLevel = InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
+        if (informationLevel) {
+          registerError(callExpression, expression);
+        }
+      }
+
       registerError(expression, expression);
     }
   }

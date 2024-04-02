@@ -110,6 +110,10 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
     if (isFormattedLog4J(logCall)) return null;
 
+    return getQuickFix(problemType, targetExpression);
+  }
+
+  public static @Nullable PsiUpdateModCommandQuickFix getQuickFix(@NotNull ProblemType problemType, @NotNull  PsiExpression targetExpression) {
     return switch (problemType) {
       case CONCATENATION ->
         StringConcatenationArgumentToLogCallFix.isAvailable(targetExpression) ? new StringConcatenationArgumentToLogCallFix() : null;
@@ -168,7 +172,11 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     return new StringConcatenationArgumentToLogCallVisitor();
   }
 
-  private static class StringConcatenationArgumentToLogCallFix extends PsiUpdateModCommandQuickFix {
+  public interface EvaluatedStringFix {
+    void fix(@NotNull Project project, @NotNull PsiMethodCallExpression logCall);
+  }
+
+  private static class StringConcatenationArgumentToLogCallFix extends PsiUpdateModCommandQuickFix implements  EvaluatedStringFix {
 
     StringConcatenationArgumentToLogCallFix() { }
 
@@ -184,6 +192,11 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
+      fix(project, methodCallExpression);
+    }
+
+    @Override
+    public void fix(@NotNull Project project, @NotNull PsiMethodCallExpression methodCallExpression) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length == 0) {
@@ -306,10 +319,16 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
         newMethodCall.append('}');
       }
       else {
-        for (PsiExpression newArgument : newArguments) {
-          newMethodCall.append(',');
-          if (newArgument != null) {
-            newMethodCall.append(newArgument.getText());
+        if (newArguments.size() == 1 && newArguments.get(0) != null &&
+            InheritanceUtil.isInheritor(newArguments.get(0).getType(), CommonClassNames.JAVA_LANG_THROWABLE)) {
+          newMethodCall.append(", String.valueOf(").append(newArguments.get(0).getText()).append(")");
+        }
+        else {
+          for (PsiExpression newArgument : newArguments) {
+            newMethodCall.append(',');
+            if (newArgument != null) {
+              newMethodCall.append(newArgument.getText());
+            }
           }
         }
       }
@@ -351,7 +370,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
   }
 
-  private static abstract class FormatArgumentToLogCallFix extends PsiUpdateModCommandQuickFix {
+  private static abstract class FormatArgumentToLogCallFix extends PsiUpdateModCommandQuickFix implements EvaluatedStringFix {
 
     @NotNull
     private final Map<TextRange, Integer> myTextMapping;
@@ -366,11 +385,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (!(element.getParent() instanceof PsiReferenceExpression referenceExpression &&
-            referenceExpression.getParent() instanceof PsiMethodCallExpression callExpression)) {
-        return;
-      }
+    public void fix(@NotNull Project project, @NotNull PsiMethodCallExpression callExpression) {
       PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
       if (expressions.length != 1) {
         return;
@@ -393,6 +408,15 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       }
 
       tracker.replace(callExpression, builder.toString());
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element.getParent() instanceof PsiReferenceExpression referenceExpression &&
+            referenceExpression.getParent() instanceof PsiMethodCallExpression callExpression)) {
+        return;
+      }
+      fix(project, callExpression);
     }
 
     @NotNull
@@ -432,7 +456,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
 
 
     @Nullable
-    static LocalQuickFix create(@NotNull PsiExpression expression) {
+    static PsiUpdateModCommandQuickFix create(@NotNull PsiExpression expression) {
       if (!(expression instanceof PsiMethodCallExpression callExpression)) {
         return null;
       }
@@ -487,7 +511,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
 
     @Nullable
-    static LocalQuickFix create(@NotNull PsiExpression originalExpression) {
+    static PsiUpdateModCommandQuickFix create(@NotNull PsiExpression originalExpression) {
       if (!(originalExpression instanceof PsiMethodCallExpression callExpression)) {
         return null;
       }
@@ -559,7 +583,7 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
     }
   }
 
-  private enum ProblemType {
+  public enum ProblemType {
     CONCATENATION, STRING_FORMAT, MESSAGE_FORMAT
   }
 
@@ -598,54 +622,73 @@ public final class StringConcatenationArgumentToLogCallInspection extends BaseIn
       if (arguments.length == 0) {
         return;
       }
-      if (arguments.length == 1 && arguments[0] instanceof PsiMethodCallExpression callExpression) {
-        FormatDecode.FormatArgument formatArgument =
-          FormatDecode.FormatArgument.extract(callExpression, List.of("format"), List.of("String"), true);
-        if (formatArgument != null) {
-          registerMethodCallError(expression, ProblemType.STRING_FORMAT, expression, callExpression);
-          return;
-        }
 
-        if (MESSAGE_FORMAT_FORMAT.test(callExpression)) {
-          registerMethodCallError(expression, ProblemType.MESSAGE_FORMAT, expression, callExpression);
-          return;
-        }
+      LogConcatenationContext result = getLogConcatenationContext(arguments);
+      if (result == null) return;
+
+      registerMethodCallError(expression, result.problemType(), expression, result.argument());
+    }
+  }
+
+
+  public record LogConcatenationContext(@NotNull PsiExpression argument, @NotNull ProblemType problemType) {
+  }
+
+  @Nullable
+  public static LogConcatenationContext getLogConcatenationContext(PsiExpression @NotNull [] arguments) {
+    PsiExpression argument = arguments[0];
+
+    ProblemType problemType = null;
+
+    if (arguments.length == 1 && argument instanceof PsiMethodCallExpression callExpression) {
+      FormatDecode.FormatArgument formatArgument =
+        FormatDecode.FormatArgument.extract(callExpression, List.of("format"), List.of("String"), true);
+      if (formatArgument != null) {
+        problemType = ProblemType.STRING_FORMAT;
       }
-      PsiExpression argument = arguments[0];
+      else if (MESSAGE_FORMAT_FORMAT.test(callExpression)) {
+        problemType = ProblemType.MESSAGE_FORMAT;
+      }
+    }
+
+    if (problemType == null) {
       if (!ExpressionUtils.hasStringType(argument)) {
         if (arguments.length < 2) {
-          return;
+          return null;
         }
         argument = arguments[1];
-        if (!ExpressionUtils.hasStringType(argument)) {
-          return;
-        }
       }
+      if (!ExpressionUtils.hasStringType(argument)) {
+        return null;
+      }
+
       if (!containsNonConstantConcatenation(argument)) {
-        return;
+        return null;
       }
-      registerMethodCallError(expression, ProblemType.CONCATENATION, expression, argument);
+      problemType = ProblemType.CONCATENATION;
     }
 
-    private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
-      if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
-        return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
-      }
-      else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
-        if (!ExpressionUtils.hasStringType(polyadicExpression)) {
-          return false;
-        }
-        if (!JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())) {
-          return false;
-        }
-        final PsiExpression[] operands = polyadicExpression.getOperands();
-        for (PsiExpression operand : operands) {
-          if (!ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
-            return true;
-          }
-        }
-      }
-      return false;
+    return new LogConcatenationContext(argument, problemType);
+  }
+
+  private static boolean containsNonConstantConcatenation(@Nullable PsiExpression expression) {
+    if (expression instanceof PsiParenthesizedExpression parenthesizedExpression) {
+      return containsNonConstantConcatenation(parenthesizedExpression.getExpression());
     }
+    else if (expression instanceof PsiPolyadicExpression polyadicExpression) {
+      if (!ExpressionUtils.hasStringType(polyadicExpression)) {
+        return false;
+      }
+      if (!JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())) {
+        return false;
+      }
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (!ExpressionUtils.isEvaluatedAtCompileTime(operand)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
