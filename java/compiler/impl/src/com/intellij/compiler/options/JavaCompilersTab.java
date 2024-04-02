@@ -78,7 +78,6 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
            myUi.useReleaseOptionCb.isSelected() != myCompilerConfiguration.useReleaseOption() ||
            !Objects.equals(myUi.targetOptionsComponent.getProjectBytecodeTarget(), myCompilerConfiguration.getProjectBytecodeTarget()) ||
            !Comparing.equal(myUi.targetOptionsComponent.getModulesBytecodeTargetMap(), myCompilerConfiguration.getModulesBytecodeTargetMap()) ||
-           myUi.warnOnArchMismatchCb.isSelected() != myCompilerConfiguration.warnOnArchMismatch() ||
            super.isModified();
   }
 
@@ -89,7 +88,6 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
       myCompilerConfiguration.setUseReleaseOption(myUi.useReleaseOptionCb.isSelected());
       myCompilerConfiguration.setProjectBytecodeTarget(myUi.targetOptionsComponent.getProjectBytecodeTarget());
       myCompilerConfiguration.setModulesBytecodeTargetMap(myUi.targetOptionsComponent.getModulesBytecodeTargetMap());
-      myCompilerConfiguration.setWarnOnArchMismatch(myUi.warnOnArchMismatchCb.isSelected());
 
       super.apply();
 
@@ -111,7 +109,6 @@ public class JavaCompilersTab extends CompositeConfigurable<Configurable> implem
     myUi.useReleaseOptionCb.setSelected(myCompilerConfiguration.useReleaseOption());
     myUi.targetOptionsComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
     myUi.targetOptionsComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
-    myUi.warnOnArchMismatchCb.setSelected(myCompilerConfiguration.warnOnArchMismatch());
   }
 
   private void selectCompiler(BackendCompiler compiler) {

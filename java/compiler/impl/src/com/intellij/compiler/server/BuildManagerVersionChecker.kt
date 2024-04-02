@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server
 
-import com.intellij.compiler.CompilerConfiguration
-import com.intellij.ide.IdeBundle
 import com.intellij.java.JavaBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -48,13 +46,6 @@ class BuildManagerVersionChecker(val project: Project, val scope: CoroutineScope
           addAction(object : NotificationAction(JavaBundle.message("arch.checker.notification.project.structure")) {
             override fun actionPerformed(e: AnActionEvent, notification: Notification) {
               ActionManager.getInstance().getAction("ShowProjectStructureSettings").actionPerformed(e)
-              notification.expire()
-            }
-          })
-
-          addAction(object : NotificationAction(IdeBundle.message("action.Anonymous.text.do.not.show.again")) {
-            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-              CompilerConfiguration.getInstance(project).setWarnOnArchMismatch(false)
               notification.expire()
             }
           })

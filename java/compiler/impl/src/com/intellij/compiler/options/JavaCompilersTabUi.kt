@@ -22,7 +22,6 @@ class JavaCompilersTabUi(
 ) {
 
   lateinit var compilerComboBox: ComboBox<BackendCompiler>
-  lateinit var warnOnArchMismatchCb: JCheckBox
   lateinit var useReleaseOptionCb: JCheckBox
   lateinit var targetOptionsComponent: TargetOptionsComponent
 
@@ -42,11 +41,6 @@ class JavaCompilersTabUi(
 
     row {
       useReleaseOptionCb = checkBox(JavaCompilerBundle.message("settings.use.release.option.for.cross.compilation"))
-        .component
-    }
-
-    row {
-      warnOnArchMismatchCb = checkBox(JavaCompilerBundle.message("settings.warn.on.arch.mismatch"))
         .component
     }
 

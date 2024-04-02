@@ -166,7 +166,6 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
-    public boolean WARN_ON_ARCH_MISMATCH = true;
   }
 
   @Override
@@ -368,16 +367,6 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
       return level.isEmpty() ? null : level;
     }
     return myBytecodeTargetLevel;
-  }
-
-  @Override
-  public boolean warnOnArchMismatch() {
-    return myState.WARN_ON_ARCH_MISMATCH;
-  }
-
-  @Override
-  public void setWarnOnArchMismatch(boolean warnOnArchMismatch) {
-    myState.WARN_ON_ARCH_MISMATCH = warnOnArchMismatch;
   }
 
   private void loadDefaultWildcardPatterns() {
