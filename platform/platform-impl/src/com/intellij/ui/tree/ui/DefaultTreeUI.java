@@ -57,11 +57,16 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
 public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport {
+
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
   public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER =
     Key.create("allows to filter single child nodes which should not be auto-expanded");
+
+  @ApiStatus.Internal
+  public static final int HORIZONTAL_SELECTION_OFFSET = 12;
+
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -287,7 +292,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
                 is("ide.experimental.ui.tree.selection") &&
                 !(tree instanceof PlainSelectionTree) &&
                 (selected || row == TreeHoverListener.getHoveredRow(tree))) {
-              int borderOffset = JBUI.scale(12);
+              int borderOffset = JBUI.scale(HORIZONTAL_SELECTION_OFFSET);
               Control control = getControl(c, path);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
               int controlOffset = painter.getControlOffset(control, depth, leaf);
