@@ -89,16 +89,15 @@ class KotlinDslSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onCancel(id: ExternalSystemTaskId) {
         if (!id.isGradleRelatedTask()) return
 
-        val cancelled = synchronized(tasks) { tasks.remove(id) }
+        val sync = synchronized(tasks) { tasks[id] } ?: return
 
         // project may be null in case of new project
         val project = id.findProject() ?: return
-        cancelled?.let {
-            GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(it.workingDir, false)
 
-            if (it.failed) {
-                reportErrors(project, it)
-            }
+        GradleBuildRootsManager.getInstance(project)?.markImportingInProgress(sync.workingDir, false)
+
+        if (sync.failed) {
+            reportErrors(project, sync)
         }
     }
 
