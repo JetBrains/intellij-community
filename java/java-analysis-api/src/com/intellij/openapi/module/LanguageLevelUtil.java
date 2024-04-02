@@ -72,7 +72,7 @@ public final class LanguageLevelUtil {
 
   static {
     for (LanguageLevel level : LanguageLevel.values()) {
-      if (level.ordinal() >= LanguageLevel.HIGHEST.ordinal()) break;
+      if (level.ordinal() > LanguageLevel.HIGHEST.ordinal()) break;
       int feature = level.feature() + 1;
       ourPresentableShortMessage.put(level, feature >= 9 ? String.valueOf(feature) : "1." + feature);
     }
@@ -97,8 +97,14 @@ public final class LanguageLevelUtil {
       URL resource = LanguageLevelUtil.class.getResource(fileName);
       if (resource != null) {
         result = loadSignatureList(resource);
-      } else {
-        Logger.getInstance(LanguageLevelUtil.class).warn("File not found: " + fileName);
+      }
+      else if (languageLevel.isAtLeast(LanguageLevel.HIGHEST)) {
+        // For preview or experimental language levels, there might be no API files yet.
+        // This is not considered an error because the API might not be stable yet.
+        result = Collections.emptySet();
+      }
+      else {
+        Logger.getInstance(LanguageLevelUtil.class).error("File not found: " + fileName);
         result = Collections.emptySet();
       }
       ourForbiddenAPI.put(languageLevel, new SoftReference<>(result));
