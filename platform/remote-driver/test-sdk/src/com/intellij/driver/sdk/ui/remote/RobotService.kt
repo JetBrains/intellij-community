@@ -8,7 +8,7 @@ internal const val REMOTE_ROBOT_MODULE_ID = "com.jetbrains.performancePlugin/int
         plugin = REMOTE_ROBOT_MODULE_ID)
 interface RobotService {
   val robot: Robot
-  fun saveHierarchy(folderPath: String, fileName: String = "ui")
+  fun saveHierarchy(folderPath: String, fileName: String = "ui.html")
 }
 
 interface RobotServiceProvider {
