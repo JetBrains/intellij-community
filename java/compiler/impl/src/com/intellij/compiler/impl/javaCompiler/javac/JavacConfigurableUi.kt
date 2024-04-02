@@ -6,7 +6,10 @@ import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 
 class JavacConfigurableUi(project: Project) {
@@ -42,7 +45,6 @@ class JavacConfigurableUi(project: Project) {
 
       row {
         additionalOptionsField = cell(RawCommandLineEditor())
-          .resizableColumn()
           .align(AlignX.FILL)
           .applyToComponent { setDescriptor(null, false) }
           .label(
@@ -56,11 +58,9 @@ class JavacConfigurableUi(project: Project) {
 
       row {
         optionsOverrideComponent = cell(CompilerModuleOptionsComponent(project))
-          .resizableColumn()
           .align(AlignX.FILL)
           .component
       }
-        .resizableRow()
     }
   }
 
