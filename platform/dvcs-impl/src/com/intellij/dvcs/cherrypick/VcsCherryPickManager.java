@@ -89,8 +89,8 @@ public final class VcsCherryPickManager {
       VcsCherryPicker cherryPicker = getCherryPickerForCommit(details);
       if (cherryPicker == null) {
         showError(DvcsBundle.message("cherry.pick.is.not.supported.for.commit.from.root",
-                                     details.getId().toShortString(),
-                                     details.getRoot().getName()));
+                                     commitId.getHash().toShortString(),
+                                     commitId.getRoot().getName()));
         return null;
       }
       return cherryPicker;
