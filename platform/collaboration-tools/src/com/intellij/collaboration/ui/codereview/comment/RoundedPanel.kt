@@ -7,11 +7,15 @@ import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 
+/**
+ * Do not create directly - use [com.intellij.collaboration.ui.ClippingRoundedPanel]
+ */
 @ApiStatus.Internal
-class RoundedPanel(layout: LayoutManager?, private val arc: Int = 8) : JPanelWithBackground(layout) {
+class RoundedPanel @Obsolete constructor(layout: LayoutManager?, private val arc: Int = 8) : JPanelWithBackground(layout) {
 
   init {
     isOpaque = false

@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui
 
 import com.intellij.application.subscribe
 import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.DimensionRestrictions
@@ -396,6 +397,16 @@ private class OrientableScrollablePanel(private val orientation: Int, layout: La
 
   override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
 }
+
+/**
+ * A panel with rounded corners which rounds the corners of both its background and its children
+ * Supposed to be used ONLY when there is not enough space between the children and panel edges, AND background color is dynamic
+ *
+ * For simpler cases where only the background should be rounded one should use [com.intellij.ui.components.panels.BackgroundRoundedPanel]
+ */
+@Suppress("FunctionName")
+fun ClippingRoundedPanel(arcRadius: Int = 8, layoutManager: LayoutManager? = null): JPanel =
+  RoundedPanel(layoutManager, arcRadius)
 
 fun jbColorFromHex(name: @NonNls String, light: @NonNls String, dark: @NonNls String): JBColor =
   JBColor.namedColor(name, jbColorFromHex(light, dark))

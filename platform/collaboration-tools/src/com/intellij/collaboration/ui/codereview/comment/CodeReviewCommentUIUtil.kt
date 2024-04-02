@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.comment
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.ClippingRoundedPanel
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
@@ -66,7 +67,7 @@ object CodeReviewCommentUIUtil {
         scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
       })
     }
-    return RoundedPanel(BorderLayout(), EDITOR_INLAY_PANEL_ARC - 2).apply {
+    return ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC - 2, BorderLayout()).apply {
       border = roundedLineBorder
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.ui.ClippingRoundedPanel
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
@@ -39,7 +40,7 @@ private const val EMPTY_GAP = 4
 
 internal object GHPRReviewSuggestedChangeComponentFactory {
   fun createIn(cs: CoroutineScope, vm: GHPRReviewCommentBodyViewModel, block: GHPRCommentBodyBlock.SuggestedChange): JComponent =
-    RoundedPanel(BorderLayout(), 8).apply {
+    ClippingRoundedPanel(8, BorderLayout()).apply {
       border = JBUI.Borders.compound(JBUI.Borders.empty(EMPTY_GAP, 0), border)
 
       val titleLabel = JBLabel(GithubBundle.message("pull.request.timeline.comment.suggested.changes")).apply {
