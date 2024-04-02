@@ -84,8 +84,8 @@ public final class LanguageLevelUtil {
   }
 
   /**
-   * For performance reasons the forbidden API is pre-generated.
-   * @see com.intellij.codeInspection.tests.JavaApiUsageGenerator
+   * For performance reasons, the forbidden API is pre-generated.
+   * @see com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator
    */
   @Nullable
   private static Set<String> getForbiddenApi(@NotNull LanguageLevel languageLevel) {
