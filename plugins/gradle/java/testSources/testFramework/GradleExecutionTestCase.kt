@@ -3,10 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJunit5Supported
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatJunit5IsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.assumeThatSpockIsSupported
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.gradle.testFramework.util.*
 
 abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
@@ -57,6 +54,11 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
   fun testSpockProject(gradleVersion: GradleVersion, action: () -> Unit) {
     assumeThatSpockIsSupported(gradleVersion)
     test(gradleVersion, GROOVY_SPOCK_FIXTURE, action)
+  }
+
+  fun testRobolectricProject(gradleVersion: GradleVersion, action: () -> Unit) {
+    assumeThatRobolectricIsSupported(gradleVersion)
+    test(gradleVersion, JAVA_ROBOLECTRIC_FIXTURE, action)
   }
 
   companion object {
@@ -128,6 +130,19 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
       }
       withDirectory("src/main/groovy")
       withDirectory("src/test/groovy")
+    }
+
+    private val JAVA_ROBOLECTRIC_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-robolectric-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-robolectric-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit4()
+        addTestImplementationDependency("org.robolectric:robolectric:4.11.1")
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
     }
   }
 }
