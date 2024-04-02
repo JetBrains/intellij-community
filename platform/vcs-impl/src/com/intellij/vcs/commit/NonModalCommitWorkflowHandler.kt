@@ -22,6 +22,8 @@ import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil.capitalize
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vcs.*
@@ -245,7 +247,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       val commitAnywayActionText = getCommitActionTextForNotification(executor, true)
       val title = message("commit.checks.failed.notification.title", commitActionText)
       val description = getCommitCheckFailureDescription(failures)
-      checkinErrorNotifications.notify(title, description, project) {
+      checkinErrorNotifications.notify(title, description.toString(), project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_FAILED)
         it.addAction(
           NotificationAction.createExpiring(commitAnywayActionText) { _, _ ->
@@ -262,15 +264,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       val commitActionText = getCommitActionTextForNotification(null, false)
       val title = message("commit.checks.failed.notification.title", commitActionText)
       val description = getCommitCheckFailureDescription(failures)
-      checkinErrorNotifications.notify(title, description, project) {
+      checkinErrorNotifications.notify(title, description.toString(), project) {
         it.setDisplayId(VcsNotificationIdsHolder.COMMIT_CHECKS_ONLY_FAILED)
         appendShowDetailsNotificationActions(it, failures)
       }
     }
   }
 
-  private fun getCommitCheckFailureDescription(failures: List<CommitCheckFailure>): @NlsContexts.NotificationContent String {
-    return failures.filterIsInstance<CommitCheckFailure.WithDescription>().joinToString("<br>") { it.text }
+  private fun getCommitCheckFailureDescription(failures: List<CommitCheckFailure>): @NlsContexts.NotificationContent HtmlBuilder {
+    return HtmlBuilder().appendWithSeparators(HtmlChunk.br(),
+                                              failures.filterIsInstance<CommitCheckFailure.WithDescription>().map { it.text })
   }
 
   private fun appendShowDetailsNotificationActions(notification: Notification, failures: List<CommitCheckFailure>) {
@@ -456,12 +459,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private fun reportCommitCheckFailure(problem: CommitProblem) {
     val checkFailure = when (problem) {
       is UnknownCommitProblem -> CommitCheckFailure.Unknown
-      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsLink,
+      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(HtmlChunk.text(problem.text),
+                                                                    problem.showDetailsLink,
                                                                     problem.showDetailsAction) { place ->
         CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, place)
         problem.showDetails(project)
       }
-      else -> CommitCheckFailure.WithDescription(problem.text)
+      else -> CommitCheckFailure.WithDescription(HtmlChunk.text(problem.text))
     }
     ui.commitProgressUi.addCommitCheckFailure(checkFailure)
   }
