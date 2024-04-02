@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.devkit.workspaceModel.CodegenJarLoader
 import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
@@ -20,6 +21,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
@@ -29,6 +31,7 @@ import com.intellij.workspaceModel.codegen.engine.*
 import kotlinx.coroutines.delay
 import org.jetbrains.io.JsonReaderEx
 import org.jetbrains.io.JsonUtil
+import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.children
@@ -116,6 +119,12 @@ object CodeWriter {
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
         indicator.isIndeterminate = false
 
+        val settings = CodeStyle.getSettings(project)
+        val kotlinSettings = settings.getCustomSettings(KotlinCodeStyleSettings::class.java)
+        val oldValue = kotlinSettings.NAME_COUNT_TO_USE_STAR_IMPORT
+        kotlinSettings.NAME_COUNT_TO_USE_STAR_IMPORT = Int.MAX_VALUE
+        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
+
         generatedCode.forEachIndexed { i, code ->
           val psiFactory = KtPsiFactory(project)
           indicator.fraction = 0.15 + 0.1 * i / generatedCode.size
@@ -165,6 +174,9 @@ object CodeWriter {
           indicator.fraction = 0.95 + 0.05 * i / filesWithGeneratedRegions.size
           reformatCodeInGeneratedRegions(file, classes.mapNotNull { it.body?.node } + listOf(file.node))
         }
+
+        kotlinSettings.NAME_COUNT_TO_USE_STAR_IMPORT = oldValue
+        CodeStyleSettingsManager.getInstance(project).notifyCodeStyleSettingsChanged()
       }
     }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
   }
@@ -411,6 +423,7 @@ object CodeWriter {
 
   private fun reformatCodeInGeneratedRegions(file: PsiFile, nodes: List<ASTNode>) {
     val generatedRegions = nodes.flatMap { findGeneratedRegions(it) }
+    if (generatedRegions.isEmpty()) return
     val regions = generatedRegions.map { TextRange.create(it.first.startOffset, it.second.startOffset + it.second.textLength) }
     CodeStyleManager.getInstance(file.project).reformatText(file, joinAdjacentRegions(regions))
   }
