@@ -96,6 +96,8 @@ interface CommitCheck : PossiblyDumbAware {
 interface CommitProblem {
   /**
    * Short problem description to show to the user.
+   *
+   * HTML markup is not supported, use [CommitProblemWithDetails].
    */
   @get:Nls(capitalization = Sentence)
   val text: String
