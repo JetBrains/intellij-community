@@ -632,7 +632,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -644,7 +644,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
     @Override
     public void update(@NotNull AnActionEvent event) {
-      super.update(event);
+      event.getUpdateSession().compute(this, "AlphaSortAction.super.update", ActionUpdateThread.EDT, () -> {
+        super.update(event);
+        return null;
+      });
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }
