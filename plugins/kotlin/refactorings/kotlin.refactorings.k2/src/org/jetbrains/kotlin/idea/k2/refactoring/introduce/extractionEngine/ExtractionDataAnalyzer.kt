@@ -180,7 +180,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 returnValueType = approximate(exitSnapshot.returnValueType) ?: builtinTypes.UNIT,
                 jumpExpressions = exitSnapshot.loopJumpExpressions,
                 hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets && !exitSnapshot.hasMultipleJumpKinds,
-                sameExitForDefaultAndJump = !exitSnapshot.hasEscapingJumps
+                sameExitForDefaultAndJump = if (exitSnapshot.hasJumps) !exitSnapshot.hasEscapingJumps && defaultExpressionInfo != null else defaultExpressionInfo == null
             )
         }
     }

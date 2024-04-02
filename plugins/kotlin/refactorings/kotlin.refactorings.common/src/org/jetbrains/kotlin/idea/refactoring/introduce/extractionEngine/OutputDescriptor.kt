@@ -15,14 +15,17 @@ data class OutputDescriptor<KotlinType>(
     override fun toString(): String {
         return buildString {
             append("OutputDescriptor[").append("\n")
+            append("defaultResultExpressions = ")
             defaultResultExpression?.let {
-                append("defaultResultExpressions = ").append(it.text).append("\n")
+                append(it.text)
             }
+            append("\n")
             append("typeOfDefaultFlow = ").append(typeOfDefaultFlow).append("\n")
             append("valuedReturnExpressions = ").append(valuedReturnExpressions.joinToString(separator = ",\n") { it.text }).append("\n")
             append("returnValueType = ").append(returnValueType).append("\n")
             append("jumpExpressions = ").append(jumpExpressions.joinToString(separator = ",\n") { it.text }).append("\n")
             append("hasSingleTarget = ").append(hasSingleTarget).append("\n")
+            append("sameExitForDefaultAndJump = ").append(sameExitForDefaultAndJump).append("\n")
             append("]")
         }
     }
