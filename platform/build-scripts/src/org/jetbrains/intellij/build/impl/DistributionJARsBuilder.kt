@@ -22,7 +22,6 @@ import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
@@ -347,7 +346,7 @@ suspend fun copyAdditionalPlugins(context: BuildContext): List<Pair<Path, List<P
       check(entries.isNotEmpty()) {
         "Suspicious additional plugin (no 'lib/*.jar' files): ${sourceDir}"
       }
-      allEntries += targetDir to entries
+      allEntries.add(targetDir to entries)
     }
 
     allEntries
@@ -772,7 +771,6 @@ private fun patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatche
   moduleOutputPatcher.patchModuleOutput(moduleName, "keymaps/\$default.xml", text)
 }
 
-@VisibleForTesting
 fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture, context: BuildContext): Path {
   return context.paths.buildOutputDir.resolve("dist.${osFamily.distSuffix}.${arch.name}")
 }

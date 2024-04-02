@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -39,11 +39,7 @@ import org.spdx.library.model.SpdxPackage.SpdxPackageBuilder
 import org.spdx.library.model.enumerations.ChecksumAlgorithm
 import org.spdx.library.model.enumerations.ReferenceCategory
 import org.spdx.library.model.enumerations.RelationshipType
-import org.spdx.library.model.license.AnyLicenseInfo
-import org.spdx.library.model.license.ExtractedLicenseInfo
-import org.spdx.library.model.license.InvalidLicenseStringException
-import org.spdx.library.model.license.LicenseInfoFactory
-import org.spdx.library.model.license.SpdxNoAssertionLicense
+import org.spdx.library.model.license.*
 import org.spdx.storage.IModelStore.IdType
 import org.spdx.storage.ISerializableModelStore
 import org.spdx.storage.simple.InMemSpdxStore
@@ -57,7 +53,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
 import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
-import kotlin.io.path.readText
 
 internal class SoftwareBillOfMaterialsImpl(
   private val context: BuildContext,
@@ -96,12 +91,12 @@ internal class SoftwareBillOfMaterialsImpl(
                  context.applicationInfo.isEAP -> "euaEap.html"
                  else -> "eua.html"
                })
-    check(eula.exists()) {
+    check(Files.exists(eula)) {
       "$eula is missing"
     }
     Options.DistributionLicense(
       name = "JetBrains User Agreement",
-      text = Jsoup.parse(eula.readText()).text(),
+      text = Jsoup.parse(Files.readString(eula)).text(),
       url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
     )
   }
@@ -125,7 +120,7 @@ internal class SoftwareBillOfMaterialsImpl(
       SimpleDateFormat(SpdxConstants.SPDX_DATE_FORMAT).format(creationDate)
     )
     document.specVersion = specVersion
-    document.dataLicense = document.parseLicense(SpdxConstants.SPDX_DATA_LICENSE_ID)
+    document.dataLicense = parseLicense(document, SpdxConstants.SPDX_DATA_LICENSE_ID)
     document.setName(name)
     return document
   }
@@ -136,13 +131,6 @@ internal class SoftwareBillOfMaterialsImpl(
   private fun SpdxDocument.write() {
     outputFile.outputStream().use {
       (modelStore as ISerializableModelStore).serialize(documentUri, it)
-    }
-  }
-
-  private fun ModelObject.validate() {
-    val errors = verify()
-    check(errors.none()) {
-      errors.joinToString(separator = "\n")
     }
   }
 
@@ -171,10 +159,10 @@ internal class SoftwareBillOfMaterialsImpl(
     check(documents.any()) {
       "No SBOM documents were generated"
     }
-    documents.forEach {
-      Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), "$it"))
+    for (doc in documents) {
+      Span.current().addEvent("SBOM document generated", Attributes.of(AttributeKey.stringKey("file"), "$doc"))
     }
-    checkNtiaConformance(documents)
+    checkNtiaConformance(documents, context)
   }
 
   private class Checksums(val path: Path) {
@@ -192,7 +180,7 @@ internal class SoftwareBillOfMaterialsImpl(
     }.flatMap { (distribution, filesWithChecksums) ->
       filesWithChecksums.map {
         val document = spdxDocument(it.path.name)
-        val rootPackage = document.spdxPackage(it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
+        val rootPackage = spdxPackage(document, it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
           setVersionInfo(version)
             .setSupplier(creator)
             .setDownloadLocation(baseDownloadUrl?.let { url ->
@@ -221,26 +209,27 @@ internal class SoftwareBillOfMaterialsImpl(
     val version = context.bundledRuntime.build
     val supplier = "Organization: ${Suppliers.JETBRAINS}"
     val runtimeArchivePackage = spdxPackage(
-      name = context.bundledRuntime.archiveName(os = os, arch = arch),
-      sha256sum = checksums.sha256sum, sha1sum = checksums.sha1sum,
-      licenseDeclared = jetBrainsOwnLicense
+      this,
+      name = context.bundledRuntime.archiveName(os = os, arch = arch), licenseDeclared = jetBrainsOwnLicense,
+      sha256sum = checksums.sha256sum,
+      sha1sum = checksums.sha1sum
     ) {
       setVersionInfo(version)
       setSupplier(supplier)
       setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
     }
-    runtimeArchivePackage.claimContainedFiles(document = this)
+    claimContainedFiles(spdxPackage = runtimeArchivePackage, document = this, license = license, context = context)
     /**
      * See [BundledRuntime.extract]
      */
-    val extractedRuntimePackage = spdxPackage(name = "./jbr/**") {
+    val extractedRuntimePackage = spdxPackage(this, name = "./jbr/**") {
       setVersionInfo(version)
       setSupplier(supplier)
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
     extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.EXPANDED_FROM_ARCHIVE)
     addRuntimeUpstreams(runtimeArchivePackage, os, arch)
-    runtimeArchivePackage.validate()
+    validate(runtimeArchivePackage)
     return extractedRuntimePackage
   }
 
@@ -261,19 +250,19 @@ internal class SoftwareBillOfMaterialsImpl(
       }
     }
     val cefArchive = "cef_binary_${cefVersion}_$cefSuffix.tar.bz2"
-    val cefPackage = spdxPackage(name = cefArchive) {
+    val cefPackage = spdxPackage(this, name = cefArchive) {
       setVersionInfo(cefVersion)
       setSupplier("Organization: The Chromium Embedded Framework Authors")
       setDownloadLocation("https://cef-builds.spotifycdn.com/$cefArchive")
     }
-    val jcefUpstream = spdxPackage("Java Chromium Embedded Framework") {
+    val jcefUpstream = spdxPackage(this, "Java Chromium Embedded Framework") {
       val revision = context.dependenciesProperties["jcef.commit"]
       setVersionInfo(revision)
       setSourceInfo("Revision $revision of https://github.com/chromiumembedded/java-cef")
       setSupplier("Organization: The Chromium Embedded Framework Authors")
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
-    val openJdkUpstream = spdxPackage("OpenJDK") {
+    val openJdkUpstream = spdxPackage(this, "OpenJDK") {
       val tag = context.dependenciesProperties["openjdk.tag"]
       setVersionInfo(tag)
       setSourceInfo("Tag $tag of https://github.com/openjdk/jdk17u")
@@ -302,7 +291,7 @@ internal class SoftwareBillOfMaterialsImpl(
     )
     externalDocumentRefs.add(runtimeRef)
     val runtimePackage = ExternalSpdxElement(modelStore, documentUri, "${runtimeRef.id}:$runtimeRootPackageId", copyManager, true)
-    runtimePackage.validate()
+    validate(runtimePackage)
     rootPackage.relatesTo(runtimePackage, RelationshipType.CONTAINS)
   }
 
@@ -317,7 +306,7 @@ internal class SoftwareBillOfMaterialsImpl(
       val distributionDir = getOsAndArchSpecificDistDirectory(os, arch, context)
       val name = context.productProperties.getBaseArtifactName(context) + "-${distributionDir.name}"
       val document = spdxDocument(name)
-      val rootPackage = document.spdxPackage(name) {
+      val rootPackage = spdxPackage(document, name) {
         setVersionInfo(version)
           .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
           .setSupplier(creator)
@@ -350,7 +339,13 @@ internal class SoftwareBillOfMaterialsImpl(
       containedPackages.forEach {
         rootPackage.relatesTo(it, RelationshipType.CONTAINS)
       }
-      rootPackage.claimContainedFiles(containedPackages.flatMap { it.files }, document)
+      claimContainedFiles(
+        spdxPackage = rootPackage,
+        files = containedPackages.flatMap { it.files },
+        document = document,
+        context = context,
+        license = license,
+      )
     }
     val libraryPackages = mavenLibraries.mapNotNull { lib ->
       val libraryPackage = document.spdxPackage(lib)
@@ -374,7 +369,7 @@ internal class SoftwareBillOfMaterialsImpl(
       }
     }
     document.write()
-    document.validate()
+    validate(document)
     return document.outputFile
   }
 
@@ -397,13 +392,13 @@ internal class SoftwareBillOfMaterialsImpl(
         it.path.startsWith(context.paths.distAllDir) -> context.paths.distAllDir.relativize(it.path)
         else -> return@associate it.path to null
       }
-      val filePackage = document.spdxPackage("./$filePath", sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
+      val filePackage = spdxPackage(document, "./$filePath", sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
         setVersionInfo(version)
           .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
           .setSupplier(creator)
       }
-      filePackage.claimContainedFiles(document = document)
-      filePackage.validate()
+      claimContainedFiles(spdxPackage = filePackage, document = document, license = license, context = context)
+      validate(filePackage)
       it.path to filePackage
     }
   }
@@ -599,13 +594,14 @@ internal class SoftwareBillOfMaterialsImpl(
       return when {
         license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
         license.license == LibraryLicense.JETBRAINS_OWN -> document.jetBrainsOwnLicense
-        else -> document.parseLicense(checkNotNull(license.spdxIdentifier))
+        else -> parseLicense(document, checkNotNull(license.spdxIdentifier))
       }
     }
   }
 
   private val SpdxDocument.jetBrainsOwnLicense: AnyLicenseInfo
     get() = extractedLicenseInfo(
+      spdxDocument = this,
       name = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.name,
       text = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.text,
       url = this@SoftwareBillOfMaterialsImpl.jetBrainsOwnLicense.url
@@ -614,37 +610,19 @@ internal class SoftwareBillOfMaterialsImpl(
   /**
    * @param id one of [SpdxConstants.LISTED_LICENSE_URL]
    */
-  private fun SpdxDocument.parseLicense(id: String): AnyLicenseInfo {
+  private fun parseLicense(spdxDocument: SpdxDocument, id: String): AnyLicenseInfo {
     return try {
-      LicenseInfoFactory.parseSPDXLicenseString(id, modelStore, documentUri, copyManager)
+      LicenseInfoFactory.parseSPDXLicenseString(id, spdxDocument.modelStore, spdxDocument.documentUri, spdxDocument.copyManager)
     }
     catch (e: InvalidLicenseStringException) {
       throw IllegalArgumentException(id).apply { addSuppressed(e) }
     }
   }
 
-  private fun SpdxDocument.extractedLicenseInfo(name: String, text: String, url: String?): ExtractedLicenseInfo {
-    // must only contain letters, numbers, "." and "-" and must begin with "LicenseRef-"
-    val licenseRefId = "LicenseRef-$name"
-      .replace(" ", "-")
-      .replace("/", "-")
-      .replace("+", "-")
-      .replace("_", "-")
-    val licenseInfo = ExtractedLicenseInfo(
-      modelStore, documentUri, licenseRefId,
-      copyManager, true
-    )
-    licenseInfo.extractedText = text
-    if (url != null) licenseInfo.seeAlso.add(url)
-    licenseInfo.validate()
-    addExtractedLicenseInfos(licenseInfo)
-    return licenseInfo
-  }
-
   private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {
     val document = this
     val upstreamPackage = spdxPackageUpstream(library.license.forkedFrom)
-    val libPackage = spdxPackage("${library.coordinates.groupId}:${library.coordinates.artifactId}", library.license(this)) {
+    val libPackage = spdxPackage(this, "${library.coordinates.groupId}:${library.coordinates.artifactId}", library.license(this)) {
       setVersionInfo(checkNotNull(library.coordinates.version) {
         "Missing version for ${library.coordinates}"
       })
@@ -665,7 +643,7 @@ internal class SoftwareBillOfMaterialsImpl(
     if (upstream?.version == null || upstream.mavenRepositoryUrl == null) {
       return null
     }
-    return spdxPackage("${upstream.groupId}:${upstream.artifactId}") {
+    return spdxPackage(this, "${upstream.groupId}:${upstream.artifactId}") {
       setVersionInfo(upstream.version)
       setSupplier(upstream.license.supplier ?: SpdxConstants.NOASSERTION_VALUE)
       val coordinates = MavenCoordinates(
@@ -720,88 +698,130 @@ internal class SoftwareBillOfMaterialsImpl(
       }
     }
   }
+}
 
-  private fun SpdxDocument.spdxPackage(name: String,
-                                       licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
-                                       sha256sum: String, sha1sum: String,
-                                       init: SpdxPackageBuilder.() -> Unit): SpdxPackage {
-    return spdxPackage(name, licenseDeclared) {
-      addFile(createSpdxFile(
-        modelStore.getNextId(IdType.SpdxId, documentUri),
-        name, licenseDeclared, null, SpdxConstants.NONE_VALUE,
-        createChecksum(ChecksumAlgorithm.SHA1, sha1sum)
-      ).addChecksum(createChecksum(ChecksumAlgorithm.SHA256, sha256sum)).build())
-      init()
-    }
+private fun spdxPackage(
+  spdxDocument: SpdxDocument,
+  name: String,
+  licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(), sha256sum: String,
+  sha1sum: String,
+  init: SpdxPackageBuilder.() -> Unit
+): SpdxPackage {
+  return spdxPackage(spdxDocument, name, licenseDeclared) {
+    addFile(spdxDocument.createSpdxFile(
+      spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri),
+      name, licenseDeclared, null, SpdxConstants.NONE_VALUE,
+      spdxDocument.createChecksum(ChecksumAlgorithm.SHA1, sha1sum)
+    ).addChecksum(spdxDocument.createChecksum(ChecksumAlgorithm.SHA256, sha256sum)).build())
+    init()
   }
+}
 
-  private fun SpdxDocument.spdxPackage(name: String,
-                                       licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
-                                       init: SpdxPackageBuilder.() -> Unit): SpdxPackage {
-    return createPackage(
-      modelStore.getNextId(IdType.SpdxId, documentUri), name,
-      SpdxNoAssertionLicense(modelStore, documentUri),
-      SpdxConstants.NOASSERTION_VALUE,
-      licenseDeclared
-    ).setFilesAnalyzed(false).apply(init).build()
+private fun extractedLicenseInfo(spdxDocument: SpdxDocument, name: String, text: String, url: String?): ExtractedLicenseInfo {
+  // must only contain letters, numbers, "." and "-" and must begin with "LicenseRef-"
+  val licenseRefId = "LicenseRef-$name"
+    .replace(" ", "-")
+    .replace("/", "-")
+    .replace("+", "-")
+    .replace("_", "-")
+  val licenseInfo = ExtractedLicenseInfo(
+    spdxDocument.modelStore, spdxDocument.documentUri, licenseRefId,
+    spdxDocument.copyManager, true
+  )
+  licenseInfo.extractedText = text
+  if (url != null) licenseInfo.seeAlso.add(url)
+  validate(licenseInfo)
+  spdxDocument.addExtractedLicenseInfos(licenseInfo)
+  return licenseInfo
+}
+
+private fun claimContainedFiles(
+  spdxPackage: SpdxPackage,
+  files: Collection<SpdxFile> = spdxPackage.files,
+  document: SpdxDocument,
+  license: Options.DistributionLicense,
+  context: BuildContext,
+) {
+  spdxPackage.copyrightText = requireNotNull(context.productProperties.sbomOptions.copyrightText) {
+    "Copyright text isn't specified"
   }
-
-  private fun SpdxPackage.claimContainedFiles(files: Collection<SpdxFile> = this.files, document: SpdxDocument) {
-    copyrightText = requireNotNull(context.productProperties.sbomOptions.copyrightText) {
-      "Copyright text isn't specified"
-    }
-    licenseDeclared = document.extractedLicenseInfo(
-      name = license.name,
-      text = license.text,
-      url = license.url
-    )
-    setPackageVerificationCode(document.createPackageVerificationCode(
+  spdxPackage.licenseDeclared = extractedLicenseInfo(
+    spdxDocument = document,
+    name = license.name,
+    text = license.text,
+    url = license.url
+  )
+  spdxPackage.setPackageVerificationCode(
+    document.createPackageVerificationCode(
       packageVerificationCode(files),
       emptyList()
-    ))
-    setFilesAnalyzed(true)
-  }
+    )
+  )
+  spdxPackage.setFilesAnalyzed(true)
+}
 
-  /**
-   * See https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
-   */
-  private fun packageVerificationCode(files: Collection<SpdxFile>): String {
-    check(files.any())
-    return files.asSequence()
-      .map { it.sha1 }.sorted()
-      .joinToString(separator = "")
-      .let(DigestUtils::sha1Hex)
+private fun validate(modelObject: ModelObject) {
+  val errors = modelObject.verify()
+  check(errors.none()) {
+    errors.joinToString(separator = "\n")
   }
+}
 
-  /**
-   * See https://pypi.org/project/ntia-conformance-checker/
-   */
-  private suspend fun checkNtiaConformance(documents: List<Path>) {
-    if (Docker.isAvailable && !SystemInfoRt.isWindows) {
-      val ntiaChecker = "ntia-checker"
-      suspendingRetryWithExponentialBackOff {
-        runProcess(
-          "docker", "build", ".", "--tag", ntiaChecker,
-          workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker")
-        )
-      }
-      coroutineScope {
-        documents.forEach {
-          launch {
-            try {
-              runProcess(
-                "docker", "run", "--rm",
-                "--volume=${it.parent}:${it.parent}:ro",
-                ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
-              )
-            }
-            catch (e: Exception) {
-              context.messages.error("""
-                 Generated SBOM $it is not NTIA-conformant. 
-                 Please search for 'Components missing an supplier' error message and specify all missing suppliers.
-                 You may use https://package-search.jetbrains.com/ to search for them.
-              """.trimIndent(), e)
-            }
+private fun spdxPackage(
+  spdxDocument: SpdxDocument,
+  name: String,
+  licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
+  init: SpdxPackageBuilder.() -> Unit
+): SpdxPackage {
+  return spdxDocument.createPackage(
+    spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri), name,
+    SpdxNoAssertionLicense(spdxDocument.modelStore, spdxDocument.documentUri),
+    SpdxConstants.NOASSERTION_VALUE,
+    licenseDeclared
+  ).setFilesAnalyzed(false).apply(init).build()
+}
+
+/**
+ * See https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
+ */
+private fun packageVerificationCode(files: Collection<SpdxFile>): String {
+  check(files.any())
+  return files.asSequence()
+    .map { it.sha1 }.sorted()
+    .joinToString(separator = "")
+    .let(DigestUtils::sha1Hex)
+}
+
+/**
+ * See https://pypi.org/project/ntia-conformance-checker/
+ */
+private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildContext) {
+  if (Docker.isAvailable && !SystemInfoRt.isWindows) {
+    val ntiaChecker = "ntia-checker"
+    suspendingRetryWithExponentialBackOff {
+      runProcess(
+        "docker", "build", ".", "--tag", ntiaChecker,
+        workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker")
+      )
+    }
+    coroutineScope {
+      documents.forEach {
+        launch {
+          try {
+            runProcess(
+              "docker", "run", "--rm",
+              "--volume=${it.parent}:${it.parent}:ro",
+              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
+            )
+          }
+          catch (e: Exception) {
+            context.messages.error(
+              """
+               Generated SBOM $it is not NTIA-conformant. 
+               Please search for 'Components missing an supplier' error message and specify all missing suppliers.
+               You may use https://package-search.jetbrains.com/ to search for them.
+            """.trimIndent(), e
+            )
           }
         }
       }

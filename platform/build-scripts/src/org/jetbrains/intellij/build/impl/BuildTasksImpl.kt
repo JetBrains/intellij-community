@@ -745,40 +745,34 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
   coroutineScope {
     createMavenArtifactJob(context, distributionState)
 
-    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope {
-      if (context.shouldBuildDistributions()) {
-        val entries = buildDistribution(state = distributionState, context)
-        if (context.productProperties.buildSourcesArchive) {
-          buildSourcesArchive(entries, context)
-        }
-        entries
-      }
-      else {
-        Span.current().addEvent(
-          "skip building product distributions because " +
-          "'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'"
-        )
-        buildSearchableOptions(context)
-        buildNonBundledPlugins(
-          pluginsToPublish = pluginsToPublish,
-          compressPluginArchive = context.options.compressZipFiles,
-          buildPlatformLibJob = null,
-          state = distributionState,
-          context = context
-        )
-        emptyList()
-      }
+    if (!context.shouldBuildDistributions()) {
+      Span.current().addEvent(
+        "skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'"
+      )
+      buildSearchableOptions(context)
+      buildNonBundledPlugins(
+        pluginsToPublish = pluginsToPublish,
+        compressPluginArchive = context.options.compressZipFiles,
+        buildPlatformLibJob = null,
+        state = distributionState,
+        context = context
+      )
+      return@coroutineScope
     }
 
-    if (!context.shouldBuildDistributions()) {
-      return@coroutineScope
+    val distEntries = spanBuilder("build platform and plugin JARs").useWithScope {
+      val entries = buildDistribution(state = distributionState, context)
+      if (context.productProperties.buildSourcesArchive) {
+        buildSourcesArchive(entries, context)
+      }
+      entries
     }
 
     layoutShared(context)
     val distDirs = buildOsSpecificDistributions(context)
     launch(Dispatchers.IO) {
       context.executeStep(spanBuilder("generate software bill of materials"), SoftwareBillOfMaterials.STEP_ID) {
-        SoftwareBillOfMaterialsImpl(context, distDirs, distEntries).generate()
+        SoftwareBillOfMaterialsImpl(context = context, distributions = distDirs, distributionFiles = distEntries).generate()
       }
     }
     if (context.productProperties.buildCrossPlatformDistribution) {
