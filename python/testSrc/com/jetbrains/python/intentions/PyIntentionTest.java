@@ -6,6 +6,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -464,8 +466,19 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   // PY-45863
-  public void testImportAsToImportFromAll() {
+  public void testRemoveQualifierFromAllUsages() {
+    shouldSelectRemoveQualifierOption(0);
     doTest("Remove 'b' qualifier");
+  }
+
+  public void testRemoveQualifierFromThisName() {
+    shouldSelectRemoveQualifierOption(1);
+    doTest("Remove 'b' qualifier");
+  }
+
+  private static void shouldSelectRemoveQualifierOption(int index) {
+    List<String> options = List.of("Remove qualifier from all usages", "Remove qualifier from this name");
+    UiInterceptors.register(new ChooserInterceptor(options, options.get(index)));
   }
 
   // PY-45863
