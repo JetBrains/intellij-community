@@ -24,7 +24,9 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
+import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Supplier
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -380,6 +382,28 @@ data class ClientId(val value: String) {
       if (!propagateAcrossThreads) return function
       val currentId = currentOrNull
       return Function { withClientId(currentId) { function.apply(it) } }
+    }
+
+    @JvmStatic
+    fun <T> decorateSupplier(supplier: Supplier<T>): Supplier<T> {
+      if (!propagateAcrossThreads) return supplier
+      val currentId = currentOrNull
+      return Supplier {
+        withClientId(currentId) {
+          supplier.get()
+        }
+      }
+    }
+
+    @JvmStatic
+    fun <T> decorateConsumer(consumer: Consumer<T>): Consumer<T> {
+      if (!propagateAcrossThreads) return consumer
+      val currentId = currentOrNull
+      return Consumer { t ->
+        withClientId(currentId) {
+          consumer.accept(t)
+        }
+      }
     }
 
     @JvmStatic
