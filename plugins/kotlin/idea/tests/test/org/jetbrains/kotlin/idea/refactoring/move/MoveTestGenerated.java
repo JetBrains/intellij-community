@@ -568,6 +568,29 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/moveTopLevelToInner")
+    public static class MoveTopLevelToInner extends AbstractMoveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("java/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test")
+        public void testJava_moveTopLevelClassToNestedClass_MoveTopLevelClassToNestedClass() throws Exception {
+            runTest("testData/refactoring/moveTopLevelToInner/java/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test");
+        }
+
+        @TestMetadata("java/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test")
+        public void testJava_moveTopLevelClassToTopLevelClassOfAnotherPackage_MoveTopLevelClassToTopLevelClassOfAnotherPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevelToInner/java/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test");
+        }
+
+        @TestMetadata("java/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test")
+        public void testJava_moveTopLevelClassToTopLevelClass_MoveTopLevelClassToTopLevelClass() throws Exception {
+            runTest("testData/refactoring/moveTopLevelToInner/java/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
     public static class Move extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -647,21 +670,6 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("java/moveClass/moveInnerToTop/moveNestedClassToTopLevelInTheSamePackage/moveNestedClassToTopLevelInTheSamePackage.test")
         public void testJava_moveClass_moveInnerToTop_moveNestedClassToTopLevelInTheSamePackage_MoveNestedClassToTopLevelInTheSamePackage() throws Exception {
             runTest("testData/refactoring/move/java/moveClass/moveInnerToTop/moveNestedClassToTopLevelInTheSamePackage/moveNestedClassToTopLevelInTheSamePackage.test");
-        }
-
-        @TestMetadata("java/moveClass/moveTopToInner/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test")
-        public void testJava_moveClass_moveTopToInner_moveTopLevelClassToNestedClass_MoveTopLevelClassToNestedClass() throws Exception {
-            runTest("testData/refactoring/move/java/moveClass/moveTopToInner/moveTopLevelClassToNestedClass/moveTopLevelClassToNestedClass.test");
-        }
-
-        @TestMetadata("java/moveClass/moveTopToInner/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test")
-        public void testJava_moveClass_moveTopToInner_moveTopLevelClassToTopLevelClassOfAnotherPackage_MoveTopLevelClassToTopLevelClassOfAnotherPackage() throws Exception {
-            runTest("testData/refactoring/move/java/moveClass/moveTopToInner/moveTopLevelClassToTopLevelClassOfAnotherPackage/moveTopLevelClassToTopLevelClassOfAnotherPackage.test");
-        }
-
-        @TestMetadata("java/moveClass/moveTopToInner/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test")
-        public void testJava_moveClass_moveTopToInner_moveTopLevelClassToTopLevelClass_MoveTopLevelClassToTopLevelClass() throws Exception {
-            runTest("testData/refactoring/move/java/moveClass/moveTopToInner/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test");
         }
 
         @TestMetadata("java/moveField/moveFieldToExternalNestedClass/moveFieldToExternalNestedClass.test")

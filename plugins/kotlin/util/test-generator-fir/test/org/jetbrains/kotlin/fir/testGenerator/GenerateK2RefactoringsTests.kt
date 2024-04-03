@@ -7,10 +7,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTe
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceFunction.AbstractK2IntroduceFunctionTest
-import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2ChangePackageTest
-import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveFileTest
-import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
-import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTopLevelTest
+import org.jetbrains.kotlin.idea.k2.refactoring.move.*
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -81,6 +78,9 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
         testClass<AbstractK2MoveTopLevelTest> {
             model("refactoring/moveTopLevel", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2MoveTopLevelToInnerTest> {
+            model("refactoring/moveTopLevelToInner", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveTest> {
             model("refactoring/move", pattern = TEST, flatten = true)

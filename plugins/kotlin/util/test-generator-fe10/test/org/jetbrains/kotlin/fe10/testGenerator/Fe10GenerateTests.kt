@@ -726,6 +726,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/changePackage", pattern = TEST, flatten = true)
             model("refactoring/moveFile", pattern = TEST, flatten = true)
             model("refactoring/moveTopLevel", pattern = TEST, flatten = true)
+            model("refactoring/moveTopLevelToInner", pattern = TEST, flatten = true)
             model("refactoring/move", pattern = TEST, flatten = true)
         }
 
