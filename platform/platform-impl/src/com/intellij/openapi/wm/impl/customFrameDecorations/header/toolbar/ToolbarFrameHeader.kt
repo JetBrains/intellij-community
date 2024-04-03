@@ -116,6 +116,7 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
                 toolbar?.removeComponentListener(contentResizeListener)
                 toolbarPlaceholder.removeAll()
                 toolbarPlaceholder.revalidate()
+                toolbar = null
               }
             }
           }
