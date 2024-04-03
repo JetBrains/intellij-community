@@ -63,13 +63,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
     fixTypeMismatchDiagnosticBasedProcessing
 )
 
-private val addOrRemoveModifiersProcessingGroup = InspectionLikeProcessingGroup(
-    runSingleTime = true,
-    processings = listOf(
-        RemoveRedundantVisibilityModifierProcessing(),
-    )
-)
-
 private val removeRedundantElementsProcessingGroup = InspectionLikeProcessingGroup(
     runSingleTime = true,
     processings = listOf(
@@ -151,7 +144,6 @@ private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
         InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
         MergePropertyWithConstructorParameterProcessing(),
         errorsFixingDiagnosticBasedPostProcessingGroup,
-        addOrRemoveModifiersProcessingGroup,
         inspectionLikePostProcessingGroup,
         removeRedundantElementsProcessingGroup,
         ClearExplicitLabelsProcessing(),
