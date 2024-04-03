@@ -11,6 +11,7 @@ import com.intellij.psi.util.parentOfType
 
 class JvmLoggerLookupElement(private val logger: JvmLogger, private val place: PsiClass) : LookupElement(), JavaCompletionStatistician.CustomStatisticsInfoProvider {
   val typeName: String = logger.loggerTypeName
+  val typeId: String = logger.id
 
   override fun getLookupString(): String {
     return logger.getLogFieldName(place) ?: JvmLoggerFieldDelegate.LOGGER_IDENTIFIER
