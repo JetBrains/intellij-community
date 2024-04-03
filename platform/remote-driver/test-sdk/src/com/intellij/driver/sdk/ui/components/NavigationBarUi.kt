@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Locators
 
 val IdeaFrameUI.navigationBar get() = x(NavigationBarUi.locator, NavigationBarUi::class.java)
@@ -17,6 +18,11 @@ class NavigationBarUi(data: ComponentData): UiComponent(data) {
     x(Locators.byClassAndAccessibleName("NavBarItemComponent", item), NavBarItemUi::class.java)
 
   class NavBarItemUi(data: ComponentData): UiComponent(data) {
-    val isSelected get() = true
+    val isSelected get() = driver.new(MethodInvocator::class, component.getClass(), "isSelected", null).invoke(component) as Boolean
+  }
+
+  @Remote("com.intellij.util.MethodInvocator")
+  interface MethodInvocator {
+    fun invoke(obj: Any, vararg args: Any): Any
   }
 }

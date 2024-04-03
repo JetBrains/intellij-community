@@ -14,4 +14,8 @@ interface Component {
   fun isEnabled(): Boolean
   fun isFocusOwner(): Boolean
   fun getLocationOnScreen(): Point
+  fun getClass(): Class
 }
+
+@Remote("java.lang.Class")
+interface Class
