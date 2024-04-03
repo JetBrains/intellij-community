@@ -707,7 +707,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       setFocusBorderAroundIcon(true);
     }
   }
-
   private final class LookupPanel extends SelectablePanel {
     boolean myUpdateExtender;
     LookupPanel() {
