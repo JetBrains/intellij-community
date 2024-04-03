@@ -117,7 +117,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
         @Override
         public String toString() {
-          return "PsiReferenceRegistrarImpl cleanuper for " + provider;
+          return "PsiReferenceRegistrarImpl cleanuper for " + provider +" ("+provider.getClass()+")";
         }
       };
       Disposer.register(parentDisposable, disposable);
