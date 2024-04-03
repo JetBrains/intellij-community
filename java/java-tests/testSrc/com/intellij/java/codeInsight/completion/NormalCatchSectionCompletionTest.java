@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("RedundantThrows")
@@ -53,7 +54,7 @@ public class NormalCatchSectionCompletionTest extends NormalCompletionTestCase {
 
     configure();
 
-    assertEquals(List.of("catch", "catch (TestException e)"), myFixture.getLookupElementStrings());
+    checkRenderedItems(List.of("catch", "catch (TestException e)"));
 
     LookupElement element = myItems[1];
     LookupElementPresentation presentation = renderElement(element);
@@ -81,7 +82,7 @@ public class NormalCatchSectionCompletionTest extends NormalCompletionTestCase {
 
     configure();
 
-    assertEquals(List.of("catch", "catch (com.test.TestException e)"), myFixture.getLookupElementStrings());
+    checkRenderedItems(List.of("catch", "catch (TestException e)"));
 
     LookupElement element = myItems[1];
     LookupElementPresentation presentation = renderElement(element);
@@ -118,10 +119,20 @@ public class NormalCatchSectionCompletionTest extends NormalCompletionTestCase {
   private void simpleTestCatchSection(@NotNull List<String> catches) {
     configure();
 
-    assertEquals(catches, myFixture.getLookupElementStrings());
+    checkRenderedItems(catches);
 
     selectItem(myItems[1]);
 
     checkResult();
+  }
+
+  private void checkRenderedItems(@NotNull List<String> catches) {
+    List<String> renderedItems = Arrays.stream(myItems).map(t -> {
+      LookupElementPresentation presentation = new LookupElementPresentation();
+      t.renderElement(presentation);
+      return (presentation.getItemText() != null ? presentation.getItemText() : "") +
+             (presentation.getTailText() != null ? presentation.getTailText() : "");
+    }).toList();
+    assertEquals(catches, renderedItems);
   }
 }

@@ -2505,7 +2505,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.configureByText("Test.java", "class X{X() {try {}<caret>}}");
     myFixture.completeBasic();
     assertEquals(myFixture.getLookupElementStrings(),
-                 List.of("catch", "finally", "catch (Exception e)", "catch (RuntimeException e)"));
+                 List.of("catch", "finally",
+                         "catch (Exception e) {\n    throw new RuntimeException(e);\n}",
+                         "catch (RuntimeException e) {\n    throw new RuntimeException(e);\n}"));
   }
 
   @NeedsIndex.ForStandardLibrary

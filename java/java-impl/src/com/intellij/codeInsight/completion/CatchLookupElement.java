@@ -2,13 +2,14 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -71,11 +72,20 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     if (element != null) {
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       PsiElement finalElement = element;
-      DumbService.getInstance(project)
-        .runWithAlternativeResolveEnabled(() -> codeStyleManager.shortenClassReferences(finalElement));
+      element = DumbService.getInstance(project)
+        .computeWithAlternativeResolveEnabled(() -> codeStyleManager.shortenClassReferences(finalElement));
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    new JavaSmartEnterProcessor().process(project, editor, context.getFile());
+
+    if (element instanceof PsiCatchSection catchSection) {
+      catchSection = (PsiCatchSection)CodeStyleManager.getInstance(project).reformat(catchSection);
+      PsiCodeBlock catchBlock = catchSection.getCatchBlock();
+      if (catchBlock != null) {
+        TextRange rangeToSelect = SurroundWithUtil.getRangeToSelect(catchBlock);
+        context.getEditor().getSelectionModel().setSelection(rangeToSelect.getStartOffset(), rangeToSelect.getEndOffset());
+        editor.getCaretModel().moveToOffset(rangeToSelect.getEndOffset());
+      }
+    }
   }
 
   @NotNull
@@ -141,13 +151,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
         String name =
           new VariableNameGenerator(tryStatement, VariableKind.PARAMETER).byName("e", "ex", "exc").generate(false);
         PsiCatchSection catchSection = factory.createCatchSection(exceptionType, name, tryStatement);
-        catchSection = (PsiCatchSection)CodeStyleManager.getInstance(project).reformat(catchSection);
-        PsiJavaToken rParenth = catchSection.getRParenth();
-        if (rParenth == null) {
-          return List.of();
-        }
-        int offset = rParenth.getTextRangeInParent().getEndOffset();
-        String catchSectionText = catchSection.getText().substring(0, offset);
+        String catchSectionText = catchSection.getText();
         lookupElements.add(new CatchLookupElement(catchSection, catchSectionText));
         if (lookupElements.size() >= MAX_LOOKUP_SIZE) {
           break;
