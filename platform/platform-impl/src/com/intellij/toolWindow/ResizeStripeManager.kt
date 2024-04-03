@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.ToolWindowShowNamesAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.AnActionHolder
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.OnePixelDivider
@@ -18,9 +20,14 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.PopupHandler
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup
+import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.MouseEvent
+import javax.swing.JList
+import javax.swing.ListCellRenderer
 
 /**
  * @author Alexander Lobas
@@ -52,8 +59,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
           val group = object : ActionGroup() {
             override fun getChildren(e: AnActionEvent?) = arrayOf(action)
           }
-          val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group)
-          popupMenu.component.show(component, x, y)
+          showPopup(group, component, x, y)
         }
       }
     })
@@ -215,7 +221,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
         }
         Registry.get("toolwindow.enable.show.names").addListener(myKeyListener!!, ApplicationManager.getApplication())
       }
-      return Registry.`is`("toolwindow.enable.show.names", false)
+      return Registry.`is`("toolwindow.enable.show.names", true)
     }
 
     fun isShowNames(): Boolean = enabled() && UISettings.getInstance().showToolWindowsNames
@@ -261,6 +267,38 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       for (project in ProjectManager.getInstance().openProjects) {
         ToolWindowManagerEx.getInstanceEx(project).setSideCustomWidth(toolbar, width)
       }
+    }
+
+    fun showPopup(group: ActionGroup, component: Component, x: Int, y: Int) {
+      val dataContext = DataManager.getInstance().getDataContext(component)
+      val factory = PresentationFactory()
+      val popup = object : ActionGroupPopup(null, group, dataContext, false, false, true, true, null, -1, null, null, factory, false) {
+        override fun afterShowSync() {
+          super.afterShowSync()
+          list.clearSelection()
+        }
+
+        override fun getListElementRenderer(): ListCellRenderer<*> {
+          return object : PopupListElementRenderer<Any>(this) {
+            override fun customizeComponent(list: JList<out Any>?, value: Any?, isSelected: Boolean) {
+              super.customizeComponent(list, value, isSelected)
+              val label = mySecondaryTextLabel ?: return
+              if (value is AnActionHolder && value.action is ToolWindowShowNamesAction) {
+                label.isEnabled = true
+                label.icon = AllIcons.General.Beta
+                label.border = JBUI.Borders.emptyLeft(6)
+              }
+              else {
+                label.isEnabled = false
+                label.icon = null
+                label.border = JBUI.Borders.empty()
+              }
+            }
+          }
+        }
+      }
+      popup.isShowSubmenuOnHover = true
+      popup.show(RelativePoint(component, Point(x, y)))
     }
   }
 }
