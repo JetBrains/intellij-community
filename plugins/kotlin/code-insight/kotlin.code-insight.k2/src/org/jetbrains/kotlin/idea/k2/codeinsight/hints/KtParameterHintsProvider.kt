@@ -8,13 +8,17 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigatio
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -106,8 +110,8 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 if (argument.getArgumentName()?.asName != name) break
                 continue
             }
-            // avoid cases like "`value:` value"
-            if (argument.text == name.asString()) continue
+
+            if (argument.isArgumentNamed(symbol)) continue
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
                 sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hasBackground = true) {
@@ -123,5 +127,25 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
                 }
             }
         }
+    }
+
+    private fun KtValueArgument.isArgumentNamed(symbol: KtValueParameterSymbol): Boolean {
+        // avoid cases like "`value:` value"
+        if (this.text == symbol.name.asString()) return true
+
+        // avoid cases like "/* value = */ value"
+        var sibling: PsiElement? = this.prevSibling
+        while (sibling != null) {
+            when(sibling) {
+                is PsiComment -> {
+                    val argumentNameCommentInfo = ArgumentNameCommentInfo(symbol)
+                    return sibling.isExpectedArgumentNameComment(argumentNameCommentInfo)
+                }
+                !is PsiWhiteSpace -> break
+            }
+            sibling = sibling.prevSibling
+        }
+
+        return false
     }
 }

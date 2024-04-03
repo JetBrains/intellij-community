@@ -7,6 +7,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
@@ -34,7 +35,11 @@ fun KtValueArgument.getBlockCommentWithName(): PsiComment? =
         .filterIsInstance<PsiComment>()
         .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.removeSuffix("*/").trim().endsWith("=") }
 
-class ArgumentNameCommentInfo(val argumentName: Name, val comment: String)
+@ApiStatus.Internal
+class ArgumentNameCommentInfo(val argumentName: Name, val comment: String) {
+    @ApiStatus.Internal
+    constructor(symbol: KtValueParameterSymbol): this(symbol.name, symbol.toArgumentNameComment())
+}
 
 typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, ArgumentNameCommentInfo>
 
@@ -62,7 +67,7 @@ fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
         // subsequent varargs.
         .takeWhileInclusive { !it.second.isVararg }
         .associate { (argument, symbol) ->
-            argument.createSmartPointer() to ArgumentNameCommentInfo(symbol.name, symbol.toArgumentNameComment())
+            argument.createSmartPointer() to ArgumentNameCommentInfo(symbol)
         }
 }
 
@@ -72,6 +77,7 @@ private fun KtCallElement.getNonLambdaArguments(): List<KtValueArgument> =
 private fun KtValueParameterSymbol.toArgumentNameComment(): String =
     canonicalArgumentNameComment(if (isVararg) "...$name" else name.toString())
 
+@ApiStatus.Internal
 fun PsiComment.isExpectedArgumentNameComment(info: ArgumentNameCommentInfo): Boolean {
     if (this.elementType != KtTokens.BLOCK_COMMENT) return false
     val parameterName = text
