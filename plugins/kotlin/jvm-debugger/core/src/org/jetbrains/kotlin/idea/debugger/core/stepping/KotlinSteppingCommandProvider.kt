@@ -110,9 +110,6 @@ class KotlinSteppingCommandProvider : JvmSteppingCommandProvider() {
 private fun SuspendContextImpl.getSourcePosition(): SourcePosition? =
     debugProcess.debuggerContext.sourcePosition
 
-private operator fun PsiElement?.contains(element: PsiElement): Boolean =
-    this?.textRange?.contains(element.textRange) ?: false
-
 interface KotlinMethodFilter : MethodFilter {
     fun locationMatches(context: SuspendContextImpl, location: Location): Boolean
 }
