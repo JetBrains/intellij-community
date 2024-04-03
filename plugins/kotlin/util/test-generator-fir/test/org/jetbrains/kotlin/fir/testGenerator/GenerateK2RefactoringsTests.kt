@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTe
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduceFunction.AbstractK2IntroduceFunctionTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2ChangePackageTest
+import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveFileTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
@@ -73,6 +74,9 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     testGroup("refactorings/kotlin.refactorings.move.k2", testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2ChangePackageTest> {
             model("refactoring/changePackage", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2MoveFileTest> {
+            model("refactoring/moveFile", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveTest> {
             model("refactoring/move", pattern = TEST, flatten = true)

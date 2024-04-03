@@ -28,20 +28,19 @@ abstract class AbstractK2ChangePackageTest : AbstractMultifileRefactoringTest() 
     }
 }
 
-
 private fun runMoveRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
     runRefactoringTest(path, config, rootDir, project, K2ChangePackageRefactoringAction)
 }
 
-private object K2ChangePackageRefactoringAction : AbstractMultifileRefactoringTest.RefactoringAction {
+private object K2ChangePackageRefactoringAction : KotlinMoveRefactoringAction {
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val newPkgName = config.getString("newPackageName")
         val descriptor = K2ChangePackageDescriptor(
             mainFile.project,
             setOf(mainFile as KtFile),
             FqName(newPkgName),
-            searchInComments = config.get("searchInCommentsAndStrings")?.asBoolean?.equals(true) ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS,
-            searchForText = config.get("searchInNonCode")?.asBoolean?.equals(true) ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
+            searchInComments = config.searchInComments(),
+            searchForText = config.searchForText()
         )
         K2ChangePackageRefactoringProcessor(descriptor).run()
     }
