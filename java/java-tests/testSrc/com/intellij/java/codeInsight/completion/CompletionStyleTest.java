@@ -44,6 +44,7 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     checkResultByFile(path + "/after1.java");
   }
 
+  @NeedsIndex.ForStandardLibrary(reason = "String class should be resolved")
   public void testIDEADEV5935() {
     configureFromFileText("A.java",
                           """
