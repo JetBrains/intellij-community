@@ -3,7 +3,6 @@
  */
 package com.jetbrains.python.psi.types
 
-import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
@@ -11,6 +10,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 
 object PyCollectionTypeUtil {
@@ -337,7 +337,7 @@ object PyCollectionTypeUtil {
     return if (isModificationExist) valueTypes else null
   }
 
-  private fun getRightValue(node: PySubscriptionExpression, element: PsiElement, typeEvalContext: TypeEvalContext): Ref<PyExpression?>? {
+  private fun getRightValue(node: PySubscriptionExpression, element: PsiElement, typeEvalContext: TypeEvalContext): TypeWithExpression? {
     var parent = node.parent
 
     var tupleParent: PyTupleExpression? = null
@@ -365,34 +365,38 @@ object PyCollectionTypeUtil {
         return null
       }
 
-      var rightValue = assignment.assignedValue
+      val rightValue = assignment.assignedValue
       if (tupleParent != null) {
-        val rightElements = PyUtil.flattenedParensAndLists(rightValue)
-        val indexInAssignment = tupleParent.elements.indexOf(node)
-        if (indexInAssignment < rightElements.size) {
-          rightValue = rightElements[indexInAssignment]
+        val expression = PyPsiUtils.flattenParens(rightValue)
+        when {
+          expression is PyTupleExpression || expression is PyListLiteralExpression -> {
+            val elements = (expression as PySequenceExpression).elements
+            val indexInAssignment = tupleParent.elements.indexOf(node)
+            if (indexInAssignment < elements.size) {
+              val assignedElement = elements[indexInAssignment]
+              return TypeWithExpression(typeEvalContext.getType(assignedElement), assignedElement)
+            }
+          }
+          expression != null -> {
+            val type = typeEvalContext.getType(expression)
+            if (type is PyCollectionType) {
+              if (type is PyTupleType) {
+                return TypeWithExpression(PyTypeChecker.getTargetTypeFromTupleAssignment(node, tupleParent, type))
+              }
+              else {
+                return TypeWithExpression(type.iteratedItemType)
+              }
+            }
+          }
         }
       }
-      return Ref(rightValue)
+      val rightValueType = if (rightValue != null) typeEvalContext.getType(rightValue) else null
+      return TypeWithExpression(rightValueType, rightValue)
     }
     return null
   }
 
-  private fun getTypeByModifications(node: PySubscriptionExpression,
-                                     element: PsiElement,
-                                     typeEvalContext: TypeEvalContext): Pair<List<PyType?>, List<PyType?>>? {
-    fun getType(element: PyTypedElement?): List<PyType?> {
-      return if (element != null)
-        listOf(typeEvalContext.getType(element))
-      else
-        emptyList()
-    }
-
-    val rightValue = getRightValue(node, element, typeEvalContext) ?: return null
-    val keyTypes = getType(node.indexExpression)
-    val valueTypes = getType(rightValue.get())
-    return Pair(keyTypes, valueTypes)
-  }
+  private data class TypeWithExpression(val type: PyType?, val expression: PyExpression? = null)
 
   private abstract class PyCollectionTypeVisitor(protected val myElement: PyTargetExpression,
                                                  protected val myTypeEvalContext: TypeEvalContext) : PyRecursiveElementVisitor() {
@@ -462,11 +466,9 @@ object PyCollectionTypeUtil {
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-      val types = getTypeByModifications(node, myElement, myTypeEvalContext)
-      if (types != null) {
-        isModificationExist = true
-        valueTypes.addAll(types.second)
-      }
+      val (type) = getRightValue(node, myElement, myTypeEvalContext) ?: return
+      isModificationExist = true
+      valueTypes.add(type)
     }
   }
 
@@ -532,12 +534,13 @@ object PyCollectionTypeUtil {
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-      val types = getTypeByModifications(node, myElement, myTypeEvalContext)
-      if (types != null) {
-        isModificationExist = true
-        keyTypes.addAll(types.first)
-        valueTypes.addAll(types.second)
+      val (type) = getRightValue(node, myElement, myTypeEvalContext) ?: return
+      isModificationExist = true
+      val indexExpression = node.indexExpression
+      if (indexExpression != null) {
+        keyTypes.add(myTypeEvalContext.getType(indexExpression))
       }
+      valueTypes.add(type)
     }
   }
 
@@ -603,12 +606,12 @@ object PyCollectionTypeUtil {
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
-      val rightValue = getRightValue(node, myElement, myTypeEvalContext)?.get() ?: return
+      val (type, expression) = getRightValue(node, myElement, myTypeEvalContext) ?: return
 
       isModificationExist = true
       val indexExpression = node.indexExpression
       if (indexExpression is PyStringLiteralExpression) {
-        strKeysToValueTypes[indexExpression.stringValue] = Pair(rightValue, myTypeEvalContext.getType(rightValue))
+        strKeysToValueTypes[indexExpression.stringValue] = Pair(expression, type)
       }
       else {
         hasAllStrKeys = false
