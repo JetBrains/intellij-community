@@ -1126,7 +1126,10 @@ class JavaToJKTreeBuilder(
         )
     }
 
-    // TODO support not only PsiJavaFile but any PsiElement
+    /**
+     * See also [org.jetbrains.kotlin.nj2k.conversions.NullabilityConversion]
+     * TODO support not only PsiJavaFile but any PsiElement
+     */
     private fun collectNullabilityInfo(element: PsiJavaFile) {
         val nullityInferrer = J2KNullityInferrer(/* annotateLocalVariables = */ true, element.project)
         try {

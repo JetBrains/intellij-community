@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @Suppress("DuplicatedCode")
 fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = listOf(
+    NullabilityConversion(context),
     ParenthesizeBitwiseOperationConversion(context),
     ParenthesizeMultilineBinaryExpressionConversion(context),
     NonCodeElementsConversion(context),
