@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.introduceFunction.AbstractK2Intr
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2ChangePackageTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveFileTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
+import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTopLevelTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
@@ -77,6 +78,9 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
         testClass<AbstractK2MoveFileTest> {
             model("refactoring/moveFile", pattern = TEST, flatten = true)
+        }
+        testClass<AbstractK2MoveTopLevelTest> {
+            model("refactoring/moveTopLevel", pattern = TEST, flatten = true)
         }
         testClass<AbstractK2MoveTest> {
             model("refactoring/move", pattern = TEST, flatten = true)

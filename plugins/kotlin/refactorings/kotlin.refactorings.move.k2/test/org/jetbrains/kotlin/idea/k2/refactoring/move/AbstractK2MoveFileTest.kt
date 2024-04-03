@@ -27,32 +27,10 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.fail
 
-abstract class AbstractK2MoveFileTest : AbstractMultifileRefactoringTest() {
-    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
-
-    override fun isFirPlugin(): Boolean = true
-
-    override fun isEnabled(config: JsonObject): Boolean = config.get("enabledInK2")?.asBoolean == true
-
+abstract class AbstractK2MoveFileTest : AbstractMultifileMoveRefactoringTest() {
     override fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
-        runMoveRefactoring(path, config, rootDir, project)
+        runRefactoringTest(path, config, rootDir, project, K2MoveFileRefactoringAction)
     }
-
-    override fun fileFilter(file: VirtualFile): Boolean {
-        if (file.isFile && file.extension == "kt") {
-            if (file.name.endsWith(".k2.kt")) return true
-            val k2CounterPart = file.parent.findChild("${file.nameWithoutExtension}.k2.kt")
-            if (k2CounterPart?.isFile == true) return false
-        }
-        return super.fileFilter(file)
-    }
-
-    override fun fileNameMapper(file: VirtualFile): String =
-        file.name.replace(".k2.kt", ".kt")
-}
-
-private fun runMoveRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project) {
-    runRefactoringTest(path, config, rootDir, project, K2MoveFileRefactoringAction)
 }
 
 private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
@@ -70,7 +48,7 @@ private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
                 project,
                 arrayOf(mainFile),
                 newParent,
-                /* searchInComments = */ config.searchInComments(),
+                config.searchInComments(),
                 /* searchInNonJavaFiles = */ true,
                 /* moveCallback = */ null,
                 /* prepareSuccessfulCallback = */ null
@@ -85,7 +63,7 @@ private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
             val targetDir = config.getNullableString("targetDirectory")
             val targetDescriptor = when {
                 targetDir != null -> {
-                    val directory =  runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDir) }.toPsiDirectory(project)!!
+                    val directory = runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDir) }.toPsiDirectory(project)!!
                     if (targetPackage != null) {
                         K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), directory)
                     } else {
@@ -93,9 +71,11 @@ private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
                         K2MoveTargetDescriptor.SourceDirectory(FqName(pkg.qualifiedName), directory)
                     }
                 }
+
                 targetPackage != null -> {
                     K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), rootDir.toPsiDirectory(project)!!)
                 }
+
                 else -> fail("No target specified")
             }
             val descriptor = K2MoveDescriptor.Files(

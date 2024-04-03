@@ -185,6 +185,389 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/moveTopLevel")
+    public static class MoveTopLevel extends AbstractMoveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("java/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test")
+        public void testJava_moveTopLevelClassToAnotherPackage_MoveTopLevelClassToAnotherPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/java/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test");
+        }
+
+        @TestMetadata("kotlin/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithFqNames/differentSourceAndTargetWithFqNames.test")
+        public void testKotlin_callsAndCallableRefs_internalUsages_differentSourceAndTargetWithFqNames_DifferentSourceAndTargetWithFqNames() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithFqNames/differentSourceAndTargetWithFqNames.test");
+        }
+
+        @TestMetadata("kotlin/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithImports/differentSourceAndTargetWithImports.test")
+        public void testKotlin_callsAndCallableRefs_internalUsages_differentSourceAndTargetWithImports_DifferentSourceAndTargetWithImports() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithImports/differentSourceAndTargetWithImports.test");
+        }
+
+        @TestMetadata("kotlin/callsAndCallableRefs/internalUsages/differentSourceWithFqNames/differentSourceWithFqNames.test")
+        public void testKotlin_callsAndCallableRefs_internalUsages_differentSourceWithFqNames_DifferentSourceWithFqNames() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/callsAndCallableRefs/internalUsages/differentSourceWithFqNames/differentSourceWithFqNames.test");
+        }
+
+        @TestMetadata("kotlin/callsAndCallableRefs/internalUsages/differentSourceWithImports/differentSourceWithImports.test")
+        public void testKotlin_callsAndCallableRefs_internalUsages_differentSourceWithImports_DifferentSourceWithImports() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/callsAndCallableRefs/internalUsages/differentSourceWithImports/differentSourceWithImports.test");
+        }
+
+        @TestMetadata("kotlin/callsAndCallableRefs/internalUsages/differentTargetWithFqNames/differentTargetWithFqNames.test")
+        public void testKotlin_callsAndCallableRefs_internalUsages_differentTargetWithFqNames_DifferentTargetWithFqNames() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/callsAndCallableRefs/internalUsages/differentTargetWithFqNames/differentTargetWithFqNames.test");
+        }
+
+        @TestMetadata("kotlin/callsAndCallableRefs/internalUsages/differentTarget/differentTarget.test")
+        public void testKotlin_callsAndCallableRefs_internalUsages_differentTarget_DifferentTarget() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/callsAndCallableRefs/internalUsages/differentTarget/differentTarget.test");
+        }
+
+        @TestMetadata("kotlin/classAlreadyInaccessible/classAlreadyInaccessible.test")
+        public void testKotlin_classAlreadyInaccessible_ClassAlreadyInaccessible() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classAlreadyInaccessible/classAlreadyInaccessible.test");
+        }
+
+        @TestMetadata("kotlin/classFromKtToKts/classFromKtToKts.test")
+        public void testKotlin_classFromKtToKts_ClassFromKtToKts() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classFromKtToKts/classFromKtToKts.test");
+        }
+
+        @TestMetadata("kotlin/classFromKtsToKt/classFromKtsToKt.test")
+        public void testKotlin_classFromKtsToKt_ClassFromKtsToKt() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classFromKtsToKt/classFromKtsToKt.test");
+        }
+
+        @TestMetadata("kotlin/classFromKtsToKts/classFromKtsToKts.test")
+        public void testKotlin_classFromKtsToKts_ClassFromKtsToKts() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classFromKtsToKts/classFromKtsToKts.test");
+        }
+
+        @TestMetadata("kotlin/classWithInitializer/classWithInitializer.test")
+        public void testKotlin_classWithInitializer_ClassWithInitializer() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/classWithInitializer/classWithInitializer.test");
+        }
+
+        @TestMetadata("kotlin/companionExtensionMemberRef/companionExtensionMemberRef.test")
+        public void testKotlin_companionExtensionMemberRef_CompanionExtensionMemberRef() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/companionExtensionMemberRef/companionExtensionMemberRef.test");
+        }
+
+        @TestMetadata("kotlin/companionMemberRefDelegation/companionMemberRefDelegation.test")
+        public void testKotlin_companionMemberRefDelegation_CompanionMemberRefDelegation() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/companionMemberRefDelegation/companionMemberRefDelegation.test");
+        }
+
+        @TestMetadata("kotlin/companionMemberRefFakeOverride/companionMemberRefFakeOverride.test")
+        public void testKotlin_companionMemberRefFakeOverride_CompanionMemberRefFakeOverride() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/companionMemberRefFakeOverride/companionMemberRefFakeOverride.test");
+        }
+
+        @TestMetadata("kotlin/companionMemberRefWithJavaParent/companionMemberRefWithJavaParent.test")
+        public void testKotlin_companionMemberRefWithJavaParent_CompanionMemberRefWithJavaParent() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/companionMemberRefWithJavaParent/companionMemberRefWithJavaParent.test");
+        }
+
+        @TestMetadata("kotlin/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test")
+        public void testKotlin_createDirInProjectNonPkgDirStructure_CreateDirInProjectNonPkgDirStructure() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test");
+        }
+
+        @TestMetadata("kotlin/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test")
+        public void testKotlin_createDirInProjectPkgDirStructure_CreateDirInProjectPkgDirStructure() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test");
+        }
+
+        @TestMetadata("kotlin/delegateInObject/delegateInObject.test")
+        public void testKotlin_delegateInObject_DelegateInObject() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/delegateInObject/delegateInObject.test");
+        }
+
+        @TestMetadata("kotlin/facadeClassChangeInTheSamePackage/facadeClassChangeInTheSamePackage.test")
+        public void testKotlin_facadeClassChangeInTheSamePackage_FacadeClassChangeInTheSamePackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/facadeClassChangeInTheSamePackage/facadeClassChangeInTheSamePackage.test");
+        }
+
+        @TestMetadata("kotlin/fakeOverrideInObject/fakeOverrideInObject.test")
+        public void testKotlin_fakeOverrideInObject_FakeOverrideInObject() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/fakeOverrideInObject/fakeOverrideInObject.test");
+        }
+
+        @TestMetadata("kotlin/functionAlreadyInaccessible/functionAlreadyInaccessible.test")
+        public void testKotlin_functionAlreadyInaccessible_FunctionAlreadyInaccessible() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/functionAlreadyInaccessible/functionAlreadyInaccessible.test");
+        }
+
+        @TestMetadata("kotlin/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test")
+        public void testKotlin_functionAndPropertyWithSameName_FunctionAndPropertyWithSameName() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test");
+        }
+
+        @TestMetadata("kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test")
+        public void testKotlin_implicitInvokeCalls_differentSourceAndTarget_DifferentSourceAndTarget() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test");
+        }
+
+        @TestMetadata("kotlin/implicitInvokeCalls/differentSource/differentSource.test")
+        public void testKotlin_implicitInvokeCalls_differentSource_DifferentSource() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentSource/differentSource.test");
+        }
+
+        @TestMetadata("kotlin/implicitInvokeCalls/differentTarget/differentTarget.test")
+        public void testKotlin_implicitInvokeCalls_differentTarget_DifferentTarget() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/implicitInvokeCalls/differentTarget/differentTarget.test");
+        }
+
+        @TestMetadata("kotlin/internalReferences/internalReferences.test")
+        public void testKotlin_internalReferences_InternalReferences() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/internalReferences/internalReferences.test");
+        }
+
+        @TestMetadata("kotlin/kt17032/kt17032.test")
+        public void testKotlin_kt17032_Kt17032() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/kt17032/kt17032.test");
+        }
+
+        @TestMetadata("kotlin/moveClassFromDefaultPackage/moveClassFromDefaultPackage.test")
+        public void testKotlin_moveClassFromDefaultPackage_MoveClassFromDefaultPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassFromDefaultPackage/moveClassFromDefaultPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveClassToDefaultPackage/moveClassToDefaultPackage.test")
+        public void testKotlin_moveClassToDefaultPackage_MoveClassToDefaultPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToDefaultPackage/moveClassToDefaultPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveClassToFile/moveClassToFile.test")
+        public void testKotlin_moveClassToFile_MoveClassToFile() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToFile/moveClassToFile.test");
+        }
+
+        @TestMetadata("kotlin/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test")
+        public void testKotlin_moveClassToNewFileAndQuotePackage_MoveClassToNewFileAndQuotePackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test");
+        }
+
+        @TestMetadata("kotlin/moveClassToPackage/moveClassToPackage.test")
+        public void testKotlin_moveClassToPackage_MoveClassToPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassToPackage/moveClassToPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveClassWithImportsRetained/moveClassWithImportsRetained.test")
+        public void testKotlin_moveClassWithImportsRetained_MoveClassWithImportsRetained() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithImportsRetained/moveClassWithImportsRetained.test");
+        }
+
+        @TestMetadata("kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test")
+        public void testKotlin_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveClassWithLongFunction/moveClassWithLongFunction.test");
+        }
+
+        @TestMetadata("kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test")
+        public void testKotlin_moveExtensionFunctionToFil_MoveExtensionFunctionToFil() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test");
+        }
+
+        @TestMetadata("kotlin/moveExtensionPropertyToFile/moveExtensionPropertyToFile.test")
+        public void testKotlin_moveExtensionPropertyToFile_MoveExtensionPropertyToFile() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveExtensionPropertyToFile/moveExtensionPropertyToFile.test");
+        }
+
+        @TestMetadata("kotlin/moveFromDefaultPackage/moveFromDefaultPackage.test")
+        public void testKotlin_moveFromDefaultPackage_MoveFromDefaultPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFromDefaultPackage/moveFromDefaultPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveFunctionToFile/moveFunctionToFile.test")
+        public void testKotlin_moveFunctionToFile_MoveFunctionToFile() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionToFile/moveFunctionToFile.test");
+        }
+
+        @TestMetadata("kotlin/moveFunctionToPackageUsedInJava/moveFunctionToPackageUsedInJava.test")
+        public void testKotlin_moveFunctionToPackageUsedInJava_MoveFunctionToPackageUsedInJava() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionToPackageUsedInJava/moveFunctionToPackageUsedInJava.test");
+        }
+
+        @TestMetadata("kotlin/moveFunctionWithImportsRetained/moveFunctionWithImportsRetained.test")
+        public void testKotlin_moveFunctionWithImportsRetained_MoveFunctionWithImportsRetained() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveFunctionWithImportsRetained/moveFunctionWithImportsRetained.test");
+        }
+
+        @TestMetadata("kotlin/moveObjectToFile/moveObjectToFile.test")
+        public void testKotlin_moveObjectToFile_MoveObjectToFile() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveObjectToFile/moveObjectToFile.test");
+        }
+
+        @TestMetadata("kotlin/moveObjectToPackage/moveObjectToPackage.test")
+        public void testKotlin_moveObjectToPackage_MoveObjectToPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveObjectToPackage/moveObjectToPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveOnlyFunctionToPackageUsedInJava/moveOnlyFunctionToPackageUsedInJava.test")
+        public void testKotlin_moveOnlyFunctionToPackageUsedInJava_MoveOnlyFunctionToPackageUsedInJava() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveOnlyFunctionToPackageUsedInJava/moveOnlyFunctionToPackageUsedInJava.test");
+        }
+
+        @TestMetadata("kotlin/movePrivateClassWithUsagesInBothAccessors/movePrivateClassWithUsagesInBothAccessors.test")
+        public void testKotlin_movePrivateClassWithUsagesInBothAccessors_MovePrivateClassWithUsagesInBothAccessors() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/movePrivateClassWithUsagesInBothAccessors/movePrivateClassWithUsagesInBothAccessors.test");
+        }
+
+        @TestMetadata("kotlin/movePrivateFun/movePrivateFun.test")
+        public void testKotlin_movePrivateFun_MovePrivateFun() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/movePrivateFun/movePrivateFun.test");
+        }
+
+        @TestMetadata("kotlin/movePrivatePropertyWithDefaultAccessors/movePrivatePropertyWithDefaultAccessors.test")
+        public void testKotlin_movePrivatePropertyWithDefaultAccessors_MovePrivatePropertyWithDefaultAccessors() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/movePrivatePropertyWithDefaultAccessors/movePrivatePropertyWithDefaultAccessors.test");
+        }
+
+        @TestMetadata("kotlin/movePrivateProperty/movePrivateProperty.test")
+        public void testKotlin_movePrivateProperty_MovePrivateProperty() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/movePrivateProperty/movePrivateProperty.test");
+        }
+
+        @TestMetadata("kotlin/movePropertyToFile/movePropertyToFile.test")
+        public void testKotlin_movePropertyToFile_MovePropertyToFile() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/movePropertyToFile/movePropertyToFile.test");
+        }
+
+        @TestMetadata("kotlin/movePropertyToPackage/movePropertyToPackage.test")
+        public void testKotlin_movePropertyToPackage_MovePropertyToPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/movePropertyToPackage/movePropertyToPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
+        public void testKotlin_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
+        public void testKotlin_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithNestedImplsToAnotherPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
+        public void testKotlin_moveSealedClassWithNestedImplsToAnotherPackage_MoveSealedClassWithNestedImplsToAnotherPackage() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
+        }
+
+        @TestMetadata("kotlin/moveTypealiasToFile/moveTypealiasToFile.test")
+        public void testKotlin_moveTypealiasToFile_MoveTypealiasToFile() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/moveTypealiasToFile/moveTypealiasToFile.test");
+        }
+
+        @TestMetadata("kotlin/mutualDependency/mutualDependency.test")
+        public void testKotlin_mutualDependency_MutualDependency() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/mutualDependency/mutualDependency.test");
+        }
+
+        @TestMetadata("kotlin/nonCodeUsagesWithJavaFacadeMethod/nonCodeUsagesWithJavaFacadeMethod.test")
+        public void testKotlin_nonCodeUsagesWithJavaFacadeMethod_NonCodeUsagesWithJavaFacadeMethod() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/nonCodeUsagesWithJavaFacadeMethod/nonCodeUsagesWithJavaFacadeMethod.test");
+        }
+
+        @TestMetadata("kotlin/nonCodeUsagesWithQuotedName/nonCodeUsagesWithQuotedName.test")
+        public void testKotlin_nonCodeUsagesWithQuotedName_NonCodeUsagesWithQuotedName() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/nonCodeUsagesWithQuotedName/nonCodeUsagesWithQuotedName.test");
+        }
+
+        @TestMetadata("kotlin/objectAlreadyInaccessible/objectAlreadyInaccessible.test")
+        public void testKotlin_objectAlreadyInaccessible_ObjectAlreadyInaccessible() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
+        }
+
+        @TestMetadata("kotlin/operationReference/operationReference.test")
+        public void testKotlin_operationReference_OperationReference() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/operationReference/operationReference.test");
+        }
+
+        @TestMetadata("kotlin/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test")
+        public void testKotlin_propertyAlreadyInaccessible_PropertyAlreadyInaccessible() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test");
+        }
+
+        @TestMetadata("kotlin/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test")
+        public void testKotlin_protectedConstructorRefInSuperListEntry_ProtectedConstructorRefInSuperListEntry() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
+        }
+
+        @TestMetadata("kotlin/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test")
+        public void testKotlin_protectedMemberUsageWithSuper_ProtectedMemberUsageWithSuper() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test");
+        }
+
+        @TestMetadata("kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test")
+        public void testKotlin_protectedMemberUsageWithThis_ProtectedMemberUsageWithThis() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test");
+        }
+
+        @TestMetadata("kotlin/protectedMembersExternalRefs/protectedMembersExternalRefs.test")
+        public void testKotlin_protectedMembersExternalRefs_ProtectedMembersExternalRefs() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMembersExternalRefs/protectedMembersExternalRefs.test");
+        }
+
+        @TestMetadata("kotlin/protectedMembersInternalRefs/protectedMembersInternalRefs.test")
+        public void testKotlin_protectedMembersInternalRefs_ProtectedMembersInternalRefs() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/protectedMembersInternalRefs/protectedMembersInternalRefs.test");
+        }
+
+        @TestMetadata("kotlin/sealedClassWithAllSubclasses/sealedClassWithAllSubclasses.test")
+        public void testKotlin_sealedClassWithAllSubclasses_SealedClassWithAllSubclasses() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/sealedClassWithAllSubclasses/sealedClassWithAllSubclasses.test");
+        }
+
+        @TestMetadata("kotlin/sealedClassWithSkippedSubclasses/sealedClassWithSkippedSubclasses.test")
+        public void testKotlin_sealedClassWithSkippedSubclasses_SealedClassWithSkippedSubclasses() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/sealedClassWithSkippedSubclasses/sealedClassWithSkippedSubclasses.test");
+        }
+
+        @TestMetadata("kotlin/sealedSubclassWithSkippedRoot/sealedSubclassWithSkippedRoot.test")
+        public void testKotlin_sealedSubclassWithSkippedRoot_SealedSubclassWithSkippedRoot() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/sealedSubclassWithSkippedRoot/sealedSubclassWithSkippedRoot.test");
+        }
+
+        @TestMetadata("kotlin/selfReferences/selfReferences.test")
+        public void testKotlin_selfReferences_SelfReferences() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/selfReferences/selfReferences.test");
+        }
+
+        @TestMetadata("kotlin/shortenCompanionObject2/shortenCompanionObject2.test")
+        public void testKotlin_shortenCompanionObject2_ShortenCompanionObject2() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/shortenCompanionObject2/shortenCompanionObject2.test");
+        }
+
+        @TestMetadata("kotlin/shortenStringTemplateEntry/shortenStringTemplateEntry.test")
+        public void testKotlin_shortenStringTemplateEntry_ShortenStringTemplateEntry() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/shortenStringTemplateEntry/shortenStringTemplateEntry.test");
+        }
+
+        @TestMetadata("kotlin/singletonsAndStatics/singletonsAndStatics.test")
+        public void testKotlin_singletonsAndStatics_SingletonsAndStatics() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/singletonsAndStatics/singletonsAndStatics.test");
+        }
+
+        @TestMetadata("kotlin/superReferences/superReferences.test")
+        public void testKotlin_superReferences_SuperReferences() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/superReferences/superReferences.test");
+        }
+
+        @TestMetadata("kotlin/syntheticMembers/syntheticMembers.test")
+        public void testKotlin_syntheticMembers_SyntheticMembers() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/syntheticMembers/syntheticMembers.test");
+        }
+
+        @TestMetadata("kotlin/unaffectedQualifiedReferences/unaffectedQualifiedReferences.test")
+        public void testKotlin_unaffectedQualifiedReferences_UnaffectedQualifiedReferences() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/unaffectedQualifiedReferences/unaffectedQualifiedReferences.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
     public static class Move extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -279,11 +662,6 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("java/moveClass/moveTopToInner/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test")
         public void testJava_moveClass_moveTopToInner_moveTopLevelClassToTopLevelClass_MoveTopLevelClassToTopLevelClass() throws Exception {
             runTest("testData/refactoring/move/java/moveClass/moveTopToInner/moveTopLevelClassToTopLevelClass/moveTopLevelClassToTopLevelClass.test");
-        }
-
-        @TestMetadata("java/moveClass/moveTop/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test")
-        public void testJava_moveClass_moveTop_moveTopLevelClassToAnotherPackage_MoveTopLevelClassToAnotherPackage() throws Exception {
-            runTest("testData/refactoring/move/java/moveClass/moveTop/moveTopLevelClassToAnotherPackage/moveTopLevelClassToAnotherPackage.test");
         }
 
         @TestMetadata("java/moveField/moveFieldToExternalNestedClass/moveFieldToExternalNestedClass.test")
@@ -514,376 +892,6 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/movePackage/movePackage/movePackage.test")
         public void testKotlin_movePackage_movePackage_MovePackage() throws Exception {
             runTest("testData/refactoring/move/kotlin/movePackage/movePackage/movePackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithFqNames/differentSourceAndTargetWithFqNames.test")
-        public void testKotlin_moveTopLevelDeclarations_callsAndCallableRefs_internalUsages_differentSourceAndTargetWithFqNames_DifferentSourceAndTargetWithFqNames() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithFqNames/differentSourceAndTargetWithFqNames.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithImports/differentSourceAndTargetWithImports.test")
-        public void testKotlin_moveTopLevelDeclarations_callsAndCallableRefs_internalUsages_differentSourceAndTargetWithImports_DifferentSourceAndTargetWithImports() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceAndTargetWithImports/differentSourceAndTargetWithImports.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceWithFqNames/differentSourceWithFqNames.test")
-        public void testKotlin_moveTopLevelDeclarations_callsAndCallableRefs_internalUsages_differentSourceWithFqNames_DifferentSourceWithFqNames() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceWithFqNames/differentSourceWithFqNames.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceWithImports/differentSourceWithImports.test")
-        public void testKotlin_moveTopLevelDeclarations_callsAndCallableRefs_internalUsages_differentSourceWithImports_DifferentSourceWithImports() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentSourceWithImports/differentSourceWithImports.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentTargetWithFqNames/differentTargetWithFqNames.test")
-        public void testKotlin_moveTopLevelDeclarations_callsAndCallableRefs_internalUsages_differentTargetWithFqNames_DifferentTargetWithFqNames() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentTargetWithFqNames/differentTargetWithFqNames.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentTarget/differentTarget.test")
-        public void testKotlin_moveTopLevelDeclarations_callsAndCallableRefs_internalUsages_differentTarget_DifferentTarget() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/callsAndCallableRefs/internalUsages/differentTarget/differentTarget.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/classAlreadyInaccessible/classAlreadyInaccessible.test")
-        public void testKotlin_moveTopLevelDeclarations_classAlreadyInaccessible_ClassAlreadyInaccessible() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/classAlreadyInaccessible/classAlreadyInaccessible.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test")
-        public void testKotlin_moveTopLevelDeclarations_createDirInProjectNonPkgDirStructure_CreateDirInProjectNonPkgDirStructure() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/createDirInProjectNonPkgDirStructure/createDirInProjectNonPkgDirStructure.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test")
-        public void testKotlin_moveTopLevelDeclarations_createDirInProjectPkgDirStructure_CreateDirInProjectPkgDirStructure() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/createDirInProjectPkgDirStructure/createDirInProjectPkgDirStructure.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/functionAlreadyInaccessible/functionAlreadyInaccessible.test")
-        public void testKotlin_moveTopLevelDeclarations_functionAlreadyInaccessible_FunctionAlreadyInaccessible() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/functionAlreadyInaccessible/functionAlreadyInaccessible.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test")
-        public void testKotlin_moveTopLevelDeclarations_implicitInvokeCalls_differentSourceAndTarget_DifferentSourceAndTarget() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/implicitInvokeCalls/differentSourceAndTarget/differentSourceAndTarget.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/implicitInvokeCalls/differentSource/differentSource.test")
-        public void testKotlin_moveTopLevelDeclarations_implicitInvokeCalls_differentSource_DifferentSource() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/implicitInvokeCalls/differentSource/differentSource.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/implicitInvokeCalls/differentTarget/differentTarget.test")
-        public void testKotlin_moveTopLevelDeclarations_implicitInvokeCalls_differentTarget_DifferentTarget() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/implicitInvokeCalls/differentTarget/differentTarget.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/classFromKtToKts/classFromKtToKts.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_classFromKtToKts_ClassFromKtToKts() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/classFromKtToKts/classFromKtToKts.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/classFromKtsToKt/classFromKtsToKt.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_classFromKtsToKt_ClassFromKtsToKt() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/classFromKtsToKt/classFromKtsToKt.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/classFromKtsToKts/classFromKtsToKts.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_classFromKtsToKts_ClassFromKtsToKts() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/classFromKtsToKts/classFromKtsToKts.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/classWithInitializer/classWithInitializer.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_classWithInitializer_ClassWithInitializer() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/classWithInitializer/classWithInitializer.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/companionExtensionMemberRef/companionExtensionMemberRef.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_companionExtensionMemberRef_CompanionExtensionMemberRef() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/companionExtensionMemberRef/companionExtensionMemberRef.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/companionMemberRefDelegation/companionMemberRefDelegation.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_companionMemberRefDelegation_CompanionMemberRefDelegation() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/companionMemberRefDelegation/companionMemberRefDelegation.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/companionMemberRefFakeOverride/companionMemberRefFakeOverride.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_companionMemberRefFakeOverride_CompanionMemberRefFakeOverride() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/companionMemberRefFakeOverride/companionMemberRefFakeOverride.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/companionMemberRefWithJavaParent/companionMemberRefWithJavaParent.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_companionMemberRefWithJavaParent_CompanionMemberRefWithJavaParent() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/companionMemberRefWithJavaParent/companionMemberRefWithJavaParent.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/delegateInObject/delegateInObject.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_delegateInObject_DelegateInObject() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/delegateInObject/delegateInObject.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/facadeClassChangeInTheSamePackage/facadeClassChangeInTheSamePackage.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_facadeClassChangeInTheSamePackage_FacadeClassChangeInTheSamePackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/facadeClassChangeInTheSamePackage/facadeClassChangeInTheSamePackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/fakeOverrideInObject/fakeOverrideInObject.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_fakeOverrideInObject_FakeOverrideInObject() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/fakeOverrideInObject/fakeOverrideInObject.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_functionAndPropertyWithSameName_FunctionAndPropertyWithSameName() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/functionAndPropertyWithSameName/functionAndPropertyWithSameName.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/internalReferences/internalReferences.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_internalReferences_InternalReferences() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/internalReferences/internalReferences.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/kt17032/kt17032.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_kt17032_Kt17032() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/kt17032/kt17032.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/moveClassFromDefaultPackage/moveClassFromDefaultPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_moveClassFromDefaultPackage_MoveClassFromDefaultPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/moveClassFromDefaultPackage/moveClassFromDefaultPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/moveClassToDefaultPackage/moveClassToDefaultPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_moveClassToDefaultPackage_MoveClassToDefaultPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/moveClassToDefaultPackage/moveClassToDefaultPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/moveClassWithImportsRetained/moveClassWithImportsRetained.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_moveClassWithImportsRetained_MoveClassWithImportsRetained() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/moveClassWithImportsRetained/moveClassWithImportsRetained.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/moveFromDefaultPackage/moveFromDefaultPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_moveFromDefaultPackage_MoveFromDefaultPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/moveFromDefaultPackage/moveFromDefaultPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/moveFunctionWithImportsRetained/moveFunctionWithImportsRetained.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_moveFunctionWithImportsRetained_MoveFunctionWithImportsRetained() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/moveFunctionWithImportsRetained/moveFunctionWithImportsRetained.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/mutualDependency/mutualDependency.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_mutualDependency_MutualDependency() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/mutualDependency/mutualDependency.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/nonCodeUsagesWithJavaFacadeMethod/nonCodeUsagesWithJavaFacadeMethod.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_nonCodeUsagesWithJavaFacadeMethod_NonCodeUsagesWithJavaFacadeMethod() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/nonCodeUsagesWithJavaFacadeMethod/nonCodeUsagesWithJavaFacadeMethod.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/nonCodeUsagesWithQuotedName/nonCodeUsagesWithQuotedName.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_nonCodeUsagesWithQuotedName_NonCodeUsagesWithQuotedName() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/nonCodeUsagesWithQuotedName/nonCodeUsagesWithQuotedName.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_protectedConstructorRefInSuperListEntry_ProtectedConstructorRefInSuperListEntry() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/protectedConstructorRefInSuperListEntry/protectedConstructorRefInSuperListEntry.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/protectedMembersExternalRefs/protectedMembersExternalRefs.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_protectedMembersExternalRefs_ProtectedMembersExternalRefs() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/protectedMembersExternalRefs/protectedMembersExternalRefs.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/protectedMembersInternalRefs/protectedMembersInternalRefs.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_protectedMembersInternalRefs_ProtectedMembersInternalRefs() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/protectedMembersInternalRefs/protectedMembersInternalRefs.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/sealedClassWithAllSubclasses/sealedClassWithAllSubclasses.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_sealedClassWithAllSubclasses_SealedClassWithAllSubclasses() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/sealedClassWithAllSubclasses/sealedClassWithAllSubclasses.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/sealedClassWithSkippedSubclasses/sealedClassWithSkippedSubclasses.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_sealedClassWithSkippedSubclasses_SealedClassWithSkippedSubclasses() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/sealedClassWithSkippedSubclasses/sealedClassWithSkippedSubclasses.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/sealedSubclassWithSkippedRoot/sealedSubclassWithSkippedRoot.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_sealedSubclassWithSkippedRoot_SealedSubclassWithSkippedRoot() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/sealedSubclassWithSkippedRoot/sealedSubclassWithSkippedRoot.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/selfReferences/selfReferences.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_selfReferences_SelfReferences() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/selfReferences/selfReferences.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/shortenCompanionObject2/shortenCompanionObject2.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_shortenCompanionObject2_ShortenCompanionObject2() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/shortenCompanionObject2/shortenCompanionObject2.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/shortenStringTemplateEntry/shortenStringTemplateEntry.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_shortenStringTemplateEntry_ShortenStringTemplateEntry() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/shortenStringTemplateEntry/shortenStringTemplateEntry.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/singletonsAndStatics/singletonsAndStatics.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_singletonsAndStatics_SingletonsAndStatics() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/singletonsAndStatics/singletonsAndStatics.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/superReferences/superReferences.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_superReferences_SuperReferences() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/superReferences/superReferences.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/syntheticMembers/syntheticMembers.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_syntheticMembers_SyntheticMembers() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/syntheticMembers/syntheticMembers.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/misc/unaffectedQualifiedReferences/unaffectedQualifiedReferences.test")
-        public void testKotlin_moveTopLevelDeclarations_misc_unaffectedQualifiedReferences_UnaffectedQualifiedReferences() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/misc/unaffectedQualifiedReferences/unaffectedQualifiedReferences.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveClassToFile/moveClassToFile.test")
-        public void testKotlin_moveTopLevelDeclarations_moveClassToFile_MoveClassToFile() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveClassToFile/moveClassToFile.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test")
-        public void testKotlin_moveTopLevelDeclarations_moveClassToNewFileAndQuotePackage_MoveClassToNewFileAndQuotePackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveClassToNewFileAndQuotePackage/moveClassToNewFileAndQuotePackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveClassToPackage/moveClassToPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_moveClassToPackage_MoveClassToPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveClassToPackage/moveClassToPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveClassWithLongFunction/moveClassWithLongFunction.test")
-        public void testKotlin_moveTopLevelDeclarations_moveClassWithLongFunction_MoveClassWithLongFunction() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveClassWithLongFunction/moveClassWithLongFunction.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test")
-        public void testKotlin_moveTopLevelDeclarations_moveExtensionFunctionToFil_MoveExtensionFunctionToFil() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveExtensionFunctionToFil/moveExtensionFunctionToFil.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveExtensionPropertyToFile/moveExtensionPropertyToFile.test")
-        public void testKotlin_moveTopLevelDeclarations_moveExtensionPropertyToFile_MoveExtensionPropertyToFile() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveExtensionPropertyToFile/moveExtensionPropertyToFile.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveFunctionToFile/moveFunctionToFile.test")
-        public void testKotlin_moveTopLevelDeclarations_moveFunctionToFile_MoveFunctionToFile() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveFunctionToFile/moveFunctionToFile.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveFunctionToPackageUsedInJava/moveFunctionToPackageUsedInJava.test")
-        public void testKotlin_moveTopLevelDeclarations_moveFunctionToPackageUsedInJava_MoveFunctionToPackageUsedInJava() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveFunctionToPackageUsedInJava/moveFunctionToPackageUsedInJava.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveObjectToFile/moveObjectToFile.test")
-        public void testKotlin_moveTopLevelDeclarations_moveObjectToFile_MoveObjectToFile() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveObjectToFile/moveObjectToFile.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveObjectToPackage/moveObjectToPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_moveObjectToPackage_MoveObjectToPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveObjectToPackage/moveObjectToPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveOnlyFunctionToPackageUsedInJava/moveOnlyFunctionToPackageUsedInJava.test")
-        public void testKotlin_moveTopLevelDeclarations_moveOnlyFunctionToPackageUsedInJava_MoveOnlyFunctionToPackageUsedInJava() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveOnlyFunctionToPackageUsedInJava/moveOnlyFunctionToPackageUsedInJava.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/movePrivateClassWithUsagesInBothAccessors/movePrivateClassWithUsagesInBothAccessors.test")
-        public void testKotlin_moveTopLevelDeclarations_movePrivateClassWithUsagesInBothAccessors_MovePrivateClassWithUsagesInBothAccessors() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/movePrivateClassWithUsagesInBothAccessors/movePrivateClassWithUsagesInBothAccessors.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/movePrivateFun/movePrivateFun.test")
-        public void testKotlin_moveTopLevelDeclarations_movePrivateFun_MovePrivateFun() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/movePrivateFun/movePrivateFun.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/movePrivatePropertyWithDefaultAccessors/movePrivatePropertyWithDefaultAccessors.test")
-        public void testKotlin_moveTopLevelDeclarations_movePrivatePropertyWithDefaultAccessors_MovePrivatePropertyWithDefaultAccessors() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/movePrivatePropertyWithDefaultAccessors/movePrivatePropertyWithDefaultAccessors.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/movePrivateProperty/movePrivateProperty.test")
-        public void testKotlin_moveTopLevelDeclarations_movePrivateProperty_MovePrivateProperty() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/movePrivateProperty/movePrivateProperty.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/movePropertyToFile/movePropertyToFile.test")
-        public void testKotlin_moveTopLevelDeclarations_movePropertyToFile_MovePropertyToFile() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/movePropertyToFile/movePropertyToFile.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/movePropertyToPackage/movePropertyToPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_movePropertyToPackage_MovePropertyToPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/movePropertyToPackage/movePropertyToPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithImplsToAnotherPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithImplsToAnotherPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_moveSealedClassWithImplsToAnotherPackage_MoveSealedClassWithNestedImplsToAnotherPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveSealedClassWithImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test")
-        public void testKotlin_moveTopLevelDeclarations_moveSealedClassWithNestedImplsToAnotherPackage_MoveSealedClassWithNestedImplsToAnotherPackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/moveTypealiasToFile/moveTypealiasToFile.test")
-        public void testKotlin_moveTopLevelDeclarations_moveTypealiasToFile_MoveTypealiasToFile() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveTypealiasToFile/moveTypealiasToFile.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test")
-        public void testKotlin_moveTopLevelDeclarations_objectAlreadyInaccessible_ObjectAlreadyInaccessible() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/operationReference/operationReference.test")
-        public void testKotlin_moveTopLevelDeclarations_operationReference_OperationReference() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/operationReference/operationReference.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test")
-        public void testKotlin_moveTopLevelDeclarations_propertyAlreadyInaccessible_PropertyAlreadyInaccessible() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/propertyAlreadyInaccessible/propertyAlreadyInaccessible.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test")
-        public void testKotlin_moveTopLevelDeclarations_protectedMemberUsageWithSuper_ProtectedMemberUsageWithSuper() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/protectedMemberUsageWithSuper/protectedMemberUsageWithSuper.test");
-        }
-
-        @TestMetadata("kotlin/moveTopLevelDeclarations/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test")
-        public void testKotlin_moveTopLevelDeclarations_protectedMemberUsageWithThis_ProtectedMemberUsageWithThis() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/protectedMemberUsageWithThis/protectedMemberUsageWithThis.test");
         }
     }
 }
