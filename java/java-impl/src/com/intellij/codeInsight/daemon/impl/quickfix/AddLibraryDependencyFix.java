@@ -86,7 +86,7 @@ class AddLibraryDependencyFix extends OrderEntryFix {
           @Override
           public void customize(@NotNull JList<? extends Library> list, Library lib, int index, boolean selected, boolean hasFocus) {
             if (lib != null) {
-              setText(getLibraryName(lib));
+              setText(lib.getPresentableName());
               setIcon(AllIcons.Nodes.PpLib);
             }
           }
