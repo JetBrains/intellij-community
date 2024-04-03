@@ -110,6 +110,11 @@ class JavaSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase() 
     myFixture.testHighlighting("IfStatementConstant.java")
   }
 
+  fun `test if statements with non constants method`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("IfStatementNonConstantMethod.java")
+  }
+
   fun `test if expressions`() {
     prepareCheckFramework()
     myFixture.testHighlighting("IfExpressions.java")
