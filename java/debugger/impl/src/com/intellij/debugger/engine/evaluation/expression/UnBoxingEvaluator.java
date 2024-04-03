@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +56,7 @@ public class UnBoxingEvaluator implements Evaluator {
     return unbox(myOperand.evaluate(context), context);
   }
 
-  public static Object unbox(@Nullable Object value, EvaluationContextImpl context) throws EvaluateException {
+  public static Object unbox(@Nullable Object value, EvaluationContext context) throws EvaluateException {
     if (value == null) {
       throw new EvaluateException("java.lang.NullPointerException: cannot unbox null value");
     }
@@ -69,7 +70,7 @@ public class UnBoxingEvaluator implements Evaluator {
     return value;
   }
 
-  private static Value convertToPrimitive(EvaluationContextImpl context, ObjectReference value, final String conversionMethodName,
+  private static Value convertToPrimitive(EvaluationContext context, ObjectReference value, final String conversionMethodName,
                                           String conversionMethodSignature) throws EvaluateException {
     // for speedup first try value field
     Value primitiveValue = getInnerPrimitiveValue(value, true).join();

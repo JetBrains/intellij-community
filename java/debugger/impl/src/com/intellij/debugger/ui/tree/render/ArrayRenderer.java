@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.utils.ErrorsValueGroup;
@@ -109,14 +110,25 @@ public class ArrayRenderer extends NodeRendererImpl {
     else if (value instanceof ArrayReference arrValue) {
       String componentTypeName = ((ArrayType)arrValue.type()).componentTypeName();
       boolean isString = CommonClassNames.JAVA_LANG_STRING.equals(componentTypeName);
-      if (TypeConversionUtil.isPrimitive(componentTypeName) || isString) {
+      if (TypeConversionUtil.isPrimitive(componentTypeName) || UnBoxingEvaluator.isTypeUnboxable(componentTypeName) || isString) {
         CompletableFuture<String> asyncLabel = DebuggerUtilsAsync.length(arrValue)
           .thenCompose(length -> {
             if (length > 0) {
               int shownLength = Math.min(length, Registry.intValue(
                 isString ? "debugger.renderers.arrays.max.strings" : "debugger.renderers.arrays.max.primitives"));
               return DebuggerUtilsAsync.getValues(arrValue, 0, shownLength).thenCompose(values -> {
-                CompletableFuture<String>[] futures = ContainerUtil.map2Array(values, new CompletableFuture[0], ArrayRenderer::getElementAsString);
+                @SuppressWarnings("unchecked")
+                CompletableFuture<String>[] futures = ContainerUtil.map2Array(values, new CompletableFuture[0], v -> {
+                  if (v != null) {
+                    try {
+                      v = (Value)UnBoxingEvaluator.unbox(v, evaluationContext);
+                    }
+                    catch (EvaluateException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                  return getElementAsString(v);
+                });
                 return CompletableFuture.allOf(futures).thenApply(__ -> {
                   List<String> elements = ContainerUtil.map(futures, CompletableFuture::join);
                   if (descriptor instanceof ValueDescriptorImpl) {
