@@ -1141,7 +1141,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     TextEditor textEditor = fileEditor instanceof TextEditor t ? t : null;
     Editor editor = textEditor == null ? null : textEditor.getEditor();
-    if (highlighter == null) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
         PassExecutorService.log(
           null,
@@ -1193,7 +1193,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull Document document,
                                   @NotNull VirtualFile virtualFile,
                                   @NotNull PsiFile psiFile,
-                                  @NotNull BackgroundEditorHighlighter backgroundEditorHighlighter,
+                                  @Nullable BackgroundEditorHighlighter backgroundEditorHighlighter,
                                   int @NotNull [] passesToIgnore,
                                   @NotNull DaemonProgressIndicator progress,
                                   @NotNull HighlightingSessionImpl session) {
@@ -1212,6 +1212,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
     // remove obsolete infos for invalid psi elements as soon as possible, before highlighting passes start
     ReadAction.run(() -> HighlightInfoUpdater.getInstance(myProject).removeInvalidPsiElements(psiFile, this, session));
+    if (backgroundEditorHighlighter == null) {
+      return;
+    }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         // wait for heavy processing to stop, re-schedule daemon but not too soon
