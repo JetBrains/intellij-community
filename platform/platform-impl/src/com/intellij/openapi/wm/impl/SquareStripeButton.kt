@@ -43,8 +43,7 @@ internal abstract class AbstractSquareStripeButton(
     setLook(SquareStripeButtonLook(this))
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
-        val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
-        popupMenu.component.show(component, x, y)
+        showPopup(popupBuilder, component, x, y)
       }
     })
   }
@@ -65,6 +64,11 @@ internal abstract class AbstractSquareStripeButton(
     }
 
     buttonLook.paintLookBorder(g, rect, color)
+  }
+
+  protected open fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
+    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
+    popupMenu.component.show(component, x, y)
   }
 }
 
@@ -189,6 +193,10 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
         }
       }
     })
+  }
+
+  override fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
+    ResizeStripeManager.showPopup(popupBuilder.invoke(), component, x, y)
   }
 
   override fun paintButtonLook(g: Graphics?) {
