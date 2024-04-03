@@ -10,7 +10,9 @@ import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
+import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Supplier
 
 private val threadLocalClientIdString = ThreadLocal.withInitial<String?> { null }
 @get:ApiStatus.Internal
@@ -80,6 +82,26 @@ fun <T, R> decorateFunction(function: Function<T, R>): Function<T, R> {
   return Function {
     withClientId(currentId) {
       function.apply(it)
+    }
+  }
+}
+
+fun <T> decorateSupplier(supplier: Supplier<T>): Supplier<T> {
+  if (!propagateClientIdAcrossThreads) return supplier
+  val currentId = currentClientIdString
+  return Supplier {
+    withClientId(currentId) {
+      supplier.get()
+    }
+  }
+}
+
+fun <T> decorateConsumer(consumer: Consumer<T>): Consumer<T> {
+  if (!propagateClientIdAcrossThreads) return consumer
+  val currentId = currentClientIdString
+  return Consumer { t ->
+    withClientId(currentId) {
+      consumer.accept(t)
     }
   }
 }
