@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.startOffset
+import com.intellij.util.containers.Stack
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
@@ -274,9 +275,33 @@ private fun WrappedText?.textWithoutSuffix(
       .withTextPrefixedBy(" ".repeat(indent) + prefix + "\n")
   }
 
-private fun WrappedText?.getFullSuffix(indent: Int, fileIndent: Int): String =
-  if (this == null || suffix.isEmpty()) ""
-  else wrapped.getFullSuffix(indent + fileIndent, fileIndent) + " ".repeat(indent) + suffix + "\n"
+private fun WrappedText?.getFullSuffix(indent: Int, fileIndent: Int): String {
+  if (this == null) return ""
+  // create a reversed stack of wrappers
+  val allLayers = Stack<WrappedText>()
+  var wr = this
+  while (wr != null) {
+    allLayers.push(wr)
+    wr = wr.wrapped
+  }
+  var totalIndent = indent + fileIndent * allLayers.size
+  var iteration = 0
+  val builder = StringBuilder()
+  while (allLayers.isNotEmpty()) {
+    allLayers.pop().run {
+      iteration += 1
+      // the indent is decreasing for each next suffix
+      totalIndent -= fileIndent
+      // indent every line of the suffix; preserve the first newline but drop other blank lines
+      if (suffix.isNotEmpty()) {
+        builder.append(
+          suffix.split('\n').filter { iteration == 1 || it.isNotBlank() }.map { " ".repeat(totalIndent) + it }.joinToString("\n") + "\n"
+        )
+      }
+    }
+  }
+  return builder.toString()
+}
 
 private data class CompletedRange(val startOffset: Int, val endOffsetExclusive: Int)
 
