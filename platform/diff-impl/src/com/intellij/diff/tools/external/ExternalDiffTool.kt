@@ -38,7 +38,8 @@ object ExternalDiffTool {
 
   @JvmStatic
   fun isEnabled(): Boolean {
-    return ExternalDiffSettings.instance.isExternalToolsEnabled
+    return ExternalDiffSettings.instance.isExternalToolsEnabled &&
+           ExternalDiffSettings.instance.externalTools[ExternalToolGroup.DIFF_TOOL].orEmpty().isNotEmpty()
   }
 
   @JvmStatic

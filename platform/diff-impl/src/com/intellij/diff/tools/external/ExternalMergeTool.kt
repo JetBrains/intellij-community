@@ -8,6 +8,7 @@ import com.intellij.diff.contents.FileContent
 import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.ThreesideMergeRequest
 import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalTool
+import com.intellij.diff.tools.external.ExternalDiffSettings.ExternalToolGroup
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -19,7 +20,8 @@ object ExternalMergeTool {
 
   @JvmStatic
   fun isEnabled(): Boolean {
-    return ExternalDiffSettings.instance.isExternalToolsEnabled
+    return ExternalDiffSettings.instance.isExternalToolsEnabled &&
+           ExternalDiffSettings.instance.externalTools[ExternalToolGroup.MERGE_TOOL].orEmpty().isNotEmpty()
   }
 
   @JvmStatic
