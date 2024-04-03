@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp.feedback
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
@@ -23,9 +24,18 @@ internal class BlockTerminalFeedbackDialog(project: Project, forTest: Boolean) :
 
   override val mySystemInfoData: BlockTerminalUsageData by lazy {
     val usageStorage = TerminalUsageLocalStorage.getInstance()
+    val rawMostUsedShell = usageStorage.mostUsedShell
+    val mostUsedShell = if (rawMostUsedShell == null && forTest) {
+      thisLogger().warn("No information about most used shell, because no commands were executed in the terminal")
+      "none"
+    }
+    else {
+      // It is guaranteed to be not null if it is not a test because of the check in BlockTerminalSurveyConfig.checkExtraConditionSatisfied
+      rawMostUsedShell!!
+    }
 
     BlockTerminalUsageData(
-      mostUsedShell = usageStorage.mostUsedShell,
+      mostUsedShell = mostUsedShell,
       executedCommandsNumber = usageStorage.executedCommandsNumber,
       feedbackMoment = getFeedbackMoment(project),
       systemInfo = CommonFeedbackSystemData.getCurrentData()
