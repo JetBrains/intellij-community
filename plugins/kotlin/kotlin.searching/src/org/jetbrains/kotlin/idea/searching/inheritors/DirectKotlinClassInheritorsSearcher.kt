@@ -12,6 +12,7 @@ import com.intellij.util.Query
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
@@ -44,12 +45,6 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
         }
 
         runReadAction { searchForTypeAliasesRecursively(baseClassName) }
-
-        val basePointer = runReadAction {
-            analyze(baseClass) {
-                baseClass.getNamedClassOrObjectSymbol()?.createPointer()
-            }
-        } ?: return null
 
         val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         return object : AbstractQuery<PsiElement>() {
@@ -86,13 +81,13 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                 }
 
                 analyze(ktClassOrObject) {
-                    val baseSymbol = basePointer.restoreSymbol() ?: return false
+                    val baseSymbol = baseClass.getClassOrObjectSymbol() ?: return false
                     val ktSymbol = ktClassOrObject.getClassOrObjectSymbol() ?: return false
                     if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) {
                         return false
                     }
 
-                    return ktSymbol.isDirectSubClassOf(baseSymbol)
+                    return ktSymbol.superTypes.any { it is KtUsualClassType && (it.classId == baseSymbol.classIdIfNonLocal || it.classSymbol == baseSymbol) }
                 }
             }
         }
