@@ -98,14 +98,18 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
 
   val oldCaretState = caretModel.tryCaptureCaretState(editor, relativeOffset = completedRange.startOffset)
 
+  val fileIndent = treeWalker.indentOf(file)
   val (additionalCaretOffset, fullTextWithoutCorrectingNewline) = createTextWrapper(treeWalker, wrappingPath)
     .wrapText(
       around = text.substring(completedRange.toIntRange()),
       caretOffset = oldCaretState?.relativeCaretPosition,
-      destinationIndent = destination?.let { treeWalker.indentOf(it) },
-      completedElementIndent = completedElement.manuallyDeterminedIndentIn(text)
-                               ?: treeWalker.indentOf(completedElement),
-      fileIndent = treeWalker.indentOf(file),
+      destinationIndent = destination?.let {
+        treeWalker.indentOf(it) +
+        if (shouldReindentDestinationStart(destination, treeWalker)) fileIndent else 0
+      },
+      completedElementIndent = (completedElement.manuallyDeterminedIndentIn(text)
+                               ?: treeWalker.indentOf(completedElement)),
+      fileIndent = fileIndent,
     )
 
   val startOfLine = completedRange.startOffset.movedToStartOfLine(text)
@@ -120,7 +124,7 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
     documentChangeAt(startOfLine) {
       replaceString(startOfLine - takePrecedingNewline.toInt(), endOfLine + takeSucceedingNewline.toInt(), "")
     },
-    documentChangeAt(offsetOfInsertionLine(destination, completedElement.startOffset).movedToStartOfLine(text)) { insertionOffset ->
+    documentChangeAt(offsetOfInsertionLine(destination, completedElement.startOffset, treeWalker).movedToStartOfLine(text)) { insertionOffset ->
       insertString(insertionOffset - takePrecedingNewline.toInt(), fullText)
       oldCaretState
         ?.restored(editor, newRelativeOffset = insertionOffset + (additionalCaretOffset ?: 0))
@@ -129,14 +133,36 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
   )
 }
 
+private fun shouldReindentDestinationStart(destination: PsiElement?, treeWalker: JsonLikePsiWalker): Boolean {
+  destination ?: return false
+  val destAdapter = treeWalker.createValueAdapter(destination)
+  return when {
+    destAdapter?.asObject != null -> treeWalker.defaultObjectValue.isNotEmpty()
+    destAdapter?.asArray != null -> treeWalker.defaultArrayValue.isNotEmpty()
+    else -> false
+  }
+}
+
 internal fun CharSequence.mark(index: Int): String = substring(0, index) + "|" + substring(index)  // TODO: Remove, debugging only!
 internal fun CharSequence.mark(vararg indices: Int): String = indices.sortedDescending()  // TODO: Remove, debugging only!
   .fold(toString()) { acc, mark -> acc.mark(mark) } // TODO: Remove, debugging only!
 
-private fun offsetOfInsertionLine(destination: PsiElement?, originOffset: Int): Int = when {
-  destination == null -> originOffset // If there is no destination, we insert at the origin
-  destination.startOffset > originOffset -> destination.startOffset // Caret is above destination, let's insert at top
-  else -> destination.endOffset // Caret is below destination, let's insert at bottom
+private fun offsetOfInsertionLine(destination: PsiElement?, originOffset: Int, treeWalker: JsonLikePsiWalker): Int {
+  // If there is no destination, we insert at the origin
+  if (destination == null) return originOffset
+
+  // If we have objects and arrays with start/end syntax like {} or [], we should insert after the start or before the end
+  // length/2 is not the best heuristic, but let it be for now
+  val destAdapter = treeWalker.createValueAdapter(destination)
+  val offsetWithinParent = when {
+    destAdapter?.asObject != null -> treeWalker.defaultObjectValue.takeIf { it.isNotEmpty() }?.let { it.length / 2 } ?: 0
+    destAdapter?.asArray != null -> treeWalker.defaultArrayValue.takeIf { it.isNotEmpty() }?.let { it.length / 2 } ?: 0
+    else -> 0
+  }
+  return when {
+    destination.startOffset > originOffset -> destination.startOffset + offsetWithinParent // Caret is above destination, let's insert at top
+    else -> destination.endOffset - offsetWithinParent // Caret is below destination, let's insert at bottom
+  }
 }
 
 private val Document.lastIndex get() = textLength - 1
@@ -269,7 +295,8 @@ private fun WrappedText?.textWithoutSuffix(
           .let { numberOfLinesBeforeCaret -> numberOfLinesBeforeCaret * (indent - indentOnWhichBodyIsBased) }
       },
       // We do not want to account for the rest of the text, because it already existed in the document before our changes
-      text = body.replace("\n", "\n" + " ".repeat(indent - indentOnWhichBodyIsBased)),
+      text = if (indent <= indentOnWhichBodyIsBased) body
+             else body.replace("\n", "\n" + " ".repeat(indent - indentOnWhichBodyIsBased)),
     ).withTextPrefixedBy(" ".repeat(indent))
     else -> wrapped.textWithoutSuffix(indent + fileIndent, fileIndent, caretOffset, indentOnWhichBodyIsBased, body)
       .withTextPrefixedBy(" ".repeat(indent) + prefix + "\n")
