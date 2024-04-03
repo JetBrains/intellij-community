@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider.isShowActions
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider.setShowActions
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.settingsButtonPadding
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.codeInsight.hint.TooltipGroup
@@ -115,7 +116,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                 JBUI.insets(7, 7, 0, 5),
+                                                 JBUI.insets(settingsButtonPadding, 7, 0, settingsButtonPadding),
                                                  0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
