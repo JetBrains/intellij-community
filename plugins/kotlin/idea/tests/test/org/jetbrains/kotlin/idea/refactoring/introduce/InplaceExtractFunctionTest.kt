@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
 import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.renameTemplate
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
@@ -42,6 +43,7 @@ class InplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
         myFixture.configureByFile("${getTestName(false)}.kt")
         ExtractKotlinFunctionHandler().invoke(myFixture.project, myFixture.editor, myFixture.file, null)
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         val template = getActiveTemplate()
         require(template != null) { "Failed to start refactoring" }
         if (changedName != null) {

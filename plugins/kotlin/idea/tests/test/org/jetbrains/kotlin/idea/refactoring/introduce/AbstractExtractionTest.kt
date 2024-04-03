@@ -162,6 +162,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 file,
                 DataManager.getInstance().getDataContext(fixture.editor.component)
             )
+            NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
             val inplaceVariableNames = InTextDirectivesUtils.findListWithPrefixes(file.text, "// INPLACE_VARIABLE_NAME:")
                 .takeUnless { it.isEmpty() }
@@ -595,6 +596,8 @@ fun checkExtract(
         }
 
         action(files.mainFile)
+
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
         assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }
         KotlinTestUtils.assertEqualsToFile(afterFile, files.mainFile.text!!) { it.removeCaret() }

@@ -4,13 +4,19 @@ package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Computable
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
@@ -24,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import java.util.concurrent.Callable
 
 fun selectElement(
     editor: Editor,
@@ -42,8 +49,18 @@ fun selectElement(
     if (editor.selectionModel.hasSelection()) {
         val selectionStart = editor.selectionModel.selectionStart
         val selectionEnd = editor.selectionModel.selectionEnd
-        val element = findElementAtRange(file, selectionStart, selectionEnd, elementKinds, failOnEmptySuggestion)
-        callback(element)
+        val task = Callable {
+            findElementAtRange(file, selectionStart, selectionEnd, elementKinds, failOnEmptySuggestion)
+        }
+        if (failOnEmptySuggestion) {
+            callback(task.call())
+        } else {
+            ReadAction.nonBlocking(task)
+                .expireWhen { editor.isDisposed }
+                .finishOnUiThread(ModalityState.nonModal()) { element ->
+                    callback(element)
+                }.submit(AppExecutorUtil.getAppExecutorService())
+        }
     } else {
         val offset = editor.caretModel.offset
         smartSelectElement(editor, file, offset, failOnEmptySuggestion, elementKinds, callback)
