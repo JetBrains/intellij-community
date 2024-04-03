@@ -13,12 +13,12 @@ import org.jetbrains.concurrency.await
 import org.jetbrains.concurrency.toPromise
 
 /**
- * The command refreshes project (like click 'Load {build tool system} changes'
- * Syntax: %refreshProject
+ * The command refreshes project (like click 'Load Gradle changes'
+ * Syntax: %refreshGradleProject
  */
-class RefreshProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+class RefreshGradleProjectCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val NAME = "refreshProject"
+    const val NAME = "refreshGradleProject"
     const val PREFIX = "$CMD_PREFIX$NAME"
   }
 

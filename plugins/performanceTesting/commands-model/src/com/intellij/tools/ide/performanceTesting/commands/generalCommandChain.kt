@@ -584,8 +584,12 @@ fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
 }
 
-fun <T : CommandChain> T.refreshProject(): T = apply {
-  addCommand("${CMD_PREFIX}refreshProject")
+fun <T : CommandChain> T.refreshMavenProject(failureExpectedPattern: String = ""): T = apply {
+  addCommand("${CMD_PREFIX}refreshMavenProject $failureExpectedPattern")
+}
+
+fun <T : CommandChain> T.refreshGradleProject(): T = apply {
+  addCommand("${CMD_PREFIX}refreshGradleProject")
 }
 
 fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
