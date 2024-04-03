@@ -25,6 +25,7 @@ import java.awt.ItemSelectable
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JScrollPane
 import javax.swing.event.DocumentEvent
 import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
@@ -411,7 +412,12 @@ internal class CellImpl<T : JComponent>(
   }
 
   private fun doEnabled(isEnabled: Boolean) {
-    viewComponent.isEnabled = isEnabled
+    if (viewComponent is JScrollPane) {
+      component.isEnabled = isEnabled
+    }
+    else {
+      viewComponent.isEnabled = isEnabled
+    }
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
   }
