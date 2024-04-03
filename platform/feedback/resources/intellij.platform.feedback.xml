@@ -63,10 +63,6 @@
       <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>
-      <action id="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction"
-              class="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction" internal="true"/>
-      <action id="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction"
-              class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
               class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.startup.IdeStartupFeedbackShowAction"

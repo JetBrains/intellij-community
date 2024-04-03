@@ -23,11 +23,6 @@ import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
 import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logDisableNotificationActionInvoked
 import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logRequestNotificationShown
 import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logRespondNotificationActionInvoked
-import com.intellij.platform.feedback.kafka.bundle.KafkaFeedbackBundle
-import com.intellij.platform.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
-import com.intellij.platform.feedback.kafka.dialog.KafkaProducerFeedbackDialog
-import com.intellij.platform.feedback.kafka.state.KafkaConsumerProducerFeedbackService
-import com.intellij.platform.feedback.kafka.state.KafkaConsumerProducerInfoState
 import com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackBundle
 import com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService
 import com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState
@@ -175,108 +170,6 @@ enum class IdleFeedbackTypes {
     }
 
     private fun checkNotificationNumberNotExceeded(state: AquaOldUserInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-  },
-  KAFKA_CONSUMER_FEEDBACK {
-    override val fusFeedbackId: String = "kafka_consumer_feedback"
-    override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
-    private val maxNumberNotificationShowed = 1
-
-    override fun isSuitable(): Boolean {
-      val state = KafkaConsumerProducerFeedbackService.getInstance().state
-
-      return isAnyProjectOpenNow() &&
-             isEditorOpened(state) &&
-             checkFeedbackNotSent(state) &&
-             checkNotificationNumberNotExceeded(state)
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        KafkaFeedbackBundle.message("notification.request.feedback.title"),
-        KafkaFeedbackBundle.message("notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return KafkaConsumerFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      KafkaConsumerProducerFeedbackService.getInstance().state.numberNotificationShowed += 1
-    }
-
-    override fun updateStateAfterDialogClosedOk() {
-      KafkaConsumerProducerFeedbackService.getInstance().state.feedbackSent = true
-    }
-
-    private fun isAnyProjectOpenNow(): Boolean {
-      return ProjectManager.getInstance().openProjects.count {
-        !it.isDisposed
-      } > 0
-    }
-
-    private fun isEditorOpened(state: KafkaConsumerProducerInfoState): Boolean {
-      return state.consumerDialogIsOpened
-    }
-
-    private fun checkFeedbackNotSent(state: KafkaConsumerProducerInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: KafkaConsumerProducerInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-  },
-  KAFKA_PRODUCER_FEEDBACK {
-    override val fusFeedbackId: String = "kafka_producer_feedback"
-    override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
-    private val maxNumberNotificationShowed = 1
-
-    override fun isSuitable(): Boolean {
-      val state = KafkaConsumerProducerFeedbackService.getInstance().state
-
-      return isAnyProjectOpenNow() &&
-             isEditorOpened(state) &&
-             checkFeedbackNotSent(state) &&
-             checkNotificationNumberNotExceeded(state)
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        KafkaFeedbackBundle.message("notification.request.feedback.title"),
-        KafkaFeedbackBundle.message("notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return KafkaProducerFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      KafkaConsumerProducerFeedbackService.getInstance().state.numberNotificationShowed += 1
-    }
-
-    override fun updateStateAfterDialogClosedOk() {
-      KafkaConsumerProducerFeedbackService.getInstance().state.feedbackSent = true
-    }
-
-    private fun isAnyProjectOpenNow(): Boolean {
-      return ProjectManager.getInstance().openProjects.count {
-        !it.isDisposed
-      } > 0
-    }
-
-    private fun isEditorOpened(state: KafkaConsumerProducerInfoState): Boolean {
-      return state.producerDialogIsOpened
-    }
-
-    private fun checkFeedbackNotSent(state: KafkaConsumerProducerInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: KafkaConsumerProducerInfoState): Boolean {
       return state.numberNotificationShowed < maxNumberNotificationShowed
     }
   },
