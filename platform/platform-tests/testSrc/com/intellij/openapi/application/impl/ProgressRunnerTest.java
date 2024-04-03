@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.idea.IJIgnore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -343,6 +344,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
    * It is better to be aware of such exceptions in tests so we propagate them in ProgressRunner
    */
   @Test
+  @IJIgnore(issue = "IDEA-350585")
   public void testPumpingExceptionPropagation() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
 
