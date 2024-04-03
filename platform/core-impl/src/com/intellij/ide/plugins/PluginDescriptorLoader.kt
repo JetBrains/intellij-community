@@ -18,6 +18,7 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
@@ -613,21 +614,22 @@ private fun CoroutineScope.loadCoreModules(
     return Java11Shim.INSTANCE.listOf(async(Dispatchers.IO) {
       loadCoreProductPlugin(
         path = PluginManagerCore.PLUGIN_XML_PATH,
-        classLoader = classLoader,
+        reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!,
         context = context,
         pathResolver = pathResolver,
         useCoreClassLoader = useCoreClassLoader,
         pool = pool,
-      )!!
+      )
     })
   }
 
   val fileName = "${platformPrefix}Plugin.xml"
   val result = mutableListOf<Deferred<IdeaPluginDescriptorImpl?>>()
   result.add(async(Dispatchers.IO) {
+    val path = "${PluginManagerCore.META_INF}$fileName"
     loadCoreProductPlugin(
-      path = "${PluginManagerCore.META_INF}$fileName",
-      classLoader = classLoader,
+      path = path,
+      reader = getResourceReader(path, classLoader) ?: return@async null,
       context = context,
       pool = pool,
       pathResolver = pathResolver,
@@ -637,14 +639,21 @@ private fun CoroutineScope.loadCoreModules(
 
   if (ProductLoadingStrategy.strategy.shouldLoadDescriptorsFromCoreClassPath) {
     val urlToFilename = collectPluginFilesInClassPath(classLoader)
-    if (!urlToFilename.isEmpty()) {
-      result.addAll(loadDescriptorsFromClassPath(
-        urlToFilename = urlToFilename,
-        context = context,
-        pathResolver = pathResolver,
-        useCoreClassLoader = useCoreClassLoader,
-        pool = pool,
-      ))
+    if (urlToFilename.isNotEmpty()) {
+      val libDir = if (useCoreClassLoader) null else Paths.get(PathManager.getLibPath())
+      urlToFilename.mapTo(result) { (url, filename) ->
+        async(Dispatchers.IO) {
+          loadDescriptorFromResource(
+            resource = url,
+            filename = filename,
+            context = context,
+            pathResolver = pathResolver,
+            useCoreClassLoader = useCoreClassLoader,
+            pool = pool,
+            libDir = libDir,
+          )
+        }
+      }
     }
   }
   return result
@@ -661,13 +670,12 @@ private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStream
 
 private fun loadCoreProductPlugin(
   path: String,
-  classLoader: ClassLoader,
   context: DescriptorListLoadingContext,
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
   pool: ZipFilePool,
-): IdeaPluginDescriptorImpl? {
-  val reader = getResourceReader(path, classLoader) ?: return null
+  reader: XMLStreamReader2,
+): IdeaPluginDescriptorImpl {
   val dataLoader = object : DataLoader {
     override val emptyDescriptorIfCannotResolve: Boolean
       get() = true
@@ -694,12 +702,32 @@ private fun loadCoreProductPlugin(
     moduleName = null,
     useCoreClassLoader = useCoreClassLoader,
   )
-  context.debugData?.recordDescriptorPath(descriptor, raw, path)
+  context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = path)
 
+  loadModuleDescriptors(
+    descriptor = descriptor,
+    pathResolver = pathResolver,
+    libDir = libDir,
+    pool = pool,
+    context = context,
+    dataLoader = dataLoader,
+  )
+  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+  return descriptor
+}
+
+private fun loadModuleDescriptors(
+  descriptor: IdeaPluginDescriptorImpl,
+  pathResolver: ClassPathXmlPathResolver,
+  libDir: Path,
+  pool: ZipFilePool,
+  context: DescriptorListLoadingContext,
+  dataLoader: DataLoader,
+) {
   val moduleDir = libDir.resolve("modules")
   val moduleDirExists = Files.isDirectory(moduleDir)
-
   val loadingStrategy = ProductLoadingStrategy.strategy
+
   for (module in descriptor.content.modules) {
     check(module.configFile == null) {
       "product module must not use `/` notation for module descriptor file (configFile=${module.configFile})"
@@ -710,7 +738,7 @@ private fun loadCoreProductPlugin(
     val subDescriptorFile = "$moduleName.xml"
 
     if (moduleDirExists && !pathResolver.isRunningFromSources && moduleName.startsWith("intellij.")) {
-      val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName)
+      val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName, moduleDir)
       val resolver = pool.load(jarFile)
       try {
         moduleRaw = resolver.loadZipEntry(subDescriptorFile)?.let {
@@ -755,8 +783,6 @@ private fun loadCoreProductPlugin(
       moduleName = moduleName,
     )
   }
-  descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
-  return descriptor
 }
 
 private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String> {
@@ -820,6 +846,7 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   return null
 }
 
+@RequiresBlockingContext
 fun loadDescriptor(
   file: Path,
   isBundled: Boolean,
@@ -881,16 +908,22 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
     productBuildNumber = { buildNumber },
   )
   val result = PluginLoadingResult(checkModuleDependencies = false)
-  result.addAll(toSequence(runBlocking {
+  result.addAll(descriptors = toSequence(runBlocking {
     val pool = ZipFilePool.POOL?.takeIf { !context.transient } ?: NonShareableJavaZipFilePool()
-    loadDescriptorsFromClassPath(
-      urlToFilename = urlToFilename,
-      context = context,
-      pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
-      useCoreClassLoader = true,
-      pool = pool,
-    )
-  }, isMainProcess()), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
+    urlToFilename.map { (url, filename) ->
+      async(Dispatchers.IO) {
+        loadDescriptorFromResource(
+          resource = url,
+          filename = filename,
+          context = context,
+          pathResolver = ClassPathXmlPathResolver(loader, isRunningFromSources = false),
+          useCoreClassLoader = true,
+          pool = pool,
+          libDir = null,
+        )
+      }
+    }
+  }, isMainProcess = isMainProcess()), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
   return result.enabledPlugins
 }
 
@@ -939,6 +972,7 @@ private fun CoroutineScope.loadDescriptorsFromClassPath(
         pathResolver = pathResolver,
         useCoreClassLoader = useCoreClassLoader,
         pool = pool,
+        libDir = null,
       )
     }
   }
@@ -952,6 +986,7 @@ private fun loadDescriptorFromResource(
   pathResolver: ClassPathXmlPathResolver,
   useCoreClassLoader: Boolean,
   pool: ZipFilePool,
+  libDir: Path?,
 ): IdeaPluginDescriptorImpl? {
   val file = Paths.get(UrlClassLoader.urlToFilePath(resource.path))
   var closeable: Closeable? = null
@@ -996,9 +1031,23 @@ private fun loadDescriptorFromResource(
       moduleName = null,
       useCoreClassLoader = useCoreClassLoader,
     )
-    context.debugData?.recordDescriptorPath(descriptor, raw, filename)
-    descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
-    // do not set jarFiles by intention - doesn't make sense
+    context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
+
+    if (libDir == null) {
+      descriptor.readExternal(raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader)
+      // do not set jarFiles by intention - doesn't make sense
+    }
+    else {
+      loadModuleDescriptors(
+        descriptor = descriptor,
+        pathResolver = pathResolver,
+        libDir = libDir,
+        pool = pool,
+        context = context,
+        dataLoader = dataLoader,
+      )
+      descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)
+    }
     return descriptor
   }
   catch (e: CancellationException) {
