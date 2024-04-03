@@ -216,6 +216,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           }.onReset {
             colorAndFontsOptions.reset()
           }.enabledIf(syncThemeAndEditorSchemePredicate.not())
+
+          syncThemeAndEditorSchemePredicate.addListener { isSyncOn ->
+            if (isSyncOn) {
+              colorAndFontsOptions.reset()
+            }
+          }
         }
 
         disposable?.whenDisposed {

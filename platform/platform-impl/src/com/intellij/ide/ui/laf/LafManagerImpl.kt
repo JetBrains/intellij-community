@@ -235,8 +235,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       return
     }
 
-    rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
-
     val currentTheme = currentTheme
     val currentIsDark = currentTheme == null || currentTheme.isDark
     val expectedTheme = if (systemIsDark) {
@@ -759,6 +757,10 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   override fun setAutodetect(value: Boolean) {
     if (autodetect == value) {
       return
+    }
+
+    if (value) {
+      rememberSchemeForLaf(EditorColorsManager.getInstance().globalScheme)
     }
 
     autodetect = value

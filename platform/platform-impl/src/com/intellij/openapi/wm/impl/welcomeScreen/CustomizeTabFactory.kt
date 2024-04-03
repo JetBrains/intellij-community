@@ -246,6 +246,12 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
           }.onReset {
             colorAndFontsOptions.reset()
           }.enabledIf(syncThemeAndEditorSchemePredicate.not())
+
+          syncThemeAndEditorSchemePredicate.addListener { isSyncOn ->
+            if (isSyncOn) {
+              colorAndFontsOptions.reset()
+            }
+          }
         }
 
         parentDisposable.whenDisposed {
