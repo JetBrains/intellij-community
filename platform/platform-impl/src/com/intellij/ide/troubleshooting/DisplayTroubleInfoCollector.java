@@ -3,10 +3,7 @@ package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 public final class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
@@ -17,14 +14,16 @@ public final class DisplayTroubleInfoCollector implements GeneralTroubleInfoColl
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
     StringBuilder output = new StringBuilder();
-    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-    for (int i = 0; i < devices.length; i++) {
-      DisplayMode displayMode = devices[i].getDisplayMode();
-      float scale = JBUIScale.sysScale(devices[i].getDefaultConfiguration());
-      Rectangle bounds = devices[i].getDefaultConfiguration().getBounds();
+    var devices = DisplayInfo.get().getScreens();
+    for (int i = 0; i < devices.size(); i++) {
+      var displayMode = devices.get(i).getResolution();
+      var scale = devices.get(i).getScaling();
+      var bounds = devices.get(i).getBounds();
+      var insets = devices.get(i).getInsets();
       output.append(
-        String.format("Display %d: %dx%d; scale: %.2f, bounds: %dx%d @ (%d; %d)\n", i, displayMode.getWidth(), displayMode.getHeight(), scale,
-                      bounds.width, bounds.height, bounds.x, bounds.y));
+        String.format("Display %d: %s; scale: %s, bounds: %dx%d @ (%d; %d), insets: (%d; %d; %d; %d)\n", i, displayMode, scale,
+                      bounds.width, bounds.height, bounds.x, bounds.y,
+                      insets.top, insets.left, insets.bottom, insets.right));
     }
     return output.toString();
   }
