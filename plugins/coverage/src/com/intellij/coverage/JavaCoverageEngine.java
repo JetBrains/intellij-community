@@ -36,6 +36,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -71,6 +72,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.stream.IntStream;
 
 /**
@@ -552,6 +554,9 @@ public class JavaCoverageEngine extends CoverageEngine {
       List<ConditionCoverageExpression> conditions = JavaCoveragePsiUtilsKt.getConditions(psiFile, range);
 
       return createBriefReport(lineData, conditions, switches);
+    }
+    catch (ProcessCanceledException | CancellationException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error(e);
