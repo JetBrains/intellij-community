@@ -306,7 +306,7 @@ public final class JBCefApp {
    *
    * @param consumer - the port number consumer.
    */
-  public void getRemoteDebuggingPort(Consumer<Integer> consumer) {
+  public void getRemoteDebuggingPort(Consumer<@Nullable Integer> consumer) {
     myDebuggingPort.whenCompleteAsync(
       (integer, throwable) -> {
         if (throwable != null) {
