@@ -37,17 +37,6 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
     }
   }
 
-  /**
-   * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
-   */
-  @Override
-  @Deprecated(forRemoval = true)
-  public void onStart(@NotNull ExternalSystemTaskId id) {
-    if (myDelegate != null) {
-      myDelegate.onStart(id);
-    }
-  }
-
   @Override
   public void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
     if (myDelegate != null) {

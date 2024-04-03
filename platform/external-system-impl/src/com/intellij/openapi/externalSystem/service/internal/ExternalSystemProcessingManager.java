@@ -137,11 +137,6 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
   }
 
   @Override
-  public void onStart(@NotNull ExternalSystemTaskId id) {
-    myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
-  }
-
-  @Override
   public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
     Long prev = myTasksInProgress.replace(event.getId(), System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (prev == null) {

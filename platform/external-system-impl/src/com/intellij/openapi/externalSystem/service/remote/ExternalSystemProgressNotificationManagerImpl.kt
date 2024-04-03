@@ -140,12 +140,6 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.onStart(id, workingDir)
     }
 
-    override fun onStart(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      @Suppress("DEPRECATION")
-      delegate.onStart(id)
-    }
-
     override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
       delegate.onEnvironmentPrepared(id)
