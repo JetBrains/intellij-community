@@ -9,7 +9,9 @@ import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
+import com.intellij.util.Query
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -19,6 +21,12 @@ interface KotlinFindUsagesSupport {
 
     companion object {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.service()
+
+        fun searchOverriders(element: PsiElement,
+                             searchScope: SearchScope,
+                             searchDeeply: Boolean = true): Sequence<PsiElement> {
+            return getInstance(element.project).searchOverriders(element, searchScope, searchDeeply)
+        }
 
         fun processCompanionObjectInternalReferences(
             companionObject: KtObjectDeclaration,
@@ -56,4 +64,9 @@ interface KotlinFindUsagesSupport {
 
     fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement>
 
+    fun searchOverriders(
+        element: PsiElement,
+        searchScope: SearchScope,
+        searchDeeply: Boolean = true
+    ): Sequence<PsiElement>
 }

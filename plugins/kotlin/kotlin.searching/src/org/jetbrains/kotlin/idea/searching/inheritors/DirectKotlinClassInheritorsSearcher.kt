@@ -46,6 +46,12 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
         runReadAction { searchForTypeAliasesRecursively(baseClassName) }
 
+        val basePointer = runReadAction {
+            analyze(baseClass) {
+                baseClass.getNamedClassOrObjectSymbol()?.createPointer()
+            }
+        } ?: return null
+
         val noLibrarySourceScope = KotlinSourceFilterScope.projectFiles(scope, project)
         return object : AbstractQuery<PsiElement>() {
             override fun processResults(consumer: Processor<in PsiElement>): Boolean {
@@ -81,7 +87,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
                 }
 
                 analyze(ktClassOrObject) {
-                    val baseSymbol = baseClass.getClassOrObjectSymbol() ?: return false
+                    val baseSymbol = basePointer.restoreSymbol() ?: return false
                     val ktSymbol = ktClassOrObject.getClassOrObjectSymbol() ?: return false
                     if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) {
                         return false

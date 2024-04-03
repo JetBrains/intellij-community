@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.searching.usages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
+import com.intellij.util.Query
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -119,4 +122,12 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
     }
 
+    override fun searchOverriders(
+        element: PsiElement,
+        searchScope: SearchScope,
+        searchDeeply: Boolean
+    ): Sequence<PsiElement> {
+        (element as? KtCallableDeclaration)?.findAllOverridings(searchScope)?.let { return it }
+        return emptySequence()
+    }
 }

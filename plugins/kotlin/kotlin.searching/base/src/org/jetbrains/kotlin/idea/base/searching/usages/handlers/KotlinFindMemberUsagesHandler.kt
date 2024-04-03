@@ -46,8 +46,6 @@ import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -315,7 +313,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (kotlinOptions.searchOverrides) {
                 addTask {
-                    val overriders = HierarchySearchRequest(element, options.searchScope, true).searchOverriders()
+                    val overriders = KotlinFindUsagesSupport.getInstance(project).searchOverriders(element, options.searchScope)
                     overriders.all {
                         val element = runReadAction { it.takeIf { it.isValid }?.navigationElement } ?: return@all true
                         processUsage(uniqueProcessor, element)
