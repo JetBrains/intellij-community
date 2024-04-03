@@ -98,12 +98,12 @@ class RegistryKeyBean private constructor() {
       }
 
       when (oldDescriptor.isOverrides to newDescriptor.isOverrides) {
-        false to true -> { // typical normal override, just allow it
+        false to true -> { // a normal override, just allow it
           // TODO: Check dependencies?
           map.put(newDescriptor.name, newDescriptor)
           // TODO: Check loading order if the descriptor requires restart?
           // TODO: ↑ this should only be a concern for dynamically-loaded plugins;
-          //       the others we can process in one batch and don't allow anybody to see changes in the registry keys that require restartF
+          //       the others we can process in one batch and don't allow anybody to see changes in the registry keys that require restart
         }
         true to false -> {
           // TODO: Check dependencies?
