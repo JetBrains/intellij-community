@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -37,6 +37,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testEnumValues() { doTest(); }
   public void testReceiverParameters() { doTest(); }
   public void testAnnotationOverIncompleteCode() { doTest(); }
+  public void testDeclarations() { doTest(); }
 
   private void doTest() { doTest(getTestName(true) + ".java"); }
   private void doTest(String name) { doTest(BASE_PATH + "/" + name, false, false); }
