@@ -45,6 +45,7 @@ public enum JavaElementKind {
   THROWS_LIST("element.throws.list"),
   TYPE_ARGUMENTS("element.type.arguments"),
   TYPE_PARAMETER("element.type.parameter"),
+  TYPE_PARAMETERS("element.type.parameters"),
   UNKNOWN("element.unknown"),
   VARIABLE("element.variable");
 
@@ -136,6 +137,9 @@ public enum JavaElementKind {
         return CONSTANT;
       }
       return FIELD;
+    }
+    if (element instanceof PsiTypeParameterList) {
+      return TYPE_PARAMETERS;
     }
     if (element instanceof PsiReferenceParameterList) {
       return TYPE_ARGUMENTS;

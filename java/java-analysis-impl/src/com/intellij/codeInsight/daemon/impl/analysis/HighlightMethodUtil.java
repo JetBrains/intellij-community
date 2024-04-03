@@ -2274,7 +2274,7 @@ public final class HighlightMethodUtil {
     if (typeParameterList != null && typeParameterList.getTypeParameters().length > 0) {
       HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeParameterList)
         .descriptionAndTooltip(JavaErrorBundle.message("record.special.method.type.parameters", methodTitle));
-      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(typeParameterList.getTypeParameters());
+      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(typeParameterList);
       info.registerFix(action, null, null, null, null);
       return info;
     }
