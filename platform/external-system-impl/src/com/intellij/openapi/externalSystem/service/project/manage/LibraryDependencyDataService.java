@@ -40,12 +40,13 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
   }
 
   private static class DataToImport {
-    private final @NotNull Map<Set<String>/* library paths */, LibraryDependencyData> moduleLibraries;
-    private final @NotNull Map<String/* library name + scope */, LibraryDependencyData> projectLibraries;
+    // the order of entries are important
+    private final @NotNull LinkedHashMap<Set<String>/* library paths */, LibraryDependencyData> moduleLibraries;
+    private final @NotNull LinkedHashMap<String/* library name + scope */, LibraryDependencyData> projectLibraries;
     private final boolean hasUnresolvedLibraries;
 
-    private DataToImport(@NotNull Map<Set<String>, LibraryDependencyData> moduleLibraries,
-                         @NotNull Map<String, LibraryDependencyData> projectLibraries,
+    private DataToImport(@NotNull LinkedHashMap<Set<String>, LibraryDependencyData> moduleLibraries,
+                         @NotNull LinkedHashMap<String, LibraryDependencyData> projectLibraries,
                          boolean hasUnresolvedLibraries) {
       this.moduleLibraries = moduleLibraries;
       this.projectLibraries = projectLibraries;
@@ -149,8 +150,8 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
   }
 
   private static @NotNull DataToImport preProcessData(@NotNull Collection<? extends DataNode<LibraryDependencyData>> nodesToImport) {
-    Map<Set<String>/* library paths */, LibraryDependencyData> moduleLibrariesToImport = new HashMap<>();
-    Map<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport = new HashMap<>();
+    LinkedHashMap<Set<String>/* library paths */, LibraryDependencyData> moduleLibrariesToImport = new LinkedHashMap<>();
+    LinkedHashMap<String/* library name + scope */, LibraryDependencyData> projectLibrariesToImport = new LinkedHashMap<>();
 
     boolean hasUnresolved = false;
     for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
