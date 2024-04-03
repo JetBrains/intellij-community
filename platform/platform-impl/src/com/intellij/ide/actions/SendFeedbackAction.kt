@@ -4,6 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.FeedbackDescriptionProvider
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.troubleshooting.DisplayInfo
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -18,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls.Companion.getInstance
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.LicensingFacade
-import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.launch
@@ -123,15 +123,9 @@ class SendFeedbackAction : AnAction(), DumbAware {
         }
       }
       if (!GraphicsEnvironment.isHeadless()) {
-        sb.append(", screens ")
-        val devices = GraphicsEnvironment.getLocalGraphicsEnvironment().screenDevices
-        for (i in devices.indices) {
-          if (i > 0) sb.append(", ")
-          val device = devices[i]
-          val displayMode = device.getDisplayMode()
-          val scale = sysScale(device.defaultConfiguration)
-          sb.append(displayMode.width * scale).append("x").append(displayMode.height * scale)
-        }
+        sb.append(", screens ").append(
+          DisplayInfo.get().screens.joinToString { "${it.resolution} (${it.scaling})" }
+        )
         if (UIUtil.isRetina()) {
           sb.append(if (SystemInfo.isMac) "; Retina" else "; HiDPI")
         }
