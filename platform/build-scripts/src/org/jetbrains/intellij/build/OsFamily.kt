@@ -1,6 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -8,16 +6,16 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 
 enum class OsFamily(
-  /** ID of OS used in system properties for [BuildOptions]  */
+  /** ID of OS used in system properties for [BuildOptions] */
   @JvmField
   val osId: String,
-  /** presentable name of OS  */
+  /** presentable name of OS */
   @JvmField
   val osName: String,
-  /** suffix for directory name where OS-specific files are produces  */
+  /** suffix for directory name where OS-specific files are produces */
   @JvmField
   val distSuffix: String,
-  /** suffix of tar.gz archive containing JBR distribution  */
+  /** suffix of tar.gz archive containing JBR distribution */
   @JvmField
   val jbrArchiveSuffix: String
 ) {
@@ -27,7 +25,7 @@ enum class OsFamily(
 
   companion object {
     @JvmField
-    val ALL: PersistentList<OsFamily> = persistentListOf(*values())
+    val ALL: PersistentList<OsFamily> = persistentListOf(*OsFamily.entries.toTypedArray())
 
     @JvmField
     val currentOs: OsFamily = when {
