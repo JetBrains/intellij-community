@@ -133,7 +133,7 @@ class FooTest {
 class Test2 {
   public void bar() {
     Stream.of("foo", "bar").collect(Collectors.toList()).add("baz");
-    Collections.checkedList(Stream.of("foo", "bar").collect(Collectors.toList()), String.class);
+    Collections.checkedList(Stream.of("foo", "bar").<warning descr="'collect(toList())' can be replaced with 'toList()'">collect(Collectors.toList())</warning>, String.class);
   }
 }
 
