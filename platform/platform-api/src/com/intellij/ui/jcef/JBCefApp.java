@@ -301,8 +301,6 @@ public final class JBCefApp {
   /**
    * Schedules passing the debug port number to the consumer once the value is available.
    * In case of error, null will be passed to the consumer. The consumer will be called from EDT.
-   * <p>
-   * Warning: waiting the callback in EDT may result in deadlock.
    *
    * @param consumer - the port number consumer.
    */
