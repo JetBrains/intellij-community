@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.actionSystem.DataContext
@@ -69,7 +70,7 @@ internal class CoroutineScopeModel internal constructor(
     }
     coroutineScope.launch(
       start = CoroutineStart.UNDISPATCHED,
-      context = ModalityState.any().asContextElement(),
+      context = ModalityState.any().asContextElement() + ClientId.coroutineContext(),
     ) {
       semaphore.withPermit {
         yield() // dispatch
