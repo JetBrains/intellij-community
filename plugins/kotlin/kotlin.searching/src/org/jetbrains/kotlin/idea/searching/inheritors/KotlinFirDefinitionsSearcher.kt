@@ -33,7 +33,11 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
                 if (isExpectEnum) {
                     processActualDeclarations(element, processor)
                 } else {
-                    processClassImplementations(element, processor) && processActualDeclarations(element, processor)
+                    processClassImplementations(element, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
+                        override fun process(actual: PsiElement?): Boolean {
+                            return actual is KtClass && processClassImplementations(actual, processor)
+                        }
+                    })
                 }
             }
 
@@ -42,16 +46,24 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
             }
 
             is KtNamedFunction, is KtSecondaryConstructor -> {
-                processFunctionImplementations(element as KtFunction, scope, processor) && processActualDeclarations(element, processor)
+                processFunctionImplementations(element as KtFunction, scope, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
+                    override fun process(actual: PsiElement?): Boolean {
+                        return actual is KtFunction && processFunctionImplementations(actual, scope, processor)
+                    }
+                })
             }
 
             is KtProperty -> {
-                processPropertyImplementations(element, scope, processor) && processActualDeclarations(element, processor)
+                processPropertyImplementations(element, scope, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
+                    override fun process(actual: PsiElement?): Boolean {
+                        return actual is KtProperty && processPropertyImplementations(actual, scope, processor)
+                    }
+                })
             }
 
             is KtParameter -> {
-                if (isFieldParameter(element)) {
-                    processPropertyImplementations(element, scope, processor) && processActualDeclarations(element, processor)
+                if (runReadAction { element.hasValOrVar() }) {
+                    processPropertyImplementations(element, scope, processor)
                 } else {
                     true
                 }
