@@ -41,7 +41,7 @@ class KotlinFirExtractFunctionHandler(
     private val acceptAllScopes: Boolean,
     private val helper: ExtractionEngineHelper = InplaceExtractionHelper(acceptAllScopes)
 ) :
-    AbstractExtractKotlinFunctionHandler(acceptAllScopes) {
+    AbstractExtractKotlinFunctionHandler(acceptAllScopes, true) {
 
     object InteractiveExtractionHelper : ExtractionEngineHelper(EXTRACT_FUNCTION) {
         @OptIn(KtAllowAnalysisOnEdt::class)

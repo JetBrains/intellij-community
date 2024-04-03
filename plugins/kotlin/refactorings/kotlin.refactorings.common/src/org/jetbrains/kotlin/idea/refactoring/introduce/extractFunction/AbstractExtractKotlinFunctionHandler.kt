@@ -16,7 +16,10 @@ import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.psi.KtFile
 
 
-abstract class AbstractExtractKotlinFunctionHandler(private val allContainersEnabled: Boolean = false) : RefactoringActionHandler {
+abstract class AbstractExtractKotlinFunctionHandler(
+    private val allContainersEnabled: Boolean = false,
+    private val acceptScripts: Boolean = false
+) : RefactoringActionHandler {
     abstract fun doInvoke(
         editor: Editor,
         file: KtFile,
@@ -32,7 +35,7 @@ abstract class AbstractExtractKotlinFunctionHandler(private val allContainersEna
             KotlinBundle.message("title.select.target.code.block"),
             listOf(ElementKind.EXPRESSION),
             ::validateExpressionElements,
-            { elements, parent -> parent.getExtractionContainers(elements.size == 1, allContainersEnabled) },
+            { elements, parent -> parent.getExtractionContainers(elements.size == 1, allContainersEnabled, acceptScripts) },
             continuation
         )
     }

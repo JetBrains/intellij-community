@@ -1770,6 +1770,29 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/script")
+    public static class Script extends AbstractK2IntroduceFunctionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("NotExpression.kts")
+        public void testNotExpression() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/script/NotExpression.kts");
+        }
+
+        @TestMetadata("TopLevelExpression.kts")
+        public void testTopLevelExpression() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/script/TopLevelExpression.kts");
+        }
+
+        @TestMetadata("topLevelFunction.kts")
+        public void testTopLevelFunction() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/script/topLevelFunction.kts");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/extractFunction/stringTemplates")
     public static class StringTemplates extends AbstractK2IntroduceFunctionTest {
         private void runTest(String testDataFilePath) throws Exception {

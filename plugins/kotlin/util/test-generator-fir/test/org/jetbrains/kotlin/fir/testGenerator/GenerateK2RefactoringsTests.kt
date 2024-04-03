@@ -66,7 +66,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/inline/lambdaExpression", pattern = Patterns.KT_WITHOUT_DOTS)
         }
         testClass<AbstractK2IntroduceFunctionTest> {
-            model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("inplace", "duplicates", "script"))
+            model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("duplicates"))
         }
     }
 

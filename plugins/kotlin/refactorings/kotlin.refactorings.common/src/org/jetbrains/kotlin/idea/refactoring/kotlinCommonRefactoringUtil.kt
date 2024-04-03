@@ -253,7 +253,7 @@ fun PsiElement.getAllExtractionContainers(strict: Boolean = true): List<KtElemen
     return containers
 }
 
-fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boolean = false): List<KtElement> {
+fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boolean = false, acceptScript: Boolean = false): List<KtElement> {
     fun getEnclosingDeclaration(element: PsiElement, strict: Boolean): PsiElement? {
         return (if (strict) element.parents else element.parentsWithSelf)
             .filter {
@@ -261,6 +261,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
                         || it is KtAnonymousInitializer
                         || it is KtClassBody
                         || it is KtFile
+                        || acceptScript && it is KtScript
             }
             .firstOrNull()
     }
@@ -273,6 +274,7 @@ fun PsiElement.getExtractionContainers(strict: Boolean = true, includeAll: Boole
 
     return when (enclosingDeclaration) {
         is KtFile -> Collections.singletonList(enclosingDeclaration)
+        is KtScript -> Collections.singletonList(enclosingDeclaration)
         is KtClassBody -> getAllExtractionContainers(strict).filterIsInstance<KtClassBody>()
         else -> {
             val targetContainer = when (enclosingDeclaration) {
