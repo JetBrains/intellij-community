@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ClassesProcessor implements CodeConstants {
+public class ClassesProcessor {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
 
   private final StructContext context;
@@ -273,19 +273,19 @@ public class ClassesProcessor implements CodeConstants {
           for (int i = 0; i < len; i++) {
             Instruction instr = seq.getInstr(i);
             switch (instr.opcode) {
-              case opc_checkcast, opc_instanceof -> {
+              case CodeConstants.opc_checkcast, CodeConstants.opc_instanceof -> {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                   refNotNew = true;
                 }
               }
-              case opc_new, opc_anewarray, opc_multianewarray -> {
+              case CodeConstants.opc_new, CodeConstants.opc_anewarray, CodeConstants.opc_multianewarray -> {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                 }
               }
-              case opc_getstatic, opc_putstatic -> {
-                if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
+              case CodeConstants.opc_getstatic, CodeConstants.opc_putstatic -> {
+                if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).className)) {
                   refCounter++;
                   refNotNew = true;
                 }

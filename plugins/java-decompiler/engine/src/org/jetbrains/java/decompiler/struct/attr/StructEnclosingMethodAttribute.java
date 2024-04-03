@@ -21,7 +21,7 @@ public class StructEnclosingMethodAttribute extends StructGeneralAttribute {
     className = pool.getPrimitiveConstant(classIndex).getString();
     if (methodIndex != 0) {
       LinkConstant lk = pool.getLinkConstant(methodIndex);
-      methodName = lk.elementname;
+      methodName = lk.elementName;
       methodDescriptor = lk.descriptor;
     }
   }

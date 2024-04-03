@@ -68,8 +68,8 @@ public class InvocationExprent extends Exprent {
                            Set<Integer> bytecodeOffsets) {
     this();
 
-    name = cn.elementname;
-    className = cn.classname;
+    name = cn.elementName;
+    className = cn.className;
     this.bootstrapArguments = bootstrapArguments;
     switch (opcode) {
       case CodeConstants.opc_invokestatic -> invocationType = INVOKE_STATIC;

@@ -158,14 +158,14 @@ public class ConstantPool implements NewClassNameBuilder {
         (ln.type == CodeConstants.CONSTANT_Fieldref ||
          ln.type == CodeConstants.CONSTANT_Methodref ||
          ln.type == CodeConstants.CONSTANT_InterfaceMethodref)) {
-      String newClassName = buildNewClassname(ln.classname);
-      String newElement = interceptor.getName(ln.classname + ' ' + ln.elementname + ' ' + ln.descriptor);
+      String newClassName = buildNewClassname(ln.className);
+      String newElement = interceptor.getName(ln.className + ' ' + ln.elementName + ' ' + ln.descriptor);
       String newDescriptor = buildNewDescriptor(ln.type == CodeConstants.CONSTANT_Fieldref, ln.descriptor);
       //TODO: Fix newElement being null caused by ln.classname being a leaf class instead of the class that declared the field/method.
       //See the comments of IDEA-137253 for more information.
       if (newClassName != null || newElement != null || newDescriptor != null) {
-        String className = newClassName == null ? ln.classname : newClassName;
-        String elementName = newElement == null ? ln.elementname : newElement.split(" ")[1];
+        String className = newClassName == null ? ln.className : newClassName;
+        String elementName = newElement == null ? ln.elementName : newElement.split(" ")[1];
         String descriptor = newDescriptor == null ? ln.descriptor : newDescriptor;
         ln = new LinkConstant(ln.type, className, elementName, descriptor);
       }

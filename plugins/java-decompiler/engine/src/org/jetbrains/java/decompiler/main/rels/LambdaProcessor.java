@@ -52,8 +52,8 @@ public class LambdaProcessor {
       LinkConstant method_ref = bootstrap.getMethodReference(i); // method handle
 
       // FIXME: extend for Eclipse etc. at some point
-      if (JAVAC_LAMBDA_CLASS.equals(method_ref.classname) &&
-          (JAVAC_LAMBDA_METHOD.equals(method_ref.elementname) || JAVAC_LAMBDA_ALT_METHOD.equals(method_ref.elementname))) {
+      if (JAVAC_LAMBDA_CLASS.equals(method_ref.className) &&
+          (JAVAC_LAMBDA_METHOD.equals(method_ref.elementName) || JAVAC_LAMBDA_ALT_METHOD.equals(method_ref.elementName))) {
         lambdaMethods.set(i);
       }
     }
@@ -84,12 +84,12 @@ public class LambdaProcessor {
               MethodDescriptor md = MethodDescriptor.parseDescriptor(invoke_dynamic.descriptor);
 
               String lambda_class_name = md.ret.getValue();
-              String lambda_method_name = invoke_dynamic.elementname;
+              String lambda_method_name = invoke_dynamic.elementName;
               String lambda_method_descriptor = ((PrimitiveConstant)bootstrap_arguments.get(2)).getString(); // method type
 
               LinkConstant content_method_handle = (LinkConstant)bootstrap_arguments.get(1);
 
-              ClassNode node_lambda = new ClassNode(content_method_handle.classname, content_method_handle.elementname,
+              ClassNode node_lambda = new ClassNode(content_method_handle.className, content_method_handle.elementName,
                                                     content_method_handle.descriptor, content_method_handle.index1,
                                                     lambda_class_name, lambda_method_name, lambda_method_descriptor, cl);
               node_lambda.simpleName = cl.qualifiedName + "##Lambda_" + invoke_dynamic.index1 + "_" + invoke_dynamic.index2;

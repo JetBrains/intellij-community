@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
@@ -20,7 +21,6 @@ import java.util.stream.IntStream;
 
 import static org.jetbrains.java.decompiler.ClassNameConstants.JAVA_LANG_OBJECT;
 import static org.jetbrains.java.decompiler.ClassNameConstants.JAVA_UTIL_OBJECTS;
-import static org.jetbrains.java.decompiler.code.CodeConstants.*;
 import static org.jetbrains.java.decompiler.modules.decompiler.PatternHelper.*;
 import static org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper.SwitchOnCandidate;
 import static org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper.TempVarAssignmentItem;
@@ -421,7 +421,7 @@ public final class SwitchPatternHelper {
           return true;
         }
         int type = primitiveConstant.type;
-        if (!(type == CONSTANT_Integer || type == CONSTANT_String || type == CONSTANT_Class)) {
+        if (!(type == CodeConstants.CONSTANT_Integer || type == CodeConstants.CONSTANT_String || type == CodeConstants.CONSTANT_Class)) {
           return true;
         }
       }
@@ -518,7 +518,7 @@ public final class SwitchPatternHelper {
     private static VarExprent createDefaultPatternVal(@NotNull String className) {
       VarProcessor processor = DecompilerContext.getVarProcessor();
       VarExprent varExprent = new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
-                                             new VarType(TYPE_OBJECT, 0, className),
+                                             new VarType(CodeConstants.TYPE_OBJECT, 0, className),
                                              processor);
       varExprent.setDefinition(true);
       processor.setVarName(varExprent.getVarVersionPair(), VarExprent.getName(varExprent.getVarVersionPair()));
@@ -1113,7 +1113,7 @@ public final class SwitchPatternHelper {
     for (int i = 0; i < bootstrapArguments.size(); i++) {
       PooledConstant constant = bootstrapArguments.get(i);
       if (constant instanceof PrimitiveConstant primitiveConstant) {
-        if (primitiveConstant.type == CONSTANT_Class) {
+        if (primitiveConstant.type == CodeConstants.CONSTANT_Class) {
           mapCaseClasses.put(i, primitiveConstant.getString());
         }
       }
@@ -1330,7 +1330,7 @@ public final class SwitchPatternHelper {
       for (int i = 0; i < bootstrapArguments.size(); i++) {
         PooledConstant constant = bootstrapArguments.get(i);
         if (constant instanceof PrimitiveConstant primitiveConstant) {
-          if (primitiveConstant.type == CONSTANT_Class) {
+          if (primitiveConstant.type == CodeConstants.CONSTANT_Class) {
             continue;
           }
           if (myPreviousSelector.isDynamicCall("enumSwitch", 2)) {
@@ -1338,8 +1338,8 @@ public final class SwitchPatternHelper {
           }
           else {
             VarType type = switch (primitiveConstant.type) {
-              case CONSTANT_String -> VARTYPE_STRING;
-              case CONSTANT_Integer -> VARTYPE_INT;
+              case CodeConstants.CONSTANT_String -> VARTYPE_STRING;
+              case CodeConstants.CONSTANT_Integer -> VARTYPE_INT;
               default -> VARTYPE_UNKNOWN;
             };
             mapCaseValue.put(i, new ConstExprent(type, primitiveConstant.value, null));
