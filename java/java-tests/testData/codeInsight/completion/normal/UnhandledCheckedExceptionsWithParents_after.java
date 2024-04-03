@@ -6,11 +6,13 @@ class X{
   class CheckedException2 extends CheckedException {
   }
   public void test() {
-    try {
-      method1();
-      throw new CheckedException2();
-    } catch(CheckedException e) {
-    } catch (Exception e)<caret>
+      try {
+          method1();
+          throw new CheckedException2();
+      } catch (CheckedException e) {
+      } catch (Exception e) {
+          <caret>
+      }
   }
 
   private void method1() throws CheckedException1{

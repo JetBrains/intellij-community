@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -61,7 +63,8 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     Project project = context.getProject();
     int startOffset = context.getStartOffset();
 
-    PsiDocumentManager.getInstance(project).commitDocument(context.getEditor().getDocument());
+    Editor editor = context.getEditor();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiFile psiFile = context.getFile();
     PsiElement element = psiFile.findElementAt(startOffset);
     element = PsiTreeUtil.getParentOfType(element, PsiCatchSection.class, false);
@@ -71,6 +74,8 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
       DumbService.getInstance(project)
         .runWithAlternativeResolveEnabled(() -> codeStyleManager.shortenClassReferences(finalElement));
     }
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    new JavaSmartEnterProcessor().process(project, editor, context.getFile());
   }
 
   @NotNull
@@ -143,7 +148,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
         }
         int offset = rParenth.getTextRangeInParent().getEndOffset();
         String catchSectionText = catchSection.getText().substring(0, offset);
-        lookupElements.add( new CatchLookupElement(catchSection, catchSectionText));
+        lookupElements.add(new CatchLookupElement(catchSection, catchSectionText));
         if (lookupElements.size() >= MAX_LOOKUP_SIZE) {
           break;
         }

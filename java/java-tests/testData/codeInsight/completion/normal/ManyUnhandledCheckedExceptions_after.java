@@ -4,48 +4,50 @@ class X{
   class CheckedException2 extends Exception {
   }
   public void test() {
-    try {
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      method1();
-      throw new CheckedException2();
-    } catch (Exception e)<caret>
+      try {
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          method1();
+          throw new CheckedException2();
+      } catch (Exception e) {
+          <caret>
+      }
   }
 
   private void method1() throws CheckedException1{

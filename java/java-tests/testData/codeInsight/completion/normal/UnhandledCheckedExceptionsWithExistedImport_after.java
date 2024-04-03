@@ -4,8 +4,10 @@ import com.test2.Test;
 
 class X{
   public void test() {
-    try {
-      Test.test();
-    } catch (TestException e)<caret>
+      try {
+          Test.test();
+      } catch (TestException e) {
+          <caret>
+      }
   }
 }
