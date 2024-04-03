@@ -11,31 +11,31 @@
 
   <xi:include href="/META-INF/analysis-api/analysis-api-fir.xml"/> <!-- comes from the Kotlin compiler -->
 
-  <xi:include href="navigation.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="refactorings.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="indices.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="file-types.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="language.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="navigation.xml"/>
+  <xi:include href="refactorings.xml"/>
+  <xi:include href="indices.xml"/>
+  <xi:include href="file-types.xml"/>
+  <xi:include href="language.xml"/>
   <xi:include href="formatter.xml" xpointer ="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jps.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="caches.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="searching-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="statistics.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="kotlin.highlighting.shared.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="codeInsights.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="light-classes.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="parcelize.k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm-debugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm-debugger-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="dep-spellchecker.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="scripting-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="native-k2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="facets-base.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="jvm.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="jps.xml"/>
+  <xi:include href="caches.xml"/>
+  <xi:include href="kotlin-core.xml"/>
+  <xi:include href="searching-base.xml"/>
+  <xi:include href="statistics.xml"/>
+  <xi:include href="kotlin.highlighting.shared.xml"/>
+  <xi:include href="codeInsights.xml"/>
+  <xi:include href="light-classes.xml"/>
+  <xi:include href="parcelize.k2.xml"/>
+  <xi:include href="jvm-debugger.xml"/>
+  <xi:include href="jvm-debugger-k2.xml"/>
+  <xi:include href="dep-spellchecker.xml"/>
+  <xi:include href="scripting-base.xml"/>
+  <xi:include href="native.xml"/>
+  <xi:include href="native-k2.xml"/>
+  <xi:include href="facets-base.xml"/>
+  <xi:include href="jvm.xml"/>
 
-  <xi:include href="extensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="extensions.xml"/>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJvmIdePlatformKindTooling"/>
