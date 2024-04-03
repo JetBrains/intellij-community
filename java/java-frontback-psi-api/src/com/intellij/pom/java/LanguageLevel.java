@@ -78,20 +78,30 @@ public enum LanguageLevel {
     Stream.of(values()).filter(ver -> !ver.isPreview())
       .collect(Collectors.toMap(ver -> ver.myVersion.feature, Function.identity()));
 
+  /**
+   * Construct the language level for a supported Java version
+   * 
+   * @param presentableTextSupplier a supplier that returns the language level description
+   * @param major the major version number. Whether the version is a preview version is determined by the enum constant name
+   */
   LanguageLevel(Supplier<@Nls String> presentableTextSupplier, int major) {
-    this(presentableTextSupplier, major, false);
-  }
-
-  LanguageLevel(int major) {
-    this(JavaPsiBundle.messagePointer("jdk.unsupported.preview.language.level.description", major), major, true);
-  }
-
-  LanguageLevel(Supplier<@Nls String> presentableTextSupplier, int major, boolean unsupported) {
     myPresentableText = presentableTextSupplier;
     myVersion = JavaVersion.compose(major);
-    myUnsupported = unsupported;
+    myUnsupported = false;
     myPreview = name().endsWith("_PREVIEW") || name().endsWith("_X");
-    if (myUnsupported && !myPreview) {
+  }
+
+  /**
+   * Construct the language level for an unsupported Java version
+   * 
+   * @param major the major version number. Unsupported Java version is always a preview version
+   */
+  LanguageLevel(int major) {
+    myPresentableText = JavaPsiBundle.messagePointer("jdk.unsupported.preview.language.level.description", major);
+    myVersion = JavaVersion.compose(major);
+    myUnsupported = true;
+    myPreview = true;
+    if (!name().endsWith("_PREVIEW")) {
       throw new IllegalArgumentException("Only preview versions could be unsupported: " + name());
     }
   }
