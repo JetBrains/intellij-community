@@ -923,6 +923,7 @@ class JavaToJKTreeBuilder(
             ).also { jkMethod ->
                 jkMethod.psi = this
                 jkMethod.updateNullability()
+                jkMethod.hasRedundantVisibility = isOverrideMethodWithRedundantVisibility(jkMethod.visibility)
                 symbolProvider.provideUniverseSymbol(this, jkMethod)
                 parameterList.node
                     ?.safeAs<CompositeElement>()
@@ -931,6 +932,14 @@ class JavaToJKTreeBuilder(
                         jkMethod.rightParen.withFormattingFrom(it.findChildByRoleAsPsiElement(ChildRole.RPARENTH))
                     }
             }.withFormattingFrom(this)
+        }
+
+        private fun PsiMethod.isOverrideMethodWithRedundantVisibility(visibility: Visibility): Boolean {
+            val superMethods = findSuperMethods()
+            if (superMethods.isEmpty()) return false // Unknown super method
+            return superMethods.any { superMethod ->
+                superMethod.overriddenMethodVisibility(referenceSearcher).visibility == visibility
+            }
         }
 
         fun PsiParameter.toJK(): JKParameter {

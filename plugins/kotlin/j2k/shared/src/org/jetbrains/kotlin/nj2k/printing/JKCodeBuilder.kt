@@ -11,9 +11,11 @@ import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
-import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
+import org.jetbrains.kotlin.nj2k.types.isInterface
+import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
@@ -61,16 +63,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
+        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner): Boolean {
+            var hasRenderedModifiers = false
             modifiersListOwner.forEachModifier { modifierElement ->
                 if (modifierElement.isRedundant()) {
                     printLeftNonCodeElements(modifierElement)
                     printRightNonCodeElements(modifierElement)
                 } else {
+                    hasRenderedModifiers = true
                     modifierElement.accept(this)
                     printer.print(" ")
                 }
             }
+            return hasRenderedModifiers
         }
 
         override fun visitTreeElementRaw(treeElement: JKElement) {
@@ -783,9 +788,9 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
             ktPrimaryConstructor.annotationList.accept(this)
-            renderModifiersList(ktPrimaryConstructor)
+            val hasRenderedModifiers = renderModifiersList(ktPrimaryConstructor)
 
-            val needConstructorKeyword = ktPrimaryConstructor.hasAnnotations || ktPrimaryConstructor.visibility != PUBLIC
+            val needConstructorKeyword = ktPrimaryConstructor.hasAnnotations || hasRenderedModifiers
             if (needConstructorKeyword) {
                 printer.print("constructor")
             }

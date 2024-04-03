@@ -6212,6 +6212,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testNestedClassPrivateMethod() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/visibility/nestedClassPrivateMethod.java");
         }
+
+        @TestMetadata("overrideEqualsBuiltIn.java")
+        public void testOverrideEqualsBuiltIn() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/visibility/overrideEqualsBuiltIn.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

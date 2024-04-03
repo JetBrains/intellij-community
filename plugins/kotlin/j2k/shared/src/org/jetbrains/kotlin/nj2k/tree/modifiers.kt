@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.nj2k.tree
 
 import org.jetbrains.kotlin.nj2k.isInterface
 import org.jetbrains.kotlin.nj2k.tree.Modality.*
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.INNER
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
-import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
+import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -144,15 +145,29 @@ inline fun JKModifiersListOwner.forEachModifier(action: (JKModifierElement) -> U
 
 internal fun JKModifierElement.isRedundant(): Boolean {
     val owner = parent ?: return false
+    if (owner is JKMethod && owner.hasRedundantVisibility && modifier is Visibility) return true
+
     val hasOverrideModifier = (owner as? JKOtherModifiersOwner)?.hasOtherModifier(OVERRIDE) == true
+    val hasInnerModifier = (owner as? JKOtherModifiersOwner)?.hasOtherModifier(INNER) == true
     val isOpenAndAbstractByDefault = owner.let {
         (it is JKClass && it.isInterface()) ||
                 (it is JKDeclaration && it.parentOfType<JKClass>()?.isInterface() == true)
     }
+    val parentClass = owner.parentOfType<JKClass>()
+
+    val parentIsPrivate = parentClass?.visibility == PRIVATE || owner.parentOfType<JKMethod>() != null
+    val redundantOnConstructor = (owner is JKConstructor && parentClass?.classKind == JKClass.ClassKind.ENUM)
+            || (owner is JKKtPrimaryConstructor && parentClass?.visibility == PRIVATE && parentClass.parentOfType<JKClass>() != null)
 
     return when (modifier) {
-        PUBLIC, FINAL -> !hasOverrideModifier
+        PUBLIC -> !hasOverrideModifier
+        FINAL -> !hasOverrideModifier
+        PRIVATE -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor) || redundantOnConstructor
+        INTERNAL -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor)
+                || redundantOnConstructor || (hasInnerModifier && parentIsPrivate)
+
         OPEN, ABSTRACT -> isOpenAndAbstractByDefault
+
         else -> false
     }
 }

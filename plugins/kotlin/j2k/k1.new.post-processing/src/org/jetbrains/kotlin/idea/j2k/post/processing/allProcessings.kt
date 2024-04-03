@@ -66,6 +66,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
 private val addOrRemoveModifiersProcessingGroup = InspectionLikeProcessingGroup(
     runSingleTime = true,
     processings = listOf(
+        // This is left for copy-paste conversion.
+        // On regular conversion, redundant modifiers are removed during JK tree processing.
         RemoveRedundantVisibilityModifierProcessing(),
     )
 )
