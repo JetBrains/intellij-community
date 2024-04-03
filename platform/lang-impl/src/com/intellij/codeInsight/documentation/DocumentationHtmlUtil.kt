@@ -23,7 +23,11 @@ import javax.swing.text.html.StyleSheet
 object DocumentationHtmlUtil {
 
   @JvmStatic
-  val contentOuterPadding: Int get() = 10
+  val settingsButtonPadding: Int get() = 9
+
+  // hand-picked padding for HTML layout
+  @JvmStatic
+  val contentOuterPadding: Int get() = 14
 
   // Should be minimum 2 to compensate mandatory table border width of 2
   @JvmStatic

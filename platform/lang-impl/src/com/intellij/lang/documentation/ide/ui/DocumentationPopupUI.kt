@@ -5,10 +5,12 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentInnerPadding
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.contentOuterPadding
+import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.settingsButtonPadding
 import com.intellij.codeInsight.documentation.DocumentationHtmlUtil.spaceBeforeParagraph
 import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
+import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
@@ -89,7 +91,7 @@ internal class DocumentationPopupUI(
     gearActions.addAll(primaryActions)
 
     val corner = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
-      border = JBUI.Borders.empty(0, 0, contentOuterPadding - 3, 0)
+      border = JBUI.Borders.empty(0, 0, contentOuterPadding - 3, settingsButtonPadding - 5)
     }
     ui.trackDocumentationBackgroundChange(this) {
       corner.background = it
@@ -156,7 +158,7 @@ internal class DocumentationPopupUI(
 
   private fun updatePaddings(toolbar: JComponent) {
     ui.locationLabel.border = JBUI.Borders.empty(
-      2 + spaceBeforeParagraph, 2 + contentOuterPadding + contentInnerPadding,
+      2 + spaceBeforeParagraph, LineTooltipRenderer.CONTENT_PADDING,
       2 + contentOuterPadding, 2 + (toolbar.width / JBUIScale.scale(1f)).toInt())
     val editorPreferredSize = ui.editorPane.preferredSize
     val viewPanel = ui.scrollPane.viewport.view as JPanel

@@ -39,6 +39,7 @@ import java.util.List;
 
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
+  public final static int CONTENT_PADDING = 20;
   /**
    * Html-like text for showing
    * Please note that the tooltip size is calculated dynamically based on the html so
@@ -72,7 +73,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
                                                  @NotNull JEditorPane editorPane,
                                                  boolean highlightActions,
                                                  boolean hasSeparators) {
-    int leftBorder = 12;
+    int leftBorder = CONTENT_PADDING;
     int rightBorder = 12;
     final class MyPanel extends JPanel implements WidthBasedLayout {
       private MyPanel() {
