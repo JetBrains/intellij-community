@@ -71,6 +71,7 @@ import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
+import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 private val settings: UISettings
@@ -178,7 +179,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       panel {
         row(message("combobox.look.and.feel")) {
-          val lafComboBoxModelWrapper = LafComboBoxModelWrapper(lafManager.lafComboBoxModel)
+          val lafComboBoxModelWrapper = LafComboBoxModelWrapper { lafManager.lafComboBoxModel }
           val theme = comboBox(lafComboBoxModelWrapper)
             .bindItem(lafProperty)
             .accessibleName(message("combobox.look.and.feel"))
@@ -675,10 +676,41 @@ private fun logIdeZoomChanged(value: Float, isPresentation: Boolean) {
 }
 
 @Internal
-class LafComboBoxModelWrapper(private val lafComboBoxModel: CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
+class LafComboBoxModelWrapper(private val lafComboBoxModelProvider: () -> CollectionComboBoxModel<LafReference>): ComboBoxModel<LafReference> {
+  private var lafComboBoxModel: CollectionComboBoxModel<LafReference> = lafComboBoxModelProvider()
   private val moreAction = LafReference(name = message("link.get.more.themes"), themeId = "")
   private val additionalItems = listOf(moreAction)
-  var comboBoxComponent: JComponent? = null
+  var comboBoxComponent: ComboBox<LafReference>? = null
+  private val listDataListener = object : ListDataListener {
+    override fun intervalAdded(e: ListDataEvent?) {
+      recreateModelIfNeeded()
+    }
+
+    override fun intervalRemoved(e: ListDataEvent?) {
+      recreateModelIfNeeded()
+    }
+
+    override fun contentsChanged(e: ListDataEvent?) {
+      recreateModelIfNeeded()
+    }
+  }
+
+  init {
+    lafComboBoxModel.addListDataListener(listDataListener)
+  }
+
+  private fun recreateModelIfNeeded() {
+    if (lafComboBoxModel === lafComboBoxModelProvider()) return
+    val comboBoxComponent = comboBoxComponent ?: return
+
+    lafComboBoxModel.removeListDataListener(comboBoxComponent)
+    lafComboBoxModel.removeListDataListener(listDataListener)
+
+    lafComboBoxModel = lafComboBoxModelProvider()
+
+    comboBoxComponent.model = this
+    lafComboBoxModel.addListDataListener(listDataListener)
+  }
 
   override fun getSize(): Int = lafComboBoxModel.size.let { if (it > 0) it + additionalItems.size else it }
 

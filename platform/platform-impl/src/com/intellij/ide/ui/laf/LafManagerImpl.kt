@@ -454,7 +454,11 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   override fun getLafComboBoxModel(): CollectionComboBoxModel<LafReference> = lafComboBoxModel.value
 
   internal fun updateLafComboboxModel() {
+    val oldModel = lafComboBoxModel.valueIfInitialized
     lafComboBoxModel.drop()
+
+    // Let the model wrapper know that it's time to recreate the wrapped model.
+    oldModel?.removeAll()
   }
 
   private fun selectComboboxModel() {

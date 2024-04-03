@@ -199,7 +199,7 @@ private class CustomizeTab(val parentDisposable: Disposable) : DefaultWelcomeScr
 
       header(IdeBundle.message("welcome.screen.color.theme.header"), true)
       row(IdeBundle.message("combobox.look.and.feel")) {
-        val themeBuilder = comboBox(LafComboBoxModelWrapper(laf.lafComboBoxModel))
+        val themeBuilder = comboBox(LafComboBoxModelWrapper { laf.lafComboBoxModel })
           .bindItem(lafProperty)
           .accessibleName(IdeBundle.message("welcome.screen.color.theme.header"))
         themeBuilder.component.isSwingPopup = false
