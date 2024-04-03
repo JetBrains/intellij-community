@@ -2,15 +2,18 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
+import com.intellij.openapi.observable.operation.OperationExecutionStatus
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import kotlinx.coroutines.delay
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
+import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
+import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskStarted
 import org.junit.Test
 import org.junit.jupiter.api.Assertions
-import org.opentest4j.AssertionFailedError
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
@@ -192,10 +195,26 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val modelFetchCompletionAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
+      val executionStartAssertion = ListenerAssertion()
+      val executionFinishAssertion = ListenerAssertion()
 
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
         throw CancellationException()
+      }
+      whenExternalSystemTaskStarted(disposable) { _, _ ->
+        executionStartAssertion.touch()
+      }
+      whenExternalSystemTaskFinished(disposable) { _, status ->
+        executionFinishAssertion.trace {
+          Assertions.assertEquals(OperationExecutionStatus.Cancel, status) {
+            "The Gradle sync should be cancelled during execution.\n" +
+            "Therefore the Gradle sync should have the cancelled state."
+          }
+          Assertions.assertDoesNotThrow(ProgressManager::checkCanceled) {
+            "Unexpected cancellation in the Gradle sync listeners"
+          }
+        }
       }
 
       initMultiModuleProject()
@@ -212,6 +231,14 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       syncCancellationAssertion.assertListenerState(1) {
         "The Gradle sync should be cancelled during execution."
       }
+      executionStartAssertion.assertListenerFailures()
+      executionStartAssertion.assertListenerState(1) {
+        "Gradle sync should be started."
+      }
+      executionFinishAssertion.assertListenerFailures()
+      executionFinishAssertion.assertListenerState(1) {
+        "Gradle sync should be finished."
+      }
     }
   }
 
@@ -221,6 +248,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
+      val executionStartAssertion = ListenerAssertion()
+      val executionFinishAssertion = ListenerAssertion()
 
       whenProjectLoaded(disposable) {
         projectLoadingAssertion.touch()
@@ -228,6 +257,20 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       }
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
+      }
+      whenExternalSystemTaskStarted(disposable) { _, _ ->
+        executionStartAssertion.touch()
+      }
+      whenExternalSystemTaskFinished(disposable) { _, status ->
+        executionFinishAssertion.trace {
+          Assertions.assertEquals(OperationExecutionStatus.Cancel, status) {
+            "The Gradle sync should be cancelled during the project loaded action.\n" +
+            "Therefore the Gradle sync should have the cancelled state."
+          }
+          Assertions.assertDoesNotThrow(ProgressManager::checkCanceled) {
+            "Unexpected cancellation in the Gradle sync listeners"
+          }
+        }
       }
 
       initMultiModuleProject()
@@ -247,6 +290,14 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       syncCancellationAssertion.assertListenerFailures()
       syncCancellationAssertion.assertListenerState(1) {
         "The Gradle sync should be cancelled during execution."
+      }
+      executionStartAssertion.assertListenerFailures()
+      executionStartAssertion.assertListenerState(1) {
+        "Gradle sync should be started."
+      }
+      executionFinishAssertion.assertListenerFailures()
+      executionFinishAssertion.assertListenerState(1) {
+        "Gradle sync should be finished."
       }
     }
   }
@@ -267,6 +318,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val modelFetchCompletionAssertion = ListenerAssertion()
       val modelFetchPhaseCompletionAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
+      val executionStartAssertion = ListenerAssertion()
+      val executionFinishAssertion = ListenerAssertion()
 
       val allPhases = GradleModelFetchPhase.entries
       val phasedModelProviders = allPhases.map { TestModelProvider(it) }
@@ -287,6 +340,20 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
       }
+      whenExternalSystemTaskStarted(disposable) { _, _ ->
+        executionStartAssertion.touch()
+      }
+      whenExternalSystemTaskFinished(disposable) { _, status ->
+        executionFinishAssertion.trace {
+          Assertions.assertEquals(OperationExecutionStatus.Cancel, status) {
+            "Gradle sync should be cancelled during the $cancellationPhase.\n" +
+            "Therefore the Gradle sync should have the cancelled state."
+          }
+          Assertions.assertDoesNotThrow(ProgressManager::checkCanceled) {
+            "Unexpected cancellation in the Gradle sync listeners"
+          }
+        }
+      }
 
       initMultiModuleProject()
       importProject(errorHandler = { _, _ ->
@@ -342,6 +409,14 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         "Expected completed phases = $expectedCompletedPhases\n" +
         "Actual completed phases = $actualCompletedPhases"
       }
+      executionStartAssertion.assertListenerFailures()
+      executionStartAssertion.assertListenerState(1) {
+        "Gradle sync should be started."
+      }
+      executionFinishAssertion.assertListenerFailures()
+      executionFinishAssertion.assertListenerState(1) {
+        "Gradle sync should be finished."
+      }
     }
   }
 
@@ -350,6 +425,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
     Disposer.newDisposable().use { disposable ->
       val modelFetchCompletionAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
+      val executionStartAssertion = ListenerAssertion()
+      val executionFinishAssertion = ListenerAssertion()
 
       whenModelFetchCompleted(disposable) { resolverContext ->
         modelFetchCompletionAssertion.trace {
@@ -361,10 +438,23 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           Assertions.assertTrue(resolverContext.cancellationToken.isCancellationRequested) {
             "The Gradle sync cancellation token should be cancelled after progress indicator cancellation"
           }
-          delay(10.seconds)
-          throw AssertionFailedError(
+          assertCancellation({ delay(10.seconds) }) {
             "The Gradle sync should be cancelled after progress indicator cancellation"
-          )
+          }
+        }
+      }
+      whenExternalSystemTaskStarted(disposable) { _, _ ->
+        executionStartAssertion.touch()
+      }
+      whenExternalSystemTaskFinished(disposable) { _, status ->
+        executionFinishAssertion.trace {
+          Assertions.assertEquals(OperationExecutionStatus.Cancel, status) {
+            "The Gradle sync should be cancelled during execution.\n" +
+            "Therefore the Gradle sync should have the cancelled state."
+          }
+          Assertions.assertDoesNotThrow(ProgressManager::checkCanceled) {
+            "Unexpected cancellation in the Gradle sync listeners"
+          }
         }
       }
 
@@ -381,6 +471,14 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       syncCancellationAssertion.assertListenerState(1) {
         "The Gradle sync should be cancelled during execution."
       }
+      executionStartAssertion.assertListenerFailures()
+      executionStartAssertion.assertListenerState(1) {
+        "Gradle sync should be started."
+      }
+      executionFinishAssertion.assertListenerFailures()
+      executionFinishAssertion.assertListenerState(1) {
+        "Gradle sync should be finished."
+      }
     }
   }
 
@@ -391,6 +489,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val projectLoadingAssertion = ListenerAssertion()
       val modelFetchCompletionAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
+      val executionStartAssertion = ListenerAssertion()
+      val executionFinishAssertion = ListenerAssertion()
 
       whenProjectLoaded(disposable) { resolverContext ->
         projectLoadingAssertion.trace {
@@ -402,14 +502,27 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           Assertions.assertTrue(resolverContext.cancellationToken.isCancellationRequested) {
             "The Gradle sync cancellation token should be cancelled after progress indicator cancellation"
           }
-          delay(10.seconds)
-          throw AssertionFailedError(
+          assertCancellation({ delay(10.seconds) }) {
             "The Gradle sync should be cancelled after progress indicator cancellation"
-          )
+          }
         }
       }
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
+      }
+      whenExternalSystemTaskStarted(disposable) { _, _ ->
+        executionStartAssertion.touch()
+      }
+      whenExternalSystemTaskFinished(disposable) { _, status ->
+        executionFinishAssertion.trace {
+          Assertions.assertEquals(OperationExecutionStatus.Cancel, status) {
+            "The Gradle sync should be cancelled during the project loaded action.\n" +
+            "Therefore the Gradle sync should have the cancelled state."
+          }
+          Assertions.assertDoesNotThrow(ProgressManager::checkCanceled) {
+            "Unexpected cancellation in the Gradle sync listeners"
+          }
+        }
       }
 
       initMultiModuleProject()
@@ -430,6 +543,14 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       syncCancellationAssertion.assertListenerState(1) {
         "The Gradle sync should be cancelled during execution."
       }
+      executionStartAssertion.assertListenerFailures()
+      executionStartAssertion.assertListenerState(1) {
+        "Gradle sync should be started."
+      }
+      executionFinishAssertion.assertListenerFailures()
+      executionFinishAssertion.assertListenerState(1) {
+        "Gradle sync should be finished."
+      }
     }
   }
 
@@ -449,6 +570,8 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       val modelFetchCompletionAssertion = ListenerAssertion()
       val modelFetchPhaseCompletionAssertion = ListenerAssertion()
       val syncCancellationAssertion = ListenerAssertion()
+      val executionStartAssertion = ListenerAssertion()
+      val executionFinishAssertion = ListenerAssertion()
 
       val allPhases = GradleModelFetchPhase.entries
       val phasedModelProviders = allPhases.map { TestModelProvider(it) }
@@ -468,10 +591,9 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
             Assertions.assertTrue(resolverContext.cancellationToken.isCancellationRequested) {
               "The Gradle sync cancellation token should be cancelled after progress indicator cancellation"
             }
-            delay(10.seconds)
-            throw AssertionFailedError(
+            assertCancellation({ delay(10.seconds) }) {
               "The Gradle sync should be cancelled after progress indicator cancellation"
-            )
+            }
           }
         }
       }
@@ -480,6 +602,23 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
       }
       whenModelFetchCompleted(disposable) {
         modelFetchCompletionAssertion.touch()
+      }
+      whenExternalSystemTaskStarted(disposable) { _, _ ->
+        executionStartAssertion.touch()
+      }
+      whenExternalSystemTaskFinished(disposable) { _, status ->
+        executionFinishAssertion.trace {
+          Assertions.assertEquals(OperationExecutionStatus.Cancel, status) {
+            "The Gradle sync should be cancelled during the project loaded action.\n" +
+            "Therefore the Gradle sync should have the cancelled state.\n" +
+            "Requested phases = $allPhases\n" +
+            "Expected completed phases = $expectedCompletedPhases\n" +
+            "Actual completed phases = $actualCompletedPhases"
+          }
+          Assertions.assertDoesNotThrow(ProgressManager::checkCanceled) {
+            "Unexpected cancellation in the Gradle sync listeners"
+          }
+        }
       }
 
       initMultiModuleProject()
@@ -535,6 +674,14 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         "Requested phases = $allPhases\n" +
         "Expected completed phases = $expectedCompletedPhases\n" +
         "Actual completed phases = $actualCompletedPhases"
+      }
+      executionStartAssertion.assertListenerFailures()
+      executionStartAssertion.assertListenerState(1) {
+        "Gradle sync should be started."
+      }
+      executionFinishAssertion.assertListenerFailures()
+      executionFinishAssertion.assertListenerState(1) {
+        "Gradle sync should be finished."
       }
     }
   }

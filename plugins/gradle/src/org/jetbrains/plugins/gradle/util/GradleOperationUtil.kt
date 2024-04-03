@@ -125,7 +125,7 @@ private fun isExecuteTask(id: ExternalSystemTaskId): Boolean {
   return id.type == ExternalSystemTaskType.EXECUTE_TASK
 }
 
-private fun whenExternalSystemTaskStarted(
+fun whenExternalSystemTaskStarted(
   parentDisposable: Disposable,
   action: (ExternalSystemTaskId, String?) -> Unit
 ) {

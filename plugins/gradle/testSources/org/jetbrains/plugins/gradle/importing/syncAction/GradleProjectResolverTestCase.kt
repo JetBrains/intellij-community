@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.jupiter.api.Assertions
+import org.opentest4j.AssertionFailedError
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
@@ -209,16 +210,13 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
       failures.clear()
     }
 
-    inline fun trace(action: () -> Unit) {
+    inline fun trace(action: ListenerAssertion.() -> Unit) {
       touch()
       try {
         return action()
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: CancellationException) {
-        throw e
+      catch (exception: ExpectedException) {
+        throw exception.original
       }
       catch (failure: Throwable) {
         addFailure(failure)
@@ -240,5 +238,20 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
     fun assertListenerState(expectedCount: Int, messageSupplier: () -> String) {
       Assertions.assertEquals(expectedCount, counter.get(), messageSupplier)
     }
+
+    inline fun assertCancellation(action: () -> Unit, messageSupplier: () -> String) {
+      try {
+        action()
+      }
+      catch (e: CancellationException) {
+        throw ExpectedException(e)
+      }
+      catch (e: ProcessCanceledException) {
+        throw ExpectedException(e)
+      }
+      throw AssertionFailedError(messageSupplier())
+    }
+
+    class ExpectedException(val original: Exception) : Exception("Expected exception", original)
   }
 }
