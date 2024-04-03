@@ -85,6 +85,9 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractK2MoveTopLevelToInnerTest> {
             model("refactoring/moveTopLevelToInner", pattern = TEST, flatten = true)
         }
+        testClass<AbstractK2MoveNestedTest> {
+            model("refactoring/moveNested", pattern = TEST, flatten = true)
+        }
         testClass<AbstractK2MoveTest> {
             model("refactoring/move", pattern = TEST, flatten = true)
         }
