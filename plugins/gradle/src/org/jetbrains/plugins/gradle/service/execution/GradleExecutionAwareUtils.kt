@@ -13,7 +13,7 @@ import com.intellij.util.ConcurrencyUtil
 fun whenTaskCanceled(task: ExternalSystemTask, callback: () -> Unit) {
   val wrappedCallback = ConcurrencyUtil.once(callback)
   val progressManager = ExternalSystemProgressNotificationManager.getInstance()
-  val notificationListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+  val notificationListener = object : ExternalSystemTaskNotificationListener {
     override fun onCancel(id: ExternalSystemTaskId) {
       wrappedCallback.run()
     }

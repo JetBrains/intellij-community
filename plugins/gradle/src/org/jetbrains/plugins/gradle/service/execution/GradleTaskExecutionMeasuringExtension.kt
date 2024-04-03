@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.OperationType
@@ -34,7 +34,7 @@ class GradleTaskExecutionMeasuringExtension : GradleOperationHelperExtension {
     val router = GradleTaskExecutionListener(handler)
     operation.addProgressListener(ProgressListener { router.route(it) }, OperationType.TASK)
     ExternalSystemProgressNotificationManager.getInstance()
-      .addNotificationListener(id, object : ExternalSystemTaskNotificationListenerAdapter() {
+      .addNotificationListener(id, object : ExternalSystemTaskNotificationListener {
         override fun onEnd(id: ExternalSystemTaskId) = router.flush()
       })
   }

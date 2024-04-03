@@ -158,7 +158,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   @Override
   public boolean cancel(@NotNull final ProgressIndicator indicator, ExternalSystemTaskNotificationListener @NotNull ... listeners) {
     indicator.setIndeterminate(true);
-    ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       @Override
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
         indicator.setText(wrapProgressText(event.getDescription()));
@@ -166,10 +166,10 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     };
     final ExternalSystemTaskNotificationListener[] ls;
     if (listeners.length > 0) {
-      ls = ArrayUtil.append(listeners, adapter);
+      ls = ArrayUtil.append(listeners, listener);
     }
     else {
-      ls = new ExternalSystemTaskNotificationListener[]{adapter};
+      ls = new ExternalSystemTaskNotificationListener[]{listener};
     }
 
     return cancel(ls);
@@ -233,7 +233,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
 
   @NotNull
   protected static ExternalSystemTaskNotificationListener wrapWithListener(@NotNull ExternalSystemProgressNotificationManagerImpl manager) {
-    return new ExternalSystemTaskNotificationListenerAdapter() {
+    return new ExternalSystemTaskNotificationListener() {
       @Override
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
         manager.onStatusChange(event);
@@ -249,7 +249,7 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
   private @NotNull ExternalSystemTaskNotificationListener getProgressIndicatorListener(@NotNull ProgressIndicator indicator) {
     final ExternalSystemTaskProgressIndicatorUpdater updater =
       ExternalSystemTaskProgressIndicatorUpdater.getInstanceOrDefault(myExternalSystemId);
-    return new ExternalSystemTaskNotificationListenerAdapter() {
+    return new ExternalSystemTaskNotificationListener() {
       @Override
       public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
         updater.updateIndicator(event, indicator, text -> wrapProgressText(text));

@@ -9,7 +9,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -259,7 +259,7 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     ExternalSystemProgressNotificationManager notificationManager =
       ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder out = new StringBuilder();
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       private volatile ExternalSystemTaskId myId = null;
 
       @Override

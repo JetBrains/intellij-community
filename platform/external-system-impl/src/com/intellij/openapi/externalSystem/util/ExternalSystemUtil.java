@@ -395,7 +395,7 @@ public final class ExternalSystemUtil {
     var syncViewManager = project.getService(SyncViewManager.class);
     try (BuildEventDispatcher eventDispatcher = new ExternalSystemEventDispatcher(taskId, syncViewManager, false)) {
       var finishSyncEventSupplier = new Ref<Supplier<? extends FinishBuildEvent>>();
-      var taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+      var taskListener = new ExternalSystemTaskNotificationListener() {
 
         @Override
         public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {

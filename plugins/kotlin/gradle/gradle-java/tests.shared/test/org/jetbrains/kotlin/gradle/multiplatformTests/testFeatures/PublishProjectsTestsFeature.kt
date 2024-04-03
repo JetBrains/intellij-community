@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.task.TaskCallback
@@ -89,7 +89,7 @@ object GradleProjectsPublisher {
 
     private fun runTaskAndGetErrorOutput(projectPath: String, project: Project, taskName: String, scriptParameters: String = ""): String {
         val taskErrOutput = StringBuilder()
-        val stdErrListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+        val stdErrListener = object : ExternalSystemTaskNotificationListener {
             override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
                 if (!stdOut) {
                     taskErrOutput.append(text)

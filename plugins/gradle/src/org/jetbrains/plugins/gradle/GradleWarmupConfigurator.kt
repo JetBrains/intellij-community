@@ -8,13 +8,12 @@ import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.ide.warmup.WarmupLogger
 import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
@@ -170,7 +169,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 
   class StateNotificationListener(
     private val project: Project, private val scope: CoroutineScope
-  ) : ExternalSystemTaskNotificationListenerAdapter() {
+  ) : ExternalSystemTaskNotificationListener {
 
     override fun onSuccess(id: ExternalSystemTaskId) {
       if (!id.isGradleProjectResolveTask()) return
@@ -221,7 +220,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 
   class ImportErrorListener(
     private val project: Project, private val scope: CoroutineScope
-  )  : ExternalSystemTaskNotificationListenerAdapter() {
+  ) : ExternalSystemTaskNotificationListener {
     private val _error = AtomicReference<Throwable?>()
     val error get() = _error.get()
 
@@ -247,7 +246,7 @@ class GradleWarmupConfigurator : WarmupConfigurator {
     }
   }
 
-  class LoggingNotificationListener(val logger: CommandLineInspectionProgressReporter?) : ExternalSystemTaskNotificationListenerAdapter() {
+  class LoggingNotificationListener(val logger: CommandLineInspectionProgressReporter?) : ExternalSystemTaskNotificationListener {
 
     private val logPath = try {
       gradleLogWriterPath.createParentDirectories().createFile()

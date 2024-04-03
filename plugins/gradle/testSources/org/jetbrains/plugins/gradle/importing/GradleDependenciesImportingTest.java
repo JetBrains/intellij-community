@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
@@ -117,7 +117,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     ExternalSystemProgressNotificationManager notificationManager =
       ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
     StringBuilder gradleClasspath = new StringBuilder();
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         if (!stdOut || text.isBlank()) return;
@@ -2294,7 +2294,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     GradleExecutionSettings settings = new GradleManager().getExecutionSettingsProvider().fun(new Pair<>(myProject, projectPath));
     new GradleTaskManager().executeTasks(
       taskId, Collections.singletonList(task), projectPath, settings, null,
-      new ExternalSystemTaskNotificationListenerAdapter() {
+      new ExternalSystemTaskNotificationListener() {
         @Override
         public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
           if (stdOut) {

@@ -25,8 +25,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   private final AtomicReference<S> mySettings              = new AtomicReference<>();
   private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<>(new ExternalSystemTaskNotificationListenerAdapter() {
-    });
+    new AtomicReference<>(ExternalSystemTaskNotificationListener.NULL_OBJECT);
 
   private final @NotNull RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
   private final @NotNull RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;

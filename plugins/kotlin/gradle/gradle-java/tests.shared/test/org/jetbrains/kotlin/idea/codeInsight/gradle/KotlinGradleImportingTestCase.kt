@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.task.TaskCallback
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestData
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
@@ -312,7 +311,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected fun runTaskAndGetErrorOutput(projectPath: String, taskName: String, scriptParameters: String = ""): String {
         val taskErrOutput = StringBuilder()
-        val stdErrListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+        val stdErrListener = object : ExternalSystemTaskNotificationListener {
             override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
                 if (!stdOut) {
                     taskErrOutput.append(text)

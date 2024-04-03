@@ -5,7 +5,6 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.setEnvironmentConfigurationProvider
@@ -34,7 +33,7 @@ fun ensureInstalledWrapper(project: Project, externalProjectPath: Path, gradleVe
   val title = GradleBundle.message("gradle.project.generation.wrapper.progress.title")
   val task = object : Task.Backgroundable(project, title, true) {
     override fun run(indicator: ProgressIndicator) {
-      val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+      val listener = object : ExternalSystemTaskNotificationListener {
         override fun onEnd(id: ExternalSystemTaskId) = callback.run()
       }
       ensureInstalledWrapperTask.execute(indicator, listener)

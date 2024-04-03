@@ -5,7 +5,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -52,7 +52,7 @@ public class GradleEnvironmentTest extends GradleImportingTestCase {
     settings.setEnv(passedEnv);
     ExternalSystemProgressNotificationManager notificationManager =
       ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
-    ExternalSystemTaskNotificationListenerAdapter listener = new ExternalSystemTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListener listener = new ExternalSystemTaskNotificationListener() {
       @Override
       public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
         gradleEnv.append(text);

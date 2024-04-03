@@ -5,7 +5,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -83,7 +83,7 @@ class GradleSystemPropertiesTest: GradleImportingTestCase() {
   }
 
   private fun createGradleTaskListener(taskOutputSystemProperties: MutableMap<String, String>) =
-    object : ExternalSystemTaskNotificationListenerAdapter() {
+    object : ExternalSystemTaskNotificationListener {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
         Gson().fromJson<Map<String, String>>(text, Map::class.java)?.let {
           taskOutputSystemProperties.putAll(it)

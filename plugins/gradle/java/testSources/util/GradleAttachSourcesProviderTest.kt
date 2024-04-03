@@ -5,7 +5,7 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
@@ -153,7 +153,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     }
 
     val output = mutableListOf<String>()
-    val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+    val listener = object : ExternalSystemTaskNotificationListener {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
         output += text
       }

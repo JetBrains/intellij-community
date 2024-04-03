@@ -6,7 +6,7 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -37,7 +37,7 @@ internal class GradleDependencyCollector : DependencyCollector {
   private fun <T> DataNode<*>.getChildrenSequence(key: Key<T>) = ExternalSystemApiUtil.getChildren(this, key).asSequence()
 }
 
-internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerAdapter() {
+internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListener {
 
   override fun onEnd(id: ExternalSystemTaskId) {
     if (id.projectSystemId == GradleConstants.SYSTEM_ID

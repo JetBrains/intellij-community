@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.autoimport.*
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RESOLVE_PROJECT
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
@@ -64,7 +64,7 @@ class ProjectAware(
 
   private inner class TaskNotificationListener(
     val delegate: ExternalSystemProjectListener
-  ) : ExternalSystemTaskNotificationListenerAdapter() {
+  ) : ExternalSystemTaskNotificationListener {
     var externalSystemTaskId = AtomicReference<ExternalSystemTaskId?>(null)
 
     override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {

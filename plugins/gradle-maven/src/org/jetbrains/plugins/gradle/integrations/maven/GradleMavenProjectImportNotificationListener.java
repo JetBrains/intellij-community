@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.integrations.maven;
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  *
  * @author Vladislav.Soroka
  */
-final class GradleMavenProjectImportNotificationListener extends ExternalSystemTaskNotificationListenerAdapter {
+final class GradleMavenProjectImportNotificationListener implements ExternalSystemTaskNotificationListener {
   @Override
   public void onSuccess(@NotNull ExternalSystemTaskId id) {
     if (GradleConstants.SYSTEM_ID.getId().equals(id.getProjectSystemId().getId())

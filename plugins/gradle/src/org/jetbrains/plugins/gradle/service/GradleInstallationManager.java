@@ -7,7 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -591,8 +591,8 @@ public class GradleInstallationManager implements Disposable {
     return null;
   }
 
-  private static final class BuildLayoutParametersCacheCleanupListener extends ExternalSystemTaskNotificationListenerAdapter
-    implements ProjectManagerListener, DynamicPluginListener {
+  private static final class BuildLayoutParametersCacheCleanupListener
+    implements ExternalSystemTaskNotificationListener, ProjectManagerListener, DynamicPluginListener {
     @Override
     public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
       getInstance().myBuildLayoutParametersCache.remove(workingDir);

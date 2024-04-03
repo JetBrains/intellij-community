@@ -6,10 +6,7 @@ package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
+import com.intellij.openapi.externalSystem.model.task.*
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
@@ -133,7 +130,7 @@ private fun whenExternalSystemTaskStarted(
   action: (ExternalSystemTaskId, String?) -> Unit
 ) {
   ExternalSystemProgressNotificationManager.getInstance()
-    .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
+    .addNotificationListener(object : ExternalSystemTaskNotificationListener {
       override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
         action(id, workingDir)
       }
@@ -145,7 +142,7 @@ fun whenExternalSystemTaskFinished(
   action: (ExternalSystemTaskId, OperationExecutionStatus) -> Unit
 ) {
   ExternalSystemProgressNotificationManager.getInstance()
-    .addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
+    .addNotificationListener(object : ExternalSystemTaskNotificationListener {
       override fun onSuccess(id: ExternalSystemTaskId) {
         action(id, OperationExecutionStatus.Success)
       }
@@ -164,7 +161,7 @@ fun whenExternalSystemTaskOutputAdded(
   parentDisposable: Disposable,
   action: (ExternalSystemTaskId, String, Boolean) -> Unit
 ) {
-  val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+  val listener = object : ExternalSystemTaskNotificationListener {
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       action(id, text, stdOut)
     }
@@ -177,7 +174,7 @@ fun whenExternalSystemEventReceived(
   parentDisposable: Disposable,
   action: (ExternalSystemTaskNotificationEvent) -> Unit
 ) {
-  val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+  val listener = object : ExternalSystemTaskNotificationListener {
     override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
       action(event)
     }

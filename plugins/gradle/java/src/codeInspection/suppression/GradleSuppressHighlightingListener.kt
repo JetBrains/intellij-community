@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gradle.codeInspection.suppression
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
-class GradleSuppressHighlightingListener : ExternalSystemTaskNotificationListenerAdapter() {
+class GradleSuppressHighlightingListener : ExternalSystemTaskNotificationListener {
 
   override fun onSuccess(id: ExternalSystemTaskId) = processAllProjects(id, GradleSuspendTypecheckingService::resumeHighlighting)
 
