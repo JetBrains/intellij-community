@@ -113,27 +113,28 @@ public final class CustomizationUtil {
       }
       AnAction ca = actionUrl.getComponentAction();
       if (ca == null) continue;
+      int position = actionUrl.getAbsolutePosition();
       if (actionUrl.getActionType() == ActionUrl.ADDED) {
         if (ca == group) {
           LOG.error("Attempt to add group to itself; group ID=" + actionManager.getId(group));
           continue;
         }
-        if (reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
-          reorderedChildren.add(actionUrl.getAbsolutePosition(), ca);
+        if (reorderedChildren.size() > position) {
+          reorderedChildren.add(position, ca);
         }
         else {
           reorderedChildren.add(ca);
         }
       }
-      else if (actionUrl.getActionType() == ActionUrl.DELETED && reorderedChildren.size() > actionUrl.getAbsolutePosition()) {
-        AnAction ra = reorderedChildren.get(actionUrl.getAbsolutePosition());
-        Presentation rt = ra.getTemplatePresentation();
-        Presentation ct = ca.getTemplatePresentation();
-        if (rt.getText() == null ? !(ct.getText() == null || ct.getText().isEmpty())
-                                 : !rt.getText().equals(ct.getText())) {
-          continue;
+      else if (actionUrl.getActionType() == ActionUrl.DELETED) {
+        if (!reorderedChildren.remove(ca)) {
+          AnAction ra = reorderedChildren.get(position);
+          Presentation rt = ra.getTemplatePresentation();
+          Presentation ct = ca.getTemplatePresentation();
+          if (rt.getText() == null ? StringUtil.isEmpty(ct.getText()) : rt.getText().equals(ct.getText())) {
+            reorderedChildren.remove(position);
+          }
         }
-        reorderedChildren.remove(actionUrl.getAbsolutePosition());
       }
     }
     for (int i = 0; i < reorderedChildren.size(); i++) {
