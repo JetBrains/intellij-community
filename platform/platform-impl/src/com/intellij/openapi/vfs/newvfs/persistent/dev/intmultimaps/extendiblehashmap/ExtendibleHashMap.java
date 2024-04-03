@@ -316,6 +316,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
+  @Override
   public synchronized boolean isClosed() {
     return !storage.isOpen();
   }

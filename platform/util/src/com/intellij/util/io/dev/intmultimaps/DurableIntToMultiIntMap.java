@@ -93,6 +93,7 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
    */
   boolean forEach(@NotNull KeyValueProcessor processor) throws IOException;
 
+  boolean isClosed();
 
   @FunctionalInterface
   interface ValueAcceptor {
