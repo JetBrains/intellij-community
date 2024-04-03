@@ -800,26 +800,35 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
   }
 
   return createSkippableJob(spanBuilder("generate maven artifacts"), BuildOptions.MAVEN_ARTIFACTS_STEP, context) {
-    val moduleNames = HashSet<String>()
+    val platformModules = HashSet<String>()
     if (mavenArtifacts.forIdeModules) {
-      moduleNames.addAll(distributionState.platformModules)
+      platformModules.addAll(distributionState.platformModules)
       val productLayout = context.productProperties.productLayout
-      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = moduleNames)
+      collectIncludedPluginModules(enabledPluginModules = context.bundledPluginModules, product = productLayout, result = platformModules)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
-    moduleNames.addAll(mavenArtifacts.additionalModules)
-    if (!moduleNames.isEmpty()) {
+    val builtArtifacts = mutableSetOf<MavenArtifactData>()
+    if (!platformModules.isEmpty()) {
       mavenArtifactsBuilder.generateMavenArtifacts(
-        moduleNamesToPublish = moduleNames,
+        moduleNamesToPublish = platformModules,
+        outputDir = "maven-artifacts",
+        builtArtifacts = builtArtifacts,
+        ignoreNonMavenizable = true,
+      )
+    }
+    if (!mavenArtifacts.additionalModules.isEmpty()) {
+      mavenArtifactsBuilder.generateMavenArtifacts(
+        moduleNamesToPublish = mavenArtifacts.additionalModules,
         moduleNamesToSquashAndPublish = mavenArtifacts.squashedModules,
+        builtArtifacts = builtArtifacts,
         outputDir = "maven-artifacts"
       )
     }
     if (!mavenArtifacts.proprietaryModules.isEmpty()) {
       mavenArtifactsBuilder.generateMavenArtifacts(
         moduleNamesToPublish = mavenArtifacts.proprietaryModules,
-        moduleNamesToSquashAndPublish = emptyList(),
+        builtArtifacts = builtArtifacts,
         outputDir = "proprietary-maven-artifacts"
       )
     }
