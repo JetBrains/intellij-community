@@ -9,6 +9,8 @@ import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.kdoc.findKDoc
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -74,7 +76,7 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
                 val element = referenceExpression.mainReference.resolve() as KtElement
                 val navigationElement = element.navigationElement as? KtDeclaration
                     ?: error("documentation can be only on KtDeclaration")
-                val docText: String? = null/*navigationElement.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(testProject, it) }?.contentTag?.getContent()*/
+                val docText: String? = navigationElement.findKDoc { DescriptorToSourceUtilsIde.getAnyDeclaration(testProject, it) }?.contentTag?.getContent()
                 return@map """
                     |$relativePath:$line:$offset
                     |$docText

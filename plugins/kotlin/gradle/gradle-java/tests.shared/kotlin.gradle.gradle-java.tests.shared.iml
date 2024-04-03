@@ -51,5 +51,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.fe10.analysis" scope="TEST" />
   </component>
 </module>
