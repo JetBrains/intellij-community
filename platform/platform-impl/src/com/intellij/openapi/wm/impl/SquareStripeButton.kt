@@ -196,7 +196,12 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
   }
 
   override fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
-    ResizeStripeManager.showPopup(popupBuilder.invoke(), component, x, y)
+    if (ResizeStripeManager.enabled()) {
+      ResizeStripeManager.showPopup(popupBuilder.invoke(), component, x, y)
+    }
+    else {
+      super.showPopup(popupBuilder, component, x, y)
+    }
   }
 
   override fun paintButtonLook(g: Graphics?) {
