@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.UsageTracker;
 import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -135,6 +136,7 @@ public class JavaExecutionStack extends XExecutionStack {
       if (frame != null) {
         myTopFrames = createStackFrames(frame);
       }
+      UsageTracker.topFrameInitialized(ContainerUtil.getFirstItem(myTopFrames));
     }
     catch (EvaluateException e) {
       LOG.info(e);
