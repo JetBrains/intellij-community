@@ -2,11 +2,9 @@
 package com.intellij.compiler.server
 
 import com.intellij.java.JavaBundle
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
@@ -38,20 +36,15 @@ internal class BuildManagerVersionChecker(val project: Project, val scope: Corou
       val jdkArch = versionInfo.arch ?: return@launch
 
       if (jdkArch != CpuArch.CURRENT) {
-        val notification = NotificationGroupManager.getInstance()
+        NotificationGroupManager.getInstance()
           .getNotificationGroup("JDK Arch Check")
           .createNotification(JavaBundle.message("arch.checker.notification.title"), JavaBundle.message("arch.checker.notification.content"), NotificationType.WARNING)
-
-        notification.apply {
-          addAction(object : NotificationAction(JavaBundle.message("arch.checker.notification.project.structure")) {
-            override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          .apply {
+            addAction(NotificationAction.createSimpleExpiring(JavaBundle.message("arch.checker.notification.project.structure")) {
               ProjectSettingsService.getInstance(project).openProjectSettings()
-              notification.expire()
-            }
-          })
-
-          notify(project)
-        }
+            })
+            notify(project)
+          }
       }
     }
   }
