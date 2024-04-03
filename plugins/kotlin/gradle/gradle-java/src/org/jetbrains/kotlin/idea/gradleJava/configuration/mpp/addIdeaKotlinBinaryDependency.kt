@@ -21,12 +21,12 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
 
     val dependencyNode = findLibraryDependencyNode(dependency) ?: run create@{
         val coordinates = dependency.coordinates ?: return null
-        val libraryData = LibraryData(coordinates.displayString, isUnresolved = dependency is IdeaKotlinUnresolvedBinaryDependency)
+        val libraryData = LibraryData(KotlinLibraryName(coordinates), isUnresolved = dependency is IdeaKotlinUnresolvedBinaryDependency)
         val libraryLevel = if (dependency.isIdeaProjectLevel) LibraryLevel.PROJECT else LibraryLevel.MODULE
         libraryData.setGroup(coordinates.group)
         libraryData.artifactId = coordinates.module
         libraryData.version = coordinates.version
-        libraryData.externalName = coordinates.identityString
+        libraryData.internalName = coordinates.displayString
         createChild(ProjectKeys.LIBRARY_DEPENDENCY, LibraryDependencyData(this.data, libraryData, libraryLevel))
     }
 
