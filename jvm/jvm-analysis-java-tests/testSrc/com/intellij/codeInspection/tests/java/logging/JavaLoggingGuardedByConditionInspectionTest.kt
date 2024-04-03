@@ -217,10 +217,9 @@ class JavaLoggingGuardedByConditionInspectionTest : LoggingGuardedByConditionIns
         void n(String arg) {
             //comment1
             //comment2
-            LOG.debug("test" + arg);
             //comment3
-
             //comment4
+            LOG.debug("test" + arg);
         }
       }
       """.trimIndent(),

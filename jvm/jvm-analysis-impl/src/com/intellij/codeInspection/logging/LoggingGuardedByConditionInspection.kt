@@ -11,13 +11,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.*
+import org.jetbrains.uast.generate.UastCommentSaverFactory
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -138,53 +138,27 @@ class LoggingGuardedByConditionInspection : AbstractBaseUastLocalInspectionTool(
         uIfExpression.replace(thenExpression)
         return
       }
+
+
       val ifStatementSourcePsi = uIfExpression.sourcePsi ?: return
+
+      val commentSaverFactory = UastCommentSaverFactory.byLanguage(ifStatementSourcePsi.language)
+
+      val commentSaver = commentSaverFactory?.grabComments(uIfExpression)
 
       val expressions = thenExpression.expressions
       if (expressions.isEmpty()) return
       var currentParent = ifStatementSourcePsi.parent
       var after = ifStatementSourcePsi
       var nextExpression = expressions[0].sourcePsi
-
-      var lastExpression = expressions.last().sourcePsi
-
+      val lastExpression = expressions.last().sourcePsi ?: return
       while (nextExpression?.parent.toUElement()?.sourcePsi == expressions[0].sourcePsi) {
         nextExpression = nextExpression?.parent
       }
-
-      while (lastExpression?.parent.toUElement()?.sourcePsi == expressions.last().sourcePsi) {
-        lastExpression = lastExpression?.parent
-      }
-
-      while (true) {
-        if (nextExpression?.prevSibling is PsiComment) {
-          nextExpression = nextExpression.prevSibling
-          continue
-        }
-        if(nextExpression?.prevSibling is PsiWhiteSpace && nextExpression.prevSibling?.prevSibling is PsiComment) {
-          nextExpression = nextExpression.prevSibling.prevSibling
-          continue
-        }
-        break
-      }
-
-      while (true) {
-        if (lastExpression?.nextSibling is PsiComment) {
-          lastExpression = lastExpression.nextSibling
-          continue
-        }
-        if (lastExpression?.nextSibling is PsiWhiteSpace && lastExpression.nextSibling?.nextSibling is PsiComment) {
-          lastExpression = lastExpression.nextSibling.nextSibling
-          continue
-        }
-        break
-      }
-
       if (nextExpression == null) return
-      if (lastExpression == null) return
-
       while (true) {
         if (nextExpression == null) break
+        commentSaver?.markUnchanged(nextExpression.toUElement())
         var newAdded: PsiElement = currentParent.addAfter(nextExpression.copy(), after)
         if (nextExpression is PsiWhiteSpace) {
           while (newAdded.nextSibling !is PsiWhiteSpace) {
@@ -200,6 +174,10 @@ class LoggingGuardedByConditionInspection : AbstractBaseUastLocalInspectionTool(
         nextExpression = nextExpression.nextSibling ?: break
       }
       ifStatementSourcePsi.delete()
+      val uElement = after.toUElement()
+      if (uElement != null) {
+        commentSaver?.restore(uElement)
+      }
     }
   }
 }
