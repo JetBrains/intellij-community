@@ -273,7 +273,6 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
-    fireBeforeReadActionStart(action.javaClass)
     val ts = myState.get()
     if (ts.hasPermit) {
       fireReadActionStarted(action.javaClass)
@@ -282,6 +281,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       return true
     }
     else {
+      fireBeforeReadActionStart(action.javaClass)
       ts.permit = tryGetReadPermit()
       if (!ts.hasPermit) {
         return false
@@ -367,8 +367,8 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     fireWriteActionFinished(ts, clazz)
     myWriteActionsStack.pop()
     if (release) {
-      myWriteAcquired = null
       ts.release()
+      myWriteAcquired = null
       fireAfterWriteActionFinished(ts, clazz)
     }
   }
@@ -629,9 +629,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   }
 
   private fun tryGetReadPermit(): ReadPermit? {
-    return runSuspend {
-      lock.tryAcquireReadPermit()
-    }
+    return lock.tryAcquireReadPermit()
   }
 
   @Deprecated
