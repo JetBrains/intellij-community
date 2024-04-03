@@ -67,6 +67,19 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/movePackage")
+    public static class MovePackage extends AbstractMoveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mixedJavaKotlin/mixedJavaKotlin.test")
+        public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
+            runTest("testData/refactoring/movePackage/mixedJavaKotlin/mixedJavaKotlin.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveFile")
     public static class MoveFile extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -895,11 +908,6 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/moveNestedClass/protectedClass/protectedClass.test")
         public void testKotlin_moveNestedClass_protectedClass_ProtectedClass() throws Exception {
             runTest("testData/refactoring/move/kotlin/moveNestedClass/protectedClass/protectedClass.test");
-        }
-
-        @TestMetadata("kotlin/movePackage/movePackage/movePackage.test")
-        public void testKotlin_movePackage_movePackage_MovePackage() throws Exception {
-            runTest("testData/refactoring/move/kotlin/movePackage/movePackage/movePackage.test");
         }
     }
 }

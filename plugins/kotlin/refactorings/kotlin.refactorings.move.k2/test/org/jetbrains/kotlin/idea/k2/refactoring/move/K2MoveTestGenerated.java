@@ -322,9 +322,4 @@ public class K2MoveTestGenerated extends AbstractK2MoveTest {
     public void testKotlin_moveNestedClass_protectedClass_ProtectedClass() throws Exception {
         runTest("../../idea/tests/testData/refactoring/move/kotlin/moveNestedClass/protectedClass/protectedClass.test");
     }
-
-    @TestMetadata("kotlin/movePackage/movePackage/movePackage.test")
-    public void testKotlin_movePackage_movePackage_MovePackage() throws Exception {
-        runTest("../../idea/tests/testData/refactoring/move/kotlin/movePackage/movePackage/movePackage.test");
-    }
 }
