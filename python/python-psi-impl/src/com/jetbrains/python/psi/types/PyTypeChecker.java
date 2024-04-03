@@ -1445,7 +1445,7 @@ public final class PyTypeChecker {
   }
 
   @Nullable
-  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyExpression target,
                                                         @NotNull PyTupleExpression parentTuple,
                                                         @NotNull PyType assignedType,
                                                         @NotNull TypeEvalContext context) {
@@ -1465,7 +1465,7 @@ public final class PyTypeChecker {
   }
 
   @Nullable
-  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target, @NotNull PyTupleExpression parentTuple,
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyExpression target, @NotNull PyTupleExpression parentTuple,
                                                         @NotNull PyTupleType assignedTupleType) {
     final int count = assignedTupleType.getElementCount();
     final PyExpression[] elements = parentTuple.getElements();
