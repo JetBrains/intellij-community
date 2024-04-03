@@ -34,7 +34,7 @@ class EditorCell(
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
-  internal var view: EditorCellView? = viewFactory()
+  var view: EditorCellView? = viewFactory()
 
   private var gutterAction: AnAction? = null
 
