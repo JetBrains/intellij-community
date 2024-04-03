@@ -698,6 +698,15 @@ public class HelpTooltip {
     }
   }
 
+  boolean fromSameWindowAs(@NotNull Component component) {
+    if (myPopup != null) {
+      Window popupWindow = SwingUtilities.getWindowAncestor(myPopup.getContent());
+      return component == popupWindow || SwingUtilities.getWindowAncestor(component) == popupWindow;
+    } else {
+      return false;
+    }
+  }
+
   private final class Header extends BoundWidthLabel {
     private Header(boolean obeyWidth) {
       setFont(deriveHeaderFont(getFont()));

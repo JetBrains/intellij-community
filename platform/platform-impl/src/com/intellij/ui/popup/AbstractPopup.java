@@ -316,7 +316,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myCancelKeyEnabled = cancelKeyEnabled;
     myLocateByContent = locateByContent;
-    myLocateWithinScreen = placeWithinScreenBounds;
+    myLocateWithinScreen = placeWithinScreenBounds && !StartupUiUtil.isWaylandToolkit();
     myAlpha = alpha;
     myMaskProvider = maskProvider;
     myInStack = inStack;
@@ -1220,6 +1220,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       popupOwner = popupOwner instanceof Window
                    ? popupOwner
                    : SwingUtilities.getWindowAncestor(popupOwner);
+      // The Wayland server may refuse to show a popup whose top-left corner
+      // is located outside of parent window's bounds
+      Rectangle okBounds = new Rectangle();
+      okBounds.width = popupOwner.getWidth() + targetBounds.width;
+      okBounds.height = popupOwner.getHeight() + targetBounds.height;
+      ScreenUtil.moveToFit(targetBounds, okBounds, new Insets(0, 0, 1, 1));
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
@@ -1424,6 +1430,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
+
     Point topLeft = new Point(targetBounds.x, targetBounds.y);
     Point bottomRight = new Point((int)targetBounds.getMaxX(), (int)targetBounds.getMaxY());
     Rectangle topLeftScreen = ScreenUtil.getScreenRectangle(topLeft);

@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -330,6 +331,8 @@ public final class ScreenUtil {
   }
 
   public static void moveRectangleToFitTheScreen(@NotNull Rectangle aRectangle) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;
     Rectangle screen = getScreenRectangle(screenX, screenY);
@@ -378,6 +381,8 @@ public final class ScreenUtil {
    * @param rightAligned shows that the rectangle should be moved to the left
    */
   public static void fitToScreenVertical(@NotNull Rectangle rectangle, int top, int bottom, boolean rightAligned) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     Rectangle screen = getScreenRectangle(rectangle.x, rectangle.y);
     if (rectangle.width > screen.width) {
       rectangle.width = screen.width;
@@ -413,6 +418,8 @@ public final class ScreenUtil {
   }
 
   public static void fitToScreen(@NotNull Rectangle r) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     Rectangle screen = getScreenRectangle(r.x, r.y);
 
     int xOverdraft = r.x + r.width - screen.x - screen.width;
@@ -455,6 +462,8 @@ public final class ScreenUtil {
   }
 
   public static void cropRectangleToFitTheScreen(@NotNull Rectangle rect) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     int screenX = rect.x;
     int screenY = rect.y;
     final Rectangle screen = getScreenRectangle(screenX, screenY);
@@ -539,6 +548,7 @@ public final class ScreenUtil {
   }
 
   public static boolean intersectsVisibleScreen(@NotNull Window window) {
+    if (StartupUiUtil.isWaylandToolkit()) return true; // No window coordinates in Wayland
     return window.getGraphicsConfiguration().getBounds().intersects(window.getBounds());
   }
 }

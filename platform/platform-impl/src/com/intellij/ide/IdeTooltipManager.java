@@ -130,6 +130,16 @@ public class IdeTooltipManager implements Disposable {
     myProcessingComponent = me.getComponent();
     try {
       if (me.getID() == MouseEvent.MOUSE_ENTERED) {
+        if (StartupUiUtil.isWaylandToolkit() && myProcessingComponent != null) {
+          if (helpTooltipManager != null && helpTooltipManager.fromSameWindowAs(myProcessingComponent)) {
+            // Since we don't fully control popups positions in Wayland, they are
+            // a lot more likely to appear right under the mouse pointer.
+            // Don't cancel the popup just because the mouse has left its
+            // parent component as it may have entered the popup itself.
+            myAlarm.cancelAllRequests();
+            return;
+          }
+        }
         boolean canShow = true;
         if (componentContextHasChanged(myProcessingComponent)) {
           canShow = hideCurrent(me, null, null);
@@ -148,7 +158,15 @@ public class IdeTooltipManager implements Disposable {
           hideCurrent(null, null, null, null, false);
         }
         else if (myProcessingComponent == myCurrentComponent || myProcessingComponent == myQueuedComponent) {
-          hideCurrent(me, null, null);
+          if (StartupUiUtil.isWaylandToolkit()) {
+            // The mouse pointer has left the tooltip's "parent" component. Don't immediately
+            // cancel the popup, wait a moment to see if the mouse entered the popup itself.
+            myAlarm.addRequest(() -> {
+              hideCurrent(me, null, null);
+            }, 200);
+          } else {
+            hideCurrent(me, null, null);
+          }
         }
       }
       else if (me.getID() == MouseEvent.MOUSE_MOVED) {
