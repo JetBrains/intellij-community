@@ -25,9 +25,12 @@ import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 private val BLOCK_TERMINAL_DISABLING: Key<Boolean> = Key.create("BlockTerminalDisabling")
 
 internal fun showBlockTerminalFeedbackNotification(project: Project) {
+  // BLOCK_TERMINAL_DISABLING can be used in showFeedbackNotification and after exiting this method.
+  // This key will be left in the project user data, and won't be cleared if the feedback notification is shown.
   project.putUserData(BLOCK_TERMINAL_DISABLING, true)
   val shown = OnDemandFeedbackResolver.getInstance().showFeedbackNotification(BlockTerminalFeedbackSurvey::class, project)
   if (!shown) {
+    // If the notification was not shown, the BLOCK_TERMINAL_DISABLING would not be used, so we can just clear it.
     project.putUserData(BLOCK_TERMINAL_DISABLING, null)
   }
 }
