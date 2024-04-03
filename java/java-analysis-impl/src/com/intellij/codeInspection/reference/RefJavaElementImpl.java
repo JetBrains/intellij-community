@@ -90,7 +90,8 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
       }
     }
     if (element instanceof PsiImplicitClass) {
-      return JavaAnalysisBundle.message("inspection.reference.implicit.class");
+      PsiFile file = element.getContainingFile();
+      return JavaAnalysisBundle.message("inspection.reference.implicit.class", file.getName());
     }
 
     if (element instanceof PsiSyntheticClass jspClass) {
