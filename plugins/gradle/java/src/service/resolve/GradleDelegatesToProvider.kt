@@ -56,7 +56,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
     val delegate = getDelegateFromAction(clazz, type, candidate.method, resolvedCall.substitutor)
                    ?: getDelegateFromClosure(clazz, resolvedCall)
                    ?: return null
-    val optionallyWrapped = replaceWithProjectAwareType(delegate, expression, resolvedCall)
+    val optionallyWrapped = maybeWrapWithProjectAwareType(delegate, expression, resolvedCall)
     return DelegatesToInfo(optionallyWrapped, Closure.DELEGATE_FIRST)
   }
 
@@ -64,7 +64,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
    * Allows some NonCodeMembersContributor's like [GradleArtifactHandlerContributor] adding additional resolve logic for PSI elements
    * inside the closable block for which we determine a delegate. For such cases it creates a delegate as [GradleProjectAwareType].
    */
-  private fun replaceWithProjectAwareType(delegate: PsiType, expression: GrClosableBlock, resolvedCall: GroovyMethodResult): PsiType {
+  private fun maybeWrapWithProjectAwareType(delegate: PsiType, expression: GrClosableBlock, resolvedCall: GroovyMethodResult): PsiType {
     val projectAwareReceiver = resolvedCall.candidate?.receiverType
     if (projectAwareReceiver !is GradleProjectAwareType) {
       return delegate
@@ -123,6 +123,7 @@ class GradleDelegatesToProvider : GrDelegatesToProvider {
    * type parameter `T`: [resolvedType] still equals `T` after substitution.
    * */
   private fun typeParameterIsNotResolved(clazz: PsiClass, psiMethod: PsiMethod, resolvedType: PsiType): Boolean {
+    // TODO check if there is a better approach than comparison between parameter type name and canonicalText of resolvedType
     val typeParameterNames = clazz.typeParameters
       .plus(psiMethod.typeParameters)
       .map(PsiTypeParameter::getName)
