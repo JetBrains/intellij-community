@@ -88,9 +88,6 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractK2MoveNestedTest> {
             model("refactoring/moveNested", pattern = TEST, flatten = true)
         }
-        testClass<AbstractK2MoveTest> {
-            model("refactoring/move", pattern = TEST, flatten = true)
-        }
     }
 
     testGroup("refactorings/kotlin.refactorings.introduce.k2", testDataPath = "../../idea/tests/testData") {

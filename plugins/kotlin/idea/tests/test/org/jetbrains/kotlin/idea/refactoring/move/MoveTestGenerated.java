@@ -80,6 +80,24 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/moveDirectory")
+    public static class MoveDirectory extends AbstractMoveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test")
+        public void testMixedJavaKotlinWithQuotation_MixedJavaKotlinWithQuotation() throws Exception {
+            runTest("testData/refactoring/moveDirectory/mixedJavaKotlinWithQuotation/mixedJavaKotlinWithQuotation.test");
+        }
+
+        @TestMetadata("mixedJavaKotlin/mixedJavaKotlin.test")
+        public void testMixedJavaKotlin_MixedJavaKotlin() throws Exception {
+            runTest("testData/refactoring/moveDirectory/mixedJavaKotlin/mixedJavaKotlin.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveFile")
     public static class MoveFile extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -898,24 +916,6 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         @TestMetadata("kotlin/moveNestedClass/protectedClass/protectedClass.test")
         public void testKotlin_moveNestedClass_protectedClass_ProtectedClass() throws Exception {
             runTest("testData/refactoring/moveNested/kotlin/moveNestedClass/protectedClass/protectedClass.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/refactoring/move")
-    public static class Move extends AbstractMoveTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test")
-        public void testKotlin_moveDirectoryWithQuotation_MoveDirectoryWithQuotation() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveDirectoryWithQuotation/moveDirectoryWithQuotation.test");
-        }
-
-        @TestMetadata("kotlin/moveDirectory/moveDirectoryWithPackageDirectiveChange/moveDirectoryWithPackageDirectiveChange.test")
-        public void testKotlin_moveDirectory_moveDirectoryWithPackageDirectiveChange_MoveDirectoryWithPackageDirectiveChange() throws Exception {
-            runTest("testData/refactoring/move/kotlin/moveDirectory/moveDirectoryWithPackageDirectiveChange/moveDirectoryWithPackageDirectiveChange.test");
         }
     }
 }
