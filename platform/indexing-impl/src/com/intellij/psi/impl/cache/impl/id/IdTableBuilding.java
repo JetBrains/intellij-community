@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.CharPredicate;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
@@ -97,6 +98,23 @@ public final class IdTableBuilding {
                                final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {
+    scanWords(processor, chars, charArray, startOffset, endOffset, mayHaveEscapes, IdTableBuilding::isWordCharacter);
+  }
+
+  public static boolean isWordCharacter(char c) {
+    return (c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') ||
+           (Character.isJavaIdentifierStart(c) && c != '$');
+  }
+
+  public static void scanWords(final ScanWordProcessor processor,
+                               final CharSequence chars,
+                               final char @Nullable [] charArray,
+                               final int startOffset,
+                               final int endOffset,
+                               final boolean mayHaveEscapes,
+                               final CharPredicate isWordCharacter) {
     int index = startOffset;
     final boolean hasArray = charArray != null;
 
@@ -105,11 +123,7 @@ public final class IdTableBuilding {
       while (true) {
         if (index >= endOffset) break ScanWordsLoop;
         final char c = hasArray ? charArray[index] : chars.charAt(index);
-
-        if ((c >= 'a' && c <= 'z') ||
-            (c >= 'A' && c <= 'Z') ||
-            (c >= '0' && c <= '9') ||
-            (Character.isJavaIdentifierStart(c) && c != '$')) {
+        if (isWordCharacter.test(c)) {
           break;
         }
         index++;
@@ -120,8 +134,7 @@ public final class IdTableBuilding {
         index++;
         if (index >= endOffset) break;
         final char c = hasArray ? charArray[index] : chars.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c) || c == '$') break;
+        if (!isWordCharacter.test(c)) break;
       }
       if (index - index1 > 100) continue; // Strange limit but we should have some!
 

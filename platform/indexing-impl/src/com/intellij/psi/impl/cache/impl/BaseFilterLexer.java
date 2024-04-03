@@ -116,11 +116,16 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
     myOccurenceMask = occurrenceMask;
     final int start = getTokenStart();
     final int end = getTokenEnd();
-    IdTableBuilding.scanWords(this, myCachedBufferSequence, myCachedArraySequence, start, end, mayHaveEscapes);
+    IdTableBuilding.scanWords(this, myCachedBufferSequence, myCachedArraySequence,
+                              start, end, mayHaveEscapes, this::isWordCharacter);
 
     if (mayHaveFileRefs) {
       processPossibleComplexFileName(myCachedBufferSequence, myCachedArraySequence, start, end);
     }
+  }
+
+  protected boolean isWordCharacter(final char c) {
+    return IdTableBuilding.isWordCharacter(c);
   }
 
   private void processPossibleComplexFileName(CharSequence chars, char[] cachedArraySequence, int startOffset, int endOffset) {
