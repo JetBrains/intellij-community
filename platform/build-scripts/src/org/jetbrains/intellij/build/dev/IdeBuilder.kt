@@ -372,7 +372,9 @@ internal suspend fun createBuildContext(
           request.productionClassOutput.parent.toString()
         }
         else {
-          buildOptionsTemplate?.classOutDir ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+          buildOptionsTemplate?.classOutDir
+          ?: System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
+          ?: request.productionClassOutput.parent.toString()
         }
         val options = BuildOptions(
           jarCacheDir = jarCacheDir,
