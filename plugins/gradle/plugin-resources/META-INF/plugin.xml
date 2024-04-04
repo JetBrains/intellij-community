@@ -182,8 +182,8 @@
     <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
                  description="URL to get updates for gradle/jvm compatibility matrix" key="gradle.compatibility.config.url"/>
 
-    <registryKey defaultValue="1"
-                 description="Time to check in days for gradle compatibility update. Set to 0 to disable updates"
+    <registryKey defaultValue="86400"
+                 description="Time to check in seconds for gradle compatibility update. Set to 0 to disable updates"
                  key="gradle.compatibility.update.interval"/>
 
     <registryKey key="gradle.settings.showDeprecatedSettings" defaultValue="false"

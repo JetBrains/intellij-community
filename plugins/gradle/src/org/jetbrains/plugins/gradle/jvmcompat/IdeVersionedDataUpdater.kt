@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
 
 private val LOG = Logger.getInstance(IdeVersionedDataUpdater::class.java)
 
@@ -14,16 +14,17 @@ abstract class IdeVersionedDataUpdater<T : IdeVersionedDataState>(
   private val dataStorage: IdeVersionedDataStorage<T>
 ) {
   abstract val configUrl: String
-  abstract val updateInterval: Int
+  abstract val updateInterval: Duration
 
   open fun checkForUpdates() {
-    if (updateInterval == 0 || configUrl.isEmpty()) {
+    val updateIntervalMillis = updateInterval.inWholeMilliseconds
+    if (updateIntervalMillis == 0.toLong() || configUrl.isEmpty()) {
       return
     }
 
     val state = dataStorage.state
     val lastUpdateTime = state?.lastUpdateTime ?: 0
-    if (lastUpdateTime + TimeUnit.DAYS.toMillis(updateInterval.toLong()) <= System.currentTimeMillis()) {
+    if (lastUpdateTime + updateIntervalMillis <= System.currentTimeMillis()) {
       LOG.info("Updating version compatibility for ${this::class.java.name}." +
                " Last update was: ${lastUpdateTime}. Update interval: ${updateInterval} Url to update $configUrl")
       retrieveNewData(configUrl)

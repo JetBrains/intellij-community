@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.jvmcompat
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 
 /**
@@ -15,8 +17,8 @@ open class GradleCompatibilitySupportUpdater : IdeVersionedDataUpdater<GradleCom
 ) {
   override val configUrl: String
     get() = Registry.stringValue("gradle.compatibility.config.url")
-  override val updateInterval: Int
-    get() = Registry.intValue("gradle.compatibility.update.interval")
+  override val updateInterval: Duration
+    get() = Registry.intValue("gradle.compatibility.update.interval").seconds
 
   companion object {
     fun getInstance(): GradleCompatibilitySupportUpdater = service()
