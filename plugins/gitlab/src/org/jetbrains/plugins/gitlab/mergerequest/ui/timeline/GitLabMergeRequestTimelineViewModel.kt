@@ -142,7 +142,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
     : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
-        GitLabMergeRequestTimelineItemViewModel.Immutable(item)
+        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(project, mergeRequest, item)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
         GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mr, item.discussion).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)

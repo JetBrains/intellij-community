@@ -179,13 +179,12 @@ internal object GitLabMergeRequestTimelineComponentFactory {
                                                  item: GitLabMergeRequestTimelineItemViewModel): JComponent =
     when (item) {
       is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
-        val immutableItem = item.item
-        val content = createContent(project, immutableItem)
+        val content = createContent(project, item)
 
         CodeReviewChatItemUIUtil.build(ComponentType.FULL,
-                                       { avatarIconsProvider.getIcon(immutableItem.actor, it) },
+                                       { avatarIconsProvider.getIcon(item.actor, it) },
                                        content) {
-          withHeader(CodeReviewTimelineUIUtil.createTitleTextPane(immutableItem.actor.name, immutableItem.actor.webUrl, immutableItem.date))
+          withHeader(CodeReviewTimelineUIUtil.createTitleTextPane(item.actor.name, item.actor.webUrl, item.date))
         }
       }
       is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
@@ -196,15 +195,16 @@ internal object GitLabMergeRequestTimelineComponentFactory {
       }
     }
 
-  private fun createContent(project: Project, item: GitLabMergeRequestTimelineItem.Immutable): JComponent =
+  private fun createContent(project: Project, item: GitLabMergeRequestTimelineItemViewModel.Immutable): JComponent =
     when (item) {
-      is GitLabMergeRequestTimelineItem.SystemNote -> createSystemDiscussionContent(project, item)
-      is GitLabMergeRequestTimelineItem.LabelEvent -> createLabeledEventContent(item)
-      is GitLabMergeRequestTimelineItem.MilestoneEvent -> createMilestonedEventContent(item)
-      is GitLabMergeRequestTimelineItem.StateEvent -> createStateChangeContent(item)
+      is GitLabMergeRequestTimelineItemViewModel.SystemNote -> createSystemDiscussionContent(project, item)
+      is GitLabMergeRequestTimelineItemViewModel.LabelEvent -> createLabeledEventContent(item)
+      is GitLabMergeRequestTimelineItemViewModel.MilestoneEvent -> createMilestonedEventContent(item)
+      is GitLabMergeRequestTimelineItemViewModel.StateEvent -> createStateChangeContent(item)
     }
 
-  private fun createSystemDiscussionContent(project: Project, item: GitLabMergeRequestTimelineItem.SystemNote): JComponent {
+  private fun createSystemDiscussionContent(project: Project,
+                                            item: GitLabMergeRequestTimelineItemViewModel.SystemNote): JComponent {
     val content = item.content
     if (content.contains("Compare with previous version")) {
       try {
@@ -231,7 +231,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     setHtmlBody(commits)
   }
 
-  private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItem.LabelEvent): JComponent {
+  private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItemViewModel.LabelEvent): JComponent {
     val text = when (item.event.actionEnum) {
       GitLabResourceLabelEventDTO.Action.ADD ->
         GitLabBundle.message("merge.request.event.label.added", item.event.label?.toHtml().orEmpty())
@@ -242,7 +242,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     return StatusMessageComponentFactory.create(textPane)
   }
 
-  private fun createMilestonedEventContent(item: GitLabMergeRequestTimelineItem.MilestoneEvent): JComponent {
+  private fun createMilestonedEventContent(item: GitLabMergeRequestTimelineItemViewModel.MilestoneEvent): JComponent {
     val text = when (item.event.actionEnum) {
       GitLabResourceMilestoneEventDTO.Action.ADD ->
         GitLabBundle.message("merge.request.event.milestone.changed", item.event.milestone.toHtml())
@@ -253,7 +253,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
     return StatusMessageComponentFactory.create(textPane)
   }
 
-  private fun createStateChangeContent(item: GitLabMergeRequestTimelineItem.StateEvent): JComponent {
+  private fun createStateChangeContent(item: GitLabMergeRequestTimelineItemViewModel.StateEvent): JComponent {
     val text = when (item.event.stateEnum) {
       GitLabResourceStateEventDTO.State.CLOSED -> GitLabBundle.message("merge.request.event.closed")
       GitLabResourceStateEventDTO.State.REOPENED -> GitLabBundle.message("merge.request.event.reopened")

@@ -23,7 +23,52 @@ import java.net.URL
 import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
-  data class Immutable(val item: GitLabMergeRequestTimelineItem.Immutable) : GitLabMergeRequestTimelineItemViewModel
+  sealed class Immutable(
+    private val project: Project,
+    private val model: GitLabMergeRequestTimelineItem.Immutable
+  ) : GitLabMergeRequestTimelineItemViewModel {
+    val date = model.date
+    val actor = model.actor
+
+    val contentHtml: String? by lazy {
+      (model as? GitLabMergeRequestTimelineItem.SystemNote)?.content?.let {
+        GitLabUIUtil.convertToHtml(project, it)
+      }
+    }
+
+    companion object {
+      fun fromModel(
+        project: Project,
+        mr: GitLabMergeRequest,
+        model: GitLabMergeRequestTimelineItem.Immutable
+      ): Immutable = when (model) {
+        is GitLabMergeRequestTimelineItem.StateEvent -> StateEvent(project, model)
+        is GitLabMergeRequestTimelineItem.LabelEvent -> LabelEvent(project, model)
+        is GitLabMergeRequestTimelineItem.MilestoneEvent -> MilestoneEvent(project, model)
+        is GitLabMergeRequestTimelineItem.SystemNote -> SystemNote(project, model)
+      }
+    }
+  }
+
+  class StateEvent(project: Project, model: GitLabMergeRequestTimelineItem.StateEvent)
+    : Immutable(project, model) {
+    val event = model.event
+  }
+
+  class LabelEvent(project: Project, model: GitLabMergeRequestTimelineItem.LabelEvent)
+    : Immutable(project, model) {
+    val event = model.event
+  }
+
+  class MilestoneEvent(project: Project, model: GitLabMergeRequestTimelineItem.MilestoneEvent)
+    : Immutable(project, model) {
+    val event = model.event
+  }
+
+  class SystemNote(project: Project, model: GitLabMergeRequestTimelineItem.SystemNote)
+    : Immutable(project, model) {
+    val content = model.content
+  }
 
   class Discussion(
     project: Project,
