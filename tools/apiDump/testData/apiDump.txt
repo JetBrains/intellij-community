@@ -1,5 +1,5 @@
 *f:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion
-- sf:Companion:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
+- *sf:Companion:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
 *f:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
 f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion
 - *sf:Companion:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion$Companion
