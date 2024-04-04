@@ -8,8 +8,8 @@ import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExte
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterDeclaration
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
-import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -30,9 +30,7 @@ internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : Abs
     }
 
     override fun visitProperty(property: KtProperty) {
-        textAttributesForKtPropertyDeclaration(property)?.let { attributes ->
-            highlightNamedDeclaration(property, attributes)
-        }
+        highlightNamedDeclaration(property, textAttributesForKtPropertyDeclaration(property))
         highlightMutability(property)
         super.visitProperty(property)
     }

@@ -40,7 +40,7 @@ fun textAttributesForKtParameterDeclaration(parameter: KtParameter): HighlightIn
 }
 
 @ApiStatus.Internal
-fun textAttributesForKtPropertyDeclaration(property: KtProperty): HighlightInfoType? = when {
+fun textAttributesForKtPropertyDeclaration(property: KtProperty): HighlightInfoType = when {
     property.isExtensionDeclaration() -> KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
     property.isLocal -> KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
     property.isTopLevel -> when {
