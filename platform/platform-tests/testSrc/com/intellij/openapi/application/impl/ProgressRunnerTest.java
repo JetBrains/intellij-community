@@ -26,6 +26,7 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -345,6 +346,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
    */
   @Test
   @IJIgnore(issue = "IDEA-350585")
+  @Ignore
   public void testPumpingExceptionPropagation() {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
 
