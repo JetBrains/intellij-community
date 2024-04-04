@@ -38,12 +38,11 @@ import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.java.JpsJavaSdkType
+import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
@@ -336,6 +335,22 @@ class CompilationContextImpl private constructor(
     return enumerator.classes().roots.map { it.absolutePath }
   }
 
+  override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
+    return findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
+  }
+
+  override fun findFileInModuleSources(module: JpsModule, relativePath: String): Path? {
+    for (info in getSourceRootsWithPrefixes(module)) {
+      if (relativePath.startsWith(info.second)) {
+        val result = info.first.resolve(relativePath.removePrefix(info.second).removePrefix("/"))
+        if (Files.exists(result)) {
+          return result
+        }
+      }
+    }
+    return null
+  }
+
   override fun notifyArtifactBuilt(artifactPath: Path) {
     if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP)) {
       return
@@ -497,4 +512,22 @@ private fun printEnvironmentDebugInfo() {
   for (propertyName in properties.keys.sortedBy { it as String }) {
     println("PROPERTY $propertyName = ${properties[propertyName].toString()}")
   }
+}
+
+private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, String>> {
+  return module.sourceRoots.asSequence()
+    .filter { JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) }
+    .map { moduleSourceRoot: JpsModuleSourceRoot ->
+      val properties = moduleSourceRoot.properties
+      var prefix = if (properties is JavaSourceRootProperties) {
+        properties.packagePrefix.replace('.', '/')
+      }
+      else {
+        (properties as JavaResourceRootProperties).relativeOutputPath
+      }
+      if (!prefix.endsWith('/')) {
+        prefix += "/"
+      }
+      Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
+    }
 }

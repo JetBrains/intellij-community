@@ -53,6 +53,10 @@ interface CompilationContext {
 
   fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
+  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
+
+  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
+
   fun notifyArtifactBuilt(artifactPath: Path)
 }
 

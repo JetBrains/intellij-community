@@ -120,10 +120,6 @@ interface BuildContext : CompilationContext {
 
   fun findApplicationInfoModule(): JpsModule
 
-  fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
-
-  fun findFileInModuleSources(module: JpsModule, relativePath: String): Path?
-
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }

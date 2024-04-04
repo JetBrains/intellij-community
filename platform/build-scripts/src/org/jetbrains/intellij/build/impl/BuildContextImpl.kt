@@ -17,12 +17,7 @@ import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.jarCache.NonCachingJarCacheManager
 import org.jetbrains.intellij.build.jarCache.SourceBuilder
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
-import org.jetbrains.jps.model.java.JavaResourceRootProperties
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot
-import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -199,22 +194,6 @@ class BuildContextImpl(
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
     compilationContext.notifyArtifactBuilt(artifactPath)
-  }
-
-  override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {
-    return findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
-  }
-
-  override fun findFileInModuleSources(module: JpsModule, relativePath: String): Path? {
-    for (info in getSourceRootsWithPrefixes(module)) {
-      if (relativePath.startsWith(info.second)) {
-        val result = info.first.resolve(relativePath.removePrefix(info.second).removePrefix("/"))
-        if (Files.exists(result)) {
-          return result
-        }
-      }
-    }
-    return null
   }
 
   override val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter by lazy {
@@ -397,22 +376,4 @@ private fun createBuildOutputRootEvaluator(projectHome: Path,
     val appInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = buildOptions)
     projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
   }
-}
-
-private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, String>> {
-  return module.sourceRoots.asSequence()
-    .filter { JavaModuleSourceRootTypes.PRODUCTION.contains(it.rootType) }
-    .map { moduleSourceRoot: JpsModuleSourceRoot ->
-      val properties = moduleSourceRoot.properties
-      var prefix = if (properties is JavaSourceRootProperties) {
-        properties.packagePrefix.replace('.', '/')
-      }
-      else {
-        (properties as JavaResourceRootProperties).relativeOutputPath
-      }
-      if (!prefix.endsWith('/')) {
-        prefix += "/"
-      }
-      Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
-    }
 }
