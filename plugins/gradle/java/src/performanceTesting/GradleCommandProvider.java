@@ -23,6 +23,7 @@ final class GradleCommandProvider implements CommandProvider {
       put(ProjectNotificationAwareShouldBeVisibleCommand.PREFIX, ProjectNotificationAwareShouldBeVisibleCommand::new);
       put(RefreshGradleProjectCommand.PREFIX, RefreshGradleProjectCommand::new);
       put(CreateGradleProjectCommand.PREFIX, CreateGradleProjectCommand::new);
+      put(ValidateGradleMatrixCompatibilityCommand.PREFIX, ValidateGradleMatrixCompatibilityCommand::new);
     }};
   }
 }

@@ -670,6 +670,10 @@ fun <T : CommandChain> T.setRegistry(registry: String, value: String): T = apply
   addCommand("${CMD_PREFIX}set $registry=$value")
 }
 
+fun <T : CommandChain> T.validateGradleMatrixCompatibility(): T = apply {
+  addCommand("${CMD_PREFIX}validateGradleMatrixCompatibility")
+}
+
 fun <T : CommandChain> T.collectNameSuggestionContext(file: String, offset: Int): T = apply {
   addCommand("${CMD_PREFIX}collectNameSuggestionContext $file $offset")
 }
