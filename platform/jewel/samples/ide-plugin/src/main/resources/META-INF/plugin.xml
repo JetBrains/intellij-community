@@ -21,4 +21,10 @@ See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for mo
 
         <iconMapper mappingFile="JewelIntUiIconMappings.json"/>
     </extensions>
+
+    <actions>
+        <action id="Jewel Dialog Demo" class="org.jetbrains.jewel.samples.ideplugin.dialog.JewelDemoAction"
+                text="Jewel Demo Dialog">
+        </action>
+    </actions>
 </idea-plugin>

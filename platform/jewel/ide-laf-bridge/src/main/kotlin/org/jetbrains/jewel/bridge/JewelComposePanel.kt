@@ -12,8 +12,8 @@ import javax.swing.JComponent
 
 public fun JewelComposePanel(
     content: @Composable () -> Unit,
-): JComponent {
-    return ComposePanel().apply {
+): JComponent =
+    ComposePanel().apply {
         setContent {
             SwingBridgeTheme {
                 CompositionLocalProvider(LocalComponent provides this@apply) {
@@ -22,7 +22,6 @@ public fun JewelComposePanel(
             }
         }
     }
-}
 
 @ExperimentalJewelApi
 public val LocalComponent: ProvidableCompositionLocal<JComponent> = staticCompositionLocalOf {
