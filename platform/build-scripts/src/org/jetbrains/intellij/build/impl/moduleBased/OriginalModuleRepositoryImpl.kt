@@ -2,6 +2,9 @@
 package org.jetbrains.intellij.build.impl.moduleBased
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
@@ -12,7 +15,7 @@ import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import java.nio.file.Path
 
-class OriginalModuleRepositoryImpl(context: CompilationContext) : OriginalModuleRepository {
+class OriginalModuleRepositoryImpl(private val context: CompilationContext) : OriginalModuleRepository {
   private val repositoryForCompiledModulesPath: Path
   override val rawRepositoryData: RawRuntimeModuleRepositoryData
 
@@ -32,7 +35,17 @@ class OriginalModuleRepositoryImpl(context: CompilationContext) : OriginalModule
     }
   }
 
+  override fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules {
+    val repository = context.originalModuleRepository.repository
+    val productModulesFile = findProductModulesFile(context, rootModuleName)
+                             ?: error("Cannot find product-modules.xml file in $rootModuleName")
+    return ProductModulesSerialization.loadProductModules(productModulesFile, productMode, repository)
+  }
+
   override val repository: RuntimeModuleRepository by lazy { 
     RuntimeModuleRepositorySerialization.loadFromRawData(repositoryForCompiledModulesPath, rawRepositoryData)
   }
 }
+
+internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? =
+  context.findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")

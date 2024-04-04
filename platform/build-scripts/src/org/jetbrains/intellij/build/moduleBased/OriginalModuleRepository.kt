@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.moduleBased
 
+import com.intellij.platform.runtime.product.ProductMode
+import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 
@@ -12,4 +14,10 @@ interface OriginalModuleRepository {
   val rawRepositoryData: RawRuntimeModuleRepositoryData
   
   val repository: RuntimeModuleRepository
+
+  /**
+   * Loads information about the product layout from product-modules.xml file located in module [rootModuleName], for a product running in
+   * [productMode].
+   */
+  fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules
 }
