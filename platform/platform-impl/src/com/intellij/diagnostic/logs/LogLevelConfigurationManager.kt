@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logs
 
 import com.intellij.ide.util.PropertiesComponent
@@ -10,7 +10,7 @@ import java.util.logging.Level
 /**
  * Allows applying & persisting custom log debug categories
  * which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
- * Applies these custom categories on startup.
+ * Applies these custom categories at startup.
  */
 @Service(Service.Level.APP)
 @State(name = "Logs.Categories",
@@ -58,7 +58,7 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
       }
 
       val trimmed = logCategory.category.trimStart('#')
-      // IDEA-297747 Convention for categories naming is not clear, so set logging for both with '#' and without '#'
+      // IDEA-297747 - convention for category naming is unclear, so set logging for both with '#' and without '#'
       addLogger("#$trimmed", loggerLevel, level)
       addLogger(trimmed, loggerLevel, level)
       LogCategory(trimmed, level)
@@ -104,16 +104,10 @@ class LogLevelConfigurationManager : SerializablePersistentStateComponent<LogLev
     }
   }
 
-  fun getCategories(): List<LogCategory> {
-    return this.state.categories
-  }
+  fun getCategories(): List<LogCategory> = this.state.categories
 
   @Serializable
   data class State(@JvmField val categories: List<LogCategory> = listOf())
-
-  //init {
-  //  loadState(State())
-  //}
 
   override fun loadState(state: State) {
     super.loadState(state)
