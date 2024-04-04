@@ -11,6 +11,7 @@ import org.jetbrains.jewel.intui.standalone.Inter
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
 import org.jetbrains.jewel.intui.standalone.theme.darkThemeDefinition
+import org.jetbrains.jewel.intui.standalone.theme.default
 import org.jetbrains.jewel.intui.standalone.theme.lightThemeDefinition
 import org.jetbrains.jewel.intui.window.decoratedWindow
 import org.jetbrains.jewel.intui.window.styling.dark
@@ -37,8 +38,8 @@ fun main() {
             }
 
         IntUiTheme(
-            themeDefinition,
-            ComponentStyling.decoratedWindow(
+            theme = themeDefinition,
+            styling = ComponentStyling.default().decoratedWindow(
                 titleBarStyle = when (MainViewModel.theme) {
                     IntUiThemes.Light -> TitleBarStyle.light()
                     IntUiThemes.LightWithLightHeader -> TitleBarStyle.lightWithLightHeader()
@@ -50,7 +51,7 @@ fun main() {
                     }
                 },
             ),
-            MainViewModel.swingCompat,
+            swingCompatMode = MainViewModel.swingCompat,
         ) {
             DecoratedWindow(
                 onCloseRequest = { exitApplication() },

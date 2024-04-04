@@ -244,12 +244,10 @@ To get an IntelliJ-like custom title bar, you need to pass the window decoration
 
 ```kotlin
 IntUiTheme(
-    themeDefinition,
-    componentStyling = {
-        themeDefinition.decoratedWindowComponentStyling(
-            titleBarStyle = TitleBarStyle.light()
-        )
-    },
+   theme = themeDefinition,
+   styling = ComponentStyling.default().decoratedWindow(
+      titleBarStyle = TitleBarStyle.light()
+   ),
 ) {
     DecoratedWindow(
         onCloseRequest = { exitApplication() },
