@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
+import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
@@ -13,6 +15,7 @@ import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
@@ -21,7 +24,10 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Graphics
+import java.awt.Insets
 import javax.swing.*
+import javax.swing.border.AbstractBorder
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
@@ -72,6 +78,7 @@ internal class ExternalProjectSelector(
     init {
       listModel = createDefaultListModel(externalProject)
       list = JBList<DependencyAnalyzerProject>(listModel)
+      list.setVisibleRowCount(15)
       list.border = emptyListBorder()
       list.cellRenderer = ExternalProjectRenderer()
       list.selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -100,6 +107,20 @@ internal class ExternalProjectSelector(
           list.model = listModel
         }
       })
+
+      val icon: Icon = getFindIcon()
+
+      filterField.border = object : AbstractBorder() {
+        override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+          super.paintBorder(c, g, x, y, width, height)
+          icon.paintIcon(c, g, x + 5, y + 5)
+        }
+
+        override fun getBorderInsets(c: Component): Insets {
+          return JBUI.insets(0, icon.iconWidth + 10, 0, 0)
+        }
+      }
+
 
       val scrollPane = JBScrollPane(list)
       layout = BorderLayout()
@@ -156,6 +177,10 @@ internal class ExternalProjectSelector(
       whenItemSelected { text = itemToString(selectedItem) }
       bind(property)
     }
+  }
+
+  private fun getFindIcon() : Icon{
+    return if (ExperimentalUI.isNewUI()) ExpUiIcons.General.Search else AllIcons.Actions.Find
   }
 }
 
