@@ -10,6 +10,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -46,10 +47,15 @@ private class BundledPluginsLister : ModernApplicationStarter() {
         val pluginIds = ArrayList<String>(plugins.size)
         val homeDir = Path.of(PathManager.getHomePath())
         for (plugin in plugins) {
+          var jarFiles = plugin.jarFiles
+          if (jarFiles == null && plugin.pluginId == PluginManagerCore.CORE_ID) {
+            jarFiles = (plugin.classLoader as? UrlClassLoader)?.files
+          }
+
           layout.add(LayoutItemDescriptor(
             name = plugin.pluginId.idString,
             kind = ProductInfoLayoutItemKind.plugin,
-            classPath = plugin.jarFiles?.map { it.relativeTo(homeDir).invariantSeparatorsPathString } ?: emptyList()
+            classPath = jarFiles?.map { it.relativeTo(homeDir).invariantSeparatorsPathString } ?: emptyList()
           ))
 
           pluginIds.add(plugin.pluginId.idString)

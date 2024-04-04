@@ -90,9 +90,11 @@ data class ProductInfoData(
   val bundledPlugins: List<String>,
   // it is not modules, but plugin aliases
   val modules: List<String>,
-  val layout: List<ProductInfoLayoutItem>,
   val fileExtensions: List<String>,
   val flavors: List<ProductFlavorData> = emptyList(),
+
+  // not used by launcher, specify in the end
+  val layout: List<ProductInfoLayoutItem>,
 )
 
 @Serializable
