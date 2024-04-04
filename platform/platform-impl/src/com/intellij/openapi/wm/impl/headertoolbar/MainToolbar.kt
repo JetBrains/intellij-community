@@ -271,7 +271,11 @@ private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?
 
   toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }
   toolbar.targetComponent = null
-  toolbar.layoutStrategy = CompressingLayoutStrategy()
+  toolbar.layoutStrategy = object : CompressingLayoutStrategy() {
+    override fun getNonCompressibleWidth(mainToolbar: Container): Int {
+      return super.getNonCompressibleWidth(mainToolbar) + layoutGap * 4
+    }
+  }
   val component = toolbar.component
   component.border = JBUI.Borders.empty()
   component.isOpaque = false

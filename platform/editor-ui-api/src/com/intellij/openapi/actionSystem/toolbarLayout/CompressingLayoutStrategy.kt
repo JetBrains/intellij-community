@@ -14,7 +14,7 @@ import kotlin.math.max
  * Preferentially, the largest components are compressed first to optimize the use of available space.
  * Note: for correct work, it's necessary to have a parent component for row with toolbar.
  */
-class CompressingLayoutStrategy : ToolbarLayoutStrategy {
+open class CompressingLayoutStrategy : ToolbarLayoutStrategy {
   override fun calculateBounds(toolbar: ActionToolbar): MutableList<Rectangle> {
     val toolbarComponent = toolbar.component
     val componentsCount = toolbarComponent.componentCount
@@ -113,9 +113,11 @@ class CompressingLayoutStrategy : ToolbarLayoutStrategy {
       }
     }
     val width = mainToolbar.width
-    val nonCompressibleWidth = mainToolbar.components.filterNot { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.sumOf { it.preferredSize.width}
+    return Pair((totalWidth).toDouble(), (width - getNonCompressibleWidth(mainToolbar)).toDouble())
+  }
 
-    return Pair((totalWidth).toDouble(), (width - nonCompressibleWidth).toDouble())
+  protected open fun getNonCompressibleWidth(mainToolbar: Container): Int {
+    return mainToolbar.components.filterNot { it is ActionToolbar && it.layoutStrategy is CompressingLayoutStrategy }.sumOf { it.preferredSize.width}
   }
 
   private fun calculateComponentSizes(toolbar: ActionToolbar, preferredAndRealSize: Pair<Double, Double>): Map<Component, Dimension> {
