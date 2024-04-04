@@ -96,7 +96,6 @@ f:com.intellij.openapi.util.text.NaturalComparator
 - java.util.Comparator
 - sf:INSTANCE:java.util.Comparator
 - <init>():V
-- b:compare(java.lang.Object,java.lang.Object):I
 - compare(java.lang.String,java.lang.String):I
 f:com.intellij.openapi.util.text.Strings
 - sf:EMPTY_CHAR_SEQUENCE:java.lang.CharSequence
@@ -522,7 +521,6 @@ f:com.intellij.util.containers.SoftArrayHashMap
 - <init>():V
 - clear():V
 - clone():com.intellij.util.containers.SoftArrayHashMap
-- b:clone():java.lang.Object
 - containsKey(java.lang.Object[]):Z
 - get(java.lang.Object[]):java.lang.Object
 - processLeafEntries(java.util.function.BiPredicate):Z
@@ -680,7 +678,6 @@ f:com.intellij.util.text.SemVer
 - <init>(java.lang.String,I,I,I):V
 - <init>(java.lang.String,I,I,I,java.lang.String):V
 - compareTo(com.intellij.util.text.SemVer):I
-- b:compareTo(java.lang.Object):I
 - equals(java.lang.Object):Z
 - getMajor():I
 - getMinor():I

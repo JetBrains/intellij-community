@@ -89,7 +89,6 @@ c:com.intellij.tools.apiDump.testData.JPublicClassInternalInterface
 c:com.intellij.tools.apiDump.testData.JPublicClassInternalSuper
 - <init>():V
 - clone():com.intellij.tools.apiDump.testData.JPublicClassInternalSuper
-- b:clone():java.lang.Object
 - psf:protectedStaticFinalMethod():V
 - ps:protectedStaticMethod():V
 - sf:publicStaticFinalMethod():V
@@ -135,7 +134,6 @@ f:com.intellij.tools.apiDump.testData.defaultParameters.KtChildClass
 - <init>():V
 - function(I,I,I):V
 - genericFunction(I,D,I):java.lang.Double
-- b:genericFunction(I,java.lang.Object,I):java.lang.Object
 com.intellij.tools.apiDump.testData.defaultParameters.KtInterface
 - a:function(I,I,I):V
 - bs:function$default(com.intellij.tools.apiDump.testData.defaultParameters.KtInterface,I,I,I,I,java.lang.Object):V
@@ -159,19 +157,11 @@ c:com.intellij.tools.apiDump.testData.generics.JGenericChildClass
 - com.intellij.tools.apiDump.testData.generics.JGenericMiddleClass
 - <init>():V
 - acceptingAT(java.lang.Double[]):V
-- b:acceptingAT(java.lang.Number[]):V
-- b:acceptingAT(java.lang.Object[]):V
 - acceptingLT(java.util.List):V
 - acceptingT(java.lang.Double):V
-- b:acceptingT(java.lang.Number):V
-- b:acceptingT(java.lang.Object):V
 - returningAT():java.lang.Double[]
-- b:returningAT():java.lang.Number[]
-- b:returningAT():java.lang.Object[]
 - returningLT():java.lang.Iterable
 - returningT():java.lang.Double
-- b:returningT():java.lang.Number
-- b:returningT():java.lang.Object
 com.intellij.tools.apiDump.testData.generics.JGenericInterface
 - a:acceptingAT(java.lang.Object[]):V
 - a:acceptingLT(java.util.List):V
@@ -183,22 +173,16 @@ a:com.intellij.tools.apiDump.testData.generics.JGenericMiddleClass
 - com.intellij.tools.apiDump.testData.generics.JGenericInterface
 - <init>():V
 - acceptingAT(java.lang.Number[]):V
-- b:acceptingAT(java.lang.Object[]):V
 - acceptingLT(java.util.List):V
 - a:acceptingT(java.lang.Number):V
-- b:acceptingT(java.lang.Object):V
 - returningAT():java.lang.Number[]
-- b:returningAT():java.lang.Object[]
 - returningLT():java.lang.Iterable
 - returningT():java.lang.Number
-- b:returningT():java.lang.Object
 f:com.intellij.tools.apiDump.testData.generics2.JChildClasses
 c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassFromMiddleWithAbstractOverride
 - com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithAbstractOverride
 - <init>():V
 - genericMethod(java.lang.Double):java.lang.Double
-- b:genericMethod(java.lang.Number):java.lang.Number
-- b:genericMethod(java.lang.Object):java.lang.Object
 c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassFromMiddleWithOverride
 - com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
 - <init>():V
@@ -206,13 +190,10 @@ c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassFromMid
 - com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClass
 - <init>():V
 - genericMethod(java.lang.Double):java.lang.Double
-- b:genericMethod(java.lang.Object):java.lang.Object
 c:com.intellij.tools.apiDump.testData.generics2.JChildClasses$JChildClassWithOverrideFromMiddleWithOverride
 - com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
 - <init>():V
 - genericMethod(java.lang.Double):java.lang.Double
-- b:genericMethod(java.lang.Number):java.lang.Number
-- b:genericMethod(java.lang.Object):java.lang.Object
 com.intellij.tools.apiDump.testData.generics2.JGenericInterface
 - a:genericMethod(java.lang.Object):java.lang.Object
 a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClass
@@ -222,24 +203,20 @@ a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithAbstractO
 - com.intellij.tools.apiDump.testData.generics2.JGenericInterface
 - <init>():V
 - a:genericMethod(java.lang.Number):java.lang.Number
-- b:genericMethod(java.lang.Object):java.lang.Object
 a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
 - com.intellij.tools.apiDump.testData.generics2.JGenericInterface
 - <init>():V
 - genericMethod(java.lang.Number):java.lang.Number
-- b:genericMethod(java.lang.Object):java.lang.Object
 c:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicClassFromPackageLocalRunnable
 - <init>():V
 f:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicFinalInheritor
 - <init>():V
-- b:packagePrivateMethodWithPackagePrivateReturnType():com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPackageLocalClass
 - packagePrivateMethodWithPackagePrivateReturnType():com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicFinalInheritor
 - ps:protectedStaticMethod():V
 - s:publicStaticMethod():V
 c:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicInheritor
 - <init>():V
 - p:<init>(B):V
-- b:packagePrivateMethodWithPackagePrivateReturnType():com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPackageLocalClass
 - packagePrivateMethodWithPackagePrivateReturnType():com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicInheritor
 - ps:protectedStaticMethod():V
 - s:publicStaticMethod():V

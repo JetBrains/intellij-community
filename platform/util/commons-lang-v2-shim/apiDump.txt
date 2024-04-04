@@ -93,26 +93,18 @@ f:org.apache.commons.lang.builder.EqualsBuilder
 - org.apache.commons.lang3.builder.EqualsBuilder
 - <init>():V
 - append(I,I):org.apache.commons.lang.builder.EqualsBuilder
-- b:append(I,I):org.apache.commons.lang3.builder.EqualsBuilder
 - append(java.lang.Object,java.lang.Object):org.apache.commons.lang.builder.EqualsBuilder
-- b:append(java.lang.Object,java.lang.Object):org.apache.commons.lang3.builder.EqualsBuilder
 - append(Z,Z):org.apache.commons.lang.builder.EqualsBuilder
-- b:append(Z,Z):org.apache.commons.lang3.builder.EqualsBuilder
 - appendSuper(Z):org.apache.commons.lang.builder.EqualsBuilder
-- b:appendSuper(Z):org.apache.commons.lang3.builder.EqualsBuilder
 - s:reflectionEquals(java.lang.Object,java.lang.Object):Z
 f:org.apache.commons.lang.builder.HashCodeBuilder
 - org.apache.commons.lang3.builder.HashCodeBuilder
 - <init>():V
 - <init>(I,I):V
 - append(I):org.apache.commons.lang.builder.HashCodeBuilder
-- b:append(I):org.apache.commons.lang3.builder.HashCodeBuilder
 - append(java.lang.Object):org.apache.commons.lang.builder.HashCodeBuilder
-- b:append(java.lang.Object):org.apache.commons.lang3.builder.HashCodeBuilder
 - append(Z):org.apache.commons.lang.builder.HashCodeBuilder
-- b:append(Z):org.apache.commons.lang3.builder.HashCodeBuilder
 - appendSuper(I):org.apache.commons.lang.builder.HashCodeBuilder
-- b:appendSuper(I):org.apache.commons.lang3.builder.HashCodeBuilder
 - s:reflectionHashCode(java.lang.Object):I
 f:org.apache.commons.lang.builder.ReflectionToStringBuilder
 - org.apache.commons.lang3.builder.ReflectionToStringBuilder
@@ -135,11 +127,8 @@ f:org.apache.commons.lang.text.StrBuilder
 - <init>(I):V
 - <init>(java.lang.String):V
 - append(I):org.apache.commons.lang.text.StrBuilder
-- b:append(I):org.apache.commons.lang3.text.StrBuilder
 - append(java.lang.String):org.apache.commons.lang.text.StrBuilder
-- b:append(java.lang.String):org.apache.commons.lang3.text.StrBuilder
 - appendNewLine():org.apache.commons.lang.text.StrBuilder
-- b:appendNewLine():org.apache.commons.lang3.text.StrBuilder
 f:org.apache.commons.lang.text.StrSubstitutor
 - org.apache.commons.lang3.text.StrSubstitutor
 - <init>():V

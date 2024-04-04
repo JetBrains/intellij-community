@@ -2,10 +2,7 @@
 package com.intellij.tools.apiDump
 
 import kotlinx.metadata.jvm.JvmFieldSignature
-import kotlinx.validation.api.ClassBinarySignature
-import kotlinx.validation.api.MEMBER_SORT_ORDER
-import kotlinx.validation.api.MemberBinarySignature
-import kotlinx.validation.api.loadApiFromJvmClasses
+import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
@@ -30,6 +27,7 @@ class ApiIndex {
     val signatures: List<ClassBinarySignature> = classFilePaths
       .map { it.inputStream() }
       .loadApiFromJvmClasses()
+      .map { it.removeSyntheticBridges() }
     discoverClasses(signatures)
 
     handleAnnotationsAndVisibility(signatures)
@@ -134,28 +132,8 @@ class ApiIndex {
         member.access.isStatic
       }
     }
-    val privateSignatures = privateSupertypes.flatMap { superType ->
-      superType.memberSignatures
-        .filter {
-          val flags = it.access.access
-          !flags.isSet(Opcodes.ACC_STATIC)
-          && !flags.isSet(Opcodes.ACC_BRIDGE)
-          && !flags.isSet(Opcodes.ACC_SYNTHETIC)
-        }
-        .map {
-          it.jvmMember
-        }
-    }.toSet()
-    val withoutBridges = memberSignatures
-      .filter { signature ->
-        val flags = signature.access.access
-        flags.isSet(Opcodes.ACC_STATIC)
-        || !flags.isSet(Opcodes.ACC_BRIDGE)
-        || !flags.isSet(Opcodes.ACC_SYNTHETIC)
-        || signature.jvmMember !in privateSignatures
-      }
     return this.copy(
-      memberSignatures = withoutBridges + inheritedStaticSignatures,
+      memberSignatures = memberSignatures + inheritedStaticSignatures,
       supertypes = supertypes - privateSupertypes.map { it.name }.toSet()
     )
   }
@@ -235,6 +213,26 @@ private fun List<AnnotationNode>?.isExperimental(): Boolean {
 }
 
 private typealias ClassResolver = (String) -> ClassBinarySignature?
+
+private fun ClassBinarySignature.removeSyntheticBridges(): ClassBinarySignature {
+  val withoutBridges = memberSignatures.filterNot {
+    it is MethodBinarySignature && it.isSyntheticBridge()
+  }
+  if (withoutBridges.size == memberSignatures.size) {
+    return this
+  }
+  else {
+    return copy(memberSignatures = withoutBridges)
+  }
+}
+
+private fun MethodBinarySignature.isSyntheticBridge(): Boolean {
+  return access.access.let { flags ->
+    !flags.isSet(Opcodes.ACC_STATIC)
+    && flags.isSet(Opcodes.ACC_BRIDGE)
+    && flags.isSet(Opcodes.ACC_SYNTHETIC)
+  }
+}
 
 private fun ClassBinarySignature.supertypes(classResolver: ClassResolver): Sequence<ClassBinarySignature> = sequence {
   val stack = ArrayDeque<ClassBinarySignature>()
