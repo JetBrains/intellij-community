@@ -18,14 +18,14 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
     super.setUp()
     Registry.get(EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY).setValue(true)
     val descriptorManager = EditorConfigOptionDescriptorManager.getInstance(project) as EditorConfigOptionDescriptorManagerImpl
-    descriptorManager.loadDescriptors(project)
+    descriptorManager.reloadDescriptors(project)
   }
 
   override fun tearDown() {
     try {
       Registry.get(EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY).resetToDefault()
       val descriptorManager = EditorConfigOptionDescriptorManager.getInstance(project) as EditorConfigOptionDescriptorManagerImpl
-      descriptorManager.loadDescriptors(project)
+      descriptorManager.reloadDescriptors(project)
     }
     catch (e: Throwable) {
       addSuppressedException(e)
