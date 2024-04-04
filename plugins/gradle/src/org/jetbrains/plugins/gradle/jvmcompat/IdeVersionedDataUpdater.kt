@@ -18,7 +18,7 @@ abstract class IdeVersionedDataUpdater<T : IdeVersionedDataState>(
 
   open fun checkForUpdates() {
     val updateIntervalMillis = updateInterval.inWholeMilliseconds
-    if (updateIntervalMillis == 0.toLong() || configUrl.isEmpty()) {
+    if (updateIntervalMillis == 0L || configUrl.isEmpty()) {
       return
     }
 
