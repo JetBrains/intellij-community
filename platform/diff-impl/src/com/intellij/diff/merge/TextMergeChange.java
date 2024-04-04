@@ -195,6 +195,14 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.RIGHT, OperationType.IGNORE));
   }
 
+  /**
+   * Overrided to allow package-level access from {@link MergeThreesideViewer}
+   */
+  @Override
+  protected void destroyOperations() {
+    super.destroyOperations();
+  }
+
   @Nullable
   private DiffGutterOperation createOperation(@NotNull ThreeSide side, @NotNull DiffGutterOperation.ModifiersRendererBuilder builder) {
     if (isResolved(side)) return null;
