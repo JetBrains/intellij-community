@@ -21,13 +21,17 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <plugin id="com.intellij.modules.python-core-capable"/>
   </dependencies>
 
+  <!-- Declare that we support python -->
+  <module value="com.intellij.modules.python"/>
+
   <!-- Python bundled modules for content -->
-  <xi:include href="/META-INF/python-v2-core-plugin-include.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-v2-core-plugin-content-include.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <content>
     <!--Mini-IDes support community python only-->
     <module name="intellij.python.community.plugin.minor"/> <!-- Python for Mini-IDEs-->
     <module name="intellij.python.community.plugin.minor.rider"/> <!-- Python special support for Rider -->
     <module name="intellij.python.community.impl.community_only"/> <!-- Community-specific code-->
+    <module name="intellij.python.community.deprecated.extensions"/><!-- backward comp -->
   </content>
 
 </idea-plugin>

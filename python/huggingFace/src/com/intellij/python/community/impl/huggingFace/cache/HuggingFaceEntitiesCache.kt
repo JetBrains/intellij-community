@@ -2,11 +2,11 @@
 package com.intellij.python.community.impl.huggingFace.cache
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
+import com.intellij.util.xmlb.XmlSerializerUtil
 
 
 @State(
@@ -48,7 +48,10 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
 
   fun getBasicData(entityId: String): HuggingFaceEntityBasicApiData? = cacheMap[entityId]
 
-  // fun isNameInSet(name: String): Boolean = nameSet.contains(name)
+  fun getPipelineTagForEntity(entityId: String): String? {
+    hotCache[entityId]?.let { return it.pipelineTag }
+    return cacheMap[entityId]?.pipelineTag
+  }
 
   override fun getState(): HuggingFaceCache = this
 

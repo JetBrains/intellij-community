@@ -32,6 +32,9 @@
                                            implementation="com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.mappings.CommonPluginMapping"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.startup.importSettings.fus.TransferSettingsCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector"/>
+
     <statistics.validation.customValidationRule implementation="com.intellij.ide.startup.importSettings.fus.KnownPluginValidationRule"/>
     <transferSettings.externalProjectImportChecker implementation="com.intellij.ide.startup.importSettings.transfer.backend.CargoExternalProjectImportChecker"/>
   </extensions>

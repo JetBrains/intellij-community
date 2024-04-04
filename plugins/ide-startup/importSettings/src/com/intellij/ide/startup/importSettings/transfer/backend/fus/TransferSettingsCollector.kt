@@ -6,6 +6,7 @@ import com.intellij.ide.startup.importSettings.models.FailedIdeVersion
 import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.ide.startup.importSettings.models.PatchedKeymap
 import com.intellij.ide.startup.importSettings.models.Settings
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.VisualStudioPluginsMapping
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -157,6 +158,7 @@ object TransferSettingsCollector : CounterUsagesCollector() {
         .forEach { (id, version), instances ->
           instancesOfIdeFound.log(id, version, instances.size)
         }
+      ImportSettingsEventsCollector.externalIdes(versions.map { it.id })
     }
   }
 

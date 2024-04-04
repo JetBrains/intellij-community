@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.VMOptions
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -25,7 +26,9 @@ import com.sun.management.OperatingSystemMXBean
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.name
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -37,7 +40,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
   private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 17)
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 18)
   private val CORES: EventId1<Int> = GROUP.registerEvent(
     "cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
   private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent(
@@ -51,6 +54,8 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTY: EventId2<String?, Boolean> =
     GROUP.registerEvent("jvm.client.properties", String("name", SYSTEM_PROPERTIES), Boolean("value"))
   private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
+  private val AGENTS_COUNT: EventId2<Int, Int> = GROUP.registerEvent("agents.count", Int("java_agents"), Int("native_agents"))
+  private val AGENT_PRESENCE_C1: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c1", EventFields.Enabled) // IJPL-856
   private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -91,7 +96,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       result += SYSTEM_PROPERTY.metric(property.key, property.value.toBoolean())
     }
 
-    result += DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled())
+    result += collectAgentMetrics()
 
     return result
   }
@@ -175,4 +180,36 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       .map { it to System.getProperty(it) }
       .filter { it.second != null }
       .toMap()
+
+  private fun collectAgentMetrics(): Set<MetricEvent> {
+    var nativeAgents = 0
+    var javaAgents = 0
+    var isAgentPresentC1 = false
+
+    for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
+      if (arg.startsWith("-javaagent:")) {
+        javaAgents++
+        if (calculateAgentSignature(arg) == "936efb883204705f") {
+          isAgentPresentC1 = true
+        }
+      }
+      if (arg.startsWith("-agentlib:") || arg.startsWith("-agentpath:")) {
+        nativeAgents++
+      }
+    }
+
+    return buildSet {
+      add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
+      add(AGENTS_COUNT.metric(javaAgents, nativeAgents))
+      add(AGENT_PRESENCE_C1.metric(isAgentPresentC1))
+    }
+  }
+
+  private fun calculateAgentSignature(arg: String): String {
+    val path = arg.removePrefix("-javaagent:").substringBefore("=")
+    val filename = runCatching {
+      Path.of(path).name
+    }.getOrDefault(path)
+    return Hashing.komihash5_0().hashStream().putString(filename).asLong.toULong().toString(16)
+  }
 }

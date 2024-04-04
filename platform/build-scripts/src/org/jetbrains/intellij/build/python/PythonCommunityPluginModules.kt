@@ -34,7 +34,8 @@ object PythonCommunityPluginModules {
     "intellij.python.featuresTrainer",
     "intellij.jupyter.core",
     "intellij.python.syntax",
-    "intellij.python.syntax.core"
+    "intellij.python.syntax.core",
+    "intellij.python.community.deprecated.extensions"
   )
 
   const val pythonCommunityName: String = "python-ce"

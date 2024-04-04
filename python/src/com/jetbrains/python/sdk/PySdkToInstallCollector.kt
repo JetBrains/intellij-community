@@ -44,7 +44,7 @@ internal object PySdkToInstallCollector : CounterUsagesCollector() {
     installationEvent.log(project, *args.toTypedArray())
   }
 
-  internal fun logInstallerException(project: Project?, release: Release, exception: ReleaseInstallerException) {
+  internal fun logInstallerException(project: Project?, release: Release, exception: BinaryInstallerException) {
     when (exception) {
       is PrepareException -> {
         when (exception) {
@@ -52,7 +52,7 @@ internal object PySdkToInstallCollector : CounterUsagesCollector() {
           is WrongChecksumPrepareException -> DownloadResult.CHECKSUM
           is CancelledPrepareException -> DownloadResult.CANCELLED
           else -> DownloadResult.EXCEPTION
-        }.apply { logSdkDownload(project, release.version.toString(), this) }
+        }.let { logSdkDownload(project, release.version, it) }
       }
       is ProcessException -> {
         when (exception) {
@@ -60,7 +60,7 @@ internal object PySdkToInstallCollector : CounterUsagesCollector() {
           is TimeoutProcessException -> InstallationResult.TIMEOUT
           is CancelledProcessException -> InstallationResult.CANCELLED
           else -> InstallationResult.EXCEPTION
-        }.apply { logSdkInstall(project, release.version.toString(), this) }
+        }.let { logSdkInstall(project, release.version, it) }
       }
     }
   }

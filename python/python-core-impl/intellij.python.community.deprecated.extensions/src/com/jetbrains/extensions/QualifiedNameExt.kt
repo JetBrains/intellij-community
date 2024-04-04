@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.extensions
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,22 +33,6 @@ interface ContextAnchor {
   val scope: GlobalSearchScope
   fun getRoots(): Array<VirtualFile> {
     return sdk?.rootProvider?.getFiles(OrderRootType.CLASSES) ?: emptyArray()
-  }
-}
-
-/**
- * @deprecated moved to {@link com.jetbrains.python.extensions}
- */
-@ApiStatus.ScheduledForRemoval
-@Deprecated(message = "Moved to com.jetbrains.python")
-class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
-  override val sdk: Sdk? = module.getSdk()
-  override val project: Project = module.project
-  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext = fromModule(module)
-  override val scope: GlobalSearchScope = module.moduleContentScope
-  override fun getRoots(): Array<VirtualFile> {
-    val manager = ModuleRootManager.getInstance(module)
-    return super.getRoots() + manager.contentRoots + manager.sourceRoots
   }
 }
 
@@ -104,7 +86,7 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
  */
 @ApiStatus.ScheduledForRemoval
 @Deprecated(message = "Moved to com.jetbrains.python")
-class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : com.jetbrains.python.extensions.ContextAnchor {
+class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
   override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
   override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
   override fun getRoots(): Array<VirtualFile> {
@@ -168,7 +150,6 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   if (lastElement != null && element is PyClass) {
     // Drill in class
 
-    //TODO: Support nested classes
     val method = element.findMethodByName(lastElement, true, context.evalContext)
     if (method != null) {
       return NameAndElement(currentName.append(lastElement), method)

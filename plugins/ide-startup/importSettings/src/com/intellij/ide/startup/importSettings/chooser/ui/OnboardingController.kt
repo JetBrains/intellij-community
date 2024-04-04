@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.WizardProvider
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 
@@ -43,9 +44,15 @@ class OnboardingController private constructor(){
 
     val skipAction: () -> Unit = skipImportAction ?:
       WizardProvider.getInstance().getWizardService()?.let {
-      { startWizard(cancelCallback, titleGetter, isModal) }
+      {
+        ImportSettingsEventsCollector.productPageSkipButton()
+        startWizard(cancelCallback, titleGetter, isModal)
+      }
     } ?: run {
-      { dialogClose() }
+      {
+        ImportSettingsEventsCollector.productPageSkipButton()
+        dialogClose()
+      }
     }
 
     val controller = ImportSettingsController.createController(dl, skipAction)
@@ -57,6 +64,7 @@ class OnboardingController private constructor(){
     if(!dl.isShowing) {
       dl.initialize()
       dl.show()
+      ImportSettingsEventsCollector.importFinished()
     }
 
     state = State.IMPORT
@@ -98,6 +106,7 @@ class OnboardingController private constructor(){
     if(!dl.isShowing) {
       dl.initialize()
       dl.show()
+      ImportSettingsEventsCollector.importFinished()
     }
 
     state = State.WIZARD

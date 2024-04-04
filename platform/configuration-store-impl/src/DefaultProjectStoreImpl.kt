@@ -19,6 +19,9 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
   // see note about default state in project store
   private val compoundStreamProvider = CompoundStreamProvider()
 
+  override val allowSavingWithoutModifications: Boolean
+    get() = true
+
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 

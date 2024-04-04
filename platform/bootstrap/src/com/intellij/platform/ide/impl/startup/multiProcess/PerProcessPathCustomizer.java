@@ -4,6 +4,7 @@ package com.intellij.platform.ide.impl.startup.multiProcess;
 import com.intellij.openapi.application.PathCustomizer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 
 import static com.intellij.idea.Main.customTargetDirectoryToImportConfig;
 import static com.intellij.idea.Main.isConfigImportNeeded;
@@ -28,6 +30,12 @@ import static com.intellij.idea.Main.isConfigImportNeeded;
 @ApiStatus.Internal
 public final class PerProcessPathCustomizer implements PathCustomizer {
   private static final String LOCK_FILE_NAME = "process.lock";
+
+  private static final Set<String> FILES_TO_KEEP = ContainerUtil.newHashSet(
+    LOCK_FILE_NAME,
+    ".pid", // Required by PerformanceWatcherImpl to report native crashes
+    ".appinfo" // Required by PerformanceWatcherImpl to report native crashes
+  );
 
   // Leave the folder locked until we exit. Store reference to keep CleanerFactory from releasing the file channel.
   @SuppressWarnings("unused") private static FileLock ourConfigLock;
@@ -130,7 +138,7 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
   private static void cleanDirectory(@NotNull Path directory) {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
       stream.forEach(path -> {
-        if (!path.getFileName().toString().equals(LOCK_FILE_NAME)) {
+        if (!FILES_TO_KEEP.contains(path.getFileName().toString())) {
           try {
             NioFiles.deleteRecursively(path);
           }

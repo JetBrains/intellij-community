@@ -58,7 +58,7 @@ private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(proj
       info = info,
       componentName = componentName,
       stateClass = stateClass,
-      useLoadedStateAsExisting = false,
+      useLoadedStateAsExisting = useLoadedStateAsExisting,
     )
     val configurationSchemaKey = info.configurationSchemaKey ?: return stateGetter
     val configurationFileManager = ConfigurationFileManager.getInstance(project)

@@ -938,13 +938,17 @@ public final class TreeUtil {
     selectPath(tree, getPathFromRoot(node));
   }
 
-  public static void moveSelectedRow(final @NotNull JTree tree, final int direction){
-    final TreePath selectionPath = tree.getSelectionPath();
-    final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
-    final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
-    final int idx = parent.getIndex(treeNode);
-    ((DefaultTreeModel)tree.getModel()).removeNodeFromParent(treeNode);
-    ((DefaultTreeModel)tree.getModel()).insertNodeInto(treeNode, parent, idx + direction);
+  public static void moveSelectedRow(@NotNull JTree tree, int direction) {
+    TreePath selectionPath = tree.getSelectionPath();
+    DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode)treeNode.getParent();
+    int idx = parent.getIndex(treeNode);
+    if (idx + direction < 0 || idx + direction >= parent.getChildCount()) {
+      return;
+    }
+    DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+    model.removeNodeFromParent(treeNode);
+    model.insertNodeInto(treeNode, parent, idx + direction);
     selectNode(tree, treeNode);
   }
 

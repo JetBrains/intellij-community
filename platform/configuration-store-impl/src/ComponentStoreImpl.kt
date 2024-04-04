@@ -85,6 +85,17 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
+  /**
+   * Indicates whether this store's components might be overwritten without
+   * explicit user action (i.e., value is dropped if it's equal to the default).
+   *
+   * This is normally true for locally stored configs (application and default.project)
+   * and false for shareable configs (project and module stores), since we have
+   * the "write-protection" for the shareable configs
+   */
+  protected open val allowSavingWithoutModifications: Boolean
+    get() = false
+
   abstract override val storageManager: StateStorageManager
 
   private val featureUsageSettingManager by lazy {
@@ -290,7 +301,7 @@ abstract class ComponentStoreImpl : IComponentStore {
               SAVE_MOD_LOG.debug(
                 "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
             }
-            if (isUseModificationCount && !isForce) {
+            if (isUseModificationCount && !(isForce && allowSavingWithoutModifications)) {
               continue
             }
           }

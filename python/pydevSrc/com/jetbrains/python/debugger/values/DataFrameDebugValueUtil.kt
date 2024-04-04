@@ -16,7 +16,7 @@ import java.lang.invoke.MethodHandles
  *
  * Example: df.foo.bar.ba<caret>, columnsBefore = ["foo", "bar"]
  */
-fun completePandasDataFrameColumns(treeColumns: DataFrameDebugValue.ColumnNode, columnsBefore: List<String?>): Set<String>? {
+fun completeDataFrameColumns(treeColumns: DataFrameDebugValue.ColumnNode, columnsBefore: List<String?>): Set<String>? {
   return if (columnsBefore.isNotEmpty()) {
     var node: DataFrameDebugValue.ColumnNode? = treeColumns.children?.get(columnsBefore[0]) ?: return emptySet()
     for (i in 1 until columnsBefore.size) {

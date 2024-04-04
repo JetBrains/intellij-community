@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.installer
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -10,12 +10,12 @@ import java.nio.file.Path
 /**
  * Base Exception for the Software Release Installer.
  */
-open class ReleaseInstallerException(cause: Throwable) : Exception(cause)
+open class BinaryInstallerException(cause: Throwable) : Exception(cause)
 
 /**
  * Base Exception for the release prepare logic (the stage before onPrepareComplete callback).
  */
-open class PrepareException(cause: Throwable) : ReleaseInstallerException(cause)
+open class PrepareException(cause: Throwable) : BinaryInstallerException(cause)
 
 class WrongSizePrepareException(path: Path, sizeDiff: Long) : PrepareException(
   IOException("Downloaded $path has incorrect size, difference is $sizeDiff bytes.")
@@ -25,12 +25,16 @@ class WrongChecksumPrepareException(path: Path, required: String, actual: String
   IOException("Checksums for $path does not match. Actual value is $actual, expected $required.")
 )
 
+class MakeShellScriptExecutableException(path: Path) : PrepareException(
+  IOException("Failed to make shell script file executable: $path")
+)
+
 class CancelledPrepareException(cause: ProcessCanceledException) : PrepareException(cause)
 
 /**
  * Base Exception for the release processing logic (the stage after onPrepareComplete callback).
  */
-open class ProcessException(val command: GeneralCommandLine, val output: ProcessOutput?, cause: Throwable) : ReleaseInstallerException(
+open class ProcessException(val command: GeneralCommandLine, val output: ProcessOutput?, cause: Throwable) : BinaryInstallerException(
   cause)
 
 class ExecutionProcessException(command: GeneralCommandLine, cause: Exception) : ProcessException(command, null, cause)

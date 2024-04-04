@@ -3,16 +3,26 @@ package com.intellij.jupyter.viewOnly
 
 
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.jupyter.core.jupyter.preview.JupyterCefHttpHandlerBase
+import com.intellij.jupyter.core.jupyter.preview.addPathSegment
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.tryUltimate
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.jcef.JBCefBrowser
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.jcef.JBCefBrowserBase
+import com.intellij.ui.jcef.JBCefJSQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -21,8 +31,6 @@ import kotlinx.coroutines.launch
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandlerAdapter
-import com.intellij.jupyter.core.jupyter.preview.JupyterCefHttpHandlerBase
-import com.intellij.jupyter.core.jupyter.preview.addPathSegment
 import java.beans.PropertyChangeListener
 import java.nio.ByteBuffer
 import javax.swing.JComponent
@@ -35,8 +43,22 @@ class JupyterViewOnlyFileEditor private constructor(val myFile: VirtualFile) : U
   private val browser = JBCefBrowser.createBuilder().setOffScreenRendering(SystemInfo.isLinux).setUrl(
     JupyterCefHttpHandlerBase.getJupyterHttpUrl().addPathSegment("index.html").toString()).build()
   private val browserComponent: JComponent = browser.component
-  private val darcula: MutableStateFlow<Boolean> = MutableStateFlow(UIUtil.isUnderDarcula())
+  private val darcula: MutableStateFlow<Boolean> = MutableStateFlow(EditorColorsManager.getInstance().isDarkEditor)
   private val scope = CoroutineScope(Dispatchers.EDT)
+
+  private val pyCharmProClickJSQuery = JBCefJSQuery.create(browser as JBCefBrowserBase).apply {
+    addHandler {
+      tryUltimate(null,
+                  PluginAdvertiserService.pyCharmProfessional,
+                  ProjectManager.getInstance().openProjects.firstOrNull(),
+                  null) {
+        val actionEvent = AnActionEvent.createFromDataContext("JupyterPreview", null, DataContext.EMPTY_CONTEXT)
+        ActionManager.getInstance().getAction("PromoPreviewJupyterNotebook")?.actionPerformed(actionEvent)
+      }
+      null
+    }
+    Disposer.register(browser, this)
+  }
 
   companion object {
     fun create(file: VirtualFile): JupyterViewOnlyFileEditor = JupyterViewOnlyFileEditor(file).apply {
@@ -45,21 +67,24 @@ class JupyterViewOnlyFileEditor private constructor(val myFile: VirtualFile) : U
         override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
           val str = Charsets.UTF_8.decode(ByteBuffer.wrap(myFile.contentsToByteArray())).toString()
           configureLaf()
-          frame.executeJavaScript("const data=$str;", browser.url, 0)
-          frame.executeJavaScript("render(data);", browser.url, 0)
+          frame.executeJavaScript("""
+            const data=$str;
+            render(data);
+            document.getElementById('TryPyCharmProButton').onclick = function() {
+              window.${pyCharmProClickJSQuery.funcName}({request: '' });
+            };""", browser.url, 0)
         }
       }, browser.cefBrowser)
       browser.setOpenLinksInExternalBrowser(true)
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
         // May be called several times, buffer merges calls
-        darcula.value = UIUtil.isUnderDarcula()
+        darcula.value = EditorColorsManager.getInstance().isDarkEditor
       })
       scope.launch {
         darcula.collect {
           configureLaf()
         }
       }
-
     }
   }
 

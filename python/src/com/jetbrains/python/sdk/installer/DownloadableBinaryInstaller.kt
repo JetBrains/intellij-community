@@ -1,64 +1,31 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.installer
 
 import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.Binary
+import com.jetbrains.python.sdk.Resource
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.fileSize
-
-val LOGGER = logger<ReleaseInstaller>()
-
-data class ReleasePreview(val description: String, val size: Long) {
-  companion object {
-    fun of(resource: Resource?) = resource?.let { ReleasePreview(it.url.toString(), it.size) } ?: ReleasePreview("", 0)
-  }
-}
-
-/**
- * Software Release Installer.
- *
- * @see com.jetbrains.python.sdk.Release
- */
-interface ReleaseInstaller {
-  /**
-   * Verifies if it can install the release (have enough binary/source resources or tools installed).
-   */
-  fun canInstall(release: Release): Boolean
-
-  /**
-   * Installation process of the selected software release.
-   * Should be checked with canInstall, otherwise the behavior is not predictable.
-   * @see ReleaseInstaller.canInstall
-   * @param onPrepareComplete callback function, have to be called right before the installation process.
-   */
-  @Throws(ReleaseInstallerException::class)
-  fun install(release: Release, indicator: ProgressIndicator, onPrepareComplete: () -> Unit)
-
-  /**
-   * Preview for pre-install messages and warnings.
-   */
-  fun getPreview(release: Release): ReleasePreview
-}
 
 /**
  * Base Release Installer with additional external resource loading.
  * Responsible for loading and checking the checksum/size of additional resources before processing.
  */
-abstract class DownloadableReleaseInstaller : ReleaseInstaller {
+abstract class DownloadableBinaryInstaller : BinaryInstaller {
   /**
    * Concrete installer should choose which resources it needs.
    * Might be any additional resources or tools outside the release scope.
    */
-  abstract fun getResourcesToDownload(release: Release): List<Resource>
+  abstract fun getResourcesToDownload(binary: Binary): List<Resource>
 
   /**
    * Concrete installer process entry point.
@@ -69,12 +36,12 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
    * @param resourcePaths - requested resources download paths (on the temp path)
    */
   @Throws(ProcessException::class)
-  abstract fun process(release: Release, resourcePaths: Map<Resource, Path>, indicator: ProgressIndicator)
+  abstract fun process(resourcePaths: Map<Resource, Path>, indicator: ProgressIndicator)
 
-  @Throws(ReleaseInstallerException::class)
-  override fun install(release: Release, indicator: ProgressIndicator, onPrepareComplete: () -> Unit) {
+  @Throws(BinaryInstallerException::class)
+  override fun install(binary: Binary, indicator: ProgressIndicator, onPrepareComplete: () -> Unit) {
     val tempPath = PathManager.getTempPath()
-    val files = getResourcesToDownload(release).associateWith {
+    val files = getResourcesToDownload(binary).associateWith {
       Paths.get(tempPath, "${System.nanoTime()}-${it.fileName}")
     }
     try {
@@ -85,7 +52,7 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
 
       onPrepareComplete()
 
-      process(release, files, indicator)
+      process(files, indicator)
     }
     finally {
       files.values.forEach { runCatching { FileUtil.delete(it) } }
@@ -110,7 +77,8 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
   @Throws(PrepareException::class)
   private fun download(resource: Resource, target: Path, indicator: ProgressIndicator) {
     LOGGER.info("Downloading ${resource.url} to $target")
-    indicator.text2 = PySdkBundle.message("python.sdk.downloading.progress.details", resource.fileName)
+    val fileSizeHumanReadable = StringUtil.formatFileSize(resource.size)
+    indicator.text2 = PySdkBundle.message("python.sdk.downloading.progress.details", fileSizeHumanReadable, resource.fileName)
     try {
       indicator.checkCanceled()
       HttpRequests.request(resource.url)
@@ -131,7 +99,7 @@ abstract class DownloadableReleaseInstaller : ReleaseInstaller {
     }
   }
 
-  override fun getPreview(release: Release): ReleasePreview {
-    return ReleasePreview.of(getResourcesToDownload(release).firstOrNull())
+  override fun getPreview(binary: Binary): ResourcePreview {
+    return ResourcePreview.of(getResourcesToDownload(binary).firstOrNull())
   }
 }

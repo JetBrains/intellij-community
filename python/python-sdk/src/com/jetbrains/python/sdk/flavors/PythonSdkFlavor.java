@@ -199,6 +199,10 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     }
   }
 
+  public static void clearExecutablesCache() {
+    ourExecutableFiles.invalidateAll();
+  }
+
   @NotNull
   private static String getIdForCache(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration configuration) {
     var builder = new StringBuilder(fullPath);

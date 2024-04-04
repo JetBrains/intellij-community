@@ -3,6 +3,7 @@ package com.intellij.ide.startup.importSettings.chooser.productChooser
 
 import com.intellij.ide.startup.importSettings.chooser.ui.ProductChooserButton
 import com.intellij.ide.startup.importSettings.chooser.ui.UiUtils
+import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -41,6 +42,7 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
     val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
     if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
+      ImportSettingsEventsCollector.productPageDropdownClicked(this)
       ActionUtil.performActionDumbAwareWithCallbacks(this, event)
     }
   }

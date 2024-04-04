@@ -78,7 +78,12 @@ internal class HuggingFaceDocumentationTarget(private val myElement : PsiElement
       val modelCardContent = fetchOrRetrieveModelCard(entityDataApiContent, entityId, entityKind)
       val project = readAction { myElement.project }
 
-      HuggingFaceCardsUsageCollector.CARD_SHOWN_ON_HOVER.log(entityId, entityKind)
+      val pipelineTag = when (entityKind) {
+        HuggingFaceEntityKind.MODEL -> HuggingFaceModelsCache.getPipelineTagForEntity(entityId) ?: HuggingFaceConstants.UNDEFINED_PIPELINE_TAG
+        HuggingFaceEntityKind.DATASET -> HuggingFaceConstants.DATASET_FAKE_PIPELINE_TAG
+      }
+      HuggingFaceCardsUsageCollector.CARD_SHOWN_ON_HOVER.log(pipelineTag)
+
       val htmlContent = HuggingFaceHtmlBuilder(
         project,
         entityDataApiContent,
