@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAware
@@ -35,11 +36,11 @@ import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import org.jdom.Element
 import javax.swing.JComponent
 
@@ -190,10 +191,11 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   @Service(Service.Level.PROJECT)
   private class ButtonsRepaintService(project: Project): Disposable {
     private val buttons = ContainerUtil.createWeakSet<ActionButton>()
+    private val alarm = SingleAlarm(this::repaintButtons, 0, this, modalityState = ModalityState.any())
     init {
       project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager) {
-          UIUtil.invokeLaterIfNeeded(this@ButtonsRepaintService::repaintButtons)
+          alarm.cancelAndRequest()
         }
       })
     }
@@ -211,7 +213,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     @RequiresEdt
     fun repaintButtons() {
       val toolbars = buttons.mapNotNullTo(LinkedHashSet()) { ActionToolbar.findToolbarBy(it) }
-      toolbars.forEach { it.updateActionsImmediately() }
+      toolbars.forEach { it.updateActionsAsync() }
     }
 
     override fun dispose() {
