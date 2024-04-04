@@ -823,20 +823,20 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitAssignmentChainAlsoLinkRaw(assignmentChainAlsoLink: JKAssignmentChainAlsoLink) {
             assignmentChainAlsoLink.receiver.accept(this)
-            printer.print(".also({ ")
+            printer.print(".also { ")
             assignmentChainAlsoLink.assignmentStatement.accept(this)
             printer.print(" ")
-            printer.print("})")
+            printer.print("}")
         }
 
         override fun visitAssignmentChainLetLinkRaw(assignmentChainLetLink: JKAssignmentChainLetLink) {
             assignmentChainLetLink.receiver.accept(this)
-            printer.print(".let({ ")
+            printer.print(".let { ")
             assignmentChainLetLink.assignmentStatement.accept(this)
             printer.print("; ")
             assignmentChainLetLink.field.accept(this)
             printer.print(" ")
-            printer.print("})")
+            printer.print("}")
         }
 
         override fun visitKtWhenBlockRaw(ktWhenBlock: JKKtWhenBlock) {
