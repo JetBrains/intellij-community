@@ -16,12 +16,13 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.CharPredicate;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.IntPredicate;
 
 public final class IdTableBuilding {
   private IdTableBuilding() {
@@ -98,47 +99,79 @@ public final class IdTableBuilding {
                                final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {
-    scanWords(processor, chars, charArray, startOffset, endOffset, mayHaveEscapes, IdTableBuilding::isWordCharacter);
+    scanWords(processor, chars, charArray, startOffset, endOffset, mayHaveEscapes, IdTableBuilding::isWordCodePoint);
   }
 
-  public static boolean isWordCharacter(char c) {
-    return (c >= 'a' && c <= 'z') ||
-           (c >= 'A' && c <= 'Z') ||
-           (c >= '0' && c <= '9') ||
-           (Character.isJavaIdentifierStart(c) && c != '$');
+  public static boolean isWordCodePoint(int codePoint) {
+    return (codePoint >= 'a' && codePoint <= 'z') ||
+           (codePoint >= 'A' && codePoint <= 'Z') ||
+           (codePoint >= '0' && codePoint <= '9') ||
+           (Character.isJavaIdentifierStart(codePoint) && codePoint != '$');
   }
 
+  @SuppressWarnings("DuplicatedCode")
   public static void scanWords(final ScanWordProcessor processor,
-                               final CharSequence chars,
+                               CharSequence chars,
                                final char @Nullable [] charArray,
                                final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes,
-                               final CharPredicate isWordCharacter) {
+                               final IntPredicate isWordCodePoint) {
     int index = startOffset;
-    final boolean hasArray = charArray != null;
-
+    boolean hasArray = charArray != null;
     ScanWordsLoop:
     while (true) {
+      int startIndex = index;
       while (true) {
         if (index >= endOffset) break ScanWordsLoop;
-        final char c = hasArray ? charArray[index] : chars.charAt(index);
-        if (isWordCharacter.test(c)) {
+        // nextCodePoint - inlined for performance
+        int codePoint;
+        char c1 = hasArray ? charArray[index++] : chars.charAt(index++);
+        if (Character.isHighSurrogate(c1) && index < endOffset) {
+          char c2 = hasArray ? charArray[index] : chars.charAt(index);
+          if (Character.isLowSurrogate(c2)) {
+            index++;
+            // UTF-16 character
+            codePoint = Character.toCodePoint(c1, c2);
+          } else {
+            codePoint = c1;
+          }
+        } else {
+          codePoint = c1;
+        }
+        if (isWordCodePoint.test(codePoint)) {
           break;
         }
-        index++;
-        if (mayHaveEscapes && c == '\\') index++; //the next symbol is for escaping
+        if (mayHaveEscapes && codePoint == '\\') index++; //the next symbol is for escaping
+        startIndex = index;
       }
-      int index1 = index;
+      int endIndex = index;
       while (true) {
-        index++;
         if (index >= endOffset) break;
-        final char c = hasArray ? charArray[index] : chars.charAt(index);
-        if (!isWordCharacter.test(c)) break;
+        // nextCodePoint - inlined for performance
+        int codePoint;
+        char c1 = hasArray ? charArray[index++] : chars.charAt(index++);
+        if (Character.isHighSurrogate(c1) && index < endOffset) {
+          char c2 = hasArray ? charArray[index] : chars.charAt(index);
+          if (Character.isLowSurrogate(c2)) {
+            index++;
+            // UTF-16 character
+            codePoint = Character.toCodePoint(c1, c2);
+          } else {
+            codePoint = c1;
+          }
+        } else {
+          codePoint = c1;
+        }
+        if (!isWordCodePoint.test(codePoint)) {
+          break;
+        }
+        endIndex = index;
       }
-      if (index - index1 > 100) continue; // Strange limit but we should have some!
+      if (endIndex - startIndex > 100) continue; // Strange limit but we should have some!
 
-      processor.run(chars, charArray, index1, index);
+      processor.run(chars, charArray, startIndex, endIndex);
     }
   }
+
 }
