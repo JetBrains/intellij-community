@@ -302,8 +302,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public boolean isClosed() {
-    //TODO please, implement me
-    throw new UnsupportedOperationException("Method is not implemented yet");
+    return keyHashToIdMap.isClosed();
   }
 
   @Override

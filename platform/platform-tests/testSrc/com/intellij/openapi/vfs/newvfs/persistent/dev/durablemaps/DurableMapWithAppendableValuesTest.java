@@ -10,15 +10,17 @@ import com.intellij.util.io.dev.enumerator.StringAsUTF8;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntFunction;
 
-@Ignore("DurableMapWithAppendableValues is not fully implemented yet")
 public class DurableMapWithAppendableValuesTest
   extends DurableMapTestBase<String, Set<Integer>, DurableMapWithAppendableValues<String, Integer>> {
 
@@ -85,5 +87,17 @@ public class DurableMapWithAppendableValuesTest
 
   public DurableMapWithAppendableValuesTest() {
     super(SUBSTRATE_DECODER);
+  }
+
+  @Override
+  @Disabled("Compaction is not implemented yet for this map")
+  public void compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(@TempDir Path tempDir) throws Exception {
+    super.compactionReturnsMapWithSameMapping_afterManyDifferentMappingsPut(tempDir);
+  }
+
+  @Override
+  @Disabled("Compaction is not implemented yet for this map")
+  public void compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(@TempDir Path tempDir) throws Exception {
+    super.compactionReturnsMapWithLastMapping_afterManyManyValuesWereOverwritten(tempDir);
   }
 }

@@ -28,9 +28,22 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
   //         the superclass, if DurableMap/PersistentMap ifaces merge.
 
   @Test
-  public void mapIsInitiallyEmpty() throws IOException {
+  public void initially_MapIsEmpty() throws IOException {
     assertTrue(storage.isEmpty());
     assertEquals(0, storage.size());
+  }
+
+  @Test
+  public void initially_MapIsNotClosed() throws IOException {
+    assertFalse(storage.isClosed(),
+                "Map should be !closed initially");
+  }
+
+  @Test
+  public void closedMap_reportedAsClosed() throws IOException {
+    storage.close();
+    assertTrue(storage.isClosed(),
+               "Map should report itself closed after .close()");
   }
 
   @Test
@@ -283,7 +296,7 @@ public abstract class DurableMapTestBase<K, V, M extends DurableMap<K, V>> exten
   }
 
 
-  /** given salt!=0 return value which is different from keyValue(substrate).getValue() */
+  /** given salt!=0 return value that is different from keyValue(substrate).getValue() */
   private V differentValue(int substrate,
                            int salt) {
     V originalValue = keyValue(substrate).getValue();
