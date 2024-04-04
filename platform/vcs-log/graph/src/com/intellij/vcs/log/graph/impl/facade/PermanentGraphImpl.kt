@@ -9,8 +9,9 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
 import com.intellij.vcs.log.graph.collapsing.BranchFilterController
 import com.intellij.vcs.log.graph.collapsing.CollapsedController
-import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap
-import com.intellij.vcs.log.graph.impl.facade.bek.BekSorter
+import com.intellij.vcs.log.graph.impl.facade.sort.SortIndexMap
+import com.intellij.vcs.log.graph.impl.facade.sort.SortedBaseController
+import com.intellij.vcs.log.graph.impl.facade.sort.bek.BekSorter
 import com.intellij.vcs.log.graph.impl.permanent.*
 import com.intellij.vcs.log.graph.linearBek.LinearBekController
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
@@ -30,7 +31,7 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
                                                              branchesCommitId: Set<CommitId>) : PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
   private val branchNodeIds: Set<Int> = permanentCommitsInfo.convertToNodeIds(branchesCommitId)
 
-  private val bekIntMap: BekIntMap by lazy {
+  private val bekIntMap: SortIndexMap by lazy {
     BekSorter.createBekMap(permanentLinearGraph, permanentGraphLayout, permanentCommitsInfo.timestampGetter)
   }
 
@@ -45,7 +46,7 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
       is PermanentGraph.Options.Base -> {
         val baseController = when (options.sortType) {
           PermanentGraph.SortType.Normal -> BaseController(this)
-          PermanentGraph.SortType.Bek -> BekBaseController(this, bekIntMap)
+          PermanentGraph.SortType.Bek -> SortedBaseController(this, bekIntMap)
         }
         if (matchingCommitIds != null) {
           return FilteredController.create(baseController, this, matchingCommitIds, visibleHeadsIds)
@@ -57,7 +58,7 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
         return FirstParentController.create(baseController, this, matchingCommitIds, visibleHeadsIds)
       }
       PermanentGraph.Options.LinearBek -> {
-        val baseController = LinearBekController(BekBaseController(this, bekIntMap), this)
+        val baseController = LinearBekController(SortedBaseController(this, bekIntMap), this)
         if (matchingCommitIds != null) {
           return FilteredController.create(baseController, this, matchingCommitIds, visibleHeadsIds)
         }

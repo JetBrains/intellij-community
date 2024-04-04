@@ -10,12 +10,12 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
-import com.intellij.vcs.log.graph.impl.facade.BekBaseController
 import com.intellij.vcs.log.graph.impl.facade.CascadeController
 import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAnswer
-import com.intellij.vcs.log.graph.impl.facade.bek.BekIntMap
+import com.intellij.vcs.log.graph.impl.facade.sort.SortIndexMap
+import com.intellij.vcs.log.graph.impl.facade.sort.SortedBaseController
 import com.intellij.vcs.log.graph.linearBek.LinearBekGraph.WorkingLinearBekGraph
 import com.intellij.vcs.log.graph.linearBek.LinearBekGraphBuilder.MergeFragment
 import com.intellij.vcs.log.graph.utils.BfsSearch
@@ -24,8 +24,8 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.*
 
-class LinearBekController(controller: BekBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
-                                                                                                                        permanentGraphInfo) {
+class LinearBekController(controller: SortedBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
+                                                                                                                                                                                          permanentGraphInfo) {
   private val delegateGraph: LinearGraph
     get() = delegateController.compiledGraph
 
@@ -182,17 +182,17 @@ class LinearBekController(controller: BekBaseController, permanentGraphInfo: Per
   override fun getCompiledGraph(): LinearGraph = compiledGraph
 
   private class BekGraphLayout(private val graphLayout: GraphLayout,
-                               private val bekIntMap: BekIntMap) : GraphLayout {
+                               private val sortIndexMap: SortIndexMap) : GraphLayout {
     override fun getLayoutIndex(nodeIndex: Int): Int {
-      return graphLayout.getLayoutIndex(bekIntMap.getUsualIndex(nodeIndex))
+      return graphLayout.getLayoutIndex(sortIndexMap.getUsualIndex(nodeIndex))
     }
 
     override fun getOneOfHeadNodeIndex(nodeIndex: Int): Int {
-      val usualIndex = graphLayout.getOneOfHeadNodeIndex(bekIntMap.getUsualIndex(nodeIndex))
-      return bekIntMap.getBekIndex(usualIndex)
+      val usualIndex = graphLayout.getOneOfHeadNodeIndex(sortIndexMap.getUsualIndex(nodeIndex))
+      return sortIndexMap.getSortedIndex(usualIndex)
     }
 
-    override fun getHeadNodeIndex(): List<Int> = graphLayout.headNodeIndex.map { bekIntMap.getBekIndex(it) }
+    override fun getHeadNodeIndex(): List<Int> = graphLayout.headNodeIndex.map { sortIndexMap.getSortedIndex(it) }
   }
 
   companion object {

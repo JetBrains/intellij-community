@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.graph.impl.facade.bek;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.graph.impl.facade.sort;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
@@ -10,8 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getDownNodes;
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.getUpNodes;
 
-public final class BekChecker {
-  private final static Logger LOG = Logger.getInstance(BekChecker.class);
+public final class SortChecker {
+  private final static Logger LOG = Logger.getInstance(SortChecker.class);
 
   public static void checkLinearGraph(@NotNull LinearGraph linearGraph) {
     Pair<Integer, Integer> reversedEdge = findReversedEdge(linearGraph);
