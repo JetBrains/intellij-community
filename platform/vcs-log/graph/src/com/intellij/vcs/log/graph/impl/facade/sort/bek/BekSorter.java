@@ -6,9 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.facade.sort.SortIndexMap;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
-import com.intellij.vcs.log.graph.utils.IntList;
 import com.intellij.vcs.log.graph.utils.TimestampGetter;
-import com.intellij.vcs.log.graph.utils.impl.CompressedIntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,44 +25,6 @@ public final class BekSorter {
     List<Integer> result = bekBranchMerger.getResult();
 
     LOG.assertTrue(result.size() == permanentGraph.nodesCount());
-    return createBekIntMap(result);
-  }
-
-  private static SortIndexMap createBekIntMap(final List<Integer> result) {
-
-    final int[] reverseMap = new int[result.size()];
-    for (int i = 0; i < result.size(); i++) {
-      reverseMap[result.get(i)] = i;
-    }
-
-    IntList compressedMap = CompressedIntList.newInstance(new IntList() {
-      @Override
-      public int size() {
-        return result.size();
-      }
-
-      @Override
-      public int get(int index) {
-        return result.get(index);
-      }
-    }, CompressedIntList.DEFAULT_BLOCK_SIZE);
-
-    final IntList compressedReverseMap = CompressedIntList.newInstance(reverseMap);
-    return new SortIndexMap() {
-      @Override
-      public int size() {
-        return compressedMap.size();
-      }
-
-      @Override
-      public int getSortedIndex(int usualIndex) {
-        return compressedReverseMap.get(usualIndex);
-      }
-
-      @Override
-      public int getUsualIndex(int sortedIndex) {
-        return compressedMap.get(sortedIndex);
-      }
-    };
+    return SortIndexMap.createFromSortedList(result);
   }
 }
