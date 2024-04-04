@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer.impl
 
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -237,12 +239,12 @@ private class RendererCache {
   }
 }
 
-private class RendererPanel: SelectablePanel(), KotlinUIDslRenderer {
+private class RendererPanel : SelectablePanel(), KotlinUIDslRendererComponent {
 
   val contentLayout = GridLayout()
 
   /**
-   * Content panel allows to trim components that could go outside of selection. It's better to implement that on layout level later
+   * Content panel allows trimming components that could go outside of selection. It's better to implement that on layout level later
    */
   val content = JPanel(contentLayout)
 
@@ -250,6 +252,23 @@ private class RendererPanel: SelectablePanel(), KotlinUIDslRenderer {
     content.isOpaque = false
     layout = BorderLayout()
     add(content, BorderLayout.CENTER)
+  }
+
+  override fun getCopyText(): String? {
+    // Find the first component with non-trivial text
+    for (component in content.components) {
+      val result = when (component) {
+        is SimpleColoredComponent -> component.getCharSequence(true).toString()
+        is JLabel -> component.text
+        else -> throw UiDslException("Unsupported component type: ${component.javaClass.name}")
+      }
+
+      if (!result.isNullOrEmpty()) {
+        return result
+      }
+    }
+
+    return null
   }
 
   override fun getBaseline(width: Int, height: Int): Int {

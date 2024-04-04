@@ -10,7 +10,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -966,7 +966,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
                                                     boolean cellHasFocus) {
         //noinspection unchecked
         Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (component instanceof JComponent && !(component instanceof KotlinUIDslRenderer)) {
+        if (component instanceof JComponent && !(component instanceof KotlinUIDslRendererComponent)) {
           customizeListRendererComponent((JComponent)component);
         }
         return component;

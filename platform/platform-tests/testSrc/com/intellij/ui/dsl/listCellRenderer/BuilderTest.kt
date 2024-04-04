@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer
 
+import com.intellij.icons.AllIcons
 import com.intellij.testFramework.TestApplicationManager
+import com.intellij.ui.components.JBList
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import org.junit.Before
@@ -55,6 +57,34 @@ class BuilderTest {
     assertTrue(a.x >= 0)
     assertEquals(a.x + a.width + DEFAULT_GAP, b.x)
     assertEquals(b.x + b.width, c.x)
+  }
+
+  @Test
+  fun testGetCopyText() {
+    val copyText = "Copy Text"
+
+    assertEquals(copyText, getCopyText {
+      text(copyText)
+    })
+    assertEquals(copyText, getCopyText {
+      icon(AllIcons.General.Add)
+      text(copyText)
+    })
+    assertEquals(copyText, getCopyText {
+      icon(AllIcons.General.Add)
+      text("")
+      text(copyText)
+    })
+    assertEquals(copyText, getCopyText {
+      text(copyText)
+      text("Secondary text")
+    })
+  }
+
+  private fun getCopyText(init: LcrRow<Unit>.() -> Unit): String? {
+    val renderer = listCellRenderer(init)
+    val list = JBList<Unit>()
+    return (renderer.getListCellRendererComponent(list, null, 0, true, false) as KotlinUIDslRendererComponent).getCopyText()
   }
 
   private fun setRendererSize(component: Component, width: Int, height: Int) {

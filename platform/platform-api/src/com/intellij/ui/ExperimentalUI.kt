@@ -77,5 +77,6 @@ abstract class ExperimentalUI {
   /**
    * Interface to mark renderers compliant with the new UI design guidelines.
    */
+  @Internal
   interface NewUIComboBoxRenderer
 }
