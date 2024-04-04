@@ -33,11 +33,10 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestActionPlaces
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabCommitViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -137,9 +136,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
-                                                               createCommitInfoPresenter(commit) {
-                                                                 GitLabUIUtil.convertToHtml(project, it)
-                                                               }
+                                                               createCommitInfoPresenter(commit)
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
@@ -152,13 +149,11 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  private fun createCommitInfoPresenter(commit: GitLabCommit, issueProcessor: ((String) -> String)? = null): CommitPresentation {
-    val title = commit.fullTitle.orEmpty()
-    val description = commit.description?.removePrefix(title).orEmpty()
+  private fun createCommitInfoPresenter(commit: GitLabCommitViewModel): CommitPresentation {
     return CommitPresentation(
-      titleHtml = if (issueProcessor != null) issueProcessor(title) else title,
-      descriptionHtml = if (issueProcessor != null) issueProcessor(description) else description,
-      author = commit.author?.name ?: commit.authorName,
+      titleHtml = commit.titleHtml.orEmpty(),
+      descriptionHtml = commit.descriptionHtml.orEmpty(),
+      author = commit.author,
       committedDate = commit.authoredDate
     )
   }

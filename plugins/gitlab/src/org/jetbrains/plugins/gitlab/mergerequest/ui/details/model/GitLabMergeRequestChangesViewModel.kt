@@ -15,10 +15,9 @@ import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
-internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommit> {
+internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitViewModel> {
   /**
    * View model of a current change list
    */
@@ -34,7 +33,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestChangesViewModel,
-    CodeReviewChangesViewModel<GitLabCommit> {
+    CodeReviewChangesViewModel<GitLabCommitViewModel> {
   private val cs = parentCs.childScope()
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -50,15 +49,17 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     GitLabMergeRequestChangeListViewModelImpl(project, this, mergeRequest, changesContainer.changes, changeList)
   }
 
-  override val reviewCommits: SharedFlow<List<GitLabCommit>> =
-    mergeRequest.changes.map { it.commits.await() }.modelFlow(cs, LOG)
+  override val reviewCommits: SharedFlow<List<GitLabCommitViewModel>> =
+    mergeRequest.changes
+      .map { it.commits.await().map { commit -> GitLabCommitViewModel(project, commit) } }
+      .modelFlow(cs, LOG)
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->
     if (sha == null) -1
     else commits.indexOfFirst { it.sha == sha }
   }.modelFlow(cs, LOG)
 
-  override val selectedCommit: SharedFlow<GitLabCommit?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
+  override val selectedCommit: SharedFlow<GitLabCommitViewModel?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
     index.takeIf { it >= 0 }?.let { commits[it] }
   }.modelFlow(cs, LOG)
 
@@ -80,7 +81,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
     delegate.selectChange(change)
   }
 
-  override fun commitHash(commit: GitLabCommit): String = commit.shortId
+  override fun commitHash(commit: GitLabCommitViewModel): String = commit.shortId
 }
 
 internal class GitLabChangesContainer(
