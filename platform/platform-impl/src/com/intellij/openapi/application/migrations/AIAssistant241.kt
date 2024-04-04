@@ -14,7 +14,7 @@ import java.nio.file.Path
 internal const val AI_PLUGIN_ID = "com.intellij.ml.llm"
 
 internal class AIAssistant241 : PluginMigration() {
-  private val PRODUCT_IDS = setOf("IU", "PY", "WS", "DG", "RM", "PS", "GO", "CL", "RD", "QA")
+  private val PRODUCT_IDS = setOf("IU", "PY", "WS", "RM", "PS", "GO", "CL", "RD", "QA")
 
   override fun migratePlugins(descriptor: PluginMigrationDescriptor) {
     if (descriptor.options.previousVersion != "2023.3") return
