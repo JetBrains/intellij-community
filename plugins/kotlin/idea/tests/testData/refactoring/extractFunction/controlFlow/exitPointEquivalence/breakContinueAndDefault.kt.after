@@ -18,5 +18,3 @@ private fun b(a: Int, b: Int): Boolean {
     if (a - b > 0) return true
     return false
 }
-
-// IGNORE_K2

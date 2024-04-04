@@ -9,5 +9,3 @@ fun bar() {
 }
 
 private fun a() = A
-
-// IGNORE_K2

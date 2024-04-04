@@ -185,7 +185,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 valuedReturnExpressions = exitSnapshot.valuedReturnExpressions.filter { it is KtReturnExpression },
                 returnValueType = approximate(exitSnapshot.returnValueType) ?: builtinTypes.UNIT,
                 jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression },
-                hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets && !exitSnapshot.hasMultipleJumpKinds,
+                hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets,
                 sameExitForDefaultAndJump = if (exitSnapshot.hasJumps) !exitSnapshot.hasEscapingJumps && defaultExpressionInfo != null else defaultExpressionInfo == null
             )
         }
