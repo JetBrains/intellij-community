@@ -100,8 +100,12 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
 
   fun waitAnalysisToFinish() {
     LOG.info("Waiting for code analysis to finish")
-    if (highlightingFinishedEverywhere.tryAcquire(1, TimeUnit.MINUTES)) {
+    val timeout: Long = 5
+    if (highlightingFinishedEverywhere.tryAcquire(timeout, TimeUnit.MINUTES)) {
       highlightingFinishedEverywhere.release()
+    }
+    else {
+      LOG.error("Waiting for highlight to finish took more than $timeout minutes.")
     }
     LOG.info("Code analysis finished")
   }
