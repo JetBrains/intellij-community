@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.calls.KtErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -38,7 +39,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinFirExtractFunctionHandler(
-    private val acceptAllScopes: Boolean,
+    private val acceptAllScopes: Boolean = false,
     private val helper: ExtractionEngineHelper = InplaceExtractionHelper(acceptAllScopes)
 ) :
     AbstractExtractKotlinFunctionHandler(acceptAllScopes, true) {
@@ -93,11 +94,11 @@ class KotlinFirExtractFunctionHandler(
 
         @Nls
         override fun getIdentifierError(file: KtFile, variableRange: TextRange): String? {
-            val call = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, KtCallExpression::class.java, false)
+            val call = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, KtCallExpression::class.java, false) ?: return null
             val name = file.viewProvider.document.getText(variableRange)
             return if (!name.isIdentifier()) {
                 JavaRefactoringBundle.message("template.error.invalid.identifier.name")
-            } else if (analyzeInModalWindow(file, KotlinBundle.message("fix.change.signature.prepare")) { call?.resolveCall() == null }) {
+            } else if (analyzeInModalWindow(file, KotlinBundle.message("fix.change.signature.prepare")) { call.resolveCall() is KtErrorCallInfo }) {
                 JavaRefactoringBundle.message("extract.method.error.method.conflict")
             } else {
                 null
