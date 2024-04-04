@@ -41,7 +41,7 @@ internal fun MarkdownEditor(
     Column(modifier) {
         ControlsRow(
             onMarkdownChange,
-            Modifier.fillMaxWidth().background(JewelTheme.globalColors.paneBackground).padding(8.dp)
+            Modifier.fillMaxWidth().background(JewelTheme.globalColors.paneBackground).padding(8.dp),
         )
         Divider(orientation = Orientation.Horizontal)
         Editor(currentMarkdown, onMarkdownChange, Modifier.fillMaxWidth().weight(1f))
