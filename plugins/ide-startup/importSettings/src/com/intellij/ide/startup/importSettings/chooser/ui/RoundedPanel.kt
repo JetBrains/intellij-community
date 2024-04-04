@@ -53,7 +53,6 @@ class RoundedPanel private constructor(unscaledRadius: Int = RADIUS) : JPanel(Bo
 open class RoundedBorder(unscaledAreaThickness: Int,
                          unscaledThickness: Int,
                          private val color: Color,
-                         private val backgroundColor: () -> Color,
                          unscaledRadius: Int
 ) : Border {
   private val areaThickness = JBUI.scale(unscaledAreaThickness)
@@ -65,16 +64,21 @@ open class RoundedBorder(unscaledAreaThickness: Int,
 
     val config = GraphicsUtil.setupAAPainting(g)
 
-    g.color = backgroundColor()
+    g.color = c.background
     g.fillRect(x, y, width, height)
 
     val gap = max(areaThickness - thickness, 0).toDouble()
 
     val area = createArea(x, y, width, height, arcSize, gap)
+    if(c is RoundedPanel) {
+      g.color = c.contentPanel.background
+      g.fill(area)
+    }
 
-    g.color = color
+
     val innerArea = createArea(x, y, width, height, arcSize, areaThickness.toDouble())
 
+    g.color = color
     area.subtract(innerArea)
     g.fill(area)
 

@@ -74,9 +74,6 @@ class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
 
     activeKeymap = pages[0]
     activePane(activeKeymap)
-    SwingUtilities.invokeLater {
-      activeKeymap.pane.requestFocus()
-    }
 
     val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back")) {
       controller.goToThemePage(isForwardDirection = false)

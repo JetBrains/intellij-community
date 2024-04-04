@@ -57,7 +57,6 @@ class ThemeServiceImpl : ThemeService {
     get() = if(StartupUiUtil.isDarkTheme) ThemeService.Theme.Dark else ThemeService.Theme.Light
 
     set(value) {
-      println("currentTheme: ${value.name}")
       val lm = LafManager.getInstance()
 
       val laf = if(value.isDark)
@@ -165,14 +164,14 @@ class WizardPluginImpl(override val icon: Icon,
 class TestKeymapService : KeymapService {
   override val keymaps: List<WizardKeymap> =
     listOf(TestWizardKeymap(UUID.randomUUID().toString(), "Visual Studio",
-                        "Visual Studio Visual Studio Visual Studio", 0),
+                            "Visual Studio Visual Studio Visual Studio"),
 
            TestWizardKeymap(UUID.randomUUID().toString(), "Visual Assist",
-                            "Visual Studio Visual Studio Visual Studio", 1),
-             TestWizardKeymap(UUID.randomUUID().toString(), "JetBrains IDE",
-           "Visual Studio Visual Studio Visual Studio", 2),
+                            "Visual Studio Visual Studio Visual Studio"),
+           TestWizardKeymap(UUID.randomUUID().toString(), "JetBrains IDE",
+                            "Visual Studio Visual Studio Visual Studio"),
            TestWizardKeymap(UUID.randomUUID().toString(), "VS Code",
-                            "Visual Studio Visual Studio Visual Studio", 3)
+                            "Visual Studio Visual Studio Visual Studio")
            )
 
   override val shortcuts: List<Shortcut> = listOf(Shortcut(UUID.randomUUID().toString(), "Search"),
@@ -190,10 +189,10 @@ class TestKeymapService : KeymapService {
 
 class TestWizardKeymap(override val id: String,
                        override val name: String,
-                       override val description: @Nls String, val ind: Int? = null) : WizardKeymap {
+                       override val description: @Nls String) : WizardKeymap {
 
   private val shortCuts = listOf("Shift+Shift", "F12", "Alt+Shift+F12", "Alt+Shift+F1", "F1", "Ctrl+Shift+B")
   override fun getShortcutValue(id: String): String {
-    return ind?.let{ shortCuts[it] } ?: shortCuts.random()
+    return shortCuts.random()
   }
 }

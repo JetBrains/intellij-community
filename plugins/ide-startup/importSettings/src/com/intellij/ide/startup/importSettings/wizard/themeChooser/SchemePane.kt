@@ -91,10 +91,10 @@ class SchemePane(val scheme: WizardScheme) {
   val pane: JPanel = roundedPanel
 
   private val activeBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
-                                           { roundedPanel.background }, RoundedPanel.RADIUS)
+                                           RoundedPanel.RADIUS)
 
   private val border = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.BORDER_COLOR,
-                                     { roundedPanel.background }, RoundedPanel.RADIUS)
+                                     RoundedPanel.RADIUS)
 
 
   init {

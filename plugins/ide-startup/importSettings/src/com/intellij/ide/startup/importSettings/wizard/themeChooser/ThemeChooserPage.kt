@@ -11,10 +11,8 @@ import com.intellij.ide.startup.importSettings.data.ThemeService
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
@@ -22,23 +20,20 @@ import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.ButtonGroup
-import javax.swing.JButton
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
 
 class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
   private val service = controller.service.getThemeService()
 
   private val pages = mutableListOf<SchemePane>()
   private lateinit var segmentedButton: SegmentedButton<ThemeService.Theme>
-  private val schemesPane = JPanel(GridBagLayout())
+  val schemesPaneGridBagLayout = GridBagLayout()
+  private val schemesPane = JPanel(schemesPaneGridBagLayout)
   private val contentPage: JComponent
 
   private var activeScheme: SchemePane
 
   private val buttonGroup = ButtonGroup()
-  private lateinit var schemePreview: SchemePreview
 
   init {
 
@@ -56,7 +51,9 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       }
       val gbc = GridBagConstraints()
 
-      gbc.insets = JBUI.insetsRight(if(index < list.size - 1) 9 else 0)
+      gbc.insets = JBUI.insetsRight(if (index < list.size - 1) 9 else 0)
+      gbc.gridx = pages.size
+      gbc.gridy = 0
       gbc.weightx = 1.0
       gbc.weighty = 1.0
       gbc.fill = GridBagConstraints.BOTH
@@ -64,7 +61,6 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
       pages.add(pane)
       schemesPane.add(pane.pane, gbc)
       buttonGroup.add(pane.jRadioButton)
-      schemePreview = SchemePreview(pane.scheme)
       pane.jRadioButton.addActionListener {
         activePane(pane)
       }
@@ -96,13 +92,8 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
         }
       }
 
-      add(JPanel(VerticalLayout(0)).apply {
-        add(pane)
-        add(schemesPane)
-        schemesPane.preferredSize = JBDimension(schemesPane.preferredSize.width, 93)
-      }, BorderLayout.NORTH)
-
-      add(schemePreview.pane, BorderLayout.CENTER)
+      add(pane, BorderLayout.NORTH)
+      add(schemesPane, BorderLayout.CENTER)
 
       border = UiUtils.CARD_BORDER
     }
@@ -134,10 +125,22 @@ class ThemeChooserPage(val controller: WizardController) : OnboardingPage {
     assert(pages.isNotEmpty() && pages.contains(schemePane))
 
     activeScheme.active = false
+
+    var constraints = schemesPaneGridBagLayout.getConstraints(activeScheme.pane)
+    constraints.weightx = 1.0
+    schemesPaneGridBagLayout.setConstraints(activeScheme.pane, constraints)
+
     activeScheme = schemePane
     activeScheme.active = true
 
-    schemePreview.scheme = schemePane.scheme
+    constraints = schemesPaneGridBagLayout.getConstraints(schemePane.pane)
+    constraints.weightx = 2.0
+    schemesPaneGridBagLayout.setConstraints(schemePane.pane, constraints)
+
+    SwingUtilities.invokeLater {
+      schemesPane.revalidate()
+      schemesPane.repaint()
+    }
 
     service.updateScheme(schemePane.scheme.id)
   }

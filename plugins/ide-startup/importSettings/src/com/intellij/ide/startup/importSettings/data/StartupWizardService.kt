@@ -78,12 +78,11 @@ interface ThemeService {
   fun updateScheme(schemeId: String)
 }
 
-data class WizardScheme (
+data class WizardScheme(
   val id: String,
   val name: @Nls String,
   val icon: Icon,
-  val backgroundColor: Color,
-  val previewIcon: Icon? = null,
+  val backgroundColor: Color
   )
 
 interface PluginService {
