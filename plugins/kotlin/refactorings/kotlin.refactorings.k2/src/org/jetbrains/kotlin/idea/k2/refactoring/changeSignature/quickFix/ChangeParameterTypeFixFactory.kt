@@ -48,26 +48,28 @@ object ChangeParameterTypeFixFactory {
 
         val functionName = getDeclarationName(functionLikeSymbol) ?: return emptyList()
 
+        val approximatedType = targetType.approximateToSuperPublicDenotableOrSelf(true)
+
+        val typePresentation = approximatedType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
+        val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
+
         return listOf(ChangeParameterTypeFix(
             parameter,
-            targetType,
+            typePresentation,
+            typeFQNPresentation,
             functionLikeSymbol is KtConstructorSymbol && functionLikeSymbol.isPrimary,
             functionName
         ))
     }
 }
 
-context(KtAnalysisSession)
 internal class ChangeParameterTypeFix(
     element: KtParameter,
-    type: KtType,
+    val typePresentation: String,
+    val typeFQNPresentation: String,
     private val isPrimaryConstructorParameter: Boolean,
     private val functionName: String
 ) : KotlinQuickFixAction<KtParameter>(element) {
-    private val approximatedType = type.approximateToSuperPublicDenotableOrSelf(true)
-
-    private val typePresentation = approximatedType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.IN_VARIANCE)
-    private val typeFQNPresentation = approximatedType.render(position = Variance.IN_VARIANCE)
 
     override fun startInWriteAction(): Boolean = false
 
