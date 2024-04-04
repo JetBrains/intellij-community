@@ -138,5 +138,12 @@ private fun isIndexableFilesFilterUpToDate(project: Project,
                                            service: ProjectIndexingDependenciesService): Boolean {
   return service.isScanningCompleted() &&
          usePersistentFilesFilter() && filterHolder.wasDataLoadedFromDisk(project) &&
+         project.getUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED) != true &&
          ApplicationManager.getApplication().getService(AppIndexingDependenciesService::class.java).getCurrent().toInt() == service.getAppIndexingRequestIdOfLastScanning()
+}
+
+val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
+
+fun invalidatePersistentIndexableFilesFilter(project: Project) {
+  project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, true)
 }
