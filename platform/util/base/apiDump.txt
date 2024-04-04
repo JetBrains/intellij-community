@@ -569,6 +569,7 @@ com.intellij.util.containers.prefix.set.PrefixTreeSet
 - a:getDescendants(java.lang.Object):java.util.Set
 - a:getRoots():java.util.Set
 c:com.intellij.util.text.CharArrayCharSequence
+- java.lang.CharSequence
 - pf:myChars:C[]
 - pf:myEnd:I
 - pf:myStart:I

@@ -51,10 +51,12 @@ c:com.intellij.execution.rmi.RemoteServer$Jndi
 - getInitialContext(java.util.Hashtable):javax.naming.Context
 - invoke(java.lang.Object,java.lang.reflect.Method,java.lang.Object[]):java.lang.Object
 f:com.intellij.execution.rmi.ssl.DefaultSslSocketFactory
+- javax.net.ssl.SSLSocketFactory
 - <init>():V
 - <init>(java.lang.String):V
 - <init>(Z):V
 f:com.intellij.execution.rmi.ssl.SslKeyStore
+- java.security.KeyStoreSpi
 - sf:SSL_DEFERRED_CA_LOADING:java.lang.String
 - sf:SSL_DEFERRED_KEY_LOADING:java.lang.String
 - ps:ourProvider:java.security.Provider
@@ -67,9 +69,11 @@ f:com.intellij.execution.rmi.ssl.SslKeyStore
 - ps:loadKeyStore(java.lang.String,C[]):java.security.KeyStore
 - s:setDefault():V
 f:com.intellij.execution.rmi.ssl.SslSocketFactory
+- javax.net.ssl.SSLSocketFactory
 - <init>():V
 - s:createTrustManagers(java.lang.String):javax.net.ssl.TrustManager[]
 f:com.intellij.execution.rmi.ssl.SslTrustStore
+- java.security.KeyStoreSpi
 - ps:ourProvider:java.security.Provider
 - <init>():V
 - s:appendCertificate(java.lang.String,java.security.cert.Certificate):V

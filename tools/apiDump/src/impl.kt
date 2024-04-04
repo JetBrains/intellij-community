@@ -132,10 +132,7 @@ class ApiIndex {
    * @see kotlinx.validation.api.filterOutNonPublic
    */
   private fun ClassBinarySignature.removePrivateSupertypes(): ClassBinarySignature {
-    val privateSupertypes = supertypes(::resolveClass)
-      .drop(1) // skip [this] signature
-      .filter { it.name in privateApi }
-      .toList()
+    val (publicSupertypeNames, privateSupertypes) = expandPrivateSupertypes(::resolveClass)
     if (privateSupertypes.isEmpty()) {
       return this
     }
@@ -146,7 +143,7 @@ class ApiIndex {
     }
     return this.copy(
       memberSignatures = memberSignatures + inheritedStaticSignatures,
-      supertypes = supertypes - privateSupertypes.map { it.name }.toSet()
+      supertypes = publicSupertypeNames,
     )
   }
 
@@ -310,22 +307,46 @@ private fun List<AnnotationNode>.addMissing(missingAnnotations: ApiAnnotations):
   return result
 }
 
-private fun ClassBinarySignature.supertypes(classResolver: ClassResolver): Sequence<ClassBinarySignature> = sequence {
-  val stack = ArrayDeque<ClassBinarySignature>()
-  stack.addLast(this@supertypes)
+private data class ExpandedSupertypes(
+  val publicSupertypeNames: List<String>,
+  val privateSupertypes: List<ClassBinarySignature>,
+)
+
+/**
+ * Recursively traverses the hierarchy of [this] and replaces private supertypes
+ * with their supertypes, until only public supertypes remain.
+ *
+ * @return a [list of new supertypes][ExpandedSupertypes.publicSupertypeNames] and
+ * a [list of skipped private supertypes][ExpandedSupertypes.privateSupertypes]
+ */
+private fun ClassBinarySignature.expandPrivateSupertypes(classResolver: ClassResolver): ExpandedSupertypes {
+  val stack = ArrayDeque<String>()
+  stack.addAll(supertypes)
+
   val visited = HashSet<String>()
+  val supertypeNames = ArrayList<String>(supertypes.size)
+  val privateSupertypes = ArrayList<ClassBinarySignature>(1)
+
   while (stack.isNotEmpty()) {
-    val signature = stack.removeLast()
-    if (!visited.add(signature.name)) {
+    val className = stack.removeLast()
+    if (!visited.add(className)) {
       continue
     }
-    yield(signature)
-    for (supertype in signature.supertypes) {
-      classResolver(supertype)?.let {
-        stack.addLast(it)
-      }
+    val supertype = classResolver(className)
+    if (supertype == null) {
+      // library type
+      supertypeNames.add(className)
+    }
+    else if (supertype.isEffectivelyPublic && !supertype.annotations.isInternal()) {
+      // public supertype, included in the dump separately
+      supertypeNames.add(className)
+    }
+    else {
+      privateSupertypes.add(supertype)
+      stack.addAll(supertype.supertypes)
     }
   }
+  return ExpandedSupertypes(supertypeNames.sorted(), privateSupertypes)
 }
 
 private fun MemberBinarySignature.isConstructorAccessor(): Boolean {

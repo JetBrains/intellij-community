@@ -75,6 +75,7 @@ f:org.jdom.Comment
 - toString():java.lang.String
 a:org.jdom.Content
 - java.io.Serializable
+- java.lang.Cloneable
 - pf:ctype:org.jdom.Content$CType
 - p:parent:org.jdom.Parent
 - p:<init>(org.jdom.Content$CType):V
@@ -156,6 +157,7 @@ f:org.jdom.DocType
 - toString():java.lang.String
 f:org.jdom.Document
 - java.io.Serializable
+- java.lang.Cloneable
 - org.jdom.Parent
 - <init>():V
 - <init>(java.util.List):V

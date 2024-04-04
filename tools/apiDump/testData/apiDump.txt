@@ -208,6 +208,7 @@ a:com.intellij.tools.apiDump.testData.generics2.JGenericMiddleClassWithOverride
 - <init>():V
 - genericMethod(java.lang.Number):java.lang.Number
 c:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicClassFromPackageLocalRunnable
+- java.lang.Runnable
 - <init>():V
 f:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicFinalInheritor
 - <init>():V
