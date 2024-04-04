@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
@@ -39,6 +40,8 @@ interface CompilationContext {
    * @return directory with compiled project classes, 'url' attribute value of 'output' tag from .idea/misc.xml by default
    */
   val classesOutputDirectory: Path
+
+  val originalModuleRepository: OriginalModuleRepository
 
   fun findRequiredModule(name: String): JpsModule
 
