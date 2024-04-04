@@ -33,9 +33,11 @@ internal class StickyLineShadowPainter {
   private var shadowHeight: Int = 0
 
   fun updateShadow(c: JComponent, newWidth: Int, newHeight: Int) {
-    if (!isEnabled()) return
-
-    if (newWidth == 0 || newHeight == 0 || c.graphicsConfiguration == null) {
+    if (!isEnabled() || c.graphicsConfiguration == null) {
+      shadow = null
+      return
+    }
+    if (newWidth == 0 || newHeight == 0) {
       shadow = null
     } else if (shadow == null || width != newWidth || height != newHeight) {
       // paint 1/2 of icon as a workaround on rendering issue with Shadow.Bottom
