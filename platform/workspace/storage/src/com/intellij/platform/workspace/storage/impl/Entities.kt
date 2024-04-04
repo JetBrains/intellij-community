@@ -439,6 +439,12 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
   }
 
+  protected fun checkModificationAllowed(fieldName: String) {
+    if (diff != null && !modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside `modifyEntity` method only! Modified field: ${this.javaClass.simpleName}#$fieldName")
+    }
+  }
+
   public abstract fun getEntityClass(): Class<T>
 
   public open fun applyToBuilder(builder: MutableEntityStorage) {
