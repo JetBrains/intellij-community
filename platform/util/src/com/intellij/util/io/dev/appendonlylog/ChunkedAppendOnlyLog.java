@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 /**
  * Chunked append-only log: log consists of chunks, and each chunk is an append-only log itself.
  * <p>
- * Actually, there are 2 types of chunks: 'fixed' and 'appendable'.
+ * There are 2 types of chunks: 'fixed' and 'appendable' (planned - 'fixed' type is not yet implemented)
  * For both chunks types data is immutable since put in -- no modification of data is allowed.
  * The difference is that 'appendable' chunk allows appending _new_ data to the chunk, up to capacity -- while with 'fixed'
  * chunk all the data must be supplied on chunk allocation, and nothing could be appended later on.
@@ -30,6 +30,9 @@ import java.nio.ByteBuffer;
  */
 @ApiStatus.Internal
 public interface ChunkedAppendOnlyLog extends Closeable, Flushable, CleanableStorage {
+
+  int NULL_ID = 0;
+
   interface LogChunk {
 
     long id();
@@ -37,11 +40,35 @@ public interface ChunkedAppendOnlyLog extends Closeable, Flushable, CleanableSto
     /** payload capacity of the chunk */
     int capacity();
 
+    /** Has this chunk .nextChunkId field reserved (allocated) at creation */
+    boolean hasNextChunkIdField();
+
+    /**
+     * @return nextChunkId if set, or NULL_ID (=0) if not yet..
+     * @throws IllegalStateException if {@link #hasNextChunkIdField()} is false (i.e. there
+     *                               is no nextChunkId field reserved in the chunk at creation)
+     */
+    long nextChunkId();
+
+    /**
+     * Sets nextChunkId if not set yet.
+     * nextChunkId could be set only once -- following attempts do not change the nextChunkId value, and return false to
+     * indicate that
+     * FiXME: much better to move to locking-based approach, instead of CAS-like
+     *
+     * @return true if nextChunkId was set, false if it was already set
+     * @throws IllegalStateException if {@link #hasNextChunkIdField()} is false (i.e. there
+     *                               is no nextChunkId field reserved in the chunk at creation)
+     */
+    boolean nextChunkId(long nextChunkId);
+
+
     /**
      * @return true if the chunk is appendable -- i.e. data could be {@link #append(ByteBufferWriter, int)} to it,
-     * or false, if chunk is non-appendable -- i.e. all the data is appended on chunk allocation, and immutable after that.
+     * or false, if chunk is non-appendable -- i.e. all the data is appended on chunk allocation, and immutable after
+     * that.
      * If chunk is 'appendable' it doesn't mean it still has free room for new data to append -- chunk could be
-     * appendable in principle, but already full now -- use {@link #remaining()} to check that.
+     * appendable in principle, but already full now -- use {@link #remaining()}/{@link #isFull()} to check that.
      */
     boolean isAppendable();
 
@@ -53,20 +80,25 @@ public interface ChunkedAppendOnlyLog extends Closeable, Flushable, CleanableSto
     boolean append(@NotNull ByteBufferWriter writer,
                    int recordSize) throws IOException;
 
-    //MAYBE RC: better wrap reading into lambda? Otherwise ByteBuffer (slice over memory-mapped region) could be spread
-    //          uncontrollable through the app
 
     /**
      * @return buffer over data appended to the chunk so far -- i.e. spare room, if exist, not
      * included.
+     * MAYBE RC: better wrap reading into lambda? Otherwise ByteBuffer (which is == slice over memory-mapped region) could
+     *           be spread uncontrollable through the app
      */
     ByteBuffer read() throws IOException;
   }
 
-  LogChunk append(int chunkSize) throws IOException;
 
+  default LogChunk append(int chunkSize) throws IOException {
+    return append(chunkSize, /*reserveNextChunkIdField: */ false);
+  }
+
+  LogChunk append(int chunkPayloadCapacity,
+                  boolean reserveNextChunkIdField) throws IOException;
   //TODO RC: 'fixed-size' (non-appendable) chunk
-  // public long append(int chunkSize, ByteBufferWriter writer) throws IOException;
+  //TODO RC: public long append(int chunkSize, ByteBufferWriter writer) throws IOException;
 
   LogChunk read(long chunkId) throws IOException;
 
