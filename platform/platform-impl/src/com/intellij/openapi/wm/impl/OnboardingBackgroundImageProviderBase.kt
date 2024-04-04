@@ -43,12 +43,20 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
   }
 
   override fun setBackgroundImageToDialog(dialog: DialogWrapper, image: Image?) {
+    var didHaveImage = false
+
     ClientProperty.get(dialog.rootPane, BACKGROUND_IMAGE_DISPOSABLE_KEY)?.let { previousDisposable ->
+      didHaveImage = true
       Disposer.dispose(previousDisposable)
       ClientProperty.remove(dialog.rootPane, BACKGROUND_IMAGE_DISPOSABLE_KEY)
     }
 
-    if (image == null) return
+    if (image == null) {
+      if (didHaveImage) {
+        dialog.rootPane.repaint()
+      }
+      return
+    }
 
     val disposable = Disposer.newDisposable(dialog.disposable)
     ClientProperty.put(dialog.rootPane, BACKGROUND_IMAGE_DISPOSABLE_KEY, disposable)
@@ -60,6 +68,8 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
                                                          1f,
                                                          JBInsets.emptyInsets(),
                                                          disposable)
+
+    dialog.rootPane.repaint()
   }
 
   companion object {
