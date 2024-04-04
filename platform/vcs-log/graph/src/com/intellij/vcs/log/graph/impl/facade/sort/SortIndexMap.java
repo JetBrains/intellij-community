@@ -21,18 +21,7 @@ public interface SortIndexMap {
       reverseMap[list.get(i)] = i;
     }
 
-    IntList compressedMap = CompressedIntList.newInstance(new IntList() {
-      @Override
-      public int size() {
-        return list.size();
-      }
-
-      @Override
-      public int get(int index) {
-        return list.get(index);
-      }
-    }, CompressedIntList.DEFAULT_BLOCK_SIZE);
-
+    IntList compressedMap = CompressedIntList.newInstance(list);
     IntList compressedReverseMap = CompressedIntList.newInstance(reverseMap);
     return new SortIndexMap() {
       @Override
