@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
-
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -69,7 +67,6 @@ import kotlin.io.path.*
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
 
 class BuildTasksImpl(private val context: BuildContextImpl) : BuildTasks {
-
   override suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean) {
     zipSourcesOfModules(modules = modules, targetFile = targetFile, includeLibraries = includeLibraries, context = context)
   }
@@ -214,7 +211,7 @@ private suspend fun localizeModules(context: BuildContext, moduleNames: Collecti
 data class SupportedDistribution(@JvmField val os: OsFamily, @JvmField val arch: JvmArchitecture)
 
 @JvmField
-val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = java.util.List.of(
+val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
@@ -223,12 +220,11 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = java.util.List.of(
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64),
 )
 
-private fun isSourceFile(path: String): Boolean {
-  return path.endsWith(".java") && path != "module-info.java" ||
-         path.endsWith(".groovy") ||
-         path.endsWith(".kt") ||
-         path.endsWith(".form")
-}
+private fun isSourceFile(path: String): Boolean =
+  path.endsWith(".java") && path != "module-info.java" ||
+  path.endsWith(".groovy") ||
+  path.endsWith(".kt") ||
+  path.endsWith(".form")
 
 private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
   JpsModelSerializationDataService.getPathVariablesConfiguration(global)!!.getUserVariableValue("MAVEN_REPOSITORY")?.let {
@@ -1400,7 +1396,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ide: DevIdeBuild, context
       launch {
         val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
         val targetPath = temporaryStepDirectory.resolve(command.second)
-        ide.runProduct(tempDir = temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()))
+        ide.runProduct(temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(
@@ -1587,4 +1583,3 @@ private fun buildInBundlePropertiesLocalization(
     }
   })
 }
-
