@@ -95,6 +95,10 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
+
+    <projectService
+      serviceInterface="org.jetbrains.idea.maven.project.MavenProjectModelReadHelper"
+      serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectModelServerModelReadHelper"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
@@ -580,8 +584,10 @@
 
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadePluginConfigurator"/>
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.plugins.buildHelper.MavenBuildHelperPluginConfigurator"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeDynamic"/>
-    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeStatic"/>
+    <importing.workspaceConfigurator
+      implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeDynamic"/>
+    <importing.workspaceConfigurator
+      implementation="org.jetbrains.idea.maven.importing.workspaceModel.LegacyToWorkspaceConfiguratorBridgeStatic"/>
     <importing.afterImportConfigurator implementation="org.jetbrains.idea.maven.importing.MavenShadeFacetPostTaskConfigurator"/>
 
     <projectResolutionContributor implementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorContributor"/>

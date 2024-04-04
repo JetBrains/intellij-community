@@ -809,7 +809,9 @@ public class MavenUtil {
       if (list == null) return false;
       Set<String> set = Set.of(list);
       return set.contains(M2_CONF_FILE) && set.contains(MVN_FILE);
-    } catch (Exception ignored) {}
+    }
+    catch (Exception ignored) {
+    }
     return false;
   }
 
@@ -1752,7 +1754,7 @@ public class MavenUtil {
   }
 
   public static MavenProjectModelReadHelper createModelReadHelper(Project project) {
-    return new MavenProjectModelServerModelReadHelper(project);
+    return MavenProjectModelReadHelper.getInstance(project);
   }
 
   public static Collection<File> collectClasspath(Collection<Class<?>> classes) {

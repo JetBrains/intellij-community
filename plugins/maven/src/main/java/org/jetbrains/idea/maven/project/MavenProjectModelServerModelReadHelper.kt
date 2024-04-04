@@ -19,4 +19,8 @@ class MavenProjectModelServerModelReadHelper(private val myProject: Project) : M
     return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.toAbsolutePath().toString())
       .assembleInheritance(model, parent)
   }
+
+  override fun filterModules(modules: List<String>, projectFile: VirtualFile): List<String> {
+    return modules;
+  }
 }
