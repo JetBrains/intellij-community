@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
+import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.*
@@ -160,7 +161,10 @@ class RepositoryTest {
       RawRuntimeModuleDescriptor("ij.bar", listOf("bar.jar"), listOf("ij.foo")),
     )
     val basePath = tempDirectory.rootPath
-    val repository = createRepository(basePath, *descriptors, bootstrapModuleName = storedBootstrapModule.takeIf { it.isNotEmpty() })
+    val moduleDescriptorsJarPath = basePath.resolve("module-descriptors.jar")
+    val bootstrapModuleName = storedBootstrapModule.takeIf { it.isNotEmpty() }
+    RuntimeModuleRepositorySerialization.saveToJar(descriptors.asList(), bootstrapModuleName, moduleDescriptorsJarPath, 0)
+    val repository = RuntimeModuleRepository.create(moduleDescriptorsJarPath)
     assertEquals(listOf(basePath.resolve("bar.jar"), basePath.resolve("foo.jar")), repository.getBootstrapClasspath("ij.bar"))
   }
   

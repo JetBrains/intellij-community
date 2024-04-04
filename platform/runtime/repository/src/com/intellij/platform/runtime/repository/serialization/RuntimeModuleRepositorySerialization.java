@@ -2,6 +2,8 @@
 package com.intellij.platform.runtime.repository.serialization;
 
 import com.intellij.platform.runtime.repository.MalformedRepositoryException;
+import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.platform.runtime.repository.impl.RuntimeModuleRepositoryImpl;
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,5 +39,10 @@ public final class RuntimeModuleRepositorySerialization {
     catch (XMLStreamException | IOException e) {
       throw new MalformedRepositoryException("Failed to load repository from " + jarPath, e);
     }
+  }
+
+  public static @NotNull RuntimeModuleRepository loadFromRawData(@NotNull Path descriptorsJarPath,
+                                                                 @NotNull RawRuntimeModuleRepositoryData rawRuntimeModuleRepositoryData) {
+    return new RuntimeModuleRepositoryImpl(descriptorsJarPath, rawRuntimeModuleRepositoryData);
   }
 }
