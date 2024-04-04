@@ -203,6 +203,7 @@ public final class FindUsagesManager {
       }
     }
     else {
+      dialog.waitWithModalProgressUntilInitialized();
       dialog.close(DialogWrapper.OK_EXIT_CODE);
     }
 

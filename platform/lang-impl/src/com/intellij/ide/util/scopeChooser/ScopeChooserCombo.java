@@ -20,10 +20,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -295,6 +292,13 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       }
     }
     return scopeName != null ? ScopeIdMapper.getInstance().getScopeSerializationId(scopeName) : null;
+  }
+
+  @ApiStatus.Internal
+  public void waitWithModalProgressUntilInitialized() {
+    if (myProject != null && initPromise != null) {
+      ScopeServiceKt.waitForPromiseWithModalProgress(myProject, initPromise);
+    }
   }
 
   private static final class MyRenderer extends SimpleListCellRenderer<ScopeDescriptor> {

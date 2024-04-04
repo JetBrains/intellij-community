@@ -1,18 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser
 
+import com.intellij.find.FindBundle
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.job
+import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.await
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -81,4 +78,10 @@ private class LegacyScopeModel(
   override fun getScopesImmediately(dataContext: DataContext): ScopesSnapshot =
     ScopeModel.getScopeDescriptors(project, dataContext, delegate.options, filter)
 
+}
+
+internal fun waitForPromiseWithModalProgress(project: Project, promise: Promise<*>) {
+  runWithModalProgressBlocking(project, FindBundle.message("find.usages.loading.search.scopes")) {
+    promise.await()
+  }
 }

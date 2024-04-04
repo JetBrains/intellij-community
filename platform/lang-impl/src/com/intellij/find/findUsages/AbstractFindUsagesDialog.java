@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
+  }
+
+  @ApiStatus.Internal
+  public void waitWithModalProgressUntilInitialized() {
+    if (myScopeCombo != null) { // some dialogs don't even initialize, consider initialization complete for them
+      myScopeCombo.waitWithModalProgressUntilInitialized();
+    }
   }
 
   @Override
