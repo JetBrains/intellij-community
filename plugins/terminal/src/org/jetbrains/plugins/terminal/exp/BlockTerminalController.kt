@@ -69,7 +69,7 @@ class BlockTerminalController(
     // Hide the prompt only when the new block is created, so it will look like the prompt is replaced with a block atomically.
     // If the command is finished very fast, the prompt will be shown back before repainting.
     // So it will look like it was not hidden at all.
-    val disposable = Disposer.newDisposable()
+    val disposable = Disposer.newDisposable(session)
     outputController.outputModel.addListener(object : TerminalOutputListener {
       override fun blockCreated(block: CommandBlock) {
         promptController.promptIsVisible = false
