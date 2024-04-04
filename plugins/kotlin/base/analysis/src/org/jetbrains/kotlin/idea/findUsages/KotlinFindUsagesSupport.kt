@@ -23,9 +23,13 @@ interface KotlinFindUsagesSupport {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.service()
 
         fun searchOverriders(element: PsiElement,
-                             searchScope: SearchScope,
-                             searchDeeply: Boolean = true): Sequence<PsiElement> {
-            return getInstance(element.project).searchOverriders(element, searchScope, searchDeeply)
+                             searchScope: SearchScope): Sequence<PsiElement> {
+            return getInstance(element.project).searchOverriders(element, searchScope)
+        }
+
+        fun searchInheritors(element: PsiElement,
+                             searchScope: SearchScope): Sequence<PsiElement> {
+            return getInstance(element.project).searchInheritors(element, searchScope)
         }
 
         fun processCompanionObjectInternalReferences(
@@ -67,6 +71,10 @@ interface KotlinFindUsagesSupport {
     fun searchOverriders(
         element: PsiElement,
         searchScope: SearchScope,
-        searchDeeply: Boolean = true
+    ): Sequence<PsiElement>
+
+    fun searchInheritors(
+        element: PsiElement,
+        searchScope: SearchScope,
     ): Sequence<PsiElement>
 }

@@ -313,7 +313,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (kotlinOptions.searchOverrides) {
                 addTask {
-                    val overriders = KotlinFindUsagesSupport.getInstance(project).searchOverriders(element, options.searchScope)
+                    val overriders = KotlinFindUsagesSupport.searchOverriders(element, options.searchScope)
                     overriders.all {
                         val element = runReadAction { it.takeIf { it.isValid }?.navigationElement } ?: return@all true
                         processUsage(uniqueProcessor, element)

@@ -9,6 +9,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
+import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
 import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
@@ -46,6 +47,10 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun searchOverriders(
         element: PsiElement,
         searchScope: SearchScope,
-        searchDeeply: Boolean
-    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope, searchDeeply).searchOverriders().asSequence()
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchOverriders().asSequence()
+
+    override fun searchInheritors(
+        element: PsiElement,
+        searchScope: SearchScope,
+    ): Sequence<PsiElement> = HierarchySearchRequest(element, searchScope).searchInheritors().asSequence()
 }

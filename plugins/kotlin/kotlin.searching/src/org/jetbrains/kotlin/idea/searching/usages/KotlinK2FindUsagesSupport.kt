@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -125,9 +126,10 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
     override fun searchOverriders(
         element: PsiElement,
         searchScope: SearchScope,
-        searchDeeply: Boolean
-    ): Sequence<PsiElement> {
-        (element as? KtCallableDeclaration)?.findAllOverridings(searchScope)?.let { return it }
-        return emptySequence()
-    }
+    ): Sequence<PsiElement> = (element as? KtCallableDeclaration)?.findAllOverridings(searchScope) ?: emptySequence()
+
+    override fun searchInheritors(
+        element: PsiElement,
+        searchScope: SearchScope,
+    ): Sequence<PsiElement> = (element as? KtClass)?.findAllInheritors(searchScope) ?: emptySequence()
 }
