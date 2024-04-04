@@ -25,6 +25,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
       "intellij.tools.jps.build.standalone",
       "intellij.devkit.runtimeModuleRepository.jps",
+      "intellij.devkit.jps",
       "intellij.idea.community.build.tasks",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
