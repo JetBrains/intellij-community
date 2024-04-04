@@ -14,13 +14,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.AdditionalIndexableFileSet;
@@ -63,11 +64,8 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
   }
 
   private @NotNull GlobalSearchScope createScopeByFile(@NotNull VirtualFile key) {
-    VirtualFile file = key;
-    VirtualFile original = key instanceof LightVirtualFile ? ((LightVirtualFile)key).getOriginalFile() : null;
-    if (original != null) {
-      file = original;
-    }
+    VirtualFile original = VirtualFileUtil.originalFile(key);
+    VirtualFile file = ObjectUtils.notNull(original, key);
     GlobalSearchScope scope = null;
     for (ResolveScopeProvider resolveScopeProvider : ResolveScopeProvider.EP_NAME.getExtensionList()) {
       scope = resolveScopeProvider.getResolveScope(file, myProject);
