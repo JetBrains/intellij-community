@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.uast" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.base.code-insight" />
   </component>
 </module>
