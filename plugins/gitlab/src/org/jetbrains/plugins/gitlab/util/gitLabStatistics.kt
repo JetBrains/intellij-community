@@ -38,7 +38,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 21)
+   private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 22)
 
   /**
    * Server metadata was fetched
@@ -254,7 +254,8 @@ internal object GitLabStatistics {
     ACTION,
     CREATION,
     TOOLWINDOW,
-    NOTIFICATION
+    NOTIFICATION,
+    TIMELINE_LINK
   }
   //endregion
 }

@@ -25,6 +25,7 @@ import java.net.URI
 
 object GitLabUIUtil {
   const val OPEN_FILE_LINK_PREFIX = "glfilelink:"
+  const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
 
   /**
    * Makes file links relative to the git repository root.
@@ -76,6 +77,14 @@ object GitLabUIUtil {
 
       linkText as String
       linkDestination as String
+
+      // If the destination starts with '!', it's a GitLab MR reference
+      if (linkDestination.startsWith('!')) {
+        val mrIid = linkDestination.substring(1)
+        val mrUrl = "$OPEN_MR_LINK_PREFIX$mrIid"
+        visitor.consumeHtml(HtmlChunk.link(mrUrl, "!${mrIid}").toString())
+        return
+      }
 
       // If the link looks an aweful lot like a website link, leave it be
       if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:")) {
