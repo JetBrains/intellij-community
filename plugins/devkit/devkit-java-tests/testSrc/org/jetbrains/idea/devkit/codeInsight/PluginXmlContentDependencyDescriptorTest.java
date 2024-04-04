@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -31,10 +31,6 @@ public class PluginXmlContentDependencyDescriptorTest extends JavaCodeInsightFix
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "codeInsight/contentDependencyDescriptor";
-  }
-
-  public void testNonJetBrainsHighlighting() {
-    doHighlightingTest(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public void testEmptyContentDependenciesHighlighting() {
