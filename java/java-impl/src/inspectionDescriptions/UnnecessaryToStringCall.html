@@ -9,7 +9,7 @@ Reports calls to <code>toString()</code> that are used in the following cases:
 </ul>
 <p>In these cases, conversion to string will be handled by the underlying library methods,
   and the explicit call to <code>toString()</code> is not needed.
-  Removing redundant <code>toString()</code> calls can occasionally even improve performance and reduce object allocations</p>
+  Removing redundant <code>toString()</code> calls can occasionally even improve performance and reduce object allocations.</p>
 <p>Example:</p>
 <pre><code>
   System.out.println(this.toString())
