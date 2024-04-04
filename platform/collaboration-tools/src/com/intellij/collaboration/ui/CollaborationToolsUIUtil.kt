@@ -398,6 +398,12 @@ private class OrientableScrollablePanel(private val orientation: Int, layout: La
   override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
 }
 
+@Suppress("FunctionName")
+fun ClippingRoundedPanel(arcRadius: Int = 8, borderColor: Color = JBColor.border(), layoutManager: LayoutManager? = null): JPanel =
+  ClippingRoundedPanel(arcRadius, layoutManager).apply {
+    border = RoundedLineBorder(borderColor, (arcRadius + 1) * 2)
+  }
+
 /**
  * A panel with rounded corners which rounds the corners of both its background and its children
  * Supposed to be used ONLY when there is not enough space between the children and panel edges, AND background color is dynamic

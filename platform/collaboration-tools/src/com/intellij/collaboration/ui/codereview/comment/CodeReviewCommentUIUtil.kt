@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
 import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.components.ActionLink
@@ -39,6 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Insets
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -53,6 +53,10 @@ object CodeReviewCommentUIUtil {
   const val INLAY_PADDING = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10
 
+  val COMMENT_BUBBLE_BORDER_COLOR: Color = JBColor.namedColor("Review.ChatItem.BubblePanel.Border",
+                                                              JBColor.namedColor("EditorTabs.underTabsBorderColor",
+                                                                          JBColor.border()))
+
   fun getInlayPadding(componentType: CodeReviewChatItemUIUtil.ComponentType): Insets {
     val paddingInsets = componentType.paddingInsets
     val top = INLAY_PADDING - paddingInsets.top
@@ -61,14 +65,11 @@ object CodeReviewCommentUIUtil {
   }
 
   fun createEditorInlayPanel(component: JComponent): JPanel {
-    val roundedLineBorder = IdeBorderFactory.createRoundedBorder(EDITOR_INLAY_PANEL_ARC).apply {
-      setColor(JBColor.lazy {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
-      })
+    val borderColor = JBColor.lazy {
+      val scheme = EditorColorsManager.getInstance().globalScheme
+      scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
     }
-    return ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC - 2, BorderLayout()).apply {
-      border = roundedLineBorder
+    return ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         scheme.defaultBackground

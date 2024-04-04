@@ -3,8 +3,6 @@ package com.intellij.collaboration.ui.codereview.comment
 
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.JBColor
-import com.intellij.ui.RoundedLineBorder
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -29,7 +27,6 @@ class RoundedPanel @Obsolete constructor(layout: LayoutManager?, private val arc
   init {
     isOpaque = false
     cursor = Cursor.getDefaultCursor()
-    border = RoundedLineBorder(DEFAULT_BORDER_COLOR, arc + 1)
   }
 
   override fun setOpaque(isOpaque: Boolean) {} // Disable opaque
@@ -121,12 +118,6 @@ class RoundedPanel @Obsolete constructor(layout: LayoutManager?, private val arc
     }.also {
       buffer = it
     }
-  }
-
-  companion object {
-    private val DEFAULT_BORDER_COLOR = JBColor.namedColor("Review.ChatItem.BubblePanel.Border",
-                                                          JBColor.namedColor("EditorTabs.underTabsBorderColor",
-                                                                             JBColor.border()))
   }
 }
 
