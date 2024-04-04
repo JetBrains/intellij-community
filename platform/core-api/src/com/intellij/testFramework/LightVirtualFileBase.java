@@ -32,6 +32,10 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
     myFileType = fileType;
   }
 
+   /**
+   * @see VirtualFileUtil#originalFile(VirtualFile)
+   * @see VirtualFileUtil#originalFileOrSelf(VirtualFile)
+   */
   public VirtualFile getOriginalFile() {
     return myOriginalFile;
   }

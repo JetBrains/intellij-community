@@ -3,7 +3,6 @@
 
 package com.intellij.openapi.vfs
 
-import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -65,10 +64,16 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
 
+/**
+ * @return [LightVirtualFileBase.originalFile]
+ */
 fun VirtualFile.originalFile(): VirtualFile? {
   return this.asSafely<LightVirtualFileBase>()?.originalFile
 }
 
+/**
+ * @return [LightVirtualFileBase.originalFile] or self
+ */
 fun VirtualFile.originalFileOrSelf(): VirtualFile {
   return originalFile() ?: this
 }
