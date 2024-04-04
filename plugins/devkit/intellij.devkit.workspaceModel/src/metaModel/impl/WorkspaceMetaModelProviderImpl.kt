@@ -160,10 +160,14 @@ internal class WorkspaceMetaModelProviderImpl(
 
     private fun createExtProperty(extProperty: PropertyDescriptor, receiverClass: ClassDescriptor, extPropertyId: Int): ExtProperty<*, *> {
       val valueType = convertType(extProperty.type, hashMapOf(), false)
+      val propertyAnnotations = extProperty.getter?.annotations
+                                  ?.mapNotNull { it.fqName }
+                                  ?.map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
+                                ?: emptyList()
       return ExtPropertyImpl(
         findObjClass(receiverClass), extProperty.name.identifier, valueType,
         computeKind(extProperty), extProperty.isAnnotatedBy(StandardNames.OPEN_ANNOTATION),
-        extProperty.isVar, false, module, extPropertyId, extProperty.source
+        extProperty.isVar, false, module, extPropertyId, propertyAnnotations, extProperty.source
       )
     }
 
