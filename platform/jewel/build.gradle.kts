@@ -12,6 +12,7 @@ dependencies {
     sarif(projects.intUi.intUiDecoratedWindow)
     sarif(projects.intUi.intUiStandalone)
     sarif(projects.markdown.core)
+    sarif(projects.markdown.extension.autolink)
     sarif(projects.markdown.extension.gfmAlerts)
     sarif(projects.markdown.ideLafBridgeStyling)
     sarif(projects.markdown.intUiStandaloneStyling)
