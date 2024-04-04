@@ -124,7 +124,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final List<NodeRenderer> myRenderers = new ArrayList<>();
 
   // we use null key here
-  private final Map<Type, Object> myNodeRenderersMap = new HashMap<>();
+  private final Map<Type, Object> myNodeRenderersMap = Collections.synchronizedMap(new HashMap<>());
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
   protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
@@ -245,7 +245,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       List<NodeRenderer> enabledRenderers = ContainerUtil.filter(myRenderers, NodeRenderer::isEnabled);
       CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getFirstApplicableRenderer(enabledRenderers, type)
         .handle((r, throwable) -> {
-          DebuggerManagerThreadImpl.assertIsManagerThread();
+          // sometimes we may be not in DebuggerManagerThread here, see EA-433577 for more details
+          //DebuggerManagerThreadImpl.assertIsManagerThread();
           if (r == null || throwable != null) {
             r = getDefaultRenderer(type); // do not cache the fallback renderer
             myNodeRenderersMap.remove(type);
