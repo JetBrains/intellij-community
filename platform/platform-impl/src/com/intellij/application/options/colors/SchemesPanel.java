@@ -130,18 +130,16 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
   }
 
   protected void onSchemeChangedFromAction(@Nullable EditorColorsScheme scheme) {
-    if (scheme != null) {
+    if (scheme != null && areSchemesLoaded()) {
       myOptions.selectScheme(scheme.getName());
-      if (areSchemesLoaded()) {
-        myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
+      myDispatcher.getMulticaster().schemeChanged(this);
 
-        if (shouldApplyImmediately() && myOptions.isModified()) {
-          try {
-            myOptions.apply();
-          }
-          catch (ConfigurationException e) {
-            LOG.warn("Unable to apply compiler resource patterns", e);
-          }
+      if (shouldApplyImmediately() && myOptions.isModified()) {
+        try {
+          myOptions.apply();
+        }
+        catch (ConfigurationException e) {
+          LOG.warn("Unable to apply compiler resource patterns", e);
         }
       }
     }
