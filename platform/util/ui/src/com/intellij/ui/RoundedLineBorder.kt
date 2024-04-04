@@ -1,45 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui;
+package com.intellij.ui
 
-import org.jetbrains.annotations.NotNull;
+import java.awt.*
+import javax.swing.border.LineBorder
 
-import javax.swing.border.LineBorder;
-import java.awt.*;
+open class RoundedLineBorder : LineBorder {
+  private var myArcSize = 1
 
-public class RoundedLineBorder extends LineBorder {
-  private int myArcSize = 1;
+  constructor(color: Color?) : super(color)
 
-  public RoundedLineBorder(Color color) {
-    super(color);
+  @JvmOverloads
+  constructor(color: Color?, arcSize: Int, thickness: Int = 1) : super(color, thickness) {
+    myArcSize = arcSize
   }
 
-  public RoundedLineBorder(Color color, int arcSize) {
-    this(color, arcSize, 1);
-  }
+  override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    val g2 = g as Graphics2D
 
-  public RoundedLineBorder(Color color, int arcSize, final int thickness) {
-    super(color, thickness);
-    myArcSize = arcSize;
-  }
+    val oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING)
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    val oldColor = g2.color
+    g2.color = lineColor
 
-  @Override
-  public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    final Graphics2D g2 = (Graphics2D)g;
-
-    final Object oldAntialiasing = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    final Color oldColor = g2.getColor();
-    g2.setColor(lineColor);
-
-    for (int i = 0; i < thickness; i++) {
-      g2.drawRoundRect(x + i, y + i, width - i - i - 1, height - i - i - 1, myArcSize, myArcSize);
+    for (i in 0 until thickness) {
+      g2.drawRoundRect(x + i, y + i, width - i - i - 1, height - i - i - 1, myArcSize, myArcSize)
     }
 
-    g2.setColor(oldColor);
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing);
+    g2.color = oldColor
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasing)
   }
 
-  public void setColor(@NotNull Color color) {
-    lineColor = color;
+  fun setColor(color: Color) {
+    lineColor = color
   }
 }
