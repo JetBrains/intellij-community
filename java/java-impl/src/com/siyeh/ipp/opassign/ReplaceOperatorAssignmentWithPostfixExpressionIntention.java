@@ -36,7 +36,7 @@ public final class ReplaceOperatorAssignmentWithPostfixExpressionIntention exten
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
     final PsiExpression expression = assignment.getLExpression();
     CommentTracker commentTracker = new CommentTracker();

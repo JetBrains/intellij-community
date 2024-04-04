@@ -72,7 +72,7 @@ public final class ReplaceMultiplyWithShiftIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
     }

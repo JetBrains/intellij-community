@@ -60,7 +60,7 @@ public final class ConstantSubexpressionIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;

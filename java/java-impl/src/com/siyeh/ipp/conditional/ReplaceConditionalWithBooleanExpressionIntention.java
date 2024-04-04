@@ -46,7 +46,7 @@ public final class ReplaceConditionalWithBooleanExpressionIntention extends MCIn
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     final PsiExpression condition = conditionalExpression.getCondition();
     CommentTracker tracker = new CommentTracker();

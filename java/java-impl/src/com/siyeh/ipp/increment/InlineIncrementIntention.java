@@ -29,7 +29,7 @@ public final class InlineIncrementIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiReferenceExpression operandExpression = IncrementUtil.getIncrementOrDecrementOperand(element);
     final PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(element.getParent(), PsiExpressionStatement.class);
     final String operatorText = IncrementUtil.getOperatorText(element);

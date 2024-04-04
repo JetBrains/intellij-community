@@ -34,7 +34,7 @@ public final class ReplaceDoWhileLoopWithWhileLoopIntention extends MCIntention 
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiDoWhileStatement doWhileStatement = (PsiDoWhileStatement)element.getParent();
     if (doWhileStatement == null) {
       return;

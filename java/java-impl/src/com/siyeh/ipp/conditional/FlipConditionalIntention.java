@@ -46,7 +46,7 @@ public final class FlipConditionalIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiConditionalExpression exp = (PsiConditionalExpression)element;
 
     final PsiExpression condition = exp.getCondition();

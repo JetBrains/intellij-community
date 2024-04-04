@@ -57,7 +57,7 @@ public final class FlipAssertLiteralIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String fromMethodName = methodExpression.getReferenceName();

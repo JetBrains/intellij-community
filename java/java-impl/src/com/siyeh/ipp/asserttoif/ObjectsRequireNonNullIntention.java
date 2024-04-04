@@ -40,7 +40,7 @@ public final class ObjectsRequireNonNullIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     if (!(element instanceof PsiReferenceExpression referenceExpression)) {
       return;
     }

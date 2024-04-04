@@ -67,7 +67,7 @@ public final class PostfixPrefixIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiUnaryExpression expression = (PsiUnaryExpression)element;
     CommentTracker commentTracker = new CommentTracker();
     commentTracker.markUnchanged(expression.getOperand());

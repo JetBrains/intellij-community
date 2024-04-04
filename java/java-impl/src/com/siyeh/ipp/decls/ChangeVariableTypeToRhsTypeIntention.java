@@ -36,7 +36,7 @@ public final class ChangeVariableTypeToRhsTypeIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiVariable variable)) {
       return;

@@ -55,7 +55,7 @@ public final class FlipCommutativeMethodCallIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression expression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = expression.getArgumentList();
     final PsiExpression argument = argumentList.getExpressions()[0];

@@ -45,7 +45,7 @@ public final class ChangeToEndOfLineCommentIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiComment oldComment = (PsiComment)element;
     final PsiElement parent = oldComment.getParent();
     assert parent != null;

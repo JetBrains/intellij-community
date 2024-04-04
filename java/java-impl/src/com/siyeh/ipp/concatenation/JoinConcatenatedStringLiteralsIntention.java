@@ -47,7 +47,7 @@ public final class JoinConcatenatedStringLiteralsIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }

@@ -37,7 +37,7 @@ public final class ReplaceAssignmentWithPostfixExpressionIntention extends MCInt
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiExpression lhs = assignmentExpression.getLExpression();
     CommentTracker commentTracker = new CommentTracker();

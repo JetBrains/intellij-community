@@ -31,7 +31,7 @@ public final class ObscureThrownExceptionsIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     if (!(element instanceof PsiReferenceList referenceList)) {
       return;
     }

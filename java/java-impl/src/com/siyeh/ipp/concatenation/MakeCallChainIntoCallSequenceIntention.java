@@ -60,7 +60,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final List<String> callTexts = new ArrayList<>();
     PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
     if (call == null) return;

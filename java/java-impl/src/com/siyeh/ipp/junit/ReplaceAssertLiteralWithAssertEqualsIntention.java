@@ -69,7 +69,7 @@ public final class ReplaceAssertLiteralWithAssertEqualsIntention extends MCInten
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
     @NonNls final String methodName = methodExpression.getReferenceName();

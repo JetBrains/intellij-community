@@ -47,7 +47,7 @@ public final class ReplaceConcatenationWithStringBufferIntention extends MCInten
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isStringConcatenation(parent)) {

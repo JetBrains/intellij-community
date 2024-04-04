@@ -39,7 +39,7 @@ public final class ReverseForLoopDirectionIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiForStatement forStatement = (PsiForStatement)element.getParent();
     final PsiDeclarationStatement initialization = (PsiDeclarationStatement)forStatement.getInitialization();
     if (initialization == null) {

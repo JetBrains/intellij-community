@@ -45,7 +45,7 @@ public class SurroundWithIfFix extends PsiUpdateModCommandQuickFix {
     }
     final PsiIfStatement ifStatement = new JavaWithIfSurrounder()
       .surroundStatements(project, anchorStatement.getParent(), elements, myText + mySuffix);
-    new MergeIfAndIntention().processIntention(ifStatement.getFirstChild());
+    new MergeIfAndIntention().invoke(ifStatement.getFirstChild());
   }
 
   @Override

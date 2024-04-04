@@ -43,7 +43,7 @@ public final class ExtractIncrementIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     IncrementDecrementUsedAsExpressionInspection.extractPrefixPostfixExpressionToSeparateStatement(element);
   }
 }

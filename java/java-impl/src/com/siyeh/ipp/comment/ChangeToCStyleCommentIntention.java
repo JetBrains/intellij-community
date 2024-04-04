@@ -46,7 +46,7 @@ public final class ChangeToCStyleCommentIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     PsiComment firstComment = (PsiComment)element;
     while (true) {
       final PsiElement prevComment = PsiTreeUtil.skipWhitespacesBackward(firstComment);

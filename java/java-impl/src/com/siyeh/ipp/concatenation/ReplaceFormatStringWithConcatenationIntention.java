@@ -76,7 +76,7 @@ public final class ReplaceFormatStringWithConcatenationIntention extends MCInten
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
       return;
     }

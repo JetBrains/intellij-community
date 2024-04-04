@@ -39,7 +39,7 @@ public final class ReplaceConcatenationWithFormatStringIntention extends MCInten
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isStringConcatenation(parent)) {

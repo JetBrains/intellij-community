@@ -12,7 +12,6 @@ import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementContextPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -30,7 +29,7 @@ public final class UnicodeUnescapeIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     TextRange selection = context.selection();
     final Document document = element.getContainingFile().getFileDocument();
     if (!selection.isEmpty()) {

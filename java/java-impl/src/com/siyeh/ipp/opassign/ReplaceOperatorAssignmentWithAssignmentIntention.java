@@ -36,7 +36,7 @@ public final class ReplaceOperatorAssignmentWithAssignmentIntention extends MCIn
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
   }
 }

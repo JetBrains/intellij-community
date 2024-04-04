@@ -36,7 +36,7 @@ public final class AdapterToListenerIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     final PsiElement grandParent = parent.getParent();
     if (!(grandParent instanceof PsiClass aClass)) {

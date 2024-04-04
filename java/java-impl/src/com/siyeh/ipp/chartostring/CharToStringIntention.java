@@ -44,7 +44,7 @@ public final class CharToStringIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiLiteralExpression charLiteral = (PsiLiteralExpression)element;
     final String charLiteralText = charLiteral.getText();
     final String stringLiteral = PsiLiteralUtil.stringForCharLiteral(charLiteralText);

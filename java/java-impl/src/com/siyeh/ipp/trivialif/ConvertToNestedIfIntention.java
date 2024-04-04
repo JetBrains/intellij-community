@@ -55,7 +55,7 @@ public final class ConvertToNestedIfIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)element;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     if (returnValue == null || ErrorUtil.containsDeepError(returnValue)) {

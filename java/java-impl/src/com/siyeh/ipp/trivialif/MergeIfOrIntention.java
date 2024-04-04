@@ -46,7 +46,7 @@ public final class MergeIfOrIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     if (MergeIfOrPredicate.isMergableExplicitIf(token)) {
       replaceMergeableExplicitIf(token);

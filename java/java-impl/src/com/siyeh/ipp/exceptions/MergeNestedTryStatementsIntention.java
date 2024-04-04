@@ -30,7 +30,7 @@ public final class MergeNestedTryStatementsIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiTryStatement tryStatement1 = (PsiTryStatement)element.getParent();
     final StringBuilder newTryStatement = new StringBuilder("try ");
     final PsiResourceList list1 = tryStatement1.getResourceList();

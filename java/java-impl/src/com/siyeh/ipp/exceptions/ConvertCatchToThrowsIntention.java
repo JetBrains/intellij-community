@@ -34,7 +34,7 @@ public final class ConvertCatchToThrowsIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
     final NavigatablePsiElement owner = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class, PsiLambdaExpression.class);
     final PsiMethod method;

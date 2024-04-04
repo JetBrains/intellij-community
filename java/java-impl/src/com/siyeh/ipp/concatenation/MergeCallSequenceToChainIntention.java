@@ -34,7 +34,7 @@ public final class MergeCallSequenceToChainIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     if (!(element instanceof PsiExpressionStatement statement)) {
       return;
     }

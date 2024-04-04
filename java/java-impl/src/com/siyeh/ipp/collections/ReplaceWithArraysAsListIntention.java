@@ -38,8 +38,8 @@ public final class ReplaceWithArraysAsListIntention extends MCIntention {
   }
 
   @Override
-  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    Presentation presentation = super.getPresentation(context);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    Presentation presentation = super.getPresentation(context, element);
     return presentation == null ? null : presentation.withPriority(PriorityAction.Priority.HIGH);
   }
 
@@ -68,7 +68,7 @@ public final class ReplaceWithArraysAsListIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();

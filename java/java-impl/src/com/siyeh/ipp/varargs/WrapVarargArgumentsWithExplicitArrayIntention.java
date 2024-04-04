@@ -36,7 +36,7 @@ public final class WrapVarargArgumentsWithExplicitArrayIntention extends MCInten
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiCall call = PsiTreeUtil.getParentOfType(element, PsiCall.class);
     if (call == null) {
       return;

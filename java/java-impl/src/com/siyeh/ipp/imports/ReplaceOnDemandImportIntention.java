@@ -36,7 +36,7 @@ public final class ReplaceOnDemandImportIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
     final PsiJavaFile javaFile = (PsiJavaFile)importStatementBase.getContainingFile();
     final PsiManager manager = importStatementBase.getManager();

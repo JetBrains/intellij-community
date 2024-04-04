@@ -27,7 +27,7 @@ public final class NegateConditionalIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     PsiExpression condition = conditionalExpression.getCondition();
     PsiExpression thenExpression = conditionalExpression.getThenExpression();

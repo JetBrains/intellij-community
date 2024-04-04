@@ -55,7 +55,7 @@ public final class CreateAssertIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiExpressionStatement statement = (PsiExpressionStatement)element;
     final PsiExpression expression = statement.getExpression();
     final String newStatement;

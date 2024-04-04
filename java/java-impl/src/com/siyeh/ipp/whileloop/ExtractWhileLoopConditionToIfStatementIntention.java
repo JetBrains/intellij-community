@@ -39,7 +39,7 @@ public final class ExtractWhileLoopConditionToIfStatementIntention extends MCInt
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiWhileStatement whileStatement = (PsiWhileStatement)element.getParent();
     if (whileStatement == null) {
       return;

@@ -48,7 +48,7 @@ public final class DetailExceptionsIntention extends MCIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  public void invoke(@NotNull PsiElement element) {
     final PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     if (tryStatement == null) return;
     CommentTracker commentTracker = new CommentTracker();

@@ -33,7 +33,7 @@ public final class ReplaceArmWithTryFinallyIntention extends MCIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) {
+  protected void invoke(@NotNull PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiTryStatement tryStatement = (PsiTryStatement)token.getParent();
     if (tryStatement == null) {
