@@ -15,8 +15,10 @@ import com.intellij.openapi.observable.util.whenItemSelected
 import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ListUtil
+import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBList.createDefaultListModel
@@ -24,12 +26,12 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Graphics
-import java.awt.Insets
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
-import javax.swing.border.AbstractBorder
 import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
 internal class ExternalProjectSelector(
   property: ObservableMutableProperty<DependencyAnalyzerProject?>,
@@ -50,8 +52,7 @@ internal class ExternalProjectSelector(
   }
 
   private fun createPopup(externalProjects: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit): JBPopup {
-    val content = ExternalProjectPopupContent(externalProjects)
-      .apply { whenMousePressed { onChange(list.selectedValue) } }
+    val content = ExternalProjectPopupContent(externalProjects, onChange)
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, null)
       .setRequestFocus(true)
@@ -70,9 +71,9 @@ internal class ExternalProjectSelector(
       }
   }
 
-  private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>) : JPanel() {
+  private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit) : JPanel() {
     val list: JBList<DependencyAnalyzerProject>
-    val filterField: JTextField
+    val filterField = SearchTextField(false)
     var listModel: DefaultListModel<DependencyAnalyzerProject>
 
     init {
@@ -85,49 +86,56 @@ internal class ExternalProjectSelector(
       ListUtil.installAutoSelectOnMouseMove(list)
       setupListPopupPreferredWidth(list)
 
-      // Create a JTextField for the user to enter their search query
-      filterField = JTextField()
-      filterField.document.addDocumentListener(object : DocumentListener {
-        override fun insertUpdate(e: DocumentEvent) {
-          newFilter()
-        }
-
-        override fun removeUpdate(e: DocumentEvent) {
-          newFilter()
-        }
-
-        override fun changedUpdate(e: DocumentEvent) {
-          newFilter()
-        }
-
-        // Apply the filter to the list
-        private fun newFilter() {
-          val filterText = filterField.text
-          listModel = createDefaultListModel(externalProject.filter { it.title.contains(filterText, ignoreCase = true) })
-          list.model = listModel
+      // Add a MouseListener to handle mouse click events
+      list.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          val selectedProject = list.selectedValue
+          if (selectedProject != null) {
+            // Handle the selected project
+            onChange(selectedProject)
+          }
         }
       })
 
-      val icon: Icon = getFindIcon()
-
-      filterField.border = object : AbstractBorder() {
-        override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-          super.paintBorder(c, g, x, y, width, height)
-          icon.paintIcon(c, g, x + 5, y + 5)
+      // Add a KeyListener to handle enter key events
+      list.addKeyListener(object : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent) {
+          if (e.keyCode == KeyEvent.VK_ENTER) {
+            val selectedProject = list.selectedValue
+            if (selectedProject != null) {
+              // Handle the selected project
+              onChange(selectedProject)
+            }
+          }
         }
+      })
 
-        override fun getBorderInsets(c: Component): Insets {
-          return JBUI.insets(0, icon.iconWidth + 10, 0, 0)
+      // Create a SearchTextField for the user to enter their search query
+      filterField.addDocumentListener(object : DocumentAdapter() {
+        override fun textChanged(e: DocumentEvent) {
+          val filterText = filterField.text
+          listModel = createDefaultListModel(externalProject.filter { it.title.contains(filterText, ignoreCase = true) })
+          list.model = listModel
+          list.selectedIndex = 0
         }
-      }
+      })
 
+      // Add a KeyListener to handle up, down, and enter key events to delegate to the list to process
+      filterField.addKeyboardListener(object : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent) {
+          when (e.keyCode) {
+            KeyEvent.VK_UP, KeyEvent.VK_DOWN,KeyEvent.VK_ENTER  -> {
+              list.dispatchEvent(e)
+            }
+          }
+        }
+      })
 
       val scrollPane = JBScrollPane(list)
       layout = BorderLayout()
       add(filterField, BorderLayout.NORTH)
       add(scrollPane, BorderLayout.CENTER)
 
-      filterField.requestFocusInWindow()
     }
   }
 
@@ -179,7 +187,7 @@ internal class ExternalProjectSelector(
     }
   }
 
-  private fun getFindIcon() : Icon{
+  private fun getFindIcon(): Icon {
     return if (ExperimentalUI.isNewUI()) ExpUiIcons.General.Search else AllIcons.Actions.Find
   }
 }
