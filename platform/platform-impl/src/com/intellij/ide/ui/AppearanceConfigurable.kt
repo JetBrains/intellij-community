@@ -532,7 +532,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 checkBox(cdShowToolWindowNames).gap(RightGap.SMALL).onApply {
                   ResizeStripeManager.applyShowNames()
                 }
-                cell(JLabel(AllIcons.General.Beta))
+                icon(AllIcons.General.Beta)
               },
               { checkBox(cdLeftToolWindowLayout) }
             )

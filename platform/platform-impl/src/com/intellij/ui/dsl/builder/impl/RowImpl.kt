@@ -26,6 +26,7 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
+import com.intellij.util.IconUtil
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
@@ -283,7 +284,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun icon(icon: Icon): CellImpl<JLabel> {
-    return cell(JBLabel(icon))
+    val label = JBLabel(icon)
+    label.disabledIcon = IconUtil.desaturate(icon)
+    return cell(label)
   }
 
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {

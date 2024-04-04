@@ -70,18 +70,16 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
         row {
           checkBox(IdeBundle.message("checkbox.compact.mode"))
             .bindSelected(UISettings.getInstance()::compactMode)
-            .enabledIf(newUiCheckBox.selected)
             .comment(IdeBundle.message("checkbox.compact.mode.description"))
         }
         if (ResizeStripeManager.enabled()) {
           row {
             checkBox(IdeBundle.message("checkbox.show.tool.window.names"))
-              .enabledIf(newUiCheckBox.selected)
               .gap(RightGap.SMALL)
               .bindSelected(UISettings.getInstance()::showToolWindowsNames).onApply {
                 ResizeStripeManager.applyShowNames()
               }
-            cell(JLabel(AllIcons.General.Beta))
+            icon(AllIcons.General.Beta)
           }
         }
         if (!SystemInfo.isMac) {
@@ -92,10 +90,10 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
                 if (SystemInfo.isUnix) {
                   comment(IdeBundle.message("ide.restart.required.comment"))
                 }
-              }.enabledIf(newUiCheckBox.selected)
+              }
           }
         }
-      }
+      }.enabledIf(newUiCheckBox.selected)
 
       separator()
         .topGap(TopGap.SMALL)
