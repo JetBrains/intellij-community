@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
-import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
@@ -16,7 +14,6 @@ import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ListUtil
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.DropDownLink
@@ -59,6 +56,32 @@ internal class ExternalProjectSelector(
       .createPopup()
       .apply {
         content.whenMousePressed(listener = ::closeOk)
+        // Add a MouseListener to handle mouse click events
+        content.list.addMouseListener(object : MouseAdapter() {
+          override fun mouseClicked(e: MouseEvent) {
+            val selectedProject = content.list.selectedValue
+            if (selectedProject != null) {
+              // Handle the selected project
+              onChange(selectedProject)
+              closeOk(e)
+            }
+          }
+        })
+
+        // Add a KeyListener to handle enter key events
+        content.list.addKeyListener(object : KeyAdapter() {
+          override fun keyPressed(e: KeyEvent) {
+            if (e.keyCode == KeyEvent.VK_ENTER) {
+              val selectedProject = content.list.selectedValue
+              if (selectedProject != null) {
+                // Handle the selected project
+                onChange(selectedProject)
+                closeOk(e)
+              }
+            }
+          }
+        })
+
         addListener(object : JBPopupListener {
           override fun onClosed(event: LightweightWindowEvent) {}
 
@@ -86,30 +109,6 @@ internal class ExternalProjectSelector(
       ListUtil.installAutoSelectOnMouseMove(list)
       setupListPopupPreferredWidth(list)
 
-      // Add a MouseListener to handle mouse click events
-      list.addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent) {
-          val selectedProject = list.selectedValue
-          if (selectedProject != null) {
-            // Handle the selected project
-            onChange(selectedProject)
-          }
-        }
-      })
-
-      // Add a KeyListener to handle enter key events
-      list.addKeyListener(object : KeyAdapter() {
-        override fun keyPressed(e: KeyEvent) {
-          if (e.keyCode == KeyEvent.VK_ENTER) {
-            val selectedProject = list.selectedValue
-            if (selectedProject != null) {
-              // Handle the selected project
-              onChange(selectedProject)
-            }
-          }
-        }
-      })
-
       // Create a SearchTextField for the user to enter their search query
       filterField.addDocumentListener(object : DocumentAdapter() {
         override fun textChanged(e: DocumentEvent) {
@@ -124,7 +123,7 @@ internal class ExternalProjectSelector(
       filterField.addKeyboardListener(object : KeyAdapter() {
         override fun keyPressed(e: KeyEvent) {
           when (e.keyCode) {
-            KeyEvent.VK_UP, KeyEvent.VK_DOWN,KeyEvent.VK_ENTER  -> {
+            KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_ENTER -> {
               list.dispatchEvent(e)
             }
           }
@@ -185,10 +184,6 @@ internal class ExternalProjectSelector(
       whenItemSelected { text = itemToString(selectedItem) }
       bind(property)
     }
-  }
-
-  private fun getFindIcon(): Icon {
-    return if (ExperimentalUI.isNewUI()) ExpUiIcons.General.Search else AllIcons.Actions.Find
   }
 }
 
