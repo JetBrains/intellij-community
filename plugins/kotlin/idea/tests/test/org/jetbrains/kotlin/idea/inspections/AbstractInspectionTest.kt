@@ -12,11 +12,10 @@ import com.intellij.util.ThrowableRunnable
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.junit.runner.Description
 import java.io.File
@@ -125,7 +124,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
                     project,
                     configurator = { FormatSettingsUtil.createConfigurator(options, it).configureSettings() }
                 ) {
-                    configureRegistryAndRun(options) {
+                    configureRegistryAndRun(project, options) {
                         try {
                             fixtureClasses.forEach { TestFixtureExtension.loadFixture(it, myFixture.module) }
 

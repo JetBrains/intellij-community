@@ -107,7 +107,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         val beforeFile = File(beforeFileName)
         val beforeFileText = FileUtil.loadFile(beforeFile)
         InTextDirectivesUtils.checkIfMuted(beforeFileText)
-        configureRegistryAndRun(beforeFileText) {
+        configureRegistryAndRun(project, beforeFileText) {
             withCustomCompilerOptions(beforeFileText, project, module) {
                 IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
                     val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()

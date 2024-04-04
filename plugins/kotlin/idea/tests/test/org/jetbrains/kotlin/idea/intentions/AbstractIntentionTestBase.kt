@@ -133,7 +133,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
             }
 
             configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
-                configureRegistryAndRun(fileText) {
+                configureRegistryAndRun(project, fileText) {
                     try {
                         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 

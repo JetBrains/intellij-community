@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
@@ -443,7 +444,8 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     return false
 }
 
-fun configureRegistryAndRun(fileText: String, body: () -> Unit) {
+fun configureRegistryAndRun(project: Project, fileText: String, body: () -> Unit) {
+    KotlinHighlightingSuspender.getInstance(project) // register Registry listener, otherwise registry changes wouldn't be picked up by ElementAnnotator
     val registers = InTextDirectivesUtils.findListWithPrefixes(fileText, "// REGISTRY:")
         .map { it.split(' ') }
         .map { Registry.get(it.first()) to it.last() }

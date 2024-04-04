@@ -23,8 +23,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 
-import static org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun;
-
 public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFixtureTestCase {
 
     public static final String NO_CHECK_INFOS_PREFIX = "// NO_CHECK_INFOS";
@@ -71,7 +69,7 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, isFirPlugin(), () -> {
             try {
-                configureRegistryAndRun(fileText, () -> {
+                KotlinLightCodeInsightFixtureTestCaseKt.configureRegistryAndRun(myFixture.getProject(), fileText, () -> {
                     checkHighlighting(fileText);
                     return Unit.INSTANCE;
                 });
