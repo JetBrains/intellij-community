@@ -247,15 +247,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         |  :taskWithArgs
       """.trimMargin())
       .assertExecutionTreeNode("successful") {
-        assertThat(it).matches("""
-          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args='test args' -q'...
-          |
-          |(?:Starting Gradle Daemon...
-          |Gradle Daemon started in .* ms
-          |)?test args
-          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args='test args' -q'.
-          |
-        """.trimMargin())
+        assertThat(it).matches(getExecutionOutputRegexString("taskWithArgs --my_args='test args' -q", "test args"))
       }
       .assertExecutionTreeNode(":taskWithArgs") {
         assertEmpty(it) // tasks output routing is not available for quiet mode
@@ -291,15 +283,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         |  :taskWithArgs
       """.trimMargin())
       .assertExecutionTreeNode("successful") {
-        assertThat(it).matches("""
-          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args=test_args --quiet'...
-          |
-          |(?:Starting Gradle Daemon...
-          |Gradle Daemon started in .* ms
-          |)?test_args
-          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args=test_args --quiet'.
-          |
-        """.trimMargin())
+        assertThat(it).matches(getExecutionOutputRegexString("taskWithArgs --my_args=test_args --quiet", "test_args"))
       }
 
     // test with task argument and known build CLI option after tasks
@@ -311,15 +295,19 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         |  :taskWithArgs
       """.trimMargin())
       .assertExecutionTreeNode("successful") {
-        assertThat(it).matches("""
-          |(\d+):(\d+):(\d+)( AM| PM)?: Executing 'taskWithArgs --my_args test_args --quiet'...
+        assertThat(it).matches(getExecutionOutputRegexString("taskWithArgs --my_args test_args --quiet", "test_args"))
+      }
+  }
+
+  private fun getExecutionOutputRegexString(command: String, args: String): String {
+    return """
+          |\d+:\d+:\d+(\p{javaSpaceChar}(AM|PM))?: Executing '$command'...
           |
           |(?:Starting Gradle Daemon...
           |Gradle Daemon started in .* ms
-          |)?test_args
-          |(\d+):(\d+):(\d+)( AM| PM)?: Execution finished 'taskWithArgs --my_args test_args --quiet'.
+          |)?$args
+          |\d+:\d+:\d+(\p{javaSpaceChar}(AM|PM))?: Execution finished '$command'.
           |
-        """.trimMargin())
-      }
+        """.trimMargin()
   }
 }
