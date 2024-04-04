@@ -172,6 +172,14 @@ public abstract class JsonSchemaObject {
   }
 
   /**
+   * @deprecated use {@link JsonSchemaObjectReadingUtils#guessType}
+   */
+  @Deprecated
+  public @Nullable JsonSchemaType guessType() {
+    return JsonSchemaObjectReadingUtils.guessType(this);
+  }
+
+  /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#hasStringChecks}
    */
   @Deprecated
