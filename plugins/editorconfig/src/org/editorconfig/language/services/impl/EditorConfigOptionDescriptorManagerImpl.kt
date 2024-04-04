@@ -17,10 +17,12 @@ import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 
 class EditorConfigOptionDescriptorManagerImpl(project: Project) : EditorConfigOptionDescriptorManager {
-  private val descriptorLoader by lazy { EditorConfigOptionLazyDescriptorLoader(project) }
+  private val descriptorLoader by lazy(LazyThreadSafetyMode.PUBLICATION) { EditorConfigOptionLazyDescriptorLoader(project) }
   // These structures can be very big but are vital for plugin
-  private val fullySupportedDescriptors = descriptorLoader.fullySupportedDescriptors
-  private val partiallySupportedDescriptors = descriptorLoader.partiallySupportedDescriptors
+  private val fullySupportedDescriptors
+    get() = descriptorLoader.fullySupportedDescriptors
+  private val partiallySupportedDescriptors
+    get() = descriptorLoader.partiallySupportedDescriptors
 
   // These structures are relatively small and can be stored via strong reference
   private val requiredDeclarationDescriptorsCache = mutableMapOf<String, List<EditorConfigDeclarationDescriptor>>()
