@@ -25,7 +25,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 
@@ -88,7 +87,6 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   private fun onStateChanged() {
-    LOG.info("State changed. Current mode: ${getCurrentMode()}")
     if (runWhenSmartCondition.asBoolean) {
       // Always reschedule execution to avoid unexpected write lock acquired.
       //
