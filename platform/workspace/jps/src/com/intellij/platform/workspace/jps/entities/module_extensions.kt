@@ -10,14 +10,14 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 
 /**
  * Describes additional data stored in [Module][com.intellij.openapi.module.Module] instance.
  */
-@ApiStatus.Internal
+@Internal
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
   val module: ModuleEntity
 
@@ -66,7 +66,7 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.customImlData: @Child ModuleCustomImlDataEntity?
   by WorkspaceEntity.extension()
 
@@ -74,7 +74,7 @@ val ModuleEntity.customImlData: @Child ModuleCustomImlDataEntity?
  * Describes [explicit module group][com.intellij.openapi.module.ModuleManager.getModuleGroupPath]. Note that explicit module groups are
  * deprecated, so this entity should be used for compatibility with old code only.
  */
-@ApiStatus.Internal
+@Internal
 interface ModuleGroupPathEntity : WorkspaceEntity {
   val module: ModuleEntity
 
@@ -117,14 +117,14 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.groupPath: @Child ModuleGroupPathEntity?
   by WorkspaceEntity.extension()
 
 /**
  * Describes options for a [Module][com.intellij.openapi.module.Module] imported from some external project system (Maven, Gradle).
  */
-@ApiStatus.Internal
+@Internal
 interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
   val module: ModuleEntity
 
@@ -177,14 +177,14 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.exModuleOptions: @Child ExternalSystemModuleOptionsEntity?
   by WorkspaceEntity.extension()
 
 /**
  * Provides reference to [production module][com.intellij.openapi.roots.TestModuleProperties.getProductionModule].
  */
-@ApiStatus.Internal
+@Internal
 interface TestModulePropertiesEntity : WorkspaceEntity {
   val module: ModuleEntity
   val productionModuleId: ModuleId
@@ -225,6 +225,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.testProperties: @Child TestModulePropertiesEntity?
   by WorkspaceEntity.extension()

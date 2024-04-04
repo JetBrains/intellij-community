@@ -9,13 +9,13 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * This entity stores order of facets in iml file. This is needed to ensure that facet tags are saved in the same order to avoid
  * unnecessary modifications of iml file.
  */
-@ApiStatus.Internal
+@Internal
 interface FacetsOrderEntity : WorkspaceEntity {
   val orderOfFacets: List<@NlsSafe String>
   val moduleEntity: ModuleEntity
@@ -57,7 +57,7 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
     by WorkspaceEntity.extension()
 

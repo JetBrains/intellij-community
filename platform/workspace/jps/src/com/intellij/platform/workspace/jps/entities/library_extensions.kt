@@ -7,13 +7,13 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 /**
  * Describes custom [library properties][com.intellij.openapi.roots.libraries.LibraryProperties].
  */
-@ApiStatus.Internal
+@Internal
 interface LibraryPropertiesEntity : WorkspaceEntity {
   val library: LibraryEntity
   val propertiesXmlTag: @NonNls String?
@@ -53,6 +53,6 @@ fun MutableEntityStorage.modifyEntity(
 }
 //endregion
 
-@get:ApiStatus.Internal
+@get:Internal
 val LibraryEntity.libraryProperties: @Child LibraryPropertiesEntity?
   by WorkspaceEntity.extension()

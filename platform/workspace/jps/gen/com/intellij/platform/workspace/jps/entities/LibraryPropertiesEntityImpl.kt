@@ -20,10 +20,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
-@ApiStatus.Internal // Just insert this manually. This is needed for correct api surface
+@Internal
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
 open class LibraryPropertiesEntityImpl(private val dataSource: LibraryPropertiesEntityData) : LibraryPropertiesEntity, WorkspaceEntityBase(
@@ -131,8 +131,7 @@ open class LibraryPropertiesEntityImpl(private val dataSource: LibraryProperties
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LIBRARY_CONNECTION_ID, this) as? LibraryEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false,
-                                                                                                  LIBRARY_CONNECTION_ID)]!! as LibraryEntity.Builder)
+          ?: (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity.Builder)
         }
         else {
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity.Builder

@@ -3,10 +3,15 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -64,12 +69,13 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(ContentRootEntity.Builder::class.java, entity, modification)
 }
 
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
+@get:Internal
+@set:Internal
 var ContentRootEntity.Builder.excludeUrlOrder: @Child ExcludeUrlOrderEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ExcludeUrlOrderEntity::class.java)
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
+
+@get:Internal
+@set:Internal
 var ContentRootEntity.Builder.sourceRootOrder: @Child SourceRootOrderEntity.Builder?
   by WorkspaceEntity.extensionBuilder(SourceRootOrderEntity::class.java)
 //endregion
@@ -128,8 +134,8 @@ fun MutableEntityStorage.modifyEntity(
   return modifyEntity(SourceRootEntity.Builder::class.java, entity, modification)
 }
 
-@get:ApiStatus.Internal
-@set:ApiStatus.Internal
+@get:Internal
+@set:Internal
 var SourceRootEntity.Builder.customSourceRootProperties: @Child CustomSourceRootPropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(CustomSourceRootPropertiesEntity::class.java)
 //endregion
