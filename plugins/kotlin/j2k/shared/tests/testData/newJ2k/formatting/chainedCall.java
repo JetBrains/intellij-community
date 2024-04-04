@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class C {
     void foo() {
         StringBuilder builder = new StringBuilder();

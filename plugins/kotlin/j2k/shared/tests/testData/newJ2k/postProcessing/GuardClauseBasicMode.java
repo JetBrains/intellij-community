@@ -1,4 +1,3 @@
-// IGNORE_K2
 // !BASIC_MODE: true
 public class Test {
     void testBasicMode(String s1) {

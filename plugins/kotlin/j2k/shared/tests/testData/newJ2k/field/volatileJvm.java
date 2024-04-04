@@ -1,4 +1,3 @@
-// IGNORE_K2
 // API_VERSION: 1.8
 
 class A {

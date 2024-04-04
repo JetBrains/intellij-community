@@ -1,4 +1,3 @@
-// IGNORE_K2
 enum E {
   FOO;
 

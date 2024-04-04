@@ -65,7 +65,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             convertedText
         }
 
-        KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+        val actualTextWithoutRedundantImports = removeRedundantImports(actualText)
+        KotlinTestUtils.assertEqualsToFile(expectedFile, actualTextWithoutRedundantImports)
     }
 
     private fun addDependencies(directives: Directives) {

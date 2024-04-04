@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class NonDefault {
     public static void main(String[] args) {
 
