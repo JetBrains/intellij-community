@@ -8,6 +8,8 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.CompilerWorkspaceConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.compiler.options.CompilerOptionsFilter.Setting
+import com.intellij.compiler.options.CompilerUIConfigurable.applyResourcePatterns
+import com.intellij.compiler.server.BuildManager
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.options.DslConfigurableBase
@@ -193,6 +195,56 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       if (components != null) {
         components.forEach { it.isVisible = false }
       }
+    }
+  }
+
+  override fun apply() {
+    val configuration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(project)
+    if (!disabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)) {
+      workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR = cbAutoShowFirstError.isSelected
+    }
+    if (!disabledSettings.contains(Setting.DISPLAY_NOTIFICATION_POPUP)) {
+      workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP = cbDisplayNotificationPopup.isSelected
+    }
+    if (!disabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)) {
+      workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = cbClearOutputDirectory.isSelected
+    }
+    if (!disabledSettings.contains(Setting.EXTERNAL_BUILD)) {
+      if (!disabledSettings.contains(Setting.AUTO_MAKE)) {
+        workspaceConfiguration.MAKE_PROJECT_ON_SAVE = cbEnableAutomake.isSelected
+      }
+      if (!disabledSettings.contains(Setting.PARALLEL_COMPILATION) && configuration.isParallelCompilationEnabled != cbParallelCompilation.isSelected) {
+        configuration.isParallelCompilationEnabled = cbParallelCompilation.isSelected
+      }
+      if (!disabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)) {
+        workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE = cbRebuildOnDependencyChange.isSelected
+      }
+      if (!disabledSettings.contains(Setting.HEAP_SIZE)) {
+        try {
+          val heapSizeText: String = heapSizeField.getText().trim()
+          workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE = if (heapSizeText.isEmpty()) 0 else heapSizeText.toInt()
+          configuration.setBuildProcessHeapSize(sharedHeapSizeField.getText().trim().toInt())
+        }
+        catch (ignored: NumberFormatException) {}
+      }
+      if (!disabledSettings.contains(Setting.COMPILER_VM_OPTIONS)) {
+        workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = vmOptionsField.getText().trim()
+        configuration.buildProcessVMOptions = sharedVMOptionsField.getText().trim()
+      }
+    }
+
+    if (!disabledSettings.contains(Setting.ADD_NOT_NULL_ASSERTIONS)) {
+      configuration.isAddNotNullAssertions = cbAssertNotNull.isSelected
+    }
+    if (!disabledSettings.contains(Setting.RESOURCE_PATTERNS)) {
+      configuration.removeResourceFilePatterns()
+      val extensionString: String = resourcePatternsField.text.trim()
+      applyResourcePatterns(extensionString, configuration)
+    }
+
+    if (!project.isDefault) {
+      BuildManager.getInstance().clearState(project)
     }
   }
 
