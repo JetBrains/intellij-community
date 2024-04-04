@@ -70,7 +70,7 @@ abstract class BlockBasedFeedbackDialogWithEmail<T : SystemDataJsonSerializable>
     emailBlockWithAgreement.addToPanel(panel)
   }
 
-  private fun collectDataToPlainText(): String {
+  protected open fun collectDataToPlainText(): String {
     val stringBuilder = StringBuilder()
 
     for (block in myBlocks) {
