@@ -118,6 +118,8 @@ public final class UnusedSymbolLocalInspection extends AbstractBaseJavaLocalInsp
       private void registerProblem(@NotNull PsiElement element,
                                    @NotNull @InspectionMessage String message,
                                    @NotNull List<IntentionAction> fixes) {
+        // Synthetic elements in JSP like JspHolderMethod may arrive here
+        if (element instanceof SyntheticElement) return;
         if (element instanceof PsiNameIdentifierOwner owner) {
           PsiElement identifier = owner.getNameIdentifier();
           if (identifier != null) {
