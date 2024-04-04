@@ -165,7 +165,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             // Unsigned type handling is not supported yet
             else -> return false
         }
-        addInstruction(PushValueInstruction(DfTypes.constant(value, ktType.toDfType()), KotlinExpressionAnchor(expr)))
+        val dfType = ktType.toDfType()
+        if (dfType == DfType.TOP) {
+            // Likely, no STDLIB
+            return false
+        }
+        addInstruction(PushValueInstruction(DfTypes.constant(value, dfType), KotlinExpressionAnchor(expr)))
         addImplicitConversion(ktType, expr.getKotlinType())
         return true
     }
