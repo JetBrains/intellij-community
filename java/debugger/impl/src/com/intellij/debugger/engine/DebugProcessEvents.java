@@ -271,7 +271,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
               }
 
-              private boolean skipEvent(LocatableEvent locatableEvent) {
+              private boolean skipEvent(@Nullable LocatableEvent locatableEvent) {
                 if (eventSet.suspendPolicy() == EventRequest.SUSPEND_ALL) {
                   // check if there is already one request with policy SUSPEND_ALL
                   for (SuspendContextImpl context : getSuspendManager().getEventContexts()) {
@@ -282,7 +282,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                         //((SuspendManagerImpl)getSuspendManager()).popContext(context);
                       }
                       else if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
-                        notifySkippedBreakpoints(locatableEvent, SkippedBreakpointReason.EVALUATION);
+                        notifySkippedBreakpointInEvaluation(locatableEvent, context);
                         DebuggerUtilsAsync.resume(eventSet);
                         return true;
                       }
@@ -640,7 +640,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         if (evaluatingContext != null &&
             !(requestor instanceof InstrumentationTracker.InstrumentationMethodBreakpoint) &&
             !DebuggerSession.enableBreakpointsDuringEvaluation()) {
-          notifySkippedBreakpoints(event, SkippedBreakpointReason.EVALUATION);
+          notifySkippedBreakpointInEvaluation(event, evaluatingContext);
           // is inside evaluation, so ignore any breakpoints
           suspendManager.voteResume(suspendContext);
           return;
@@ -762,10 +762,19 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   private final AtomicBoolean myNotificationsCoolDown = new AtomicBoolean();
 
-  private enum SkippedBreakpointReason {
-    EVALUATION, // There are too many open problems if we would stop.
+  public enum SkippedBreakpointReason {
+    EVALUATION_IN_ANOTHER_THREAD, // There are too many open problems if we would stop.
+    EVALUATION_IN_THE_SAME_THREAD, // Breakpoint in the evaluated code
     OTHER_VM, // Rare case of reattaching debugger to different VMs.
     STEPPING, // Suspend-all stepping ignores breakpoints in other threads for the sake of ease-of-debug.
+  }
+
+  private void notifySkippedBreakpointInEvaluation(@Nullable LocatableEvent event, @NotNull SuspendContextImpl existingContext) {
+    ThreadReferenceProxyImpl contextThread = existingContext.getThread();
+    SkippedBreakpointReason reason =
+      event != null && contextThread != null && contextThread.getThreadReference().equals(event.thread()) ?
+      SkippedBreakpointReason.EVALUATION_IN_THE_SAME_THREAD : SkippedBreakpointReason.EVALUATION_IN_ANOTHER_THREAD;
+    notifySkippedBreakpoints(event, reason);
   }
 
   private void notifySkippedBreakpoints(@Nullable LocatableEvent event, SkippedBreakpointReason reason) {
@@ -775,11 +784,14 @@ public class DebugProcessEvents extends DebugProcessImpl {
     final LocatableEventRequestor requestor = (LocatableEventRequestor)RequestManagerImpl.findRequestor(event.request());
     if (requestor instanceof SyntheticBreakpoint) return;
 
+    DebuggerStatistics.logBreakpointSkipped(getProject(), reason);
+
     if (!myNotificationsCoolDown.compareAndSet(false, true)) return;
 
     AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> myNotificationsCoolDown.set(false), 1, TimeUnit.SECONDS);
     var message = switch (reason) {
-      case EVALUATION -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.evaluation", event.location());
+      case EVALUATION_IN_ANOTHER_THREAD,
+           EVALUATION_IN_THE_SAME_THREAD -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.evaluation", event.location());
       case OTHER_VM -> JavaDebuggerBundle.message("message.breakpoint.skipped.other.vm", event.location());
       case STEPPING -> JavaDebuggerBundle.message("message.breakpoint.skipped.during.stepping.in.another.thread", event.location());
     };
