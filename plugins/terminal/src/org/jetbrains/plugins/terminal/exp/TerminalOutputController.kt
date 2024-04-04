@@ -49,7 +49,7 @@ class TerminalOutputController(
 
     session.addCommandListener(object : ShellCommandListener {
       override fun clearInvoked() {
-        val disposable = Disposer.newDisposable()
+        val disposable = Disposer.newDisposable(session)
         // clear all blocks when command is finished and then remove listener
         session.addCommandListener(object : ShellCommandListener {
           override fun commandFinished(event: CommandFinishedEvent) {
