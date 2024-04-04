@@ -3349,8 +3349,9 @@ c:com.intellij.ui.RoundedLineBorder
 - <init>(java.awt.Color):V
 - <init>(java.awt.Color,I):V
 - <init>(java.awt.Color,I,I):V
+- b:<init>(java.awt.Color,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
-- setColor(java.awt.Color):V
+- f:setColor(java.awt.Color):V
 f:com.intellij.ui.ScreenUtil
 - sf:DISPOSE_TEMPORARY:java.lang.String
 - s:cropRectangleToFitTheScreen(java.awt.Rectangle):V
