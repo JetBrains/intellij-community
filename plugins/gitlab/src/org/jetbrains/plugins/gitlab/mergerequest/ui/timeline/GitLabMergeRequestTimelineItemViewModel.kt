@@ -25,6 +25,7 @@ import java.util.*
 sealed interface GitLabMergeRequestTimelineItemViewModel {
   sealed class Immutable(
     private val project: Project,
+    private val mr: GitLabMergeRequest,
     private val model: GitLabMergeRequestTimelineItem.Immutable
   ) : GitLabMergeRequestTimelineItemViewModel {
     val date = model.date
@@ -32,7 +33,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
 
     val contentHtml: String? by lazy {
       (model as? GitLabMergeRequestTimelineItem.SystemNote)?.content?.let {
-        GitLabUIUtil.convertToHtml(project, it)
+        GitLabUIUtil.convertToHtml(project, mr.gitRepository, it)
       }
     }
 
@@ -42,31 +43,31 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
         mr: GitLabMergeRequest,
         model: GitLabMergeRequestTimelineItem.Immutable
       ): Immutable = when (model) {
-        is GitLabMergeRequestTimelineItem.StateEvent -> StateEvent(project, model)
-        is GitLabMergeRequestTimelineItem.LabelEvent -> LabelEvent(project, model)
-        is GitLabMergeRequestTimelineItem.MilestoneEvent -> MilestoneEvent(project, model)
-        is GitLabMergeRequestTimelineItem.SystemNote -> SystemNote(project, model)
+        is GitLabMergeRequestTimelineItem.StateEvent -> StateEvent(project, mr, model)
+        is GitLabMergeRequestTimelineItem.LabelEvent -> LabelEvent(project, mr, model)
+        is GitLabMergeRequestTimelineItem.MilestoneEvent -> MilestoneEvent(project, mr, model)
+        is GitLabMergeRequestTimelineItem.SystemNote -> SystemNote(project, mr, model)
       }
     }
   }
 
-  class StateEvent(project: Project, model: GitLabMergeRequestTimelineItem.StateEvent)
-    : Immutable(project, model) {
+  class StateEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.StateEvent)
+    : Immutable(project, mr, model) {
     val event = model.event
   }
 
-  class LabelEvent(project: Project, model: GitLabMergeRequestTimelineItem.LabelEvent)
-    : Immutable(project, model) {
+  class LabelEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.LabelEvent)
+    : Immutable(project, mr, model) {
     val event = model.event
   }
 
-  class MilestoneEvent(project: Project, model: GitLabMergeRequestTimelineItem.MilestoneEvent)
-    : Immutable(project, model) {
+  class MilestoneEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.MilestoneEvent)
+    : Immutable(project, mr, model) {
     val event = model.event
   }
 
-  class SystemNote(project: Project, model: GitLabMergeRequestTimelineItem.SystemNote)
-    : Immutable(project, model) {
+  class SystemNote(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.SystemNote)
+    : Immutable(project, mr, model) {
     val content = model.content
   }
 
@@ -111,7 +112,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     override val reactionsVm: GitLabReactionsViewModel? = null
 
     override val body: Flow<String> = note.body
-    override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
+    override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, mr.gitRepository, it) }.modelFlow(cs, LOG)
 
     override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
 

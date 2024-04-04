@@ -3,10 +3,12 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCommit
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 
 internal class GitLabCommitViewModel(
   private val project: Project,
+  private val mr: GitLabMergeRequest,
   model: GitLabCommit
 ) {
   val sha = model.sha
@@ -16,9 +18,9 @@ internal class GitLabCommitViewModel(
   val authoredDate = model.authoredDate
 
   val titleHtml = model.fullTitle?.let {
-    GitLabUIUtil.convertToHtml(project, it)
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, it)
   }
   val descriptionHtml = model.description?.removePrefix(model.fullTitle.orEmpty())?.let {
-    GitLabUIUtil.convertToHtml(project, it)
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, it)
   }
 }

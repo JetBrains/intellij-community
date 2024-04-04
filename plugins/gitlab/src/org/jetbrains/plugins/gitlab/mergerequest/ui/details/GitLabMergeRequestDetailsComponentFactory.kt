@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabCommitVi
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestErrorStatusPresenter
+import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -103,7 +104,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
 
     val title = CodeReviewDetailsTitleComponentFactory.create(cs, detailsVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
-                                                              htmlPaneFactory = { SimpleHtmlPane() })
+                                                              htmlPaneFactory = { SimpleHtmlPane(addBrowserListener = false).apply {
+                                                                addGitLabHyperlinkListener(project)
+                                                              } })
     val timelineLink = ActionLink(CollaborationToolsBundle.message("review.details.view.timeline.action")) {
       detailsVm.showTimeline()
     }
@@ -138,7 +141,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                                                              commitPresentation = { commit ->
                                                                createCommitInfoPresenter(commit)
                                                              },
-                                                             htmlPaneFactory = { SimpleHtmlPane() }),
+                                                             htmlPaneFactory = { SimpleHtmlPane(addBrowserListener = false).apply {
+                                                               addGitLabHyperlinkListener(project)
+                                                             } }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
       add(GitLabMergeRequestDetailsChangesComponentFactory.create(cs, changesVm),
           CC().grow().shrinkPrioY(200))

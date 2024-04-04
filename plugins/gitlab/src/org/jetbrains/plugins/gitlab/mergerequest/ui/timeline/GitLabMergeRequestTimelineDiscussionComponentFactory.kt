@@ -110,7 +110,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibilityIn(cs, vm.repliesFolded)
     }
-    val textPanel = createDiscussionTextPane(cs, vm)
+    val textPanel = createDiscussionTextPane(project, cs, vm)
 
     val editVmFlow = mainNoteVm.flatMapLatest { it.actionsVm?.editVm ?: flowOf(null) }
     val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, editVmFlow) {
@@ -163,7 +163,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
   private fun createContentIn(project: Project,
                               cs: CoroutineScope,
                               vm: GitLabMergeRequestTimelineItemViewModel.DraftNote): JPanel {
-    val textPanel = GitLabNoteComponentFactory.createTextPanel(cs, vm.bodyHtml, vm.serverUrl)
+    val textPanel = GitLabNoteComponentFactory.createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl)
 
     val textContentPanel = EditableComponentFactory.wrapTextComponent(cs, textPanel, vm.actionsVm?.editVm ?: flowOf(null)) {
       GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE,
@@ -261,7 +261,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
     )
   }
 
-  private fun createDiscussionTextPane(cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+  private fun createDiscussionTextPane(project: Project, cs: CoroutineScope, vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val collapsedFlow = combine(vm.collapsible, vm.collapsed) { collapsible, collapsed ->
       collapsible && collapsed
     }
@@ -270,7 +270,7 @@ internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
       if (collapsed) mainNote.body else mainNote.bodyHtml
     }.flatMapLatest { it }
 
-    val textPane = GitLabNoteComponentFactory.createTextPanel(cs, textFlow, vm.serverUrl)
+    val textPane = GitLabNoteComponentFactory.createTextPanel(project, cs, textFlow, vm.serverUrl)
     val layout = SizeRestrictedSingleComponentLayout()
     return JPanel(layout).apply {
       name = "Text pane wrapper"

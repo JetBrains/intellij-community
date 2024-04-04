@@ -16,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
@@ -111,7 +110,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   project: Project,
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
-  glProject: GitLabProjectCoordinates
+  mr: GitLabMergeRequest
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -120,14 +119,14 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = true
-  override val serverUrl: URL = glProject.serverPath.toURL()
+  override val serverUrl: URL = mr.glProject.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
     if (note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
   override val reactionsVm: GitLabReactionsViewModel? = null
 
   override val body: Flow<String> = note.body
-  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, it) }.modelFlow(cs, LOG)
+  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, mr.gitRepository, it) }.modelFlow(cs, LOG)
 
   override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
 

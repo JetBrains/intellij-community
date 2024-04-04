@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.error.GitLabMergeRequestTimelineErrorStatusPresenter
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -52,13 +52,13 @@ internal object GitLabMergeRequestTimelineComponentFactory {
              timelineVm: GitLabMergeRequestTimelineViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
-    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(cs, timelineVm).let {
+    val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(project, cs, timelineVm).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }.apply {
       border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
     val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent
-      .createComponent(cs, timelineVm, avatarIconsProvider)
+      .createComponent(project, cs, timelineVm, avatarIconsProvider)
 
     val timelinePanel = VerticalListPanel(0)
     val errorOrTimelineComponent = createErrorOrTimelineComponent(cs, project, avatarIconsProvider, timelineVm, timelinePanel)
@@ -212,23 +212,30 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         val title = lines[0]
         val commits = lines[2]
         return VerticalListPanel().apply {
-          add(SimpleHtmlPane(title))
-          add(StatusMessageComponentFactory.create(createCommitsListPane(commits)))
+          add(SimpleHtmlPane(addBrowserListener = false).apply {
+            setHtmlBody(title)
+            addGitLabHyperlinkListener(project)
+          })
+          add(StatusMessageComponentFactory.create(createCommitsListPane(project, commits)))
         }
       }
       catch (e: Exception) {
         thisLogger().warn("Error occurred while parsing the note with added commits", e)
       }
     }
-    return StatusMessageComponentFactory.create(SimpleHtmlPane(GitLabUIUtil.convertToHtml(project, content)))
+    return StatusMessageComponentFactory.create(SimpleHtmlPane(addBrowserListener = false).apply {
+      setHtmlBody(item.contentHtml ?: "")
+      addGitLabHyperlinkListener(project)
+    })
   }
 
   private val noUlGapsStyleSheet by lazy {
     StyleSheetUtil.loadStyleSheet("""ul {margin: 0}""")
   }
 
-  private fun createCommitsListPane(commits: @NlsSafe String) = SimpleHtmlPane(noUlGapsStyleSheet).apply {
+  private fun createCommitsListPane(project: Project, commits: @NlsSafe String) = SimpleHtmlPane(noUlGapsStyleSheet, addBrowserListener = false).apply {
     setHtmlBody(commits)
+    addGitLabHyperlinkListener(project)
   }
 
   private fun createLabeledEventContent(item: GitLabMergeRequestTimelineItemViewModel.LabelEvent): JComponent {
