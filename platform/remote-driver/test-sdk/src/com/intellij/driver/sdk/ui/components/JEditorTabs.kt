@@ -14,6 +14,10 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getTabs() = editorTabsComponent.getTabs().map { Tab(it) }
 
+  fun clickTab(text: String) {
+    x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]").click()
+  }
+
   fun closeTab(text: String = "") {
     x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]//div[@myicon='closeSmall.svg']")
       .click()
