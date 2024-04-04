@@ -133,7 +133,7 @@ __jetbrains_intellij_collect_shell_info() {
     is_oh_my_zsh='true'
   fi
   builtin local is_p10k='false'
-  if [ -n "${P9K_VERSION:-}" ] || [ -n "${POWERLEVEL9K_INSTANT_PROMPT:-}" ]; then
+  if [ -n "${P9K_VERSION:-}" ]; then
     is_p10k='true'
   fi
   builtin local is_starship='false'
