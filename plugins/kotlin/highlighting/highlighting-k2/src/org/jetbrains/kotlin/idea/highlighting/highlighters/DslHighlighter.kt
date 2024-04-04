@@ -77,8 +77,7 @@ private fun getDslAnnotation(type: KtType): ClassId? {
         }
     }
     val dslAnnotation = allAnnotationsWithSuperTypes.find { annotationClassId ->
-        val symbol = getClassOrObjectSymbolByClassId(annotationClassId) ?: return@find false
-        symbol.isDslHighlightingMarker()
+        getClassOrObjectSymbolByClassId(annotationClassId)?.isDslHighlightingMarker() ?: false
     }
     return dslAnnotation
 }

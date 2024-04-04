@@ -16,11 +16,9 @@ import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
 @ApiStatus.Internal
 fun textAttributesKeyForKtElement(element: PsiElement): HighlightInfoType? {
-    return sequence {
-        yield(textAttributesKeyForTypeDeclaration(element))
-        yield(textAttributesKeyForKtFunction(element))
-        yield(textAttributesKeyForPropertyDeclaration(element))
-    }.firstOrNull { it != null }
+    return textAttributesKeyForTypeDeclaration(element) ?:
+    textAttributesKeyForKtFunction(element) ?:
+    textAttributesKeyForPropertyDeclaration(element)
 }
 
 @ApiStatus.Internal
