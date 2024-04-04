@@ -229,17 +229,16 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
     }
   }
 
-  private static LibraryOrderEntry syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                                                 @NotNull final LibraryDependencyData libraryDependencyData,
-                                                                 @NotNull final Library library,
-                                                                 @NotNull final ModifiableRootModel moduleRootModel,
-                                                                 @NotNull final Module module,
-                                                                 @Nullable LibraryOrderEntry currentRegisteredLibraryOrderEntry) {
+  private static @NotNull LibraryOrderEntry syncExistingLibraryDependency(@NotNull IdeModifiableModelsProvider modelsProvider,
+                                                                          @NotNull final LibraryDependencyData libraryDependencyData,
+                                                                          @NotNull final Library library,
+                                                                          @NotNull final ModifiableRootModel moduleRootModel,
+                                                                          @NotNull final Module module,
+                                                                          @Nullable LibraryOrderEntry currentRegisteredLibraryOrderEntry) {
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     final String libraryName = libraryDependencyData.getInternalName();
     final LibraryData libraryDependencyDataTarget = libraryDependencyData.getTarget();
-    Map<OrderRootType, Collection<File>> files = ProjectDataService.EP_NAME.findExtensionOrFail(LibraryDataService.class)
-      .prepareLibraryFiles(libraryDependencyDataTarget);
+    Map<OrderRootType, Collection<File>> files = LibraryDataService.prepareLibraryFiles(libraryDependencyDataTarget);
     Set<String> excludedPaths = libraryDependencyDataTarget.getPaths(LibraryPathType.EXCLUDED);
     LibraryDataService.registerPaths(libraryDependencyDataTarget.isUnresolved(), files, excludedPaths, libraryModel, libraryName);
     LibraryOrderEntry orderEntry = currentRegisteredLibraryOrderEntry;
