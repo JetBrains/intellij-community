@@ -3,6 +3,7 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
@@ -13,6 +14,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 public final class AssertWithSideEffectsInspection extends BaseInspection {
 
@@ -25,6 +28,11 @@ public final class AssertWithSideEffectsInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ASSERTIONS);
   }
 
   @Override

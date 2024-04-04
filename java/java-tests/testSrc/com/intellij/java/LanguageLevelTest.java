@@ -18,4 +18,17 @@ public final class LanguageLevelTest {
     assertEquals(LanguageLevel.JDK_17, jdk17Preview.getNonPreviewLevel());
     assertFalse(JavaFeature.PATTERNS_IN_SWITCH.isSufficient(jdk17Preview.getNonPreviewLevel()));
   }
+
+  @Test
+  public void getShortText() {
+    LanguageLevel jdk17 = LanguageLevel.JDK_17;
+    assertEquals("17", jdk17.getShortText());
+    //noinspection UsagesOfObsoleteApi
+    LanguageLevel jdk17Preview = LanguageLevel.JDK_17_PREVIEW;
+    assertEquals("17-preview", jdk17Preview.getShortText());
+    LanguageLevel jdk14 = LanguageLevel.JDK_1_4;
+    assertEquals("1.4", jdk14.getShortText());
+    LanguageLevel jdkX = LanguageLevel.JDK_X;
+    assertEquals("X", jdkX.getShortText());
+  }
 }

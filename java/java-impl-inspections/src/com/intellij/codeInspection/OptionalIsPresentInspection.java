@@ -59,7 +59,7 @@ public final class OptionalIsPresentInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
-    @Override
+  @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
     return Set.of(JavaFeature.STREAM_OPTIONAL);
   }

@@ -185,7 +185,11 @@ public enum LanguageLevel {
     if (this == JDK_X) {
       return "X";
     }
-    return feature() + (isPreview() ? "-preview" : "");
+    int feature = feature();
+    if (feature < 5) {
+      return "1." + feature;
+    }
+    return feature + (isPreview() ? "-preview" : "");
   }
 
   /** See {@link JavaVersion#parse(String)} for supported formats. */

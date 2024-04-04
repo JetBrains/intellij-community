@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public final class IfCanBeAssertionInspection extends BaseInspection {
   private static final CallMatcher.Simple MATCHER = CallMatcher.staticCall("com.google.common.base.Preconditions", "checkNotNull");
@@ -31,6 +32,11 @@ public final class IfCanBeAssertionInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... infos) {
     return getDisplayName();
+  }
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ASSERTIONS);
   }
 
   @Override

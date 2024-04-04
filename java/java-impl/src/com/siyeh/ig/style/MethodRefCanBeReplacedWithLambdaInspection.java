@@ -40,7 +40,7 @@ public final class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspec
 
   @Override
   public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
-    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS, JavaFeature.METHOD_REFERENCES);
   }
 
   @Override
