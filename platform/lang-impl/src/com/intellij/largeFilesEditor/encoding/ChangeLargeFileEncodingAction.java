@@ -63,14 +63,14 @@ final class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
     e.getPresentation().setEnabledAndVisible(true);
   }
 
-  ListPopup createPopup(VirtualFile vFile, Editor editor, Component componentParent) {
+  ListPopup createPopup(@NotNull VirtualFile vFile, Editor editor, Component componentParent) {
     DataContext dataContext = wrapInDataContext(vFile, editor, componentParent);
     DefaultActionGroup group = createActionGroup(vFile, editor, null, null, null);
     return JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(),
                                                                group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  private static DataContext wrapInDataContext(VirtualFile vFile, Editor editor, Component componentParent) {
+  private static DataContext wrapInDataContext(@NotNull VirtualFile vFile, Editor editor, Component componentParent) {
     DataContext parent = DataManager.getInstance().getDataContext(componentParent);
     return SimpleDataContext.builder()
       .setParent(parent)

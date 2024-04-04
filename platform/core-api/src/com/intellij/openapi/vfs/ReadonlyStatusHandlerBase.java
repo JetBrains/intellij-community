@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -68,13 +68,8 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     checkThreading();
 
     Set<VirtualFile> realFiles = new HashSet<>(originalFiles.size());
-    for (VirtualFile file : originalFiles) {
-      if (file instanceof LightVirtualFile) {
-        VirtualFile originalFile = ((LightVirtualFile)file).getOriginalFile();
-        if (originalFile != null) {
-          file = originalFile;
-        }
-      }
+    for (@Nullable VirtualFile file : originalFiles) {
+      file = ObjectUtils.doIfNotNull(file, VirtualFileUtil::originalFileOrSelf);
       if (file instanceof VirtualFileWindow) {
         file = ((VirtualFileWindow)file).getDelegate();
       }

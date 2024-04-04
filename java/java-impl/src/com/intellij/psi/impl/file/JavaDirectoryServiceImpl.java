@@ -24,11 +24,11 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,10 +44,7 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
     Project project = dir.getProject();
-    VirtualFile file = dir.getVirtualFile();
-    if (file instanceof LightVirtualFile lvf && lvf.getOriginalFile() != null) {
-      file = lvf.getOriginalFile();
-    }
+    VirtualFile file = VirtualFileUtil.originalFileOrSelf(dir.getVirtualFile());
     String packageName = PackageIndex.getInstance(project).getPackageNameByDirectory(file);
     if (packageName == null) return null;
     return JavaPsiFacade.getInstance(project).findPackage(packageName);
