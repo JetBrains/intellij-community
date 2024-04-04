@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup {
+public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implements DumbAware {
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
