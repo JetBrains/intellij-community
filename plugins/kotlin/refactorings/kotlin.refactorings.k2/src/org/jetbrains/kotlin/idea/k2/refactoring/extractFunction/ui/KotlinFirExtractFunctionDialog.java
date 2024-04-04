@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.analysis.api.types.KtType;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*;
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.FirExtractFunctionParameterTablePanel;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken;

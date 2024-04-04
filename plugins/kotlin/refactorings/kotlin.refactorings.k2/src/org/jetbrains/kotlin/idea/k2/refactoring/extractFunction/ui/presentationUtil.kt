@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGenera
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ui.KotlinFirExtractFunctionDialog.createNewDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.Generator
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.validate
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui.FirExtractFunctionParameterTablePanel
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtElement
