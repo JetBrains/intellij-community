@@ -2,10 +2,9 @@
 package com.intellij.workspaceModel.codegen.impl.writer.extensions
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.impl.writer.QualifiedName
+import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
-import com.intellij.workspaceModel.codegen.impl.writer.fqn
 
 internal val ObjClass<*>.javaFullName: QualifiedName
   get() = fqn(module.name, name)
@@ -49,6 +48,12 @@ internal val ObjClass<*>.allFieldsWithComputable: List<OwnProperty<*, *>>
     val fieldsByName = LinkedHashMap<String, OwnProperty<*, *>>()
     collectFields(this, fieldsByName, true)
     return fieldsByName.values.toList()
+  }
+
+internal val ObjClass<*>.additionalAnnotations: String
+  get() {
+    val hasInternalAnnotation = annotations.any { it.fqName == Internal.decoded }
+    return if (hasInternalAnnotation) "@${Internal}" else ""
   }
 
 private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String, OwnProperty<*, *>>, withComputable: Boolean) {

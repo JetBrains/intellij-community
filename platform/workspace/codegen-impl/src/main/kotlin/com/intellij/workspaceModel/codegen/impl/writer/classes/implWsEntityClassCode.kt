@@ -12,8 +12,7 @@ fun ObjClass<*>.implWsEntityCode(): String {
   return """
 package ${module.name}    
 
-@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})
-@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})
+${implWsEntityAnnotations}
 $generatedCodeVisibilityModifier ${if (openness.instantiatable) "open" else "abstract"} class $javaImplName(private val dataSource: $javaDataName): $javaFullName, ${WorkspaceEntityBase}(dataSource) {
     ${
     """
@@ -41,6 +40,17 @@ ${getLinksOfConnectionIds(this)}
 }
     """.trimIndent()
 }
+
+private val ObjClass<*>.implWsEntityAnnotations: String
+  get() {
+    return lines {
+      if (additionalAnnotations.isNotEmpty()) {
+        line(additionalAnnotations)
+      }
+      line("@${GeneratedCodeApiVersion}(${CodeGeneratorVersionCalculator.apiVersion})")
+      lineNoNl("@${GeneratedCodeImplVersion}(${CodeGeneratorVersionCalculator.implementationMajorVersion})")
+    }
+  }
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines(2) {

@@ -8,9 +8,25 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.*
 val ExtProperty<*, *>.wsCode: String
   get() = lines {
     val isChild = valueType.getRefType().child
-    val annotation = if (isChild) "@${Child} " else ""
+    val childAnnotation = if (isChild) "@${Child} " else ""
     val generic = if (receiver.builderWithTypeParameter) "<out ${receiver.javaFullName}>" else ""
-    sectionNoBrackets("$generatedCodeVisibilityModifier var ${receiver.javaBuilderName}$generic.$name: $annotation${valueType.javaBuilderTypeWithGeneric}") {
+    if (additionalAnnotations.isNotEmpty()) {
+      line(additionalAnnotations)
+    }
+    sectionNoBrackets("$generatedCodeVisibilityModifier var ${receiver.javaBuilderName}$generic.$name: $childAnnotation${valueType.javaBuilderTypeWithGeneric}") {
       line("by WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
     }
+  }
+
+private val ExtProperty<*, *>.additionalAnnotations: String
+  get() {
+    val hasInternalAnnotation = annotations.any {
+      it.fqName == Internal.decoded
+    }
+    return if (hasInternalAnnotation)
+      """
+        @get:$Internal
+        @set:$Internal
+      """.trimIndent()
+    else ""
   }
