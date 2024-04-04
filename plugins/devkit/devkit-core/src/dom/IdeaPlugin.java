@@ -32,12 +32,10 @@ public interface IdeaPlugin extends DomElement {
 
   @SubTag("content")
   @Stubbed
-  @ApiStatus.Experimental
   @NotNull ContentDescriptor getContent();
 
   @SubTag("dependencies")
   @Stubbed
-  @ApiStatus.Experimental
   @NotNull DependencyDescriptor getDependencies();
 
   @NameValue
@@ -70,7 +68,6 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull GenericAttributeValue<Boolean> getRequireRestart();
 
-  @ApiStatus.Experimental
   @Stubbed
   @Convert(IdeaPluginPackageConverter.class)
   @NotNull GenericAttributeValue<PsiPackage> getPackage();
