@@ -38,7 +38,7 @@ class FilteredController(delegateLinearGraphController: LinearGraphController, p
                permanentGraphInfo: PermanentGraphInfo<*>,
                matchedIds: Set<Int>,
                visibleHeadsIds: Set<Int>? = null): FilteredController {
-      val visibility = delegateController.compiledGraph.getReachableMatchingNodes(visibleHeadsIds, matchedIds)
+      val visibility = permanentGraphInfo.linearGraph.getReachableMatchingNodes(visibleHeadsIds, matchedIds)
       return FilteredController(delegateController, permanentGraphInfo) {
         CollapsedGraph.newInstance(delegateController.compiledGraph, visibility).also {
           DottedFilterEdgesGenerator.update(it, 0, it.delegatedGraph.nodesCount() - 1)
