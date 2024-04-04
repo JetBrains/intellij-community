@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.vfs
 
+import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
@@ -14,6 +15,8 @@ import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightVirtualFileBase
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
@@ -60,6 +63,14 @@ fun VirtualFile.findDocument(): Document? {
 @RequiresReadLock
 fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
+}
+
+fun VirtualFile.originalFile(): VirtualFile? {
+  return this.asSafely<LightVirtualFileBase>()?.originalFile
+}
+
+fun VirtualFile.originalFileOrSelf(): VirtualFile {
+  return originalFile() ?: this
 }
 
 private fun VirtualFile.relativizeToClosestAncestor(
