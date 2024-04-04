@@ -39,7 +39,10 @@ internal fun MarkdownEditor(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
-        ControlsRow(onMarkdownChange, Modifier.fillMaxWidth().background(JewelTheme.globalColors.paneBackground).padding(8.dp))
+        ControlsRow(
+            onMarkdownChange,
+            Modifier.fillMaxWidth().background(JewelTheme.globalColors.paneBackground).padding(8.dp)
+        )
         Divider(orientation = Orientation.Horizontal)
         Editor(currentMarkdown, onMarkdownChange, Modifier.fillMaxWidth().weight(1f))
     }
@@ -122,12 +125,13 @@ private fun Editor(
     modifier: Modifier,
 ) {
     val monospacedTextStyle = JewelTheme.defaultTextStyle.copy(fontFamily = FontFamily.Monospace)
-
-    TextArea(
-        value = currentMarkdown,
-        onValueChange = onMarkdownChange,
-        modifier = modifier.padding(16.dp),
-        undecorated = true,
-        textStyle = monospacedTextStyle,
-    )
+    Box(modifier.padding(16.dp)) {
+        TextArea(
+            value = currentMarkdown,
+            onValueChange = onMarkdownChange,
+            modifier = Modifier.align(Alignment.TopStart),
+            undecorated = true,
+            textStyle = monospacedTextStyle,
+        )
+    }
 }
