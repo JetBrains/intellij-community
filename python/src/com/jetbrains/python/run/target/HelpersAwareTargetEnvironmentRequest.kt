@@ -7,7 +7,6 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonHelpersLocator
 import java.nio.file.Path
@@ -34,7 +33,7 @@ interface HelpersAwareTargetEnvironmentRequest {
 
 fun getPythonHelpers(): Path = PythonHelpersLocator.getHelpersRoot().toPath()
 
-fun getPythonProHelpers(): Path? = if (PlatformUtils.isCommercialEdition()) PythonHelpersLocator.getHelpersProRoot() else null
+fun getPythonProHelpers(): Path? = if (PythonHelpersLocator.hasHelpersPro()) PythonHelpersLocator.getHelpersProRoot() else null
 
 /**
  * Returns the mappings where Python helpers of Community and Professional versions are mapped to a single directory.
