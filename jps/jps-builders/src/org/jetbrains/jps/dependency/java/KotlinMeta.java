@@ -15,10 +15,7 @@ import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -156,6 +153,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container instanceof KmClass? ((KmClass)container).getTypeParameters() : Collections.emptyList();
   }
 
+  public Visibility getContainerVisibility() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? Attributes.getVisibility((KmClass)container) : Visibility.PUBLIC;
+  }
+
   @Nullable
   public KmDeclarationContainer getDeclarationContainer() {
     KotlinClassMetadata clsMeta = getClassMetadata();
@@ -197,7 +199,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && functions().unchanged() && properties().unchanged()/*&& !dataChanged()*/;
+      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() && functions().unchanged() && properties().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -214,6 +216,14 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     public boolean packageChanged() {
       return !Objects.equals(myPast.myPackageName, myPackageName);
+    }
+
+    public boolean containerVisibilityChanged() {
+      return myPast.getContainerVisibility() != getContainerVisibility();
+    }
+
+    public boolean containerAccessRestricted() {
+      return getVisibilityLevel(getContainerVisibility()) < getVisibilityLevel(myPast.getContainerVisibility());
     }
 
     public boolean extraChanged() {
@@ -244,11 +254,19 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged();
+      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged();
     }
 
     public boolean becameNullable() {
       return !Attributes.isNullable(past.getReturnType()) && Attributes.isNullable(now.getReturnType());
+    }
+
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
     }
 
     public boolean argsBecameNotNull() {
@@ -295,7 +313,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !nullabilityChanged();
+      return !nullabilityChanged() && !visibilityChanged();
     }
 
     public boolean nullabilityChanged() {
@@ -310,6 +328,42 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return Attributes.isNullable(past.getReturnType()) && !Attributes.isNullable(now.getReturnType());
     }
 
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now) || getGetterVisibility(past) != getGetterVisibility(now) || getSetterVisibility(past) != getSetterVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean getterAccessRestricted() {
+      return getVisibilityLevel(getGetterVisibility(now)) < getVisibilityLevel(getGetterVisibility(past));
+    }
+
+    public boolean setterAccessRestricted() {
+      return getVisibilityLevel(getSetterVisibility(now)) < getVisibilityLevel(getSetterVisibility(past));
+    }
+
+    private static Visibility getGetterVisibility(KmProperty prop) {
+      return Attributes.getVisibility(prop.getGetter());
+    }
+
+    private static Visibility getSetterVisibility(KmProperty prop) {
+      return Attributes.getVisibility(prop.getGetter());
+    }
   }
 
+  private static final Map<Visibility, Integer> VISIBILITY_LEVEL = Map.of(
+    Visibility.LOCAL, 1,
+    Visibility.PRIVATE_TO_THIS, 2,
+    Visibility.PRIVATE, 3,
+    Visibility.PROTECTED, 4,
+    Visibility.INTERNAL, 5,
+    Visibility.PUBLIC, 6
+  );
+
+  private static int getVisibilityLevel(Visibility v) {
+    Integer level = VISIBILITY_LEVEL.get(v);
+    return level != null? level : 0;
+  }
 }

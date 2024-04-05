@@ -167,6 +167,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         affectSubclasses(context, future, change.getNow().getReferenceID(), true);
       }
 
+      if (metaDiff.containerAccessRestricted()) {
+        debug("Kotlin class' visibility restricted; affecting class lookup usage ", changedClass.getName());
+        affectClassLookupUsages(context, changedClass);
+      }
+
       for (KmFunction removedFunction : metaDiff.functions().removed()) {
         JvmMethod method = getJvmMethod(change.getNow(), JvmExtensionsKt.getSignature(removedFunction));
         if (method != null && !method.isPrivate()) {
@@ -186,8 +191,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           continue;
         }
         KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
-        if (funDiff.becameNullable() || funDiff.argsBecameNotNull()) {
-          debug("One of method's parameters or method's return value has become non-nullable ", changedKmFunction.getName());
+        if (funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.accessRestricted()) {
+          debug("One of function's parameters or return value has become non-nullable, or the function has become less accessible ", changedKmFunction.getName());
           JvmMethod jvmMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(changedKmFunction));
           if (jvmMethod != null) {
             // this will affect all usages from both java and kotlin code
@@ -200,7 +205,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           }
           if (isDeclaresDefaultValue(changedKmFunction)) {
             // additionally: functions with default parameters produce several methods in bytecode, so need to affect by lookup usage
-            debug("One of method's parameters or method's return value has become non-nullable; or function's receiver parameter changed: ", changedKmFunction.getName());
+            debug("One of method's parameters or method's return value has become non-nullable; or function has become less accessible: ", changedKmFunction.getName());
             affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
           }
         }
@@ -225,19 +230,25 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (Difference.Change<KmProperty, KotlinMeta.KmPropertiesDiff> propChange : metaDiff.properties().changed()) {
-        KmProperty prop = propChange.getPast();
+        KmProperty changedProp = propChange.getPast();
         KotlinMeta.KmPropertiesDiff propDiff = propChange.getDiff();
-        if (propDiff.becameNullable()) {
-          JvmMethod getter = getJvmMethod(changedClass, JvmExtensionsKt.getGetterSignature(prop));
+        if (propDiff.accessRestricted()) {
+          debug("A property has become less accessible; affecting its lookup usages ", changedProp.getName());
+          affectMemberLookupUsages(context, changedClass, changedProp.getName(), future);
+        }
+
+        if (propDiff.becameNullable() || propDiff.getterAccessRestricted()) {
+          JvmMethod getter = getJvmMethod(changedClass, JvmExtensionsKt.getGetterSignature(changedProp));
           if (getter != null && !getter.getFlags().isPrivate()) {
-            debug("A property has become nullable; affecting getter usages ", getter);
+            debug("A property has become nullable or its getter has become less accessible; affecting getter usages ", getter);
             affectMemberUsages(context, changedClass.getReferenceID(), getter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), getter));
           }
         }
-        else if (propDiff.becameNotNull()) {
-          JvmMethod setter = getJvmMethod(changedClass, JvmExtensionsKt.getSetterSignature(prop));
+
+        if (propDiff.becameNotNull() || propDiff.setterAccessRestricted()) {
+          JvmMethod setter = getJvmMethod(changedClass, JvmExtensionsKt.getSetterSignature(changedProp));
           if (setter != null && !setter.getFlags().isPrivate()) {
-            debug("A property has become not-null; affecting setter usages ", setter);
+            debug("A property has become not-null or its setter has become less accessible; affecting setter usages ", setter);
             affectMemberUsages(context, changedClass.getReferenceID(), setter, future.collectSubclassesWithoutMethod(changedClass.getReferenceID(), setter));
           }
         }

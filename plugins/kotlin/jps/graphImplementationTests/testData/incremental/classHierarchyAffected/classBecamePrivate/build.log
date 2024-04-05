@@ -14,7 +14,6 @@ Cleaning output files:
   out/production/module/bar/ImportStarKt.class
   out/production/module/bar/ReferencedByFqNameKt.class
   out/production/module/foo/AChild.class
-  out/production/module/foo/AGrandChild.class
   out/production/module/foo/ATypeParameter.class
   out/production/module/foo/ClassLiteralKt.class
   out/production/module/foo/FunctionParameterKt.class
@@ -24,13 +23,11 @@ Cleaning output files:
 End of files
 Compiling files:
   src/AChild.kt
-  src/AGrandChild.kt
   src/ATypeParameter.kt
   src/classLiteral.kt
   src/functionParameter.kt
   src/getA.kt
   src/importA.kt
-  src/importAGrandChild.kt
   src/importStar.kt
   src/referencedByFqName.kt
   src/returnType.kt
@@ -65,13 +62,11 @@ End of files
 Compiling files:
   src/A.kt
   src/AChild.kt
-  src/AGrandChild.kt
   src/ATypeParameter.kt
   src/classLiteral.kt
   src/functionParameter.kt
   src/getA.kt
   src/importA.kt
-  src/importAGrandChild.kt
   src/importStar.kt
   src/referencedByFqName.kt
   src/returnType.kt
