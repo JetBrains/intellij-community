@@ -20,9 +20,14 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBList.createDefaultListModel
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.components.panels.ListLayout
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.Component
+import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -39,23 +44,23 @@ internal class ExternalProjectSelector(
     val dropDownLink = ExternalProjectDropDownLink(property, externalProjects)
       .apply { border = JBUI.Borders.empty(BORDER, ICON_TEXT_GAP / 2, BORDER, BORDER) }
     val label = JLabel(iconProvider.projectIcon)
+      .apply { preferredSize = Dimension(iconProvider.projectIcon.iconWidth + BORDER, iconProvider.projectIcon.iconHeight) }
       .apply { border = JBUI.Borders.empty(BORDER, BORDER, BORDER, ICON_TEXT_GAP / 2) }
       .apply { labelFor = dropDownLink }
 
-    layout = HorizontalLayout(0)
+    layout = ListLayout.horizontal(0)
     border = JBUI.Borders.empty()
     add(label)
     add(dropDownLink)
   }
 
   private fun createPopup(externalProjects: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit): JBPopup {
-    val content = ExternalProjectPopupContent(externalProjects, onChange)
+    val content = ExternalProjectPopupContent(externalProjects)
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(content, null)
       .setRequestFocus(true)
       .createPopup()
       .apply {
-        content.whenMousePressed(listener = ::closeOk)
         // Add a MouseListener to handle mouse click events
         content.list.addMouseListener(object : MouseAdapter() {
           override fun mouseClicked(e: MouseEvent) {
@@ -83,8 +88,6 @@ internal class ExternalProjectSelector(
         })
 
         addListener(object : JBPopupListener {
-          override fun onClosed(event: LightweightWindowEvent) {}
-
           override fun beforeShown(event: LightweightWindowEvent) {
             SwingUtilities.invokeLater {
               content.filterField.requestFocusInWindow()
@@ -94,7 +97,7 @@ internal class ExternalProjectSelector(
       }
   }
 
-  private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>, onChange: (DependencyAnalyzerProject) -> Unit) : JPanel() {
+  private inner class ExternalProjectPopupContent(externalProject: List<DependencyAnalyzerProject>) : JPanel() {
     val list: JBList<DependencyAnalyzerProject>
     val filterField = SearchTextField(false)
     var listModel: DefaultListModel<DependencyAnalyzerProject>
