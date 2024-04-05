@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider
+import org.jetbrains.plugins.gradle.action.GradleAttachSourcesProvider
 
 class GradleDocumentationDownloader : DocumentationDownloader {
 

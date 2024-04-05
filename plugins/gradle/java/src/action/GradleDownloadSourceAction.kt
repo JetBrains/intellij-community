@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.util
+package org.jetbrains.plugins.gradle.action
 
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.codeInsight.AttachSourcesProvider.AttachSourcesAction
@@ -20,6 +20,10 @@ import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.execution.target.maybeGetLocalValue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.service.cache.GradleLocalCacheHelper
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloader
+import org.jetbrains.plugins.gradle.util.isValidJar
 import java.io.File
 import java.nio.file.Path
 import java.util.EnumSet

@@ -73,7 +73,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.plugins.gradle.config.GradleResourceConfigurationGeneratorCompileTask"/>
 
-    <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
+    <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.action.GradleAttachSourcesProvider"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
 
     <defender.config implementation="org.jetbrains.plugins.gradle.util.GradleWindowsDefenderCheckerExt"/>
