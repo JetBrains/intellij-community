@@ -215,7 +215,7 @@ private fun getImmediateLoggerQualifier(expression: UCallExpression): UExpressio
 }
 
 internal fun findMessageSetterStringArg(node: UCallExpression,
-                               loggerType: LoggerTypeSearcher?): UExpression? {
+                                        loggerType: LoggerTypeSearcher?): UExpression? {
   if (loggerType == null) {
     return null
   }
@@ -249,11 +249,17 @@ internal fun findMessageSetterStringArg(node: UCallExpression,
 }
 
 /**
- * @return The count of additional arguments, or null if it is impossible to count.
+ * Additional argument for logging is an argument that is not located in the same method as string with placeholders.
+ * For example:
+ * ```java
+ * LOG.atInfo().addArgument(arg).log("{}");
+ * ```
+ * here "arg" is additional argument
+ * @return the list of [UExpression] corresponding to the additional argument or null if it is impossible to count.
  */
-internal fun findAdditionalArgumentCount(node: UCallExpression,
-                                loggerType: LoggerTypeSearcher,
-                                allowIntermediateMessage: Boolean): List<UExpression>? {
+internal fun findAdditionalArguments(node: UCallExpression,
+                                     loggerType: LoggerTypeSearcher,
+                                     allowIntermediateMessage: Boolean): List<UExpression>? {
   val uExpressions = mutableListOf<UExpression>()
   if (loggerType != SLF4J_BUILDER_HOLDER) {
     return emptyList()
@@ -366,7 +372,7 @@ internal fun getPlaceholderContext(
   if (parameters.isEmpty() || arguments.isEmpty()) {
     //try to find String somewhere else
     logStringArgument = findMessageSetterStringArg(uCallExpression, searcher) ?: return null
-    placeholderParameters = findAdditionalArgumentCount(uCallExpression, searcher, true) ?: return null
+    placeholderParameters = findAdditionalArguments(uCallExpression, searcher, true) ?: return null
   }
   else {
     val index = getLogStringIndex(parameters) ?: return null
@@ -382,7 +388,7 @@ internal fun getPlaceholderContext(
         return null
       }
     }
-    val additionalArgumentCount = findAdditionalArgumentCount(uCallExpression, searcher, false) ?: return null
+    val additionalArgumentCount = findAdditionalArguments(uCallExpression, searcher, false) ?: return null
     placeholderParameters += additionalArgumentCount
     logStringArgument = arguments[index - 1]
   }
