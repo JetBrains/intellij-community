@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.xdebugger.impl.ui
@@ -102,15 +102,16 @@ internal class ExecutionPositionUi private constructor(
 
     private suspend fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
       EDT.assertIsEdt()
-      val document = readAction {
-        FileDocumentManager.getInstance().getDocument(vm.file)
+
+      val (range, line, document) = withContext(Dispatchers.Default) {
+        readAction {
+          val document = FileDocumentManager.getInstance().getDocument(vm.file) ?: return@readAction null
+          val line = vm.line.takeIf { DocumentUtil.isValidLine(it, document) } ?: return@readAction null
+          Triple(vm.exactRange, line, document)
+        }
       } ?: return null
 
-      val line = vm.line
-      if (!DocumentUtil.isValidLine(line, document)) return null
-
       val markupModel = DocumentMarkupModel.forDocument(document, project, true)
-      val range = vm.exactRange
       if (range != null) {
         return markupModel.addRangeHighlighter(null, range.startOffset, range.endOffset,
                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
