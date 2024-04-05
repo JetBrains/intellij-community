@@ -195,6 +195,12 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
   protected void perform(ConfigurationContext context) {
   }
 
+  /** @deprecated Use regular {@link #update(AnActionEvent)} instead */
+  @Deprecated(forRemoval = true)
+  protected void fullUpdate(@NotNull AnActionEvent event) {
+    update(event);
+  }
+
   @Override
   public void update(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
