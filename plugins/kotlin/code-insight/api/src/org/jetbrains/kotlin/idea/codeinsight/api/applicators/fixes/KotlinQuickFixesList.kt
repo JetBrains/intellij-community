@@ -51,7 +51,7 @@ class KtQuickFixesListBuilder private constructor() {
     ) {
         for (factory in factories) {
             registerFactory(diagnosticClass) { diagnostic: DIAGNOSTIC ->
-                factory.createQuickFix(diagnostic.psi)
+                diagnostic.psi.takeIf (PsiElement::isWritable)?.let(factory::createQuickFix) ?: emptyList()
             }
         }
     }
