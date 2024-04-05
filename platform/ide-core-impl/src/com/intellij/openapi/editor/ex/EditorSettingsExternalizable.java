@@ -27,6 +27,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
 
+@ClientSetting
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
   /**

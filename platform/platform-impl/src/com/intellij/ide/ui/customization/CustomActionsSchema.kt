@@ -55,6 +55,7 @@ private val additionalIdToName = ConcurrentHashMap<String, String>()
 
 private val EP_NAME = ExtensionPointName<CustomizableActionGroupProvider>("com.intellij.customizableActionGroupProvider")
 
+@ClientSetting
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema",
        storages = [Storage(value = "customization.xml", usePathMacroManager = false)],
        category = SettingsCategory.UI)

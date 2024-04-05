@@ -6,10 +6,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.Disposer;
@@ -31,6 +28,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@ClientSetting
 @State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);

@@ -28,6 +28,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@DoNotSynchronizeSetting
 @Service(Service.Level.PROJECT)
 @State(name = "editorHistoryManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
 class EditorHistoryManager internal constructor(private val project: Project) : PersistentStateComponent<Element?>, Disposable {

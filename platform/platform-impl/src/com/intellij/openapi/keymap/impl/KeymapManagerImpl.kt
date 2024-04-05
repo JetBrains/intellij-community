@@ -35,6 +35,7 @@ private const val NAME_ATTRIBUTE = "name"
 private const val COMPONENT_NAME = "KeymapManager"
 private const val STORAGE_VALUE = "keymap.xml"
 
+@ClientSetting
 @State(name = COMPONENT_NAME, storages = [(Storage(value = STORAGE_VALUE, roamingType = RoamingType.PER_OS))],
        additionalExportDirectory = KEYMAPS_DIR_PATH,
        category = SettingsCategory.KEYMAP)

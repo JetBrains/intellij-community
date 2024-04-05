@@ -31,6 +31,7 @@ import javax.swing.SwingConstants
 
 private val LOG = logger<UISettings>()
 
+@ClientSetting
 @State(
   name = "UISettings",
   storages = [(Storage("ui.lnf.xml", usePathMacroManager = false))],

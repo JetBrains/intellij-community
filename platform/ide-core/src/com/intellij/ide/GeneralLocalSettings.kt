@@ -7,6 +7,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.annotations.SystemDependent
 
+@ClientSetting
 @Service(Service.Level.APP)
 @State(name = "GeneralLocalSettings",
        storages = [Storage(value = "ide.general.local.xml", roamingType = RoamingType.DISABLED)])

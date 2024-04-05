@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 private val defaultProviderType: ProviderType
   get() = CredentialStoreManager.getInstance().defaultProvider()
 
+@ClientSetting
 @ApiStatus.Internal
 @State(name = "PasswordSafe",
        category = SettingsCategory.SYSTEM,

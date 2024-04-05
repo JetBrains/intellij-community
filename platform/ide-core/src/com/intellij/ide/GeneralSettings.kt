@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.SystemDependent
 
 
+@ClientSetting
 @State(name = "GeneralSettings", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)], category = SettingsCategory.SYSTEM)
 class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   private var state = GeneralSettingsState()
