@@ -15,7 +15,9 @@ import java.nio.file.Path;
 public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixtureTestCase {
 
   @NotNull
-  protected abstract String getFileExtension();
+  protected String getFileExtension() {
+    return "";
+  }
 
   protected void doTest(String fixName) {
     doTest(myFixture, fixName, getFileExtension(), getTestName(false));

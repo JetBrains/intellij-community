@@ -433,6 +433,15 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
 
+    <localInspection language="UAST"
+                     key="inspection.read.or.write.action.in.service.init.display.name"
+                     shortName="ReadOrWriteActionInServiceInitialization"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     enabledByDefault="false"
+                     level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.ReadOrWriteActionInServiceInitializationInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>

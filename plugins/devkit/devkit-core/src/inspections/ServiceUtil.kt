@@ -135,6 +135,26 @@ fun toLevel(name: String): Service.Level? {
   }
 }
 
+internal fun isService(uClass: UClass): Boolean {
+  return isLightService(uClass) || isServiceRegisteredInXml(uClass)
+}
+
+internal fun isServiceRegisteredInXml(uClass: UClass): Boolean {
+  val project = uClass.sourcePsi?.project ?: return false
+  val domManager = DomManager.getDomManager(project) ?: return false
+  val psiClass = uClass.javaPsi
+  for (candidate in locateExtensionsByPsiClass(psiClass)) {
+    val tag = candidate.pointer.element ?: continue
+    val element = domManager.getDomElement(tag) ?: continue
+    if (element is Extension) {
+      if (ExtensionUtil.hasServiceBeanFqn(element)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
 internal fun isLightService(uClass: UClass): Boolean {
   return uClass.findAnnotation(Service::class.java.canonicalName) != null
 }
