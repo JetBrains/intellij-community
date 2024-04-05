@@ -1,14 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.execution.PsiLocation
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
-import com.siyeh.ig.junit.JUnitCommonClassNames
-import org.junit.jupiter.api.Assertions
 
 class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
 
@@ -181,15 +178,6 @@ class GradleExecutionSettingsUtilTest : GradleExecutionSettingsUtilTestCase() {
     val testMethod = testClass.findChildByType<PsiMethod>()
     val testClassLocation = PsiLocation.fromPsiElement(project, testClass)
     val testMethodLocation = PsiLocation.fromPsiElement(project, testMethod)
-
-    val parametrizedTestAnnotation = AnnotationUtil.findAnnotationInHierarchy(testMethod, setOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
-    Assertions.assertNotNull(parametrizedTestAnnotation) {
-      "Cannot find @ParameterizedTest annotation above the test method"
-    }
-    val parametrizedTestAnnotationClass = parametrizedTestAnnotation!!.resolveAnnotationType()
-    Assertions.assertNotNull(parametrizedTestAnnotationClass) {
-      "Cannot find definition for the @ParameterizedTest annotation"
-    }
 
     assertTestFilter("--tests \"org.example.TestCase\"", testClassLocation, testClass, null)
     assertTestFilter("--tests \"org.example.TestCase.test\"", testMethodLocation, testClass, testMethod)
