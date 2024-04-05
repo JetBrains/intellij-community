@@ -136,13 +136,18 @@ class ApiIndex {
     if (privateSupertypes.isEmpty()) {
       return this
     }
-    val inheritedStaticSignatures = privateSupertypes.flatMap { superType ->
-      superType.memberSignatures.filter { member ->
-        member.access.isStatic
+    val inheritedSignatures = sequence {
+      for (supertype in privateSupertypes) {
+        for (member in supertype.memberSignatures) {
+          if (!member.access.isStatic) {
+            continue
+          }
+          yield(member)
+        }
       }
     }
     return this.copy(
-      memberSignatures = memberSignatures + inheritedStaticSignatures,
+      memberSignatures = memberSignatures + inheritedSignatures,
       supertypes = publicSupertypeNames,
     )
   }
