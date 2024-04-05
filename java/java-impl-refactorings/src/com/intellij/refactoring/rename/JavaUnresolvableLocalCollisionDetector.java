@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,6 +35,18 @@ public final class JavaUnresolvableLocalCollisionDetector {
     else {
       // element is a PsiParameter
       scope = ((PsiParameter)element).getDeclarationScope();
+      // Declaration scope returned for pattern variable in case is the whole switch.
+      // Let's reduce it to the single rule to avoid conflicts with other branches.  
+      if (element instanceof PsiPatternVariable patternVariable) {
+        PsiPattern pattern = patternVariable.getPattern();
+        while (pattern != null && pattern.getParent() instanceof PsiDeconstructionList list) {
+          pattern = ObjectUtils.tryCast(list.getParent(), PsiPattern.class);
+        }
+        if (pattern != null && pattern.getParent() instanceof PsiCaseLabelElementList list &&
+            list.getParent() instanceof PsiSwitchLabeledRuleStatement rule) {
+          scope = rule;
+        }
+      }
     }
     LOG.assertTrue(scope != null, element.getClass().getName());
 
