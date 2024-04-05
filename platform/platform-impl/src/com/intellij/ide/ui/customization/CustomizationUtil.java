@@ -119,7 +119,7 @@ public final class CustomizationUtil {
           LOG.error("Attempt to add group to itself; group ID=" + actionManager.getId(group));
           continue;
         }
-        if (reorderedChildren.size() > position) {
+        if (position < reorderedChildren.size()) {
           reorderedChildren.add(position, ca);
         }
         else {
@@ -127,7 +127,7 @@ public final class CustomizationUtil {
         }
       }
       else if (actionUrl.getActionType() == ActionUrl.DELETED) {
-        if (!reorderedChildren.remove(ca)) {
+        if (!reorderedChildren.remove(ca) && position < reorderedChildren.size()) {
           AnAction ra = reorderedChildren.get(position);
           Presentation rt = ra.getTemplatePresentation();
           Presentation ct = ca.getTemplatePresentation();
