@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -276,10 +277,12 @@ public class GithubCreateGistAction extends DumbAwareAction {
                      GithubBundle.message("create.gist.error.binary.file", realFile.getName()));
       return Collections.emptyList();
     }
-    String content = ReadAction.compute(() -> {
+    String content = WriteAction.computeAndWait(() -> {
       try {
-        Document document = FileDocumentManager.getInstance().getDocument(realFile);
+        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+        Document document = fileDocumentManager.getDocument(realFile);
         if (document != null) {
+          fileDocumentManager.saveDocument(document);
           return document.getText();
         }
         else {
