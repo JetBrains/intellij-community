@@ -3,12 +3,14 @@
 package org.jetbrains.kotlin.idea.codeInsight.shorten
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -100,7 +102,13 @@ fun performDelayedRefactoringRequests(project: Project, defaultOptions: Options 
         val elementToOptions = shorteningRequests.mapNotNull { req -> req.pointer.element?.let { it to req.options } }.toMap()
         val elements = elementToOptions.keys
         //TODO: this is not correct because it should not shorten deep into the elements!
-        ShortenReferences { elementToOptions[it] ?: defaultOptions }.process(elements)
+        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
+            KotlinBaseFe10CodeInsightBundle.message("progress.title.shortening.references"),
+            project,
+            null
+        ) {
+            ShortenReferences { elementToOptions[it] ?: defaultOptions }.process(elements)
+        }
 
         val importInsertHelper = ImportInsertHelper.getInstance(project)
 
