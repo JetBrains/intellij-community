@@ -79,7 +79,6 @@ f:com.intellij.execution.rmi.ssl.SslKeyStore
 - engineIsCertificateEntry(java.lang.String):Z
 - engineIsKeyEntry(java.lang.String):Z
 - engineLoad(java.io.InputStream,C[]):V
-- engineLoad(java.io.InputStream,C[]):V
 - engineSetCertificateEntry(java.lang.String,java.security.cert.Certificate):V
 - engineSetKeyEntry(java.lang.String,java.security.Key,C[],java.security.cert.Certificate[]):V
 - engineSetKeyEntry(java.lang.String,B[],java.security.cert.Certificate[]):V
@@ -117,7 +116,6 @@ f:com.intellij.execution.rmi.ssl.SslTrustStore
 - engineGetKey(java.lang.String,C[]):java.security.Key
 - engineIsCertificateEntry(java.lang.String):Z
 - engineIsKeyEntry(java.lang.String):Z
-- engineLoad(java.io.InputStream,C[]):V
 - engineLoad(java.io.InputStream,C[]):V
 - engineSetCertificateEntry(java.lang.String,java.security.cert.Certificate):V
 - engineSetKeyEntry(java.lang.String,java.security.Key,C[],java.security.cert.Certificate[]):V

@@ -137,6 +137,7 @@ class ApiIndex {
       return this
     }
     val isFinal = access.isFinal
+    val signatures = memberSignatures.mapTo(HashSet()) { it.jvmMember }
     val inheritedSignatures = sequence {
       for (supertype in privateSupertypes) {
         if (supertype.annotations.isInternal()) {
@@ -148,6 +149,10 @@ class ApiIndex {
             continue
           }
           if (isFinal && member.access.isProtected) {
+            continue
+          }
+          if (!signatures.add(member.jvmMember)) {
+            // don't inherit if already exists
             continue
           }
           yield(member)
