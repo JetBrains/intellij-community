@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -97,6 +98,10 @@ class KotlinFacetSerializationTest {
                 implementedModuleNames = listOf("implementedModule1", "implementedModule2")
                 dependsOnModuleNames = listOf("dependsOnModule1", "dependsOnModule2")
                 additionalVisibleModuleNames = setOf("friend1", "friend2")
+                compilerSettings = CompilerSettings().apply {
+                    additionalArguments = "foo"
+                }
+                compilerSettings!!.scriptTemplates = "boo"
             }
 
 
@@ -126,6 +131,10 @@ class KotlinFacetSerializationTest {
                       <friend>friend2</friend>
                     </additionalVisibleModuleNames>
                     <newMppModelJpsModuleKind>COMPILATION_AND_SOURCE_SET_HOLDER</newMppModelJpsModuleKind>
+                    <compilerSettings>
+                      <option name="additionalArguments" value="foo" />
+                      <option name="scriptTemplates" value="boo" />
+                    </compilerSettings>
                     <compilerArguments>
                       <stringArguments>
                         <stringArg name="apiVersion" arg="1.0" />

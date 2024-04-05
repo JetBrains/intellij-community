@@ -88,8 +88,8 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
                 return _compilerSettings
             }
 
-            val compilerSettingsData = entity.compilerSettings
-            _compilerSettings = compilerSettingsData?.toCompilerSettings { newSettings ->
+            val compilerSettingsData = entity.compilerSettings ?: return null
+            _compilerSettings = compilerSettingsData.toCompilerSettings { newSettings ->
                 entity.compilerSettings = newSettings.toCompilerSettingsData()
                 updateMergedArguments()
             }
@@ -99,9 +99,8 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntity.Builder
         set(value) {
             entity.compilerSettings = value.toCompilerSettingsData()
             updateMergedArguments()
-            _compilerSettings = value?.unfrozen()
+            _compilerSettings = null
         }
-
 
     private var _dependsOnModuleNames: List<String> = entity.dependsOnModuleNames
     override var dependsOnModuleNames: List<String>

@@ -8,6 +8,7 @@ import com.intellij.facet.mock.MockFacetEditorContext
 import com.intellij.facet.ui.FacetEditorContext
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
@@ -73,7 +74,8 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
 
         mainFacet.configuration.settings.useProjectSettings = false
 
-        fireFacetChangedAndValidateKotlinFacet(mainFacet)
+        fireFacetChangedEvent(mainFacet)
+        checkStorageForEntityAndFacet()
     }
 
     fun testCreateFacetEnableHmpp() {
@@ -82,7 +84,8 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
 
         mainFacet.configuration.settings.isHmppEnabled = true
 
-        fireFacetChangedAndValidateKotlinFacet(mainFacet)
+        fireFacetChangedEvent(mainFacet)
+        checkStorageForEntityAndFacet()
     }
 
     fun testCreateFacetExternalSystemProjectId() {
@@ -92,7 +95,8 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         mainFacet.configuration.settings.externalSystemRunTasks =
             listOf(ExternalSystemTestRunTask("taskName", "externalSystemProjectId", "targetName", "kotlinPlatformId"))
 
-        fireFacetChangedAndValidateKotlinFacet(mainFacet)
+        fireFacetChangedEvent(mainFacet)
+        checkStorageForEntityAndFacet()
     }
 
     fun testCreateFacetAndCheckNullableTypes() {
@@ -105,16 +109,37 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         mainFacet.configuration.settings.productionOutputPath = null
         mainFacet.configuration.settings.testOutputPath = null
 
-        fireFacetChangedAndValidateKotlinFacet(mainFacet)
+        fireFacetChangedEvent(mainFacet)
+        checkStorageForEntityAndFacet()
     }
 
-    private fun fireFacetChangedAndValidateKotlinFacet(mainFacet: KotlinFacet) {
+    fun testChangeCompilerSettingsAfterCreation() {
+        val mainFacet = getKotlinFacet()
+        checkStorageForEntityAndFacet()
+
+        val additionalArgs = "foo"
+        val scriptTemplates = "bar"
+        // setup initial compiler settings
+        mainFacet.configuration.settings.compilerSettings = CompilerSettings().apply {
+            additionalArguments = additionalArgs
+        }
+        fireFacetChangedEvent(mainFacet)
+
+        // change compiler settings after setup
+        mainFacet.configuration.settings.compilerSettings?.scriptTemplates = scriptTemplates
+        fireFacetChangedEvent(mainFacet)
+
+        // check that both changes were applied
+        assertTrue(getEntity().compilerSettings!!.additionalArguments == additionalArgs)
+        assertTrue(getEntity().compilerSettings!!.scriptTemplates == scriptTemplates)
+    }
+
+    private fun fireFacetChangedEvent(mainFacet: KotlinFacet) {
         val allFacets = FacetManager.getInstance(myModule).allFacets
         assertSize(1, allFacets)
         assertSame(mainFacet, allFacets[0])
 
         allFacets.forEach { facet -> FacetManager.getInstance(myModule).facetConfigurationChanged(facet) }
-        checkStorageForEntityAndFacet()
     }
 
     private fun getKotlinFacet(): KotlinFacet {
@@ -123,11 +148,16 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         return facetManager.allFacets[0] as KotlinFacet
     }
 
-    private fun checkStorageForEntityAndFacet(facetName: String = "Kotlin") {
+
+    private fun getEntity(): KotlinSettingsEntity {
         val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot
         val entities: List<KotlinSettingsEntity> = entityStorage.entities(KotlinSettingsEntity::class.java).toList()
         assertSize(1, entities)
-        val entity = entities[0]
+        return entities[0]
+    }
+
+    private fun checkStorageForEntityAndFacet(facetName: String = "Kotlin") {
+        val entity = getEntity()
         assertEquals(facetName, entity.name)
         assertEquals(myModule.name, entity.module.name)
 
