@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "version": "2.29.4",
+  "version": "2.29.5",
   "description": "Syntax highlighting and autocompletion for Terraform",
   "license": "MPL-2.0",
   "contributes": {

@@ -107,4 +107,3 @@ diff --git a/community/plugins/textmate/lib/bundles/terraform/language-configura
 +    "decreaseIndentPattern": "^((?!.*?\\/\\*).*\\*/)?\\s*[\\)\\}\\]].*$"
 +  }
  }
-

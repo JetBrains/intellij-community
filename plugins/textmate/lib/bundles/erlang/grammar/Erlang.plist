@@ -536,6 +536,219 @@
 				</dict>
 			</array>
 		</dict>
+		<key>docstring</key>
+		<dict>
+			<key>comment</key>
+			<string>It is possible to use more than 3 double quote characters as beginning and closing sequences (must be the same). Cover 3-9 characters here.</string>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>include</key>
+					<string>#docstring3</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring4</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring5</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring6</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring7</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring8</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring9</string>
+				</dict>
+			</array>
+		</dict>
+		<key>docstring3</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{3}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>comment</key>
+			<string>Only whitespace characters are allowed after the beggining and before the closing sequences and those cannot be in the same line</string>
+			<key>end</key>
+			<string>^(\s*["]{3})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
+		<key>docstring4</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{4}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>^(\s*["]{4})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
+		<key>docstring5</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{5}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>^(\s*["]{5})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
+		<key>docstring6</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{6}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>^(\s*["]{6})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
+		<key>docstring7</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{7}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>^(\s*["]{7})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
+		<key>docstring8</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{8}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>^(\s*["]{8})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
+		<key>docstring9</key>
+		<dict>
+			<key>begin</key>
+			<string>(?&lt;!")(["]{9}\s*)$</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.begin.erlang</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>^(\s*["]{9})(?!")</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>punctuation.definition.docstring.end.erlang</string>
+				</dict>
+			</dict>
+			<key>name</key>
+			<string>string.string.docstring.multi.erlang</string>
+		</dict>
 		<key>everything-else</key>
 		<dict>
 			<key>patterns</key>
@@ -599,6 +812,10 @@
 				<dict>
 					<key>include</key>
 					<string>#atom</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#docstring</string>
 				</dict>
 				<dict>
 					<key>include</key>
@@ -2593,6 +2810,8 @@
 							<string>punctuation.definition.escape.erlang</string>
 						</dict>
 					</dict>
+					<key>comment</key>
+					<string>escape sequence</string>
 					<key>match</key>
 					<string>(\\)([bdefnrstv\\'"]|(\^)[@-_a-z]|[0-7]{1,3}|x[\da-fA-F]{2})</string>
 					<key>name</key>
@@ -2617,36 +2836,18 @@
 							<key>name</key>
 							<string>punctuation.separator.placeholder-parts.erlang</string>
 						</dict>
-						<key>12</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.placeholder-parts.erlang</string>
-						</dict>
-						<key>3</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.placeholder-parts.erlang</string>
-						</dict>
-						<key>4</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.placeholder-parts.erlang</string>
-						</dict>
 						<key>6</key>
 						<dict>
 							<key>name</key>
 							<string>punctuation.separator.placeholder-parts.erlang</string>
 						</dict>
-						<key>8</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.placeholder-parts.erlang</string>
-						</dict>
 					</dict>
+					<key>comment</key>
+					<string>io:fwrite format control sequence</string>
 					<key>match</key>
-					<string>(~)((\-)?\d++|(\*))?((\.)(\d++|(\*)))?((\.)((\*)|.))?[~cfegswpWPBX#bx\+ni]</string>
+					<string>(~)((\-)?\d++|(\*))?((\.)(\d++|(\*))?((\.)((\*)|.))?)?[tlkK]*[~cfegswpWPBX#bx\+ni]</string>
 					<key>name</key>
-					<string>constant.other.placeholder.erlang</string>
+					<string>constant.character.format.placeholder.other.erlang</string>
 				</dict>
 				<dict>
 					<key>captures</key>
@@ -2656,16 +2857,13 @@
 							<key>name</key>
 							<string>punctuation.definition.placeholder.erlang</string>
 						</dict>
-						<key>2</key>
-						<dict>
-							<key>name</key>
-							<string>punctuation.separator.placeholder-parts.erlang</string>
-						</dict>
 					</dict>
+					<key>comment</key>
+					<string>io:fread format control sequence</string>
 					<key>match</key>
-					<string>(~)(\*)?(\d++)?[~du\-#fsacl]</string>
+					<string>(~)(\*)?(\d++)?(t)?[~du\-#fsacl]</string>
 					<key>name</key>
-					<string>constant.other.placeholder.erlang</string>
+					<string>constant.character.format.placeholder.other.erlang</string>
 				</dict>
 				<dict>
 					<key>match</key>

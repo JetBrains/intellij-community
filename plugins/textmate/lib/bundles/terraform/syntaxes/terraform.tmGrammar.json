@@ -362,22 +362,23 @@
       ]
     },
     "inline_for_expression": {
-      "begin": "(for)\\b",
-      "end": "\\n",
-      "beginCaptures": {
+      "match": "(for)\\b(.*)\\n",
+      "captures": {
         "1": {
           "name": "keyword.control.hcl"
-        }
-      },
-      "patterns": [
-        {
-          "name": "storage.type.function.hcl",
-          "match": "\\=\\>"
         },
-        {
-          "include": "#for_expression_body"
+        "2": {
+          "patterns": [
+            {
+              "match": "\\=\\>",
+              "name": "storage.type.function.hcl"
+            },
+            {
+              "include": "#for_expression_body"
+            }
+          ]
         }
-      ]
+      }
     },
     "inline_if_expression": {
       "begin": "(if)\\b",
@@ -691,7 +692,12 @@
           "match": "\\.\\.\\."
         },
         {
+          "name": "keyword.operator.hcl",
           "match": "\\:"
+        },
+        {
+          "name": "keyword.operator.hcl",
+          "match": "\\=\\>"
         }
       ]
     },
