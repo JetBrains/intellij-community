@@ -70,8 +70,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     const val TEST_PLUGIN_DIRECTORY_NAME: String = "tests-plugin"
   }
 
-  open fun setUpLogging(sessionLifetime: Lifetime, session: RdTestSession) {
-    LOG.info("Setting up loggers")
+  open fun setUpTestLoggingFactory(sessionLifetime: Lifetime, session: RdTestSession) {
+    LOG.info("Setting up test logging factory")
     LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
   }
 
@@ -126,7 +126,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       val isNotRdHost = !(session.agentInfo.productType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
 
       try {
-        setUpLogging(sessionLifetime, session)
+        setUpTestLoggingFactory(sessionLifetime, session)
         val app = ApplicationManager.getApplication()
         if (session.testMethodName == null || session.testClassName == null) {
           LOG.info("Test session without test class to run.")
@@ -275,6 +275,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
 
         // Initialize loggers
+        LOG.info("Setting up trace categories from session")
         LogLevelConfigurationManager.getInstance().addCategories(session.traceCategories.map { LogCategory(it, DebugLogLevel.TRACE) } +
                                                                  session.debugCategories.map { LogCategory(it, DebugLogLevel.DEBUG) })
 
