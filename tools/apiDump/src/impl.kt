@@ -138,6 +138,10 @@ class ApiIndex {
     }
     val inheritedSignatures = sequence {
       for (supertype in privateSupertypes) {
+        if (supertype.annotations.isInternal()) {
+          // Members of an `@Internal` class are also effectively `@Internal`.
+          continue
+        }
         for (member in supertype.memberSignatures) {
           if (!member.access.isStatic) {
             continue

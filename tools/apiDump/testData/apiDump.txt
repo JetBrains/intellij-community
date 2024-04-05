@@ -85,14 +85,9 @@ c:com.intellij.tools.apiDump.testData.JPublicClass
 - s:publicStaticMethod():V
 c:com.intellij.tools.apiDump.testData.JPublicClassInternalInterface
 - <init>():V
-- s:publicStaticMethod():V
 c:com.intellij.tools.apiDump.testData.JPublicClassInternalSuper
 - <init>():V
 - clone():com.intellij.tools.apiDump.testData.JPublicClassInternalSuper
-- psf:protectedStaticFinalMethod():V
-- ps:protectedStaticMethod():V
-- sf:publicStaticFinalMethod():V
-- s:publicStaticMethod():V
 f:com.intellij.tools.apiDump.testData.JPublicFinalClass
 - <init>():V
 com.intellij.tools.apiDump.testData.JPublicInterface
