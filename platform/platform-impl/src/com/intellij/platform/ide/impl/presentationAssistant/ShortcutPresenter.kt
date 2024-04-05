@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -54,9 +53,7 @@ internal class ShortcutPresenter(private val coroutineScope: CoroutineScope) {
         // Otherwise, popups may be presented with visible blinks.
         coroutineScope.launch(Dispatchers.EDT) {
           val actionId = serviceAsync<ActionManager>().getId(action)
-                         ?: action.copySourceActionId?.takeIf {
-                           Registry.`is`("ide.presentation.assistant.take.copy.source.action.id", false)
-                         }
+                         ?: action.copySourceActionId
                          ?: return@launch
           if (!movingActions.contains(actionId) && !typingActions.contains(actionId)) {
             val project = event.project
