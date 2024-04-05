@@ -90,6 +90,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddInlineModifierFix.usageIsNotInlinableFactory)
         registerFactory(AddInlineModifierFix.nonLocalReturnNotAllowed)
         registerFactory(AddInlineModifierFix.inlineSuspendFunctionTypeUnsupported)
+        registerFactory(SpecifyOverrideExplicitlyFixFactory.specifyOverrideExplicitlyFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

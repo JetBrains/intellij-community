@@ -41,7 +41,7 @@ import javax.swing.Icon
 @ApiStatus.Internal
 data class KtClassMemberInfo internal constructor(
     val symbolPointer: KtSymbolPointer<KtCallableSymbol>,
-    @NlsSafe val memberText: String,
+    @NlsSafe val memberText: String?,
     val memberIcon: Icon?,
     @NlsContexts.Label val containingSymbolText: String?,
     val containingSymbolIcon: Icon?,
@@ -51,10 +51,10 @@ data class KtClassMemberInfo internal constructor(
         context(KtAnalysisSession)
         fun create(
             symbol: KtCallableSymbol,
-            memberText: @NlsSafe String,
-            memberIcon: Icon?,
-            @NlsContexts.Label containingSymbolText: String?,
-            containingSymbolIcon: Icon?,
+            memberText: @NlsSafe String? = null,
+            memberIcon: Icon? = null,
+            @NlsContexts.Label containingSymbolText: String? = null,
+            containingSymbolIcon: Icon? = null,
         ): KtClassMemberInfo = KtClassMemberInfo(
             symbolPointer = symbol.createPointer(),
             memberText = memberText,

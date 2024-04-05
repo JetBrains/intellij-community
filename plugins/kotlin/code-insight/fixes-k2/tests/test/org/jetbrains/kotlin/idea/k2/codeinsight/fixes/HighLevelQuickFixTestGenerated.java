@@ -5261,7 +5261,48 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly")
+    public static class SpecifyOverrideExplicitly extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("base.kt")
+        public void testBase() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/base.kt");
+        }
+
+        @TestMetadata("global.kt")
+        public void testGlobal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/global.kt");
+        }
+
+        @TestMetadata("lists.kt")
+        public void testLists() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/lists.kt");
+        }
+
+        @TestMetadata("lists2.kt")
+        public void testLists2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/lists2.kt");
+        }
+
+        @TestMetadata("notPossible.kt")
+        public void testNotPossible() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/notPossible.kt");
+        }
+
+        @TestMetadata("outer.kt")
+        public void testOuter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/outer.kt");
+        }
+
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/property.kt");
+        }
+    }
 
 
 
