@@ -5,8 +5,7 @@
 
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
@@ -127,7 +126,7 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
 
     val element: Element?
     try {
-      element = serializeState(state = state, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
+      element = serializeState(state = state, component = component, componentName = componentName, pluginId = pluginId, controller = controller, roamingType = roamingType)
     }
     catch (e: WriteExternalException) {
       LOG.debug(e)
@@ -144,7 +143,7 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
   abstract fun setSerializedState(componentName: String, element: Element?)
 }
 
-internal fun serializeState(state: Any, componentName: String, pluginId: PluginId, controller: SettingsController?, roamingType: RoamingType?): Element? {
+internal fun serializeState(state: Any, component: Any?, componentName: String, pluginId: PluginId, controller: SettingsController?, roamingType: RoamingType?): Element? {
   @Suppress("DEPRECATION")
   when (state) {
     is Element -> {
@@ -152,7 +151,7 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
         val key = SettingDescriptor(
           key = createSettingKey(componentName = componentName, binding = null),
           pluginId = pluginId,
-          tags = createTags(componentName, roamingType, extraTag = null),
+          tags = createTags(componentName, component, roamingType, extraTag = null),
           serializer = JsonElementSettingSerializerDescriptor,
         )
 
@@ -178,6 +177,7 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
               rootBinding = rootBinding,
               state = state,
               filter = filter,
+              component = component,
               componentName = componentName,
               pluginId = pluginId,
               controller = controller,
@@ -185,7 +185,7 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
             )
           }
           else if (rootBinding is KotlinxSerializationBinding) {
-            val keyTags = createTags(componentName, roamingType, extraTag = null)
+            val keyTags = createTags(componentName, component, roamingType, extraTag = null)
             val key = SettingDescriptor(
               key = createSettingKey(componentName = componentName, binding = null),
               pluginId = pluginId,
@@ -211,36 +211,47 @@ internal fun serializeState(state: Any, componentName: String, pluginId: PluginI
   }
 }
 
-private fun createTags(componentName: String, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
-  val componentPropertyTag = PersistenceStateComponentPropertyTag(componentName)
+private inline fun <reified T: Annotation> hasAnnotationInSuperclass(value: Any): Boolean {
+  return generateSequence(value.javaClass) { it.superclass }
+    .mapNotNull { it.annotations.find { annotation -> annotation is T } }
+    .any()
+}
+
+private fun createTags(componentName: String, component: Any?, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
+  val tags = mutableListOf<SettingTag>(PersistenceStateComponentPropertyTag(componentName))
   if (roamingType == RoamingType.DISABLED) {
-    if (extraTag == null) {
-      return java.util.List.of(componentPropertyTag, NonShareableTag)
+    tags.add(NonShareableTag)
+  }
+  if (extraTag != null) {
+    tags.add(extraTag)
+  }
+
+  // TODO move rdct-specific code to some extension
+  if (component != null) {
+    if (hasAnnotationInSuperclass<HostSetting>(componentName)) {
+      tags.add(HostSettingTag)
     }
-    else {
-      return java.util.List.of(componentPropertyTag, NonShareableTag, extraTag)
+    if (hasAnnotationInSuperclass<ClientSetting>(componentName)) {
+      tags.add(ClientSettingTag)
+    }
+    if (hasAnnotationInSuperclass<DoNotSynchronizeSetting>(componentName)) {
+      tags.add(DoNotSynchronizeSettingTag)
     }
   }
-  else {
-    if (extraTag == null) {
-      return java.util.List.of(componentPropertyTag)
-    }
-    else {
-      return java.util.List.of(componentPropertyTag, extraTag)
-    }
-  }
+  return tags
 }
 
 private fun serializeWithController(
   rootBinding: BeanBinding,
   state: Any,
   filter: SkipDefaultsSerializationFilter,
+  component: Any?,
   componentName: String,
   pluginId: PluginId,
   controller: SettingsController,
   roamingType: RoamingType?
 ): Element? {
-  val keyTags = createTags(componentName, roamingType, extraTag = null)
+  val keyTags = createTags(componentName, component, roamingType, extraTag = null)
   var element: Element? = null
   for (binding in rootBinding.bindings!!) {
     val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = state, rootBinding = rootBinding, isFilterPropertyItself = true)
@@ -292,7 +303,7 @@ internal fun <T : Any> deserializeStateWithController(
         controller = controller,
         componentName = componentName,
         pluginId = pluginId,
-        tags = createTags(componentName, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
+        tags = createTags(componentName, component = null, roamingType, extraTag = OldLocalValueSupplierTag(supplier = SynchronizedClearableLazy {
           stateElement?.let {
             jdomToJson(it)
           }

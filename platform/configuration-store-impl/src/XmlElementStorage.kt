@@ -458,7 +458,7 @@ private class StateGetterImpl<S : Any>(
       serializedState
     }
     else {
-      serializeState(state = stateAfterLoad, componentName = componentName, pluginId = pluginId, controller = null, roamingType = null)?.let {
+      serializeState(state = stateAfterLoad, component = component, componentName = componentName, pluginId = pluginId, controller = null, roamingType = null)?.let {
         normalizeRootName(it)
       }?.takeIf { !it.isEmpty }
     }
