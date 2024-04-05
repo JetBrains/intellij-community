@@ -82,7 +82,7 @@ internal fun getAlignedRanges(uExpression: UExpression, context: PlaceholderCont
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, context.partHolderList)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
 
-  return placeholderCountResult.placeholderRangeList.map {range ->
+  return placeholderCountResult.placeholderRangeList.map { range ->
     if (range == null) return null
     getAlignedRangeInLiteralExpression(uExpression, range) ?: return null
   }

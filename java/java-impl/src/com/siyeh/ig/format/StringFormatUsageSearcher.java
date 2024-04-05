@@ -26,9 +26,9 @@ public final class StringFormatUsageSearcher implements UsageSearcher {
   }
 
   @NotNull
-  private static List<Usage> getFormatUsages(Symbol symbol,
-                                             PsiExpression expression,
-                                             PsiExpression arg,
+  private static List<Usage> getFormatUsages(@NotNull Symbol symbol,
+                                             @NotNull PsiExpression expression,
+                                             @NotNull PsiExpression arg,
                                              @NotNull Function<? super PsiLiteralExpression, ? extends Iterable<? extends PsiSymbolReference>> function) {
     return SyntaxTraverser.psiTraverser(expression)
       .traverse()
