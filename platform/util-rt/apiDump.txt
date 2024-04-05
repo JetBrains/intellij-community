@@ -59,14 +59,12 @@ f:com.intellij.execution.rmi.ssl.SslKeyStore
 - java.security.KeyStoreSpi
 - sf:SSL_DEFERRED_CA_LOADING:java.lang.String
 - sf:SSL_DEFERRED_KEY_LOADING:java.lang.String
-- ps:ourProvider:java.security.Provider
 - <init>():V
 - s:appendUserKeyStore(java.lang.String,C[]):I
 - engineLoad(java.io.InputStream,C[]):V
 - s:getInstance():java.security.KeyStore
 - s:getUserKey():java.security.Key
 - s:loadKey(java.lang.String,java.lang.String,java.lang.String,C[]):V
-- ps:loadKeyStore(java.lang.String,C[]):java.security.KeyStore
 - s:setDefault():V
 f:com.intellij.execution.rmi.ssl.SslSocketFactory
 - javax.net.ssl.SSLSocketFactory
@@ -74,7 +72,6 @@ f:com.intellij.execution.rmi.ssl.SslSocketFactory
 - s:createTrustManagers(java.lang.String):javax.net.ssl.TrustManager[]
 f:com.intellij.execution.rmi.ssl.SslTrustStore
 - java.security.KeyStoreSpi
-- ps:ourProvider:java.security.Provider
 - <init>():V
 - s:appendCertificate(java.lang.String,java.security.cert.Certificate):V
 - s:appendCertificates(java.lang.String,java.util.Collection):V
@@ -82,7 +79,6 @@ f:com.intellij.execution.rmi.ssl.SslTrustStore
 - s:appendUserTrustStore(java.lang.String,C[]):I
 - engineLoad(java.io.InputStream,C[]):V
 - s:getType():java.lang.String
-- ps:loadKeyStore(java.lang.String,C[]):java.security.KeyStore
 - s:setDefault():V
 f:com.intellij.execution.rmi.ssl.SslUtil
 - sf:SSL_CA_CERT_PATH:java.lang.String

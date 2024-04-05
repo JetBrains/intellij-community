@@ -136,6 +136,7 @@ class ApiIndex {
     if (privateSupertypes.isEmpty()) {
       return this
     }
+    val isFinal = access.isFinal
     val inheritedSignatures = sequence {
       for (supertype in privateSupertypes) {
         if (supertype.annotations.isInternal()) {
@@ -144,6 +145,9 @@ class ApiIndex {
         }
         for (member in supertype.memberSignatures) {
           if (!member.access.isStatic) {
+            continue
+          }
+          if (isFinal && member.access.isProtected) {
             continue
           }
           yield(member)

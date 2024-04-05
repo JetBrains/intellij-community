@@ -208,7 +208,6 @@ c:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicClassFromPa
 f:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicFinalInheritor
 - <init>():V
 - packagePrivateMethodWithPackagePrivateReturnType():com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicFinalInheritor
-- ps:protectedStaticMethod():V
 - s:publicStaticMethod():V
 c:com.intellij.tools.apiDump.testData.inheritFromPackageLocal.JPublicInheritor
 - <init>():V
