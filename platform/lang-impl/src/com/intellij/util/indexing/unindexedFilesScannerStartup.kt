@@ -89,16 +89,21 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) emptyList()
   else {
-    val projectDirtyFileIdsFromProjectQueue = PersistentDirtyFilesQueue.readIndexingQueue(project.getQueueFile(), ManagingFS.getInstance().creationTimestamp)
-    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, fileBasedIndex.orphanDirtyFileIds)
-    val allProjectDirtyFileIds = projectDirtyFileIdsFromProjectQueue + projectDirtyFilesFromOrphanQueue.mapNotNull { (it as? VirtualFileWithId)?.id }
+    val projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(project.getQueueFile(), ManagingFS.getInstance().creationTimestamp)
+    if (projectDirtyFilesQueue.lastSeenIdsInOrphanQueue > (fileBasedIndex.orphanDirtyFileIds?.lastId ?: 0)) {
+      LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
+                "projectQueue.lastSeenIdsInOrphanQueue=${projectDirtyFilesQueue.lastSeenIdsInOrphanQueue}, orphanQueue.lastId=${fileBasedIndex.orphanDirtyFileIds?.lastId}, " +
+                "project=$project")
+    }
+    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, fileBasedIndex.orphanDirtyFileIds?.fileIds ?: emptyList())
+    val allProjectDirtyFileIds = projectDirtyFilesQueue.fileIds + projectDirtyFilesFromOrphanQueue.mapNotNull { (it as? VirtualFileWithId)?.id }
     fileBasedIndex.ensureDirtyFileIndexesDeleted(allProjectDirtyFileIds)
     removeCurrentFile(project.getQueueFile())
 
     val vfToFindLimit = if (findAllVirtualFiles) -1
     else max(0, dumbModeThreshold - projectDirtyFilesFromOrphanQueue.size - 1)
     
-    val projectDirtyFilesFromProjectQueue = findProjectFiles(project, projectDirtyFileIdsFromProjectQueue, vfToFindLimit)
+    val projectDirtyFilesFromProjectQueue = findProjectFiles(project, projectDirtyFilesQueue.fileIds, vfToFindLimit)
     val projectDirtyFiles = projectDirtyFilesFromProjectQueue + projectDirtyFilesFromOrphanQueue
     if (!findAllVirtualFiles) {
       assert(projectDirtyFiles.size < dumbModeThreshold) {

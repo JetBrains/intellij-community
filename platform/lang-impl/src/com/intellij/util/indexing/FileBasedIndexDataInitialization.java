@@ -24,7 +24,6 @@ import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
@@ -48,8 +47,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   private final RegisteredIndexes myRegisteredIndexes;
   @NotNull
   private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
-  @NotNull
-  private final IntSet myDirtyFileIds = IntSets.synchronize(new IntOpenHashSet());
+  private volatile OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
   @NotNull
   private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
   @NotNull
@@ -66,9 +64,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     Iterator<FileBasedIndexExtension<?, ?>> extensions = FileBasedIndexExtension.EXTENSION_POINT_NAME.getIterable().iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint().size());
 
-    IntList orphanDirtyFiles = PersistentDirtyFilesQueue.readIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp());
-    myDirtyFileIds.addAll(orphanDirtyFiles);
-    IntSet allDirtyFiles = new IntOpenHashSet(orphanDirtyFiles);
+    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp());
+    IntSet allDirtyFiles = new IntOpenHashSet(myOrphanDirtyFilesQueue.getFileIds());
     if (StaleIndexesChecker.shouldCheckStaleIndexesOnStartup()) {
       readAllProjectDirtyFilesQueues(allDirtyFiles);
     }
@@ -116,7 +113,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
     if (projectQueueFiles != null) {
       for (File file : projectQueueFiles) {
-        dirtyFiles.addAll(PersistentDirtyFilesQueue.readIndexingQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()));
+        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
       }
     }
   }
@@ -195,7 +192,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
       myFileBasedIndex.addStaleIds(myStaleIds);
-      myFileBasedIndex.addDirtyFileIds(myDirtyFileIds);
+      myFileBasedIndex.setOrphanDirtyFilesQueue(myOrphanDirtyFilesQueue);
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads

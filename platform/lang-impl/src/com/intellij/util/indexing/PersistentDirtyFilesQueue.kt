@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import it.unimi.dsi.fastutil.ints.IntArrayList
@@ -22,7 +23,7 @@ object PersistentDirtyFilesQueue {
   private val isUnittestMode: Boolean
     get() = ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode
 
-  val currentVersion = 1L
+  val currentVersion = 2L
 
   val queuesDirName: String = "dirty-file-queues"
 
@@ -48,22 +49,56 @@ object PersistentDirtyFilesQueue {
   }
 
   @JvmStatic
-  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): IntList {
-    val result = IntArrayList()
+  fun readProjectDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): ProjectDirtyFilesQueue {
+    val (fileIds, index) = readIndexingQueue(queueFile, currentVfsVersion)
+    return ProjectDirtyFilesQueue(fileIds, index ?: 0L)
+  }
+
+  @JvmStatic
+  fun readOrphanDirtyFilesQueue(queueFile: Path, currentVfsVersion: Long?): OrphanDirtyFilesQueue {
+    val (fileIds, index) = readIndexingQueue(queueFile, currentVfsVersion)
+    return OrphanDirtyFilesQueue(fileIds, index ?: fileIds.size.toLong())
+  }
+
+  /**
+   * Project dirty files queue and orphan dirty files queue have the same format
+   * Project queue: [version, vfs version, last seen index in orphan queue, ids...]
+   * Orphan queue: [version, vfs version, last index in queue, ids...]
+   */
+  @JvmStatic
+  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): Pair<IntList, Long?> {
     try {
-      DataInputStream(queueFile.inputStream().buffered()).use {
+      return DataInputStream(queueFile.inputStream().buffered()).use {
+        val result = IntArrayList()
         val version = it.readLong()
-        val storedVfsVersion = if (version < 10L) {
-          // we can assume that small numbers are dirty files queue version and not vfs version
-          // because vfs version is vfs creation timestamp that is System.currentTimeMillis()
-          it.readLong()
+        val (storedVfsVersion, index) = when (version) {
+          1L -> {
+            val vfsVersion = it.readLong()
+            Pair(vfsVersion, null)
+          }
+          2L -> {
+            val vfsVersion = it.readLong()
+            val index = it.readLong()
+            Pair(vfsVersion, index)
+          }
+          else -> {
+            // we can assume that small numbers are dirty files queue version and not vfs version
+            // because vfs version is vfs creation timestamp that is System.currentTimeMillis()
+            Pair(version, null)
+          }
         }
-        else version
         if (currentVfsVersion == null || storedVfsVersion == currentVfsVersion) {
-          while (it.available() > -1) {
+          while (it.available() > 0) {
             result.add(it.readInt())
           }
         }
+        else {
+          thisLogger().info("Discarding dirty files queue $queueFile because vfs version changed: old=$storedVfsVersion, new=$currentVfsVersion")
+        }
+        if (isUnittestMode) {
+          thisLogger().info("read dirty file ids: ${result.toIntArray().contentToString()}")
+        }
+        Pair(result, index)
       }
     }
     catch (ignored: NoSuchFileException) {
@@ -73,19 +108,16 @@ object PersistentDirtyFilesQueue {
     catch (e: IOException) {
       thisLogger().info(e)
     }
-    if (isUnittestMode) {
-      thisLogger().info("read dirty file ids: ${result.toIntArray().contentToString()}")
-    }
-    return result
+    return Pair(IntArrayList(), null)
   }
 
   @JvmStatic
-  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, vfsVersion: Long) {
-    storeIndexingQueue(queueFile, fileIds, vfsVersion, currentVersion)
+  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, index: Long, vfsVersion: Long) {
+    storeIndexingQueue(queueFile, fileIds, index, vfsVersion, currentVersion)
   }
 
   @JvmStatic
-  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, vfsVersion: Long, version: Long) {
+  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, index: Long, vfsVersion: Long, version: Long) {
     try {
       if (fileIds.isEmpty()) {
         queueFile.deleteIfExists()
@@ -94,6 +126,7 @@ object PersistentDirtyFilesQueue {
       DataOutputStream(queueFile.outputStream().buffered()).use {
         if (version > 0) it.writeLong(version)
         it.writeLong(vfsVersion)
+        it.writeLong(index)
         fileIds.forEach { fileId ->
           it.writeInt(fileId)
         }
@@ -106,5 +139,23 @@ object PersistentDirtyFilesQueue {
       val idsToPaths = mapOf(*fileIds.map { it to StaleIndexesChecker.getStaleRecordOrExceptionMessage(it) }.toTypedArray())
       thisLogger().info("dirty file ids stored. Ids & filenames: ${idsToPaths.toString().take(300)}")
     }
+  }
+}
+
+class ProjectDirtyFilesQueue(val fileIds: IntCollection, val lastSeenIdsInOrphanQueue: Long) {
+  fun store(project: Project, vfsVersion: Long) {
+    PersistentDirtyFilesQueue.storeIndexingQueue(project.getQueueFile(), fileIds, lastSeenIdsInOrphanQueue, vfsVersion)
+  }
+}
+
+class OrphanDirtyFilesQueue(val fileIds: IntList, val lastId: Long) {
+  fun store(vfsVersion: Long) {
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), fileIds, lastId, vfsVersion)
+  }
+
+  fun plus(ids: IntCollection): OrphanDirtyFilesQueue {
+    val newIds = IntArrayList(fileIds)
+    newIds.addAll(ids)
+    return OrphanDirtyFilesQueue(newIds, lastId + ids.size)
   }
 }
