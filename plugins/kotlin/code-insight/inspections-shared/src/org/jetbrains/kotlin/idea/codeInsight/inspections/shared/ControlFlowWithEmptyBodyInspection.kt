@@ -6,11 +6,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -101,4 +103,5 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
     }
 }
 
-private val CONTROL_FLOW_FQ_NAME = FqName("kotlin.also")
+private val CONTROL_FLOW_FQ_NAME: FqName = StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+    .child(Name.identifier("also"))
