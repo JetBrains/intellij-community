@@ -6,7 +6,6 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.FilesScanningTask
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.stubs.StubTreeBuilder
@@ -20,7 +19,6 @@ import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import java.util.function.Predicate
 
 @ApiStatus.Internal
@@ -34,7 +32,6 @@ class RescanIndexesAction : RecoveryAction {
 
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
     val project = recoveryScope.project
-    val historyFuture = CompletableFuture<ProjectScanningHistory>()
     val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
     var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
@@ -43,7 +40,7 @@ class RescanIndexesAction : RecoveryAction {
       if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
     application.service<AppIndexingDependenciesService>().invalidateAllStamps("Rescanning indexes recovery action")
-    object : UnindexedFilesScanner(project, false, false, false,
+    val historyFuture = object : UnindexedFilesScanner(project, false, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
                                    if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null) {
       private val stubIndex =
@@ -75,21 +72,6 @@ class RescanIndexesAction : RecoveryAction {
         StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
       }.getOrNull() != null
 
-      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
-                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
-        try {
-          val history = super.performScanningAndIndexing(indicator, progressReporter)
-          historyFuture.complete(history)
-          return history
-        }
-        catch (e: Exception) {
-          historyFuture.completeExceptionally(e)
-          throw e
-        }
-      }
-
-      override fun tryMergeWith(taskFromQueue: FilesScanningTask): UnindexedFilesScanner? =
-        if (taskFromQueue.javaClass == javaClass) this else null
     }.queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -344,18 +343,11 @@ class UnindexedFilesScannerTest {
   }
 
   private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
-    val scanningHistoryRef = Ref<ProjectScanningHistory>()
-    val scanningTask = object : UnindexedFilesScanner(project, false, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null) {
-      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
-                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
-        return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)
-      }
-    }
+    val scanningTask = UnindexedFilesScanner(project, false, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL, null)
     scanningTask.setFlushQueueAfterScanning(false)
-    val indicator = EmptyProgressIndicator()
-    ProgressManager.getInstance().runProcess({ scanningTask.perform(indicator) }, indicator)
+    val scanningHistoryFuture = scanningTask.queue()
 
-    val history = scanningHistoryRef.get()
+    val history = scanningHistoryFuture.get()
     val dirtyFilesPerOrigin = project.service<PerProjectIndexingQueue>().getFilesAndClear()
     return Pair(history, dirtyFilesPerOrigin)
   }
