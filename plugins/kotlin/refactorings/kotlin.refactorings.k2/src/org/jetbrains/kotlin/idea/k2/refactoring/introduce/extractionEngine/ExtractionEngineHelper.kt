@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine
 import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -24,15 +23,12 @@ abstract class ExtractionEngineHelper(@NlsContexts.DialogTitle operationName: St
     // called under potemkin progress, still in EDT but the progress is visible
     @OptIn(KtAllowAnalysisFromWriteAction::class, KtAllowAnalysisOnEdt::class)
     override fun generateDeclaration(config: ExtractionGeneratorConfiguration): ExtractionResult {
-        allowAnalysisOnEdt {
+        return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
-                return Generator.generateDeclaration(config, null)
+                Generator.generateDeclaration(config, null)
             }
         }
     }
 
-    override fun validate(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptorWithConflicts =
-        analyze(descriptor.extractionData.commonParent) {
-            descriptor.validate()
-        }
+    override fun validate(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptorWithConflicts = descriptor.validate()
 }

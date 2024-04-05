@@ -261,6 +261,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/privateMemberRef.kt");
         }
 
+        @TestMetadata("privateMembersAccessible.kt")
+        public void testPrivateMembersAccessible() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/privateMembersAccessible.kt");
+        }
+
         @TestMetadata("privateNestedClass.kt")
         public void testPrivateNestedClass() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/privateNestedClass.kt");

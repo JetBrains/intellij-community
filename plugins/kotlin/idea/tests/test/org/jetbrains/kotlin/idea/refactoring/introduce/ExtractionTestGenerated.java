@@ -1040,6 +1040,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/extractFunction/basic/privateMemberRef.kt");
             }
 
+            @TestMetadata("privateMembersAccessible.kt")
+            public void testPrivateMembersAccessible() throws Exception {
+                runTest("testData/refactoring/extractFunction/basic/privateMembersAccessible.kt");
+            }
+
             @TestMetadata("privateNestedClass.kt")
             public void testPrivateNestedClass() throws Exception {
                 runTest("testData/refactoring/extractFunction/basic/privateNestedClass.kt");

@@ -11,6 +11,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeD
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.MutableParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.inferParametersInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.targetKey
@@ -311,16 +314,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     )
 }
 
-context(KtAnalysisSession)
 fun ExtractableCodeDescriptor.validate(): ExtractableCodeDescriptorWithConflicts {
-    fun getDeclarationMessage(declaration: PsiElement, messageKey: String, capitalize: Boolean = true): String {
-        val declarationStr = RefactoringUIUtil.getDescription(declaration, true)
-        val message = KotlinBundle.message(messageKey, declarationStr)
-        return if (capitalize) message.capitalize() else message
-    }
-
-    val conflicts = MultiMap<PsiElement, String>()
-
     val config = ExtractionGeneratorConfiguration(
         this,
         ExtractionGeneratorOptions(
@@ -329,6 +323,23 @@ fun ExtractableCodeDescriptor.validate(): ExtractableCodeDescriptorWithConflicts
         )
     )
     val result = Generator.generateDeclaration(config, null)
+
+    return analyzeCopy(result.declaration, DanglingFileResolutionMode.PREFER_SELF) {
+        validateTempResult(result)
+    }
+}
+
+context(KtAnalysisSession)
+private fun ExtractableCodeDescriptor.validateTempResult(
+    result: ExtractionResult,
+): ExtractableCodeDescriptorWithConflicts {
+    fun getDeclarationMessage(declaration: PsiElement, messageKey: String, capitalize: Boolean = true): String {
+        val declarationStr = RefactoringUIUtil.getDescription(declaration, true)
+        val message = KotlinBundle.message(messageKey, declarationStr)
+        return if (capitalize) message.capitalize() else message
+    }
+
+    val conflicts = MultiMap<PsiElement, String>()
 
     val namedFunction = result.declaration as? KtNamedFunction
     val valueParameterList = namedFunction?.valueParameterList
