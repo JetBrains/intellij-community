@@ -7,9 +7,10 @@ import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 
-@ApiStatus.Internal data class HuggingFaceMdCacheEntry(val data: String, val timeFetched: Long)
+@ApiStatus.Internal data class HuggingFaceMdCacheEntry(@Nls val data: String, val timeFetched: Long)
 
 @ApiStatus.Internal
 @State(name = "HuggingFaceMdCardsCache", storages = [Storage("HuggingFaceMdCardsCache.xml")])

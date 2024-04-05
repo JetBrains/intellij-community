@@ -19,8 +19,8 @@ class HuggingFaceEntityNameAnnotator : Annotator {
     if (element !is PyStringLiteralExpression) return
 
     val project = element.project
-    val manager = project.getService(HuggingFacePluginManager::class.java)
-    if (!manager.isLibraryImported()) return
+    val pluginManager = project.getService(HuggingFacePluginManager::class.java)
+    if (!pluginManager.isActive()) return
 
     val text = element.stringValue
     if (!isValidHfString(element, text)) return
