@@ -2,17 +2,19 @@
 package com.intellij.python.community.impl.huggingFace
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceApi
+import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCacheUpdateListener
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceDatasetsCache
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceLastCacheRefresh
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceModelsCache
 import com.intellij.python.community.impl.huggingFace.service.PyHuggingFaceBundle
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyArgumentList
+import com.jetbrains.python.psi.PyAssignmentStatement
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyPlainStringElementImpl
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
@@ -20,43 +22,6 @@ import java.time.Duration
 
 @ApiStatus.Internal
 object HuggingFaceUtil {
-  private val huggingFaceRelevantLibraries = setOf(
-    "diffusers", "transformers", "allennlp", "spacy",
-    "asteroid", "flair", "keras", "sentence-transformers",
-    "stable-baselines3", "adapters", "huggingface_hub",
-  )
-
-  private fun isAnyHFLibraryImportedInFile(file: PyFile): Boolean {
-    val isDirectlyImported = file.importTargets.any { importStmt ->
-      huggingFaceRelevantLibraries.any { lib -> importStmt.importedQName.toString().contains(lib) }
-    }
-
-    val isFromImported = file.fromImports.any { fromImport ->
-      huggingFaceRelevantLibraries.any { lib -> fromImport.importSourceQName?.toString()?.contains(lib) == true }
-    }
-
-    val isQualifiedImported: Boolean = file.importTargets.any { importStmt: PyImportElement? ->
-      huggingFaceRelevantLibraries.any { lib: String -> importStmt?.importedQName?.components?.contains(lib) == true }
-    }
-    return isDirectlyImported || isFromImported || isQualifiedImported
-  }
-
-  fun isAnyHFLibraryImportedInProject(project: Project): Boolean {
-    var isLibraryImported = false
-
-    ProjectFileIndex.getInstance(project).iterateContent { virtualFile ->
-      if (virtualFile.extension in listOf("py", "ipynb")) {
-        val pythonFile = PsiManager.getInstance(project).findFile(virtualFile)
-        if (pythonFile is PyFile) {
-          isLibraryImported = isLibraryImported or isAnyHFLibraryImportedInFile(pythonFile)
-        }
-      }
-      !isLibraryImported
-    }
-
-    return isLibraryImported
-  }
-
   fun isWhatHuggingFaceEntity(text: String): HuggingFaceEntityKind? {
     return when {
       isHuggingFaceModel(text) -> HuggingFaceEntityKind.MODEL
@@ -116,16 +81,20 @@ object HuggingFaceUtil {
   fun triggerCacheFillIfNeeded(project: Project) {
     val refreshState = project.getService(HuggingFaceLastCacheRefresh::class.java)
     val currentTime = System.currentTimeMillis()
-    if (currentTime - refreshState.lastRefreshTime < Duration.ofDays(1).toMillis()) {
-      return
+    if (currentTime - refreshState.lastRefreshTime < Duration.ofDays(1).toMillis()) return
+
+    val completionCallback = {
+      HuggingFaceCacheUpdateListener.notifyCacheUpdated()
     }
 
     HuggingFaceApi.fillCacheWithBasicApiData(HuggingFaceEntityKind.MODEL,
                                              HuggingFaceModelsCache,
-                                             HuggingFaceConstants.MAX_MODELS_IN_CACHE)
+                                             HuggingFaceConstants.MAX_MODELS_IN_CACHE,
+                                             completionCallback)
     HuggingFaceApi.fillCacheWithBasicApiData(HuggingFaceEntityKind.DATASET,
                                              HuggingFaceDatasetsCache,
-                                             HuggingFaceConstants.MAX_DATASETS_IN_CACHE)
+                                             HuggingFaceConstants.MAX_DATASETS_IN_CACHE,
+                                             completionCallback)
   }
 
   fun humanReadableNumber(rawNumber: Int): String {

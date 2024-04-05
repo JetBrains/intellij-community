@@ -6,6 +6,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.api.HuggingFaceEntityBasicApiData
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -30,6 +31,7 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
     }
 
   @Synchronized
+  @RequiresBackgroundThread
   fun saveEntities(entitiesMap: Map<String, HuggingFaceEntityBasicApiData>) {
     cacheMap.putAll(entitiesMap)
     entitiesMap.keys.forEach { key ->
@@ -38,6 +40,7 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
   }
 
   @Synchronized
+  @RequiresBackgroundThread
   fun saveEntity(entityData: HuggingFaceEntityBasicApiData) {
     cacheMap[entityData.itemId] = entityData
     nameSet.add(entityData.itemId)
@@ -70,6 +73,7 @@ abstract class HuggingFaceCache(private val maxSize: Int) : PersistentStateCompo
     XmlSerializerUtil.copyBean(state, this)
     cacheMap = state.cacheMap
     nameSet = state.nameSet
+    HuggingFaceCacheUpdateListener.notifyCacheUpdated()
   }
 }
 

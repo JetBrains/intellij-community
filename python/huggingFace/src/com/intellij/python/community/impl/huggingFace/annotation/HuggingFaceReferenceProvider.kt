@@ -6,21 +6,23 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
-import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManager
+import com.intellij.python.community.impl.huggingFace.service.HuggingFacePluginManager
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import org.jetbrains.annotations.ApiStatus
+
 
 @ApiStatus.Internal
 class HuggingFaceIdentifierReferenceProvider : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val pyStringLiteralExpression = element as? PyStringLiteralExpression ?: return PsiReference.EMPTY_ARRAY
+    val text = pyStringLiteralExpression.stringValue
+    if (!HF_WORTHY_STRING_REGEX.matches(text)) return PsiReference.EMPTY_ARRAY
 
     val project = element.project
-    val manager = project.getService(HuggingFaceImportedLibrariesManager::class.java)
+    val manager = project.getService(HuggingFacePluginManager::class.java)
     if (!manager.isLibraryImported()) return PsiReference.EMPTY_ARRAY
 
-    val text = pyStringLiteralExpression.stringValue
     val entityKind = HuggingFaceUtil.isWhatHuggingFaceEntity(text) ?: return PsiReference.EMPTY_ARRAY
 
     val textRange = getTextRange(element, text)
@@ -34,5 +36,9 @@ class HuggingFaceIdentifierReferenceProvider : PsiReferenceProvider() {
     } else {
       TextRange.EMPTY_RANGE
     }
+  }
+
+  companion object {
+    private val HF_WORTHY_STRING_REGEX = Regex("""[\w.-]+\/[\w.-]+""")
   }
 }
