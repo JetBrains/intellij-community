@@ -1705,6 +1705,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/privateFieldInSuperclass.kt");
             }
 
+            @TestMetadata("privateLocalDelegatedProperty.kt")
+            public void testPrivateLocalDelegatedProperty() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateLocalDelegatedProperty.kt");
+            }
+
             @TestMetadata("privateMember.kt")
             public void testPrivateMember() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
