@@ -74,7 +74,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.log(Level.ALL, "<caret>{}", i)
         }
      }
@@ -87,7 +87,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getFormatterLogger()
-        fun m(int i) {
+        fun m(i: Int) {
           LOG.info("<caret>%d", i)
         }
      }
@@ -95,12 +95,98 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
     doTest(mapOf(TextRange(1, 3) to "i"))
   }
 
-  fun `test log4j2 default logger builder`() {
+  fun `test log4j2 formatted logger with numbered placeholders simple`() {
+    val dollar = "$"
     myFixture.configureByText("Logging.kt", """
       import org.apache.logging.log4j.*
       class Logging {
+        val LOG = LogManager.getFormatterLogger()
+        fun m(fst: Int, snd: Int) {
+          LOG.info("<caret>%2${dollar}s %1${dollar}s", fst, snd)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+  fun `test log4j2 formatted logger with numbered placeholders same index`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG = LogManager.getFormatterLogger()
+        fun m(fst: Int, snd: Int) {
+          LOG.info("<caret>%1${dollar}s %1${dollar}s", fst)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+  fun `test log4j2 formatted logger with numbered placeholders mix`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG = LogManager.getFormatterLogger()
+        fun m(fst: Int, snd: Int) {
+          LOG.info("<caret>%2${dollar}s %1${dollar}s %s %s", fst, snd)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+  fun `test log4j2 formatted logger with previous placeholder simple`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG = LogManager.getFormatterLogger()
+        fun m(fst: Int, snd: Int) {
+          LOG.info("<caret>%s %<s %<s", fst)
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 3) to "fst", TextRange(4, 7) to "fst", TextRange(8, 11) to "fst"))
+  }
+
+  fun `test log4j2 formatted logger with previous placeholder mix`() {
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG: Logger = LogManager.getFormatterLogger()
+        
+        fun m(fst: Int, snd: Int) {
+          LOG.info("<caret>%s %<s %<s %s %<s %<s", fst, snd)
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 3) to "fst", TextRange(4, 7) to "fst", TextRange(8, 11) to "fst",
+                 TextRange(12, 14) to "snd", TextRange(15, 18) to "snd", TextRange(19, 22) to "snd"))
+  }
+
+  fun `test log4j2 formatted logger with numbered and previous placeholder`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.kt", """
+      import org.apache.logging.log4j.*
+      class Logging {
+        val LOG = LogManager.getFormatterLogger()
+        fun m(fst: Int) {
+          LOG.info("<caret>%1${dollar}s %<s", fst)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+
+  fun `test log4j2 default logger builder`() {
+    myFixture.configureByText("Logging.kt",
+                              """
+      import org.apache.logging.log4j.*
+      class Logging {
         val LOG: Logger = LogManager.getLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().log("<caret>{}", i)
         }
      }
@@ -113,7 +199,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getFormatterLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().log("<caret>%d", i)
         }
      }
@@ -126,7 +212,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.info("<caret>{} {}", i, Exception())
         }
      }
@@ -140,7 +226,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.info("<caret>{}", Exception()) 
         }
      }
@@ -154,7 +240,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().log("<caret>{} {}", i, Exception())
         }
      }
@@ -167,7 +253,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.apache.logging.log4j.*
       class Logging {
         val LOG: Logger = LogManager.getLogger()
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().log("<caret>{}", Exception())
         }
      }
@@ -180,7 +266,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.info("<caret>{}", i)
         }
      }
@@ -193,7 +279,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.debug("<caret>{}", i)
         }
      }
@@ -206,7 +292,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.error("<caret>{}", i)
         }
      }
@@ -219,7 +305,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.warn("<caret>{}", i)
         }
      }
@@ -233,7 +319,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.trace("<caret>{}", i)
         }
      }
@@ -247,7 +333,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().log("<caret>{}", i)
         }
      }
@@ -260,7 +346,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().addArgument("foo").setMessage("<caret>{} {}").addArgument("bar").log()
         }
      }
@@ -273,7 +359,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().addArgument("foo").setMessage("<caret>{} {} {}").setMessage("{} {}").addArgument("bar").log()
         }
      }
@@ -286,7 +372,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().addArgument("foo").addArgument("bar").log("<caret>{} {} {}", "baz")
         }
      }
@@ -299,7 +385,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().addArgument("foo").addArgument("bar").log("<caret>{} {} {}", Throwable())
         }
      }
@@ -312,7 +398,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.atInfo().addArgument("foo").addArgument("bar").setCause(Throwable()).log("<caret>{} {} {}")
         }
      }
@@ -328,7 +414,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.info($multilineString, i)
         }
      }
@@ -341,7 +427,7 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
       import org.slf4j.*
       class Logging {
         val LOG: Logger = LoggerFactory.getLogger(Logging.class)
-        void m(int i) {
+        fun m(i: Int) {
           LOG.info("{} <caret>" +  "}", i)
         }
      }

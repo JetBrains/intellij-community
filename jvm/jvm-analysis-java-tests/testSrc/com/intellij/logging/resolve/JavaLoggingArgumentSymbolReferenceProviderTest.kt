@@ -95,6 +95,89 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
     doTest(mapOf(TextRange(1, 3) to "i"))
   }
 
+  fun `test log4j2 formatted logger with numbered placeholders simple`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getFormatterLogger(Logging.class);
+        void m(int fst, int snd) {
+          LOG.info("<caret>%2${dollar}s %1${dollar}s", fst, snd);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 5) to "snd", TextRange(6, 10) to "fst"))
+  }
+
+  fun `test log4j2 formatted logger with numbered placeholders same index`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getFormatterLogger(Logging.class);
+        void m(int fst) {
+          LOG.info("<caret>%1${dollar}s %1${dollar}s", fst);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 5) to "fst", TextRange(6, 10) to "fst"))
+  }
+
+  fun `test log4j2 formatted logger with numbered placeholders mix`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getFormatterLogger(Logging.class);
+        void m(int fst, int snd) {
+          LOG.info("<caret>%2${dollar}s %1${dollar}s %s %s", fst, snd);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 5) to "snd", TextRange(6, 10) to "fst", TextRange(11, 13) to "fst", TextRange(14, 16) to "snd"))
+  }
+
+  fun `test log4j2 formatted logger with previous placeholder simple`() {
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getFormatterLogger(Logging.class);
+        void m(int fst) {
+          LOG.info("<caret>%s %<s %<s", fst);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 3) to "fst", TextRange(4, 7) to "fst", TextRange(8, 11) to "fst"))
+  }
+
+  fun `test log4j2 formatted logger with previous placeholder mix`() {
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getFormatterLogger(Logging.class);
+        void m(int fst, int snd) {
+          LOG.info("<caret>%s %<s %<s %s %<s %<s", fst, snd);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 3) to "fst", TextRange(4, 7) to "fst", TextRange(8, 11) to "fst",
+                 TextRange(12, 14) to "snd", TextRange(15, 18) to "snd", TextRange(19, 22) to "snd"))
+  }
+
+  fun `test log4j2 formatted logger with numbered and previous placeholder`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.*;
+      class Logging {
+        private static final Logger LOG = LogManager.getFormatterLogger(Logging.class);
+        void m(int fst) {
+          LOG.info("<caret>%1${dollar}s %<s", fst);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(1, 5) to "fst", TextRange(6, 9) to "fst"))
+  }
+
   fun `test log4j2 default logger builder`() {
     myFixture.configureByText("Logging.java", """
       import org.apache.logging.log4j.*;
