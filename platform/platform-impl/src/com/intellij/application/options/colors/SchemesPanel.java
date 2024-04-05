@@ -169,6 +169,6 @@ public class SchemesPanel extends SimpleSchemesPanel<EditorColorsScheme> {
 
   @Override
   public boolean useBoldForNonRemovableSchemes() {
-    return true;
+    return false;
   }
 }
