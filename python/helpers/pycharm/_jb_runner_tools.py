@@ -272,15 +272,16 @@ messages.TeamcityServiceMessages = NewTeamcityServiceMessages
 
 # Monkeypatched
 
-def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
+def jb_patch_targets(targets, fs_glue, old_python_glue, new_python_glue, fs_to_python_glue, python_parts_action=None):
     """
-    Converts python target if format "/path/foo.py::parts.to.python" provided by Java to 
-    python specific format
+    Converts python targets format provided by Java to python-specific format
 
-    :param targets: list of dot-separated targets
+    :param targets: list of separated by [old_python_glue] or dots targets
     :param fs_glue: how to glue fs parts of target. I.e.: module "eggs" in "spam" package is "spam[fs_glue]eggs"
-    :param python_glue: how to glue python parts (glue between class and function etc)
+    :param new_python_glue: how to glue python parts (glue between class and function etc)
+    :param old_python_glue: which symbols need to be replaced by [new_python_glue]
     :param fs_to_python_glue: between last fs-part and first python part
+    :param python_parts_action: additional action for python parts
     :return: list of targets with patched separators
     """
     if not targets:
@@ -291,13 +292,29 @@ def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
         match = re.match("^(:?(.+)[.]py::)?(.+)$", target)
         assert match, "unexpected string: {0}".format(target)
         fs_part = match.group(2)
-        python_part = match.group(3).replace(".", python_glue)
+        python_part = match.group(3).replace(old_python_glue, new_python_glue)
+        if python_parts_action is not None:
+            python_part = python_parts_action(fs_part, python_part)
         if fs_part:
             return fs_part.replace("/", fs_glue) + fs_to_python_glue + python_part
         else:
             return python_part
 
     return map(_patch_target, targets)
+
+
+def jb_patch_separator(targets, fs_glue, python_glue, fs_to_python_glue):
+    """
+    Converts python target if format "/path/foo.py::parts.to.python" provided by Java to 
+    python-specific format
+
+    :param targets: list of dot-separated targets
+    :param fs_glue: how to glue fs parts of target. I.e.: module "eggs" in "spam" package is "spam[fs_glue]eggs"
+    :param python_glue: how to glue python parts (glue between class and function etc)
+    :param fs_to_python_glue: between last fs-part and first python part
+    :return: list of targets with patched separators
+    """
+    return jb_patch_targets(targets, fs_glue, '.', python_glue, fs_to_python_glue)
 
 
 def jb_start_tests():
