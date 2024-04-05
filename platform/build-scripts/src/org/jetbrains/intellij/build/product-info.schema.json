@@ -191,13 +191,6 @@
       "description": "IDs of product modules (non-removable bundled plugins)",
       "type": "array",
       "items": {
-        "type": "object"
-      }
-    },
-    "flavors": {
-      "description": "Specifies characteristics of a non-standard variant of the product. For example, a product which bundles JetBrains Runtime 21 instead of JetBrains Runtime 17 will have a flavor with 'id: jbr21'.",
-      "type": "array",
-      "items": {
         "type": "object",
         "additionalProperties": false,
         "minItems": 0,
@@ -220,6 +213,21 @@
           "name",
           "kind"
         ]
+      }
+    },
+    "flavors": {
+      "description": "Specifies characteristics of a non-standard variant of the product. For example, a product which bundles JetBrains Runtime 21 instead of JetBrains Runtime 17 will have a flavor with 'id: jbr21'.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "minItems": 0,
+        "properties": {
+          "id": {
+            "type": "string"
+            }
+          }
       }
     }
   }
