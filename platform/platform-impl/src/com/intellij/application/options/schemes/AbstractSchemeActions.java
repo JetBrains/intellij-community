@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +95,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     if (!schemeExporterNames.isEmpty()) {
       actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.export"),
                                            schemeExporterNames,
-                                           ExportAction::new));
+                                           ExportAction::new,
+                                           null));
     }
 
     if (withSeparator) {
@@ -104,7 +106,10 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     if (!schemeImportersNames.isEmpty()) {
       actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.import", mySchemesPanel.getSchemeTypeName()),
                                            schemeImportersNames,
-                                           ImportAction::new));
+                                           ImportAction::new,
+                                           () -> {
+                                             return mySchemesPanel.isEnabled();
+                                           }));
     }
 
     return actions;
@@ -222,7 +227,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
-      p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme));
+      boolean isAvailable = scheme != null && mySchemesPanel.getModel().canDuplicateScheme(scheme);
+      p.setVisible(isAvailable);
+      p.setEnabled(isAvailable && mySchemesPanel.isEnabled());
     }
 
     @Override
@@ -274,12 +281,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     public void update(@NotNull AnActionEvent e) {
       Presentation p = e.getPresentation();
       T scheme = getCurrentScheme();
-      boolean isEnabled = scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme);
+      boolean isAvailable = scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme);
+      boolean isEnabled = isAvailable && mySchemesPanel.isEnabled();
+
+      p.setEnabled(isEnabled);
       if (mySchemesPanel.hideDeleteActionIfUnavailable()) {
-        p.setEnabledAndVisible(isEnabled);
-      }
-      else {
-        p.setEnabled(isEnabled);
+        p.setVisible(isAvailable);
       }
     }
 
@@ -290,8 +297,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
 
   protected static @NotNull AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
-                                                            @NotNull Collection<@NlsActions.ActionText String> actionNames,
-                                                            @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName) {
+                                                              @NotNull Collection<@NlsActions.ActionText String> actionNames,
+                                                              @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName,
+                                                              @Nullable Computable<Boolean> isEnabledComputable) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     }
@@ -299,6 +307,19 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       @Override
       protected @NotNull AnAction createAction(@NotNull String actionName) {
         return createActionByName.apply(actionName, actionName);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        if (isEnabledComputable != null) {
+          e.getPresentation().setEnabled(isEnabledComputable.compute());
+        }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     };
   }

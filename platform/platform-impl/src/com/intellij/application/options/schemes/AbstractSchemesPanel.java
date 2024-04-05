@@ -357,16 +357,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
 
     @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-
-      Component component = e.getDataContext().getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-      if (component != null) {
-        e.getPresentation().setEnabled(component.isEnabled());
-      }
-    }
-
-    @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return mySchemeActions.getActions().toArray(EMPTY_ARRAY);
     }
