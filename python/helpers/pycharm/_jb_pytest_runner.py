@@ -15,15 +15,30 @@ else:
         from pkg_resources import iter_entry_points
 
 from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, \
-    start_protocol, parse_arguments, \
-    set_parallel_mode, jb_finish_tests
+    start_protocol, parse_arguments, set_parallel_mode, jb_finish_tests, \
+    jb_patch_targets
 from teamcity import pytest_plugin
 import os
+
+_DOCTEST_MODULES_ARG = "--doctest-modules"
+
+def _add_module_to_target(module_name, python_parts):
+    # Doctest: Add module name to path_to_file.py::module_name.class_name.fun_name
+    return module_name + "." + python_parts
+
 
 if __name__ == '__main__':
     path, targets, additional_args = parse_arguments()
     sys.argv += additional_args
-    joined_targets = jb_patch_separator(targets, fs_glue="/", python_glue="::", fs_to_python_glue=".py::")
+
+    # Path pytest targets:
+    if _DOCTEST_MODULES_ARG in additional_args:
+        # Doctest: path_to_file.py::module_name.class_name.fun_name
+        joined_targets = jb_patch_targets(targets, '/', '::', '.', '.py::', _add_module_to_target)
+    else:
+        # Pytest: path_to_file.py::module_name::class_name::fun_name
+        joined_targets = jb_patch_separator(targets, fs_glue="/", python_glue="::", fs_to_python_glue=".py::")
+
     # When file is launched in pytest it should be file.py: you can't provide it as bare module
     joined_targets = [t + ".py" if ":" not in t else t for t in joined_targets]
     sys.argv += [path] if path else joined_targets

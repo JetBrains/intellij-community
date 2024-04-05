@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer;
@@ -65,7 +66,12 @@ public final class PythonDocTestConfigurationProducer extends PythonTestLegacyCo
   // test configuration is always prefered over regular one
   @Override
   public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
-    return self.isProducedBy(getClass());
+    return other.getConfiguration() instanceof PythonRunConfiguration;
+  }
+
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return other.getConfiguration() instanceof PythonRunConfiguration;
   }
 
   private static class PyDocTestVisitor extends PsiRecursiveElementVisitor {
