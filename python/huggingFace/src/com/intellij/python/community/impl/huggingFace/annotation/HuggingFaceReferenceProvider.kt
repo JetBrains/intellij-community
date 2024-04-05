@@ -39,6 +39,6 @@ class HuggingFaceIdentifierReferenceProvider : PsiReferenceProvider() {
   }
 
   companion object {
-    private val HF_WORTHY_STRING_REGEX = Regex("""[\w.-]+\/[\w.-]+""")
+    private val HF_WORTHY_STRING_REGEX = Regex("""[\w.-]+/[\w.-]+""")
   }
 }

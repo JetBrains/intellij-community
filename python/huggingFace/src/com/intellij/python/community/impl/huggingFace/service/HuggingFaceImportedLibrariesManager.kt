@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -28,69 +29,48 @@ class HuggingFaceImportedLibrariesManager(val project: Project) : Disposable {
   private val connection: MessageBusConnection = project.messageBus.connect(this)
   private var documentListener: DocumentListener? = null
   private val cacheFillService: HuggingFaceCacheFillService = project.getService(HuggingFaceCacheFillService::class.java)
+  private val librariesChecker = HuggingFaceLibraryImportChecker(project)
   private enum class LibraryImportStatus { NOT_CHECKED, IMPORTED, NOT_IMPORTED }
 
   init { setupListeners() }
 
   private fun setupListeners() {
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, HuggingFaceFileChangesListener { checkLibraryImportStatus() })
-    val documentListener = HuggingFaceImportDetectionListener { checkLibraryImportStatus() }
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, HuggingFaceFileChangesListener { checkLibraryImportStatusInProject() })
+    val documentListener = HuggingFaceImportDetectionListener(project) { pyFile -> checkLibraryImportStatusInFile(pyFile) }
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, connection)
     this.documentListener = documentListener
   }
 
   @RequiresBackgroundThread
   fun isLibraryImported(): Boolean {
-    if (libraryImportStatus != LibraryImportStatus.IMPORTED) checkLibraryImportStatus()
+    if (libraryImportStatus != LibraryImportStatus.IMPORTED) checkLibraryImportStatusInProject()
     return libraryImportStatus == LibraryImportStatus.IMPORTED
   }
 
-  private fun checkLibraryImportStatus() {
-    if (libraryImportStatus == LibraryImportStatus.IMPORTED) return
+  private fun checkLibraryImportStatusInFile(pyFile: PyFile) {
+    val isImported = librariesChecker.isAnyHFLibraryImportedInFile(pyFile)
+    updateLibraryImportStatus(isImported)
+  }
 
+  private fun checkLibraryImportStatusInProject() {
+    if (libraryImportStatus == LibraryImportStatus.IMPORTED) return
     val isUpdateTime = System.currentTimeMillis() - cacheTimestamp > HuggingFaceLibrariesManagerConfig.INVALIDATION_THRESHOLD_MS
     if (libraryImportStatus == LibraryImportStatus.NOT_CHECKED || isUpdateTime)
     {
-      val isImported = isAnyHFLibraryImportedInProject(project)
-
-      libraryImportStatus = if (isImported) {
-        cacheFillService.triggerCacheFillIfNeeded()
-        detachListeners()
-        LibraryImportStatus.IMPORTED
-      } else {
-        LibraryImportStatus.NOT_IMPORTED
-      }
+      val isImported = librariesChecker.isAnyHFLibraryImportedInProject()
+      updateLibraryImportStatus(isImported)
       cacheTimestamp = System.currentTimeMillis()
     }
   }
 
-  private fun isAnyHFLibraryImportedInProject(project: Project): Boolean {
-    var isLibraryImported = false
-
-    ProjectFileIndex.getInstance(project).iterateContent { virtualFile ->
-      if (virtualFile.extension in listOf("py", "ipynb")) {
-        val pythonFile = PsiManager.getInstance(project).findFile(virtualFile)
-        if (pythonFile is PyFile) isLibraryImported = isLibraryImported or isAnyHFLibraryImportedInFile(pythonFile)
-      }
-      !isLibraryImported
+  private fun updateLibraryImportStatus(newStatus: Boolean) {
+    libraryImportStatus = if (newStatus) {
+      cacheFillService.triggerCacheFillIfNeeded()
+      detachListeners()
+      LibraryImportStatus.IMPORTED
+    } else {
+      LibraryImportStatus.NOT_IMPORTED
     }
-
-    return isLibraryImported
-  }
-
-  private fun isAnyHFLibraryImportedInFile(file: PyFile): Boolean {
-    val isDirectlyImported = file.importTargets.any { importStmt ->
-      HuggingFaceRelevantLibraries.relevantLibraries.any { lib -> importStmt.importedQName.toString().contains(lib) }
-    }
-
-    val isFromImported = file.fromImports.any { fromImport ->
-      HuggingFaceRelevantLibraries.relevantLibraries.any { lib -> fromImport.importSourceQName?.toString()?.contains(lib) == true }
-    }
-
-    val isQualifiedImported: Boolean = file.importTargets.any { importStmt: PyImportElement? ->
-      HuggingFaceRelevantLibraries.relevantLibraries.any { lib: String -> importStmt?.importedQName?.components?.contains(lib) == true }
-    }
-    return isDirectlyImported || isFromImported || isQualifiedImported
   }
 
   private fun detachListeners() {
@@ -106,6 +86,37 @@ class HuggingFaceImportedLibrariesManager(val project: Project) : Disposable {
   }
 }
 
+private class HuggingFaceLibraryImportChecker(val project: Project) {
+  fun isAnyHFLibraryImportedInProject(): Boolean {
+    var isLibraryImported = false
+
+    ProjectFileIndex.getInstance(project).iterateContent { virtualFile ->
+      if (virtualFile.extension in listOf("py", "ipynb")) {
+        val pythonFile = PsiManager.getInstance(project).findFile(virtualFile)
+        if (pythonFile is PyFile) isLibraryImported = isLibraryImported or isAnyHFLibraryImportedInFile(pythonFile)
+      }
+      !isLibraryImported
+    }
+
+    return isLibraryImported
+  }
+
+  fun isAnyHFLibraryImportedInFile(file: PyFile): Boolean {
+    val isDirectlyImported = file.importTargets.any { importStmt ->
+      HuggingFaceRelevantLibraries.relevantLibraries.any { lib -> importStmt.importedQName.toString().contains(lib) }
+    }
+
+    val isFromImported = file.fromImports.any { fromImport ->
+      HuggingFaceRelevantLibraries.relevantLibraries.any { lib -> fromImport.importSourceQName?.toString()?.contains(lib) == true }
+    }
+
+    val isQualifiedImported: Boolean = file.importTargets.any { importStmt: PyImportElement? ->
+      HuggingFaceRelevantLibraries.relevantLibraries.any { lib: String -> importStmt?.importedQName?.components?.contains(lib) == true }
+    }
+    return isDirectlyImported || isFromImported || isQualifiedImported
+  }
+}
+
 private class HuggingFaceFileChangesListener(private val onThresholdReached: () -> Unit) : BulkFileListener {
   private var fileChangesCounter = 0
 
@@ -117,10 +128,15 @@ private class HuggingFaceFileChangesListener(private val onThresholdReached: () 
   }
 }
 
-private class HuggingFaceImportDetectionListener(private val onImportDetected: () -> Unit) : DocumentListener {
+private class HuggingFaceImportDetectionListener(
+  private val project: Project,
+  private val onImportDetected: (PyFile) -> Unit
+) : DocumentListener {
   override fun documentChanged(event: DocumentEvent) {
-    if (event.newFragment.toString().contains("import")) {
-      onImportDetected()
+    if (!event.newFragment.toString().contains("import")) return
+    val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
+    PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
+      if (psiFile is PyFile) onImportDetected(psiFile)
     }
   }
 }
