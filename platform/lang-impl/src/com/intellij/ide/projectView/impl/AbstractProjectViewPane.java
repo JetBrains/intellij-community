@@ -684,7 +684,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       @Override
       public boolean isExpandAllVisible() {
-        return isExpandAllAllowed() && Registry.is("ide.project.view.expand.all.action.visible");
+        return isExpandAllAllowed() && Registry.is("ide.project.view.expand.all.action.visible") &&
+               !Registry.is("ide.project.view.replace.expand.all.with.expand.recursively");
+      }
+
+      @Override
+      public boolean isExpandAllEnabled() {
+        return super.isExpandAllEnabled() && !Registry.is("ide.project.view.replace.expand.all.with.expand.recursively");
       }
 
       @Override
