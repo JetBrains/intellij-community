@@ -512,7 +512,8 @@ fun MutableEntityStorage.modifyEntity(
     var filePath: VirtualFileUrl
   }
 
-  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(PackagingElementEntity) {
+  companion object : EntityType<FileOrDirectoryPackagingElementEntity, Builder<FileOrDirectoryPackagingElementEntity>>(
+    PackagingElementEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

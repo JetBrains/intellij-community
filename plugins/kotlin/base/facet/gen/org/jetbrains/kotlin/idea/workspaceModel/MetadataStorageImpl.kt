@@ -21,10 +21,10 @@ object MetadataStorageImpl: MetadataStorageBase() {
         
         var typeMetadata: StorageTypeMetadata
         
-        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "parentId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))), withDefault = false),
-OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "parentId", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.jps.entities.ModuleId", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "presentableName", valueType = primitiveTypeStringNotNullable, withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
         
         addMetadata(typeMetadata)
         
@@ -74,12 +74,12 @@ OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = 
 
     override fun initializeMetadataHash() {
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity", metadataHash = 1261471986)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = -575206713)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = -684863835)
         addMetadataHash(typeFqn = "com.intellij.util.descriptors.ConfigFileItem", metadataHash = -445249281)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.config.KotlinModuleKind", metadataHash = -848779934)
         addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.CompilerSettingsData", metadataHash = -2034595788)
-        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId", metadataHash = 236435207)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1609236105)
+        addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsId", metadataHash = -1378190363)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -592653735)
     }
 
 }

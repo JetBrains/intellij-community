@@ -19,7 +19,8 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)
-open class ExternalProjectsBuildClasspathEntityImpl(private val dataSource: ExternalProjectsBuildClasspathEntityData) : ExternalProjectsBuildClasspathEntity, WorkspaceEntityBase(dataSource) {
+open class ExternalProjectsBuildClasspathEntityImpl(private val dataSource: ExternalProjectsBuildClasspathEntityData) : ExternalProjectsBuildClasspathEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -46,7 +47,8 @@ open class ExternalProjectsBuildClasspathEntityImpl(private val dataSource: Exte
   }
 
 
-  class Builder(result: ExternalProjectsBuildClasspathEntityData?) : ModifiableWorkspaceEntityBase<ExternalProjectsBuildClasspathEntity, ExternalProjectsBuildClasspathEntityData>(result), ExternalProjectsBuildClasspathEntity.Builder {
+  class Builder(result: ExternalProjectsBuildClasspathEntityData?) : ModifiableWorkspaceEntityBase<ExternalProjectsBuildClasspathEntity, ExternalProjectsBuildClasspathEntityData>(
+    result), ExternalProjectsBuildClasspathEntity.Builder {
     constructor() : this(ExternalProjectsBuildClasspathEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -140,7 +142,8 @@ class ExternalProjectsBuildClasspathEntityData : WorkspaceEntityData<ExternalPro
   }
 
   override fun getMetadata(): EntityMetadata {
-    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity") as EntityMetadata
+    return MetadataStorageImpl.getMetadataByTypeFqn(
+      "com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

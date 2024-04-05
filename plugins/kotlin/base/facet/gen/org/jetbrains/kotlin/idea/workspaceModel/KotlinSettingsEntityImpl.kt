@@ -32,10 +32,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.util.descriptors.ConfigFileItem
-import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity.Builder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(5)

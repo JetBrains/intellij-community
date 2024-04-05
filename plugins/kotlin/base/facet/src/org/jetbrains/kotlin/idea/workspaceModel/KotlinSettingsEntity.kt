@@ -15,10 +15,7 @@ import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.util.descriptors.ConfigFileItem
-import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinModuleKind
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
-import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity.Builder
 
 interface KotlinSettingsEntity : ModuleSettingsBase {
     val sourceRoots: List<String>
