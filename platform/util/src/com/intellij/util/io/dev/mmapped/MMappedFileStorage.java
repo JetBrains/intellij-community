@@ -459,11 +459,19 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
       //MAYBE RC: this could cause noticeable pauses, hence it may worth to enlarge file in advance, async.
       //          i.e. schedule enlargement as soon as last page is 50% full?
       //          It wouldn't work good for completely random-access storages, but most our use-cases are either append-only
-      //          logs, or file-attributes, which indexed by fileId, which are growing quite monotonically, so it may work
+      //          logs, or file-attributes, which indexed by fileId, which are growing quite monotonically, so it may work.
+      //          ...But it is tricky to implement it on MMappedFileStorage level, since MMappedFileStorage has only info
+      //          about page usage, but no info about page content usage -- i.e. MMappedFileStorage doesn't know which bytes
+      //          on the page is already accessed by client(s), to forecast how soon the page will be 'exhausted' and the next
+      //          page likely requested. 'Clients' on the other side, have this information, so it is much easier to implement
+      //          forecasting on the client level -- but making it per-client is much less universal/more intrusive solution.
 
       long startedAtNs = System.nanoTime();
       try {
         ensureFileRegionAllocatedAndZeroed(regionAllocationAtomicityLock, channel, pageSize);
+        //MAYBE RC: fill the page with 0 (via Unsafe.setMemory), _in addition_ to file region already filled with 0?
+        //          It shouldn't be needed, but we have a lot of EA about non-zero values in not-yet-written mapped
+        //          file regions, so maybe this helps?
         return channel.map(READ_WRITE, offsetInFile, pageSize);
       }
       finally {
@@ -475,14 +483,29 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     private void ensureFileRegionAllocatedAndZeroed(@NotNull RegionAllocationAtomicityLock regionAllocationAtomicityLock,
                                                     @NotNull FileChannel channel,
                                                     int pageSize) throws IOException {
-      //The difference between the branches is: in the 'correct' branch we don't touch already existing part of the
-      // file -- because it could be already written to, and we don't want to ruin that data.
-      //In the 'recovering' branch we intentionally zero _all_ the region -- because we're sure nobody should write into it,
-      // but it could be some garbage in it, which we want to erase
+      //Why do we zero a page via writing to FileChannel, and not just mmap page, and then fill the mmapped buffer with
+      // zeros? Because mmap is tricky: it is possible to write to a mmapped buffer beyond current EOF -- but it is
+      // an 'undefined behavior', and results vary on different platforms, and could be anything from OK to SIGBUS, and
+      // to very tricky bugs.
+      //Why do we write zeros from start to finish, and not just write single 0 at the end of region, and allow OS
+      // to expand the file and fill everything until new EOF? Because on many modern FSes file could be sparse, and
+      // a single write to the far end of the file could leave huge unallocated gap in the middle of the file -- the
+      // gap which lately leads to SIGBUS if e.g. no disk space to allocate block for it.
+      // Filling the file explicitly by writing zeroes _seems to_ (as of today) forces FS to allocate all the blocks
+      // immediately -- so disk space or any other disk-related issues present themself as some kind of IOException,
+      // and not as SIGBUS.
 
       RegionAllocationAtomicityLock.Region region = regionAllocationAtomicityLock.region(offsetInFile, pageSize);
 
+      //The difference between the branches:
+      //In the 'correct' branch: we don't touch already existing part of the file -- because it could be already written
+      //  to, and we don't want to ruin that data.
+      //In the unfinished (='recovering') branch: we intentionally zero _all_ the region -- because we know we didn't
+      //  finish page allocation, so page wasn't published for use => nobody should _legally_ write anything meaningful
+      //  into it, but page-zeroing is likely also un-finished, hence it could be some _garbage_ on the page, which we
+      //  want to erase
       if (region.isUnfinished()) {
+        //recover from page-allocation-and-zeroing-interrupted-in-the-middle
         LOG.warn("mmapped file region " + region + " allocation & zeroing has been started, " +
                  "but hasn't been properly finished -- IDE was crashed/killed? -> try finishing the job");
         IOUtil.fillFileRegionWithZeros(channel, offsetInFile, offsetInFile + pageSize);
@@ -528,7 +551,7 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
     }
 
 
-    public static void unmapBuffer(@NotNull ByteBuffer buffer) throws Exception {
+    private static void unmapBuffer(@NotNull ByteBuffer buffer) throws Exception {
       if (!buffer.isDirect()) {
         return;
       }
