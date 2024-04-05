@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -27,25 +26,22 @@ import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.readField
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.writeField;
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
-public final class ShelvedBinaryFile implements JDOMExternalizable {
+public final class ShelvedBinaryFile {
   private static final String BEFORE_PATH_FIELD_NAME = "BEFORE_PATH";
   private static final String AFTER_PATH_FIELD_NAME = "AFTER_PATH";
   private static final String SHELVED_PATH_FIELD_NAME = "SHELVED_PATH";
 
-  public String BEFORE_PATH;
-  public String AFTER_PATH;
-  @Nullable public String SHELVED_PATH;         // null if binary file was deleted
-  private Change myChange;
+  public final String BEFORE_PATH;
+  public final String AFTER_PATH;
+  @Nullable public final String SHELVED_PATH;         // null if binary file was deleted
 
-  ShelvedBinaryFile() {
-  }
+  private Change myChange;
 
   public ShelvedBinaryFile(String beforePath, String afterPath, @Nullable String shelvedPath) {
     assert beforePath != null || afterPath != null;
-    BEFORE_PATH = beforePath;
-    AFTER_PATH = afterPath;
-    SHELVED_PATH = shelvedPath;
-    convertPathsToSystemIndependent();
+    BEFORE_PATH = convertToSystemIndependent(beforePath);
+    AFTER_PATH = convertToSystemIndependent(afterPath);
+    SHELVED_PATH = convertToSystemIndependent(shelvedPath);
   }
 
   @Nullable
@@ -53,30 +49,25 @@ public final class ShelvedBinaryFile implements JDOMExternalizable {
     return beforePath != null ? FileUtil.toSystemIndependentName(beforePath) : null;
   }
 
-  private void convertPathsToSystemIndependent() {
-    BEFORE_PATH = convertToSystemIndependent(BEFORE_PATH);
-    AFTER_PATH = convertToSystemIndependent(AFTER_PATH);
-    SHELVED_PATH = convertToSystemIndependent(SHELVED_PATH);
-  }
-
-  @Override
-  public void readExternal(@NotNull Element element) {
+  public static @NotNull ShelvedBinaryFile readExternal(@NotNull Element element) {
+    String beforePath = null;
+    String afterPath = null;
+    String shelvedPath = null;
     for (Map.Entry<String, String> field : readFields(element).entrySet()) {
       String value = Objects.requireNonNull(field.getValue());
       if (field.getKey().equals(BEFORE_PATH_FIELD_NAME)) {
-        BEFORE_PATH = value;
+        beforePath = value;
       }
       else if (field.getKey().equals(AFTER_PATH_FIELD_NAME)) {
-        AFTER_PATH = value;
+        afterPath = value;
       }
       else if (field.getKey().equals(SHELVED_PATH_FIELD_NAME)) {
-        SHELVED_PATH = value;
+        shelvedPath = value;
       }
     }
-    convertPathsToSystemIndependent();
+    return new ShelvedBinaryFile(beforePath, afterPath, shelvedPath);
   }
 
-  @Override
   public void writeExternal(@NotNull Element element) {
     writeField(element, BEFORE_PATH_FIELD_NAME, BEFORE_PATH);
     writeField(element, AFTER_PATH_FIELD_NAME, AFTER_PATH);

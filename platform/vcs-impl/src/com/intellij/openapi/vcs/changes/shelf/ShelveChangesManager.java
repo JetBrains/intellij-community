@@ -166,7 +166,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                 @Override
                 public @NotNull Parent writeScheme(@NotNull ShelvedChangeList scheme) throws WriteExternalException {
                   Element child = new Element(ELEMENT_CHANGELIST);
-                  scheme.writeExternal(child);
+                  ShelvedChangeList.writeExternal(scheme, child);
                   if (shouldCollapsePath) {
                     myPathMacroSubstitutor.collapsePaths(child);
                   }
@@ -277,10 +277,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   private @NotNull ShelvedChangeList readOneShelvedChangeList(@NotNull Element element) throws InvalidDataException {
-    ShelvedChangeList data = new ShelvedChangeList();
     myPathMacroSubstitutor.expandPaths(element);
-    data.readExternal(element);
-    return data;
+    return ShelvedChangeList.readExternal(element);
   }
 
   //load old shelf information from workspace.xml without moving .patch and binary files into new directory

@@ -6,7 +6,6 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -22,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public final class ShelvedChangeList implements JDOMExternalizable, ExternalizableScheme {
+public final class ShelvedChangeList implements ExternalizableScheme {
   private static final Logger LOG = Logger.getInstance(ShelvedChangeList.class);
 
   @NonNls private static final String NAME_ATTRIBUTE = "name";
@@ -35,20 +34,33 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
   @NonNls private static final String DESCRIPTION_FIELD_NAME = "DESCRIPTION";
 
   private Path myPath;
+  private @NotNull String mySchemeName;
   /**
    * Use {@link ShelvedChangeList#getDescription()} and {@link ShelvedChangeList#setDescription(String)} instead.
    */
   @ApiStatus.Internal public @NlsSafe String DESCRIPTION;
   private Date myDate;
-  private volatile List<ShelvedChange> myChanges;
-  private volatile @Nls String myChangesLoadingError = null;
-  private List<ShelvedBinaryFile> myBinaryFiles;
+
   private boolean myRecycled;
   private boolean myToDelete;
   private boolean myIsDeleted;
-  private String mySchemeName;
 
-  ShelvedChangeList() {
+  private final List<ShelvedBinaryFile> myBinaryFiles;
+
+  private volatile List<ShelvedChange> myChanges;
+  private volatile @Nls String myChangesLoadingError = null;
+
+  ShelvedChangeList(@Nullable Path path, @NotNull String name, @NlsSafe String description,
+                    long time, boolean isRecycled, boolean isToDelete, boolean isDeleted,
+                    @NotNull List<ShelvedBinaryFile> binaryFiles) {
+    myPath = path;
+    mySchemeName = name;
+    DESCRIPTION = description;
+    myDate = new Date(time);
+    myRecycled = isRecycled;
+    myToDelete = isToDelete;
+    myIsDeleted = isDeleted;
+    myBinaryFiles = binaryFiles;
   }
 
   public ShelvedChangeList(@NotNull Path path,
@@ -63,11 +75,7 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
                     List<ShelvedBinaryFile> binaryFiles,
                     @NotNull List<ShelvedChange> shelvedChanges,
                     long time) {
-    myPath = path;
-    DESCRIPTION = description;
-    myDate = new Date(time);
-    myBinaryFiles = binaryFiles;
-    mySchemeName = DESCRIPTION;
+    this(path, description, description, time, false, false, false, binaryFiles);
     myChanges = shelvedChanges;
   }
 
@@ -77,62 +85,6 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
 
   public void setRecycled(final boolean recycled) {
     myRecycled = recycled;
-  }
-
-  @Override
-  public void readExternal(@NotNull Element element) throws InvalidDataException {
-    myPath = null;
-    DESCRIPTION = null;
-    for (Map.Entry<String, String> field : readFields(element).entrySet()) {
-      if (PATH_FIELD_NAME.equals(field.getKey())) {
-        String value = field.getValue();
-        if (!value.isEmpty()) {
-          myPath = Paths.get(value);
-        }
-      }
-      else if (DESCRIPTION_FIELD_NAME.equals(field.getKey())) {
-        DESCRIPTION = field.getValue();
-      }
-    }
-
-    mySchemeName = element.getAttributeValue(NAME_ATTRIBUTE);
-    myDate = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
-    myRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_RECYCLED_CHANGELIST));
-    myToDelete = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_TOBE_DELETED_CHANGELIST));
-    myIsDeleted = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_DELETED_CHANGELIST));
-    final List<Element> children = element.getChildren(ELEMENT_BINARY);
-    myBinaryFiles = new ArrayList<>(children.size());
-    for (Element child : children) {
-      ShelvedBinaryFile binaryFile = new ShelvedBinaryFile();
-      binaryFile.readExternal(child);
-      myBinaryFiles.add(binaryFile);
-    }
-  }
-
-  @Override
-  public void writeExternal(@NotNull Element element) {
-    writeExternal(element, this);
-  }
-
-  private static void writeExternal(@NotNull Element element, @NotNull ShelvedChangeList shelvedChangeList) {
-    if (shelvedChangeList.myPath != null) {
-      writeField(element, PATH_FIELD_NAME, shelvedChangeList.myPath.toString().replace(File.separatorChar, '/'));
-    }
-    writeField(element, DESCRIPTION_FIELD_NAME, shelvedChangeList.DESCRIPTION);
-    element.setAttribute(NAME_ATTRIBUTE, shelvedChangeList.getName());
-    element.setAttribute(ATTRIBUTE_DATE, Long.toString(shelvedChangeList.myDate.getTime()));
-    element.setAttribute(ATTRIBUTE_RECYCLED_CHANGELIST, Boolean.toString(shelvedChangeList.isRecycled()));
-    if (shelvedChangeList.isMarkedToDelete()) {
-      element.setAttribute(ATTRIBUTE_TOBE_DELETED_CHANGELIST, "true");
-    }
-    if (shelvedChangeList.isDeleted()) {
-      element.setAttribute(ATTRIBUTE_DELETED_CHANGELIST, "true");
-    }
-    for (ShelvedBinaryFile file : shelvedChangeList.getBinaryFiles()) {
-      Element child = new Element(ELEMENT_BINARY);
-      file.writeExternal(child);
-      element.addContent(child);
-    }
   }
 
   @Nls
@@ -278,6 +230,58 @@ public final class ShelvedChangeList implements JDOMExternalizable, Externalizab
    */
   public void updateDate() {
     myDate = new Date(System.currentTimeMillis());
+  }
+
+  public static @NotNull ShelvedChangeList readExternal(@NotNull Element element) throws InvalidDataException {
+    Path path = null;
+    String description = null;
+    for (Map.Entry<String, String> field : readFields(element).entrySet()) {
+      if (PATH_FIELD_NAME.equals(field.getKey())) {
+        String value = field.getValue();
+        if (!value.isEmpty()) {
+          path = Paths.get(value);
+        }
+      }
+      else if (DESCRIPTION_FIELD_NAME.equals(field.getKey())) {
+        description = field.getValue();
+      }
+    }
+
+    String name = element.getAttributeValue(NAME_ATTRIBUTE, "");
+    long time = Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE));
+    boolean isRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_RECYCLED_CHANGELIST));
+    boolean isToDelete = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_TOBE_DELETED_CHANGELIST));
+    boolean isDeleted = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_DELETED_CHANGELIST));
+
+    List<Element> children = element.getChildren(ELEMENT_BINARY);
+    List<ShelvedBinaryFile> binaryFiles = new ArrayList<>(children.size());
+    for (Element child : children) {
+      ShelvedBinaryFile binaryFile = ShelvedBinaryFile.readExternal(child);
+      binaryFiles.add(binaryFile);
+    }
+
+    return new ShelvedChangeList(path, name, description, time, isRecycled, isToDelete, isDeleted, binaryFiles);
+  }
+
+  public static void writeExternal(@NotNull ShelvedChangeList shelvedChangeList, @NotNull Element element) {
+    if (shelvedChangeList.myPath != null) {
+      writeField(element, PATH_FIELD_NAME, shelvedChangeList.myPath.toString().replace(File.separatorChar, '/'));
+    }
+    writeField(element, DESCRIPTION_FIELD_NAME, shelvedChangeList.DESCRIPTION);
+    element.setAttribute(NAME_ATTRIBUTE, shelvedChangeList.getName());
+    element.setAttribute(ATTRIBUTE_DATE, Long.toString(shelvedChangeList.myDate.getTime()));
+    element.setAttribute(ATTRIBUTE_RECYCLED_CHANGELIST, Boolean.toString(shelvedChangeList.isRecycled()));
+    if (shelvedChangeList.isMarkedToDelete()) {
+      element.setAttribute(ATTRIBUTE_TOBE_DELETED_CHANGELIST, "true");
+    }
+    if (shelvedChangeList.isDeleted()) {
+      element.setAttribute(ATTRIBUTE_DELETED_CHANGELIST, "true");
+    }
+    for (ShelvedBinaryFile file : shelvedChangeList.getBinaryFiles()) {
+      Element child = new Element(ELEMENT_BINARY);
+      file.writeExternal(child);
+      element.addContent(child);
+    }
   }
 
   static void writeField(@NotNull Element element, @NotNull String name, @Nullable String value) {
