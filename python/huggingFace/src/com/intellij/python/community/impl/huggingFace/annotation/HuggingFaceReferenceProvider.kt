@@ -20,8 +20,8 @@ class HuggingFaceIdentifierReferenceProvider : PsiReferenceProvider() {
     if (!HF_WORTHY_STRING_REGEX.matches(text)) return PsiReference.EMPTY_ARRAY
 
     val project = element.project
-    val manager = project.getService(HuggingFacePluginManager::class.java)
-    if (!manager.isLibraryImported()) return PsiReference.EMPTY_ARRAY
+    val pluginManager = project.getService(HuggingFacePluginManager::class.java)
+    if (!pluginManager.isActive()) return PsiReference.EMPTY_ARRAY
 
     val entityKind = HuggingFaceUtil.isWhatHuggingFaceEntity(text) ?: return PsiReference.EMPTY_ARRAY
 
