@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.gradleCodeInsightCommon">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
+    <plugin id="org.jetbrains.plugins.gradle"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.project-wizard.idea"/>
