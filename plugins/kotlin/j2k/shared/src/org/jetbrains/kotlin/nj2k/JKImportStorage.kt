@@ -47,6 +47,7 @@ class JKImportStorage(languageSettings: LanguageVersionSettings) {
 
     companion object {
         private val JAVA_TYPE_WRAPPERS_WHICH_HAVE_CONFLICTS_WITH_KOTLIN_ONES = setOf(
+            FqName(CommonClassNames.JAVA_LANG_BOOLEAN),
             FqName(CommonClassNames.JAVA_LANG_BYTE),
             FqName(CommonClassNames.JAVA_LANG_SHORT),
             FqName(CommonClassNames.JAVA_LANG_LONG),

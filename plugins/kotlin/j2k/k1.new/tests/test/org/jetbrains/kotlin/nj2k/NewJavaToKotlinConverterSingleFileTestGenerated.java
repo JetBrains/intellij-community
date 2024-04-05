@@ -801,6 +801,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/boxedType/boolean.java");
         }
 
+        @TestMetadata("booleanStaticMember.java")
+        public void testBooleanStaticMember() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/boxedType/booleanStaticMember.java");
+        }
+
+        @TestMetadata("booleanStaticMember2.java")
+        public void testBooleanStaticMember2() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/boxedType/booleanStaticMember2.java");
+        }
+
+        @TestMetadata("booleanStaticMember3.java")
+        public void testBooleanStaticMember3() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/boxedType/booleanStaticMember3.java");
+        }
+
         @TestMetadata("Boxing.java")
         public void testBoxing() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/boxedType/Boxing.java");
