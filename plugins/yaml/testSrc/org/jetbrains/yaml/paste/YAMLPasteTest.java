@@ -90,6 +90,16 @@ public abstract class YAMLPasteTest extends BasePlatformTestCase {
     doTest(INDENTED_SAMPLE);
   }
 
+  public void testPasteLinesIntoSequence() {
+    doTest("line1\nline2\nline3");
+  }
+  public void testPasteLinesIntoSequence_alreadyPrefixed() {
+    doTest("line1\n- line2\n- line3");
+  }
+  public void testPasteLinesIntoSequence_allPrefixed() {
+    doTest("- line1\n- line2\n- line3");
+  }
+
   public void testPasteItem_zeroIndent() {
     doTest(ZERO_INDENT_SAMPLE);
   }

@@ -15,6 +15,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.*;
@@ -140,13 +141,69 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
       return specialKeyPaste;
     }
 
-    if (indent == 0 || !canBeInsertedWithIndentAdjusted(file, caretOffset)) {
-      // It could be copy and paste of lines
-      // User could fix indentation later if he wanted to copy some block into top-level block
+    // It could be copy and paste of lines
+    // User could fix indentation later if he wanted to copy some block into top-level block
+    if (indent == 0) {
       return text;
     }
 
-    return indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
+    LineAdjustmentMode adjustmentMode = adjustmentAfterInsertion(file, caretOffset);
+    if (adjustmentMode == LineAdjustmentMode.None) {
+      return text;
+    }
+
+    if (adjustmentMode == LineAdjustmentMode.Indent) {
+      return indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
+    }
+
+    List<String> lines = LineTokenizer.tokenizeIntoList(text, false, false);
+    if (lines.isEmpty()) {
+      return text;
+    }
+
+    String firstLine = lines.get(0);
+
+    // we are inserting a yaml fragment into a value
+    // we don't turn the remaining lines into sequence items, just reindent them
+    if (firstLine.trim().endsWith(":")) {
+      return indentText(text, StringUtil.repeatSymbol(' ', indent), shouldInsertIndentAtTheEnd(caretOffset, document));
+    }
+
+    // if we have separate lines pasted into a sequence, turn each line into a sequence item
+    return adjustListItems(lines, indent + fixOffset(document, caretOffset));
+  }
+
+  private static int fixOffset(Document document, int caretOffset) {
+    // the initially computed indent includes everything before the caret,
+    // so we have to trim the '-' prefix and following ws
+    CharSequence sequence = document.getCharsSequence();
+    int offset = 0;
+    while (sequence.charAt(caretOffset - 1 + offset) != '-') {
+      offset--;
+    }
+    return offset - 1;
+  }
+
+  private static String adjustListItems(List<String> lines, int indent) {
+    String firstLine = lines.get(0).substring(YAMLTextUtil.getStartIndentSize(lines.get(0)));
+    // if we are pasting a list of sequence items into a sequence,
+    //  there is a high probability that we are inlining them into that sequence, so do that
+    String firstLineAdjusted = ContainerUtil.and(lines, s -> s.trim().startsWith("-"))
+      ? StringUtil.trimLeading(StringUtil.trimStart(firstLine, "-")) : firstLine;
+    return firstLineAdjusted + "\n" +
+           lines.stream().skip(1).map(line -> {
+             // remove common indent and add needed indent
+             if (isEmptyLine(line)) {
+               // do not indent empty lines at all
+               return "";
+             }
+             else if (line.trim().startsWith("-")) {
+               return StringUtil.repeatSymbol(' ', indent) + StringUtil.trimLeading(line);
+             }
+             else {
+               return StringUtil.repeatSymbol(' ', indent) + "- " + StringUtil.trimLeading(line);
+             }
+           }).reduce((left, right) -> left + "\n" + right).orElse("");
   }
 
   private static boolean isCommentElement(@Nullable PsiElement element) {
@@ -167,18 +224,24 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     return false; // insert at the end of the document
   }
 
-  private static boolean canBeInsertedWithIndentAdjusted(PsiFile file, int caretOffset) {
+  private enum LineAdjustmentMode {
+    None,
+    Indent,
+    ListItem
+  }
+
+  private static LineAdjustmentMode adjustmentAfterInsertion(PsiFile file, int caretOffset) {
     PsiElement element = file.findElementAt(caretOffset);
 
     if (element != null) {
       if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.SCALAR_LIST ||
           PsiUtilCore.getElementType(element.getParent()) == YAMLElementTypes.SCALAR_LIST_VALUE) {
-        return false;
+        return LineAdjustmentMode.None;
       }
       TokenSet ends = TokenSet.create(YAMLTokenTypes.EOL, YAMLTokenTypes.SCALAR_EOL, YAMLTokenTypes.COMMENT);
       IElementType nextType = PsiUtilCore.getElementType(element.getNextSibling());
       if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT && (nextType == null || ends.contains(nextType))) {
-        return true;
+        return LineAdjustmentMode.Indent;
       }
     }
 
@@ -188,7 +251,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
         previousElement = file.findElementAt(caretOffset - 1);
       }
       else {
-        return true;
+        return LineAdjustmentMode.Indent;
       }
     }
     else {
@@ -196,9 +259,17 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
     if (PsiUtilCore.getElementType(previousElement) == TokenType.WHITE_SPACE) previousElement = PsiTreeUtil.prevLeaf(previousElement, true);
 
-    return PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.INDENT ||
-           PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.EOL ||
-           PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.SEQUENCE_MARKER;
+    if (PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.INDENT ||
+        PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.EOL) {
+      return LineAdjustmentMode.Indent;
+    }
+
+    if (PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.SEQUENCE_MARKER ||
+      PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.TEXT && previousElement.textMatches("-")) {
+      return LineAdjustmentMode.ListItem;
+    }
+
+    return LineAdjustmentMode.None;
   }
 
   private static @NotNull String indentText(@NotNull String text, @NotNull String curLineIndent, boolean shouldInsertIndentInTheEnd) {
