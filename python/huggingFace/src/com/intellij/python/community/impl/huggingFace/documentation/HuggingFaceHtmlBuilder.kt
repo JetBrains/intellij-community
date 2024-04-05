@@ -24,12 +24,12 @@ class HuggingFaceHtmlBuilder(
   private val entityKind: HuggingFaceEntityKind
 ) {
   @NlsSafe
-  suspend fun build(noHeader: Boolean = false): String {
-    val cardHeaderChunk = if (noHeader) {
-      HtmlChunk.empty()
-    } else {
-      generateCardHeader(modelDataApiContent)
+  suspend fun build(customHeader: HtmlChunk? = null): String {
+    val cardHeaderChunk = when (customHeader) {
+      null -> generateCardHeader(modelDataApiContent)
+      else -> customHeader
     }
+
     @NlsSafe val convertedHtml = readAction { DocMarkdownToHtmlConverter.convert(project, modelCardContent, PythonLanguage.INSTANCE) }
 
     val wrappedBodyContent = HtmlChunk.div()
