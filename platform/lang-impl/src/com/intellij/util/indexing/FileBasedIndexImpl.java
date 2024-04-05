@@ -878,22 +878,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  IntList ensureDirtyFileIndexesDeleted() {
+  IntList getOrphanDirtyFileIds() {
     synchronized (myOrphanDirtyFileIds) {
-      return ensureDirtyFileIndexesDeleted(myOrphanDirtyFileIds);
+      return new IntArrayList(myOrphanDirtyFileIds);
     }
   }
 
-  @NotNull
-  IntList ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
-    if (dirtyFiles.isEmpty()) return new IntArrayList();
+  void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
+    if (dirtyFiles.isEmpty()) return;
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
       for (int fileId : dirtyFiles) {
         removeFileDataFromIndices(indexIDs, fileId, null);
       }
     });
-    return new IntArrayList(dirtyFiles);
   }
 
   @Override

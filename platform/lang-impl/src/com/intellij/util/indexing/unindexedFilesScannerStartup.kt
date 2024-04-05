@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
@@ -24,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlin.math.max
 
 @JvmField
 internal val FIRST_SCANNING_REQUESTED: Key<FirstScanningState> = Key.create("FIRST_SCANNING_REQUESTED")
@@ -87,14 +89,24 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) emptyList()
   else {
-    val projectQueueFile = project.getQueueFile()
-    val projectDirtyFileIds = PersistentDirtyFilesQueue.readIndexingQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
-    val processedIds = fileBasedIndex.ensureDirtyFileIndexesDeleted()
-    val projectProcessedIds = fileBasedIndex.ensureDirtyFileIndexesDeleted(projectDirtyFileIds)
-    removeCurrentFile(projectQueueFile)
-    val projectFiles = findProjectFiles(project, processedIds + projectProcessedIds, if (findAllVirtualFiles) -1 else dumbModeThreshold - 1)
-    scheduleForIndexing(projectFiles, fileBasedIndex, dumbModeThreshold - 1)
-    projectFiles
+    val projectDirtyFileIdsFromProjectQueue = PersistentDirtyFilesQueue.readIndexingQueue(project.getQueueFile(), ManagingFS.getInstance().creationTimestamp)
+    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, fileBasedIndex.orphanDirtyFileIds)
+    val allProjectDirtyFileIds = projectDirtyFileIdsFromProjectQueue + projectDirtyFilesFromOrphanQueue.mapNotNull { (it as? VirtualFileWithId)?.id }
+    fileBasedIndex.ensureDirtyFileIndexesDeleted(allProjectDirtyFileIds)
+    removeCurrentFile(project.getQueueFile())
+
+    val vfToFindLimit = if (findAllVirtualFiles) -1
+    else max(0, dumbModeThreshold - projectDirtyFilesFromOrphanQueue.size - 1)
+    
+    val projectDirtyFilesFromProjectQueue = findProjectFiles(project, projectDirtyFileIdsFromProjectQueue, vfToFindLimit)
+    val projectDirtyFiles = projectDirtyFilesFromProjectQueue + projectDirtyFilesFromOrphanQueue
+    if (!findAllVirtualFiles) {
+      assert(projectDirtyFiles.size < dumbModeThreshold) {
+        "Only ${dumbModeThreshold - 1} of virtual files are needed to put them in FilesToUpdateCollector during scanning in smart mode."
+      }
+    }
+    scheduleForIndexing(projectDirtyFiles, fileBasedIndex, dumbModeThreshold - 1)
+    projectDirtyFiles
   }
 }
 
@@ -107,7 +119,7 @@ private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection
       .mapNotNull { fileId ->
         try {
           val file = fs.findFileById(fileId)
-          if (file != null && fileBasedIndex.getContainingProjects(file).contains(project)) file else null
+          if (file != null && fileBasedIndex.belongsToProjectIndexableFiles(file, project)) file else null
         }
         catch (e: VfsRootAccessNotAllowedError) {
           if (!exceptionLogged) {
