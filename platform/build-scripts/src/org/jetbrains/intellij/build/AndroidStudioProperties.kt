@@ -76,7 +76,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     toolsJarRequired = true
     scrambleMainJar = false
     buildSourcesArchive = true
-    buildCrossPlatformDistribution = true
 
     // Software Bill of Materials (SBOM).
     sbomOptions.creator = "Organization: Google LLC"
