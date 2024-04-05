@@ -10,6 +10,7 @@ interface TGroup {
 
     val testSourcesPath: String
     val testDataPath: String
+    val category: GroupCategory
 
     val kotlinRoot: File
     val moduleRoot: File
@@ -29,6 +30,7 @@ class TGroupImpl(
     override val modulePath: String,
     override val testSourcesPath: String,
     override val testDataPath: String,
+    override val category: GroupCategory,
     override val isCompilerTestData: Boolean,
 ) : MutableTGroup {
     override val kotlinRoot = KotlinRoot.DIR
@@ -38,16 +40,40 @@ class TGroupImpl(
     override val suites = mutableListOf<TSuite>()
 }
 
+enum class GroupCategory {
+    UNCATEGORIZED,
+    HIGHLIGHTING,
+    COMPLETION,
+    CODE_INSIGHT,
+    NAVIGATION,
+    FIND_USAGES,
+    REFACTORING,
+    RENAME_REFACTORING,
+    INLINE_REFACTORING,
+    MOVE_REFACTORING,
+    EXTRACT_FUNCTION_REFACTORING,
+    EXTRACT_VARIABLE_REFACTORING,
+    INSPECTIONS,
+    INTENTIONS,
+    QUICKFIXES,
+    GRADLE,
+    SCRIPTS,
+    DEBUGGER,
+    J2K
+}
+
 fun MutableTWorkspace.testGroup(
     modulePath: String,
     testSourcesPath: String = "test",
     testDataPath: String = "testData",
+    category: GroupCategory = GroupCategory.UNCATEGORIZED,
     block: MutableTGroup.() -> Unit
 ) {
     groups += TGroupImpl(
         modulePath,
         testSourcesPath,
         testDataPath,
+        category,
         isCompilerTestData = testDataPath.startsWith(TestKotlinArtifacts.compilerTestDataDir.canonicalPath)
     ).apply(block)
 }

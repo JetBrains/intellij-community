@@ -49,6 +49,7 @@ import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
@@ -119,7 +120,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir/tests", testDataPath = "../../idea/tests/testData") {
+    testGroup("fir/tests", category = CODE_INSIGHT, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2AddImportActionTest> {
             model("idea/actions/kotlinAddImportAction", pattern = KT_WITHOUT_DOTS)
         }
@@ -167,24 +168,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirInLibraryResolveEverythingTest> {
             model("resolve/compiled/sources")
-        }
-
-        testClass<AbstractFirGotoTypeDeclarationTest> {
-            model("navigation/gotoTypeDeclaration", pattern = TEST)
-        }
-
-        testClass<AbstractFirGotoTest> {
-            model("navigation/gotoClass", testMethodName = "doClassTest")
-            model("navigation/gotoSymbol", testMethodName = "doSymbolTest")
-        }
-
-        testClass<AbstractFirGotoRelatedSymbolMultiModuleTest> {
-            model("navigation/relatedSymbols/multiModule", isRecursive = false, pattern = DIRECTORY)
-        }
-
-
-        testClass<AbstractFirGotoDeclarationTest> {
-            model("navigation/gotoDeclaration", pattern = TEST)
         }
 
         testClass<AbstractFirLiteralTextToKotlinCopyPasteTest> {
@@ -235,7 +218,27 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir/tests", testDataPath = "../../completion/testData") {
+    testGroup("fir/tests", testDataPath = "../../idea/tests/testData", category = NAVIGATION) {
+        testClass<AbstractFirGotoTypeDeclarationTest> {
+            model("navigation/gotoTypeDeclaration", pattern = TEST)
+        }
+
+        testClass<AbstractFirGotoTest> {
+            model("navigation/gotoClass", testMethodName = "doClassTest")
+            model("navigation/gotoSymbol", testMethodName = "doSymbolTest")
+        }
+
+        testClass<AbstractFirGotoRelatedSymbolMultiModuleTest> {
+            model("navigation/relatedSymbols/multiModule", isRecursive = false, pattern = DIRECTORY)
+        }
+
+
+        testClass<AbstractFirGotoDeclarationTest> {
+            model("navigation/gotoDeclaration", pattern = TEST)
+        }
+    }
+
+    testGroup("fir/tests", category = COMPLETION, testDataPath = "../../completion/testData") {
         testClass<AbstractK2JvmBasicCompletionTest> {
             model("basic/common", pattern = KT_WITHOUT_FIR_PREFIX)
             model("basic/java", pattern = KT_WITHOUT_FIR_PREFIX)
@@ -312,7 +315,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir/tests", testDataPath = "../../code-insight/testData") {
+    testGroup("fir/tests", category = HIGHLIGHTING, testDataPath = "../../code-insight/testData") {
         testClass<AbstractK2MultiModuleLineMarkerTest> {
             model("linemarkers", isRecursive = false, pattern = DIRECTORY)
         }
@@ -329,7 +332,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("refactorings/rename.k2", testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/rename.k2", category = RENAME_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractFirRenameTest> {
             model("refactoring/rename", pattern = TEST, flatten = true)
         }
@@ -341,7 +344,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir/tests", testDataPath = "../../idea/tests/testData/findUsages") {
+    testGroup("fir/tests", category = FIND_USAGES, testDataPath = "../../idea/tests/testData/findUsages") {
         testClass<AbstractFindUsagesFirTest> {
             model("kotlin", pattern = Patterns.forRegex("""^(.+)\.0\.(kt|kts)$"""))
             model("java", pattern = Patterns.forRegex("""^(.+)\.0\.java$"""))
@@ -382,7 +385,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir/tests") {
+    testGroup("fir/tests", category = HIGHLIGHTING) {
         testClass<AbstractHLImplementationSearcherTest> {
             model("search/implementations", pattern = KT_WITHOUT_DOTS)
         }

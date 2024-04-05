@@ -5,12 +5,13 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixM
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixMultiModuleTest
 import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 
 internal fun MutableTWorkspace.generateK2FixTests() {
     val idea = "idea/tests/testData/"
-    testGroup("code-insight/fixes-k2/tests", testDataPath = "../../..") {
+    testGroup("code-insight/fixes-k2/tests", category = QUICKFIXES, testDataPath = "../../..") {
         testClass<AbstractHighLevelQuickFixTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$")
             model("$idea/quickfix/abstract", pattern = pattern)

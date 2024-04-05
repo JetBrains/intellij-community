@@ -5,12 +5,13 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractShared
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 
 
 internal fun MutableTWorkspace.generateK2IntentionTests() {
     val idea = "idea/tests/testData/"
 
-    testGroup("code-insight/intentions-k2/tests", testDataPath = "../../..") {
+    testGroup("code-insight/intentions-k2/tests", category = INTENTIONS, testDataPath = "../../..") {
         testClass<AbstractK2IntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("${idea}intentions/addFullQualifier", pattern = pattern)
@@ -184,7 +185,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
         }
     }
 
-    testGroup("code-insight/intentions-shared/tests/k2", testDataPath = "../testData") {
+    testGroup("code-insight/intentions-shared/tests/k2", category = INTENTIONS, testDataPath = "../testData") {
         testClass<AbstractSharedK2IntentionTest> {
             model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
         }

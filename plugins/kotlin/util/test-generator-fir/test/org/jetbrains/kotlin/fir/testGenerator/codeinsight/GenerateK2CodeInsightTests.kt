@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.k2.structureView.AbstractKotlinGoToSuperDeclara
 import org.jetbrains.kotlin.idea.k2.surroundWith.AbstractKotlinFirSurroundWithTest
 import org.jetbrains.kotlin.idea.k2.unwrap.AbstractKotlinFirUnwrapRemoveTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
@@ -25,7 +26,7 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
     generateK2LiveTemplateTests()
     generateK2LineMarkerTests()
 
-    testGroup("code-insight/kotlin.code-insight.k2") {
+    testGroup("code-insight/kotlin.code-insight.k2", category = CODE_INSIGHT) {
         testClass<AbstractKotlinGoToSuperDeclarationsHandlerTest> {
             model("gotoSuperDeclarationsHandler", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
         }

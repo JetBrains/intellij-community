@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.testGenerator.generator.SuiteElement
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.generator.toRelativeStringSystemIndependent
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory
 import org.jetbrains.kotlin.testGenerator.model.TWorkspace
 import java.io.File
 import java.util.Date
@@ -24,6 +25,7 @@ object ParityReportGenerator {
     data class Variation(
         val name: String,
         val ignoreDirectives: Set<String>,
+        val successByCategory: MutableMap<GroupCategory, AtomicInteger> = mutableMapOf<GroupCategory, AtomicInteger>(),
         val successTestClasses: MutableMap<String, AtomicInteger> = mutableMapOf<String, AtomicInteger>()
     ) {
         fun totalCount(): Int = successTestClasses.map { it.value }.sumOf { it.get() }
@@ -56,7 +58,7 @@ object ParityReportGenerator {
     }
 
     data class CaseNameFile(val generatedClassName: String, val testCaseMethod: TestCaseMethod, val fileName: String)
-    data class Case(val clusterName: String, val files: List<CaseNameFile>)
+    data class Case(val clusterName: String, val category: GroupCategory, val files: List<CaseNameFile>)
 
     private fun buildCases(clusterName: String, workspace: TWorkspace, stringBuilder: StringBuilder): List<Case> =
         buildList<Case> {
@@ -109,12 +111,14 @@ object ParityReportGenerator {
                                     .filter { it.file.isDirectory }
                                     .map { it.file.toRelativeKotlinRoot() }
                                 stringBuilder.appendLine().appendLine("$className has directories")
-                                for (s in directories) {
-                                    stringBuilder.append(" * ").appendLine(s)
-                                }
+                                directories.forEach { stringBuilder.append(" * ").appendLine(it) }
                             }
                         } else {
-                            this.add(Case(clusterName, fs.map { CaseNameFile(className, it, it.file.toRelativeKotlinRoot()) }))
+                            this += Case(
+                                clusterName,
+                                category = group.category,
+                                fs.map { CaseNameFile(className, it, it.file.toRelativeKotlinRoot()) }
+                            )
                         }
                     }
                 }
@@ -133,7 +137,27 @@ object ParityReportGenerator {
             }
         }
 
+    private fun handleCategories(invertedFileCases: Map<String, Case>, ignored: BooleanArray, variation: Variation) {
+        invertedFileCases.forEach { (fileName, case) ->
+            val counter = variation.successByCategory.computeIfAbsent(case.category) { AtomicInteger() }
+            val file = File(KotlinRoot.DIR, fileName)
+            val caseNameFile: CaseNameFile = case.files.firstOrNull() ?: return@forEach
+            ignored.fill(false)
+            if (caseNameFile.testCaseMethod.ignored) {
+                ignored[1] = true
+            }
+            file.handleIgnored(k1Variation, k2Variation, ignored = ignored) {
+                counter.incrementAndGet()
+            }
+        }
+    }
+
     private fun reportSharedFilesDetails(invertedK1FileCases: Map<String, Case>, invertedK2FileCases: Map<String, Case>, stringBuilder: StringBuilder) {
+        val testClassesPerCategory = mutableMapOf<GroupCategory, AtomicInteger>()
+        val ignored = BooleanArray(2)
+        handleCategories(invertedK1FileCases, ignored, k1Variation)
+        handleCategories(invertedK2FileCases, ignored, k2Variation)
+
         val sharedFiles = buildList<Pair<String, Case>> {
             for (invertedK2FileCasesEntry in invertedK2FileCases) {
                 val fileName: String = invertedK2FileCasesEntry.key
@@ -145,7 +169,6 @@ object ParityReportGenerator {
 
         val testClassesPerClassName = mutableMapOf<String, AtomicInteger>()
         val extensions = mutableSetOf<String>()
-        val ignored = BooleanArray(2)
         for (fileNameToCase in sharedFiles) {
             val fileName = fileNameToCase.first
             val case: Case = fileNameToCase.second
@@ -154,20 +177,36 @@ object ParityReportGenerator {
 
             val caseNameFile: CaseNameFile = case.files.firstOrNull() ?: continue
 
-            testClassesPerClassName.computeIfAbsent(caseNameFile.generatedClassName){ AtomicInteger() }.incrementAndGet()
+            val generatedClassName = caseNameFile.generatedClassName
+            testClassesPerClassName.computeIfAbsent(generatedClassName){ AtomicInteger() }.incrementAndGet()
 
             ignored.fill(false)
             if (caseNameFile.testCaseMethod.ignored) {
                 ignored[1] = true
             }
-            k1Variation.successTestClasses.computeIfAbsent(caseNameFile.generatedClassName) { AtomicInteger() }
-            k2Variation.successTestClasses.computeIfAbsent(caseNameFile.generatedClassName) { AtomicInteger() }
+
+            k1Variation.successTestClasses.computeIfAbsent(generatedClassName) { AtomicInteger() }
+            k2Variation.successTestClasses.computeIfAbsent(generatedClassName) { AtomicInteger() }
+
             file.handleIgnored(k1Variation, k2Variation, ignored = ignored) {
-                it.successTestClasses[caseNameFile.generatedClassName]!!.incrementAndGet()
+                it.successTestClasses[generatedClassName]!!.incrementAndGet()
             }
         }
 
         with(stringBuilder) {
+            appendLine("## Categories")
+            appendLine()
+            appendLine("| Status | Category | Success rate, % | K2 files | K1 files |")
+            appendLine("| -- | -- | --  | -- | -- |")
+            GroupCategory.entries.forEach{
+                val k2 = k2Variation.successByCategory[it]?.get() ?: 0
+                val k1 = k1Variation.successByCategory[it]?.get() ?: 0
+                if (k2 == 0 && k1 == 0) return@forEach
+                val statusLine = StatusLine(it.name, k2, k1, testClassesPerCategory[it]?.get() ?: 0)
+                appendLine(statusLine.renderToMd())
+            }
+            appendLine()
+
             appendLine("## Shared cases")
             appendLine("shared ${sharedFiles.size} files out of ${k2Variation.successTestClasses.size} cases").appendLine()
 

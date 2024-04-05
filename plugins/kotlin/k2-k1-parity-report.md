@@ -1,10 +1,31 @@
 # K2/K1 feature parity report
 
 
-Generated on Fri Mar 22 13:44:25 CET 2024
+Generated on Sat Apr 06 23:04:24 CEST 2024
+
+## Categories
+
+| Status | Category | Success rate, % | K2 files | K1 files |
+| -- | -- | --  | -- | -- |
+ | :white_check_mark: | UNCATEGORIZED | 173 | 5270 | 3049 | 0 | 
+ | :x: | HIGHLIGHTING | 80 | 455 | 569 | 0 | 
+ | :x: | COMPLETION | 72 | 2890 | 4031 | 0 | 
+ | :x: | CODE_INSIGHT | 60 | 2502 | 4170 | 0 | 
+ | :x: | NAVIGATION | 48 | 139 | 287 | 0 | 
+ | :white_check_mark: | FIND_USAGES | 100 | 671 | 672 | 0 | 
+ | :x: | REFACTORING | 62 | 1180 | 1914 | 0 | 
+ | :white_check_mark: | RENAME_REFACTORING | 100 | 823 | 823 | 0 | 
+ | :white_check_mark: | INLINE_REFACTORING | 206 | 670 | 326 | 0 | 
+ | :x: | MOVE_REFACTORING | 84 | 287 | 341 | 0 | 
+ | :x: | INSPECTIONS | 22 | 1138 | 5189 | 0 | 
+ | :x: | INTENTIONS | 81 | 4615 | 5709 | 0 | 
+ | :white_check_mark: | QUICKFIXES | 98 | 3370 | 3438 | 0 | 
+ | :x: | SCRIPTS | 0 | 0 | 66 | 0 | 
+ | :x: | DEBUGGER | 0 | 0 | 1882 | 0 | 
+ | :x: | J2K | 0 | 0 | 1644 | 0 | 
 
 ## Shared cases
-shared 11550 files out of 818 cases
+shared 11811 files out of 847 cases
 
 | Status | Case name | Success rate, % | K2 files | K1 files | Total files |
 | -- | -- | --  | -- | -- | -- |
@@ -16,13 +37,12 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | FirParameterInfoTestGenerated$TypeArguments | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib1 | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib2 | 100 | 1 | 1 | 1 | 
- | :x: | [HighLevelQuickFixTestGenerated] | 31 | 485 | 1558 | 1564 | 
+ | :x: | [HighLevelQuickFixTestGenerated] | 32 | 500 | 1558 | 1564 | 
  | :x: | HighLevelQuickFixTestGenerated$AddAnnotationTarget | 0 | 0 | 30 | 30 | 
  | :x: | HighLevelQuickFixTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$AddConstructorParameter | 0 | 0 | 1 | 1 | 
  | :x: | HighLevelQuickFixTestGenerated$AddConstructorParameterFromSuperTypeCall | 0 | 0 | 10 | 10 | 
  | :x: | HighLevelQuickFixTestGenerated$AddConversionCall | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$AddCrossinline | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$AddDefaultConstructor | 0 | 0 | 6 | 6 | 
  | :x: | HighLevelQuickFixTestGenerated$AddElseBranchToIf | 0 | 0 | 7 | 7 | 
  | :x: | HighLevelQuickFixTestGenerated$AddEmptyArgumentList | 0 | 0 | 1 | 1 | 
@@ -34,7 +54,6 @@ shared 11550 files out of 818 cases
  | :x: | HighLevelQuickFixTestGenerated$AddJvmInline | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$AddJvmStaticAnnotation | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$AddNewLineAfterAnnotations | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$AddNoinline | 0 | 0 | 4 | 4 | 
  | :x: | HighLevelQuickFixTestGenerated$AddReifiedToTypeParameterOfFunctionFix | 0 | 0 | 3 | 3 | 
  | :x: | HighLevelQuickFixTestGenerated$AddReturnExpression | 0 | 0 | 2 | 2 | 
  | :x: | HighLevelQuickFixTestGenerated$AddReturnToLastExpressionInFunction | 0 | 0 | 6 | 6 | 
@@ -160,7 +179,6 @@ shared 11550 files out of 818 cases
  | :x: | HighLevelQuickFixTestGenerated$SupertypeInitialization | 50 | 16 | 32 | 32 | 
  | :x: | HighLevelQuickFixTestGenerated$Override | 63 | 15 | 24 | 24 | 
  | :x: | HighLevelQuickFixTestGenerated$ReplaceWithDotCall | 67 | 6 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$AutoImports | 71 | 35 | 49 | 49 | 
  | :x: | HighLevelQuickFixTestGenerated$When | 73 | 27 | 37 | 38 | 
  | :x: | HighLevelQuickFixTestGenerated$Abstract | 74 | 26 | 35 | 35 | 
  | :x: | HighLevelQuickFixTestGenerated$Modifiers | 75 | 52 | 69 | 69 | 
@@ -170,12 +188,15 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceInfixOrOperatorCall | 86 | 19 | 22 | 22 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceWithSafeCall | 86 | 25 | 29 | 29 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveUnused | 89 | 25 | 28 | 28 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$AutoImports | 90 | 44 | 49 | 49 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$Expressions | 90 | 36 | 40 | 40 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddFunModifier | 91 | 10 | 11 | 11 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$Nullables | 92 | 11 | 12 | 12 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$WrapWithSafeLetCall | 94 | 32 | 34 | 34 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$AddCrossinline | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddDataModifier | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInitializer | 100 | 23 | 23 | 23 | 
+ | :white_check_mark: | HighLevelQuickFixTestGenerated$AddNoinline | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$AddPropertyAccessors | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$CheckArguments | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | HighLevelQuickFixTestGenerated$ConflictingImports | 100 | 3 | 3 | 3 | 
@@ -317,28 +338,19 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | K2IntentionTestGenerated$InsertExplicitTypeArguments | 103 | 31 | 30 | 31 | 
  | :white_check_mark: | K2IntentionTestGenerated$RemoveExplicitType | 115 | 62 | 54 | 66 | 
  | :white_check_mark: | K2IntentionTestGenerated$Flatten | 133 | 4 | 3 | 4 | 
- | :x: | [K2JavaToKotlinConverterPartialTestGenerated] | 19 | 9 | 47 | 47 | 
- | :x: | K2JavaToKotlinConverterPartialTestGenerated$Field | 0 | 0 | 13 | 13 | 
- | :x: | K2JavaToKotlinConverterPartialTestGenerated$Function | 26 | 9 | 34 | 34 | 
  | :x: | [K2JavaToKotlinConverterSingleFileFullJDKTestGenerated] | 13 | 1 | 8 | 8 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Collections | 0 | 0 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Enum | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Issues | 50 | 1 | 2 | 2 | 
- | :x: | [K2JavaToKotlinConverterSingleFileTestGenerated] | 34 | 354 | 1038 | 1038 | 
+ | :x: | [K2JavaToKotlinConverterSingleFileTestGenerated] | 49 | 518 | 1049 | 1049 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousClass | 0 | 0 | 3 | 3 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Blocks | 0 | 0 | 2 | 2 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BoxedType | 0 | 0 | 12 | 12 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Equals | 0 | 0 | 7 | 7 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ExplicitApiMode | 0 | 0 | 2 | 2 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ForeachStatement | 0 | 0 | 6 | 6 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$InvalidCode | 0 | 0 | 4 | 4 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$JavaStandardMethods | 0 | 0 | 3 | 3 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$JavaStreamsApi | 0 | 0 | 6 | 6 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$LabelStatement | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Lambda | 0 | 0 | 2 | 2 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$LibraryUsage | 0 | 0 | 2 | 2 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$List | 0 | 0 | 2 | 2 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MutableCollections | 0 | 0 | 13 | 13 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ObjectLiteral | 0 | 0 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Projections | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$RawGenerics | 0 | 0 | 4 | 4 | 
@@ -349,60 +361,67 @@ shared 11550 files out of 818 cases
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TryStatement | 0 | 0 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TryWithResource | 0 | 0 | 12 | 12 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Visibility | 0 | 0 | 12 | 12 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DetectProperties | 3 | 2 | 74 | 74 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayInitializerExpression | 8 | 1 | 12 | 12 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayType | 9 | 1 | 11 | 11 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Constructors | 9 | 4 | 45 | 45 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Field | 13 | 2 | 16 | 16 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DetectProperties | 8 | 6 | 74 | 74 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Overloads | 13 | 1 | 8 | 8 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PostProcessing | 14 | 4 | 28 | 28 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Equals | 14 | 1 | 7 | 7 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MutableCollections | 15 | 2 | 13 | 13 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$CallChainExpression | 17 | 1 | 6 | 6 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Types | 17 | 1 | 6 | 6 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Formatting | 18 | 2 | 11 | 11 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Switch | 19 | 3 | 16 | 16 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$NewClassExpression | 20 | 3 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeParameters | 20 | 3 | 15 | 15 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeCastExpression | 21 | 4 | 19 | 19 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Settings | 25 | 1 | 4 | 4 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Issues | 26 | 22 | 84 | 84 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Function | 29 | 13 | 45 | 45 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MethodCallExpression | 30 | 7 | 23 | 23 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Nullability | 32 | 12 | 38 | 38 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Enum | 36 | 9 | 25 | 25 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousBlock | 40 | 6 | 15 | 15 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$InvalidCode | 25 | 1 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PostProcessing | 25 | 7 | 28 | 28 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeCastExpression | 26 | 5 | 19 | 19 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayType | 27 | 3 | 11 | 11 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Constructors | 33 | 15 | 45 | 45 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Types | 33 | 2 | 6 | 6 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Function | 38 | 17 | 45 | 45 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Issues | 38 | 32 | 84 | 84 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AssertStatement | 40 | 2 | 5 | 5 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Enum | 40 | 10 | 25 | 25 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Inheritance | 40 | 2 | 5 | 5 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$KotlinApiAccess | 42 | 8 | 19 | 19 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Protected | 43 | 3 | 7 | 7 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$SuperExpression | 43 | 3 | 7 | 7 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$For | 46 | 24 | 52 | 52 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AssignmentExpression | 48 | 13 | 27 | 27 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$CaseConversion | 50 | 1 | 2 | 2 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ClassExpression | 50 | 2 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Nullability | 46 | 18 | 39 | 39 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousBlock | 47 | 7 | 15 | 15 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayInitializerExpression | 50 | 6 | 12 | 12 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$FunctionalInterfaces | 50 | 4 | 8 | 8 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Identifier | 50 | 2 | 4 | 4 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Misc | 50 | 3 | 6 | 6 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Comments | 53 | 10 | 19 | 19 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$LiteralExpression | 53 | 10 | 19 | 19 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ImportStatement | 60 | 3 | 5 | 5 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Annotations | 61 | 20 | 33 | 33 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Class | 65 | 24 | 37 | 37 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DeclarationStatement | 67 | 4 | 6 | 6 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Switch | 50 | 8 | 16 | 16 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MethodCallExpression | 52 | 12 | 23 | 23 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$NewClassExpression | 53 | 8 | 15 | 15 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Comments | 58 | 11 | 19 | 19 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Field | 63 | 10 | 16 | 16 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$KotlinApiAccess | 63 | 12 | 19 | 19 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BoxedType | 67 | 10 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Interface | 67 | 8 | 12 | 12 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$IsOperator | 67 | 2 | 3 | 3 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$LocalVariable | 67 | 6 | 9 | 9 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$StaticMembers | 67 | 6 | 9 | 9 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BinaryExpression | 69 | 18 | 26 | 26 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$SimplifyNegatedBinaryExpression | 67 | 4 | 6 | 6 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AssignmentExpression | 70 | 19 | 27 | 27 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Annotations | 73 | 24 | 33 | 33 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BinaryExpression | 73 | 19 | 26 | 26 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DocComments | 73 | 11 | 15 | 15 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ImplicitCasts | 73 | 8 | 11 | 11 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Formatting | 73 | 8 | 11 | 11 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayAccessExpression | 75 | 3 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ClassExpression | 75 | 3 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$For | 75 | 39 | 52 | 52 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$IfStatement | 75 | 6 | 8 | 8 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Settings | 75 | 3 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$StaticMembers | 78 | 7 | 9 | 9 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ImportStatement | 80 | 4 | 5 | 5 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ImplicitCasts | 82 | 9 | 11 | 11 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DeclarationStatement | 83 | 5 | 6 | 6 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ForeachStatement | 83 | 5 | 6 | 6 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PrefixOperator | 83 | 5 | 6 | 6 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ReturnStatement | 83 | 5 | 6 | 6 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayAccessExpression | 100 | 3 | 3 | 3 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Protected | 86 | 6 | 7 | 7 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Class | 89 | 33 | 37 | 37 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LocalVariable | 89 | 8 | 9 | 9 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LiteralExpression | 95 | 18 | 19 | 19 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$BreakStatement | 100 | 2 | 2 | 2 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$CaseConversion | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ConditionalExpression | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ContinueStatement | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$DoWhileStatement | 100 | 5 | 5 | 5 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LibraryUsage | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$NewJavaFeatures | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PackageStatement | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ParenthesizedExpression | 100 | 3 | 3 | 3 | 
@@ -422,31 +441,36 @@ shared 11550 files out of 818 cases
  | :x: | [FirJvmOptimizeImportsTestGenerated] | 71 | 84 | 119 | 119 | 
  | :x: | FirJvmOptimizeImportsTestGenerated$Jvm | 43 | 20 | 47 | 47 | 
  | :white_check_mark: | FirJvmOptimizeImportsTestGenerated$Common | 89 | 64 | 72 | 72 | 
+ | :x: | [K2JavaToKotlinConverterPartialTestGenerated] | 45 | 21 | 47 | 47 | 
+ | :x: | K2JavaToKotlinConverterPartialTestGenerated$Function | 44 | 15 | 34 | 34 | 
+ | :x: | K2JavaToKotlinConverterPartialTestGenerated$Field | 46 | 6 | 13 | 13 | 
+ | :x: | K2MoveNestedTestGenerated | 50 | 29 | 58 | 58 | 
  | :x: | K2AutoImportTestGenerated | 64 | 18 | 28 | 28 | 
  | :x: | HighLevelQuickFixMultiFileTestGenerated$Uncategorized | 65 | 87 | 134 | 135 | 
  | :x: | SharedK2MultiFileQuickFixTestGenerated | 67 | 2 | 3 | 3 | 
  | :x: | K2PsiUnifierTestGenerated$Equivalence | 67 | 4 | 6 | 6 | 
- | :x: | K2MoveTestGenerated | 72 | 115 | 159 | 161 | 
+ | :x: | K2JvmBasicCompletionTestGenerated$Java | 68 | 41 | 60 | 65 | 
  | :x: | HighLevelBasicCompletionHandlerTestGenerated$Basic | 76 | 214 | 283 | 289 | 
- | :white_check_mark: | [K2JvmBasicCompletionTestGenerated] | 89 | 613 | 685 | 719 | 
- | :x: | K2JvmBasicCompletionTestGenerated$Java | 78 | 39 | 50 | 54 | 
- | :white_check_mark: | K2JvmBasicCompletionTestGenerated$Common | 90 | 574 | 635 | 665 | 
- | :white_check_mark: | [K2MultiFileLocalInspectionTestGenerated] | 92 | 11 | 12 | 12 | 
+ | :white_check_mark: | [K2MultiFileLocalInspectionTestGenerated] | 95 | 18 | 19 | 19 | 
  | :x: | K2MultiFileLocalInspectionTestGenerated$RedundantQualifierName | 80 | 4 | 5 | 5 | 
+ | :white_check_mark: | K2MultiFileLocalInspectionTestGenerated$ReconcilePackageWithDirectory | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | K2MultiFileLocalInspectionTestGenerated$UnusedSymbol | 100 | 7 | 7 | 7 | 
+ | :x: | K2MoveFileTestGenerated | 81 | 17 | 21 | 22 | 
  | :white_check_mark: | FirWithLibBasicCompletionTestGenerated | 88 | 15 | 17 | 17 | 
  | :white_check_mark: | FirShortenRefsTestGenerated$This | 88 | 7 | 8 | 8 | 
  | :white_check_mark: | K2ChangePackageTestGenerated | 88 | 7 | 8 | 8 | 
+ | :white_check_mark: | K2MoveTopLevelTestGenerated | 88 | 65 | 74 | 75 | 
  | :white_check_mark: | FirMultiModuleRenameTestGenerated | 88 | 23 | 26 | 26 | 
  | :white_check_mark: | K2CompletionCharFilterTestGenerated | 89 | 31 | 35 | 35 | 
  | :white_check_mark: | HighLevelMultiFileJvmBasicCompletionTestGenerated | 90 | 80 | 89 | 94 | 
  | :white_check_mark: | FirKeywordCompletionTestGenerated$Keywords | 91 | 127 | 139 | 139 | 
- | :white_check_mark: | FirQuickDocTestGenerated | 92 | 60 | 65 | 65 | 
- | :white_check_mark: | [K2IdeK2CodeKotlinEvaluateExpressionTestGenerated] | 92 | 325 | 352 | 352 | 
+ | :white_check_mark: | K2JsBasicCompletionLegacyStdlibTestGenerated$Common | 92 | 573 | 626 | 655 | 
+ | :white_check_mark: | [K2IdeK2CodeKotlinEvaluateExpressionTestGenerated] | 92 | 327 | 354 | 354 | 
  | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$MultipleBreakpoints | 92 | 33 | 36 | 36 | 
- | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$SingleBreakpoint | 92 | 292 | 316 | 316 | 
+ | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$SingleBreakpoint | 92 | 294 | 318 | 318 | 
  | :white_check_mark: | FirMultiModuleSafeDeleteTestGenerated | 92 | 23 | 25 | 25 | 
  | :white_check_mark: | K2KDocCompletionTestGenerated | 93 | 28 | 30 | 30 | 
+ | :white_check_mark: | FirQuickDocTestGenerated | 93 | 69 | 74 | 74 | 
  | :white_check_mark: | [K2SelectExpressionForDebuggerTestGenerated] | 99 | 68 | 69 | 69 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$DisallowMethodCalls | 95 | 20 | 21 | 21 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$Uncategorized | 100 | 48 | 48 | 48 | 
@@ -457,7 +481,7 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | [FirUastValuesTestGenerated] | 100 | 2 | 2 | 2 | 
  | :x: | [K2AddImportActionTestGenerated] | 62 | 24 | 39 | 39 | 
  | :white_check_mark: | [K2BytecodeToolWindowTestGenerated] | 100 | 19 | 19 | 19 | 
- | :white_check_mark: | [FirDumbCompletionTestGenerated] | 100 | 39 | 39 | 39 | 
+ | :white_check_mark: | [FirDumbCompletionTestGenerated] | 100 | 45 | 45 | 45 | 
  | :white_check_mark: | [FirKeywordCompletionHandlerTestGenerated] | 100 | 49 | 49 | 49 | 
  | :white_check_mark: | [HighLevelJavaCompletionHandlerTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [K2CompletionIncrementalResolveTestGenerated] | 100 | 5 | 5 | 5 | 
@@ -481,7 +505,7 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | [KotlinFirBreadcrumbsTestGenerated] | 100 | 15 | 15 | 15 | 
  | :white_check_mark: | [K2SharedQuickFixTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [SharedK2InspectionTestGenerated] | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 302 | 302 | 302 | 
+ | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 380 | 380 | 380 | 
  | :white_check_mark: | [SharedK2KDocHighlightingTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [SharedK2IntentionTestGenerated] | 100 | 364 | 364 | 364 | 
  | :white_check_mark: | [LineMarkersK2TestGenerated] | 100 | 46 | 46 | 46 | 
@@ -495,7 +519,7 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | [K2IdeK2CodeFileRankingTestGenerated] | 100 | 12 | 12 | 12 | 
  | :white_check_mark: | [K2IdeK2CodeKotlinVariablePrintingTestGenerated] | 100 | 9 | 9 | 9 | 
  | :white_check_mark: | [K2IdeK2CodeXCoroutinesStackTraceTestGenerated] | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | [K2IndyLambdaKotlinSteppingTestGenerated] | 100 | 317 | 317 | 317 | 
+ | :white_check_mark: | [K2IndyLambdaKotlinSteppingTestGenerated] | 100 | 318 | 318 | 318 | 
  | :white_check_mark: | [K2KotlinExceptionFilterTestGenerated] | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | [K2PositionManagerTestGenerated] | 100 | 20 | 20 | 20 | 
  | :white_check_mark: | [K2SmartStepIntoTestGenerated] | 100 | 46 | 46 | 46 | 
@@ -509,13 +533,17 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | [KtParameterHintsProviderTestGenerated] | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | [KtRangesHintsProviderTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [KtReferenceTypeHintsProviderTestGenerated] | 100 | 38 | 38 | 38 | 
- | :white_check_mark: | [K2InspectionTestGenerated] | 88 | 14 | 16 | 16 | 
+ | :white_check_mark: | [K2InspectionTestGenerated] | 87 | 13 | 15 | 15 | 
+ | :white_check_mark: | [K2MultiFileInspectionTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2GotoTestOrCodeActionTestGenerated] | 100 | 11 | 11 | 11 | 
  | :white_check_mark: | [FirMoveLeftRightTestGenerated] | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | [KotlinFirMoveStatementTestGenerated] | 99 | 281 | 283 | 283 | 
  | :white_check_mark: | [K2MultiFileQuickFixTestGenerated] | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | [KotlinFirInlineTestGenerated] | 99 | 145 | 147 | 148 | 
+ | :white_check_mark: | [KotlinFirInlineTestGenerated] | 99 | 146 | 148 | 149 | 
  | :white_check_mark: | [K2IntroduceVariableTestGenerated] | 92 | 131 | 143 | 145 | 
+ | :white_check_mark: | [K2IntroduceFunctionTestGenerated] | 100 | 140 | 140 | 144 | 
+ | :white_check_mark: | [K2MovePackageTestGenerated] | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | [K2MoveTopLevelToInnerTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2SafeDeleteTestGenerated] | 100 | 198 | 198 | 198 | 
  | :white_check_mark: | [FirAnnotatedMembersSearchTestGenerated] | 100 | 12 | 12 | 12 | 
  | :white_check_mark: | [KotlinFirFileStructureTestGenerated] | 100 | 19 | 19 | 19 | 
@@ -525,7 +553,7 @@ shared 11550 files out of 818 cases
  | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Uncategorized | 109 | 126 | 116 | 127 | 
  | :white_check_mark: | FirGotoTypeDeclarationTestGenerated | 111 | 20 | 18 | 20 | 
  | :white_check_mark: | FirGotoDeclarationTestGenerated | 113 | 17 | 15 | 17 | 
- | :white_check_mark: | K2InplaceRenameTestGenerated | 121 | 121 | 100 | 126 | 
+ | :white_check_mark: | K2InplaceRenameTestGenerated | 121 | 122 | 101 | 127 | 
  | :white_check_mark: | [K2HighlightingMetaInfoTestGenerated] | 105 | 58 | 55 | 58 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Diagnostics | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Dsl | 100 | 6 | 6 | 6 | 
@@ -540,8 +568,8 @@ kt, test, before.Main.kt, kts, main.java, main.kt, option1.kt, kt.kt, java, 0.kt
 
 ---
 ## Total 
- * K1: 11430 rate: 99 % of 11550 files
- * K2: 7940 rate: 69 % of 11550 files
+ * K1: 11687 rate: 99 % of 11811 files
+ * K2: 8379 rate: 71 % of 11811 files
 ---
 
 ## Build cases for K1
@@ -564,387 +592,6 @@ org.jetbrains.kotlin.idea.codeInsight.gradle.GradleBuildFileHighlightingTestGene
 org.jetbrains.kotlin.idea.debugger.test.PositionManagerTestGenerated$MultiFile has directories
  * jvm-debugger/test/testData/positionManager/multiFilePackage
  * jvm-debugger/test/testData/positionManager/multiFileSameName
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Type has directories
- * idea/tests/testData/hierarchy/class/type/CaretAtAnnotation
- * idea/tests/testData/hierarchy/class/type/CaretAtConstructor
- * idea/tests/testData/hierarchy/class/type/CaretAtFabricMethod
- * idea/tests/testData/hierarchy/class/type/CaretAtImport
- * idea/tests/testData/hierarchy/class/type/CaretAtJavaType
- * idea/tests/testData/hierarchy/class/type/CaretAtModifierList
- * idea/tests/testData/hierarchy/class/type/CaretAtReceiverExtFun
- * idea/tests/testData/hierarchy/class/type/CaretAtSuperCall
- * idea/tests/testData/hierarchy/class/type/CaretAtSuperTypeCallEntry
- * idea/tests/testData/hierarchy/class/type/CaretAtSupertypesList
- * idea/tests/testData/hierarchy/class/type/CaretAtTypeReference
- * idea/tests/testData/hierarchy/class/type/CaretInClassBody
- * idea/tests/testData/hierarchy/class/type/ClassFromClass
- * idea/tests/testData/hierarchy/class/type/ClassFromObject
- * idea/tests/testData/hierarchy/class/type/ClassInClassObject
- * idea/tests/testData/hierarchy/class/type/ClassInPackage
- * idea/tests/testData/hierarchy/class/type/InnerClass
- * idea/tests/testData/hierarchy/class/type/JKJHierarchy
- * idea/tests/testData/hierarchy/class/type/JavaFromKotlin
- * idea/tests/testData/hierarchy/class/type/JavaFromKotlinByRef
- * idea/tests/testData/hierarchy/class/type/JavaFromKotlinForKotlinClass
- * idea/tests/testData/hierarchy/class/type/JavaStyleClassLiteralInvalidCode
- * idea/tests/testData/hierarchy/class/type/JetInt
- * idea/tests/testData/hierarchy/class/type/KJKHierarchy
- * idea/tests/testData/hierarchy/class/type/KotlinFromJava
- * idea/tests/testData/hierarchy/class/type/KotlinFromJavaByRef
- * idea/tests/testData/hierarchy/class/type/KotlinFromKotlinByRef
- * idea/tests/testData/hierarchy/class/type/Object
- * idea/tests/testData/hierarchy/class/type/TwoChildren
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Super has directories
- * idea/tests/testData/hierarchy/class/super/JetList
- * idea/tests/testData/hierarchy/class/super/MultiTypeAlias
- * idea/tests/testData/hierarchy/class/super/TwoInterfaces
- * idea/tests/testData/hierarchy/class/super/TypeAlias
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Sub has directories
- * idea/tests/testData/hierarchy/class/sub/AllFromClass
- * idea/tests/testData/hierarchy/class/sub/AllFromInterface
- * idea/tests/testData/hierarchy/class/sub/ClassFromClass
- * idea/tests/testData/hierarchy/class/sub/ClassFromInterface
- * idea/tests/testData/hierarchy/class/sub/ConstructorCallCaretAfter
- * idea/tests/testData/hierarchy/class/sub/ConstructorCallCaretBefore
- * idea/tests/testData/hierarchy/class/sub/InterfaceFromClass
- * idea/tests/testData/hierarchy/class/sub/InterfaceFromInterface
- * idea/tests/testData/hierarchy/class/sub/MultiTypeAlias
- * idea/tests/testData/hierarchy/class/sub/ObjectFromClass
- * idea/tests/testData/hierarchy/class/sub/ObjectFromInterface
- * idea/tests/testData/hierarchy/class/sub/SecondaryConstructorCallCaretAfter
- * idea/tests/testData/hierarchy/class/sub/SecondaryConstructorCallCaretBefore
- * idea/tests/testData/hierarchy/class/sub/TypeAlias
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Callers has directories
- * idea/tests/testData/hierarchy/calls/callers/callInsideAnonymousFun
- * idea/tests/testData/hierarchy/calls/callers/callInsideLambda
- * idea/tests/testData/hierarchy/calls/callers/insideJavadoc
- * idea/tests/testData/hierarchy/calls/callers/insideKDoc
- * idea/tests/testData/hierarchy/calls/callers/kotlinClass
- * idea/tests/testData/hierarchy/calls/callers/kotlinEnumClass
- * idea/tests/testData/hierarchy/calls/callers/kotlinEnumEntry
- * idea/tests/testData/hierarchy/calls/callers/kotlinFunction
- * idea/tests/testData/hierarchy/calls/callers/kotlinFunctionNonCallUsages
- * idea/tests/testData/hierarchy/calls/callers/kotlinInterface
- * idea/tests/testData/hierarchy/calls/callers/kotlinLocalClass
- * idea/tests/testData/hierarchy/calls/callers/kotlinLocalFunction
- * idea/tests/testData/hierarchy/calls/callers/kotlinLocalFunctionWithNonLocalCallers
- * idea/tests/testData/hierarchy/calls/callers/kotlinNestedClass
- * idea/tests/testData/hierarchy/calls/callers/kotlinNestedInnerClass
- * idea/tests/testData/hierarchy/calls/callers/kotlinObjectDeclaration
- * idea/tests/testData/hierarchy/calls/callers/kotlinPackageFunction
- * idea/tests/testData/hierarchy/calls/callers/kotlinPackageProperty
- * idea/tests/testData/hierarchy/calls/callers/kotlinPrimaryConstructorImplicitCalls
- * idea/tests/testData/hierarchy/calls/callers/kotlinPrivateClass
- * idea/tests/testData/hierarchy/calls/callers/kotlinPrivateFunction
- * idea/tests/testData/hierarchy/calls/callers/kotlinPrivateProperty
- * idea/tests/testData/hierarchy/calls/callers/kotlinProperty
- * idea/tests/testData/hierarchy/calls/callers/kotlinSecondaryConstructor
- * idea/tests/testData/hierarchy/calls/callers/kotlinSecondaryConstructorImplicitCalls
- * idea/tests/testData/hierarchy/calls/callers/kotlinUnresolvedFunction
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$CallersJava has directories
- * idea/tests/testData/hierarchy/calls/callersJava/javaMethod
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Callees has directories
- * idea/tests/testData/hierarchy/calls/callees/kotlinAnonymousObject
- * idea/tests/testData/hierarchy/calls/callees/kotlinClass
- * idea/tests/testData/hierarchy/calls/callees/kotlinClassObject
- * idea/tests/testData/hierarchy/calls/callees/kotlinEnumClass
- * idea/tests/testData/hierarchy/calls/callees/kotlinFunction
- * idea/tests/testData/hierarchy/calls/callees/kotlinInterface
- * idea/tests/testData/hierarchy/calls/callees/kotlinLocalClass
- * idea/tests/testData/hierarchy/calls/callees/kotlinLocalFunction
- * idea/tests/testData/hierarchy/calls/callees/kotlinNestedClass
- * idea/tests/testData/hierarchy/calls/callees/kotlinObject
- * idea/tests/testData/hierarchy/calls/callees/kotlinPackageFunction
- * idea/tests/testData/hierarchy/calls/callees/kotlinPackageProperty
- * idea/tests/testData/hierarchy/calls/callees/kotlinProperty
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Overrides has directories
- * idea/tests/testData/hierarchy/overrides/kotlinBuiltInMemberFunction
- * idea/tests/testData/hierarchy/overrides/kotlinFunctionInClass
- * idea/tests/testData/hierarchy/overrides/kotlinFunctionInInterface
- * idea/tests/testData/hierarchy/overrides/kotlinPropertyInClass
- * idea/tests/testData/hierarchy/overrides/kotlinPropertyInInterface
- * idea/tests/testData/hierarchy/overrides/kotlinTopLevelFunction
- * idea/tests/testData/hierarchy/overrides/kotlinVarParameter
-
-org.jetbrains.kotlin.idea.hierarchy.HierarchyWithLibTestGenerated has directories
- * idea/tests/testData/hierarchy/withLib/annotation
- * idea/tests/testData/hierarchy/withLib/enum
-
-org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithLibTestGenerated has directories
- * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
- * idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters
- * idea/tests/testData/resolve/referenceWithLib/enumEntryMethods
- * idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods
- * idea/tests/testData/resolve/referenceWithLib/fakeOverride
- * idea/tests/testData/resolve/referenceWithLib/fakeOverride2
- * idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation
- * idea/tests/testData/resolve/referenceWithLib/innerClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter
- * idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters
- * idea/tests/testData/resolve/referenceWithLib/namedArguments
- * idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/overloadFun
- * idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter
- * idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration
- * idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/sameNameInLib
- * idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters
-
-org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompiledLibTestGenerated has directories
- * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
- * idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters
- * idea/tests/testData/resolve/referenceWithLib/enumEntryMethods
- * idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods
- * idea/tests/testData/resolve/referenceWithLib/fakeOverride
- * idea/tests/testData/resolve/referenceWithLib/fakeOverride2
- * idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation
- * idea/tests/testData/resolve/referenceWithLib/innerClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter
- * idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters
- * idea/tests/testData/resolve/referenceWithLib/namedArguments
- * idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/overloadFun
- * idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter
- * idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration
- * idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/sameNameInLib
- * idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters
-
-org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCrossLibTestGenerated has directories
- * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
- * idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters
- * idea/tests/testData/resolve/referenceWithLib/enumEntryMethods
- * idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods
- * idea/tests/testData/resolve/referenceWithLib/fakeOverride
- * idea/tests/testData/resolve/referenceWithLib/fakeOverride2
- * idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation
- * idea/tests/testData/resolve/referenceWithLib/innerClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter
- * idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters
- * idea/tests/testData/resolve/referenceWithLib/namedArguments
- * idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/overloadFun
- * idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter
- * idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration
- * idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib
- * idea/tests/testData/resolve/referenceWithLib/sameNameInLib
- * idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters
-
-org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompilerPluginsWithLibTestGenerated has directories
- * idea/tests/testData/resolve/referenceWithCompilerPluginsWithLib/serialization
-
-org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompilerPluginsWithCompiledLibTestGenerated has directories
- * idea/tests/testData/resolve/referenceWithCompilerPluginsWithLib/serialization
-
-org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompilerPluginsWithCrossLibTestGenerated has directories
- * idea/tests/testData/resolve/referenceWithCompilerPluginsWithLib/serialization
-
-org.jetbrains.kotlin.idea.caches.resolve.MultiModuleLineMarkerTestGenerated has directories
- * idea/tests/testData/multiModuleLineMarker/actualConstructorWithProperties
- * idea/tests/testData/multiModuleLineMarker/actualDerived
- * idea/tests/testData/multiModuleLineMarker/actualEnumEntries
- * idea/tests/testData/multiModuleLineMarker/actualEnumEntriesInOneLine
- * idea/tests/testData/multiModuleLineMarker/actualWithOverload
- * idea/tests/testData/multiModuleLineMarker/expectConstructorWithProperties
- * idea/tests/testData/multiModuleLineMarker/expectEnumEntries
- * idea/tests/testData/multiModuleLineMarker/expectEnumEntriesInOneLine
- * idea/tests/testData/multiModuleLineMarker/expectEnumWithEnumEntriesInOneLine
- * idea/tests/testData/multiModuleLineMarker/expectWithActualInSameModule
- * idea/tests/testData/multiModuleLineMarker/expectWithOverload
- * idea/tests/testData/multiModuleLineMarker/fromActualAnnotation
- * idea/tests/testData/multiModuleLineMarker/fromActualAnnotationWithParametersInOneLine
- * idea/tests/testData/multiModuleLineMarker/fromActualCompanion
- * idea/tests/testData/multiModuleLineMarker/fromActualPrimaryConstructor
- * idea/tests/testData/multiModuleLineMarker/fromActualSealedClass
- * idea/tests/testData/multiModuleLineMarker/fromActualSecondaryConstructor
- * idea/tests/testData/multiModuleLineMarker/fromActualTypeAlias
- * idea/tests/testData/multiModuleLineMarker/fromClassToAlias
- * idea/tests/testData/multiModuleLineMarker/fromClassToJavaAliasInTest
- * idea/tests/testData/multiModuleLineMarker/fromCommonToJvmHeader
- * idea/tests/testData/multiModuleLineMarker/fromCommonToJvmImpl
- * idea/tests/testData/multiModuleLineMarker/fromExpectCompanion
- * idea/tests/testData/multiModuleLineMarker/fromExpectedAnnotation
- * idea/tests/testData/multiModuleLineMarker/fromExpectedPrimaryConstructor
- * idea/tests/testData/multiModuleLineMarker/fromExpectedSealedClass
- * idea/tests/testData/multiModuleLineMarker/fromExpectedSecondaryConstructor
- * idea/tests/testData/multiModuleLineMarker/fromExpectedTypeAlias
- * idea/tests/testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSide
- * idea/tests/testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSideNonJavaIds
- * idea/tests/testData/multiModuleLineMarker/hierarchyWithExpectClassPlatformSide
- * idea/tests/testData/multiModuleLineMarker/kotlinTestAnnotations
- * idea/tests/testData/multiModuleLineMarker/suspendImplInPlatformModules
- * idea/tests/testData/multiModuleLineMarker/topLevelFunWithKotlinTest
- * idea/tests/testData/multiModuleLineMarker/transitive
- * idea/tests/testData/multiModuleLineMarker/transitiveCommon
- * idea/tests/testData/multiModuleLineMarker/withOverloads
-
-org.jetbrains.kotlin.idea.WorkSelectionTestGenerated has directories
- * idea/tests/testData/wordSelection/ArrayBrackets
- * idea/tests/testData/wordSelection/Class
- * idea/tests/testData/wordSelection/ClassMember1
- * idea/tests/testData/wordSelection/ClassMember2
- * idea/tests/testData/wordSelection/ClassMember3
- * idea/tests/testData/wordSelection/ClassMember4
- * idea/tests/testData/wordSelection/ClassMember5
- * idea/tests/testData/wordSelection/CommentForStatements
- * idea/tests/testData/wordSelection/CommentForStatementsInLambda
- * idea/tests/testData/wordSelection/DeclarationWithComment1
- * idea/tests/testData/wordSelection/DeclarationWithComment2
- * idea/tests/testData/wordSelection/DeclarationWithComment3
- * idea/tests/testData/wordSelection/DeclarationWithComment4
- * idea/tests/testData/wordSelection/DeclarationWithDocComment
- * idea/tests/testData/wordSelection/DefiningMultipleSuperClass
- * idea/tests/testData/wordSelection/DefiningSuperClass
- * idea/tests/testData/wordSelection/DefiningVariable
- * idea/tests/testData/wordSelection/DocComment
- * idea/tests/testData/wordSelection/DocCommentOneLine
- * idea/tests/testData/wordSelection/DocCommentTagLink
- * idea/tests/testData/wordSelection/DocCommentTagName
- * idea/tests/testData/wordSelection/DocCommentTagText
- * idea/tests/testData/wordSelection/EscapedIdentifier
- * idea/tests/testData/wordSelection/ForRange
- * idea/tests/testData/wordSelection/FunctionWithLineCommentAfter
- * idea/tests/testData/wordSelection/FunctionWithLineCommentBefore
- * idea/tests/testData/wordSelection/IfBody
- * idea/tests/testData/wordSelection/IfCondition
- * idea/tests/testData/wordSelection/InvokedExpression
- * idea/tests/testData/wordSelection/KT13675
- * idea/tests/testData/wordSelection/LabeledReturn
- * idea/tests/testData/wordSelection/LambdaArgument1
- * idea/tests/testData/wordSelection/LambdaArgument2
- * idea/tests/testData/wordSelection/LambdaArgument3
- * idea/tests/testData/wordSelection/LambdaArgument4
- * idea/tests/testData/wordSelection/LeftBrace
- * idea/tests/testData/wordSelection/LineComment
- * idea/tests/testData/wordSelection/MultiDeclaration
- * idea/tests/testData/wordSelection/ObjectExpression
- * idea/tests/testData/wordSelection/RightBrace
- * idea/tests/testData/wordSelection/SimpleComment
- * idea/tests/testData/wordSelection/SimpleStringLiteral
- * idea/tests/testData/wordSelection/SimpleStringLiteral2
- * idea/tests/testData/wordSelection/Statements
- * idea/tests/testData/wordSelection/TemplateStringLiteral1
- * idea/tests/testData/wordSelection/TemplateStringLiteral2
- * idea/tests/testData/wordSelection/TemplateStringLiteral3
- * idea/tests/testData/wordSelection/TypeArguments
- * idea/tests/testData/wordSelection/TypeParameters
- * idea/tests/testData/wordSelection/ValueArguments
- * idea/tests/testData/wordSelection/ValueParameters
- * idea/tests/testData/wordSelection/ValueParameters2
- * idea/tests/testData/wordSelection/ValueParametersInLambda
- * idea/tests/testData/wordSelection/ValueParametersInLambda2
- * idea/tests/testData/wordSelection/ValueParametersInLambda3
- * idea/tests/testData/wordSelection/ValueParametersInLambda4
- * idea/tests/testData/wordSelection/WhenEntries
-
-org.jetbrains.kotlin.idea.caches.resolve.MultiPlatformHighlightingTestGenerated has directories
- * idea/tests/testData/multiModuleHighlighting/multiplatform/actualizedSupertype
- * idea/tests/testData/multiModuleHighlighting/multiplatform/additionalMembersInPlatformInterface
- * idea/tests/testData/multiModuleHighlighting/multiplatform/basic
- * idea/tests/testData/multiModuleHighlighting/multiplatform/catchHeaderExceptionInPlatformModule
- * idea/tests/testData/multiModuleHighlighting/multiplatform/completionHandlexCoroutines
- * idea/tests/testData/multiModuleHighlighting/multiplatform/contracts
- * idea/tests/testData/multiModuleHighlighting/multiplatform/depends
- * idea/tests/testData/multiModuleHighlighting/multiplatform/differentJvmImpls
- * idea/tests/testData/multiModuleHighlighting/multiplatform/headerClass
- * idea/tests/testData/multiModuleHighlighting/multiplatform/headerClassImplTypealias
- * idea/tests/testData/multiModuleHighlighting/multiplatform/headerFunUsesStdlibInSignature
- * idea/tests/testData/multiModuleHighlighting/multiplatform/headerFunctionProperty
- * idea/tests/testData/multiModuleHighlighting/multiplatform/headerPartiallyImplemented
- * idea/tests/testData/multiModuleHighlighting/multiplatform/headerWithoutImplForBoth
- * idea/tests/testData/multiModuleHighlighting/multiplatform/internal
- * idea/tests/testData/multiModuleHighlighting/multiplatform/internalDependencyFromTests
- * idea/tests/testData/multiModuleHighlighting/multiplatform/internalInheritanceToCommon
- * idea/tests/testData/multiModuleHighlighting/multiplatform/javaUsesPlatformFacade
- * idea/tests/testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJava
- * idea/tests/testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls
- * idea/tests/testData/multiModuleHighlighting/multiplatform/jvmNameInCommon
- * idea/tests/testData/multiModuleHighlighting/multiplatform/multifileFacade
- * idea/tests/testData/multiModuleHighlighting/multiplatform/nestedClassWithoutImpl
- * idea/tests/testData/multiModuleHighlighting/multiplatform/platformTypeAliasInterchangebleWithAliasedClass
- * idea/tests/testData/multiModuleHighlighting/multiplatform/sealedTypeAlias
- * idea/tests/testData/multiModuleHighlighting/multiplatform/suppressHeaderWithoutImpl
- * idea/tests/testData/multiModuleHighlighting/multiplatform/suspend
- * idea/tests/testData/multiModuleHighlighting/multiplatform/transitive
- * idea/tests/testData/multiModuleHighlighting/multiplatform/triangle
- * idea/tests/testData/multiModuleHighlighting/multiplatform/triangleWithDependency
- * idea/tests/testData/multiModuleHighlighting/multiplatform/typeAliasedParameter
- * idea/tests/testData/multiModuleHighlighting/multiplatform/typeAliasedSam
- * idea/tests/testData/multiModuleHighlighting/multiplatform/useAppendable
- * idea/tests/testData/multiModuleHighlighting/multiplatform/useCorrectBuiltInsForCommonModule
- * idea/tests/testData/multiModuleHighlighting/multiplatform/usePlatformSpecificMember
- * idea/tests/testData/multiModuleHighlighting/multiplatform/withOverrides
-
-org.jetbrains.kotlin.idea.caches.resolve.MultiplatformAnalysisTestGenerated has directories
- * idea/tests/testData/multiplatform/aliasesTypeMismatch
- * idea/tests/testData/multiplatform/builtinsAndStdlib
- * idea/tests/testData/multiplatform/callableReferences
- * idea/tests/testData/multiplatform/chainedTypeAliasRefinement
- * idea/tests/testData/multiplatform/commonSealedWithPlatformInheritor
- * idea/tests/testData/multiplatform/constructorsOfExpect
- * idea/tests/testData/multiplatform/correctOverloadResolutionAmbiguity
- * idea/tests/testData/multiplatform/defaultArguments
- * idea/tests/testData/multiplatform/diamondActualInBottom
- * idea/tests/testData/multiplatform/diamondActualOnOnePath
- * idea/tests/testData/multiplatform/diamondDuplicateActuals
- * idea/tests/testData/multiplatform/diamondModuleDependency1
- * idea/tests/testData/multiplatform/diamondModuleDependency2
- * idea/tests/testData/multiplatform/diamondSeesTwoActuals
- * idea/tests/testData/multiplatform/differentKindsOfDependencies
- * idea/tests/testData/multiplatform/duplicateActualsExplicit
- * idea/tests/testData/multiplatform/duplicateActualsImplicit
- * idea/tests/testData/multiplatform/duplicateActualsOneWeaklyIncompatible
- * idea/tests/testData/multiplatform/duplicateActualsOneWithStrongIncompatibility
- * idea/tests/testData/multiplatform/duplicateExpectsExplicit
- * idea/tests/testData/multiplatform/duplicateExpectsImplicit
- * idea/tests/testData/multiplatform/duplicateExpectsWithStrongIncompatibility
- * idea/tests/testData/multiplatform/enumFromCommonSerlializableSupertype
- * idea/tests/testData/multiplatform/expectActualLineMarkers
- * idea/tests/testData/multiplatform/extensionOnExpect
- * idea/tests/testData/multiplatform/hierarcicalActualization
- * idea/tests/testData/multiplatform/incompleteActualization
- * idea/tests/testData/multiplatform/internalFromDependsOn
- * idea/tests/testData/multiplatform/internalFromDependsOnOfProduction
- * idea/tests/testData/multiplatform/internalFromProduction
- * idea/tests/testData/multiplatform/jsNameClash
- * idea/tests/testData/multiplatform/jvmDefaultNonMpp
- * idea/tests/testData/multiplatform/jvmInlineValueClass
- * idea/tests/testData/multiplatform/kt41218
- * idea/tests/testData/multiplatform/kt44898
- * idea/tests/testData/multiplatform/kt48291
- * idea/tests/testData/multiplatform/ktij22295
- * idea/tests/testData/multiplatform/ktij27523
- * idea/tests/testData/multiplatform/lambdas
- * idea/tests/testData/multiplatform/languageConstructions
- * idea/tests/testData/multiplatform/multilevelParents
- * idea/tests/testData/multiplatform/multiplatformLibrary
- * idea/tests/testData/multiplatform/nativeStdlib
- * idea/tests/testData/multiplatform/overrideExpect
- * idea/tests/testData/multiplatform/overrideExpectWithCompositeType
- * idea/tests/testData/multiplatform/platformDependencyInCommon
- * idea/tests/testData/multiplatform/platformSpecificChecksInCommon
- * idea/tests/testData/multiplatform/qualifiedReceiver
- * idea/tests/testData/multiplatform/recursiveTypes
- * idea/tests/testData/multiplatform/sealedInheritorsInComplexModuleStructure1
- * idea/tests/testData/multiplatform/sealedInheritorsInComplexModuleStructure2
- * idea/tests/testData/multiplatform/simple
- * idea/tests/testData/multiplatform/smartCastOnPropertyFromDependentModule
- * idea/tests/testData/multiplatform/supertypes
- * idea/tests/testData/multiplatform/transitiveDependencyOnCommonSourceSets
- * idea/tests/testData/multiplatform/typeAliasToExpectClassExplicitReference
- * idea/tests/testData/multiplatform/typeAliases
- * idea/tests/testData/multiplatform/typeParameters
- * idea/tests/testData/multiplatform/unresolvedInMultiplatformLibrary
- * idea/tests/testData/multiplatform/useCorrectBuiltIns
- * idea/tests/testData/multiplatform/weaklyIncompatibleActualInIntermediateModule
- * idea/tests/testData/multiplatform/whenExhaustivenessForSealed
 
 org.jetbrains.kotlin.idea.quickfix.QuickFixMultiModuleTestGenerated$AccessibilityChecker has directories
  * idea/tests/testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass
@@ -1302,6 +949,387 @@ org.jetbrains.kotlin.idea.navigation.KotlinGotoSuperMultiModuleTestGenerated has
  * idea/tests/testData/navigation/gotoSuper/multiModule/actualFunction
  * idea/tests/testData/navigation/gotoSuper/multiModule/actualProperty
 
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Type has directories
+ * idea/tests/testData/hierarchy/class/type/CaretAtAnnotation
+ * idea/tests/testData/hierarchy/class/type/CaretAtConstructor
+ * idea/tests/testData/hierarchy/class/type/CaretAtFabricMethod
+ * idea/tests/testData/hierarchy/class/type/CaretAtImport
+ * idea/tests/testData/hierarchy/class/type/CaretAtJavaType
+ * idea/tests/testData/hierarchy/class/type/CaretAtModifierList
+ * idea/tests/testData/hierarchy/class/type/CaretAtReceiverExtFun
+ * idea/tests/testData/hierarchy/class/type/CaretAtSuperCall
+ * idea/tests/testData/hierarchy/class/type/CaretAtSuperTypeCallEntry
+ * idea/tests/testData/hierarchy/class/type/CaretAtSupertypesList
+ * idea/tests/testData/hierarchy/class/type/CaretAtTypeReference
+ * idea/tests/testData/hierarchy/class/type/CaretInClassBody
+ * idea/tests/testData/hierarchy/class/type/ClassFromClass
+ * idea/tests/testData/hierarchy/class/type/ClassFromObject
+ * idea/tests/testData/hierarchy/class/type/ClassInClassObject
+ * idea/tests/testData/hierarchy/class/type/ClassInPackage
+ * idea/tests/testData/hierarchy/class/type/InnerClass
+ * idea/tests/testData/hierarchy/class/type/JKJHierarchy
+ * idea/tests/testData/hierarchy/class/type/JavaFromKotlin
+ * idea/tests/testData/hierarchy/class/type/JavaFromKotlinByRef
+ * idea/tests/testData/hierarchy/class/type/JavaFromKotlinForKotlinClass
+ * idea/tests/testData/hierarchy/class/type/JavaStyleClassLiteralInvalidCode
+ * idea/tests/testData/hierarchy/class/type/JetInt
+ * idea/tests/testData/hierarchy/class/type/KJKHierarchy
+ * idea/tests/testData/hierarchy/class/type/KotlinFromJava
+ * idea/tests/testData/hierarchy/class/type/KotlinFromJavaByRef
+ * idea/tests/testData/hierarchy/class/type/KotlinFromKotlinByRef
+ * idea/tests/testData/hierarchy/class/type/Object
+ * idea/tests/testData/hierarchy/class/type/TwoChildren
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Super has directories
+ * idea/tests/testData/hierarchy/class/super/JetList
+ * idea/tests/testData/hierarchy/class/super/MultiTypeAlias
+ * idea/tests/testData/hierarchy/class/super/TwoInterfaces
+ * idea/tests/testData/hierarchy/class/super/TypeAlias
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Sub has directories
+ * idea/tests/testData/hierarchy/class/sub/AllFromClass
+ * idea/tests/testData/hierarchy/class/sub/AllFromInterface
+ * idea/tests/testData/hierarchy/class/sub/ClassFromClass
+ * idea/tests/testData/hierarchy/class/sub/ClassFromInterface
+ * idea/tests/testData/hierarchy/class/sub/ConstructorCallCaretAfter
+ * idea/tests/testData/hierarchy/class/sub/ConstructorCallCaretBefore
+ * idea/tests/testData/hierarchy/class/sub/InterfaceFromClass
+ * idea/tests/testData/hierarchy/class/sub/InterfaceFromInterface
+ * idea/tests/testData/hierarchy/class/sub/MultiTypeAlias
+ * idea/tests/testData/hierarchy/class/sub/ObjectFromClass
+ * idea/tests/testData/hierarchy/class/sub/ObjectFromInterface
+ * idea/tests/testData/hierarchy/class/sub/SecondaryConstructorCallCaretAfter
+ * idea/tests/testData/hierarchy/class/sub/SecondaryConstructorCallCaretBefore
+ * idea/tests/testData/hierarchy/class/sub/TypeAlias
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Callers has directories
+ * idea/tests/testData/hierarchy/calls/callers/callInsideAnonymousFun
+ * idea/tests/testData/hierarchy/calls/callers/callInsideLambda
+ * idea/tests/testData/hierarchy/calls/callers/insideJavadoc
+ * idea/tests/testData/hierarchy/calls/callers/insideKDoc
+ * idea/tests/testData/hierarchy/calls/callers/kotlinClass
+ * idea/tests/testData/hierarchy/calls/callers/kotlinEnumClass
+ * idea/tests/testData/hierarchy/calls/callers/kotlinEnumEntry
+ * idea/tests/testData/hierarchy/calls/callers/kotlinFunction
+ * idea/tests/testData/hierarchy/calls/callers/kotlinFunctionNonCallUsages
+ * idea/tests/testData/hierarchy/calls/callers/kotlinInterface
+ * idea/tests/testData/hierarchy/calls/callers/kotlinLocalClass
+ * idea/tests/testData/hierarchy/calls/callers/kotlinLocalFunction
+ * idea/tests/testData/hierarchy/calls/callers/kotlinLocalFunctionWithNonLocalCallers
+ * idea/tests/testData/hierarchy/calls/callers/kotlinNestedClass
+ * idea/tests/testData/hierarchy/calls/callers/kotlinNestedInnerClass
+ * idea/tests/testData/hierarchy/calls/callers/kotlinObjectDeclaration
+ * idea/tests/testData/hierarchy/calls/callers/kotlinPackageFunction
+ * idea/tests/testData/hierarchy/calls/callers/kotlinPackageProperty
+ * idea/tests/testData/hierarchy/calls/callers/kotlinPrimaryConstructorImplicitCalls
+ * idea/tests/testData/hierarchy/calls/callers/kotlinPrivateClass
+ * idea/tests/testData/hierarchy/calls/callers/kotlinPrivateFunction
+ * idea/tests/testData/hierarchy/calls/callers/kotlinPrivateProperty
+ * idea/tests/testData/hierarchy/calls/callers/kotlinProperty
+ * idea/tests/testData/hierarchy/calls/callers/kotlinSecondaryConstructor
+ * idea/tests/testData/hierarchy/calls/callers/kotlinSecondaryConstructorImplicitCalls
+ * idea/tests/testData/hierarchy/calls/callers/kotlinUnresolvedFunction
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$CallersJava has directories
+ * idea/tests/testData/hierarchy/calls/callersJava/javaMethod
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Callees has directories
+ * idea/tests/testData/hierarchy/calls/callees/kotlinAnonymousObject
+ * idea/tests/testData/hierarchy/calls/callees/kotlinClass
+ * idea/tests/testData/hierarchy/calls/callees/kotlinClassObject
+ * idea/tests/testData/hierarchy/calls/callees/kotlinEnumClass
+ * idea/tests/testData/hierarchy/calls/callees/kotlinFunction
+ * idea/tests/testData/hierarchy/calls/callees/kotlinInterface
+ * idea/tests/testData/hierarchy/calls/callees/kotlinLocalClass
+ * idea/tests/testData/hierarchy/calls/callees/kotlinLocalFunction
+ * idea/tests/testData/hierarchy/calls/callees/kotlinNestedClass
+ * idea/tests/testData/hierarchy/calls/callees/kotlinObject
+ * idea/tests/testData/hierarchy/calls/callees/kotlinPackageFunction
+ * idea/tests/testData/hierarchy/calls/callees/kotlinPackageProperty
+ * idea/tests/testData/hierarchy/calls/callees/kotlinProperty
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyTestGenerated$Overrides has directories
+ * idea/tests/testData/hierarchy/overrides/kotlinBuiltInMemberFunction
+ * idea/tests/testData/hierarchy/overrides/kotlinFunctionInClass
+ * idea/tests/testData/hierarchy/overrides/kotlinFunctionInInterface
+ * idea/tests/testData/hierarchy/overrides/kotlinPropertyInClass
+ * idea/tests/testData/hierarchy/overrides/kotlinPropertyInInterface
+ * idea/tests/testData/hierarchy/overrides/kotlinTopLevelFunction
+ * idea/tests/testData/hierarchy/overrides/kotlinVarParameter
+
+org.jetbrains.kotlin.idea.hierarchy.HierarchyWithLibTestGenerated has directories
+ * idea/tests/testData/hierarchy/withLib/annotation
+ * idea/tests/testData/hierarchy/withLib/enum
+
+org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithLibTestGenerated has directories
+ * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
+ * idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters
+ * idea/tests/testData/resolve/referenceWithLib/enumEntryMethods
+ * idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods
+ * idea/tests/testData/resolve/referenceWithLib/fakeOverride
+ * idea/tests/testData/resolve/referenceWithLib/fakeOverride2
+ * idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation
+ * idea/tests/testData/resolve/referenceWithLib/innerClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter
+ * idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters
+ * idea/tests/testData/resolve/referenceWithLib/namedArguments
+ * idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/overloadFun
+ * idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter
+ * idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration
+ * idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/sameNameInLib
+ * idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters
+
+org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompiledLibTestGenerated has directories
+ * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
+ * idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters
+ * idea/tests/testData/resolve/referenceWithLib/enumEntryMethods
+ * idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods
+ * idea/tests/testData/resolve/referenceWithLib/fakeOverride
+ * idea/tests/testData/resolve/referenceWithLib/fakeOverride2
+ * idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation
+ * idea/tests/testData/resolve/referenceWithLib/innerClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter
+ * idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters
+ * idea/tests/testData/resolve/referenceWithLib/namedArguments
+ * idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/overloadFun
+ * idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter
+ * idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration
+ * idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/sameNameInLib
+ * idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters
+
+org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCrossLibTestGenerated has directories
+ * idea/tests/testData/resolve/referenceWithLib/dataClassSyntheticMethods
+ * idea/tests/testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters
+ * idea/tests/testData/resolve/referenceWithLib/enumEntryMethods
+ * idea/tests/testData/resolve/referenceWithLib/enumSyntheticMethods
+ * idea/tests/testData/resolve/referenceWithLib/fakeOverride
+ * idea/tests/testData/resolve/referenceWithLib/fakeOverride2
+ * idea/tests/testData/resolve/referenceWithLib/infinityAndNanInJavaAnnotation
+ * idea/tests/testData/resolve/referenceWithLib/innerClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/iteratorWithTypeParameter
+ * idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters
+ * idea/tests/testData/resolve/referenceWithLib/namedArguments
+ * idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/overloadFun
+ * idea/tests/testData/resolve/referenceWithLib/overridingFunctionWithSamAdapter
+ * idea/tests/testData/resolve/referenceWithLib/packageOfLibDeclaration
+ * idea/tests/testData/resolve/referenceWithLib/referenceToRootJavaClassFromLib
+ * idea/tests/testData/resolve/referenceWithLib/sameNameInLib
+ * idea/tests/testData/resolve/referenceWithLib/setWithTypeParameters
+
+org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompilerPluginsWithLibTestGenerated has directories
+ * idea/tests/testData/resolve/referenceWithCompilerPluginsWithLib/serialization
+
+org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompilerPluginsWithCompiledLibTestGenerated has directories
+ * idea/tests/testData/resolve/referenceWithCompilerPluginsWithLib/serialization
+
+org.jetbrains.kotlin.idea.resolve.ReferenceResolveWithCompilerPluginsWithCrossLibTestGenerated has directories
+ * idea/tests/testData/resolve/referenceWithCompilerPluginsWithLib/serialization
+
+org.jetbrains.kotlin.idea.caches.resolve.MultiModuleLineMarkerTestGenerated has directories
+ * idea/tests/testData/multiModuleLineMarker/actualConstructorWithProperties
+ * idea/tests/testData/multiModuleLineMarker/actualDerived
+ * idea/tests/testData/multiModuleLineMarker/actualEnumEntries
+ * idea/tests/testData/multiModuleLineMarker/actualEnumEntriesInOneLine
+ * idea/tests/testData/multiModuleLineMarker/actualWithOverload
+ * idea/tests/testData/multiModuleLineMarker/expectConstructorWithProperties
+ * idea/tests/testData/multiModuleLineMarker/expectEnumEntries
+ * idea/tests/testData/multiModuleLineMarker/expectEnumEntriesInOneLine
+ * idea/tests/testData/multiModuleLineMarker/expectEnumWithEnumEntriesInOneLine
+ * idea/tests/testData/multiModuleLineMarker/expectWithActualInSameModule
+ * idea/tests/testData/multiModuleLineMarker/expectWithOverload
+ * idea/tests/testData/multiModuleLineMarker/fromActualAnnotation
+ * idea/tests/testData/multiModuleLineMarker/fromActualAnnotationWithParametersInOneLine
+ * idea/tests/testData/multiModuleLineMarker/fromActualCompanion
+ * idea/tests/testData/multiModuleLineMarker/fromActualPrimaryConstructor
+ * idea/tests/testData/multiModuleLineMarker/fromActualSealedClass
+ * idea/tests/testData/multiModuleLineMarker/fromActualSecondaryConstructor
+ * idea/tests/testData/multiModuleLineMarker/fromActualTypeAlias
+ * idea/tests/testData/multiModuleLineMarker/fromClassToAlias
+ * idea/tests/testData/multiModuleLineMarker/fromClassToJavaAliasInTest
+ * idea/tests/testData/multiModuleLineMarker/fromCommonToJvmHeader
+ * idea/tests/testData/multiModuleLineMarker/fromCommonToJvmImpl
+ * idea/tests/testData/multiModuleLineMarker/fromExpectCompanion
+ * idea/tests/testData/multiModuleLineMarker/fromExpectedAnnotation
+ * idea/tests/testData/multiModuleLineMarker/fromExpectedPrimaryConstructor
+ * idea/tests/testData/multiModuleLineMarker/fromExpectedSealedClass
+ * idea/tests/testData/multiModuleLineMarker/fromExpectedSecondaryConstructor
+ * idea/tests/testData/multiModuleLineMarker/fromExpectedTypeAlias
+ * idea/tests/testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSide
+ * idea/tests/testData/multiModuleLineMarker/hierarchyWithExpectClassCommonSideNonJavaIds
+ * idea/tests/testData/multiModuleLineMarker/hierarchyWithExpectClassPlatformSide
+ * idea/tests/testData/multiModuleLineMarker/kotlinTestAnnotations
+ * idea/tests/testData/multiModuleLineMarker/suspendImplInPlatformModules
+ * idea/tests/testData/multiModuleLineMarker/topLevelFunWithKotlinTest
+ * idea/tests/testData/multiModuleLineMarker/transitive
+ * idea/tests/testData/multiModuleLineMarker/transitiveCommon
+ * idea/tests/testData/multiModuleLineMarker/withOverloads
+
+org.jetbrains.kotlin.idea.caches.resolve.MultiPlatformHighlightingTestGenerated has directories
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/actualizedSupertype
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/additionalMembersInPlatformInterface
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/basic
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/catchHeaderExceptionInPlatformModule
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/completionHandlexCoroutines
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/contracts
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/depends
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/differentJvmImpls
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/headerClass
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/headerClassImplTypealias
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/headerFunUsesStdlibInSignature
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/headerFunctionProperty
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/headerPartiallyImplemented
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/headerWithoutImplForBoth
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/internal
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/internalDependencyFromTests
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/internalInheritanceToCommon
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/javaUsesPlatformFacade
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJava
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/jvmNameInCommon
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/multifileFacade
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/nestedClassWithoutImpl
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/platformTypeAliasInterchangebleWithAliasedClass
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/sealedTypeAlias
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/suppressHeaderWithoutImpl
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/suspend
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/transitive
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/triangle
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/triangleWithDependency
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/typeAliasedParameter
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/typeAliasedSam
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/useAppendable
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/useCorrectBuiltInsForCommonModule
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/usePlatformSpecificMember
+ * idea/tests/testData/multiModuleHighlighting/multiplatform/withOverrides
+
+org.jetbrains.kotlin.idea.WorkSelectionTestGenerated has directories
+ * idea/tests/testData/wordSelection/ArrayBrackets
+ * idea/tests/testData/wordSelection/Class
+ * idea/tests/testData/wordSelection/ClassMember1
+ * idea/tests/testData/wordSelection/ClassMember2
+ * idea/tests/testData/wordSelection/ClassMember3
+ * idea/tests/testData/wordSelection/ClassMember4
+ * idea/tests/testData/wordSelection/ClassMember5
+ * idea/tests/testData/wordSelection/CommentForStatements
+ * idea/tests/testData/wordSelection/CommentForStatementsInLambda
+ * idea/tests/testData/wordSelection/DeclarationWithComment1
+ * idea/tests/testData/wordSelection/DeclarationWithComment2
+ * idea/tests/testData/wordSelection/DeclarationWithComment3
+ * idea/tests/testData/wordSelection/DeclarationWithComment4
+ * idea/tests/testData/wordSelection/DeclarationWithDocComment
+ * idea/tests/testData/wordSelection/DefiningMultipleSuperClass
+ * idea/tests/testData/wordSelection/DefiningSuperClass
+ * idea/tests/testData/wordSelection/DefiningVariable
+ * idea/tests/testData/wordSelection/DocComment
+ * idea/tests/testData/wordSelection/DocCommentOneLine
+ * idea/tests/testData/wordSelection/DocCommentTagLink
+ * idea/tests/testData/wordSelection/DocCommentTagName
+ * idea/tests/testData/wordSelection/DocCommentTagText
+ * idea/tests/testData/wordSelection/EscapedIdentifier
+ * idea/tests/testData/wordSelection/ForRange
+ * idea/tests/testData/wordSelection/FunctionWithLineCommentAfter
+ * idea/tests/testData/wordSelection/FunctionWithLineCommentBefore
+ * idea/tests/testData/wordSelection/IfBody
+ * idea/tests/testData/wordSelection/IfCondition
+ * idea/tests/testData/wordSelection/InvokedExpression
+ * idea/tests/testData/wordSelection/KT13675
+ * idea/tests/testData/wordSelection/LabeledReturn
+ * idea/tests/testData/wordSelection/LambdaArgument1
+ * idea/tests/testData/wordSelection/LambdaArgument2
+ * idea/tests/testData/wordSelection/LambdaArgument3
+ * idea/tests/testData/wordSelection/LambdaArgument4
+ * idea/tests/testData/wordSelection/LeftBrace
+ * idea/tests/testData/wordSelection/LineComment
+ * idea/tests/testData/wordSelection/MultiDeclaration
+ * idea/tests/testData/wordSelection/ObjectExpression
+ * idea/tests/testData/wordSelection/RightBrace
+ * idea/tests/testData/wordSelection/SimpleComment
+ * idea/tests/testData/wordSelection/SimpleStringLiteral
+ * idea/tests/testData/wordSelection/SimpleStringLiteral2
+ * idea/tests/testData/wordSelection/Statements
+ * idea/tests/testData/wordSelection/TemplateStringLiteral1
+ * idea/tests/testData/wordSelection/TemplateStringLiteral2
+ * idea/tests/testData/wordSelection/TemplateStringLiteral3
+ * idea/tests/testData/wordSelection/TypeArguments
+ * idea/tests/testData/wordSelection/TypeParameters
+ * idea/tests/testData/wordSelection/ValueArguments
+ * idea/tests/testData/wordSelection/ValueParameters
+ * idea/tests/testData/wordSelection/ValueParameters2
+ * idea/tests/testData/wordSelection/ValueParametersInLambda
+ * idea/tests/testData/wordSelection/ValueParametersInLambda2
+ * idea/tests/testData/wordSelection/ValueParametersInLambda3
+ * idea/tests/testData/wordSelection/ValueParametersInLambda4
+ * idea/tests/testData/wordSelection/WhenEntries
+
+org.jetbrains.kotlin.idea.caches.resolve.MultiplatformAnalysisTestGenerated has directories
+ * idea/tests/testData/multiplatform/aliasesTypeMismatch
+ * idea/tests/testData/multiplatform/builtinsAndStdlib
+ * idea/tests/testData/multiplatform/callableReferences
+ * idea/tests/testData/multiplatform/chainedTypeAliasRefinement
+ * idea/tests/testData/multiplatform/commonSealedWithPlatformInheritor
+ * idea/tests/testData/multiplatform/constructorsOfExpect
+ * idea/tests/testData/multiplatform/correctOverloadResolutionAmbiguity
+ * idea/tests/testData/multiplatform/defaultArguments
+ * idea/tests/testData/multiplatform/diamondActualInBottom
+ * idea/tests/testData/multiplatform/diamondActualOnOnePath
+ * idea/tests/testData/multiplatform/diamondDuplicateActuals
+ * idea/tests/testData/multiplatform/diamondModuleDependency1
+ * idea/tests/testData/multiplatform/diamondModuleDependency2
+ * idea/tests/testData/multiplatform/diamondSeesTwoActuals
+ * idea/tests/testData/multiplatform/differentKindsOfDependencies
+ * idea/tests/testData/multiplatform/duplicateActualsExplicit
+ * idea/tests/testData/multiplatform/duplicateActualsImplicit
+ * idea/tests/testData/multiplatform/duplicateActualsOneWeaklyIncompatible
+ * idea/tests/testData/multiplatform/duplicateActualsOneWithStrongIncompatibility
+ * idea/tests/testData/multiplatform/duplicateExpectsExplicit
+ * idea/tests/testData/multiplatform/duplicateExpectsImplicit
+ * idea/tests/testData/multiplatform/duplicateExpectsWithStrongIncompatibility
+ * idea/tests/testData/multiplatform/enumFromCommonSerlializableSupertype
+ * idea/tests/testData/multiplatform/expectActualLineMarkers
+ * idea/tests/testData/multiplatform/extensionOnExpect
+ * idea/tests/testData/multiplatform/hierarcicalActualization
+ * idea/tests/testData/multiplatform/incompleteActualization
+ * idea/tests/testData/multiplatform/internalFromDependsOn
+ * idea/tests/testData/multiplatform/internalFromDependsOnOfProduction
+ * idea/tests/testData/multiplatform/internalFromProduction
+ * idea/tests/testData/multiplatform/jsNameClash
+ * idea/tests/testData/multiplatform/jvmDefaultNonMpp
+ * idea/tests/testData/multiplatform/jvmInlineValueClass
+ * idea/tests/testData/multiplatform/kt41218
+ * idea/tests/testData/multiplatform/kt44898
+ * idea/tests/testData/multiplatform/kt48291
+ * idea/tests/testData/multiplatform/ktij22295
+ * idea/tests/testData/multiplatform/ktij27523
+ * idea/tests/testData/multiplatform/lambdas
+ * idea/tests/testData/multiplatform/languageConstructions
+ * idea/tests/testData/multiplatform/multilevelParents
+ * idea/tests/testData/multiplatform/multiplatformLibrary
+ * idea/tests/testData/multiplatform/nativeStdlib
+ * idea/tests/testData/multiplatform/overrideExpect
+ * idea/tests/testData/multiplatform/overrideExpectWithCompositeType
+ * idea/tests/testData/multiplatform/platformDependencyInCommon
+ * idea/tests/testData/multiplatform/platformSpecificChecksInCommon
+ * idea/tests/testData/multiplatform/qualifiedReceiver
+ * idea/tests/testData/multiplatform/recursiveTypes
+ * idea/tests/testData/multiplatform/sealedInheritorsInComplexModuleStructure1
+ * idea/tests/testData/multiplatform/sealedInheritorsInComplexModuleStructure2
+ * idea/tests/testData/multiplatform/simple
+ * idea/tests/testData/multiplatform/smartCastOnPropertyFromDependentModule
+ * idea/tests/testData/multiplatform/supertypes
+ * idea/tests/testData/multiplatform/transitiveDependencyOnCommonSourceSets
+ * idea/tests/testData/multiplatform/typeAliasToExpectClassExplicitReference
+ * idea/tests/testData/multiplatform/typeAliases
+ * idea/tests/testData/multiplatform/typeParameters
+ * idea/tests/testData/multiplatform/unresolvedInMultiplatformLibrary
+ * idea/tests/testData/multiplatform/useCorrectBuiltIns
+ * idea/tests/testData/multiplatform/weaklyIncompatibleActualInIntermediateModule
+ * idea/tests/testData/multiplatform/whenExhaustivenessForSealed
+
 org.jetbrains.kotlin.idea.internal.BytecodeToolWindowMultiplatformTestGenerated$Common has directories
  * idea/tests/testData/internal/toolWindowMultiplatform/abstractClass
  * idea/tests/testData/internal/toolWindowMultiplatform/classWithConstructor
@@ -1329,58 +1357,6 @@ org.jetbrains.kotlin.idea.internal.BytecodeToolWindowMultiplatformTestGenerated$
  * idea/tests/testData/internal/toolWindowMultiplatform/obj
  * idea/tests/testData/internal/toolWindowMultiplatform/propertyVal
  * idea/tests/testData/internal/toolWindowMultiplatform/propertyVar
-
-org.jetbrains.kotlin.idea.script.ScriptConfigurationHighlightingTestGenerated$Highlighting has directories
- * idea/tests/testData/script/definition/highlighting/acceptedAnnotations
- * idea/tests/testData/script/definition/highlighting/additionalImports
- * idea/tests/testData/script/definition/highlighting/asyncResolver
- * idea/tests/testData/script/definition/highlighting/conflictingModule
- * idea/tests/testData/script/definition/highlighting/customBaseClass
- * idea/tests/testData/script/definition/highlighting/customExtension
- * idea/tests/testData/script/definition/highlighting/customJavaHome
- * idea/tests/testData/script/definition/highlighting/customLibrary
- * idea/tests/testData/script/definition/highlighting/doNotSpeakAboutJava
- * idea/tests/testData/script/definition/highlighting/doNotSpeakAboutJavaLegacy
- * idea/tests/testData/script/definition/highlighting/emptyAsyncResolver
- * idea/tests/testData/script/definition/highlighting/implicitReceiver
- * idea/tests/testData/script/definition/highlighting/multiModule
- * idea/tests/testData/script/definition/highlighting/multipleScripts
- * idea/tests/testData/script/definition/highlighting/nestedClass
- * idea/tests/testData/script/definition/highlighting/noResolver
- * idea/tests/testData/script/definition/highlighting/propertyAccessor
- * idea/tests/testData/script/definition/highlighting/propertyAccessorFromModule
- * idea/tests/testData/script/definition/highlighting/simple
-
-org.jetbrains.kotlin.idea.script.ScriptConfigurationHighlightingTestGenerated$Complex has directories
- * idea/tests/testData/script/definition/complex/errorResolver
-
-org.jetbrains.kotlin.idea.script.ScriptConfigurationNavigationTestGenerated has directories
- * idea/tests/testData/script/definition/navigation/buildSrcProblem
- * idea/tests/testData/script/definition/navigation/conflictingModule
- * idea/tests/testData/script/definition/navigation/customBaseClass
- * idea/tests/testData/script/definition/navigation/includedPluginProblem
- * idea/tests/testData/script/definition/navigation/javaLib
- * idea/tests/testData/script/definition/navigation/javaLibWithSources
- * idea/tests/testData/script/definition/navigation/kotlinLib
- * idea/tests/testData/script/definition/navigation/kotlinLibWithSources
- * idea/tests/testData/script/definition/navigation/stdlib
- * idea/tests/testData/script/definition/navigation/stdlibWithSources
-
-org.jetbrains.kotlin.idea.script.ScriptConfigurationCompletionTestGenerated has directories
- * idea/tests/testData/script/definition/completion/conflictingModule
- * idea/tests/testData/script/definition/completion/conflictingModuleCustomDef
- * idea/tests/testData/script/definition/completion/conflictingModuleJavaLib
- * idea/tests/testData/script/definition/completion/implicitReceiver
-
-org.jetbrains.kotlin.idea.script.ScriptConfigurationInsertImportOnPasteTestGenerated$Copy has directories
- * idea/tests/testData/script/definition/imports/implicitImport
-
-org.jetbrains.kotlin.idea.script.ScriptConfigurationInsertImportOnPasteTestGenerated$Cut has directories
- * idea/tests/testData/script/definition/imports/implicitImport
-
-org.jetbrains.kotlin.idea.script.ScriptDefinitionsOrderTestGenerated has directories
- * idea/tests/testData/script/definition/order/reorder
- * idea/tests/testData/script/definition/order/switchOff
 
 org.jetbrains.kotlin.idea.slicer.SlicerMultiplatformTestGenerated has directories
  * idea/tests/testData/slicer/mpp/actualClassFunctionParameter
@@ -1975,7 +1951,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * fir/tests/testData/resolve/anchors/anchorInSameModuleJavaDependency
 ## K1 only cases
 
-455 K1 only cases (6254 files):
+443 K1 only cases (5960 files):
 
  * org.jetbrains.kotlin.DataFlowValueRenderingTestGenerated
  * org.jetbrains.kotlin.addImport.AddImportTestGenerated
@@ -2156,7 +2132,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CanBeVal
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$CatchIgnoresException
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$Collections
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ComplexRedundantLet
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConstantConditionIf
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConventionNameCalls
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$ConvertObjectToDataObject
@@ -2219,6 +2194,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantRequireNotNullCall
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantSamConstructor
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantUnitExpression
+ * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantUnitReturnType
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantVisibilityModifier
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RedundantWith
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$RemoveEmptyParenthesesFromAnnotationEntry
@@ -2256,7 +2232,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SelfAssignment
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SelfReferenceConstructorParameter
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SetterBackingFieldAssignment
- * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimpleRedundantLet
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifyAssertNotNull
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifyNestedEachInScope
  * org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated$SimplifyWhenWithBooleanConstantCondition
@@ -2368,18 +2343,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.refactoring.inline.InlineMultiFileTestGenerated
  * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestGenerated$InlineTypeAlias
  * org.jetbrains.kotlin.idea.refactoring.inline.InlineTestWithSomeDescriptorsGenerated
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Basic
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$ControlFlow
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$DefaultContainer
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Delegation
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Duplicates
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Initializers
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Multiline
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$OptIn
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Parameters
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$Script
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$StringTemplates
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractFunction$TypeParameters
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractInterface
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$ExtractSuperclass
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceConstant$BinaryExpression
@@ -2400,6 +2364,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$Uncategorized
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceTypeAlias
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceTypeParameter
+ * org.jetbrains.kotlin.idea.refactoring.move.MoveTestGenerated$MoveDirectory
  * org.jetbrains.kotlin.idea.refactoring.move.MultiModuleMoveTestGenerated
  * org.jetbrains.kotlin.idea.refactoring.pullUp.PullUpTestGenerated$J2K
  * org.jetbrains.kotlin.idea.refactoring.pullUp.PullUpTestGenerated$K2J
@@ -2410,7 +2375,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.refactoring.safeDelete.SafeDeleteTestGenerated$KotlinClassWithJava
  * org.jetbrains.kotlin.idea.refactoring.safeDelete.SafeDeleteTestGenerated$KotlinFunctionWithJava
  * org.jetbrains.kotlin.idea.refactoring.safeDelete.SafeDeleteTestGenerated$KotlinPropertyWithJava
- * org.jetbrains.kotlin.idea.repl.IdeReplCompletionTestGenerated
  * org.jetbrains.kotlin.idea.resolve.AdditionalResolveDescriptorRendererTestGenerated
  * org.jetbrains.kotlin.idea.resolve.PartialBodyResolveTestGenerated
  * org.jetbrains.kotlin.idea.resolve.ReferenceToJavaWithWrongFileStructureTestGenerated

@@ -3,9 +3,10 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test.AbstractLineMarkersK2Test
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 
 internal fun MutableTWorkspace.generateK2LineMarkerTests() {
-    testGroup("code-insight/line-markers") {
+    testGroup("code-insight/line-markers", category = HIGHLIGHTING) {
         testClass<AbstractLineMarkersK2Test> {
             model("recursive", pattern = Patterns.KT_WITHOUT_DOTS)
             model("suspend", pattern = Patterns.KT_WITHOUT_DOTS)

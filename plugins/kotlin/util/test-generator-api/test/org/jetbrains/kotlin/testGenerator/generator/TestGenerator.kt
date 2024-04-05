@@ -5,11 +5,11 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestIndexingModeSupporter
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import junit.framework.ComparisonFailure
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.TestIndexingMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.TestMetadata
@@ -142,12 +142,21 @@ internal fun write(file: File, content: String, isUpToDateCheck: Boolean) {
 
     if (normalizeContent(content) != normalizeContent(oldContent)) {
         if (isUpToDateCheck) {
-            throw FileComparisonFailedError(
-                /* message = */ "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
-                /* expected = */ oldContent,
-                /* actual = */ content,
-                /* expectedFilePath = */ file.absolutePath,
-            )
+            if (file.exists()) {
+                throw FileComparisonFailedError(
+                    message = "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
+                    expected = oldContent,
+                    actual = content,
+                    expectedFilePath = file.absolutePath,
+                    actualFilePath = file.absolutePath
+                )
+            } else {
+                throw ComparisonFailure(
+                    /* message = */ "'${file.name}' is not up to date\nUse 'Generate Kotlin Tests' run configuration to regenerate tests\n",
+                    /* expected = */ oldContent,
+                    /* actual = */ content
+                )
+            }
         }
 
         Files.createDirectories(file.toPath().parent)

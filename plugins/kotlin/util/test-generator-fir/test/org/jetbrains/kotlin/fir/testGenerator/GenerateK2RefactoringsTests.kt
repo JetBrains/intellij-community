@@ -11,10 +11,11 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.*
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 internal fun MutableTWorkspace.generateK2RefactoringsTests() {
-    testGroup("refactorings/kotlin.refactorings.tests.k2", testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2SafeDeleteTest> {
             model("refactoring/safeDelete/deleteClass/kotlinClass", testMethodName = "doClassTest")
             //todo secondary constructor
@@ -35,8 +36,15 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter", testMethodName = "doTypeParameterTest")
             model("refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava", testMethodName = "doTypeParameterTestWithJava")
             model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameter", testMethodName = "doValueParameterTest")
-            model("refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava",  testMethodName = "doValueParameterTestWithJava")
-            model("refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaParameterTest")
+            model(
+                "refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava",
+                testMethodName = "doValueParameterTestWithJava"
+            )
+            model(
+                "refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin",
+                pattern = Patterns.JAVA,
+                testMethodName = "doJavaParameterTest"
+            )
         }
 
         testClass<AbstractFirMultiModuleSafeDeleteTest> {
@@ -50,6 +58,8 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         testClass<AbstractK2BindToFqnTest> {
             model("refactoring/bindToFqn")
         }
+    }
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = INLINE_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractKotlinFirInlineTest> {
             model("refactoring/inline/inlineVariableOrProperty", isRecursive = false, pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/inlineVariableOrProperty/addParenthesis", pattern = Patterns.KT_WITHOUT_DOTS)
@@ -64,12 +74,14 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/inline/anonymousFunction", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/lambdaExpression", pattern = Patterns.KT_WITHOUT_DOTS)
         }
+    }
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceFunctionTest> {
             model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("duplicates"))
         }
     }
 
-    testGroup("refactorings/kotlin.refactorings.move.k2", testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.move.k2", category = MOVE_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2ChangePackageTest> {
             model("refactoring/changePackage", pattern = TEST, flatten = true)
         }
@@ -90,7 +102,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
     }
 
-    testGroup("refactorings/kotlin.refactorings.introduce.k2", testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.introduce.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceVariableTest> {
             model("refactoring/introduceVariable", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
         }
