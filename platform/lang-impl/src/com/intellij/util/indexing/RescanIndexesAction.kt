@@ -30,9 +30,41 @@ class RescanIndexesAction : RecoveryAction {
   override val actionKey: String
     get() = "rescan"
 
+  class ForceReindexingTrigger : Predicate<IndexedFile> {
+    val stubAndIndexingStampInconsistencies: MutableList<CacheInconsistencyProblem> = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
+
+    private val stubIndex =
+      runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
+        .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
+
+    private class StubAndIndexStampInconsistency(private val path: String) : CacheInconsistencyProblem {
+      override val message: String
+        get() = "`$path` should have already indexed stub but it's not present"
+    }
+
+    private fun isAbleToBuildStub(file: VirtualFile): Boolean = runCatching {
+      StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
+    }.getOrNull() != null
+
+    override fun test(it: IndexedFile): Boolean {
+      if (stubIndex != null) {
+        val fileId = (it.file as VirtualFileWithId).id
+        if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
+            stubIndex.getIndexedFileData(fileId).isEmpty() &&
+            isAbleToBuildStub(it.file)) {
+          stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
+          return true
+        }
+        return false
+      }
+      else {
+        return false;
+      }
+    }
+  }
+
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
     val project = recoveryScope.project
-    val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
     var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
     if (recoveryScope is FilesRecoveryScope) {
@@ -40,42 +72,14 @@ class RescanIndexesAction : RecoveryAction {
       if (predefinedIndexableFilesIterators.isEmpty()) return emptyList()
     }
     application.service<AppIndexingDependenciesService>().invalidateAllStamps("Rescanning indexes recovery action")
-    val historyFuture = object : UnindexedFilesScanner(project, false, false, false,
-                                   predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
-                                   if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null) {
-      private val stubIndex =
-        runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
-        .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
-
-      private inner class StubAndIndexStampInconsistency(private val path: String): CacheInconsistencyProblem {
-        override val message: String
-          get() = "`$path` should have already indexed stub but it's not present"
-      }
-
-      override fun getForceReindexingTrigger(): Predicate<IndexedFile>? {
-        if (stubIndex != null) {
-          return Predicate<IndexedFile> {
-            val fileId = (it.file as VirtualFileWithId).id
-            if (stubIndex.getIndexingStateForFile(fileId, it) == FileIndexingState.UP_TO_DATE &&
-                stubIndex.getIndexedFileData(fileId).isEmpty() &&
-                isAbleToBuildStub(it.file)) {
-              stubAndIndexingStampInconsistencies.add(StubAndIndexStampInconsistency(it.file.path))
-              return@Predicate true
-            }
-            false
-          }
-        }
-        return null
-      }
-
-      private fun isAbleToBuildStub(file: VirtualFile): Boolean = runCatching {
-        StubTreeBuilder.buildStubTree(FileContentImpl.createByFile(file))
-      }.getOrNull() != null
-
-    }.queue()
+    val trigger = ForceReindexingTrigger()
+    val historyFuture = UnindexedFilesScanner(project, false, false, false,
+                                              predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
+                                              if (predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null,
+                                              false, trigger).queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
-             stubAndIndexingStampInconsistencies
+             trigger.stubAndIndexingStampInconsistencies
     }
     catch (e: Exception) {
       return listOf(ExceptionalCompletionProblem(e))
