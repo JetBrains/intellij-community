@@ -14,7 +14,9 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
+import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Supplier
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -218,9 +220,25 @@ fun captureThreadContext(runnable: Runnable): Runnable {
 }
 
 /**
+ * Same as [captureThreadContext] but for [Supplier]
+ */
+fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
+  val c = captureCallableThreadContext(s::get)
+  return Supplier(c::call)
+}
+
+/**
+ * Same as [captureThreadContext] but for [Consumer]
+ */
+fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
+  val f = capturePropagationAndCancellationContext(c::accept)
+  return Consumer(f::apply)
+}
+
+/**
  * Same as [captureThreadContext] but for [Function]
  */
-fun <T, U> captureThreadContext(f : Function<in T, out U>) : Function<in T, out U> {
+fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
   return capturePropagationAndCancellationContext(f)
 }
 

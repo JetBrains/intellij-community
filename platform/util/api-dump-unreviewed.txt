@@ -51,7 +51,9 @@ f:com.intellij.UtilBundle
 *f:com.intellij.concurrency.ThreadContext
 - sf:captureThreadContext(java.lang.Runnable):java.lang.Runnable
 - sf:captureThreadContext(java.util.concurrent.Callable):java.util.concurrent.Callable
+- sf:captureThreadContext(java.util.function.Consumer):java.util.function.Consumer
 - sf:captureThreadContext(java.util.function.Function):java.util.function.Function
+- sf:captureThreadContext(java.util.function.Supplier):java.util.function.Supplier
 - sf:currentThreadContext():kotlin.coroutines.CoroutineContext
 - sf:currentThreadContextOrNull():kotlin.coroutines.CoroutineContext
 - sf:getContextSkeleton(kotlin.coroutines.CoroutineContext):java.util.Set

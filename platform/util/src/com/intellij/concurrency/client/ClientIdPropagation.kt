@@ -36,6 +36,9 @@ private inline fun <T> withClientId(clientId: String?, action: () -> T): T {
   }
 }
 
+internal fun withClientId(clientId: String?, action: Runnable) = withClientId(clientId, action::run)
+internal fun <T> withClientId(clientId: String?, callable: Callable<T>) = withClientId(clientId, callable::call)
+
 fun decorateRunnable(runnable: Runnable): Runnable {
   if (!propagateClientIdAcrossThreads) return runnable
   val currentId = currentClientIdString
