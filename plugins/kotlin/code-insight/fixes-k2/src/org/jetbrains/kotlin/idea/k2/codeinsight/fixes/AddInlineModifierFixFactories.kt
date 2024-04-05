@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 
-internal object AddInlineModifierFix {
+internal object AddInlineModifierFixFactories {
 
     val usageIsNotInlinableFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KtFirDiagnostic.UsageIsNotInlinable ->
         val reference = diagnostic.psi as? KtNameReferenceExpression ?: return@ModCommandBased emptyList()
