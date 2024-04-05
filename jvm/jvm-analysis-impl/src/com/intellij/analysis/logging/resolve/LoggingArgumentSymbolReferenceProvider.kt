@@ -10,7 +10,6 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import org.jetbrains.uast.*
 
 class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
@@ -32,10 +31,13 @@ fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>
   val psiLiteralExpression = uExpression.sourcePsi ?: return null
   val placeholderParametersSize = context.placeholderParameters.size
 
-  val loggerReferenceList = ranges.zip(context.placeholderParameters) { range, parameter ->
+  val loggerReferenceList = ranges.zip(context.placeholderParameters) { placeholderRanges, parameter ->
     val parameterPsi = parameter.sourcePsi ?: return null
-    LoggingArgumentSymbolReference(psiLiteralExpression, range, parameterPsi)
-  }
+    placeholderRanges.ranges.map { range ->
+      if (range == null) return null
+      LoggingArgumentSymbolReference(psiLiteralExpression, range, parameterPsi)
+    }
+  }.flatten()
 
   return when (context.loggerType) {
     SLF4J -> {
@@ -65,7 +67,7 @@ internal fun getContext(uExpression: UExpression): PlaceholderContext? {
   return context
 }
 
-internal fun getPlaceholderRanges(context: PlaceholderContext): List<TextRange>? {
+internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
   val logStringText = context.logStringArgument.sourcePsi?.text ?: return null
   val partHolders = listOf(
     LoggingStringPartEvaluator.PartHolder(
@@ -76,8 +78,5 @@ internal fun getPlaceholderRanges(context: PlaceholderContext): List<TextRange>?
   val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, partHolders)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
 
-  return placeholderCountResult.placeholderRangeList.map { range ->
-    if (range == null) return null
-    range
-  }
+  return placeholderCountResult.placeholderRangesList
 }
