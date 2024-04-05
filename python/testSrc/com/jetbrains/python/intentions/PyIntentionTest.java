@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class PyIntentionTest extends PyTestCase {
   @Nullable private PyDocumentationSettings myDocumentationSettings = null;
@@ -467,18 +468,18 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-45863
   public void testRemoveQualifierFromAllUsages() {
-    shouldSelectRemoveQualifierOption(0);
+    shouldSelectRemoveQualifierOption("Remove qualifier from all usages");
     doTest("Remove 'b' qualifier");
   }
 
   public void testRemoveQualifierFromThisName() {
-    shouldSelectRemoveQualifierOption(1);
+    shouldSelectRemoveQualifierOption("Remove qualifier from this name");
     doTest("Remove 'b' qualifier");
   }
 
-  private static void shouldSelectRemoveQualifierOption(int index) {
+  private static void shouldSelectRemoveQualifierOption(String option) {
     List<String> options = List.of("Remove qualifier from all usages", "Remove qualifier from this name");
-    UiInterceptors.register(new ChooserInterceptor(options, options.get(index)));
+    UiInterceptors.register(new ChooserInterceptor(options, Pattern.quote(option)));
   }
 
   // PY-45863
