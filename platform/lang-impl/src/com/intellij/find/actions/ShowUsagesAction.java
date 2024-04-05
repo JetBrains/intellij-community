@@ -503,7 +503,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                                                        @NotNull ShowUsagesActionHandler actionHandler) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = parameters.project;
-    UsageViewImpl usageView = createUsageView(project, actionHandler.getTargetLanguage());
+    UsageViewImpl usageView = actionHandler.createUsageView(project);
     return ShowUsagesManager.getInstance(project).showElementUsagesWithResult(parameters, actionHandler, usageView);
   }
 
@@ -769,10 +769,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       null, DataContext.EMPTY_CONTEXT, "",
       action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0
     );
-  }
-
-  private static @NotNull UsageViewImpl createUsageView(@NotNull Project project, @Nullable Language targetLanguage) {
-    return project.getService(UsageViewPopupManager.class).createUsageViewPopup(targetLanguage);
   }
 
   private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {
