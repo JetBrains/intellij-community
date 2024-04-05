@@ -111,14 +111,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         line("return $name::class.java")
       }
 
-      sectionNl("override fun serialize(ser: ${EntityInformation.Serializer})") {
-        //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, SerializatorVisitor(this@sectionNl))
-      }
-
-      sectionNl("override fun deserialize(de: ${EntityInformation.Deserializer})") {
-        //InterfaceTraverser(simpleTypes).traverse(this@implWsDataClassCode, DeserializationVisitor(this@sectionNl))
-      }
-
       sectionNl("override fun createDetachedEntity(parents: List<${WorkspaceEntity.Builder}<*>>): ${WorkspaceEntity.Builder}<*>") {
         val noRefs = allFields.noRefs().noSymbolicId()
         val mandatoryFields = allFields.mandatoryFields()
