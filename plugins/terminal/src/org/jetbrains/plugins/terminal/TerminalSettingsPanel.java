@@ -34,6 +34,7 @@ import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,9 +79,11 @@ public final class TerminalSettingsPanel {
   private ComboBox<TerminalUiSettingsManager.CursorShape> myCursorShape;
   private JBCheckBox myUseOptionAsMetaKey;
 
-  private JPanel myNewUiPanel;
+  private JPanel myNewUiSettingsPanel;
   private JBCheckBox myNewUiCheckbox;
   private JBLabel myBetaLabel;
+  private JPanel myNewUiChildSettingsPanel;
+  private JBCheckBox myShellPromptCheckbox;
 
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
@@ -95,8 +98,13 @@ public final class TerminalSettingsPanel {
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
-    myNewUiPanel.setVisible(ExperimentalUI.isNewUI());
+    myNewUiSettingsPanel.setVisible(ExperimentalUI.isNewUI());
     myBetaLabel.setIcon(AllIcons.General.Beta);
+    myNewUiChildSettingsPanel.setBorder(JBUI.Borders.emptyLeft(20));
+    myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    // Show child New Terminal settings as disabled if New Terminal is not selected
+    updateNewUiPanelState();
+    myNewUiCheckbox.addChangeListener(__ -> updateNewUiPanelState());
 
     myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
     myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
@@ -170,8 +178,15 @@ public final class TerminalSettingsPanel {
     }
   }
 
+  private void updateNewUiPanelState() {
+    UIUtil.uiTraverser(myNewUiChildSettingsPanel).forEach(c -> {
+      c.setEnabled(myNewUiCheckbox.isSelected());
+    });
+  }
+
   public boolean isModified() {
     return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
+           || (myShellPromptCheckbox.isSelected() != myOptionsProvider.getUseShellPrompt())
            || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
@@ -201,6 +216,7 @@ public final class TerminalSettingsPanel {
         }, ModalityState.nonModal());
       }
     }
+    myOptionsProvider.setUseShellPrompt(myShellPromptCheckbox.isSelected());
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
@@ -227,6 +243,7 @@ public final class TerminalSettingsPanel {
 
   public void reset() {
     myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
+    myShellPromptCheckbox.setSelected(myOptionsProvider.getUseShellPrompt());
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());

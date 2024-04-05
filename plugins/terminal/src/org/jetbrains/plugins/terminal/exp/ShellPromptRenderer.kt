@@ -59,7 +59,8 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
     val defaultStyle = TextStyle(TerminalColor { session.colorPalette.defaultForeground },
                                  TerminalColor { session.colorPalette.defaultBackground })
     styleState.setDefaultStyle(defaultStyle)
-    val textBuffer = TerminalTextBuffer(session.model.width, session.model.height, styleState, 0, null)
+    val (width, height) = session.model.withContentLock { session.model.width to session.model.height }
+    val textBuffer = TerminalTextBuffer(width, height, styleState, 0, null)
     val terminal = JediTerminal(FakeDisplay(session.settings), textBuffer, styleState)
     terminal.setModeEnabled(TerminalMode.AutoNewLine, true)
     val dataStream = ArrayTerminalDataStream(escapedPrompt.toCharArray())

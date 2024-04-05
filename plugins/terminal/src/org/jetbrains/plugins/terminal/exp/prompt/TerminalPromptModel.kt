@@ -22,16 +22,21 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.HighlightingInfo
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
+import org.jetbrains.plugins.terminal.exp.ShellPromptRenderer
 
 class TerminalPromptModel(private val editor: EditorEx, private val session: BlockTerminalSession) {
-  private val renderer: TerminalPromptRenderer = BuiltInPromptRenderer(session)
   private val document: DocumentEx
     get() = editor.document
 
+  private var renderer: TerminalPromptRenderer = createPromptRenderer()
+
   private var rightPromptManager: RightPromptManager? = null
+
+  private var curPromptState: TerminalPromptState = TerminalPromptState(currentDirectory = "")
 
   var promptRenderingInfo: PromptRenderingInfo = PromptRenderingInfo("", emptyList())
     @RequiresEdt
@@ -52,11 +57,7 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
   init {
     session.addCommandListener(object : ShellCommandListener {
       override fun promptStateUpdated(newState: TerminalPromptState) {
-        val updatedInfo = renderer.calculateRenderingInfo(newState)
-        runInEdt {
-          updatePrompt(updatedInfo)
-          promptRenderingInfo = updatedInfo
-        }
+        calculateAndUpdatePrompt(newState)
       }
     })
 
@@ -70,6 +71,10 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
     editor.project!!.messageBus.connect(session).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       updatePrompt(promptRenderingInfo)
     })
+    TerminalOptionsProvider.instance.addListener(session) {
+      renderer = createPromptRenderer()
+      calculateAndUpdatePrompt(curPromptState)
+    }
   }
 
   @RequiresEdt
@@ -79,6 +84,15 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
     // reset Undo/Redo actions queue to not allow undoing the prompt update
     val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
     undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
+  }
+
+  private fun calculateAndUpdatePrompt(state: TerminalPromptState) {
+    val updatedInfo = renderer.calculateRenderingInfo(state)
+    runInEdt {
+      updatePrompt(updatedInfo)
+      curPromptState = state
+      promptRenderingInfo = updatedInfo
+    }
   }
 
   private fun updatePrompt(renderingInfo: PromptRenderingInfo) {
@@ -110,6 +124,10 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
     Disposer.register(session, manager)
     rightPromptManager = manager
     return manager
+  }
+
+  private fun createPromptRenderer(): TerminalPromptRenderer {
+    return if (TerminalOptionsProvider.instance.useShellPrompt) ShellPromptRenderer(session) else BuiltInPromptRenderer(session)
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
