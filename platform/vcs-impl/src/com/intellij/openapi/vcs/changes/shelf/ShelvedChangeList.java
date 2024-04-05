@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.options.ExternalizableScheme;
@@ -232,12 +233,13 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     myDate = new Date(System.currentTimeMillis());
   }
 
-  public static @NotNull ShelvedChangeList readExternal(@NotNull Element element) throws InvalidDataException {
+  public static @NotNull ShelvedChangeList readExternal(@NotNull Element element,
+                                                        @NotNull PathMacroSubstitutor pathMacroSubstitutor) throws InvalidDataException {
     Path path = null;
     String description = null;
     for (Map.Entry<String, String> field : readFields(element).entrySet()) {
       if (PATH_FIELD_NAME.equals(field.getKey())) {
-        String value = field.getValue();
+        String value = pathMacroSubstitutor.expandPath(field.getValue());
         if (!value.isEmpty()) {
           path = Paths.get(value);
         }
@@ -256,16 +258,18 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     List<Element> children = element.getChildren(ELEMENT_BINARY);
     List<ShelvedBinaryFile> binaryFiles = new ArrayList<>(children.size());
     for (Element child : children) {
-      ShelvedBinaryFile binaryFile = ShelvedBinaryFile.readExternal(child);
+      ShelvedBinaryFile binaryFile = ShelvedBinaryFile.readExternal(child, pathMacroSubstitutor);
       binaryFiles.add(binaryFile);
     }
 
     return new ShelvedChangeList(path, name, description, time, isRecycled, isToDelete, isDeleted, binaryFiles);
   }
 
-  public static void writeExternal(@NotNull ShelvedChangeList shelvedChangeList, @NotNull Element element) {
+  public static void writeExternal(@NotNull ShelvedChangeList shelvedChangeList, @NotNull Element element,
+                                   @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
     if (shelvedChangeList.myPath != null) {
-      writeField(element, PATH_FIELD_NAME, shelvedChangeList.myPath.toString().replace(File.separatorChar, '/'));
+      String pathString = collapsePath(shelvedChangeList.myPath.toString().replace(File.separatorChar, '/'), pathMacroSubstitutor);
+      writeField(element, PATH_FIELD_NAME, pathString);
     }
     writeField(element, DESCRIPTION_FIELD_NAME, shelvedChangeList.DESCRIPTION);
     element.setAttribute(NAME_ATTRIBUTE, shelvedChangeList.getName());
@@ -279,7 +283,7 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     }
     for (ShelvedBinaryFile file : shelvedChangeList.getBinaryFiles()) {
       Element child = new Element(ELEMENT_BINARY);
-      file.writeExternal(child);
+      file.writeExternal(child, pathMacroSubstitutor);
       element.addContent(child);
     }
   }
@@ -289,6 +293,11 @@ public final class ShelvedChangeList implements ExternalizableScheme {
     element.addContent(new Element(Constants.OPTION)
                          .setAttribute(Constants.NAME, name)
                          .setAttribute(Constants.VALUE, value));
+  }
+
+  static @Nullable String collapsePath(@Nullable String path, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
+    if (pathMacroSubstitutor == null || path == null) return path;
+    return pathMacroSubstitutor.collapsePath(path);
   }
 
   static @NotNull Map<String, String> readFields(@NotNull Element element) {

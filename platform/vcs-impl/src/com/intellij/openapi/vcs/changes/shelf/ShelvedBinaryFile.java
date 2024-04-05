@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -22,8 +23,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.readFields;
-import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.writeField;
+import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.*;
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
 public final class ShelvedBinaryFile {
@@ -49,12 +49,12 @@ public final class ShelvedBinaryFile {
     return beforePath != null ? FileUtil.toSystemIndependentName(beforePath) : null;
   }
 
-  public static @NotNull ShelvedBinaryFile readExternal(@NotNull Element element) {
+  public static @NotNull ShelvedBinaryFile readExternal(@NotNull Element element, @NotNull PathMacroSubstitutor pathMacroSubstitutor) {
     String beforePath = null;
     String afterPath = null;
     String shelvedPath = null;
     for (Map.Entry<String, String> field : readFields(element).entrySet()) {
-      String value = Objects.requireNonNull(field.getValue());
+      String value = pathMacroSubstitutor.expandPath(Objects.requireNonNull(field.getValue()));
       if (field.getKey().equals(BEFORE_PATH_FIELD_NAME)) {
         beforePath = value;
       }
@@ -68,10 +68,10 @@ public final class ShelvedBinaryFile {
     return new ShelvedBinaryFile(beforePath, afterPath, shelvedPath);
   }
 
-  public void writeExternal(@NotNull Element element) {
-    writeField(element, BEFORE_PATH_FIELD_NAME, BEFORE_PATH);
-    writeField(element, AFTER_PATH_FIELD_NAME, AFTER_PATH);
-    writeField(element, SHELVED_PATH_FIELD_NAME, SHELVED_PATH);
+  public void writeExternal(@NotNull Element element, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
+    writeField(element, BEFORE_PATH_FIELD_NAME, collapsePath(BEFORE_PATH, pathMacroSubstitutor));
+    writeField(element, AFTER_PATH_FIELD_NAME, collapsePath(AFTER_PATH, pathMacroSubstitutor));
+    writeField(element, SHELVED_PATH_FIELD_NAME, collapsePath(SHELVED_PATH, pathMacroSubstitutor));
   }
 
   public FileStatus getFileStatus() {

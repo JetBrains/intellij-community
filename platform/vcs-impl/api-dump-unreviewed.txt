@@ -4669,9 +4669,9 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
 - equals(java.lang.Object):Z
 - getFileStatus():com.intellij.openapi.vcs.FileStatus
 - hashCode():I
-- s:readExternal(org.jdom.Element):com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
+- s:readExternal(org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile
 - toString():java.lang.String
-- writeExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):V
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch
 - com.intellij.openapi.diff.impl.patch.FilePatch
 - <init>(com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile):V
@@ -4711,14 +4711,14 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - isValid():Z
 - loadChangesIfNeeded(com.intellij.openapi.project.Project):V
 - markToDelete(Z):V
-- s:readExternal(org.jdom.Element):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
+- s:readExternal(org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - setDate(java.util.Date):V
 - setDeleted(Z):V
 - setName(java.lang.String):V
 - setRecycled(Z):V
 - toString():java.lang.String
 - updateDate():V
-- s:writeExternal(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,org.jdom.Element):V
+- s:writeExternal(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):V
 c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - com.intellij.openapi.Disposable
 - sf:SHELVED_BINARY_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
