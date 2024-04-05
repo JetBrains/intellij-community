@@ -71,6 +71,7 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
   }
 
   private fun calculateExistingGenFolder(sourceFolder: SourceFolder): VirtualFile? {
+    if (sourceFolder.contentEntry.file == sourceFolder.file) return null
     return sourceFolder.file?.parent?.children?.find {
       if (sourceFolder.isTestSource) {
         it.name == TEST_GENERATED_FOLDER_NAME
