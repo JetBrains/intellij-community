@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitParameterizedSourceGoToRelatedTestBase
@@ -61,6 +61,58 @@ class KotlinJUnitParameterizedSourceGoToRelatedTest : JUnitParameterizedSourceGo
       assertNotNull(element)
       assertEquals("abc", element?.name)
       assertEquals(0, element?.parameters?.size)
+    }
+  }
+
+  fun `test go to enum source value`() {
+    myFixture.testGoToPsiElement(JvmLanguage.KOTLIN, """
+      enum class Foo { AAA, BBB }
+      
+      class ExampleTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EnumSource(
+          value = F<caret>oo::class
+        )
+        fun valid() {}
+      }
+    """.trimIndent()) { item ->
+      assertEquals("enum class Foo { AAA, BBB }", item.text)
+    }
+  }
+
+  fun `test go to enum source single name`() {
+    myFixture.testGoToPsiElement(JvmLanguage.KOTLIN, """
+      enum class Foo { AAA, BBB }
+      
+      class ExampleTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EnumSource(
+          value = Foo::class, 
+          names = ["AAA", "B<caret>BB"]
+        )
+        fun valid() {}
+      }
+    """.trimIndent()) { item ->
+      assertEquals("enum class Foo { AAA, BBB }", item.parent.text)
+      assertEquals("BBB", item.text)
+    }
+  }
+
+  fun `test go to enum source multiple names`() {
+    myFixture.testGoToPsiElement(JvmLanguage.KOTLIN, """
+      enum class Foo { AAA, BBB }
+      
+      class ExampleTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.EnumSource(
+          value = Foo::class, 
+          names = ["AAA", "B<caret>BB"]
+        )
+        fun valid() {}
+      }
+    """.trimIndent()) { item ->
+      assertEquals("enum class Foo { AAA, BBB }", item.parent.text)
+      assertEquals("BBB", item.text)
     }
   }
 }
