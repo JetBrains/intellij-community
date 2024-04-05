@@ -18,11 +18,13 @@ package com.jetbrains.env.ut;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.jetbrains.env.ConfigurationBasedProcessRunner;
 import com.jetbrains.env.PyAbstractTestProcessRunner;
+import com.jetbrains.env.PyConfigurationProducerForRunner;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -54,6 +56,15 @@ public class PyScriptTestProcessRunner<CONF_T extends AbstractPythonRunConfigura
                                    @NotNull final String scriptName,
                                    final int timesToRerunFailedTests) {
     super(configurationFactory, expectedConfigurationType, timesToRerunFailedTests);
+    myScriptName = scriptName;
+  }
+
+  @ApiStatus.Internal
+  public PyScriptTestProcessRunner(@NotNull String scriptName,
+                                   @NotNull PyConfigurationProducerForRunner<CONF_T> configurationProducer,
+                                   @NotNull final Class<CONF_T> expectedConfigurationType,
+                                   final int timesToRerunFailedTests) {
+    super(configurationProducer, expectedConfigurationType, timesToRerunFailedTests);
     myScriptName = scriptName;
   }
 

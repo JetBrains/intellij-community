@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,9 +44,7 @@ import com.intellij.util.ThreeState
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.*
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
@@ -57,6 +56,7 @@ import com.jetbrains.python.reflection.DelegationProperty
 import com.jetbrains.python.reflection.Properties
 import com.jetbrains.python.reflection.Property
 import com.jetbrains.python.reflection.getProperties
+import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
@@ -749,12 +749,13 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
 
 
 internal sealed class PyTestTargetForConfig(val configurationTarget: ConfigurationTarget,
-                                            val workingDirectory: VirtualFile) {
-  class PyTestPathTarget(target: String, workingDirectory: VirtualFile) :
-    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PATH), workingDirectory)
+                                            val workingDirectory: VirtualFile,
+                                            val targetElement: PsiElement) {
+  class PyTestPathTarget(target: String, workingDirectory: VirtualFile, targetElement: PsiElement) :
+    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PATH), workingDirectory, targetElement)
 
-  class PyTestPythonTarget(target: String, workingDirectory: VirtualFile, val namePaths: QualifiedNameParts) :
-    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PYTHON), workingDirectory)
+  class PyTestPythonTarget(target: String, workingDirectory: VirtualFile, val namePaths: QualifiedNameParts, targetElement: PsiElement) :
+    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PYTHON), workingDirectory, targetElement)
 }
 
 /**
@@ -764,8 +765,8 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   companion object {
     /**
      * Creates [ConfigurationTarget] to make  configuration work with provided element.
-     * Also reports working dir what should be set to configuration to work correctly
-     * @return [target, workingDirectory]
+     * Also reports working dir what should be set to configuration to work correctly and target PsiElement
+     * @return [targetPath, workingDirectory, targetPsiElement]
      */
     internal fun getTargetForConfig(configuration: PyAbstractTestConfiguration,
                                     baseElement: PsiElement): PyTestTargetForConfig? {
@@ -788,7 +789,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
                                                 folderToStart = workingDirectory.virtualFile)
               val parts = element.tryResolveAndSplit(context) ?: return null
               val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
-              return PyTestTargetForConfig.PyTestPythonTarget(qualifiedName.toString(), workingDirectory.virtualFile, parts)
+              return PyTestTargetForConfig.PyTestPythonTarget(qualifiedName.toString(), workingDirectory.virtualFile, parts, element)
             }
             is PsiFileSystemItem -> {
               val virtualFile = element.virtualFile
@@ -798,7 +799,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
                                                     is PsiDirectory -> virtualFile
                                                     else -> return null
                                                   } ?: return null
-              return PyTestTargetForConfig.PyTestPathTarget(virtualFile.path, workingDirectory)
+              return PyTestTargetForConfig.PyTestPathTarget(virtualFile.path, workingDirectory, element)
             }
           }
         }
@@ -824,6 +825,21 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       }
       return elementFolder
     }
+
+    private fun checkDoctest(element: PsiElement, configuration: PyAbstractTestConfiguration, module: Module) {
+      if (TestRunnerService.getInstance(module).selectedFactory !is PyTestFactory) return
+      val tests = (element.containingFile as? PyFile)?.let { PythonDocTestUtil.getDocTestCasesFromFile(it) } ?: return
+      if (element is PyFile && tests.isNotEmpty() || tests.contains(element)) {
+        configuration.additionalArguments += DOCTEST_MODULES_ARG
+      }
+    }
+
+    private fun isDoctestConfiguration(configuration: RunConfiguration): Boolean =
+      configuration.name.contains(DOCTEST_PREFIX) ||
+      (configuration as? PyAbstractTestConfiguration)?.additionalArguments?.contains(DOCTEST_MODULES_ARG) == true
+
+    private const val DOCTEST_MODULES_ARG = "--doctest-modules"
+    private const val DOCTEST_PREFIX = "Doctest via "
   }
 
   override fun getConfigurationFactory() = PythonTestConfigurationType.getInstance().configurationFactories[0]
@@ -852,10 +868,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
 
   // test configuration is always prefered over regular one
   override fun shouldReplace(self: ConfigurationFromContext,
-                             other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
+                             other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration ||
+                                                                         isDoctestConfiguration(self.configuration)
 
   override fun isPreferredConfiguration(self: ConfigurationFromContext?,
-                                        other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
+                                        other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration ||
+                                                                                    self?.configuration?.let { isDoctestConfiguration(it) } == true
 
   override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration,
                                              context: ConfigurationContext,
@@ -897,8 +915,16 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
           }
         }
       }
+
+      if (Registry.`is`("python.run.doctest.via.pytest.configuration")) {
+        configuration.module?.let { checkDoctest(targetForConfig.targetElement, configuration, it) }
+      }
     }
     configuration.setGeneratedName()
+    if (isDoctestConfiguration(configuration)) {
+      configuration.name = DOCTEST_PREFIX + configuration.name
+    }
+
     return true
   }
 
