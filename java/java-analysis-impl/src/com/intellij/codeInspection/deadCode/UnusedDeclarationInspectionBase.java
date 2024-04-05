@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -16,7 +16,6 @@ import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
@@ -33,7 +32,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UField;
+import org.jetbrains.uast.UMethod;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -155,110 +156,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  private static boolean isExternalizableNoParameterConstructor(@NotNull UMethod method, @Nullable RefClass refClass) {
-    if (!method.isConstructor()) return false;
-    if (method.getVisibility() != UastVisibility.PUBLIC) return false;
-    List<UParameter> parameterList = method.getUastParameters();
-    if (!parameterList.isEmpty()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return aClass == null || isExternalizable(aClass, refClass);
-  }
-
-  private static boolean isSerializationImplicitlyUsedField(@NotNull UField field) {
-    String name = field.getName();
-    if (!CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
-    if (!field.isStatic()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(field, UClass.class);
-    return aClass == null || isSerializable(aClass, null);
-  }
-
-  private static boolean isWriteObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
-    String name = method.getName();
-    if (!"writeObject".equals(name)) return false;
-    List<UParameter> parameters = method.getUastParameters();
-    if (parameters.size() != 1) return false;
-    if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectOutputStream")) return false;
-    if (method.isStatic()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return aClass == null || isSerializable(aClass, refClass);
-  }
-
-  private static boolean isReadObjectMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
-    String name = method.getName();
-    if (!"readObject".equals(name)) return false;
-    List<UParameter> parameters = method.getUastParameters();
-    if (parameters.size() != 1) return false;
-    if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectInputStream")) return false;
-    if (method.isStatic()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return aClass == null || isSerializable(aClass, refClass);
-  }
-
-  private static boolean isReadObjectNoDataMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
-    String name = method.getName();
-    if (!"readObjectNoData".equals(name)) return false;
-    if (!method.getUastParameters().isEmpty()) return false;
-    if (!equalsToText(method.getReturnType(), PsiKeyword.VOID)) return false;
-    if (method.isStatic()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return aClass == null || isSerializable(aClass, refClass);
-  }
-
-  private static boolean isWriteReplaceMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
-    String name = method.getName();
-    if (!"writeReplace".equals(name)) return false;
-    List<UParameter> parameters = method.getUastParameters();
-    if (!parameters.isEmpty()) return false;
-    if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
-    if (method.isStatic()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return aClass == null || isSerializable(aClass, refClass);
-  }
-
-  private static boolean isReadResolveMethod(@NotNull UMethod method, @Nullable RefClass refClass) {
-    String name = method.getName();
-    if (!"readResolve".equals(name)) return false;
-    List<UParameter> parameters = method.getUastParameters();
-    if (!parameters.isEmpty()) return false;
-    if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
-    if (method.isStatic()) return false;
-    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
-    return aClass == null || isSerializable(aClass, refClass);
-  }
-
-  private static boolean equalsToText(PsiType type, @NotNull String text) {
-    return type != null && type.equalsToText(text);
-  }
-
-  private static boolean isSerializable(@NotNull UClass aClass, @Nullable RefClass refClass) {
-    return isSerializable(aClass, refClass, "java.io.Serializable");
-  }
-
-  private static boolean isExternalizable(@NotNull UClass aClass, @Nullable RefClass refClass) {
-    return isSerializable(aClass, refClass, "java.io.Externalizable");
-  }
-
-  private static boolean isSerializable(@NotNull UClass aClass, @Nullable RefClass refClass, @NotNull String fqn) {
-    PsiClass psiClass = aClass.getJavaPsi();
-    Project project = psiClass.getProject();
-    PsiClass serializableClass = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
-      () -> JavaPsiFacade.getInstance(project).findClass(fqn, psiClass.getResolveScope()));
-    return serializableClass != null && isSerializable(aClass, refClass, serializableClass);
-  }
-
-  private static boolean isSerializable(@Nullable UClass aClass, @Nullable RefClass refClass, @NotNull PsiClass serializableClass) {
-    if (aClass == null) return false;
-    if (aClass.getJavaPsi().isInheritor(serializableClass, true)) return true;
-    if (refClass != null) {
-      Set<RefClass> subClasses = refClass.getSubClasses();
-      for (RefClass subClass : subClasses) {
-        //TODO reimplement
-        if (isSerializable(subClass.getUastElement(), subClass, serializableClass)) return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public boolean isReadActionNeeded() {
     return false;
@@ -316,31 +213,33 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         return true;
       }
 
-      if (owner instanceof RefClass &&
-          (isAddAppletEnabled() && ((RefClass)owner).isApplet()
-           || isAddServletEnabled() && ((RefClass)owner).isServlet())) {
-        return true;
-      }
+      return owner instanceof RefClass &&
+             (isAddAppletEnabled() && ((RefClass)owner).isApplet()
+              || isAddServletEnabled() && ((RefClass)owner).isServlet());
     }
 
     return false;
   }
 
   public boolean isEntryPoint(@NotNull PsiElement element) {
-    Project project = element.getProject();
-    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     if (element instanceof PsiMethod && isAddMainsEnabled() && PsiClassImplUtil.isMainOrPremainMethod((PsiMethod)element)) {
       return true;
     }
+    Project project = element.getProject();
     if (element instanceof PsiClass aClass) {
-      PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-      if (isAddAppletEnabled() && applet != null && aClass.isInheritor(applet, true)) {
-        return true;
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      if (isAddAppletEnabled()) {
+        PsiClass applet = psiFacade.findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+        if (applet != null && aClass.isInheritor(applet, true)) {
+          return true;
+        }
       }
 
-      PsiClass servlet = psiFacade.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
-      if (isAddServletEnabled() && servlet != null && aClass.isInheritor(servlet, true)) {
-        return true;
+      if (isAddServletEnabled()) {
+        PsiClass servlet = psiFacade.findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+        if (servlet != null && aClass.isInheritor(servlet, true)) {
+          return true;
+        }
       }
       if (isAddMainsEnabled() && hasMainMethodDeep(aClass)) return true;
     }
@@ -416,7 +315,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         }
         processedSuspicious.add(refField);
         UField uField = refField.getUastElement();
-        if (uField != null && isSerializationImplicitlyUsedField(uField)) {
+        if (uField != null && RefSerializationUtil.isSerializationImplicitlyUsedField(uField)) {
           getEntryPointsManager(globalContext).addEntryPoint(refField, false);
         }
         else {
@@ -446,7 +345,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           }
         }
         UMethod uMethod = refMethod.getUastElement();
-        if (uMethod != null && (isSerializablePatternMethod(uMethod, refMethod.getOwnerClass()) ||
+        if (uMethod != null && (RefSerializationUtil.isSerializationMethod(uMethod, refMethod.getOwnerClass()) ||
                                 // todo this method potentially leads to INRE. Perhaps, it should be reconsidered/deleted (IJ-CR-5556)
                                 belongsToRepeatableAnnotationContainer(uMethod, refMethod.getOwnerClass()))) {
           getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
@@ -517,15 +416,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     return true;
-  }
-
-  private static boolean isSerializablePatternMethod(@NotNull UMethod psiMethod, @Nullable RefClass refClass) {
-    return isReadObjectMethod(psiMethod, refClass) ||
-           isReadObjectNoDataMethod(psiMethod, refClass) ||
-           isWriteObjectMethod(psiMethod, refClass) ||
-           isReadResolveMethod(psiMethod, refClass) ||
-           isWriteReplaceMethod(psiMethod, refClass) ||
-           isExternalizableNoParameterConstructor(psiMethod, refClass);
   }
 
   private static boolean belongsToRepeatableAnnotationContainer(@NotNull UMethod uMethod, @Nullable RefClass ownerRefClass) {
