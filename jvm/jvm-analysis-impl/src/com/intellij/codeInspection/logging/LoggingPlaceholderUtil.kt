@@ -354,14 +354,16 @@ private fun countFormattedBasedPlaceholders(holders: List<LoggingStringPartEvalu
 internal fun getPlaceholderContext(
   uCallExpression: UCallExpression,
   mapper: CallMapper<LoggerTypeSearcher>,
-  log4jAsImplementationForSlf4j: Boolean
+  log4jAsImplementationForSlf4j: Boolean? = null
 ): PlaceholderContext? {
   val method = uCallExpression.resolveToUElement() as? UMethod ?: return null
 
   val searcher = mapper.mapFirst(uCallExpression) ?: return null
   val arguments = uCallExpression.valueArguments
 
-  val loggerType = searcher.findType(uCallExpression, LoggerContext(log4jAsImplementationForSlf4j)) ?: return null
+  val loggerType = searcher.findType(uCallExpression, LoggerContext(
+    log4jAsImplementationForSlf4j ?: LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
+  )) ?: return null
 
   if (arguments.isEmpty() && searcher != SLF4J_BUILDER_HOLDER) return null
   val parameters = method.uastParameters

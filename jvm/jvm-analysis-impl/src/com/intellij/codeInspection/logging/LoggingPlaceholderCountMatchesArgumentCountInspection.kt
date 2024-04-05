@@ -47,10 +47,11 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
       val log4jAsImplementationForSlf4j = when (slf4jToLog4J2Type) {
-        Slf4jToLog4J2Type.AUTO -> LoggingUtil.hasBridgeFromSlf4jToLog4j2(node)
+        Slf4jToLog4J2Type.AUTO -> null
         Slf4jToLog4J2Type.YES -> true
         Slf4jToLog4J2Type.NO -> false
       }
+
       val context = getPlaceholderContext(node, LOGGER_TYPE_SEARCHERS, log4jAsImplementationForSlf4j) ?: return true
 
       var finalArgumentCount = context.placeholderParameters.size

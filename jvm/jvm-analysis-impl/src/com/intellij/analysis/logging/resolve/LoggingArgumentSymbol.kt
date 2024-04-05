@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.logging.resolve
 
+import com.intellij.codeInspection.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
+import com.intellij.codeInspection.logging.detectLoggerMethod
+import com.intellij.codeInspection.logging.getPlaceholderContext
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
@@ -12,10 +15,6 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
-import com.intellij.codeInspection.logging.LOGGER_RESOLVE_TYPE_SEARCHERS
-import com.intellij.codeInspection.logging.LoggingUtil
-import com.intellij.codeInspection.logging.detectLoggerMethod
-import com.intellij.codeInspection.logging.getPlaceholderContext
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.getParentOfType
@@ -27,10 +26,9 @@ class LoggingArgumentSymbol(val expression: PsiElement) : Symbol, NavigatableSym
   fun getPlaceholderString(): UExpression? {
     val uExpression = expression.toUElementOfType<UExpression>() ?: return null
     val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
-    val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
 
     val logMethod = detectLoggerMethod(uCallExpression) ?: return null
-    return getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)?.logStringArgument
+    return getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS)?.logStringArgument
   }
 
   override fun createPointer(): Pointer<LoggingArgumentSymbol> {

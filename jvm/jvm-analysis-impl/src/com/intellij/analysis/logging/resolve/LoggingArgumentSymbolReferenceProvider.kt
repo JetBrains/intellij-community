@@ -17,18 +17,9 @@ import org.jetbrains.uast.*
 
 class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
-    if (!hintsCheck(hints)) return emptyList()
-
     val literalExpression = element.toUElementOfType<UExpression>() ?: return emptyList()
+    if (literalExpression !is ULiteralExpression && literalExpression !is UPolyadicExpression) return emptyList()
     return getLogArgumentReferences(literalExpression) ?: emptyList()
-  }
-
-  private fun hintsCheck(hints: PsiSymbolReferenceHints): Boolean {
-    if (!hints.referenceClass.isAssignableFrom(LoggingArgumentSymbolReference::class.java)) return false
-    val targetClass = hints.targetClass
-    if (targetClass != null && !targetClass.isAssignableFrom(LoggingArgumentSymbol::class.java)) return false
-    val target = hints.target
-    return target == null || target is LoggingArgumentSymbol
   }
 
   override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> {
@@ -69,11 +60,9 @@ fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>
 
 internal fun getContext(uExpression: UExpression): PlaceholderContext? {
   val uCallExpression = uExpression.getParentOfType<UCallExpression>() ?: return null
-  val log4jHasImplementationForSlf4j = LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
-
   val logMethod = detectLoggerMethod(uCallExpression) ?: return null
 
-  val context = getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS, log4jHasImplementationForSlf4j)
+  val context = getPlaceholderContext(logMethod, LOGGER_RESOLVE_TYPE_SEARCHERS)
   if (uExpression != context?.logStringArgument || context.partHolderList.size > 1) return null
   return context
 }
