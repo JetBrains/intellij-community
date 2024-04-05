@@ -413,13 +413,61 @@ class KotlinLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRe
     myFixture.configureByText("Logging.kt", """
       import org.slf4j.*
       class Logging {
-        val LOG: Logger = LoggerFactory.getLogger(Logging.class)
+        val LOG: Logger = LoggerFactory.getLogger(Logging::class.java)
         fun m(i: Int) {
           LOG.info($multilineString, i)
         }
      }
       """.trimIndent())
     doTest(mapOf(TextRange(4, 6) to "i"))
+  }
+
+  fun `test should resolve in strange multiline string`() {
+    val strangeMultilineString = "\"\"\"\n " +
+                                 "              <caret>{}   \n    " +
+                                 "     {}       " +
+                                 "  \"\"\""
+    myFixture.configureByText("Logging.kt", """
+      import org.slf4j.*
+      class Logging {
+        val LOG = LoggerFactory.getLogger(Logging::class.java)
+        fun m(i: Int) {
+          LOG.info($strangeMultilineString, i, i)
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(14, 16) to "i", TextRange(24, 26) to "i"))
+  }
+
+  fun `test should not resolve in multiline string with brace on next line`() {
+    val multilineString = "\"\"\"\n" +
+                          "<caret>{\n}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.kt", """
+      import org.slf4j.*
+      class Logging {
+        val Logger LOG = LoggerFactory.getLogger(Logging::class.java)
+        fun m(i: Int) {
+          LOG.info($multilineString, i)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
+
+  fun `test should not resolve with interpolation`() {
+    val dollar = "$"
+    myFixture.configureByText("Logging.kt", """
+      import org.slf4j.*
+      class Logging {
+        val LOG = LoggerFactory.getLogger(Logging::class.java)
+        fun m(i: Int) {
+          LOG.info("${dollar}i {} <caret> {}", i, i)
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
   }
 
   fun `test should not resolve with string concatenation`() {

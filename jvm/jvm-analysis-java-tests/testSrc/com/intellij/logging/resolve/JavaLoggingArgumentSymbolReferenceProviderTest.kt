@@ -419,6 +419,39 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
     doTest(mapOf(TextRange(4, 6) to "i"))
   }
 
+  fun `test should resolve in strange multiline string`() {
+    val strangeMultilineString = "\"\"\"\n " +
+                                 "              <caret>{}\n             " +
+                                 "     {}       " +
+                                 "  \"\"\""
+    myFixture.configureByText("Logging.java", """
+      import org.slf4j.*;
+      class Logging {
+        private static final Logger LOG = LoggerFactory.getLogger(Logging.class);
+        void m(int i) {
+          LOG.info($strangeMultilineString, i, i);
+        }
+     }
+      """.trimIndent())
+    doTest(mapOf(TextRange(14, 16) to "i", TextRange(30, 32) to "i"))
+  }
+
+  fun `test should not resolve in multiline string with brace on next line`() {
+    val multilineString = "\"\"\"\n" +
+                          "<caret>{\n}" +
+                          "\"\"\""
+    myFixture.configureByText("Logging.java", """
+      import org.slf4j.*;
+      class Logging {
+        private static final Logger LOG = LoggerFactory.getLogger(Logging.class);
+        void m(int i) {
+          LOG.info($multilineString, i);
+        }
+     }
+      """.trimIndent())
+    doTest(emptyMap())
+  }
+
   fun `test should not resolve with string concatenation`() {
     myFixture.configureByText("Logging.java", """
       import org.slf4j.*;
