@@ -55,13 +55,36 @@ f:com.intellij.execution.rmi.ssl.DefaultSslSocketFactory
 - <init>():V
 - <init>(java.lang.String):V
 - <init>(Z):V
+- createSocket(java.lang.String,I):java.net.Socket
+- createSocket(java.lang.String,I,java.net.InetAddress,I):java.net.Socket
+- createSocket(java.net.InetAddress,I):java.net.Socket
+- createSocket(java.net.InetAddress,I,java.net.InetAddress,I):java.net.Socket
+- createSocket(java.net.Socket,java.lang.String,I,Z):java.net.Socket
+- getDefaultCipherSuites():java.lang.String[]
+- getSupportedCipherSuites():java.lang.String[]
 f:com.intellij.execution.rmi.ssl.SslKeyStore
 - java.security.KeyStoreSpi
 - sf:SSL_DEFERRED_CA_LOADING:java.lang.String
 - sf:SSL_DEFERRED_KEY_LOADING:java.lang.String
 - <init>():V
 - s:appendUserKeyStore(java.lang.String,C[]):I
+- engineAliases():java.util.Enumeration
+- engineContainsAlias(java.lang.String):Z
+- engineDeleteEntry(java.lang.String):V
+- engineGetCertificate(java.lang.String):java.security.cert.Certificate
+- engineGetCertificateAlias(java.security.cert.Certificate):java.lang.String
+- engineGetCertificateChain(java.lang.String):java.security.cert.Certificate[]
+- engineGetCreationDate(java.lang.String):java.util.Date
+- engineGetKey(java.lang.String,C[]):java.security.Key
+- engineIsCertificateEntry(java.lang.String):Z
+- engineIsKeyEntry(java.lang.String):Z
 - engineLoad(java.io.InputStream,C[]):V
+- engineLoad(java.io.InputStream,C[]):V
+- engineSetCertificateEntry(java.lang.String,java.security.cert.Certificate):V
+- engineSetKeyEntry(java.lang.String,java.security.Key,C[],java.security.cert.Certificate[]):V
+- engineSetKeyEntry(java.lang.String,B[],java.security.cert.Certificate[]):V
+- engineSize():I
+- engineStore(java.io.OutputStream,C[]):V
 - s:getInstance():java.security.KeyStore
 - s:getUserKey():java.security.Key
 - s:loadKey(java.lang.String,java.lang.String,java.lang.String,C[]):V
@@ -69,7 +92,14 @@ f:com.intellij.execution.rmi.ssl.SslKeyStore
 f:com.intellij.execution.rmi.ssl.SslSocketFactory
 - javax.net.ssl.SSLSocketFactory
 - <init>():V
+- createSocket(java.lang.String,I):java.net.Socket
+- createSocket(java.lang.String,I,java.net.InetAddress,I):java.net.Socket
+- createSocket(java.net.InetAddress,I):java.net.Socket
+- createSocket(java.net.InetAddress,I,java.net.InetAddress,I):java.net.Socket
+- createSocket(java.net.Socket,java.lang.String,I,Z):java.net.Socket
 - s:createTrustManagers(java.lang.String):javax.net.ssl.TrustManager[]
+- getDefaultCipherSuites():java.lang.String[]
+- getSupportedCipherSuites():java.lang.String[]
 f:com.intellij.execution.rmi.ssl.SslTrustStore
 - java.security.KeyStoreSpi
 - <init>():V
@@ -77,7 +107,23 @@ f:com.intellij.execution.rmi.ssl.SslTrustStore
 - s:appendCertificates(java.lang.String,java.util.Collection):V
 - s:appendUserCert(java.lang.String,java.lang.String):I
 - s:appendUserTrustStore(java.lang.String,C[]):I
+- engineAliases():java.util.Enumeration
+- engineContainsAlias(java.lang.String):Z
+- engineDeleteEntry(java.lang.String):V
+- engineGetCertificate(java.lang.String):java.security.cert.Certificate
+- engineGetCertificateAlias(java.security.cert.Certificate):java.lang.String
+- engineGetCertificateChain(java.lang.String):java.security.cert.Certificate[]
+- engineGetCreationDate(java.lang.String):java.util.Date
+- engineGetKey(java.lang.String,C[]):java.security.Key
+- engineIsCertificateEntry(java.lang.String):Z
+- engineIsKeyEntry(java.lang.String):Z
 - engineLoad(java.io.InputStream,C[]):V
+- engineLoad(java.io.InputStream,C[]):V
+- engineSetCertificateEntry(java.lang.String,java.security.cert.Certificate):V
+- engineSetKeyEntry(java.lang.String,java.security.Key,C[],java.security.cert.Certificate[]):V
+- engineSetKeyEntry(java.lang.String,B[],java.security.cert.Certificate[]):V
+- engineSize():I
+- engineStore(java.io.OutputStream,C[]):V
 - s:getType():java.lang.String
 - s:setDefault():V
 f:com.intellij.execution.rmi.ssl.SslUtil

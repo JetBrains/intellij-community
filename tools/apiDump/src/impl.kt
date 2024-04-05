@@ -144,7 +144,7 @@ class ApiIndex {
           continue
         }
         for (member in supertype.memberSignatures) {
-          if (!member.access.isStatic) {
+          if (member.name == "<init>") {
             continue
           }
           if (isFinal && member.access.isProtected) {
