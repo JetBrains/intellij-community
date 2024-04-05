@@ -432,6 +432,49 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/stepping/stepOver/steppingThroughInlineLambdas")
+        public static class SteppingThroughInlineLambdas extends AbstractIndyLambdaIrKotlinSteppingTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("stepOverInlinedLambdaStdlibThrough.kt")
+            public void testStepOverInlinedLambdaStdlibThrough() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepOverInlinedLambdaStdlibThrough.kt");
+            }
+
+            @TestMetadata("stepOverInlinedLambdaThrough.kt")
+            public void testStepOverInlinedLambdaThrough() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepOverInlinedLambdaThrough.kt");
+            }
+
+            @TestMetadata("stepThroughForEach.kt")
+            public void testStepThroughForEach() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepThroughForEach.kt");
+            }
+
+            @TestMetadata("stepThroughInAnotherInlineFunc.kt")
+            public void testStepThroughInAnotherInlineFunc() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepThroughInAnotherInlineFunc.kt");
+            }
+
+            @TestMetadata("stepThroughLet.kt")
+            public void testStepThroughLet() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepThroughLet.kt");
+            }
+
+            @TestMetadata("stepThroughMyFunc.kt")
+            public void testStepThroughMyFunc() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepThroughMyFunc.kt");
+            }
+
+            @TestMetadata("stepThroughSynchronized.kt")
+            public void testStepThroughSynchronized() throws Exception {
+                runTest("testData/stepping/stepOver/steppingThroughInlineLambdas/stepThroughSynchronized.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepOver")
         public static class Uncategorized extends AbstractIndyLambdaIrKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {

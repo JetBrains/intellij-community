@@ -57,12 +57,12 @@ abstract class KotlinStepOverFilter(locationStepOverStartedFrom: Location) : Kot
         val stackFrame = context.frameProxy?.stackFrame ?: return true
         val callerInfo = StepOverCallerInfo.from(location)
         if (callerInfo.methodName != null && callerInfo.methodSignature != null && this.callerInfo == callerInfo) {
-            return isAcceptable(location, LocationToken.from(stackFrame))
+            return isAcceptable(location, LocationToken.from(stackFrame), stackFrame)
         }
         return true
     }
 
-    abstract fun isAcceptable(location: Location, locationToken: LocationToken): Boolean
+    abstract fun isAcceptable(location: Location, locationToken: LocationToken, stackFrame: StackFrame): Boolean
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         throw IllegalStateException("Should not be called from Kotlin hint")

@@ -33,8 +33,10 @@ object InlineStackTraceCalculator {
 }
 
 private val INLINE_LAMBDA_REGEX =
-    "${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.replace("$", "\\$")}-(.+)-[^\$]+\\$([^\$]+)\\$.*"
+    "${Regex.escape(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)}-(.+)-[^\$]+\\$([^\$]+)\\$.*"
         .toRegex()
+
+data class LambdaName(val inlineFunctionName: String, val declarationFunctionName: String)
 
 class KotlinStackFrameInfo(
     // The scope introduction variable for an inline stack frame, i.e., $i$f$function
@@ -64,14 +66,19 @@ class KotlinStackFrameInfo(
                 return scopeVariableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
             }
 
-            val groupValues = INLINE_LAMBDA_REGEX.matchEntire(scopeVariableName)?.groupValues
-            if (groupValues != null) {
-                val lambdaName = groupValues.getOrNull(1)
-                val declarationFunctionName = groupValues.getOrNull(2)
-                return "lambda '$lambdaName' in '$declarationFunctionName'"
-            } else {
-                return scopeVariableName
+            lambdaDetails?.let {
+                return "lambda '${it.inlineFunctionName}' in '${it.declarationFunctionName}'"
             }
+
+            return scopeVariableName
+        }
+
+    val lambdaDetails: LambdaName?
+        get() {
+            val scopeVariableName = scopeVariable?.name ?: return null
+            val match = INLINE_LAMBDA_REGEX.matchEntire(scopeVariableName) ?: return null
+            val (inlineFunctionName, declarationFunctionName) = match.destructured
+            return LambdaName(inlineFunctionName, declarationFunctionName)
         }
 
     val visibleVariables: List<LocalVariable>

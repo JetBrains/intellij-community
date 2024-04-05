@@ -54,3 +54,5 @@ inline fun inlineFunThrowException() {
         throw IllegalArgumentException()
     }
 }
+
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

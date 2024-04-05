@@ -20,3 +20,4 @@ inline fun foo() {
 fun nop() {}
 
 // STEP_OVER: 4
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

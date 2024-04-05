@@ -1,4 +1,4 @@
-package stepOverInlinedLambda
+package stepOverInlinedLambdaThrough
 
 fun main(args: Array<String>) {
     //Breakpoint!
@@ -48,4 +48,4 @@ class A {
 fun test(i: Int) = 1
 
 // STEP_OVER: 99
-// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=true

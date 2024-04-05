@@ -26,6 +26,12 @@ class VariableWithLocation(
         location.compareTo(other.location).takeIf { it != 0 }
             ?: name.compareTo(other.name)
 
+    override fun equals(other: Any?): Boolean =
+        (other is VariableWithLocation) && (this compareTo other == 0)
+
+    override fun hashCode(): Int =
+        31 * location.hashCode() + name.hashCode()
+
     val name: String
         get() = variable.name()
 

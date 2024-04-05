@@ -15,3 +15,4 @@ inline operator fun Int.get(f: () -> Unit) {
 fun nop() {}
 
 // STEP_OVER: 2
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false
