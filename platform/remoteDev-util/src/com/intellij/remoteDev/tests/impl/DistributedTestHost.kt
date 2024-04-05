@@ -98,7 +98,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
           delay(10.milliseconds)
         }
-        withContext(Dispatchers.EDT) {
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           createProtocol(hostAddress, port)
         }
       }
