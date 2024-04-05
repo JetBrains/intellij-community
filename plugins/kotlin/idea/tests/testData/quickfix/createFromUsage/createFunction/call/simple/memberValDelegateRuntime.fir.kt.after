@@ -6,7 +6,7 @@ import kotlin.properties.ReadOnlyProperty
 class A<T>(val t: T) {
     val x: A<Int> by foo(t, "")
 
-    private fun foo(p0: T, string: String): ReadOnlyProperty<A<T>, A<Int>> {
+    private fun foo(t: T, string: String): ReadOnlyProperty<A<T>, A<Int>> {
         TODO("Not yet implemented")
     }
 }

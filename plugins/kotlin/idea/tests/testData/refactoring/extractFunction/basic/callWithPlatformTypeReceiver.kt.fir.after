@@ -3,7 +3,7 @@
 // PARAM_DESCRIPTOR: value-parameter it: kotlin.collections.Map.Entry<kotlin.Boolean!, kotlin.Boolean!> defined in test.`<anonymous>`
 // PARAM_TYPES: kotlin.collections.Map.Entry<kotlin.Boolean!, kotlin.Boolean!>
 fun test() {
-    J.getMap().filter { __dummyTestFun__(it) }
+    J.getMap().filter { bool(it) }
 }
 
-private fun __dummyTestFun__(entry: Map.Entry<Boolean, Boolean>): Boolean? = entry.key
+private fun bool(entry: Map.Entry<Boolean, Boolean>): Boolean? = entry.key

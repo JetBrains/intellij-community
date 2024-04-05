@@ -196,7 +196,9 @@ class KotlinNameSuggester(
     context(KtAnalysisSession)
     fun suggestTypeNames(type: KtType): Sequence<String> {
         return sequence {
-            val primitiveType = getPrimitiveType(type)
+            val presentableType = getPresentableType(type)
+
+            val primitiveType = getPrimitiveType(presentableType)
             if (primitiveType != null) {
                 PRIMITIVE_TYPE_NAMES.getValue(primitiveType).forEachIndexed { index, s ->
                     // skip first item for the primitives like `int`
@@ -207,7 +209,7 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (type.isCharSequence || type.isString) {
+            if (presentableType.isCharSequence || presentableType.isString) {
                 registerCompoundName("string")
                 registerCompoundName("str")
                 registerCompoundName("s")
@@ -215,26 +217,22 @@ class KotlinNameSuggester(
                 return@sequence
             }
 
-            if (type.isFunctionType) {
+            if (presentableType.isFunctionType) {
                 registerCompoundName("function")
                 registerCompoundName("fn")
                 registerCompoundName("f")
                 return@sequence
             }
 
-            tailrec fun getClassId(type: KtType): ClassId? = when (type) {
-                is KtDefinitelyNotNullType -> getClassId(type.original)
-                is KtFlexibleType -> getClassId(type.lowerBound)
-                is KtTypeParameterType -> {
-                    val bound = type.symbol.upperBounds.firstOrNull()
-                    if (bound != null) getClassId(bound) else null
-                }
+            fun getClassId(type: KtType): ClassId = when (type) {
                 is KtNonErrorClassType -> type.classId
+                is KtTypeParameterType -> ClassId(FqName.ROOT, FqName.topLevel(type.name), false)
+
                 else -> ClassId(FqName.ROOT, FqName.topLevel(Name.identifier("Value")), false)
             }
 
             suspend fun SequenceScope<String>.registerClassNames(type: KtType, preprocessor: (String) -> String = { it }) {
-                val classId = getClassId(type) ?: return
+                val classId = getClassId(type)
 
                 KotlinNameSuggester(case, EscapingRules.NONE, ignoreCompanionNames)
                     .suggestClassNames(classId)
@@ -242,37 +240,39 @@ class KotlinNameSuggester(
                     .forEach { registerCompoundName(it) }
             }
 
-            if (type is KtNonErrorClassType) {
-                val elementType = getIterableElementType(type)
+            // when the presentable iterable element type is `Any`, don't suggest `anies`
+            val presentableElementType = getIterableElementType(presentableType)?.let { getPresentableType(it) }?.takeUnless { it.isAny }
 
-                if (elementType != null) {
-                    registerClassNames(elementType) { Strings.pluralize(it) }
+            if (presentableElementType != null) {
+                registerClassNames(presentableElementType) { Strings.pluralize(it) }
+                return@sequence
+            }
+
+            val classId = getClassId(presentableType)
+            if (!classId.isLocal && !classId.isNestedClass) {
+                val fqName = classId.asSingleFqName().toUnsafe()
+
+                val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
+                if (primitiveElementType != null) {
+                    val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
+                    val chunk = Strings.pluralize(primitiveName)
+                    registerCompoundName(chunk)
                     return@sequence
                 }
 
-                val classId = type.classId
-                if (!classId.isLocal && !classId.isNestedClass) {
-                    val fqName = classId.asSingleFqName().toUnsafe()
-
-                    val primitiveElementType = FqNames.arrayClassFqNameToPrimitiveType[fqName]
-                    if (primitiveElementType != null) {
-                        val primitiveName = PRIMITIVE_TYPE_NAMES.getValue(primitiveElementType).first()
-                        val chunk = Strings.pluralize(primitiveName)
-                        registerCompoundName(chunk)
-                        return@sequence
-                    }
-
-                    val specialNames = getSpecialNames(fqName)
-                    if (specialNames != null) {
-                        specialNames.forEach { registerCompoundName(it) }
-                        return@sequence
-                    }
+                val specialNames = getSpecialNames(fqName)
+                if (specialNames != null) {
+                    specialNames.forEach { registerCompoundName(it) }
+                    return@sequence
                 }
-
-                registerClassNames(type)
             }
+
+            registerClassNames(presentableType)
         }
     }
+
+    context(KtAnalysisSession)
+    private fun getPresentableType(type: KtType): KtType = type.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
 
     /**
      * Suggests type alias name for a given type element.

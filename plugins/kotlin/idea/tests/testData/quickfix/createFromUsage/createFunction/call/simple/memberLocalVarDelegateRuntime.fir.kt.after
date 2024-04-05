@@ -8,7 +8,7 @@ class A<T>(val t: T) {
         var x: A<Int> by foo(t, "")
     }
 
-    private fun foo(p0: T, string: String): ReadWriteProperty<Any?, A<Int>> {
+    private fun foo(t: T, string: String): ReadWriteProperty<Any?, A<Int>> {
         <selection>TODO("Not yet implemented")<caret></selection>
     }
 }

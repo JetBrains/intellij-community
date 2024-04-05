@@ -21,18 +21,18 @@ class KotlinExpressionNameSuggesterTest : NewLightKotlinCodeInsightFixtureTestCa
     fun testClassLiteral() = test("String::class", "klass", "clazz", "declaration", "message")
     fun testIntArray() = test("intArrayOf(1, 2, 3)", "ints", "message", "intArrayOf", "arrayOf")
     fun testGenericIntArray() = test("arrayOf(1, 2, 3)", "ints", "message", "arrayOf")
-    fun testGenericArray() = test("arrayOf(1, 'c')", "values", "message", "arrayOf",)
+    fun testGenericArray() = test("arrayOf(1, 'c')", "message", "arrayOf", "array")
     fun testIntList() = test("listOf(1, 2, 3)", "ints", "message", "listOf")
     fun testClassList() = test("listOf(String::class.java, Long::class.java)", "classes", "message", "listOf")
     fun testStringList() = test("listOf(\"foo\", \"bar\")", "strings", "message", "listOf")
-    fun testGenericList() = test("listOf(1, 'c')", "values", "message", "listOf")
+    fun testGenericList() = test("listOf(1, 'c')", "message", "listOf", "list")
     fun testLazy() = test("lazy { 5 }", "lazy", "message")
     fun testJavaFile() = test("java.io.File(\".\")", "file", "message")
     fun testAnonymousFunction() = test("fun(s: String): Boolean = s.isNotEmpty()", "function", "fn", "f", "message")
     fun testLambda() = test("{ s: String -> s.isNotEmpty() }", "function", "fn", "f", "message")
-    fun testShortUnresolvedCall() = test("E()", "e")
-    fun testShortUnresolvedCallWithPrefixIs() = test("isE()", "e")
-    fun testShortUnresolvedCallWithPrefixGet() = test("getE()", "e")
+    fun testShortUnresolvedCall() = test("E()", "e", "value")
+    fun testShortUnresolvedCallWithPrefixIs() = test("isE()", "e", "value")
+    fun testShortUnresolvedCallWithPrefixGet() = test("getE()", "e", "value")
 
     private fun test(expressionText: String, vararg names: String) {
         val fileText = "fun test() { print<caret>($expressionText) }"
