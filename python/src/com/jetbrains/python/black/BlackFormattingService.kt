@@ -20,11 +20,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.ui.LightweightHint
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import org.jetbrains.annotations.Nls
+import java.awt.Container
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import kotlin.time.toKotlinDuration
@@ -36,7 +39,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val NAME: String = PyBundle.message("black.formatting.service.name")
     val DEFAULT_CHARSET: Charset = StandardCharsets.UTF_8
     const val NOTIFICATION_GROUP_ID = "Black Formatter Integration"
-    val FEATURES: Set<FormattingService.Feature> = setOf(FormattingService.Feature.FORMAT_FRAGMENTS)
+    val FEATURES: Set<FormattingService.Feature> = setOf()
   }
 
   override fun getFeatures(): Set<FormattingService.Feature> = FEATURES
@@ -67,7 +70,6 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     val blackConfig = BlackFormatterConfiguration.getBlackConfiguration(project)
     val sdk = blackConfig.getSdk()
     val editor = PsiEditorUtil.findEditor(file)
-    val isUserInitiatedReformat = EditorLastActionTracker.getInstance().lastActionId == IdeActions.ACTION_EDITOR_REFORMAT
 
     if (sdk == null) {
       val message = PyBundle.message("black.sdk.not.configured.error", project.name)
@@ -88,13 +90,10 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
       TextRange(0, text.length)
     }
     else {
-      formattingRequest.formattingRanges[0]
+      formattingRequest.formattingRanges.first()
     }
 
     val isFormatFragmentAction = isFormatFragmentAction(text, formattingRange)
-
-    // allow to reformat fragments only for user-initiated reformats to avoid problems with implicit reformats on various actions
-    if (isFormatFragmentAction && !isUserInitiatedReformat) return null
 
     val fragment = runCatching { text.substring(formattingRange.startOffset, formattingRange.endOffset) }.getOrNull()
     if (fragment.isNullOrBlank()) return null
@@ -193,8 +192,7 @@ class BlackFormattingService : AsyncDocumentFormattingService() {
     }
   }
 
-  private fun isFormatFragmentAction(text: CharSequence, range: TextRange): Boolean =
-    range.length != text.length
+  private fun isFormatFragmentAction(text: CharSequence, range: TextRange): Boolean = range.length != text.length
 
   override fun getNotificationGroupId(): String = NOTIFICATION_GROUP_ID
 
