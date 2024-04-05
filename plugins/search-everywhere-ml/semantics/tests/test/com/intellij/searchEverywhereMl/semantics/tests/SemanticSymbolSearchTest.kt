@@ -19,6 +19,7 @@ import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.kotlin.psi.KtFunction
 import kotlin.time.Duration.Companion.seconds
@@ -33,9 +34,9 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.size)
+    assertEquals(5, storage.index.getSize())
 
-    var neighbours = storage.searchNeighbours("begin indexing", 10, 0.5).asSequence().filterByModel()
+    var neighbours = storage.searchNeighbours("begin indexing", 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
 
     neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
@@ -47,7 +48,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
-    assertEquals(1, storage.index.size)
+    assertEquals(1, storage.index.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest(
@@ -75,7 +76,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test method renaming changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.size)
+    assertEquals(5, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
     assertEquals(setOf("ProjectIndexingTask", "startIndexing"), neighbours)
@@ -102,7 +103,7 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test removal of file with method changes the index`() = runTest {
     setupTest("java/ProjectIndexingTask.java", "kotlin/ScoresFileManager.kt")
-    assertEquals(5, storage.index.size)
+    assertEquals(5, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("begin indexing", 0.5).filterByModel()
     assertEquals(setOf("startIndexing", "ProjectIndexingTask"), neighbours)
@@ -123,8 +124,8 @@ class SemanticSymbolSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("handleScoresFile", "clearFileWithScores"), neighbours)
   }
 
-  private fun Sequence<ScoredText>.filterByModel(): Set<String> {
-    return map { it.text }.filter {
+  private suspend fun Flow<ScoredText>.filterByModel(): Set<String> {
+    return this.map { it.text }.filter {
       model.getElementsByName(it, false, it).any { element ->
         (element as PsiElement).isValid
       }

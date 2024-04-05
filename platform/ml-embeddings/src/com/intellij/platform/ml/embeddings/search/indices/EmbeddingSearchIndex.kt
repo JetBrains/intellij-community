@@ -3,29 +3,32 @@ package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import kotlinx.coroutines.flow.Flow
 
 interface EmbeddingSearchIndex {
-  val size: Int
   var limit: Int?
 
-  operator fun contains(id: String): Boolean
-  fun lookup(id: String): FloatTextEmbedding?
-  fun clear()
+  suspend fun getSize(): Int
+  suspend fun setLimit(value: Int?)
 
-  fun onIndexingStart()
-  fun onIndexingFinish()
+  suspend fun contains(id: String): Boolean
+  suspend fun lookup(id: String): FloatTextEmbedding?
+  suspend fun clear()
+
+  suspend fun onIndexingStart()
+  suspend fun onIndexingFinish()
 
   suspend fun addEntries(values: Iterable<Pair<String, FloatTextEmbedding>>, shouldCount: Boolean = false)
 
   suspend fun saveToDisk()
   suspend fun loadFromDisk()
 
-  fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
-  fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Sequence<ScoredText>
+  suspend fun findClosest(searchEmbedding: FloatTextEmbedding, topK: Int, similarityThreshold: Double? = null): List<ScoredText>
+  suspend fun streamFindClose(searchEmbedding: FloatTextEmbedding, similarityThreshold: Double? = null): Flow<ScoredText>
 
-  fun estimateMemoryUsage(): Long
+  suspend fun estimateMemoryUsage(): Long
   fun estimateLimitByMemory(memory: Long): Int
-  fun checkCanAddEntry(): Boolean
+  suspend fun checkCanAddEntry(): Boolean
 }
 
 internal fun Map<String, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,

@@ -24,7 +24,7 @@ class EmbeddingIndexMemoryManager {
 
   fun registerIndex(index: EmbeddingSearchIndex) = trackedIndices.add(index)
 
-  fun checkCanAddEntry(): Boolean {
+  suspend fun checkCanAddEntry(): Boolean {
     val limit = applicationEmbeddingsMemoryLimit
     return limit == null || trackedIndices.sumOf { it.estimateMemoryUsage() } < limit
   }

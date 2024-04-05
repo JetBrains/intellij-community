@@ -10,6 +10,8 @@ import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val project: Project,
                                                                       private val cs: CoroutineScope) : EmbeddingsStorage {
@@ -20,7 +22,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
-    if (index.size == 0) return emptyList()
+    if (index.getSize() == 0) return emptyList()
     val searchStartTime = System.nanoTime()
     val embedding = generateEmbedding(text) ?: return emptyList()
     val neighbours = index.findClosest(embedding, topK, similarityThreshold)
@@ -29,10 +31,10 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   }
 
   @RequiresBackgroundThread
-  suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
+  suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Flow<ScoredText> {
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
-    if (index.size == 0) return emptySequence()
-    val embedding = generateEmbedding(text) ?: return emptySequence()
+    if (index.getSize() == 0) return emptyFlow()
+    val embedding = generateEmbedding(text) ?: return emptyFlow()
     return index.streamFindClose(embedding, similarityThreshold)
   }
 }

@@ -80,7 +80,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     }
   }
 
-  private fun onFirstIndexingStart() {
+  private suspend fun onFirstIndexingStart() {
     ActionEmbeddingsStorage.getInstance().index.onIndexingStart()
   }
 

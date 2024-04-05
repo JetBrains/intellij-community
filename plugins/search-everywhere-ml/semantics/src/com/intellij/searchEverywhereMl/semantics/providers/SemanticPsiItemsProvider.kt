@@ -7,6 +7,8 @@ import com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbed
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
 import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimilarity<*>> {
   var model: FilteringGotoByModel<*>
@@ -22,8 +24,8 @@ interface SemanticPsiItemsProvider : StreamSemanticItemsProvider<PsiItemWithSimi
   }
 
   override suspend fun streamSearch(pattern: String,
-                                    similarityThreshold: Double?): Sequence<ScoredText> {
-    if (pattern.isBlank()) return emptySequence()
+                                    similarityThreshold: Double?): Flow<ScoredText> {
+    if (pattern.isBlank()) return emptyFlow()
     return getEmbeddingsStorage().streamSearchNeighbours(convertNameToNaturalLanguage(pattern), similarityThreshold)
   }
 

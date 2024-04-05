@@ -18,6 +18,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.utils.editor.commitToPsi
 import com.intellij.testFramework.utils.editor.saveToDisk
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.flow.*
 import org.jetbrains.kotlin.psi.KtClass
 import kotlinx.coroutines.test.runTest
 import kotlin.time.Duration.Companion.seconds
@@ -31,9 +32,9 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
-    var neighbours = storage.searchNeighbours("index project job", 10, 0.5).asSequence().filterByModel()
+    var neighbours = storage.searchNeighbours("index project job", 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
 
     neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
@@ -45,14 +46,14 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test index ids are not duplicated`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/IndexProjectAction.kt")
-    assertEquals(1, storage.index.size)
+    assertEquals(1, storage.index.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest(
     timeout = 45.seconds // increased timeout because of a bug in class index
   ) {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     val contributor = SemanticClassSearchEverywhereContributor(createEvent())
     Disposer.register(project, contributor)
@@ -73,7 +74,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test class renaming changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
@@ -100,7 +101,7 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test removal of file with class changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction", "ProjectIndexingTask"), neighbours)
@@ -118,8 +119,8 @@ class SemanticClassSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("ScoresFileManager"), neighbours)
   }
 
-  private fun Sequence<ScoredText>.filterByModel(): Set<String> {
-    return map { it.text }.filter {
+  private suspend fun Flow<ScoredText>.filterByModel(): Set<String> {
+    return this.map { it.text }.filter {
       model.getElementsByName(it, false, it).any { element ->
         (element as PsiElement).isValid
       }

@@ -14,6 +14,7 @@ import com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemant
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.utils.vfs.deleteRecursively
 import com.intellij.util.TimeoutUtil
+import kotlinx.coroutines.flow.*
 import java.io.BufferedReader
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -28,9 +29,9 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test basic semantics`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
-    var neighbours = storage.searchNeighbours("index project job", 10, 0.5).asSequence().filterByModel()
+    var neighbours = storage.searchNeighbours("index project job", 10, 0.5).asFlow().filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)
 
     neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
@@ -45,12 +46,12 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     myFixture.copyFileToProject("java/IndexProjectAction.java", "src/second/IndexProjectAction.java")
     setupTest()
 
-    assertEquals(1, storage.index.size)
+    assertEquals(1, storage.index.getSize())
   }
 
   fun `test search everywhere contributor`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     val contributor = SemanticFileSearchEverywhereContributor(createEvent())
     Disposer.register(project, contributor)
@@ -71,7 +72,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test file renaming changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
     assertEquals(setOf("ProjectIndexingTask.kt", "IndexProjectAction.java"), neighbours)
@@ -94,7 +95,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test file removal changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "kotlin/ProjectIndexingTask.kt", "java/ScoresFileManager.java")
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)
@@ -117,7 +118,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
   fun `test file creation changes the index`() = runTest {
     setupTest("java/IndexProjectAction.java", "java/ScoresFileManager.java")
-    assertEquals(2, storage.index.size)
+    assertEquals(2, storage.index.getSize())
 
     var neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction.java"), neighbours)
@@ -130,7 +131,7 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
 
     TimeoutUtil.sleep(2000) // wait for two seconds for index update
 
-    assertEquals(3, storage.index.size)
+    assertEquals(3, storage.index.getSize())
 
     neighbours = storage.streamSearchNeighbours("index project job", 0.5).filterByModel()
     assertEquals(setOf("IndexProjectAction.java", "ProjectIndexingTask.kt"), neighbours)
@@ -139,8 +140,8 @@ class SemanticFileSearchTest : SemanticSearchBaseTestCase() {
     assertEquals(setOf("ScoresFileManager.java"), neighbours)
   }
 
-  private fun Sequence<ScoredText>.filterByModel(): Set<String> {
-    return map { it.text }.filter {
+  private suspend fun Flow<ScoredText>.filterByModel(): Set<String> {
+    return this.map { it.text }.filter {
       model.getElementsByName(it, false, it).any { element ->
         (element as PsiElement).isValid
       }

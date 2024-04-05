@@ -12,6 +12,8 @@ import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Compan
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import java.io.File
 
 /**
@@ -31,7 +33,7 @@ class ActionEmbeddingsStorage : EmbeddingsStorage {
   @RequiresBackgroundThread
   override suspend fun searchNeighbours(text: String, topK: Int, similarityThreshold: Double?): List<ScoredText> {
     ActionEmbeddingStorageManager.getInstance().triggerIndexing() // trigger indexing on first search usage
-    if (index.size == 0) return emptyList()
+    if (index.getSize() == 0) return emptyList()
     val searchStartTime = System.nanoTime()
     val embedding = generateEmbedding(text) ?: return emptyList()
     val neighbours = index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
@@ -40,10 +42,10 @@ class ActionEmbeddingsStorage : EmbeddingsStorage {
   }
 
   @RequiresBackgroundThread
-  suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Sequence<ScoredText> {
+  suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Flow<ScoredText> {
     ActionEmbeddingStorageManager.getInstance().triggerIndexing() // trigger indexing on first search usage
-    if (index.size == 0) return emptySequence()
-    val embedding = generateEmbedding(text) ?: return emptySequence()
+    if (index.getSize() == 0) return emptyFlow()
+    val embedding = generateEmbedding(text) ?: return emptyFlow()
     return index.streamFindClose(embedding, similarityThreshold)
   }
 

@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 class LocalSemanticActionsProvider(
   model: GotoActionModel,
@@ -16,8 +18,8 @@ class LocalSemanticActionsProvider(
     return ActionEmbeddingsStorage.getInstance().searchNeighbours(pattern, ITEMS_LIMIT, similarityThreshold)
   }
 
-  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<ScoredText> {
-    if (pattern.isBlank()) return emptySequence()
+  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Flow<ScoredText> {
+    if (pattern.isBlank()) return emptyFlow()
     return ActionEmbeddingsStorage.getInstance().streamSearchNeighbours(pattern, similarityThreshold)
   }
 

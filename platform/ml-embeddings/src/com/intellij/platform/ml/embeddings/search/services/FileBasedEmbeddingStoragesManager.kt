@@ -87,8 +87,9 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           val index = FileEmbeddingsStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
           index.loadFromDisk()
-          indexLoaded = indexLoaded && index.size > 0
-          logger.debug { "Loaded files embedding index from disk, size: ${index.size}, root: ${index.root}" }
+          val indexSize = index.getSize()
+          indexLoaded = indexLoaded && indexSize > 0
+          logger.debug { "Loaded files embedding index from disk, size: ${indexSize}, root: ${index.root}" }
         }
       }
       val classIndexLoadingJob = launch {
@@ -96,8 +97,9 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           val index = ClassEmbeddingsStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
           index.loadFromDisk()
-          indexLoaded = indexLoaded && index.size > 0
-          logger.debug { "Loaded classes embedding index from disk, size: ${index.size}, root: ${index.root}" }
+          val indexSize = index.getSize()
+          indexLoaded = indexLoaded && indexSize > 0
+          logger.debug { "Loaded classes embedding index from disk, size: ${indexSize}, root: ${index.root}" }
         }
       }
       val symbolIndexLoadingJob = launch {
@@ -105,8 +107,9 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           val index = SymbolEmbeddingStorage.getInstance(project).index
           EmbeddingIndexMemoryManager.getInstance().registerIndex(index)
           index.loadFromDisk()
-          indexLoaded = indexLoaded && index.size > 0
-          logger.debug { "Loaded symbols embedding index from disk, size: ${index.size}, root: ${index.root}" }
+          val indexSize = index.getSize()
+          indexLoaded = indexLoaded && indexSize > 0
+          logger.debug { "Loaded symbols embedding index from disk, size: ${indexSize}, root: ${index.root}" }
         }
       }
       listOf(filesIndexLoadingJob, classIndexLoadingJob, symbolIndexLoadingJob).joinAll()
@@ -177,7 +180,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       launch {
         val entity = IndexableFile(file)
         val index = FileEmbeddingsStorage.getInstance(project).index
-        if (entity.id in index) return@launch
+        if (index.contains(entity.id)) return@launch
         EmbeddingIndexingTask.Add(listOf(entity.id), listOf(entity.indexableRepresentation)).run(index)
       }
     }
@@ -187,7 +190,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           FileIndexableEntitiesProvider.extractClasses(psiManager.findFile(file) ?: return@readAction emptyFlow())
         }
         val index = ClassEmbeddingsStorage.getInstance(project).index
-        entities.filter { it.id !in index }.collect {
+        entities.filter { !index.contains(it.id) }.collect {
           EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
         }
       }
@@ -198,7 +201,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
           FileIndexableEntitiesProvider.extractSymbols(psiManager.findFile(file) ?: return@readAction emptyFlow())
         }
         val index = SymbolEmbeddingStorage.getInstance(project).index
-        entities.filter { it.id !in index }.collect {
+        entities.filter { !index.contains(it.id) }.collect {
           EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
         }
       }
@@ -233,7 +236,7 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     }
   }
 
-  private fun onFirstIndexingStart() {
+  private suspend fun onFirstIndexingStart() {
     val settings = EmbeddingIndexSettingsImpl.getInstance()
     if (settings.shouldIndexFiles) {
       FileEmbeddingsStorage.getInstance(project).index.onIndexingStart()
