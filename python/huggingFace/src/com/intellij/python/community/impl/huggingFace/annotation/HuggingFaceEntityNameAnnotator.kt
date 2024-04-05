@@ -9,7 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.impl.huggingFace.HuggingFaceUtil
 import com.intellij.python.community.impl.huggingFace.annotation.HuggingFaceIdentifierPsiElement.Companion.HUGGING_FACE_ENTITY_NAME_KEY
-import com.intellij.python.community.impl.huggingFace.service.HuggingFaceImportedLibrariesManager
+import com.intellij.python.community.impl.huggingFace.service.HuggingFacePluginManager
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,7 +19,7 @@ class HuggingFaceEntityNameAnnotator : Annotator {
     if (element !is PyStringLiteralExpression) return
 
     val project = element.project
-    val manager = project.getService(HuggingFaceImportedLibrariesManager::class.java)
+    val manager = project.getService(HuggingFacePluginManager::class.java)
     if (!manager.isLibraryImported()) return
 
     val text = element.stringValue

@@ -21,7 +21,12 @@ import java.time.Instant
 object HuggingFaceApi {
   private val nextLinkRegex = Regex("""<(.+)>; rel="next"""")
 
-  fun fillCacheWithBasicApiData(endpoint: HuggingFaceEntityKind, cache: HuggingFaceCache, maxCount: Int) {
+  fun fillCacheWithBasicApiData(
+    endpoint: HuggingFaceEntityKind,
+    cache: HuggingFaceCache,
+    maxCount: Int,
+    onCompletion: () -> Unit
+  ) {
 
     HuggingFaceCoroutine.Utils.ioScope.launch {
       var nextPageUrl: String? = HuggingFaceURLProvider.fetchApiDataUrl(endpoint).toString()
@@ -36,6 +41,8 @@ object HuggingFaceApi {
         }
         nextPageUrl = extractNextPageUrl(response.linkHeader)
       }
+
+      onCompletion()
     }
   }
 
