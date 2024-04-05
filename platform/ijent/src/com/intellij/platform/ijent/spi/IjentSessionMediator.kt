@@ -1,8 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ijent
+package com.intellij.platform.ijent.spi
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.*
+import com.intellij.platform.ijent.IjentApplicationScope
+import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.blockingDispatcher
@@ -12,7 +13,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.takeWhile
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -22,8 +22,7 @@ import kotlin.time.Duration.Companion.seconds
  * A wrapper for a [Process] that runs IJent. The wrapper logs stderr lines, waits for the exit code, terminates the process in case
  * of problems in the IDE.
  */
-@ApiStatus.Internal
-class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process, private val lastStderrMessages: SharedFlow<String?>) {
+class IjentSessionMediator private constructor(val scope: CoroutineScope, val process: Process) {
   enum class ExpectedErrorCode {
     /** During initialization, even a sudden successful exit is an error. */
     NO,
@@ -37,45 +36,6 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
 
   @Volatile
   var expectedErrorCode = ExpectedErrorCode.NO
-
-  /**
-   * If an error happens, it is rethrown, but also the function waits for [lastStderrMessagesTimeout] and attaches all stderr lines
-   * received since the start of execution of [body].
-   */
-  suspend fun <T> attachStderrOnError(body: suspend () -> T): T =
-    coroutineScope {
-      val stderr = StringBuilder()
-      val collector = launch(CoroutineName("attachStderrOnError")) {
-        collectLines(lastStderrMessages, stderr)
-      }
-      try {
-        val result = body()
-        collector.cancel()
-        result
-      }
-      catch (err: Throwable) {
-        runCatching {
-          withTimeoutOrNull(lastStderrMessagesTimeout) {
-            collector.join()
-          }
-        }.exceptionOrNull()?.let(err::addSuppressed)
-
-        collector.cancel()
-
-        // TODO Suppress RuntimeExceptionWithAttachments instead of wrapping when KT-66006 is resolved.
-        //err.addSuppressed(RuntimeExceptionWithAttachments(
-        //  "The error happened during handling $process",
-        //  Attachment("stderr", stderr.toString()).apply { isIncluded = isIncluded or ApplicationManager.getApplication().isInternal },
-        //))
-        //throw err
-
-        throw RuntimeExceptionWithAttachments(
-          err.message ?: "",
-          err,
-          Attachment("stderr", stderr.toString()).apply { isIncluded = isIncluded or ApplicationManager.getApplication().isInternal },
-        )
-      }
-    }
 
   companion object {
     /** See the docs of [IjentSessionMediator] */
@@ -96,7 +56,7 @@ class IjentSessionMediator private constructor(val scope: CoroutineScope, val pr
         ijentProcessStderrLogger(process, ijentId, lastStderrMessages)
       }
 
-      val mediator = IjentSessionMediator(connectionScope, process, lastStderrMessages)
+      val mediator = IjentSessionMediator(connectionScope, process)
 
       val awaiterScope = IjentApplicationScope.instance().launch(CoroutineName("ijent $ijentId > exit awaiter scope")) {
         ijentProcessExitAwaiter(ijentId, mediator, lastStderrMessages)

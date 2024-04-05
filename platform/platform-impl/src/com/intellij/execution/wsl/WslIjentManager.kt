@@ -1,16 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
-import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentPosixApi
-import com.intellij.platform.ijent.bootstrapOverShellSession
-import com.intellij.util.io.computeDetached
+import com.intellij.platform.ijent.deploy
+import com.intellij.platform.ijent.spi.DeployedIjent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -50,28 +49,20 @@ suspend fun deployAndLaunchIjent(
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): IjentPosixApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).second
+): IjentPosixApi = deployAndLaunchIjentGettingPath(project, wslDistribution, wslCommandLineOptionsModifier).ijentApi
 
-@OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
 @VisibleForTesting
 suspend fun deployAndLaunchIjentGettingPath(
   project: Project?,
   wslDistribution: WSLDistribution,
   wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {},
-): Pair<String, IjentPosixApi> {
-  // IJent can start an interactive shell by itself whenever it needs.
-  // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
-  // with possible user extensions in ~/.profile
-  val wslCommandLineOptions = WSLCommandLineOptions()
-    .setExecuteCommandInInteractiveShell(false)
-    .setExecuteCommandInLoginShell(false)
-    .setExecuteCommandInShell(false)
-
-  wslCommandLineOptionsModifier(wslCommandLineOptions)
-
-  val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine("/bin/sh"))
-  wslDistribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
-
-  val process = computeDetached { commandLine.createProcess() }
-  return bootstrapOverShellSession("WSL-${wslDistribution.id}", process, wslDistribution::getWslPath)
+): DeployedIjent.Posix {
+  return coroutineScope {
+    WslIjentDeployingStrategy(
+      scope = this,
+      distribution = wslDistribution,
+      project = project,
+      wslCommandLineOptionsModifier = wslCommandLineOptionsModifier
+    ).deploy("WSL-${wslDistribution.id}")
+  }
 }
