@@ -2,10 +2,10 @@
 package com.intellij.python.community.impl.huggingFace.api
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -13,37 +13,16 @@ import java.net.URL
 
 @ApiStatus.Internal
 object HuggingFaceHttpClient {
-  fun exists(url: String, retries: Int = 2): Boolean {
-    repeat(retries) {
-      if (existsSingle(url))
-        return true
-    }
-    return false
-  }
-
-  private fun existsSingle(url: String): Boolean {
-    return try {
-      val code = HttpRequests.request(url).connect {
-        (it.connection as HttpURLConnection).responseCode
-      }
-      code in 200..299
-    } catch (e: IOException) {
-      thisLogger().warn(e)
-      false
-    }
-  }
-
-  @RequiresBackgroundThread
-  fun downloadFile(url: String): Result<String> =
+  suspend fun downloadFile(url: String): Result<String> = withContext(Dispatchers.IO) {
     runCatching {
       HttpRequests.request(url).readString()
     }.onFailure {
       thisLogger().warn("Failed to download file: $url", it)
     }
+  }
 
-  @RequiresBackgroundThread
-  fun downloadContentAndHeaders(url: String): Result<HfHttpResponseWithHeaders> {
-    return runCatching {
+  suspend fun downloadContentAndHeaders(url: String): Result<HfHttpResponseWithHeaders> = withContext(Dispatchers.IO) {
+    runCatching {
       val connection = URL(url).openConnection() as HttpURLConnection
       val content = connection.inputStream.bufferedReader().use { it.readText() }
       val linkHeader = connection.getHeaderField("Link")

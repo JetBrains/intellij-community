@@ -2,6 +2,7 @@
 package com.intellij.python.community.impl.huggingFace.cache
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.python.community.impl.huggingFace.HuggingFaceConstants
 import com.intellij.python.community.impl.huggingFace.HuggingFaceEntityKind
@@ -33,6 +34,7 @@ class HuggingFaceCacheFillService(private val project: Project) {
       HuggingFaceCacheUpdateListener.notifyCacheUpdated()
       wasFilled = true
     } catch (e: IOException) {
+      thisLogger().error(e)
       wasFilled = false
     }
   }
