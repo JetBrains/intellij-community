@@ -17,10 +17,8 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
@@ -117,11 +115,6 @@ class UnindexedFilesScannerExecutor(project: Project)
         pauseReason.update { it.remove(activityName) }
       }
     }
-  }
-
-  @TestOnly
-  suspend fun waitUntilFinished() {
-    isRunning.first { !it }
   }
 
   companion object {
