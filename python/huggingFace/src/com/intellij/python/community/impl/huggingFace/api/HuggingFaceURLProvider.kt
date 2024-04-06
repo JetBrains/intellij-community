@@ -52,8 +52,8 @@ object HuggingFaceURLProvider {
   fun getModelSearchQuery(
     query: String,
     tags: String? = null,
-    sortKey: HuggingFaceModelSortKey = HuggingFaceModelSortKey.DOWNLOADS,
-    limit: Int = 20
+    sortKey: HuggingFaceModelSortKey = HuggingFaceModelSortKey.LIKES,
+    limit: Int = 25
   ): URL {
     val commonParameters = mapOf(
       "search" to query,
