@@ -4,6 +4,7 @@ package com.intellij.python.community.impl.huggingFace.service
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceCacheUpdateHandler
 import org.jetbrains.annotations.ApiStatus
@@ -14,5 +15,5 @@ class HuggingFacePluginManager(val project: Project) : Disposable {
   private var libraryStatusChecker: HuggingFaceImportedLibrariesManager = project.getService(HuggingFaceImportedLibrariesManager::class.java)
   init { project.getService(HuggingFaceCacheUpdateHandler::class.java) }
   fun isActive(): Boolean = libraryStatusChecker.isLibraryImported() && Registry.`is`("python.enable.hugging.face.cards")
-  override fun dispose() { }
+  override fun dispose() = Disposer.dispose(libraryStatusChecker)
 }
