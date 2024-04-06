@@ -2,6 +2,8 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.internal.DebugAttachDetector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -10,6 +12,14 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class JVMResponsivenessMonitorStarter : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
-    service<JVMResponsivenessMonitor>()
+    val app = ApplicationManager.getApplication()
+    //We're interested in responsiveness for a regular user-facing IDE app.
+    //Responsiveness statistics under unit-tests/headless or with debugger is unlikely representative for it
+    val startResponsivenessMonitor = !app.isUnitTestMode
+                                     && !app.isHeadlessEnvironment
+                                     && !DebugAttachDetector.isDebugEnabled()
+    if(startResponsivenessMonitor) {
+      service<JVMResponsivenessMonitor>()
+    }
   }
 }
