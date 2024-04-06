@@ -1424,6 +1424,9 @@
     <applicationService serviceInterface="com.intellij.openapi.ui.OnboardingBackgroundImageProvider"
                         serviceImplementation="com.intellij.openapi.wm.impl.OnboardingBackgroundImageProviderImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.ui.BannerImageProvider"
+                        serviceImplementation="com.intellij.openapi.wm.impl.BannerImageProviderImpl"/>
+
     <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="all"/>
 
     <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
