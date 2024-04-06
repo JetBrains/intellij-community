@@ -17,7 +17,7 @@ import java.util.function.Supplier
 class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorImpl>) {
   private val _moduleGraph = createModuleGraph(unsortedPlugins)
   private val builder = _moduleGraph.builder()
-  val moduleGraph: SortedModuleGraph = _moduleGraph.sorted(builder)
+  @JvmField val moduleGraph: ModuleGraph = _moduleGraph.sorted(builder)
 
   private val enabledPluginIds = HashMap<PluginId, IdeaPluginDescriptorImpl>(unsortedPlugins.size)
   private val enabledModuleV2Ids = HashMap<String, IdeaPluginDescriptorImpl>(unsortedPlugins.size * 2)
@@ -139,9 +139,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
     return PluginSet(
       moduleGraph = moduleGraph,
       allPlugins = allPlugins,
-      enabledPlugins = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
-        sortedPlugins.filterTo(result) { it.isEnabled }
-      },
+      enabledPlugins = sortedPlugins.filterTo(ArrayList<IdeaPluginDescriptorImpl>()) { it.isEnabled },
       enabledModuleMap = java11Shim.copyOf(enabledModuleV2Ids),
       enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginIds),
       enabledModules = ArrayList<IdeaPluginDescriptorImpl>().also { result ->
@@ -176,7 +174,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
       )
     }
 
-    descriptor.allPluginDependencies
+    getAllPluginDependencies(descriptor)
       .firstOrNull { it !in enabledPluginIds }
       ?.let { dependencyPluginId ->
         return idMap.get(dependencyPluginId)?.let {
@@ -184,7 +182,7 @@ class PluginSetBuilder(@JvmField val unsortedPlugins: Set<IdeaPluginDescriptorIm
         } ?: createCannotLoadError(descriptor, dependencyPluginId, errors, isNotifyUser)
       }
 
-    return descriptor.moduleDependencies
+    return descriptor.dependencies.modules.asSequence().map { it.name }
       .firstOrNull { it !in enabledModuleV2Ids }
       ?.let {
         PluginLoadingError(
@@ -249,14 +247,10 @@ private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String
   return Supplier { CoreBundle.message(key, *params) }
 }
 
-private val IdeaPluginDescriptorImpl.allPluginDependencies: Sequence<PluginId>
-  get(): Sequence<PluginId> {
-    return pluginDependencies.asSequence()
-             .filterNot { it.isOptional }
-             .map { it.pluginId } +
-           dependencies.plugins.asSequence()
-             .map { it.id }
-  }
-
-private val IdeaPluginDescriptorImpl.moduleDependencies
-  get(): Sequence<String> = dependencies.modules.asSequence().map { it.name }
+private fun getAllPluginDependencies(ideaPluginDescriptorImpl: IdeaPluginDescriptorImpl): Sequence<PluginId> {
+  return ideaPluginDescriptorImpl.pluginDependencies.asSequence()
+           .filterNot { it.isOptional }
+           .map { it.pluginId } +
+         ideaPluginDescriptorImpl.dependencies.plugins.asSequence()
+           .map { it.id }
+}
