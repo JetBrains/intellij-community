@@ -327,6 +327,5 @@
       <add-to-group group-id="FileHistory.KeymapGroup"/>
     </group>
   </actions>
-
 </idea-plugin>
 
