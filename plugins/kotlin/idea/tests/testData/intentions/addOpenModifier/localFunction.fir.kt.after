@@ -1,7 +1,0 @@
-open class Foo {
-    open fun bar() {
-        fun foo() {
-
-        }
-    }
-}

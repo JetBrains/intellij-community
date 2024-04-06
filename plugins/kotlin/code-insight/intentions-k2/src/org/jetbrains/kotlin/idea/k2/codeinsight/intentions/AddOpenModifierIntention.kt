@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -20,12 +19,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 internal class AddOpenModifierIntention :
     KotlinApplicableModCommandAction<KtCallableDeclaration, Unit>(KtCallableDeclaration::class),
     LowPriorityAction {
-
-    override fun stopSearchAt(
-        element: PsiElement,
-        context: ActionContext,
-    ): Boolean = false
-
     override fun getFamilyName(): String =
         KotlinBundle.message("make.open")
 
