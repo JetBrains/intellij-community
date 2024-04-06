@@ -488,6 +488,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       // Pretend to be Fig.io terminal to avoid it breaking IntelliJ shell integration:
       // at startup it runs a sub-shell without IntelliJ shell integration
       envs.put("FIG_TERM", "1");
+      // CodeWhisperer runs a nested shell unavailable for injecting IntelliJ shell integration.
+      // Zsh and Bash are affected although these shell integrations are installed differently.
+      // We need to either change how IntelliJ injects shell integrations to support nested shells
+      // or disable running a nested shell by CodeWhisperer. Let's do the latter:
+      envs.put("PROCESS_LAUNCHED_BY_CW", "1");
     }
 
     CommandBlockIntegration commandIntegration = integration != null ? integration.getCommandBlockIntegration() : null;
