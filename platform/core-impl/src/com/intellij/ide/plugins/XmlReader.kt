@@ -747,33 +747,61 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
 
 private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, readContext: ReadModuleContext) {
   reader.consumeChildElements { elementName ->
-    when (elementName) {
-      "module" -> {
-        var name: String? = null
-        for (i in 0 until reader.attributeCount) {
-          when (reader.getAttributeLocalName(i)) {
-            "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
+    if (elementName != "module") {
+      reader.skipElement()
+      throw RuntimeException("Unknown content item type: $elementName")
+    }
+
+    var name: String? = null
+    for (i in 0 until reader.attributeCount) {
+      when (reader.getAttributeLocalName(i)) {
+        "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
+      }
+    }
+
+    if (name.isNullOrEmpty()) {
+      throw RuntimeException("Name is not specified at ${reader.location}")
+    }
+
+    var configFile: String? = null
+    val index = name.lastIndexOf('/')
+    if (index != -1) {
+      configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
+    }
+
+    if (descriptor.contentModules == null) {
+      descriptor.contentModules = ArrayList()
+    }
+
+    val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
+    if (isEndElement) {
+      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(
+        name = name,
+        configFile = configFile,
+        descriptorContent = null,
+      ))
+    }
+    else {
+      val descriptorContent = reader.text?.takeIf { it.isNotBlank() }
+      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(
+        name = name,
+        configFile = configFile,
+        descriptorContent = descriptorContent,
+      ))
+
+      var nesting = 1
+      while (true) {
+        val type = reader.next()
+        if (type == XMLStreamConstants.START_ELEMENT) {
+          nesting++
+        }
+        else if (type == XMLStreamConstants.END_ELEMENT) {
+          if (--nesting == 0) {
+            break
           }
         }
-
-        if (name.isNullOrEmpty()) {
-          throw RuntimeException("Name is not specified at ${reader.location}")
-        }
-
-        var configFile: String? = null
-        val index = name.lastIndexOf('/')
-        if (index != -1) {
-          configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
-        }
-
-        if (descriptor.contentModules == null) {
-          descriptor.contentModules = ArrayList()
-        }
-        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
       }
-      else -> throw RuntimeException("Unknown content item type: $elementName")
     }
-    reader.skipElement()
   }
   assert(reader.isEndElement)
 }
@@ -786,8 +814,9 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
       "module" -> {
         var name: String? = null
         for (i in 0 until reader.attributeCount) {
-          when (reader.getAttributeLocalName(i)) {
-            "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
+          if (reader.getAttributeLocalName(i) == "name") {
+            name = readContext.interner.name(reader.getAttributeValue(i))
+            break
           }
         }
 
@@ -796,8 +825,9 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
       "plugin" -> {
         var id: String? = null
         for (i in 0 until reader.attributeCount) {
-          when (reader.getAttributeLocalName(i)) {
-            "id" -> id = readContext.interner.name(reader.getAttributeValue(i))
+          if (reader.getAttributeLocalName(i) == "id") {
+            id = readContext.interner.name(reader.getAttributeValue(i))
+            break
           }
         }
 
