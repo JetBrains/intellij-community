@@ -10,7 +10,6 @@
   <content>
     <module name="intellij.notebooks.visualization"/>
     <module name="intellij.notebooks.ui"/>
-    <module name="intellij.platform.images.copyright"/>
     <module name="intellij.xml.xmlbeans"/>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ml.embeddings"/>
@@ -19,7 +18,8 @@
     <module name="intellij.platform.experiment"/>
     <module name="intellij.idea.customization.base"/>
   </content>
-  
+  <xi:include href="/META-INF/common-ide-modules.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
                         serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"

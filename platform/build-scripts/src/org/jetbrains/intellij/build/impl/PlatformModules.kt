@@ -529,13 +529,21 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
     readXmlAsModel(file)
   }?.let { root ->
     collectProductModules(root = root, result = result)
+
+    // we don't want to allow providing product modules in any x-include, check only specific ones
+    if (root.children.any { it.name == "include" && it.getAttributeValue("href") == "/META-INF/common-ide-modules.xml" }) {
+      collectProductModules(
+        root = readXmlAsModel(context.findFileInModuleSources("intellij.platform.resources", "META-INF/common-ide-modules.xml")!!),
+        result = result,
+      )
+    }
   }
 
   withContext(Dispatchers.IO) {
-    val file = context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-    file?.let { readXmlAsModel(it) }
-  }?.let {
-    collectProductModules(root = it, result = result)
+    collectProductModules(
+      root = readXmlAsModel(context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")!!),
+      result = result,
+    )
   }
 
   return result
