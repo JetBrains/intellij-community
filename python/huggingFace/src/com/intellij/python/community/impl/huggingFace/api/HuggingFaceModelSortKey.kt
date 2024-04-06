@@ -5,8 +5,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 enum class HuggingFaceModelSortKey(val value: String, val displayName: String) {
-  DOWNLOADS("downloads", "Downloads"),
   LIKES("likes", "Likes"),
+  DOWNLOADS("downloads", "Downloads"),
   CREATED_AT("createdAt", "Created At"),
-  LAST_MODIFIED("lastModified", "Last Modified");
+  LAST_MODIFIED("lastModified", "Last Modified")
 }
