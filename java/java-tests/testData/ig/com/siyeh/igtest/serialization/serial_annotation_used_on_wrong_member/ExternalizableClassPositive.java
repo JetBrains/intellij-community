@@ -4,7 +4,7 @@ class Test implements Externalizable {
 
   <warning descr="Annotated member is not a part of the serialization mechanism">@Serial</warning>
   private static final long serialVersionID = 7874493593505141603L;
-  <warning descr="Annotated member is not a part of the serialization mechanism">@Serial</warning>
+  @Serial
   static final long serialVersionUID = 7874493593505141603L;
 
   <warning descr="Annotated member is not a part of the serialization mechanism">@Serial</warning>
