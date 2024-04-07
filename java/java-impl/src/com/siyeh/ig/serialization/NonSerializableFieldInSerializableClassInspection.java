@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,13 +45,15 @@ public final class NonSerializableFieldInSerializableClassInspection extends Ser
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.field.in.serializable.class.problem.descriptor");
+    boolean isRecord = (boolean)infos[1];
+    return isRecord
+           ? InspectionGadgetsBundle.message("non.serializable.component.in.serializable.record.problem.descriptor")
+           :InspectionGadgetsBundle.message("non.serializable.field.in.serializable.class.problem.descriptor");
   }
 
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
-    final PsiModifierListOwner field = (PsiModifierListOwner)infos[0];
+    final PsiVariable field = (PsiVariable)infos[0];
     return SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(field, this, insp -> insp.ignorableAnnotations)
       .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
@@ -66,7 +68,8 @@ public final class NonSerializableFieldInSerializableClassInspection extends Ser
     @Override
     public void visitField(@NotNull PsiField field) {
       PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null) {
+      if (containingClass == null || containingClass.isEnum()) {
+        // https://docs.oracle.com/javase/1.5.0/docs/guide/serialization/spec/serial-arch.html#enum
         return;
       }
       if (ignoreAnonymousInnerClasses && containingClass instanceof PsiAnonymousClass) {
@@ -83,14 +86,14 @@ public final class NonSerializableFieldInSerializableClassInspection extends Ser
       visitVariable(recordComponent, recordComponent.getContainingClass());
     }
 
-    private void visitVariable(@NotNull PsiVariable psiVariable, @Nullable PsiClass containingClass) {
-      if (psiVariable.hasModifierProperty(PsiModifier.TRANSIENT) || psiVariable.hasModifierProperty(PsiModifier.STATIC)) {
+    private void visitVariable(@NotNull PsiVariable variable, @Nullable PsiClass containingClass) {
+      if (variable.hasModifierProperty(PsiModifier.TRANSIENT) || variable.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       if (!SerializationUtils.isSerializable(containingClass)) {
         return;
       }
-      PsiType variableType = psiVariable.getType();
+      PsiType variableType = variable.getType();
       if (SerializationUtils.isProbablySerializable(variableType)) {
         return;
       }
@@ -101,12 +104,10 @@ public final class NonSerializableFieldInSerializableClassInspection extends Ser
       if (SerializationUtils.hasWriteObject(containingClass) || SerializationUtils.hasWriteReplace(containingClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(psiVariable, ignorableAnnotations, 0)) {
+      if (AnnotationUtil.isAnnotated(variable, ignorableAnnotations, 0)) {
         return;
       }
-      PsiIdentifier nameIdentifier = psiVariable.getNameIdentifier();
-      assert nameIdentifier != null;
-      registerError(nameIdentifier, psiVariable);
+      registerVariableError(variable, variable, containingClass.isRecord());
     }
   }
 }
