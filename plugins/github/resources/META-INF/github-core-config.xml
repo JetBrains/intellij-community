@@ -111,7 +111,6 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-    <action id="Github.Create.Gist.AlwaysEnabled" class="org.jetbrains.plugins.github.GithubCreateGistAlwaysEnabledAction"/>
     <group id="GitHub.MainMenu" popup="true">
       <reference ref="Github.Share"/>
       <reference ref="Github.Create.Pull.Request"/>
