@@ -38,12 +38,16 @@ class WslFixture private constructor(val vms: List<WSLDistribution>) {
 
     fun ensureCorrectVersion(wsl: WSLDistribution) {
       System.getenv("WSL_VERSION")?.let {
-        Assumptions.assumeTrue(it.toInt() == wsl.version, """
+        if (it.toInt() != wsl.version) {
+          val error = """
         Variable provided by environment claims WSL is $it.
         But wsl is ${wsl.version}.
         Hence, environment provides wrong information.
         With all of that, test can't continue. Fix your environment.
-      """.trimIndent())
+      """.trimIndent()
+          logger<WslRule>().warn(error)
+          Assumptions.abort<Nothing>(error)
+        }
       }
     }
 
