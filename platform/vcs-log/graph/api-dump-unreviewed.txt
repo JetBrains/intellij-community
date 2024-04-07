@@ -269,16 +269,25 @@ com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAction
 - com.intellij.vcs.log.graph.actions.GraphAction
 - a:getAffectedElement():com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
-c:com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
+f:com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
 - <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges):V
-- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor):V
-- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set):V
-- b:<init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,java.lang.Runnable):V
+- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.lang.Runnable):V
+- b:<init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.lang.Runnable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.awt.Cursor,java.util.Set):V
+- f:component1():com.intellij.vcs.log.graph.impl.facade.GraphChanges
+- f:component2():java.awt.Cursor
+- f:component3():java.util.Set
+- f:component4():java.lang.Runnable
+- f:copy(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,java.lang.Runnable):com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
+- bs:copy$default(com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer,com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,java.lang.Runnable,I,java.lang.Object):com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
+- equals(java.lang.Object):Z
 - f:getCursorToSet():java.awt.Cursor
 - f:getGraphChanges():com.intellij.vcs.log.graph.impl.facade.GraphChanges
-- getGraphUpdater():java.lang.Runnable
+- f:getGraphUpdater():java.lang.Runnable
 - f:getSelectedNodeIds():java.util.Set
+- hashCode():I
+- toString():java.lang.String
 c:com.intellij.vcs.log.graph.impl.facade.LinearGraphWrapper
 - com.intellij.vcs.log.graph.api.LinearGraph
 - <init>(com.intellij.vcs.log.graph.api.LinearGraph):V

@@ -16,11 +16,11 @@ interface LinearGraphController {
   }
 
   // Integer = nodeId
-  open class LinearGraphAnswer @JvmOverloads constructor(val graphChanges: GraphChanges<Int>?,
-                                                         val cursorToSet: Cursor? = null,
-                                                         val selectedNodeIds: Set<Int>? = null) {
-    constructor(cursor: Cursor?, selectedNodeIds: Set<Int>?) : this(null, cursor, selectedNodeIds)
+  data class LinearGraphAnswer(val graphChanges: GraphChanges<Int>?, val cursorToSet: Cursor?, val selectedNodeIds: Set<Int>?,
+                               val graphUpdater: Runnable?) {
+    constructor(cursor: Cursor?, selectedNodeIds: Set<Int>?) : this(null, cursor, selectedNodeIds, null)
 
-    open val graphUpdater: Runnable? get() = null
+    @JvmOverloads
+    constructor(graphChanges: GraphChanges<Int>?, graphUpdater: Runnable? = null) : this(graphChanges, null, null, graphUpdater)
   }
 }
