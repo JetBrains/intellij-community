@@ -29,4 +29,9 @@ object HuggingFaceDocumentationPlaceholdersUtil {
   @Nls
   fun noInternetConnectionPlaceholder(entityId: String): String =
     PyHuggingFaceBundle.message("python.hugging.face.placeholder.no.internet", entityId)
+
+  @Nls
+  fun notFoundErrorPlaceholder(entityId: String): String =
+    PyHuggingFaceBundle.message("python.hugging.face.placeholder.not.found", entityId)
+
 }

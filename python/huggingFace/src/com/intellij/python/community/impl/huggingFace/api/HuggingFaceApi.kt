@@ -11,6 +11,7 @@ import com.intellij.python.community.impl.huggingFace.cache.HuggingFaceMdCardsCa
 import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationPlaceholdersUtil
 import com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceReadmeCleaner
 import com.intellij.python.community.impl.huggingFace.service.HuggingFaceCoroutine
+import com.intellij.util.io.HttpRequests.HttpStatusException
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -85,13 +86,21 @@ object HuggingFaceApi {
     val mdUrl = HuggingFaceURLProvider.getEntityMarkdownURL(entityId, entityKind).toString()
     val rawDataResult = HuggingFaceHttpClient.downloadFile(mdUrl)
 
-    if (rawDataResult.isSuccess) {
-      val rawData = rawDataResult.getOrThrow()
-      val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
-      HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now().epochSecond))
-      return cleanedData
-    } else {
-      return HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
-    }
+    return rawDataResult.fold(
+      onSuccess = { rawData ->
+        val cleanedData = HuggingFaceReadmeCleaner(rawData, entityId, entityKind).doCleanUp().getMarkdown()
+        HuggingFaceMdCardsCache.saveData("markdown_$entityId", HuggingFaceMdCacheEntry(cleanedData, Instant.now().epochSecond))
+        cleanedData
+      },
+      onFailure = { exception ->
+        when(exception) {
+          is HttpStatusException -> when(exception.statusCode) {
+            404 -> HuggingFaceDocumentationPlaceholdersUtil.notFoundErrorPlaceholder(entityId)
+            else -> HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
+          }
+          else -> HuggingFaceDocumentationPlaceholdersUtil.noInternetConnectionPlaceholder(entityId)
+        }
+      }
+    )
   }
 }
