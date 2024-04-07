@@ -108,7 +108,7 @@ public class MarkdownProcessor(
         outerLoop@ for ((i, spans) in previousIndexes.withIndex()) {
             val (_, end) = spans
             for (j in currFirstLine..end) {
-                if (newLines[j] != previousLines[j]) {
+                if (j < 0 || j >= newLines.size || newLines[j] != previousLines[j]) {
                     break@outerLoop
                 }
             }
@@ -125,7 +125,8 @@ public class MarkdownProcessor(
         outerLoop@ for ((i, spans) in previousIndexes.withIndex().reversed()) {
             val (begin, _) = spans
             for (j in begin until currLastLine) {
-                if (previousLines[j] != newLines[j + nLinesDelta]) {
+                val newIndex = j + nLinesDelta
+                if (newIndex < 0 || newIndex >= newLines.size || previousLines[j] != newLines[newIndex]) {
                     break@outerLoop
                 }
             }

@@ -15,6 +15,7 @@ import org.junit.Test
 
 private val rawMarkdown = """
     Paragraph 0
+    continue p0
     # Header 1
     Paragraph 2
     * list item 3-1
@@ -32,8 +33,12 @@ private val rawMarkdown = """
     Paragraph 7
     
     Paragraph 8
+    continue p8
 """.trimIndent()
 
+@Suppress(
+    "LargeClass", // Detekt triggers on files > 600 lines
+)
 class MarkdownProcessorTest {
 
     private val htmlRenderer = HtmlRenderer.builder().build()
@@ -45,6 +50,7 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(
             """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             
@@ -57,7 +63,8 @@ class MarkdownProcessorTest {
         assertNotSame(firstRun[2], secondRun[2])
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -94,6 +101,7 @@ class MarkdownProcessorTest {
             Paragraph 7
             
             Paragraph 8
+            continue p8
             """.trimIndent(),
         )
         assertHtmlEquals(
@@ -113,7 +121,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -130,6 +139,7 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(
             """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             * list item 3-1
@@ -147,11 +157,13 @@ class MarkdownProcessorTest {
             Paragraph 7
             
             Paragraph *CHANGE*
+            continue p8
             """.trimIndent(),
         )
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -166,7 +178,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph <em>CHANGE</em></p>
+            <p>Paragraph <em>CHANGE</em>
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -184,6 +197,7 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(
             """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             * list item 3-1
@@ -201,11 +215,13 @@ class MarkdownProcessorTest {
             Paragraph 7
             
             Paragraph 8
+            continue p8
             """.trimIndent(),
         )
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -220,7 +236,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -240,6 +257,7 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(
             """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             * list item 3-1
@@ -256,11 +274,13 @@ class MarkdownProcessorTest {
             ```
             Paragraph 7
             Paragraph 8
+            continue p8
             """.trimIndent(),
         )
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -275,7 +295,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7
-            Paragraph 8</p>
+            Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -292,6 +313,7 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(
             """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             * list item 3-1
@@ -308,11 +330,13 @@ class MarkdownProcessorTest {
             Paragraph 7
             
             Paragraph 8
+            continue p8
             """.trimIndent(),
         )
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -327,7 +351,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -345,6 +370,7 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(
             """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             * list item 3-1
@@ -357,11 +383,13 @@ class MarkdownProcessorTest {
             Paragraph 7
             
             Paragraph 8
+            continue p8
             """.trimIndent(),
         )
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -373,7 +401,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -391,6 +420,7 @@ class MarkdownProcessorTest {
         val firstRun = processor.processWithQuickEdits(rawMarkdown)
         val secondDocument = """
             Paragraph 0
+            continue p0
             # Header 1
             Paragraph 2
             * list item 3-1
@@ -412,13 +442,15 @@ class MarkdownProcessorTest {
             Paragraph 7
             
             Paragraph 8
+            continue p8
         """.trimIndent()
         val secondRun = processor.processWithQuickEdits(
             secondDocument,
         )
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -434,7 +466,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -454,7 +487,8 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits(rawMarkdown)
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -469,7 +503,8 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
@@ -484,7 +519,8 @@ class MarkdownProcessorTest {
         val secondRun = processor.processWithQuickEdits("\n" + rawMarkdown)
         assertHtmlEquals(
             """
-            <p>Paragraph 0</p>
+            <p>Paragraph 0
+            continue p0</p>
             <h1>Header 1</h1>
             <p>Paragraph 2</p>
             <ul>
@@ -499,13 +535,28 @@ class MarkdownProcessorTest {
             line 6-2
             </code></pre>
             <p>Paragraph 7</p>
-            <p>Paragraph 8</p>
+            <p>Paragraph 8
+            continue p8</p>
             
             """.trimIndent(),
             secondRun,
         )
         assertNotSame(firstRun[0], secondRun[0])
         assertSame(firstRun[1], secondRun[1])
+    }
+
+    /** Regression https://github.com/JetBrains/jewel/issues/344 */
+    @Test
+    fun `content if empty`() {
+        val processor = MarkdownProcessor()
+        processor.processWithQuickEdits(rawMarkdown)
+        val secondRun = processor.processWithQuickEdits("")
+        assertHtmlEquals(
+            """
+            """.trimIndent(),
+            secondRun,
+        )
+        processor.processWithQuickEdits(rawMarkdown)
     }
 
     @Test
