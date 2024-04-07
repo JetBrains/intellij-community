@@ -8,6 +8,7 @@ import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.DataManager
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.idea.IdeaLogger
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -25,10 +26,8 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.Consumer
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 
 /**
@@ -64,22 +63,43 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
   ): Boolean {
     val event = events[0]
     val plugin = IdeErrorsDialog.getPlugin(event)
-    val lastActionId = IdeaLogger.ourLastActionId
-    var previousReportId = -1
-    val previousException = previousReport
-    val eventData = event.data
-    if (previousException != null && eventData is AbstractMessage && eventData.date.time - previousException.first in 0..INTERVAL) {
-      previousReportId = previousException.second
-    }
-    val errorBean = ErrorBean(event, additionalInfo, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, previousReportId)
+    val errorBean = createReportBean(event, additionalInfo, plugin)
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
     return submit(project, errorBean, parentComponent, postUrl, consumer::consume)
+  }
+
+  @ApiStatus.Internal
+  suspend fun submitAutomated(event: IdeaLoggingEvent, plugin: IdeaPluginDescriptor?): SubmittedReportInfo {
+    val errorBean = createReportBean(event, comment = "Automatically reported exception", plugin)
+    return service<ITNProxyCoroutineScopeHolder>().coroutineScope.async {
+      try {
+        val reportId = ITNProxy.sendError(null, null, errorBean, postUrl)
+        updatePreviousReport(event, reportId)
+        SubmittedReportInfo(ITNProxy.getBrowseUrl(reportId), reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE)
+      }
+      catch (_: Exception) {
+        SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED)
+      }
+    }.await()
   }
 
   /**
    * Used to enable error reporting even in release versions.
    */
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
+
+  private fun createReportBean(event: IdeaLoggingEvent, comment: String?, plugin: IdeaPluginDescriptor?): ErrorBean {
+    val lastActionId = IdeaLogger.ourLastActionId
+    val prevReport = previousReport
+    val eventDate = (event.data as? AbstractMessage)?.date
+    val prevReportId = if (prevReport != null && eventDate != null && eventDate.time - prevReport.first in 0..INTERVAL) prevReport.second else -1
+    return ErrorBean(event, comment, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, prevReportId)
+  }
+
+  private fun updatePreviousReport(event: IdeaLoggingEvent, reportId: Int) {
+    val eventDate = (event.data as? AbstractMessage)?.date
+    previousReport = if (eventDate != null) eventDate.time to reportId else null
+  }
 
   private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, postUrl: String, callback: (SubmittedReportInfo) -> Unit): Boolean {
     val credentialsLazy = suspend {
@@ -114,7 +134,8 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
         else {
           ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean, newThreadPostUrl)
         }
-        onSuccess(project, reportId, errorBean.event.data, callback)
+        updatePreviousReport(errorBean.event, reportId)
+        onSuccess(project, reportId, callback)
       }
       catch (e: Exception) {
         onError(project, e, errorBean, parentComponent, newThreadPostUrl, callback)
@@ -122,9 +143,7 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
     }
   }
 
-  private fun onSuccess(project: Project?, reportId: Int, eventData: Any?, callback: (SubmittedReportInfo) -> Unit) {
-    previousReport = if (eventData is AbstractMessage) eventData.date.time to reportId else null
-
+  private fun onSuccess(project: Project?, reportId: Int, callback: (SubmittedReportInfo) -> Unit) {
     val reportUrl = ITNProxy.getBrowseUrl(reportId)
     callback(SubmittedReportInfo(reportUrl, reportId.toString(), SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
     val content = DiagnosticBundle.message("error.report.gratitude")
