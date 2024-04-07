@@ -242,6 +242,8 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       for (project in ProjectManager.getInstance().openProjects) {
         ToolWindowManagerEx.getInstanceEx(project).setShowNames(newValue)
       }
+
+      showToolWindowNamesChanged(newValue)
     }
 
     fun getSideCustomWidth(side: ToolWindowAnchor): Int {
