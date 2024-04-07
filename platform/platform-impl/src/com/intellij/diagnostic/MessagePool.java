@@ -1,13 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -97,38 +93,29 @@ public final class MessagePool {
   }
 
   private void doAddMessage(@NotNull AbstractMessage message) {
-    message.setOnReadCallback(() -> notifyEntryRead());
+    for (var listener : myListeners) {
+      if (!listener.beforeEntryAdded(message)) {
+        return;
+      }
+    }
+
     if (ApplicationManager.getApplication().isInternal()) {
       for (Attachment attachment : message.getAllAttachments()) {
         attachment.setIncluded(true);
       }
     }
+
     if (shallAddSilently(message)) {
       message.setRead(true);
     }
+
+    message.setOnReadCallback(() -> notifyEntryRead());
     myErrors.add(message);
     notifyEntryAdded();
   }
 
-  private static boolean shallAddSilently(@NotNull AbstractMessage message) {
-    if (SlowOperations.isMyMessage(message.getThrowable().getMessage())) {
-      return true;
-    }
-
-    // https://youtrack.jetbrains.com/issue/RUST-12889
-    if (PlatformUtils.isRustRover()) {
-      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(message.getThrowable()));
-      if (plugin == null) {
-        return true; // Mark exceptions from Core as read
-      }
-      if (plugin.getPluginId().getIdString().equals("com.jetbrains.rust")) {
-        return false; // Don't mark exceptions from the Rust plugin as read - RustRover team wants to receive them
-      }
-      // Mark exceptions from other bundled plugins as read
-      return plugin.isBundled();
-    }
-
-    return false;
+  private static boolean shallAddSilently(AbstractMessage message) {
+    return SlowOperations.isMyMessage(message.getThrowable().getMessage());
   }
 
   public static final class TooManyErrorsException extends Exception {
