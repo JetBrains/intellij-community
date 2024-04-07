@@ -29,7 +29,7 @@ class LinearBekController(controller: SortedBaseController, permanentGraphInfo: 
   private val delegateGraph: LinearGraph
     get() = delegateController.compiledGraph
 
-  private val compiledGraph: LinearBekGraph = LinearBekGraph(delegateGraph)
+  override val compiledGraph: LinearBekGraph = LinearBekGraph(delegateGraph)
   private val bekGraphLayout: BekGraphLayout = BekGraphLayout(permanentGraphInfo.permanentGraphLayout, controller.bekIntMap)
   private val linearBekGraphBuilder: LinearBekGraphBuilder = LinearBekGraphBuilder(compiledGraph, bekGraphLayout)
 
@@ -93,12 +93,11 @@ class LinearBekController(controller: SortedBaseController, permanentGraphInfo: 
 
   private fun expandAll(): LinearGraphAnswer {
     return object : LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES) {
-      override fun getGraphUpdater(): Runnable {
-        return Runnable {
+      override val graphUpdater: Runnable
+        get() = Runnable {
           compiledGraph.dottedEdges.removeAll()
           compiledGraph.hiddenEdges.removeAll()
         }
-      }
     }
   }
 
@@ -106,9 +105,7 @@ class LinearBekController(controller: SortedBaseController, permanentGraphInfo: 
     val workingGraph = WorkingLinearBekGraph(compiledGraph)
     LinearBekGraphBuilder(workingGraph, bekGraphLayout).collapseAll()
     return object : LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
-      override fun getGraphUpdater(): Runnable {
-        return Runnable { workingGraph.applyChanges() }
-      }
+      override val graphUpdater: Runnable get() = Runnable { workingGraph.applyChanges() }
     }
   }
 
@@ -178,8 +175,6 @@ class LinearBekController(controller: SortedBaseController, permanentGraphInfo: 
     if (edge.type != GraphEdgeType.DOTTED) return null
     return LinearGraphAnswer(GraphChangesUtil.edgesReplaced(setOf(edge), compiledGraph.expandEdge(edge), delegateGraph))
   }
-
-  override fun getCompiledGraph(): LinearGraph = compiledGraph
 
   private class BekGraphLayout(private val graphLayout: GraphLayout,
                                private val sortIndexMap: SortIndexMap) : GraphLayout {

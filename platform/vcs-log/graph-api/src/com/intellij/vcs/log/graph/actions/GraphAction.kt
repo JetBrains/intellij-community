@@ -13,48 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph.actions;
+package com.intellij.vcs.log.graph.actions
 
-import com.intellij.vcs.log.graph.PrintElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.vcs.log.graph.PrintElement
 
 /**
  */
-public interface GraphAction {
+interface GraphAction {
+  val affectedElement: PrintElement?
+  val type: Type
 
-  @Nullable
-  PrintElement getAffectedElement();
-
-  @NotNull
-  Type getType();
-
-  enum Type {
+  enum class Type {
     MOUSE_CLICK,
     MOUSE_OVER,
     BUTTON_COLLAPSE,
     BUTTON_EXPAND
   }
 
-  class GraphActionImpl implements GraphAction {
-    @Nullable private final PrintElement myPrintElement;
-    @NotNull private final Type myActionType;
-
-    public GraphActionImpl(@Nullable PrintElement printElement, @NotNull Type actionType) {
-      myPrintElement = printElement;
-      myActionType = actionType;
-    }
-
-    @Nullable
-    @Override
-    public PrintElement getAffectedElement() {
-      return myPrintElement;
-    }
-
-    @NotNull
-    @Override
-    public Type getType() {
-      return myActionType;
-    }
-  }
+  data class GraphActionImpl(override val affectedElement: PrintElement?, override val type: Type) : GraphAction
 }

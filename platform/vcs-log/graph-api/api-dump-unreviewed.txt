@@ -98,17 +98,25 @@ com.intellij.vcs.log.graph.actions.ActionController
 com.intellij.vcs.log.graph.actions.GraphAction
 - a:getAffectedElement():com.intellij.vcs.log.graph.PrintElement
 - a:getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
-c:com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl
+f:com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl
 - com.intellij.vcs.log.graph.actions.GraphAction
 - <init>(com.intellij.vcs.log.graph.PrintElement,com.intellij.vcs.log.graph.actions.GraphAction$Type):V
+- f:component1():com.intellij.vcs.log.graph.PrintElement
+- f:component2():com.intellij.vcs.log.graph.actions.GraphAction$Type
+- f:copy(com.intellij.vcs.log.graph.PrintElement,com.intellij.vcs.log.graph.actions.GraphAction$Type):com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl
+- bs:copy$default(com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl,com.intellij.vcs.log.graph.PrintElement,com.intellij.vcs.log.graph.actions.GraphAction$Type,I,java.lang.Object):com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl
+- equals(java.lang.Object):Z
 - getAffectedElement():com.intellij.vcs.log.graph.PrintElement
 - getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
+- hashCode():I
+- toString():java.lang.String
 e:com.intellij.vcs.log.graph.actions.GraphAction$Type
 - java.lang.Enum
 - sf:BUTTON_COLLAPSE:com.intellij.vcs.log.graph.actions.GraphAction$Type
 - sf:BUTTON_EXPAND:com.intellij.vcs.log.graph.actions.GraphAction$Type
 - sf:MOUSE_CLICK:com.intellij.vcs.log.graph.actions.GraphAction$Type
 - sf:MOUSE_OVER:com.intellij.vcs.log.graph.actions.GraphAction$Type
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.vcs.log.graph.actions.GraphAction$Type
 - s:values():com.intellij.vcs.log.graph.actions.GraphAction$Type[]
 com.intellij.vcs.log.graph.actions.GraphAnswer
