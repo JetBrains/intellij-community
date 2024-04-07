@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -16,35 +16,21 @@ public class SerialAnnotationUsedOnWrongMemberInspectionTest extends LightJavaIn
 
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[] {
-      """
-package java.io;
-import java.lang.annotation.*;
-@Target({ElementType.METHOD, ElementType.FIELD})
-@Retention(RetentionPolicy.SOURCE)
-public @interface Serial  {}"""
+    return new String[]{"""
+                          package java.io;
+                          import java.lang.annotation.*;
+                          @Target({ElementType.METHOD, ElementType.FIELD})
+                          @Retention(RetentionPolicy.SOURCE)
+                          public @interface Serial  {}
+                          """
     };
   }
 
-  public void testSerializableClassPositive() {
-    doTest();
-  }
-
-  public void testSerializableClassNegative() {
-    doTest();
-  }
-
-  public void testExternalizableClassPositive() {
-    doTest();
-  }
-
-  public void testExternalizableClassNegative() {
-    doTest();
-  }
-
-  public void testSuppressedSerial() {
-    doTest();
-  }
+  public void testSerializableClassPositive() { doTest(); }
+  public void testSerializableClassNegative() { doTest(); }
+  public void testExternalizableClassPositive() { doTest(); }
+  public void testExternalizableClassNegative() { doTest(); }
+  public void testSuppressedSerial() { doTest(); }
 
   @Override
   protected @Nullable InspectionProfileEntry getInspection() {
