@@ -73,7 +73,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
   private fun ensureLockedIfNeeded() {
     synchronized(stateLock) {
       if (!sessions.isEmpty() && !locked) {
-        LOG.info("Highlighting began")
+        LOG.info("Highlighting began with ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
         highlightingFinishedEverywhere.acquire()
         locked = true
       }
@@ -167,17 +167,20 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
 
     companion object {
       @RequiresReadLock
-      fun create(editor: TextEditor, project: Project): HighlightedEditor {
-        if (UIUtil.isShowing(editor.getComponent())) {
-          return VisibleEditor(editor, DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor, project))
-        }
-        else {
+      fun create(editor: TextEditor, project: Project, isCancelled: Boolean, isFinishedInDumbMode: Boolean): HighlightedEditor {
+        if (!UIUtil.isShowing(editor.getComponent())) {
+          LOG.info("Invisible editor ${editor.description}")
           return InvisibleEditor(editor)
         }
-      }
-
-      fun createIncompletelyHighlighted(editor: TextEditor): HighlightedEditor {
-        return IncompletelyHighlightedEditor(editor)
+        else if (isFinishedInDumbMode || isCancelled) {
+          LOG.info("Unfinished editor ${editor.description}")
+          return IncompletelyHighlightedEditor(editor)
+        }
+        else {
+          val isHighlighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor, project)
+          LOG.info("Visible editor ${editor.description}\nisHighlighted $isHighlighted")
+          return VisibleEditor(editor, isHighlighted)
+        }
       }
     }
   }
@@ -236,12 +239,8 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
     if (worthy.isEmpty()) return
 
     val highlightedEditors: List<ListenerState.HighlightedEditor> = runReadAction {
-      if (isCancelled || DumbService.isDumb(project)) {
-        worthy.map { ListenerState.HighlightedEditor.createIncompletelyHighlighted(it) }
-      }
-      else {
-        worthy.map { ListenerState.HighlightedEditor.create(it, project) }
-      }
+      val isFinishedInDumbMode = DumbService.isDumb(project)
+      worthy.map { ListenerState.HighlightedEditor.create(it, project, isCancelled = isCancelled, isFinishedInDumbMode = isFinishedInDumbMode) }
     }
 
     project.service<ListenerState>().registerAnalysisFinished(highlightedEditors)
