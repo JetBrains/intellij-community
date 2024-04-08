@@ -103,16 +103,16 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       if (file != null && icon == null) {
         icon = FileIconUtil.getIconFromProviders(file, flags, element.getProject());
       }
-      if (icon == null) {
-        icon = ((ElementBase)element).getElementIcon(flags);
-      }
-      else if (!(icon instanceof RowIcon)) {
-        icon = IconManager.getInstance().createLayeredIcon(element, icon, flags);
-      }
       if (file != null && icon != null) {
         icon = FileIconUtil.patchIconByIconPatchers(icon, file, flags, element.getProject());
       }
-      return icon;
+      if (icon instanceof RowIcon) {
+        return icon;
+      }
+      else if (icon != null) {
+        return IconManager.getInstance().createLayeredIcon(element, icon, flags);
+      }
+      return ((ElementBase)element).getElementIcon(flags);
     }
     else if (icon == null) {
       return ((ElementBase)element).getElementIcon(flags);
@@ -227,23 +227,22 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       }
     }
 
-    if (element instanceof PsiFile) {
-      PsiFile psiFile = (PsiFile)element;
-      VirtualFile vFile = psiFile.getVirtualFile();
-      Icon baseIcon;
-      if (vFile == null) {
-        baseIcon = psiFile.getFileType().getIcon();
+    if (element instanceof PsiFileSystemItem) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(element);
+      Icon baseIcon = null;
+      if (file == null && element instanceof PsiFile) {
+        baseIcon = ((PsiFile)element).getFileType().getIcon();
       }
-      else {
+      else if (file != null) {
         IconManager iconManager = IconManager.getInstance();
         if (iconManager instanceof CoreAwareIconManager) {
-          baseIcon = ((CoreAwareIconManager)iconManager).getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject());
+          baseIcon = ((CoreAwareIconManager)iconManager).getIcon(file, flags & ~ICON_FLAG_READ_STATUS, element.getProject());
         }
         else {
           baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
-          if (baseIcon == null) return null;
         }
       }
+      if (baseIcon == null) return null;
       return IconManager.getInstance().createLayeredIcon(this, baseIcon, elementFlags);
     }
 

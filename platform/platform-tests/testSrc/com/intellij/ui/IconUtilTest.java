@@ -155,10 +155,10 @@ public class IconUtilTest extends HeavyPlatformTestCase {
     IconTestUtil.renderDeferredIcon(psiFileIcon);
 
     assertSameElements("dir icons do not match",
-                       IconTestUtil.renderDeferredIcon(vDirIcon),
-                       IconTestUtil.renderDeferredIcon(psiDirIcon));
+                       IconTestUtil.renderDeferredIcon(psiDirIcon),
+                       IconTestUtil.renderDeferredIcon(vDirIcon));
     assertSameElements("file icons do not match",
-                       IconTestUtil.renderDeferredIcon(vFileIcon),
-                       IconTestUtil.renderDeferredIcon(psiFileIcon));
+                       IconTestUtil.renderDeferredIcon(psiFileIcon),
+                       IconTestUtil.renderDeferredIcon(vFileIcon));
   }
 }
