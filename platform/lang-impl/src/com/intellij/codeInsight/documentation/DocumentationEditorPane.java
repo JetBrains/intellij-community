@@ -15,6 +15,9 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.html.UtilsKt;
+import com.intellij.util.ui.html.image.AdaptiveImageView;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
@@ -74,7 +77,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
             return (int)(pane.getContentsScaleFactor() * num);
           });
         })
-        .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
+        .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION)
         .build()
     );
     setBackground(BACKGROUND_COLOR);
@@ -88,6 +91,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
 
   @Override
   public void setDocument(Document doc) {
+    doc.putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
     super.setDocument(doc);
     myCachedPreferredSize = null;
   }

@@ -31,9 +31,11 @@ import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.html.image.AdaptiveImageView;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -335,6 +337,7 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
       }
     });
     pane.getDocument().putProperty("imageCache", IMAGE_MANAGER.getImageProvider());
+    pane.getDocument().putProperty(AdaptiveImageView.ADAPTIVE_IMAGES_MANAGER_PROPERTY, CachingAdaptiveImageManagerService.getInstance());
     return pane;
   }
 
@@ -416,6 +419,11 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
         return true;
       }
     };
+
+    private boolean initialized;
+
+    private int repaintTracking = 0;
+
     private boolean myRepaintRequested;
     private float myScaleFactor = 1f;
 
@@ -426,22 +434,37 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
           .imageResolverFactory(pane -> IMAGE_MANAGER.getImageProvider())
           .customStyleSheetProvider(pane -> getStyleSheet(pane, editor))
           .fontResolver(EditorCssFontResolver.getInstance(editor))
+          .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION)
           .build()
       );
       if (trackMemory) {
         MEMORY_MANAGER.register(DocRenderer.this, 50 /* rough size estimation */);
       }
+
+      initialized = true;
     }
 
     @Override
     public void repaint(long tm, int x, int y, int width, int height) {
-      myRepaintRequested = true;
+      if (!initialized) {
+        return;
+      }
+
+      if (repaintTracking > 0) {
+        myRepaintRequested = true;
+      } else {
+        scheduleRepaint();
+      }
     }
 
     void doWithRepaintTracking(Runnable task) {
-      myRepaintRequested = false;
-      task.run();
-      if (myRepaintRequested) repaintRenderer();
+      repaintTracking++;
+      try {
+        task.run();
+        if (myRepaintRequested) repaintRenderer();
+      } finally {
+        repaintTracking--;
+      }
     }
 
     private void repaintRenderer() {
@@ -509,10 +532,12 @@ public final class DocRenderer implements CustomFoldRegionRenderer {
 
     @Override
     public void revalidate() {
-      super.revalidate();
       myCachedHeight = -1;
       myCachedWidth = -1;
-      scheduleUpdate();
+      super.revalidate();
+      if (initialized) {
+        scheduleUpdate();
+      }
     }
 
     private void scheduleUpdate() {
