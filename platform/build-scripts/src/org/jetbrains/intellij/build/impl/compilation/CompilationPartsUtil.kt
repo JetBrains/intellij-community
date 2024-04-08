@@ -3,8 +3,8 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.containers.ContainerUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -108,7 +108,7 @@ private fun createBufferPool(): DirectFixedSizeByteBufferPool {
   return DirectFixedSizeByteBufferPool(size = MAX_BUFFER_SIZE, maxPoolSize = ForkJoinPool.getCommonPoolParallelism() * 2)
 }
 
-fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.NONE): List<PackAndUploadItem> {
+fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntriesMode: AddDirEntriesMode = AddDirEntriesMode.ALL): List<PackAndUploadItem> {
   val incremental = context.options.incrementalCompilation
   if (!incremental) {
     try {
@@ -169,7 +169,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
             targetFile = item.archive,
             dirs = mapOf(item.output to ""),
             overwrite = true,
-            fileFilter = { it != "classpath.index" && it != ".unmodified" && it != ".DS_Store" },
+            fileFilter = { it != ".unmodified" && it != ".DS_Store" },
             addDirEntriesMode = addDirEntriesMode
           )
         }
@@ -185,7 +185,7 @@ fun packCompilationResult(context: CompilationContext, zipDir: Path, addDirEntri
 private fun isModuleOutputDirEmpty(moduleOutDir: Path): Boolean {
   Files.newDirectoryStream(moduleOutDir).use {
     for (child in it) {
-      if (!child.endsWith("classpath.index") && !child.endsWith(".unmodified") && !child.endsWith(".DS_Store")) {
+      if (!child.endsWith(".unmodified") && !child.endsWith(".DS_Store")) {
         return false
       }
     }
