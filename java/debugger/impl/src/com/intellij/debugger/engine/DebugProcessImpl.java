@@ -1093,20 +1093,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private abstract class InvokeCommand<E extends Value> {
     private final Method myMethod;
     private final List<Value> myArgs;
+    protected final @NotNull EvaluationContext myEvaluationContext;
 
-    protected InvokeCommand(@NotNull Method method, @NotNull List<? extends Value> args) {
+    protected InvokeCommand(@NotNull Method method, @NotNull List<? extends Value> args, @NotNull EvaluationContext evaluationContext) {
       myMethod = method;
       myArgs = new ArrayList<>(args);
+      myEvaluationContext = evaluationContext;
     }
 
     public String toString() {
       return "INVOKE: " + super.toString();
     }
 
-    protected abstract E invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                                ClassNotLoadedException,
-                                                                                IncompatibleThreadStateException,
-                                                                                InvalidTypeException;
+    protected abstract E invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+      throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException;
 
 
     E start(EvaluationContextImpl evaluationContext, boolean internalEvaluate) throws EvaluateException {
@@ -1215,9 +1215,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       Ref<Exception> exception = Ref.create();
       Ref<E> result = Ref.create();
       getManagerThread().startLongProcessAndFork(() -> {
-        ThreadReferenceProxyImpl thread = context.getThread();
-        ThreadBlockedMonitor.InvocationWatcher invocationWatcher = null;
         try {
+          ThreadReferenceProxyImpl thread = (ThreadReferenceProxyImpl)getEvaluationThread(myEvaluationContext);
           try {
             if (LOG.isDebugEnabled()) {
               final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
@@ -1268,14 +1267,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             }
 
             int invokePolicy = getInvokePolicy(context);
-            invocationWatcher = myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context);
-
-            result.set(invokeMethod(invokePolicy, myMethod, myArgs));
+            try {
+              invokeWithThreadBlockedMonitor(context, invokePolicy, thread, result);
+            } catch (IncompatibleThreadStateException e) {
+              if (thread == context.getEventThread()) {
+                throw e;
+              }
+              context.myNotExecutableThreads.add(thread);
+              thread = context.getEventThread();
+              if (thread == null) {
+                throw e;
+              }
+              invokeWithThreadBlockedMonitor(context, invokePolicy, thread, result);
+            }
           }
           finally {
-            if (invocationWatcher != null) {
-              invocationWatcher.invocationFinished();
-            }
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
               myMethod.virtualMachine().setDebugTraceMode(getTraceMask());
             }
@@ -1316,6 +1322,25 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return result.get();
     }
 
+    private void invokeWithThreadBlockedMonitor(
+      @NotNull SuspendContextImpl context,
+      int invokePolicy,
+      @NotNull ThreadReferenceProxyImpl thread,
+      @NotNull Ref<E> result
+    ) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+
+      ThreadBlockedMonitor.InvocationWatcher invocationWatcher = null;
+      try {
+        invocationWatcher = myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context);
+        result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
+      }
+      finally {
+        if (invocationWatcher != null) {
+          invocationWatcher.invocationFinished();
+        }
+      }
+    }
+
     private static void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
       LOG.assertTrue(context.isEvaluating());
       try {
@@ -1350,10 +1375,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     @NotNull List<? extends Value> args,
                                     final int invocationOptions,
                                     boolean internalEvaluate) throws EvaluateException {
-    final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<>(method, args) {
+    return new InvokeCommand<>(method, args, evaluationContext) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args)
+      protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
@@ -1363,14 +1387,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
   }
 
-  private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
+  private static ThreadReferenceProxy getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
     ThreadReferenceProxy fromStackFrame =
       ObjectUtils.doIfNotNull(evaluationContext.getFrameProxy(), stackFrameProxy -> stackFrameProxy.threadProxy());
-    ThreadReferenceProxy evaluationThread = fromStackFrame != null ? fromStackFrame : evaluationContext.getSuspendContext().getThread();
+    SuspendContextImpl suspendContext = (SuspendContextImpl)evaluationContext.getSuspendContext();
+    ThreadReferenceProxy evaluationThread = fromStackFrame != null ? fromStackFrame : suspendContext.getThread();
+    if (suspendContext.myNotExecutableThreads.contains(evaluationThread)) {
+      evaluationThread = suspendContext.getEventThread();
+    }
     if (evaluationThread == null) {
       throw EvaluateExceptionUtil.NULL_STACK_FRAME;
     }
-    return evaluationThread.getThreadReference();
+    return evaluationThread;
   }
 
   @Override
@@ -1395,13 +1423,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             @NotNull List<? extends Value> args,
                             int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
-    final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<>(method, args) {
+    return new InvokeCommand<>(method, args, evaluationContext) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                                                       ClassNotLoadedException,
-                                                                                                       IncompatibleThreadStateException,
-                                                                                                       InvalidTypeException {
+      protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + classType.name() + "." + method.name());
         }
@@ -1414,13 +1439,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             InterfaceType interfaceType,
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
-    final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<>(method, args) {
+    return new InvokeCommand<>(method, args, evaluationContext) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                                                       ClassNotLoadedException,
-                                                                                                       IncompatibleThreadStateException,
-                                                                                                       InvalidTypeException {
+      protected Value invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + interfaceType.name() + "." + method.name());
         }
@@ -1465,10 +1487,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull List<? extends Value> args,
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
-    final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args) {
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args, evaluationContext) {
       @Override
-      protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args)
+      protected ObjectReference invokeMethod(ThreadReference thread, int invokePolicy, Method method, List<? extends Value> args)
         throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("New instance " + classType.name() + "." + method.name());

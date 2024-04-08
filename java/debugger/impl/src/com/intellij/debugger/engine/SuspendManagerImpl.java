@@ -186,6 +186,7 @@ public class SuspendManagerImpl implements SuspendManager {
 
     if (context.isExplicitlyResumed(thread)) {
       context.myResumedThreads.remove(thread);
+      context.myNotExecutableThreads.remove(thread);
       thread.suspend();
     }
   }
@@ -199,6 +200,7 @@ public class SuspendManagerImpl implements SuspendManager {
       context.myResumedThreads = new HashSet<>();
     }
     context.myResumedThreads.add(thread);
+    context.myNotExecutableThreads.remove(thread);
     thread.resume();
   }
 

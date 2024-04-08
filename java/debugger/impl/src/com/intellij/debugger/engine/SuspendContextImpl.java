@@ -45,6 +45,8 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected int myVotesToVote;
   protected Set<ThreadReferenceProxyImpl> myResumedThreads;
 
+  protected final Set<ThreadReferenceProxyImpl> myNotExecutableThreads = new HashSet<>();
+
   private final EventSet myEventSet;
   private volatile boolean myIsResumed;
 
@@ -59,11 +61,13 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   private final ThreadReferenceProxyImpl.ThreadListener myListener = new ThreadReferenceProxyImpl.ThreadListener() {
     @Override
     public void threadSuspended() {
+      myNotExecutableThreads.clear();
       myFrameCount = -1;
     }
 
     @Override
     public void threadResumed() {
+      myNotExecutableThreads.clear();
       myFrameCount = -1;
     }
   };
