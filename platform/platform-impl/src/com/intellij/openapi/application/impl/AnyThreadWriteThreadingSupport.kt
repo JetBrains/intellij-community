@@ -10,10 +10,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
@@ -53,6 +50,8 @@ private class ThreadState(var permit: Permit? = null, var inListener: Boolean = 
 @ApiStatus.Internal
 internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private val logger = Logger.getInstance(AnyThreadWriteThreadingSupport::class.java)
+
+  private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
 
   @JvmField
   internal val lock = RWMutexIdea()
@@ -230,15 +229,34 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       return rv
     }
     else {
-      ts.permit = if (ts.impatientReader && !ProgressManager.getInstance().isInNonCancelableSection) {
-        tryGetReadPermit()
-      }
-      else {
-        getReadPermit()
-      }
-      // Impatient read & no luck
-      if (!ts.hasPermit) {
-        throw ApplicationUtil.CannotRunReadActionException.create()
+      ts.permit = tryGetReadPermit()
+      if (ts.permit == null) {
+        val progress = ProgressManager.getInstance()
+        // Impatient reader not in non-cancellable session will not wait
+        if (ts.impatientReader && !progress.isInNonCancelableSection) {
+          throw ApplicationUtil.CannotRunReadActionException.create()
+        }
+        // Check for cancellation
+        val indicator = ProgressIndicatorProvider.getGlobalProgressIndicator()
+        if (indicator == null || progress.isInNonCancelableSection) {
+          // Nothing to check or cannot be canceled
+          ts.permit = getReadPermit()
+        }
+        else {
+          var iter = 0
+          do {
+            if (indicator.isCanceled) {
+              throw ProcessCanceledException()
+            }
+            if (iter++ < SPIN_TO_WAIT_FOR_LOCK) {
+              Thread.yield()
+              ts.permit = tryGetReadPermit()
+            }
+            else {
+              ts.permit = getReadPermit()// getReadPermitTimed (1) // millis
+            }
+          } while (ts.permit == null)
+        }
       }
       try {
         fireReadActionStarted(clazz)
