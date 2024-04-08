@@ -38,10 +38,11 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
 
     companion object {
         context(KtAnalysisSession)
-fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
+        fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .map { unimplementedMemberSymbol ->
                     val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
+
                     @NlsSafe
                     val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
                     KtClassMemberInfo.create(
@@ -54,7 +55,7 @@ fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): Lis
                 }
 
         context(KtAnalysisSession)
-private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
+        private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
             return buildList {
                 classWithUnimplementedMembers.getMemberScope().getCallableSymbols().forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
@@ -75,6 +76,7 @@ private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClass
                                 .filter { (it as? KtSymbolWithModality)?.modality == Modality.ABSTRACT }
                                 .forEach { add(it) }
                         }
+
                         else -> {
                         }
                     }
@@ -132,7 +134,7 @@ object MemberNotImplementedQuickfixFactories {
         }
 
     context(KtAnalysisSession)
-private fun getUnimplementedMemberFixes(
+    private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
         includeImplementAsConstructorParameterQuickfix: Boolean = true
     ): List<IntentionAction> {
