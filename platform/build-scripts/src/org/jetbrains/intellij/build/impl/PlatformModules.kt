@@ -85,7 +85,9 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.webSymbols",
   "intellij.xml.dom.impl",
 
-  "intellij.platform.vcs.dvcs",
+  "intellij.platform.vcs.dvcs.impl",
+  "intellij.platform.vcs.log.graph.impl",
+  "intellij.platform.vcs.log.impl",
   "intellij.smart.update",
 
   "intellij.platform.collaborationTools",
@@ -93,10 +95,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.collaborationTools.auth",
 
   "intellij.platform.markdown.utils",
-  "intellij.platform.util.commonsLangV2Shim",
-
-  // do we need it?
-  "intellij.platform.sqlite",
+  "intellij.platform.util.commonsLangV2Shim"
 )
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
@@ -528,39 +527,27 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
 
     readXmlAsModel(file)
   }?.let { root ->
-    collectProductModules(root = root, result = result)
+    collectProductModules(root = root, result = result, context = context)
   }
 
   withContext(Dispatchers.IO) {
     val file = context.findFileInModuleSources("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
     file?.let { readXmlAsModel(it) }
   }?.let {
-    collectProductModules(root = it, result = result)
+    collectProductModules(root = it, result = result, context = context)
   }
 
   return result
 }
 
-private fun collectProductModules(root: XmlElement, result: LinkedHashSet<ModuleItem>) {
+private fun collectProductModules(root: XmlElement, result: LinkedHashSet<ModuleItem>, context: BuildContext) {
   for (module in (root.getChild("content")?.children("module") ?: emptySequence())) {
     val moduleName = module.attributes.get("name") ?: continue
-    val relativeOutFile = "modules/$moduleName.jar"
     result.add(
-      ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES),
+      ModuleItem(moduleName = moduleName, relativeOutputFile = "modules/$moduleName.jar", reason = ModuleIncludeReasons.PRODUCT_MODULES),
     )
-    PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
-      it.mapTo(result) { subModuleName ->
-        ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES)
-      }
-    }
   }
 }
-
-private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
-  "intellij.platform.vcs.log.impl", listOf(
-    "intellij.platform.vcs.log.graph.impl"
-  )
-)
 
 internal object ModuleIncludeReasons {
   const val PRODUCT_MODULES: String = "productModule"
