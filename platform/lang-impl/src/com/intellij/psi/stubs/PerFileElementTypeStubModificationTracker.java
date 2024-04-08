@@ -137,7 +137,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
     while (!myPendingUpdates.isEmpty()) {
       VirtualFile file = myPendingUpdates.poll();
 
+      //noinspection deprecation
       if (file.getUserData(BackFileViewProvider.FRONT_FILE_KEY) != null) {
+        //noinspection deprecation
         file = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
       }
 

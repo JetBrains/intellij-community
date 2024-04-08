@@ -331,6 +331,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         if (Comparing.equal(file, virtualFileToIgnoreOccurrencesIn)) return true;
         int currentFilesCount = filesCount.incrementAndGet();
 
+        //noinspection deprecation
         VirtualFile frontFile = file.getUserData(BackFileViewProvider.FRONT_FILE_KEY);
         file = frontFile != null ? frontFile : file;
 
@@ -338,6 +339,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         long fileLength = file.isDirectory() ? 0 : file.getLength();
         //Backed files can have different front file and back file size.
         // For instance, notebook can be 1mb but there jsut 2 short lines inside where we will search.
+        //noinspection deprecation
         Float ratio = file.getCopyableUserData(BackFileViewProvider.FRONT_FILE_SIZE_RATIO_KEY);
         long estimatedLength = ratio != null ? Math.round(fileLength * ratio) : fileLength;
 
@@ -600,7 +602,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
       PsiFile file = vfile.isValid() ? myManager.findFile(vfile) : null;
 
+      //noinspection deprecation
       if (file != null && file.getViewProvider() instanceof BackFileViewProvider) {
+        //noinspection deprecation
         file = ((BackFileViewProvider)file.getViewProvider()).getFrontPsiFile();
       }
 

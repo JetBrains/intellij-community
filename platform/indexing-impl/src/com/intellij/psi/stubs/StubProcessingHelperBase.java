@@ -40,7 +40,9 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass,
                                                              @NotNull Computable<String> debugOperationName) {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    //noinspection deprecation
     if (psiFile != null && psiFile.getViewProvider() instanceof BackFileViewProvider) {
+      //noinspection deprecation
       psiFile = ((BackFileViewProvider)psiFile.getViewProvider()).getFrontPsiFile();
     }
 

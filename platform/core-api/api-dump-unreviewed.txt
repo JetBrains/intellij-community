@@ -1281,11 +1281,6 @@ com.intellij.navigation.PsiElementNavigationItem
 - a:getNavigationTargets(com.intellij.openapi.project.Project,com.intellij.model.Symbol):java.util.Collection
 - a:psiElementNavigationTarget(com.intellij.psi.PsiElement):com.intellij.platform.backend.navigation.NavigationTarget
 - a:psiFileNavigationTarget(com.intellij.psi.PsiFile):com.intellij.platform.backend.navigation.NavigationTarget
-*:com.intellij.notebook.editor.BackFileViewProvider
-- sf:FRONT_FILE_KEY:com.intellij.openapi.util.Key
-- sf:FRONT_FILE_SIZE_RATIO_KEY:com.intellij.openapi.util.Key
-- a:getFrontPsiFile():com.intellij.psi.PsiFile
-- a:getFrontVirtualFile():com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.notebook.editor.BackedVirtualFile
 - a:getOriginFile():com.intellij.openapi.vfs.VirtualFile
 - s:getOriginFileIfBacked(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
