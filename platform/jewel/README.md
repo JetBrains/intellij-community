@@ -77,15 +77,15 @@ repositories {
 To use Jewel in your app, you only need to add the relevant dependency. There are two scenarios: standalone Compose for
 Desktop app, and IntelliJ Platform plugin.
 
-If you're writing a **standalone app**, then you should depend on the `int-ui-standalone` artifact:
+If you're writing a **standalone app**, then you should depend on the latest `int-ui-standalone-*` artifact:
 
 ```kotlin
 dependencies {
     // See https://github.com/JetBrains/Jewel/releases for the release notes
-    implementation("org.jetbrains.jewel:jewel-int-ui-standalone:[jewel version]")
+    implementation("org.jetbrains.jewel:jewel-int-ui-standalone-[latest platform version]:[jewel version]")
 
     // Optional, for custom decorated windows:
-    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window:[jewel version]")
+    implementation("org.jetbrains.jewel:jewel-int-ui-decorated-window-[latest platform version]:[jewel version]")
 
     // Do not bring in Material (we use Jewel)
     implementation(compose.desktop.currentOs) {
