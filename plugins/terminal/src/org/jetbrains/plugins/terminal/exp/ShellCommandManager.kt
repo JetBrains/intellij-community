@@ -129,7 +129,8 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
   private fun fireInitialized(rawShellInfo: String) {
     debug { "Shell event: initialized. Shell info: $rawShellInfo" }
     for (listener in listeners) {
-      listener.initialized(rawShellInfo)
+      listener.shellInfoReceived(rawShellInfo)
+      listener.initialized()
     }
     clearTerminal()
   }
@@ -254,7 +255,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
 }
 
 interface ShellCommandListener {
-  fun initialized(rawShellInfo: String) {}
+  fun initialized() {}
 
   /**
    * Fired each time when prompt is printed.
@@ -271,6 +272,8 @@ interface ShellCommandListener {
   fun promptStateUpdated(newState: TerminalPromptState) {}
 
   fun commandHistoryReceived(history: String) {}
+
+  fun shellInfoReceived(rawShellInfo: String) {}
 
   fun generatorFinished(requestId: Int, result: String) {}
 
