@@ -77,17 +77,21 @@ private fun scheduleDirtyFilesScanning(project: Project,
                                        coroutineScope: CoroutineScope,
                                        indexingReason: String?) {
   LOG.info("Skipping full scanning on startup because indexable files filter is up-to-date and 'full.scanning.on.startup.can.be.skipped' is set to true")
-  val projectDirtyFilesFuture = coroutineScope.async(Dispatchers.IO) {
+  val projectDirtyFiles = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, true)
   }
-  UnindexedFilesScanner(project, startSuspended, true, true, listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFuture)), null,
-                        indexingReason, ScanningType.PARTIAL, projectDirtyFilesFuture.asCompletableFuture())
+  val projectDirtyFilesFromProjectQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromProjectQueue ?: emptyList() }
+  val projectDirtyFilesFromOrphanQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromOrphanQueue ?: emptyList() }
+  val iterators = listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFromProjectQueue, false),
+                         DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
+  UnindexedFilesScanner(project, startSuspended, true, true, iterators, null,
+                        indexingReason, ScanningType.PARTIAL, projectDirtyFiles.asCompletableFuture())
     .queue()
 }
 
-private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFiles: Boolean): List<VirtualFile> {
+private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFiles: Boolean): ResultOfClearIndexesForDirtyFiles? {
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-  return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) emptyList()
+  return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) null
   else {
     val projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(project.getQueueFile(), ManagingFS.getInstance().creationTimestamp)
     if (projectDirtyFilesQueue.lastSeenIdsInOrphanQueue > (fileBasedIndex.orphanDirtyFileIds?.lastId ?: 0)) {
@@ -111,7 +115,7 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
       }
     }
     scheduleForIndexing(projectDirtyFiles, fileBasedIndex, dumbModeThreshold - 1)
-    projectDirtyFiles
+    ResultOfClearIndexesForDirtyFiles(projectDirtyFilesFromProjectQueue, projectDirtyFilesFromOrphanQueue)
   }
 }
 
@@ -164,3 +168,5 @@ val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_IND
 fun invalidatePersistentIndexableFilesFilter(project: Project) {
   project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, true)
 }
+
+private class ResultOfClearIndexesForDirtyFiles(val projectDirtyFilesFromProjectQueue: List<VirtualFile>, val projectDirtyFilesFromOrphanQueue: List<VirtualFile>)

@@ -11,8 +11,9 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import kotlinx.coroutines.Deferred
 
-class DirtyFilesIndexableFilesIterator(private val dirtyFileIndexesCleanupFuture: Deferred<List<VirtualFile>>) : IndexableFilesIterator {
-  override fun getDebugName(): String = "dirty files iterator"
+class DirtyFilesIndexableFilesIterator(private val dirtyFileIndexesCleanupFuture: Deferred<List<VirtualFile>>,
+                                       private val fromOrphanQueue: Boolean) : IndexableFilesIterator {
+  override fun getDebugName(): String = "dirty files iterator (from orphan queue=$fromOrphanQueue)"
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.files.from.previous.ide.session")
   override fun getOrigin(): IndexableSetOrigin = DirtyFilesOrigin
 
