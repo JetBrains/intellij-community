@@ -37,6 +37,9 @@
     <dependencySupport coordinate="com.jetbrains.intellij.gateway:gateway" kind="java" displayName="JetBrains Gateway"/>
     <dependencySupport coordinate="com.google.android.studio:android-studio" kind="java" displayName="Android Studio"/>
     <dependencySupport coordinate="com.jetbrains.intellij.fleetBackend:fleetBackend" kind="java" displayName="Fleet Backend"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.rustrover:RustRover" kind="java" displayName="RustRover"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.webstorm:webstorm" kind="java" displayName="WebStorm"/>
+    <dependencySupport coordinate="com.jetbrains.intellij.idea:writerside" kind="java" displayName="Writerside"/>
 
     <!-- Dependencies created with Gradle IntelliJ Plugin 1.x as intermediate Ivy repository artifacts -->
     <dependencySupport coordinate="com.jetbrains:ideaIC" kind="java" displayName="IntelliJ IDEA Community"/>
