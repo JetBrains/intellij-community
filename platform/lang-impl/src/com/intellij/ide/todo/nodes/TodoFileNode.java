@@ -46,7 +46,9 @@ public final class TodoFileNode extends PsiFileNode {
       assert psiFile != null;
 
       FileViewProvider viewProvider = psiFile.getViewProvider();
+      //noinspection deprecation
       if (viewProvider instanceof BackFileViewProvider) {
+        //noinspection deprecation
         psiFile = ((BackFileViewProvider)viewProvider).getFrontPsiFile();
         if (psiFile == null) {
           return List.of();

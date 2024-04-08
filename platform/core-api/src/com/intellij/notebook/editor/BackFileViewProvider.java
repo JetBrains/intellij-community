@@ -10,8 +10,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This is interface should be inherited for that  files which differ in disk and editor representation
  * a Typical case is Jupyter notebooks, which have JSON and source text representation
+ * @deprecated Will be fixed in <a href="https://youtrack.jetbrains.com/issue/PY-71854/Rewrite-NotebookVirtualFileSystem">PY-71854</a>
  */
-@ApiStatus.Experimental
+@Deprecated
+@ApiStatus.Internal
 public interface BackFileViewProvider {
   Key<VirtualFile> FRONT_FILE_KEY = new Key<>("FRONT_FILE_KEY");
   /**
