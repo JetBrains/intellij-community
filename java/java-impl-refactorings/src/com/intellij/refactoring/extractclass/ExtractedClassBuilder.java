@@ -271,6 +271,7 @@ class ExtractedClassBuilder {
       }
 
       field.accept(new Mutator(out));
+      out.append('\n');
 
       if (myFieldsNeedingGetter != null && myFieldsNeedingGetter.contains(field)) {
         out.append(GenerateMembersUtil.generateGetterPrototype(field).getText());
