@@ -46,6 +46,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),
+      Map.entry(CloseProjectCommand.PREFIX, CloseProjectCommand::new),
       Map.entry(CodeAnalysisCommand.PREFIX, CodeAnalysisCommand::new),
       Map.entry(DumpProjectFiles.PREFIX, DumpProjectFiles::new),
       Map.entry(CompareProjectFiles.PREFIX, CompareProjectFiles::new),

@@ -102,6 +102,10 @@ fun <T : CommandChain> T.reopenProject(): T = apply {
   addCommand("${CMD_PREFIX}openProject")
 }
 
+fun <T : CommandChain> T.closeProject(): T = apply {
+  addCommand("${CMD_PREFIX}closeProject")
+}
+
 fun <T : CommandChain> T.storeIndices(): T = apply {
   addCommand("${CMD_PREFIX}storeIndices")
 }
