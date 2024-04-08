@@ -58,7 +58,7 @@ object StubInconsistencyReportUtil {
   )
 
   @JvmStatic
-  fun reportStubInconsistency(project: Project, reason: SourceOfCheck?, type: InconsistencyType) {
+  fun reportStubInconsistencyBetweenPsiAndText(project: Project, reason: SourceOfCheck?, type: InconsistencyType) {
     val parameters = mutableListOf<EventPair<*>>(INCONSISTENCY_TYPE_FIELD.with(type))
     reason?.let { parameters.add(CHECK_REASON_FIELD.with(it)) }
     STUB_INCONSISTENCY_EVENT.log(project, parameters)

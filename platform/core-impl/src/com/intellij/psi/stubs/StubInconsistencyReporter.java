@@ -50,24 +50,24 @@ public interface StubInconsistencyReporter {
     }
   }
 
-  void reportStubInconsistency(@NotNull Project project,
-                               @Nullable StubInconsistencyReporter.SourceOfCheck reason,
-                               @NotNull InconsistencyType type);
+  void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project,
+                                                @Nullable StubInconsistencyReporter.SourceOfCheck reason,
+                                                @NotNull InconsistencyType type);
 
   /**
-   * @deprecated Use {@link #reportStubInconsistency(Project, SourceOfCheck, InconsistencyType)}
+   * @deprecated Use {@link #reportStubInconsistencyBetweenPsiAndText(Project, SourceOfCheck, InconsistencyType)}
    */
   @Deprecated
   void reportEnforcedStubInconsistency(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
                                        @NotNull EnforcedInconsistencyType enforcedInconsistencyType);
 
   /**
-   * @deprecated Use {@link #reportStubInconsistency(Project, SourceOfCheck, InconsistencyType)}
+   * @deprecated Use {@link #reportStubInconsistencyBetweenPsiAndText(Project, SourceOfCheck, InconsistencyType)}
    */
   @Deprecated
-  void reportStubInconsistency(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
-                               @NotNull InconsistencyType type,
-                               @Nullable EnforcedInconsistencyType enforcedInconsistencyType);
+  void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project, @NotNull StubInconsistencyReporter.SourceOfCheck reason,
+                                                @NotNull InconsistencyType type,
+                                                @Nullable EnforcedInconsistencyType enforcedInconsistencyType);
 
   void reportKotlinDescriptorNotFound(@Nullable Project project);
 

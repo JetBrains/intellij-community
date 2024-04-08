@@ -125,7 +125,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
   private static void reportInconsistency(@NotNull PsiFile file,
                                           @Nullable StubInconsistencyReporter.SourceOfCheck reason,
                                           @NotNull InconsistencyType inconsistencyType) {
-    StubInconsistencyReporter.getInstance().reportStubInconsistency(file.getProject(), reason, inconsistencyType);
+    StubInconsistencyReporter.getInstance().reportStubInconsistencyBetweenPsiAndText(file.getProject(), reason, inconsistencyType);
   }
 
   private static @NotNull List<PsiFileStub<?>> restoreStubsFromText(FileViewProvider viewProvider) {
