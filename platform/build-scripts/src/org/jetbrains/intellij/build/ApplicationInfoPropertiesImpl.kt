@@ -183,30 +183,24 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       @Suppress("HttpUrlsUsage")
       val namespace = Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info")
 
-      if (isEapOverride != null || suffixOverride != null) {
-        val version = element.getChildren("version", namespace)
-                        .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
-        isEapOverride?.let { version.setAttribute("eap", it) }
-        suffixOverride?.let { version.setAttribute("suffix", it) }
+      fun replaceAttribute(element: Element, tag: String, override: String?) {
+        if (override != null) {
+          element.setAttribute(tag, override)
+        }
+        else {
+          element.removeAttribute(tag)
+        }
       }
 
       if (appInfoOverride != null) {
-        fun replaceAttribute(element: Element, tag: String, override: String?) {
-          if (override != null) {
-            element.setAttribute(tag, override)
-          } else {
-            element.removeAttribute(tag)
-          }
-        }
-
         val names = element.getChildren("names", namespace)
-          .singleOrNull() ?: error("Could not find or more than one child element 'names' under root of '$appInfoXmlPath'")
+                      .singleOrNull() ?: error("Could not find or more than one child element 'names' under root of '$appInfoXmlPath'")
 
         val version = element.getChildren("version", namespace)
-          .singleOrNull() ?: error("Could not find or more than one child element 'version' under root of '$appInfoXmlPath'")
+                        .singleOrNull() ?: error("Could not find or more than one child element 'version' under root of '$appInfoXmlPath'")
 
         val build = element.getChildren("build", namespace)
-          .singleOrNull() ?: error("Could not find or more than one child element 'build' under root of '$appInfoXmlPath'")
+                      .singleOrNull() ?: error("Could not find or more than one child element 'build' under root of '$appInfoXmlPath'")
 
         names.setAttribute("fullname", appInfoOverride.fullProductName)
         replaceAttribute(names, "edition", appInfoOverride.editionName)
@@ -222,7 +216,12 @@ internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 
         replaceAttribute(build, "majorReleaseDate", appInfoOverride.majorReleaseDate)
       }
-
+      if (isEapOverride != null || suffixOverride != null) {
+        val version = element.getChildren("version", namespace)
+                        .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
+        replaceAttribute(version, "eap", isEapOverride)
+        replaceAttribute(version, "suffix", suffixOverride)
+      }
       patchedAppInfo = JDOMUtil.write(element)
     }
     return@lazy patchedAppInfo
