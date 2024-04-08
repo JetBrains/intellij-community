@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.rt.coverage.data.ClassData
 import com.intellij.rt.coverage.data.LineCoverage
@@ -109,7 +110,8 @@ private fun assertEqualsFile(expectedFile: File, actual: String) {
     expectedFile.writeText(actual)
     throw AssertionError("File ${expectedFile} not found. Created new file with actual content")
   }
-  val content = expectedFile.readText()
+
+  val content = FileUtil.loadFile(expectedFile, true)
   if (content != actual) {
     throw FileComparisonFailedError("File content differs", content, actual, expectedFilePath = expectedFile.absolutePath)
   }
