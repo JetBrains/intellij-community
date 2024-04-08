@@ -103,11 +103,13 @@ abstract class K2CreateFunctionFromUsageTest : LightIntentionActionTestCase() {
 
     /**
      * Class names correspond to the testData directories inside /idea/tests/testData/quickfix/createFromUsage/
+     * E.g. test class [Call.Abstract] will find all test files inside `/idea/tests/testData/quickfix/createFromUsage/call/abstract` and execute corresponding tests on them
      */
     class FromJava : K2CreateFunctionFromUsageTest()
     class FromKotlinToJava : K2CreateFunctionFromUsageTest()
     class Call {
         class Abstract : K2CreateFunctionFromUsageTest()
+        class Member : K2CreateFunctionFromUsageTest()
         class Simple : K2CreateFunctionFromUsageTest()
     }
 }
