@@ -17,13 +17,11 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution
 import org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveOptimizingOptionsProvider
-import org.jetbrains.kotlin.idea.compiler.IdeModuleAnnotationsResolver
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.stubindex.resolve.KotlinShortClassNameFileIndex
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService
 import org.jetbrains.kotlin.resolve.CodeAnalyzerInitializer
 import org.jetbrains.kotlin.resolve.DummyCodeAnalyzerInitializer
-import org.jetbrains.kotlin.resolve.ModuleAnnotationsResolver
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
 
@@ -37,7 +35,6 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         ServiceWithImplementation(KotlinCacheService::class.java, ::KotlinCacheServiceImpl),
         ServiceWithImplementation(ResolutionAnchorProvider::class.java) { DummyResolutionAnchorProvider() },
         ServiceWithImplementation(CodeAnalyzerInitializer::class.java) { DummyCodeAnalyzerInitializer(project) },
-        ServiceWithImplementation(ModuleAnnotationsResolver::class.java, ::IdeModuleAnnotationsResolver),
         ServiceWithImplementation(DeclarationProviderFactoryService::class.java) { PluginDeclarationProviderFactoryService() }
 
     )
