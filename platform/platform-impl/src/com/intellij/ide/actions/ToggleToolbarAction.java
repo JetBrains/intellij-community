@@ -186,7 +186,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
   }
 
   static @NotNull String getShowToolbarProperty(@NotNull ToolWindow window) {
-    return getShowToolbarProperty("ToolWindow" + window.getStripeTitle());
+    return getShowToolbarProperty("ToolWindow." + window.getId());
   }
 
   static @NotNull String getShowToolbarProperty(@NotNull @NonNls String s) {
