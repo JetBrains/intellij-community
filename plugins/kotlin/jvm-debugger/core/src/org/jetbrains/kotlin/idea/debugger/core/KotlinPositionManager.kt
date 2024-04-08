@@ -421,16 +421,21 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             // Kotlin indy lambdas can come in wrong order, sort by order and hierarchy
             .sortedBy { IrLambdaDescriptor(it.name()) }
 
+        if (lambdas.isEmpty()) {
+            return null
+        }
+
         // To bring the list of fun literals into conformity with list of lambda-methods in bytecode above
         // it is needed to filter out literals without executable code on current line.
         val suitableFunLiterals = filter { it.hasExecutableCodeInsideOnLine(lineNumber) }
 
+        val methodIdx = lambdas.indexOf(method)
         if (lambdas.size == suitableFunLiterals.size) {
             // All lambdas on the line compiled into methods
-            return suitableFunLiterals[lambdas.indexOf(method)]
+            return suitableFunLiterals[methodIdx]
         }
         // SAM lambdas compiled into methods, and other non-SAM lambdas on same line compiled into anonymous classes
-        return suitableFunLiterals.getSamLambdaWithIndex(lambdas.indexOf(method))
+        return suitableFunLiterals.getSamLambdaWithIndex(methodIdx)
     }
 
     private fun KtFunction.hasExecutableCodeInsideOnLine(lineNumber: Int): Boolean {
