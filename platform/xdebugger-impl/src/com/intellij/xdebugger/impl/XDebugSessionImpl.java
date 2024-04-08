@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -333,9 +334,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     rebuildViews();
   }
 
+  @RequiresReadLock
   @Override
   public void initBreakpoints() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     LOG.assertTrue(!breakpointsInitialized);
     breakpointsInitialized = true;
 
@@ -499,8 +500,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     }
   }
 
+  @RequiresReadLock
   public boolean isBreakpointActive(@NotNull XBreakpoint<?> b) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     return !areBreakpointsMuted() && b.isEnabled() && !isInactiveSlaveBreakpoint(b) && !((XBreakpointBase<?, ?, ?>)b).isDisposed();
   }
 
@@ -524,9 +525,9 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDispatcher.removeListener(listener);
   }
 
+  @RequiresReadLock
   @Override
   public void setBreakpointMuted(boolean muted) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (areBreakpointsMuted() == muted) return;
     mySessionData.setBreakpointsMuted(muted);
     if (!myBreakpointsDisabled) {
@@ -599,8 +600,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.startPausing();
   }
 
+  @RequiresReadLock
   private void processAllBreakpoints(final boolean register, final boolean temporary) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     for (XBreakpointHandler<?> handler : myDebugProcess.getBreakpointHandlers()) {
       processBreakpoints(handler, register, temporary);
     }

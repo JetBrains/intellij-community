@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -113,7 +113,7 @@ class BreakpointsUtilValidator : CustomValidationRule() {
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     if ("custom" == data) return ValidationResultType.ACCEPTED
 
-    for (breakpoint in XBreakpointType.EXTENSION_POINT_NAME.extensions) {
+    for (breakpoint in XBreakpointType.EXTENSION_POINT_NAME.extensionList) {
       if (StringUtil.equals(breakpoint.id, data)) {
         val info = getPluginInfo(breakpoint.javaClass)
         return if (info.isDevelopedByJetBrains()) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
