@@ -1,0 +1,29 @@
+f:com.intellij.execution.process.ProcessServiceImpl
+- com.intellij.execution.process.ProcessService
+- <init>():V
+- getCommand(java.lang.Process):java.util.List
+- hasControllingTerminal(java.lang.Process):Z
+- isLocalPtyProcess(java.lang.Process):Z
+- killWinProcess(I):V
+- killWinProcessRecursively(java.lang.Process):V
+- sendWinProcessCtrlC(I):Z
+- sendWinProcessCtrlC(I,java.io.OutputStream):Z
+- sendWinProcessCtrlC(java.lang.Process):Z
+- startPtyProcess(java.lang.String[],java.lang.String,java.util.Map,com.intellij.execution.process.LocalPtyOptions,com.intellij.openapi.application.Application,Z,Z,Z):java.lang.Process
+- winPtyChildProcessId(java.lang.Process):java.lang.Integer
+c:com.intellij.util.io.IoServiceImpl
+- com.intellij.util.io.IoService
+- <init>():V
+- getProxySelector(java.lang.String):java.net.ProxySelector
+c:com.intellij.util.io.jackson.IntelliJPrettyPrinter
+- com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+- sf:Companion:com.intellij.util.io.jackson.IntelliJPrettyPrinter$Companion
+- sf:UNIX_LINE_FEED_INSTANCE:com.fasterxml.jackson.core.util.DefaultIndenter
+- <init>():V
+f:com.intellij.util.io.jackson.IntelliJPrettyPrinter$Companion
+f:com.intellij.util.io.jackson.JacksonUtil
+- sf:array(com.fasterxml.jackson.core.JsonGenerator,java.lang.String,kotlin.jvm.functions.Function0):V
+- bs:array$default(com.fasterxml.jackson.core.JsonGenerator,java.lang.String,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- sf:obj(com.fasterxml.jackson.core.JsonGenerator,java.lang.String,kotlin.jvm.functions.Function0):V
+- bs:obj$default(com.fasterxml.jackson.core.JsonGenerator,java.lang.String,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- sf:readSingleField(com.fasterxml.jackson.core.JsonParser,java.lang.String):java.lang.String

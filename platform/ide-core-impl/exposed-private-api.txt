@@ -1,0 +1,4 @@
+com/intellij/facet/frameworks/beans/Artifact
+com/intellij/facet/frameworks/beans/ArtifactItem
+com/intellij/notification/impl/NotificationGroupEP$DisplayType
+com/intellij/util/containers/IntObjectLRUMap$MapEntry

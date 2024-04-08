@@ -1,0 +1,647 @@
+c:com.intellij.diff.DiffApplicationSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- SHOW_LST_WORD_DIFFERENCES:Z
+- <init>():V
+- s:getInstance():com.intellij.diff.DiffApplicationSettings
+- getState():com.intellij.diff.DiffApplicationSettings
+- loadState(com.intellij.diff.DiffApplicationSettings):V
+a:com.intellij.diff.DiffContentFactory
+- <init>():V
+- a:create(com.intellij.openapi.editor.Document,com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.fileTypes.FileType):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DiffContent
+- a:create(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DiffContent
+- a:create(com.intellij.openapi.project.Project,java.lang.String):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,java.lang.String,com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileTypes.FileType,Z):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vcs.FilePath):com.intellij.diff.contents.DocumentContent
+- a:create(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DocumentContent
+- a:create(java.lang.String):com.intellij.diff.contents.DocumentContent
+- a:create(java.lang.String,com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
+- a:create(java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.diff.contents.DocumentContent
+- a:create(java.lang.String,com.intellij.openapi.fileTypes.FileType,Z):com.intellij.diff.contents.DocumentContent
+- a:create(java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DocumentContent
+- a:createBinary(com.intellij.openapi.project.Project,B[],com.intellij.openapi.fileTypes.FileType,java.lang.String):com.intellij.diff.contents.DiffContent
+- a:createClipboardContent():com.intellij.diff.contents.DiffContent
+- a:createClipboardContent(com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
+- a:createClipboardContent(com.intellij.openapi.project.Project):com.intellij.diff.contents.DiffContent
+- a:createClipboardContent(com.intellij.openapi.project.Project,com.intellij.diff.contents.DocumentContent):com.intellij.diff.contents.DocumentContent
+- a:createDocument(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DocumentContent
+- a:createEditable(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.diff.contents.DocumentContent
+- a:createEmpty():com.intellij.diff.contents.EmptyContent
+- a:createFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.FileContent
+- a:createFragment(com.intellij.openapi.project.Project,com.intellij.diff.contents.DocumentContent,com.intellij.openapi.util.TextRange):com.intellij.diff.contents.DocumentContent
+- a:createFragment(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.util.TextRange):com.intellij.diff.contents.DocumentContent
+- a:createFromBytes(com.intellij.openapi.project.Project,B[],com.intellij.openapi.fileTypes.FileType,java.lang.String):com.intellij.diff.contents.DiffContent
+- a:createFromBytes(com.intellij.openapi.project.Project,B[],com.intellij.openapi.vcs.FilePath):com.intellij.diff.contents.DiffContent
+- a:createFromBytes(com.intellij.openapi.project.Project,B[],com.intellij.openapi.vcs.FilePath,java.nio.charset.Charset):com.intellij.diff.contents.DiffContent
+- a:createFromBytes(com.intellij.openapi.project.Project,B[],com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.contents.DiffContent
+- s:getInstance():com.intellij.diff.DiffContentFactory
+a:com.intellij.diff.DiffContext
+- com.intellij.diff.FocusableContext
+- com.intellij.openapi.util.UserDataHolder
+- pf:myUserDataHolder:com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- a:getProject():com.intellij.openapi.project.Project
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- a:isWindowFocused():Z
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+c:com.intellij.diff.DiffDialogHints
+- sf:DEFAULT:com.intellij.diff.DiffDialogHints
+- sf:FRAME:com.intellij.diff.DiffDialogHints
+- sf:MODAL:com.intellij.diff.DiffDialogHints
+- sf:NON_MODAL:com.intellij.diff.DiffDialogHints
+- <init>(com.intellij.openapi.ui.WindowWrapper$Mode):V
+- <init>(com.intellij.openapi.ui.WindowWrapper$Mode,java.awt.Component):V
+- <init>(com.intellij.openapi.ui.WindowWrapper$Mode,java.awt.Component,com.intellij.util.Consumer):V
+- getMode():com.intellij.openapi.ui.WindowWrapper$Mode
+- getParent():java.awt.Component
+- getWindowConsumer():com.intellij.util.Consumer
+com.intellij.diff.DiffEditorTitleCustomizer
+- a:getLabel():javax.swing.JComponent
+a:com.intellij.diff.DiffExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- a:onViewerCreated(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):V
+a:com.intellij.diff.DiffManager
+- <init>():V
+- a:createRequestPanel(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,java.awt.Window):com.intellij.diff.DiffRequestPanel
+- s:getInstance():com.intellij.diff.DiffManager
+- a:showDiff(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain,com.intellij.diff.DiffDialogHints):V
+- a:showDiff(com.intellij.openapi.project.Project,com.intellij.diff.requests.DiffRequest):V
+- a:showDiff(com.intellij.openapi.project.Project,com.intellij.diff.requests.DiffRequest,com.intellij.diff.DiffDialogHints):V
+- a:showMerge(com.intellij.openapi.project.Project,com.intellij.diff.merge.MergeRequest):V
+a:com.intellij.diff.DiffManagerEx
+- com.intellij.diff.DiffManager
+- <init>():V
+- a:getDiffTools():java.util.List
+- s:getInstance():com.intellij.diff.DiffManagerEx
+- a:getMergeTools():java.util.List
+- a:showDiffBuiltin(com.intellij.openapi.project.Project,com.intellij.diff.chains.DiffRequestChain,com.intellij.diff.DiffDialogHints):V
+- a:showDiffBuiltin(com.intellij.openapi.project.Project,com.intellij.diff.requests.DiffRequest):V
+- a:showDiffBuiltin(com.intellij.openapi.project.Project,com.intellij.diff.requests.DiffRequest,com.intellij.diff.DiffDialogHints):V
+- a:showMergeBuiltin(com.intellij.openapi.project.Project,com.intellij.diff.merge.MergeRequest):V
+- a:showMergeBuiltin(com.intellij.openapi.project.Project,com.intellij.diff.merge.MergeRequestProducer,com.intellij.diff.DiffDialogHints):V
+a:com.intellij.diff.DiffRequestFactory
+- <init>():V
+- a:createBinaryMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createClipboardVsValue(java.lang.String):com.intellij.diff.requests.ContentDiffRequest
+- a:createFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.requests.ContentDiffRequest
+- a:createFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):com.intellij.diff.requests.ContentDiffRequest
+- a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.editor.Document,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.diff.merge.ConflictType,java.lang.String,java.util.List):com.intellij.diff.merge.MergeRequest
+- a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.diff.merge.ConflictType,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List):com.intellij.diff.merge.MergeRequest
+- a:createMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- a:createTextMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.diff.merge.ConflictType,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
+- a:createTextMergeRequest(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
+- a:createTextMergeRequestFromFiles(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.util.List,java.lang.String,java.util.List,com.intellij.util.Consumer):com.intellij.diff.merge.TextMergeRequest
+- a:getContentTitle(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:getInstance():com.intellij.diff.DiffRequestFactory
+- a:getTitle(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getTitle(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+com.intellij.diff.DiffRequestPanel
+- com.intellij.openapi.Disposable
+- a:getComponent():javax.swing.JComponent
+- a:getPreferredFocusedComponent():javax.swing.JComponent
+- a:putContextHints(com.intellij.openapi.util.Key,java.lang.Object):V
+- a:setRequest(com.intellij.diff.requests.DiffRequest):V
+- a:setRequest(com.intellij.diff.requests.DiffRequest,java.lang.Object):V
+com.intellij.diff.DiffTool
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:canShow(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):Z
+- a:getName():java.lang.String
+com.intellij.diff.DiffToolType
+f:com.intellij.diff.DiffToolType$Default
+- com.intellij.diff.DiffToolType
+- sf:INSTANCE:com.intellij.diff.DiffToolType$Default
+f:com.intellij.diff.DiffToolType$Unified
+- com.intellij.diff.DiffToolType
+- sf:INSTANCE:com.intellij.diff.DiffToolType$Unified
+com.intellij.diff.EditorDiffViewer
+- com.intellij.diff.FrameDiffTool$DiffViewer
+- getCurrentEditor():com.intellij.openapi.editor.Editor
+- a:getEditors():java.util.List
+com.intellij.diff.FocusableContext
+- a:isFocusedInWindow():Z
+- a:requestFocusInWindow():V
+com.intellij.diff.FrameDiffTool
+- com.intellij.diff.DiffTool
+- a:createComponent(com.intellij.diff.DiffContext,com.intellij.diff.requests.DiffRequest):com.intellij.diff.FrameDiffTool$DiffViewer
+- getToolType():com.intellij.diff.DiffToolType
+*:com.intellij.diff.FrameDiffTool$DiffInfo
+- a:getComponent():javax.swing.JComponent
+com.intellij.diff.FrameDiffTool$DiffViewer
+- com.intellij.openapi.Disposable
+- a:dispose():V
+- a:getComponent():javax.swing.JComponent
+- a:getPreferredFocusedComponent():javax.swing.JComponent
+- a:init():com.intellij.diff.FrameDiffTool$ToolbarComponents
+c:com.intellij.diff.FrameDiffTool$ToolbarComponents
+- diffInfo:com.intellij.diff.FrameDiffTool$DiffInfo
+- needTopToolbarBorder:Z
+- popupActions:java.util.List
+- statusPanel:javax.swing.JComponent
+- toolbarActions:java.util.List
+- <init>():V
+c:com.intellij.diff.InvalidDiffRequestException
+- java.lang.Exception
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+- <init>(java.lang.Throwable):V
+com.intellij.diff.SuppressiveDiffTool
+- com.intellij.diff.DiffTool
+- a:getSuppressedTools():java.util.List
+com.intellij.diff.chains.DiffRequestChain
+- com.intellij.openapi.util.UserDataHolder
+- a:getIndex():I
+- a:getRequests():java.util.List
+- setIndex(I):V
+a:com.intellij.diff.chains.DiffRequestChainBase
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.diff.chains.DiffRequestChain
+- <init>():V
+- <init>(I):V
+- getIndex():I
+- setIndex(I):V
+com.intellij.diff.chains.DiffRequestProducer
+- getContentType():com.intellij.openapi.fileTypes.FileType
+- a:getName():java.lang.String
+- a:process(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
+c:com.intellij.diff.chains.DiffRequestProducerException
+- java.lang.Exception
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+- <init>(java.lang.Throwable):V
+com.intellij.diff.chains.DiffRequestSelectionChain
+- com.intellij.diff.chains.DiffRequestChain
+- getIndex():I
+- a:getListSelection():com.intellij.openapi.ListSelection
+- getRequests():java.util.List
+c:com.intellij.diff.chains.SimpleDiffRequestChain
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.diff.chains.DiffRequestSelectionChain
+- <init>(com.intellij.diff.requests.DiffRequest):V
+- <init>(java.util.List):V
+- <init>(java.util.List,I):V
+- s:fromProducer(com.intellij.diff.chains.DiffRequestProducer):com.intellij.diff.chains.SimpleDiffRequestChain
+- s:fromProducers(com.intellij.openapi.ListSelection):com.intellij.diff.chains.SimpleDiffRequestChain
+- s:fromProducers(java.util.List):com.intellij.diff.chains.SimpleDiffRequestChain
+- s:fromProducers(java.util.List,I):com.intellij.diff.chains.SimpleDiffRequestChain
+- getListSelection():com.intellij.openapi.ListSelection
+c:com.intellij.diff.chains.SimpleDiffRequestChain$DiffRequestProducerWrapper
+- com.intellij.diff.chains.DiffRequestProducer
+- <init>(com.intellij.diff.requests.DiffRequest):V
+- equals(java.lang.Object):Z
+- getContentType():com.intellij.openapi.fileTypes.FileType
+- getName():java.lang.String
+- getRequest():com.intellij.diff.requests.DiffRequest
+- hashCode():I
+- process(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.requests.DiffRequest
+f:com.intellij.diff.chains.SimpleDiffRequestProducer
+- <init>():V
+- s:create(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.util.ThrowableComputable):com.intellij.diff.chains.DiffRequestProducer
+- s:create(java.lang.String,com.intellij.openapi.util.ThrowableComputable):com.intellij.diff.chains.DiffRequestProducer
+a:com.intellij.diff.comparison.ComparisonManager
+- <init>():V
+- a:compareChars(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:compareLines(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:compareLines(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:compareLinesInner(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:compareWords(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- s:getInstance():com.intellij.diff.comparison.ComparisonManager
+- a:isEquals(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy):Z
+- a:mergeLines(java.lang.CharSequence,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.util.List
+- a:mergeLinesAdditions(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,com.intellij.openapi.progress.ProgressIndicator):java.lang.String
+- a:processBlocks(java.util.List,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.comparison.ComparisonPolicy,Z,Z):java.util.List
+- a:squash(java.util.List):java.util.List
+e:com.intellij.diff.comparison.InnerFragmentsPolicy
+- java.lang.Enum
+- sf:CHARS:com.intellij.diff.comparison.InnerFragmentsPolicy
+- sf:NONE:com.intellij.diff.comparison.InnerFragmentsPolicy
+- sf:WORDS:com.intellij.diff.comparison.InnerFragmentsPolicy
+- s:valueOf(java.lang.String):com.intellij.diff.comparison.InnerFragmentsPolicy
+- s:values():com.intellij.diff.comparison.InnerFragmentsPolicy[]
+com.intellij.diff.contents.DiffContent
+- com.intellij.openapi.util.UserDataHolder
+- a:getContentType():com.intellij.openapi.fileTypes.FileType
+- getNavigatable():com.intellij.pom.Navigatable
+- getOpenFileDescriptor():com.intellij.openapi.fileEditor.OpenFileDescriptor
+- onAssigned(Z):V
+a:com.intellij.diff.contents.DiffContentBase
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.diff.contents.DiffContent
+- <init>():V
+com.intellij.diff.contents.DirectoryContent
+- com.intellij.diff.contents.DiffContent
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+com.intellij.diff.contents.DocumentContent
+- com.intellij.diff.contents.DiffContent
+- getCharset():java.nio.charset.Charset
+- a:getDocument():com.intellij.openapi.editor.Document
+- getHighlightFile():com.intellij.openapi.vfs.VirtualFile
+- getLineSeparator():com.intellij.util.LineSeparator
+- getNavigatable(com.intellij.diff.util.LineCol):com.intellij.pom.Navigatable
+- getOpenFileDescriptor(I):com.intellij.openapi.fileEditor.OpenFileDescriptor
+- hasBom():java.lang.Boolean
+c:com.intellij.diff.contents.EmptyContent
+- com.intellij.diff.contents.DiffContentBase
+- <init>():V
+- getContentType():com.intellij.openapi.fileTypes.FileType
+com.intellij.diff.contents.FileContent
+- com.intellij.diff.contents.DiffContent
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+a:com.intellij.diff.merge.BinaryMergeRequest
+- com.intellij.diff.merge.ThreesideMergeRequest
+- <init>():V
+- a:getByteContents():java.util.List
+- a:getOutputContent():com.intellij.diff.contents.FileContent
+e:com.intellij.diff.merge.ConflictType
+- java.lang.Enum
+- sf:ADDED_ADDED:com.intellij.diff.merge.ConflictType
+- sf:DEFAULT:com.intellij.diff.merge.ConflictType
+- sf:DELETED_MODIFIED:com.intellij.diff.merge.ConflictType
+- sf:MODIFIED_DELETED:com.intellij.diff.merge.ConflictType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.diff.merge.ConflictType
+- s:values():com.intellij.diff.merge.ConflictType[]
+c:com.intellij.diff.merge.MergeCallback
+- <init>():V
+- addListener(com.intellij.diff.merge.MergeCallback$Listener,com.intellij.openapi.Disposable):V
+- applyResult(com.intellij.diff.merge.MergeResult):V
+- checkIsValid():Z
+- s:getCallback(com.intellij.diff.merge.MergeRequest):com.intellij.diff.merge.MergeCallback
+- s:register(com.intellij.diff.merge.MergeRequest,com.intellij.diff.merge.MergeCallback):com.intellij.diff.merge.MergeRequest
+- s:register(com.intellij.diff.merge.MergeRequest,com.intellij.util.Consumer):com.intellij.diff.merge.MergeRequest
+- s:retarget(com.intellij.diff.merge.MergeRequest,com.intellij.diff.merge.MergeRequest):V
+com.intellij.diff.merge.MergeCallback$Listener
+- java.util.EventListener
+- fireConflictInvalid():V
+a:com.intellij.diff.merge.MergeContext
+- com.intellij.diff.FocusableContext
+- com.intellij.openapi.util.UserDataHolder
+- pf:myUserDataHolder:com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- a:finishMerge(com.intellij.diff.merge.MergeResult):V
+- a:getProject():com.intellij.openapi.project.Project
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+a:com.intellij.diff.merge.MergeRequest
+- com.intellij.openapi.util.UserDataHolder
+- pf:myUserDataHolder:com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- a:applyResult(com.intellij.diff.merge.MergeResult):V
+- a:getTitle():java.lang.String
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- onAssigned(Z):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+com.intellij.diff.merge.MergeRequestProducer
+- a:getName():java.lang.String
+- a:process(com.intellij.openapi.util.UserDataHolder,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.merge.MergeRequest
+e:com.intellij.diff.merge.MergeResult
+- java.lang.Enum
+- sf:CANCEL:com.intellij.diff.merge.MergeResult
+- sf:LEFT:com.intellij.diff.merge.MergeResult
+- sf:RESOLVED:com.intellij.diff.merge.MergeResult
+- sf:RIGHT:com.intellij.diff.merge.MergeResult
+- s:valueOf(java.lang.String):com.intellij.diff.merge.MergeResult
+- s:values():com.intellij.diff.merge.MergeResult[]
+com.intellij.diff.merge.MergeTool
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:canShow(com.intellij.diff.merge.MergeContext,com.intellij.diff.merge.MergeRequest):Z
+- a:createComponent(com.intellij.diff.merge.MergeContext,com.intellij.diff.merge.MergeRequest):com.intellij.diff.merge.MergeTool$MergeViewer
+com.intellij.diff.merge.MergeTool$MergeViewer
+- com.intellij.openapi.Disposable
+- a:dispose():V
+- a:getComponent():javax.swing.JComponent
+- a:getPreferredFocusedComponent():javax.swing.JComponent
+- a:getResolveAction(com.intellij.diff.merge.MergeResult):javax.swing.Action
+- a:init():com.intellij.diff.merge.MergeTool$ToolbarComponents
+c:com.intellij.diff.merge.MergeTool$ToolbarComponents
+- closeHandler:com.intellij.openapi.util.BooleanGetter
+- statusPanel:javax.swing.JComponent
+- toolbarActions:java.util.List
+- <init>():V
+a:com.intellij.diff.merge.TextMergeRequest
+- com.intellij.diff.merge.ThreesideMergeRequest
+- <init>():V
+- a:getContents():java.util.List
+- a:getOutputContent():com.intellij.diff.contents.DocumentContent
+a:com.intellij.diff.merge.ThreesideMergeRequest
+- com.intellij.diff.merge.MergeRequest
+- <init>():V
+- a:getContentTitles():java.util.List
+- a:getContents():java.util.List
+- a:getOutputContent():com.intellij.diff.contents.DiffContent
+com.intellij.diff.merge.external.AutomaticExternalMergeTool
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:canShow(com.intellij.openapi.project.Project,com.intellij.diff.merge.MergeRequest):Z
+- a:show(com.intellij.openapi.project.Project,com.intellij.diff.merge.MergeRequest):V
+a:com.intellij.diff.requests.ComponentDiffRequest
+- com.intellij.diff.requests.DiffRequest
+- <init>():V
+- a:getComponent(com.intellij.diff.DiffContext):javax.swing.JComponent
+a:com.intellij.diff.requests.ContentDiffRequest
+- com.intellij.diff.requests.DiffRequest
+- <init>():V
+- a:getContentTitles():java.util.List
+- a:getContents():java.util.List
+- getFilesToRefresh():java.util.List
+a:com.intellij.diff.requests.DiffRequest
+- com.intellij.openapi.util.UserDataHolder
+- pf:myUserDataHolder:com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- getFilesToRefresh():java.util.List
+- a:getTitle():java.lang.String
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- onAssigned(Z):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+f:com.intellij.diff.requests.ErrorDiffRequest
+- com.intellij.diff.requests.MessageDiffRequest
+- <init>(com.intellij.diff.chains.DiffRequestProducer,java.lang.String):V
+- <init>(com.intellij.diff.chains.DiffRequestProducer,java.lang.Throwable):V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,com.intellij.diff.chains.DiffRequestProducer,java.lang.Throwable):V
+- <init>(java.lang.String,java.lang.Throwable):V
+- <init>(java.lang.Throwable):V
+- getException():java.lang.Throwable
+- getProducer():com.intellij.diff.chains.DiffRequestProducer
+c:com.intellij.diff.requests.MessageDiffRequest
+- com.intellij.diff.requests.DiffRequest
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- getMessage():java.lang.String
+- getTitle():java.lang.String
+- f:onAssigned(Z):V
+- setMessage(java.lang.String):V
+- setTitle(java.lang.String):V
+c:com.intellij.diff.requests.NoDiffRequest
+- com.intellij.diff.requests.MessageDiffRequest
+- sf:INSTANCE:com.intellij.diff.requests.NoDiffRequest
+- <init>():V
+- <init>(java.lang.String):V
+c:com.intellij.diff.requests.ProxySimpleDiffRequest
+- com.intellij.diff.requests.SimpleDiffRequest
+- <init>(java.lang.String,java.util.List,java.util.List,com.intellij.openapi.util.UserDataHolder):V
+- getUserData(com.intellij.openapi.util.Key):java.lang.Object
+- f:onAssigned(Z):V
+- putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
+c:com.intellij.diff.requests.SimpleDiffRequest
+- com.intellij.diff.requests.ContentDiffRequest
+- <init>(java.lang.String,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,java.lang.String,java.lang.String,java.lang.String):V
+- <init>(java.lang.String,com.intellij.diff.contents.DiffContent,com.intellij.diff.contents.DiffContent,java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.util.List,java.util.List):V
+- getContentTitles():java.util.List
+- getContents():java.util.List
+- getTitle():java.lang.String
+- onAssigned(Z):V
+- toString():java.lang.String
+com.intellij.diff.util.DiffNotificationProvider
+- a:createNotification(com.intellij.diff.FrameDiffTool$DiffViewer):javax.swing.JComponent
+com.intellij.diff.util.DiffUserDataKeys
+- sf:ALIGNED_TWO_SIDED_DIFF:com.intellij.openapi.util.Key
+- sf:CONTEXT_ACTIONS:com.intellij.openapi.util.Key
+- sf:DATA_PROVIDER:com.intellij.openapi.util.Key
+- sf:DIALOG_GROUP_KEY:com.intellij.openapi.util.Key
+- sf:DO_NOT_CHANGE_WINDOW_TITLE:com.intellij.openapi.util.Key
+- sf:DO_NOT_IGNORE_WHITESPACES:com.intellij.openapi.util.Key
+- sf:ENABLE_SEARCH_IN_CHANGES:com.intellij.openapi.util.Key
+- sf:FORCE_READ_ONLY:com.intellij.openapi.util.Key
+- sf:FORCE_READ_ONLY_CONTENTS:com.intellij.openapi.util.Key
+- sf:GO_TO_SOURCE_DISABLE:com.intellij.openapi.util.Key
+- sf:HELP_ID:com.intellij.openapi.util.Key
+- sf:LANGUAGE:com.intellij.openapi.util.Key
+- sf:MASTER_SIDE:com.intellij.openapi.util.Key
+- sf:MERGE_EDITOR_FLAG:com.intellij.openapi.util.Key
+- sf:NOTIFICATION_PROVIDERS:com.intellij.openapi.util.Key
+- sf:PLACE:com.intellij.openapi.util.Key
+- sf:PREFERRED_FOCUS_SIDE:com.intellij.openapi.util.Key
+- sf:PREFERRED_FOCUS_THREESIDE:com.intellij.openapi.util.Key
+- sf:SCROLL_TO_LINE:com.intellij.openapi.util.Key
+- sf:SCROLL_TO_LINE_THREESIDE:com.intellij.openapi.util.Key
+- sf:THREESIDE_DIFF_COLORS_MODE:com.intellij.openapi.util.Key
+e:com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors
+- java.lang.Enum
+- sf:LEFT_TO_RIGHT:com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors
+- sf:MERGE_CONFLICT:com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors
+- sf:MERGE_RESULT:com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors
+- s:valueOf(java.lang.String):com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors
+- s:values():com.intellij.diff.util.DiffUserDataKeys$ThreeSideDiffColors[]
+c:com.intellij.diff.util.LineCol
+- f:column:I
+- f:line:I
+- <init>(I):V
+- <init>(I,I):V
+- equals(java.lang.Object):Z
+- s:fromCaret(com.intellij.openapi.editor.Editor):com.intellij.diff.util.LineCol
+- s:fromOffset(com.intellij.openapi.editor.Document,I):com.intellij.diff.util.LineCol
+- hashCode():I
+- toOffset(com.intellij.openapi.editor.Document):I
+- s:toOffset(com.intellij.openapi.editor.Document,I,I):I
+- s:toOffset(com.intellij.openapi.editor.Document,com.intellij.diff.util.LineCol):I
+- toOffset(com.intellij.openapi.editor.Editor):I
+- toString():java.lang.String
+c:com.intellij.diff.util.LineRange
+- f:end:I
+- f:start:I
+- <init>(I,I):V
+- contains(I,I):Z
+- equals(java.lang.Object):Z
+- hashCode():I
+- isEmpty():Z
+- toString():java.lang.String
+com.intellij.ide.diff.AsyncDiffElement
+- a:copyToAsync(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement,java.lang.String):org.jetbrains.concurrency.Promise
+- a:deleteAsync():org.jetbrains.concurrency.Promise
+a:com.intellij.ide.diff.DiffElement
+- sf:EMPTY_ARRAY:com.intellij.ide.diff.DiffElement[]
+- <init>():V
+- copyTo(com.intellij.ide.diff.DiffElement,java.lang.String):com.intellij.ide.diff.DiffElement
+- createDiffContent(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.contents.DiffContent
+- delete():Z
+- getCharset():java.nio.charset.Charset
+- a:getChildren():com.intellij.ide.diff.DiffElement[]
+- a:getContent():B[]
+- getContentStream():java.io.InputStream
+- getElementChooser(com.intellij.openapi.project.Project):java.util.concurrent.Callable
+- getFileType():com.intellij.openapi.fileTypes.FileType
+- getFilterablePath():java.lang.String
+- getIcon():javax.swing.Icon
+- a:getName():java.lang.String
+- getNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- a:getPath():java.lang.String
+- getPresentableName():java.lang.String
+- getPresentablePath():java.lang.String
+- s:getSeparator():java.lang.String
+- a:getSize():J
+- a:getTimeStamp():J
+- a:getValue():java.lang.Object
+- a:isContainer():Z
+- isOperationsEnabled():Z
+- refresh(Z):V
+c:com.intellij.ide.diff.DiffErrorElement
+- com.intellij.ide.diff.DiffElement
+- <init>(java.lang.String,java.lang.String):V
+- createDiffContent(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):com.intellij.diff.contents.DiffContent
+- getChildren():com.intellij.ide.diff.DiffElement[]
+- getContent():B[]
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getPath():java.lang.String
+- getSize():J
+- getTimeStamp():J
+- getValue():java.lang.Object
+- isContainer():Z
+e:com.intellij.ide.diff.DiffType
+- java.lang.Enum
+- sf:CHANGED:com.intellij.ide.diff.DiffType
+- sf:EQUAL:com.intellij.ide.diff.DiffType
+- sf:ERROR:com.intellij.ide.diff.DiffType
+- sf:SEPARATOR:com.intellij.ide.diff.DiffType
+- sf:SOURCE:com.intellij.ide.diff.DiffType
+- sf:TARGET:com.intellij.ide.diff.DiffType
+- s:valueOf(java.lang.String):com.intellij.ide.diff.DiffType
+- s:values():com.intellij.ide.diff.DiffType[]
+com.intellij.ide.diff.DirDiffElement
+- a:getName():java.lang.String
+- a:getOperation():com.intellij.ide.diff.DirDiffOperation
+- a:getSource():com.intellij.ide.diff.DiffElement
+- a:getTarget():com.intellij.ide.diff.DiffElement
+- a:getType():com.intellij.ide.diff.DiffType
+com.intellij.ide.diff.DirDiffModel
+- a:applySettings():V
+- a:getElements():java.util.List
+- a:getSettings():com.intellij.ide.diff.DirDiffSettings
+- a:getSourceDir():com.intellij.ide.diff.DiffElement
+- a:getTargetDir():com.intellij.ide.diff.DiffElement
+- a:reloadModel(Z):V
+- a:setSourceDir(com.intellij.ide.diff.DiffElement):V
+- a:setTargetDir(com.intellij.ide.diff.DiffElement):V
+com.intellij.ide.diff.DirDiffModelHolder
+- a:setModel(com.intellij.ide.diff.DirDiffModel):V
+e:com.intellij.ide.diff.DirDiffOperation
+- java.lang.Enum
+- sf:COPY_FROM:com.intellij.ide.diff.DirDiffOperation
+- sf:COPY_TO:com.intellij.ide.diff.DirDiffOperation
+- sf:DELETE:com.intellij.ide.diff.DirDiffOperation
+- sf:EQUAL:com.intellij.ide.diff.DirDiffOperation
+- sf:MERGE:com.intellij.ide.diff.DirDiffOperation
+- sf:NONE:com.intellij.ide.diff.DirDiffOperation
+- getIcon():javax.swing.Icon
+- getTextColor():java.awt.Color
+- s:valueOf(java.lang.String):com.intellij.ide.diff.DirDiffOperation
+- s:values():com.intellij.ide.diff.DirDiffOperation[]
+c:com.intellij.ide.diff.DirDiffSettings
+- sf:KEY:com.intellij.openapi.util.Key
+- compareMode:com.intellij.ide.diff.DirDiffSettings$CompareMode
+- compareTimestampAccuracy:D
+- f:customSettings:java.util.HashMap
+- customSourceChooser:com.intellij.ide.diff.DirDiffSettings$CustomSourceChooser
+- enableChoosers:Z
+- enableOperations:Z
+- enableSyncActions:Z
+- showCompareModes:Z
+- showDate:Z
+- showDifferent:Z
+- showEqual:Z
+- showInFrame:Z
+- showNewOnSource:Z
+- showNewOnTarget:Z
+- showSize:Z
+- <init>():V
+- addExtraAction(com.intellij.openapi.actionSystem.AnAction):V
+- getDirDiffFilter():com.intellij.util.FilePatternFilter
+- getExtraActions():java.util.List
+- getFilter():java.lang.String
+- setFilter(java.lang.String):V
+e:com.intellij.ide.diff.DirDiffSettings$CompareMode
+- java.lang.Enum
+- sf:CONTENT:com.intellij.ide.diff.DirDiffSettings$CompareMode
+- sf:SIZE:com.intellij.ide.diff.DirDiffSettings$CompareMode
+- sf:TEXT:com.intellij.ide.diff.DirDiffSettings$CompareMode
+- sf:TIMESTAMP:com.intellij.ide.diff.DirDiffSettings$CompareMode
+- getPresentableName():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.ide.diff.DirDiffSettings$CompareMode
+- s:values():com.intellij.ide.diff.DirDiffSettings$CompareMode[]
+com.intellij.ide.diff.DirDiffSettings$CustomSourceChooser
+- a:chooseSource(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement):com.intellij.ide.diff.DiffElement
+f:com.intellij.openapi.LineNumberConstants
+- sf:ABSENT_LINE_NUMBER:I
+- sf:FAKE_LINE_NUMBER:I
+- <init>():V
+f:com.intellij.openapi.ListSelection
+- asExplicitSelection():com.intellij.openapi.ListSelection
+- s:create(java.util.List,java.lang.Object):com.intellij.openapi.ListSelection
+- s:create(java.lang.Object[],java.lang.Object):com.intellij.openapi.ListSelection
+- s:createAt(java.util.List,I):com.intellij.openapi.ListSelection
+- s:createSingleton(java.lang.Object):com.intellij.openapi.ListSelection
+- s:empty():com.intellij.openapi.ListSelection
+- getExplicitSelection():java.util.List
+- getList():java.util.List
+- getSelectedIndex():I
+- isEmpty():Z
+- isExplicitSelection():Z
+- map(com.intellij.util.NullableFunction):com.intellij.openapi.ListSelection
+- withExplicitSelection(Z):com.intellij.openapi.ListSelection
+f:com.intellij.openapi.diff.DiffBundle
+- sf:BUNDLE:java.lang.String
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+com.intellij.openapi.diff.DiffColors
+- sf:DIFF_ABSENT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DIFF_CONFLICT:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DIFF_DELETED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DIFF_INSERTED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:DIFF_MODIFIED:com.intellij.openapi.editor.colors.TextAttributesKey
+c:com.intellij.openapi.diff.DiffNavigationContext
+- <init>(java.lang.Iterable,java.lang.String):V
+- contextMatchCheck(java.util.Iterator):I
+- getPreviousLinesIterable():java.lang.Iterable
+- getTargetString():java.lang.String
+a:com.intellij.openapi.diff.DirDiffManager
+- <init>():V
+- a:canShow(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement):Z
+- a:createDiffElement(java.lang.Object):com.intellij.ide.diff.DiffElement
+- a:createDiffModel(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DirDiffSettings):com.intellij.ide.diff.DirDiffModel
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.diff.DirDiffManager
+- a:showDiff(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement):V
+- a:showDiff(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DirDiffSettings):V
+- a:showDiff(com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DiffElement,com.intellij.ide.diff.DirDiffSettings,java.lang.Runnable):V
+c:com.intellij.openapi.diff.LineTokenizer
+- com.intellij.openapi.diff.LineTokenizerBase
+- <init>(java.lang.String):V
+- p:addLine(java.util.List,I,I,Z):V
+- p:charAt(I):C
+- s:concatLines(java.lang.String[]):java.lang.String
+- s:correctLineSeparators(java.lang.String):java.lang.String
+- execute():java.lang.String[]
+- p:length():I
+- p:substring(I,I):java.lang.String
+a:com.intellij.openapi.diff.LineTokenizerBase
+- <init>():V
+- pa:addLine(java.util.List,I,I,Z):V
+- pa:charAt(I):C
+- doExecute(java.util.List):V
+- getLineSeparator():java.lang.String
+- pa:length():I
+- pa:substring(I,I):java.lang.String
+a:com.intellij.openapi.diff.impl.settings.DiffPreviewProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- s:createContent(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.diff.contents.DiffContent[]
+- a:createContents():com.intellij.diff.contents.DiffContent[]
+- s:getContents():com.intellij.diff.contents.DiffContent[]
+@:org.jetbrains.annotations.CalledInAwt
+- java.lang.annotation.Annotation
+- a:instrument():Z
+@:org.jetbrains.annotations.CalledInBackground
+- java.lang.annotation.Annotation
+- a:instrument():Z

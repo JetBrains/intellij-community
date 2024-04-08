@@ -1,0 +1,2 @@
+com/intellij/openapi/editor/colors/impl/AppConsoleFontOptions$ConsoleFontState
+com/intellij/openapi/editor/ex/util/LayeredLexerEditorHighlighter$MappingSegments

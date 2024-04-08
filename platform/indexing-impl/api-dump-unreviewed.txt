@@ -1,0 +1,699 @@
+f:com.intellij.find.ngrams.TrigramIndex
+- com.intellij.util.indexing.ScalarIndexExtension
+- com.intellij.util.indexing.CustomInputsIndexFileBasedIndexExtension
+- sf:INDEX_ID:com.intellij.util.indexing.ID
+- <init>():V
+- createExternalizer():com.intellij.util.io.DataExternalizer
+- dependsOnFileContent():Z
+- getIndexer():com.intellij.util.indexing.DataIndexer
+- getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
+- getKeyDescriptor():com.intellij.util.io.KeyDescriptor
+- getName():com.intellij.util.indexing.ID
+- getVersion():I
+- needsForwardIndexWhenSharing():Z
+f:com.intellij.find.ngrams.TrigramTextSearchService
+- com.intellij.find.TextSearchService
+- <init>():V
+- isInSearchableScope(com.intellij.openapi.vfs.VirtualFile):Z
+- processFilesWithText(java.lang.String,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):com.intellij.find.TextSearchService$TextSearchResult
+f:com.intellij.ide.todo.TodoFilter
+- java.lang.Cloneable
+- <init>():V
+- <init>(org.jdom.Element,java.util.List):V
+- accept(com.intellij.psi.search.PsiTodoSearchHelper,com.intellij.psi.PsiFile):Z
+- addTodoPattern(com.intellij.psi.search.TodoPattern):V
+- clone():com.intellij.ide.todo.TodoFilter
+- contains(com.intellij.psi.search.TodoPattern):Z
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+- isEmpty():Z
+- iterator():java.util.Iterator
+- removeTodoPattern(com.intellij.psi.search.TodoPattern):V
+- setName(java.lang.String):V
+- writeExternal(org.jdom.Element,com.intellij.psi.search.TodoPattern[]):V
+a:com.intellij.psi.impl.cache.impl.BaseFilterLexer
+- com.intellij.lexer.DelegateLexer
+- com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor
+- p:<init>(com.intellij.lexer.Lexer,com.intellij.psi.impl.cache.impl.OccurrenceConsumer):V
+- pf:addOccurrenceInToken(I):V
+- pf:addOccurrenceInToken(I,I,I):V
+- pf:advanceTodoItemCountsInToken():V
+- s:advanceTodoItemsCount(java.lang.CharSequence,com.intellij.psi.impl.cache.impl.OccurrenceConsumer,com.intellij.psi.impl.cache.impl.BaseFilterLexer$TodoScanningState):V
+- s:createTodoScanningState(com.intellij.psi.search.IndexPattern[]):com.intellij.psi.impl.cache.impl.BaseFilterLexer$TodoScanningState
+- p:getWordCodePointPredicate():java.util.function.IntPredicate
+- f:run(java.lang.CharSequence,C[],I,I):V
+- pf:scanWordsInToken(I,Z,Z):V
+- start(java.lang.CharSequence,I,I,I):V
+f:com.intellij.psi.impl.cache.impl.BaseFilterLexer$TodoScanningState
+- <init>(com.intellij.psi.search.IndexPattern[],java.util.regex.Matcher[]):V
+f:com.intellij.psi.impl.cache.impl.BaseFilterLexerUtil
+- <init>():V
+- s:calcIdEntries(com.intellij.util.indexing.FileContent,com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer):java.util.Map
+- s:calcTodoEntries(com.intellij.util.indexing.FileContent,com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer):java.util.Map
+com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
+- a:createLexer(com.intellij.psi.impl.cache.impl.OccurrenceConsumer):com.intellij.lexer.Lexer
+f:com.intellij.psi.impl.cache.impl.IndexCacheManagerImpl
+- com.intellij.psi.impl.cache.CacheManager
+- <init>(com.intellij.openapi.project.Project):V
+- getFilesWithWord(java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.psi.PsiFile[]
+- getVirtualFilesWithWord(java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):com.intellij.openapi.vfs.VirtualFile[]
+- processFilesWithWord(com.intellij.util.Processor,java.lang.String,S,com.intellij.psi.search.GlobalSearchScope,Z):Z
+- processVirtualFilesWithAllWords(java.util.Collection,S,com.intellij.psi.search.GlobalSearchScope,Z,com.intellij.util.Processor):Z
+f:com.intellij.psi.impl.cache.impl.IndexPatternUtil
+- <init>():V
+- s:getIndexPatterns():com.intellij.psi.search.IndexPattern[]
+f:com.intellij.psi.impl.cache.impl.OccurrenceConsumer
+- <init>(com.intellij.psi.impl.cache.impl.id.IdDataConsumer,Z):V
+- addOccurrence(java.lang.CharSequence,C[],I,I,I):V
+- getOccurrenceCount(com.intellij.psi.search.IndexPattern):I
+- incTodoOccurrence(com.intellij.psi.search.IndexPattern):V
+- isNeedToDo():Z
+f:com.intellij.psi.impl.cache.impl.id.IdDataConsumer
+- <init>():V
+- addOccurrence(java.lang.CharSequence,I,I,I):V
+- addOccurrence(C[],I,I,I):V
+- getResult():java.util.Map
+com.intellij.psi.impl.cache.impl.id.IdIndexer
+- com.intellij.util.indexing.DataIndexer
+- getVersion():I
+f:com.intellij.psi.impl.cache.impl.id.IdIndexers
+- com.intellij.openapi.fileTypes.FileTypeExtension
+- sf:INSTANCE:com.intellij.psi.impl.cache.impl.id.IdIndexers
+f:com.intellij.psi.impl.cache.impl.id.IdTableBuilding
+- s:createCustomFileTypeScanner(com.intellij.ide.highlighter.custom.SyntaxTable):com.intellij.lang.cacheBuilder.WordsScanner
+- s:createDefaultIndexer(com.intellij.lang.cacheBuilder.WordsScanner):com.intellij.psi.impl.cache.impl.id.IdIndexer
+- s:getFileTypeIndexer(com.intellij.openapi.fileTypes.FileType):com.intellij.psi.impl.cache.impl.id.IdIndexer
+- s:isWordCodePoint(I):Z
+- s:scanWords(com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor,java.lang.CharSequence,I,I):V
+- s:scanWords(com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor,java.lang.CharSequence,C[],I,I,Z):V
+- s:scanWords(com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor,java.lang.CharSequence,C[],I,I,Z,java.util.function.IntPredicate):V
+com.intellij.psi.impl.cache.impl.id.IdTableBuilding$ScanWordProcessor
+- a:run(java.lang.CharSequence,C[],I,I):V
+a:com.intellij.psi.impl.cache.impl.id.LexerBasedIdIndexer
+- com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
+- com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
+- <init>():V
+- f:map(com.intellij.util.indexing.FileContent):java.util.Map
+com.intellij.psi.impl.cache.impl.id.LexingIdIndexer
+- com.intellij.psi.impl.cache.impl.id.IdIndexer
+f:com.intellij.psi.impl.cache.impl.id.PlainTextIdIndexer
+- com.intellij.psi.impl.cache.impl.id.IdIndexer
+- <init>():V
+- s:getIdIndexData(com.intellij.util.indexing.FileContent):java.util.Map
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+a:com.intellij.psi.impl.cache.impl.id.ScanningIdIndexer
+- com.intellij.psi.impl.cache.impl.id.IdIndexer
+- <init>():V
+- ps:createProcessor(java.lang.CharSequence,com.intellij.psi.impl.cache.impl.id.IdDataConsumer):com.intellij.util.Processor
+- pa:createScanner():com.intellij.lang.cacheBuilder.WordsScanner
+- getVersion():I
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+a:com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer
+- com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer
+- com.intellij.psi.impl.cache.impl.IdAndToDoScannerBasedOnFilterLexer
+- <init>():V
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+c:com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer
+- com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer
+- <init>():V
+- map(com.intellij.util.indexing.FileContent):java.util.Map
+f:com.intellij.psi.impl.cache.impl.todo.TodoIndexEntry
+- <init>(java.lang.String,Z):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.psi.impl.cache.impl.todo.TodoIndexers
+- com.intellij.openapi.fileTypes.FileTypeExtension
+- sf:INSTANCE:com.intellij.psi.impl.cache.impl.todo.TodoIndexers
+- s:belongsToProject(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- s:needsTodoIndex(com.intellij.util.indexing.IndexedFile):Z
+com.intellij.psi.impl.cache.impl.todo.TodoIndexers$ExtraPlaceChecker
+- a:accept(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.psi.impl.cache.impl.todo.VersionedTodoIndexer
+- com.intellij.util.indexing.DataIndexer
+- <init>():V
+- getVersion():I
+f:com.intellij.psi.impl.search.CachesBasedRefSearcher
+- com.intellij.openapi.application.QueryExecutorBase
+- <init>():V
+- processQuery(com.intellij.psi.search.searches.ReferencesSearch$SearchParameters,com.intellij.util.Processor):V
+f:com.intellij.psi.impl.search.HelperKt
+- sf:runSearch(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.project.Project,com.intellij.util.Query):kotlinx.coroutines.channels.ReceiveChannel
+com.intellij.psi.impl.search.IndexPatternBuilder
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getCharsAllowedInContinuationPrefix(com.intellij.psi.tree.IElementType):java.lang.String
+- a:getCommentEndDelta(com.intellij.psi.tree.IElementType):I
+- a:getCommentStartDelta(com.intellij.psi.tree.IElementType):I
+- getCommentStartDelta(com.intellij.psi.tree.IElementType,java.lang.CharSequence):I
+- a:getCommentTokenSet(com.intellij.psi.PsiFile):com.intellij.psi.tree.TokenSet
+- a:getIndexingLexer(com.intellij.psi.PsiFile):com.intellij.lexer.Lexer
+f:com.intellij.psi.impl.search.LowLevelSearchUtil
+- <init>():V
+- s:processElementsContainingWordInElement(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.PsiElement,com.intellij.util.text.StringSearcher,Z,com.intellij.openapi.progress.ProgressIndicator):Z
+- s:processTexts(java.lang.CharSequence,I,I,com.intellij.util.text.StringSearcher,java.util.function.IntPredicate):Z
+f:com.intellij.psi.impl.search.LowLevelSearchUtilKt
+c:com.intellij.psi.impl.search.PsiSearchHelperImpl
+- com.intellij.psi.search.PsiSearchHelper
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- <init>(com.intellij.openapi.project.Project):V
+- findCommentsContainingIdentifier(java.lang.String,com.intellij.psi.search.SearchScope):com.intellij.psi.PsiElement[]
+- findFilesWithPlainTextWords(java.lang.String):com.intellij.psi.PsiFile[]
+- getCodeUsageScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- getUseScope(com.intellij.psi.PsiElement):com.intellij.psi.search.SearchScope
+- hasIdentifierInFile(com.intellij.psi.PsiFile,java.lang.String):Z
+- isCheapEnoughToSearch(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.psi.PsiFile):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- isCheapEnoughToSearch(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.psi.PsiFile,com.intellij.openapi.progress.ProgressIndicator):com.intellij.psi.search.PsiSearchHelper$SearchCostResult
+- processAllFilesWithWord(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor,Z):Z
+- processAllFilesWithWordInComments(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- processAllFilesWithWordInLiterals(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor):Z
+- processAllFilesWithWordInText(java.lang.String,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.Processor,Z):Z
+- processCandidateFilesForText(com.intellij.psi.search.GlobalSearchScope,S,Z,java.lang.String,com.intellij.util.Processor):Z
+- processCandidateFilesForText(com.intellij.psi.search.GlobalSearchScope,S,Z,Z,java.lang.String,com.intellij.util.Processor):Z
+- processCommentsContainingIdentifier(java.lang.String,com.intellij.psi.search.SearchScope,com.intellij.util.Processor):Z
+- processElementsWithWord(com.intellij.psi.search.SearchScope,java.lang.String,S,java.util.EnumSet,java.lang.String,com.intellij.psi.search.SearchSession,com.intellij.psi.search.TextOccurenceProcessor):Z
+- processElementsWithWord(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z):Z
+- processElementsWithWord(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z,Z):Z
+- processElementsWithWordAsync(com.intellij.psi.search.TextOccurenceProcessor,com.intellij.psi.search.SearchScope,java.lang.String,S,Z):com.intellij.concurrency.AsyncFuture
+- processRequests(com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):Z
+- processRequestsAsync(com.intellij.psi.search.SearchRequestCollector,com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
+- processUsagesInNonJavaFiles(com.intellij.psi.PsiElement,java.lang.String,com.intellij.psi.search.PsiNonJavaFileReferenceProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+- processUsagesInNonJavaFiles(java.lang.String,com.intellij.psi.search.PsiNonJavaFileReferenceProcessor,com.intellij.psi.search.GlobalSearchScope):Z
+- s:shouldProcessInjectedPsi(com.intellij.psi.search.SearchScope):Z
+e:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- java.lang.Enum
+- sf:CASE_SENSITIVE_SEARCH:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- sf:PROCESS_INJECTED_PSI:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- sf:PROCESS_ONLY_JAVA_IDENTIFIERS_IF_POSSIBLE:com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- s:valueOf(java.lang.String):com.intellij.psi.impl.search.PsiSearchHelperImpl$Options
+- s:values():com.intellij.psi.impl.search.PsiSearchHelperImpl$Options[]
+f:com.intellij.psi.impl.search.SearcherQueryExecutor
+- com.intellij.util.QueryExecutor
+- <init>():V
+- execute(com.intellij.psi.search.searches.ReferencesSearch$SearchParameters,com.intellij.util.Processor):Z
+f:com.intellij.psi.impl.search.TodoItemImpl
+- com.intellij.psi.search.TodoItem
+- <init>(com.intellij.psi.PsiFile,I,I,com.intellij.psi.search.TodoPattern,java.util.List):V
+- equals(java.lang.Object):Z
+- getAdditionalTextRanges():java.util.List
+- getFile():com.intellij.psi.PsiFile
+- getPattern():com.intellij.psi.search.TodoPattern
+- getTextRange():com.intellij.openapi.util.TextRange
+- hashCode():I
+com.intellij.psi.stubs.PrebuiltStubsProvider
+- a:findStub(com.intellij.util.indexing.FileContent):com.intellij.psi.stubs.SerializedStubTree
+f:com.intellij.psi.stubs.SerializedStubTreeDataExternalizer
+- com.intellij.util.io.DataExternalizer
+- <init>(com.intellij.psi.stubs.StubTreeSerializer,com.intellij.psi.stubs.StubForwardIndexExternalizer):V
+- read(java.io.DataInput):com.intellij.psi.stubs.SerializedStubTree
+- save(java.io.DataOutput,com.intellij.psi.stubs.SerializedStubTree):V
+f:com.intellij.psi.stubs.ShareableStubTreeSerializer
+- com.intellij.psi.stubs.StubTreeSerializer
+- <init>():V
+- deserialize(java.io.InputStream):com.intellij.psi.stubs.Stub
+- serialize(com.intellij.psi.stubs.Stub,java.io.OutputStream):V
+a:com.intellij.psi.stubs.StubForwardIndexExternalizer
+- com.intellij.util.io.DataExternalizer
+- p:<init>():V
+- p:<init>(Z):V
+- s:createFileLocalExternalizer():com.intellij.psi.stubs.StubForwardIndexExternalizer
+- pa:createStubIndexKeySerializationState(java.io.DataInput,I):java.lang.Object
+- pa:createStubIndexKeySerializationState(java.io.DataOutput,java.util.Set):java.lang.Object
+- p:doRead(java.io.DataInput,com.intellij.psi.stubs.StubIndexKey,java.lang.Object):java.util.Map
+- s:getIdeUsedExternalizer():com.intellij.psi.stubs.StubForwardIndexExternalizer
+- f:read(java.io.DataInput):java.util.Map
+- pa:readStubIndexKey(java.io.DataInput,java.lang.Object):com.intellij.util.indexing.ID
+- f:save(java.io.DataOutput,java.util.Map):V
+- pa:writeStubIndexKey(java.io.DataOutput,com.intellij.psi.stubs.StubIndexKey,java.lang.Object):V
+f:com.intellij.psi.stubs.StubIdExternalizer
+- com.intellij.util.io.DataExternalizer
+- sf:INSTANCE:com.intellij.psi.stubs.StubIdExternalizer
+- <init>():V
+- read(java.io.DataInput):com.intellij.psi.stubs.StubIdList
+- save(java.io.DataOutput,com.intellij.psi.stubs.StubIdList):V
+f:com.intellij.psi.stubs.StubProcessingHelper
+- com.intellij.psi.stubs.StubProcessingHelperBase
+- <init>():V
+- retrieveStubIdList(com.intellij.psi.stubs.StubIndexKey,java.lang.Object,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z):com.intellij.psi.stubs.StubIdList
+a:com.intellij.psi.stubs.StubProcessingHelperBase
+- psf:LOG:com.intellij.openapi.diagnostic.Logger
+- <init>():V
+- ps:getFileTypeInfo(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.lang.String
+- pa:onInternalError(com.intellij.openapi.vfs.VirtualFile):V
+- processStubsInFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.stubs.StubIdList,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,java.lang.Class,com.intellij.openapi.util.Computable):Z
+com.intellij.psi.stubs.StubTreeSerializer
+- a:deserialize(java.io.InputStream):com.intellij.psi.stubs.Stub
+- a:serialize(com.intellij.psi.stubs.Stub,java.io.OutputStream):V
+f:com.intellij.psi.stubs.StubUpdatingIndex
+- com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
+- com.intellij.util.indexing.CustomImplementationFileBasedIndexExtension
+- sf:INDEX_ID:com.intellij.util.indexing.ID
+- sf:USE_SNAPSHOT_MAPPINGS:Z
+- <init>():V
+- <init>(com.intellij.psi.stubs.StubForwardIndexExternalizer,com.intellij.psi.stubs.SerializationManagerEx):V
+- s:canHaveStub(com.intellij.openapi.vfs.VirtualFile):Z
+- createIndexImplementation(com.intellij.util.indexing.FileBasedIndexExtension,com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout):com.intellij.util.indexing.UpdatableIndex
+- enableWal():Z
+- getCacheSize():I
+- getIndexer():com.intellij.util.indexing.SingleEntryIndexer
+- getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
+- getName():com.intellij.util.indexing.ID
+- getValueExternalizer():com.intellij.util.io.DataExternalizer
+- getVersion():I
+- handleInitializationError(java.lang.Throwable):V
+f:com.intellij.util.indexing.AdditionalIndexableFileSet
+- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,java.util.List):V
+- isInSet(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.util.indexing.AdditionalIndexedRootsScope
+- com.intellij.psi.search.GlobalSearchScope
+- <init>(com.intellij.psi.search.GlobalSearchScope):V
+- <init>(com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IndexableFileSet):V
+- <init>(com.intellij.psi.search.GlobalSearchScope,java.lang.Class):V
+- compare(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):I
+- contains(com.intellij.openapi.vfs.VirtualFile):Z
+- isSearchInLibraries():Z
+- isSearchInModuleContent(com.intellij.openapi.module.Module):Z
+com.intellij.util.indexing.CustomImplementationFileBasedIndexExtension
+- a:createIndexImplementation(com.intellij.util.indexing.FileBasedIndexExtension,com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout):com.intellij.util.indexing.UpdatableIndex
+- handleInitializationError(java.lang.Throwable):V
+f:com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup
+- com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode
+- <init>():V
+- runActivity(com.intellij.openapi.project.Project):V
+*e:com.intellij.util.indexing.FileIndexingState
+- java.lang.Enum
+- sf:NOT_INDEXED:com.intellij.util.indexing.FileIndexingState
+- sf:OUT_DATED:com.intellij.util.indexing.FileIndexingState
+- sf:UP_TO_DATE:com.intellij.util.indexing.FileIndexingState
+- updateRequired():Z
+- s:valueOf(java.lang.String):com.intellij.util.indexing.FileIndexingState
+- s:values():com.intellij.util.indexing.FileIndexingState[]
+f:com.intellij.util.indexing.IndexDataComparer
+- sf:INSTANCE:com.intellij.util.indexing.IndexDataComparer
+- f:areIndexedDataOfFileTheSame(com.intellij.util.indexing.FileBasedIndexExtension,java.util.Map,java.util.Map):Z
+- f:areStubTreesTheSame(com.intellij.psi.stubs.SerializedStubTree,com.intellij.psi.stubs.SerializedStubTree):Z
+- f:areValuesTheSame(com.intellij.util.indexing.FileBasedIndexExtension,java.lang.Object,java.lang.Object):Z
+f:com.intellij.util.indexing.IndexDataPresenter
+- sf:INSTANCE:com.intellij.util.indexing.IndexDataPresenter
+- f:getPresentableIndexKey(java.lang.Object):java.lang.String
+- f:getPresentableIndexValue(java.lang.Object):java.lang.String
+- f:getPresentableKeyValueMap(java.util.Map):java.lang.String
+- f:getPresentableSerializedStubTree(com.intellij.psi.stubs.SerializedStubTree):java.lang.String
+- f:getPresentableStub(com.intellij.psi.stubs.Stub):java.lang.String
+f:com.intellij.util.indexing.IndexInfrastructure
+- s:getIndexRootDir(com.intellij.util.indexing.ID):java.nio.file.Path
+- s:getInputIndexStorageFile(com.intellij.util.indexing.ID):java.nio.file.Path
+- s:getPersistentIndexRoot():java.nio.file.Path
+- s:getPersistentIndexRootDir(com.intellij.util.indexing.ID):java.nio.file.Path
+- s:getStorageFile(com.intellij.util.indexing.ID):java.nio.file.Path
+- s:getVersionFile(com.intellij.util.indexing.ID):java.nio.file.Path
+- s:hasIndices():Z
+- s:isIndexesInitializationSuspended():Z
+com.intellij.util.indexing.IndexableFilesIndex
+- a:getIndexingIterators():java.util.List
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.util.indexing.IndexableFilesIndex
+- a:getModuleIndexingIterators(com.intellij.platform.workspace.jps.entities.ModuleEntity,com.intellij.platform.workspace.storage.EntityStorage):java.util.Collection
+- a:getOrigins(java.util.Collection):java.util.Collection
+- a:shouldBeIndexed(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.util.indexing.InputMapExternalizer
+- com.intellij.util.io.DataExternalizer
+- <init>(com.intellij.util.indexing.IndexExtension):V
+- read(java.io.DataInput):java.util.Map
+- save(java.io.DataOutput,java.util.Map):V
+com.intellij.util.indexing.UpdatableIndex
+- com.intellij.util.indexing.InvertedIndex
+- a:cleanupForNextTest():V
+- a:cleanupMemoryStorage():V
+- a:getExtension():com.intellij.util.indexing.IndexExtension
+- a:getFileIndexMetaData(com.intellij.util.indexing.IndexedFile):java.lang.Object
+- a:getIndexedFileData(I):java.util.Map
+- a:getIndexingStateForFile(I,com.intellij.util.indexing.IndexedFile):com.intellij.util.indexing.FileIndexingState
+- a:getLock():java.util.concurrent.locks.ReadWriteLock
+- a:getModificationStamp():J
+- a:invalidateIndexedStateForFile(I):V
+- a:isDirty():Z
+- a:processAllKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- a:removeTransientDataForFile(I):V
+- a:removeTransientDataForKeys(I,com.intellij.util.indexing.impl.InputDataDiffBuilder):V
+- a:setBufferingEnabled(Z):V
+- setIndexedStateForFile(I,com.intellij.util.indexing.IndexedFile):V
+- setIndexedStateForFile(I,com.intellij.util.indexing.IndexedFile,Z):V
+- setIndexedStateForFileOnFileIndexMetaData(I,java.lang.Object):V
+- setIndexedStateForFileOnFileIndexMetaData(I,java.lang.Object,Z):V
+- a:setUnindexedStateForFile(I):V
+- a:updateWithMap(com.intellij.util.indexing.impl.AbstractUpdateData):V
+com.intellij.util.indexing.VfsAwareIndexStorage
+- com.intellij.util.indexing.impl.IndexStorage
+- a:processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+f:com.intellij.util.indexing.contentQueue.CachedFileContent
+- <init>(com.intellij.openapi.vfs.VirtualFile):V
+- getBytes():B[]
+- getBytesOrEmpty():B[]
+- getTimeStamp():J
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- isWritable():Z
+- setEmptyContent():V
+f:com.intellij.util.indexing.diagnostic.IndexIdRuleValidator
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- <init>():V
+- getRuleId():java.lang.String
+f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting
+- sf:REPORT_INDIVIDUAL_LOOKUPS_TO_OPEN_TELEMETRY:Z
+- <init>():V
+f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationAggregatesCollector
+- sf:MAX_TRACKABLE_DURATION_MS:I
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- getMetrics():java.util.Set
+- s:recordAllKeysLookup(com.intellij.util.indexing.IndexId,Z,J):V
+- s:recordEntriesByKeysLookup(com.intellij.util.indexing.IndexId,Z,J):V
+- s:recordStubEntriesByKeysLookup(com.intellij.util.indexing.IndexId,Z,J):V
+f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector
+- sf:TRACE_OF_ALL_KEYS_LOOKUP:java.lang.ThreadLocal
+- sf:TRACE_OF_ENTRIES_LOOKUP:java.lang.ThreadLocal
+- sf:TRACE_OF_STUB_ENTRIES_LOOKUP:java.lang.ThreadLocal
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- s:lookupAllKeysStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupAllKeysTrace
+- s:lookupEntriesStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
+- s:lookupStubEntriesStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
+f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupAllKeysTrace
+- java.lang.AutoCloseable
+- java.lang.Cloneable
+- f:close():V
+- indexValidationFinished():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupAllKeysTrace
+- lookupFailed():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- f:lookupFinished():V
+- lookupResultSize(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- lookupStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupAllKeysTrace
+- toString():java.lang.String
+- totalKeysIndexed(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- withProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
+- java.lang.AutoCloseable
+- java.lang.Cloneable
+- f:close():V
+- indexValidationFinished():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
+- keysWithAND(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
+- keysWithOR(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
+- lookupFailed():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- f:lookupFinished():V
+- lookupResultSize(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- lookupStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupEntriesByKeysTrace
+- toString():java.lang.String
+- totalKeysIndexed(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- withProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+f:com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
+- java.lang.AutoCloseable
+- java.lang.Cloneable
+- f:close():V
+- indexValidationFinished():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
+- lookupFailed():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- f:lookupFinished():V
+- lookupResultSize(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- lookupStarted(com.intellij.util.indexing.IndexId):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
+- stubTreesDeserializingStarted():com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupStubEntriesByKeyTrace
+- toString():java.lang.String
+- totalKeysIndexed(I):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+- withProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting$IndexOperationFusCollector$LookupTraceBase
+f:com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporter
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+e:com.intellij.util.indexing.diagnostic.ScanningType
+- java.lang.Enum
+- sf:Companion:com.intellij.util.indexing.diagnostic.ScanningType$Companion
+- sf:FULL:com.intellij.util.indexing.diagnostic.ScanningType
+- sf:FULL_FORCED:com.intellij.util.indexing.diagnostic.ScanningType
+- sf:FULL_ON_PROJECT_OPEN:com.intellij.util.indexing.diagnostic.ScanningType
+- sf:PARTIAL:com.intellij.util.indexing.diagnostic.ScanningType
+- sf:PARTIAL_FORCED:com.intellij.util.indexing.diagnostic.ScanningType
+- sf:REFRESH:com.intellij.util.indexing.diagnostic.ScanningType
+- s:getEntries():kotlin.enums.EnumEntries
+- f:isFull():Z
+- s:valueOf(java.lang.String):com.intellij.util.indexing.diagnostic.ScanningType
+- s:values():com.intellij.util.indexing.diagnostic.ScanningType[]
+f:com.intellij.util.indexing.diagnostic.ScanningType$Companion
+- f:merge(com.intellij.util.indexing.diagnostic.ScanningType,com.intellij.util.indexing.diagnostic.ScanningType):com.intellij.util.indexing.diagnostic.ScanningType
+f:com.intellij.util.indexing.diagnostic.StubInconsistencyFusCollector
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+f:com.intellij.util.indexing.events.VfsEventsMerger
+- <init>():V
+- getChangedFiles():java.util.Iterator
+- processChanges(com.intellij.util.indexing.events.VfsEventsMerger$VfsEventProcessor):Z
+- s:tryLog(java.lang.String,I):V
+- s:tryLog(java.lang.String,com.intellij.openapi.vfs.VirtualFile):V
+- s:tryLog(java.lang.String,com.intellij.openapi.vfs.VirtualFile,java.util.function.Supplier):V
+- s:tryLog(java.lang.String,com.intellij.util.indexing.IndexedFile,java.util.function.Supplier):V
+- s:tryLog(java.util.function.Supplier):V
+f:com.intellij.util.indexing.events.VfsEventsMerger$ChangeInfo
+- toString():java.lang.String
+com.intellij.util.indexing.events.VfsEventsMerger$VfsEventProcessor
+- endBatch():V
+- a:process(com.intellij.util.indexing.events.VfsEventsMerger$ChangeInfo):Z
+f:com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint
+- com.intellij.util.indexing.FileBasedIndex$InputFilter
+- sf:INSTANCE:com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint
+- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- sf:INSTANCE:com.intellij.util.indexing.hints.AcceptAllRegularFilesIndexingHint
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*a:com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- com.intellij.util.indexing.FileBasedIndex$ProjectSpecificInputFilter
+- com.intellij.util.indexing.hints.FileTypeIndexingHint
+- <init>(com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy):V
+- a:acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- f:acceptInput(com.intellij.util.indexing.IndexedFile):Z
+- f:acceptsFileTypeFastPath(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+*a:com.intellij.util.indexing.hints.BaseWeakBinaryFileInputFilter
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+e:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- java.lang.Enum
+- sf:BINARY:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- sf:BINARY_OR_NON_BINARY:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- sf:NON_BINARY:com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.indexing.hints.BinaryFileTypePolicy
+- s:values():com.intellij.util.indexing.hints.BinaryFileTypePolicy[]
+*f:com.intellij.util.indexing.hints.ExactFileNameInputFilter
+- com.intellij.util.indexing.hints.BaseWeakBinaryFileInputFilter
+- <init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy):V
+- b:<init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.FileNameExtensionInputFilter
+- com.intellij.util.indexing.hints.BaseWeakBinaryFileInputFilter
+- <init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy):V
+- b:<init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.FileNameSuffixInputFilter
+- com.intellij.util.indexing.hints.BaseWeakBinaryFileInputFilter
+- <init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy):V
+- b:<init>(java.lang.String,Z,com.intellij.util.indexing.hints.BinaryFileTypePolicy,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+*f:com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy,kotlin.jvm.functions.Function1):V
+- <init>(kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.fileTypes.FileType[]):V
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+e:com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- java.lang.Enum
+- sf:AFTER_SUBSTITUTION:com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- sf:BEFORE_SUBSTITUTION:com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy
+- s:values():com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy[]
+*f:com.intellij.util.indexing.hints.NonBinaryFileTypeInputFilter
+- com.intellij.util.indexing.hints.BaseFileTypeInputFilter
+- <init>(com.intellij.util.indexing.FileBasedIndex$InputFilter):V
+- acceptFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.util.ThreeState
+- slowPathIfFileTypeHintUnsure(com.intellij.util.indexing.IndexedFile):Z
+f:com.intellij.util.indexing.hints.RejectAllIndexingHint
+- com.intellij.util.indexing.FileBasedIndex$InputFilter
+- sf:INSTANCE:com.intellij.util.indexing.hints.RejectAllIndexingHint
+- acceptInput(com.intellij.openapi.vfs.VirtualFile):Z
+c:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor
+- com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor
+- <init>(com.intellij.util.indexing.IndexExtension):V
+- convertToDataType(com.intellij.util.indexing.impl.InputData):java.lang.Void
+- p:convertToMap(I,java.lang.Void):java.util.Map
+- createDiffBuilderByMap(I,java.util.Map):com.intellij.util.indexing.impl.InputDataDiffBuilder
+- f:getDiffBuilder(I,com.intellij.openapi.util.io.ByteArraySequence):com.intellij.util.indexing.impl.InputDataDiffBuilder
+- f:serializeIndexedData(com.intellij.util.indexing.impl.InputData):com.intellij.openapi.util.io.ByteArraySequence
+f:com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor$SingleValueDiffBuilder
+- com.intellij.util.indexing.impl.DirectInputDataDiffBuilder
+- <init>(I,java.util.Map):V
+- differentiate(java.util.Map,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.KeyValueUpdateProcessor,com.intellij.util.indexing.impl.RemovedKeyProcessor):Z
+- getKeys():java.util.Collection
+f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
+- sf:INSTANCE:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout
+- f:createIndexStorage(com.intellij.util.indexing.FileBasedIndexExtension,com.intellij.util.io.StorageLockContext):com.intellij.util.indexing.VfsAwareIndexStorage
+- f:getAvailableLayouts():java.util.List
+- sf:getLayout(com.intellij.util.indexing.FileBasedIndexExtension):com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+- sf:getUsedLayoutId():java.lang.String
+f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout$DefaultStorageLayout
+- <init>(com.intellij.util.indexing.FileBasedIndexExtension):V
+- clearIndexData():V
+- getForwardIndexAccessor():com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
+- openForwardIndex():com.intellij.util.indexing.impl.forward.ForwardIndex
+- openIndexStorage():com.intellij.util.indexing.impl.IndexStorage
+f:com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout$SingleEntryStorageLayout
+- clearIndexData():V
+- getForwardIndexAccessor():com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
+- openForwardIndex():com.intellij.util.indexing.impl.forward.ForwardIndex
+- openIndexStorage():com.intellij.util.indexing.impl.IndexStorage
+f:com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
+- sf:INSTANCE:com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings
+- f:getUsedLayout():com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
+- f:loadUsedLayout():Z
+- f:resetUsedLayout():V
+- f:saveCurrentLayout():V
+- f:setUsedLayout(com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean):V
+f:com.intellij.util.indexing.impl.storage.InMemoryStorageLayout
+- <init>(com.intellij.util.indexing.FileBasedIndexExtension):V
+- clearIndexData():V
+- getForwardIndexAccessor():com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
+- openForwardIndex():com.intellij.util.indexing.impl.forward.ForwardIndex
+- openIndexStorage():com.intellij.util.indexing.impl.IndexStorage
+f:com.intellij.util.indexing.impl.storage.InMemoryStorageLayoutProvider
+- <init>():V
+- getLayout(com.intellij.util.indexing.FileBasedIndexExtension):com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+f:com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage
+- com.intellij.util.indexing.VfsAwareIndexStorage
+- <init>(com.intellij.util.indexing.impl.IndexStorage,com.intellij.util.indexing.FileBasedIndexExtension):V
+- addBufferingStateListener(com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage$BufferingStateListener):V
+- addValue(java.lang.Object,I,java.lang.Object):V
+- clear():V
+- clearCaches():V
+- clearMemoryMap():Z
+- clearMemoryMapForId(java.lang.Object,I):Z
+- close():V
+- fireMemoryStorageCleared():V
+- flush():V
+- isDirty():Z
+- keysCountApproximately():I
+- processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- read(java.lang.Object):com.intellij.util.indexing.ValueContainer
+- removeAllValues(java.lang.Object,I):V
+- setBufferingEnabled(Z):V
+com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage$BufferingStateListener
+- a:bufferingStateChanged(Z):V
+- a:memoryStorageCleared():V
+c:com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
+- com.intellij.util.indexing.impl.MapIndexStorage
+- com.intellij.util.indexing.VfsAwareIndexStorage
+- <init>(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,I,Z):V
+- <init>(java.nio.file.Path,com.intellij.util.io.KeyDescriptor,com.intellij.util.io.DataExternalizer,I,Z,Z,Z):V
+- addValue(java.lang.Object,I,java.lang.Object):V
+- clear():V
+- close():V
+- flush():V
+- p:initMapAndCache():V
+- processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- removeAllValues(java.lang.Object,I):V
+f:com.intellij.util.indexing.memory.InMemoryForwardIndex
+- com.intellij.util.indexing.impl.forward.ForwardIndex
+- <init>():V
+- clear():V
+- close():V
+- force():V
+- get(java.lang.Integer):com.intellij.openapi.util.io.ByteArraySequence
+- isDirty():Z
+- keysCountApproximately():I
+- put(java.lang.Integer,com.intellij.openapi.util.io.ByteArraySequence):V
+f:com.intellij.util.indexing.memory.InMemoryIndexStorage
+- com.intellij.util.indexing.VfsAwareIndexStorage
+- <init>(com.intellij.util.io.KeyDescriptor):V
+- addValue(java.lang.Object,I,java.lang.Object):V
+- clear():V
+- clearCaches():V
+- close():V
+- flush():V
+- isDirty():Z
+- keysCountApproximately():I
+- processKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- read(java.lang.Object):com.intellij.util.indexing.ValueContainer
+- removeAllValues(java.lang.Object,I):V
+*a:com.intellij.util.indexing.storage.MapReduceIndexBase
+- com.intellij.util.indexing.impl.MapReduceIndex
+- com.intellij.util.indexing.UpdatableIndex
+- p:<init>(com.intellij.util.indexing.IndexExtension,com.intellij.openapi.util.ThrowableComputable,com.intellij.openapi.util.ThrowableComputable,com.intellij.util.indexing.impl.forward.ForwardIndexAccessor):V
+- checkCanceled():V
+- cleanupForNextTest():V
+- cleanupMemoryStorage():V
+- getIndexedFileData(I):java.util.Map
+- pa:getLogger():com.intellij.openapi.diagnostic.Logger
+- p:getNullableIndexedData(I):java.util.Map
+- processAllKeys(com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope,com.intellij.util.indexing.IdFilter):Z
+- removeTransientDataForFile(I):V
+- removeTransientDataForKeys(I,com.intellij.util.indexing.impl.InputDataDiffBuilder):V
+- setBufferingEnabled(Z):V
+- updateWithMap(com.intellij.util.indexing.impl.AbstractUpdateData):V
+*:com.intellij.util.xml.AttributeIterator
+- a:localName():java.lang.String
+- a:namespacePrefix():java.lang.String
+- a:namespaceUri():java.lang.String
+- a:next():Z
+- a:value():java.lang.String
+- a:valueAsInt():I
+com.intellij.util.xml.NanoXmlBuilder
+- net.n3.nanoxml.IXMLBuilder
+- addAttribute(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- addPCData(java.io.Reader,java.lang.String,I):V
+- elementAttributesProcessed(java.lang.String,java.lang.String,java.lang.String):V
+- endElement(java.lang.String,java.lang.String,java.lang.String):V
+- getResult():java.lang.Object
+- newProcessingInstruction(java.lang.String,java.io.Reader):V
+- startBuilding(java.lang.String,I):V
+- startElement(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
+- s:stop():V
+f:com.intellij.util.xml.NanoXmlUtil
+- s:createLocation(java.lang.String[]):java.lang.String
+- s:parse(java.io.InputStream,net.n3.nanoxml.IXMLBuilder):V
+- s:parse(java.io.Reader,net.n3.nanoxml.IXMLBuilder):V
+- s:parse(java.io.Reader,net.n3.nanoxml.IXMLBuilder,net.n3.nanoxml.IXMLValidator):V
+- s:parse(net.n3.nanoxml.StdXMLReader,net.n3.nanoxml.IXMLBuilder):V
+- s:parse(net.n3.nanoxml.StdXMLReader,net.n3.nanoxml.IXMLBuilder,net.n3.nanoxml.IXMLValidator):V
+- s:parseHeader(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.xml.XmlFileHeader
+- s:parseHeader(com.intellij.psi.PsiFile):com.intellij.util.xml.XmlFileHeader
+- s:parseHeader(java.io.Reader):com.intellij.util.xml.XmlFileHeader
+- s:parseHeaderWithException(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.xml.XmlFileHeader
+- s:parseHeaderWithException(java.io.Reader):com.intellij.util.xml.XmlFileHeader
+c:com.intellij.util.xml.NanoXmlUtil$BaseXmlBuilder
+- com.intellij.util.xml.NanoXmlBuilder
+- <init>():V
+- endElement(java.lang.String,java.lang.String,java.lang.String):V
+- p:getLocation():java.lang.String
+- ps:readText(java.io.Reader):java.lang.String
+- startBuilding(java.lang.String,I):V
+- startElement(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
+c:com.intellij.util.xml.NanoXmlUtil$EmptyValidator
+- net.n3.nanoxml.NonValidator
+- <init>():V
+- attributeAdded(java.lang.String,java.lang.String,java.lang.String,I):V
+- elementAttributesProcessed(java.lang.String,java.util.Properties,java.lang.String,I):V
+- elementStarted(java.lang.String,java.lang.String,I):V
+a:com.intellij.util.xml.NanoXmlUtil$IXMLBuilderAdapter
+- com.intellij.util.xml.NanoXmlBuilder
+- <init>():V
+f:com.intellij.util.xml.NanoXmlUtil$ParserStoppedXmlException
+- net.n3.nanoxml.XMLException
+- sf:INSTANCE:com.intellij.util.xml.NanoXmlUtil$ParserStoppedXmlException
+- fillInStackTrace():java.lang.Throwable
+*:com.intellij.util.xml.XmlProcessor
+- content(C[],I,I):V
+- endElement(java.lang.String,java.lang.String):Z
+- a:startElement(java.lang.String,java.lang.String,java.lang.String,com.intellij.util.xml.AttributeIterator):Z
+f:com.intellij.util.xml.XmlProcessorUtil
+- sf:parseXml(java.io.InputStream,com.intellij.util.xml.XmlProcessor):V
+- sf:parseXml(java.io.Reader,com.intellij.util.xml.XmlProcessor):V
+- sf:parseXmlHeader(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.xml.XmlFileHeader
+- sf:parseXmlHeader(com.intellij.psi.PsiFile):com.intellij.util.xml.XmlFileHeader
+- sf:parseXmlHeader(java.io.Reader):com.intellij.util.xml.XmlFileHeader

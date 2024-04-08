@@ -1,0 +1,8 @@
+f:kotlin.coroutines.jvm.internal.CoroutineDumpState
+- <init>():V
+- s:install():V
+f:kotlin.coroutines.jvm.internal.DebugProbesKt
+- <init>():V
+- s:probeCoroutineCreated(kotlin.coroutines.Continuation):kotlin.coroutines.Continuation
+- s:probeCoroutineResumed(kotlin.coroutines.Continuation):V
+- s:probeCoroutineSuspended(kotlin.coroutines.Continuation):V

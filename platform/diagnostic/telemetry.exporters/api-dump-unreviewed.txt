@@ -1,0 +1,171 @@
+f:com.intellij.platform.diagnostic.telemetry.exporters.AnyValue
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.AnyValue$Companion
+- f:string:java.lang.String
+- <init>():V
+- <init>(java.lang.String):V
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.AnyValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.AnyValue$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.AnyValue
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.AnyValue):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.AnyValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope$Companion
+- f:attributes:java.util.List
+- f:name:java.lang.String
+- f:version:java.lang.String
+- <init>(java.lang.String,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporterKt
+f:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue$Companion
+- f:key:java.lang.String
+- f:value:com.intellij.platform.diagnostic.telemetry.exporters.AnyValue
+- <init>(java.lang.String,com.intellij.platform.diagnostic.telemetry.exporters.AnyValue):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.KeyValue
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.KeyValue):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.KeyValue$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.OltpKt
+- sf:normalizeOtlpEndPoint(java.lang.String):java.lang.String
+f:com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter
+- f:export(java.net.URI,B[],com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol):V
+e:com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol
+- java.lang.Enum
+- sf:JSON:com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol
+- sf:PROTOBUF:com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol
+- f:getContentType():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol
+- s:values():com.intellij.platform.diagnostic.telemetry.exporters.OpenTelemetryRawTraceExporter$Protocol[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.ReentrantMutexKt
+f:com.intellij.platform.diagnostic.telemetry.exporters.Resource
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.Resource$Companion
+- f:attributes:java.util.List
+- f:droppedAttributesCount:I
+- <init>():V
+- <init>(java.util.List,I):V
+- b:<init>(java.util.List,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.Resource$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.Resource$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.Resource
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.Resource):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.Resource$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans$Companion
+- f:resource:com.intellij.platform.diagnostic.telemetry.exporters.Resource
+- f:schemaUrl:java.lang.String
+- f:scopeSpans:java.util.List
+- <init>():V
+- <init>(com.intellij.platform.diagnostic.telemetry.exporters.Resource,java.util.List,java.lang.String):V
+- b:<init>(com.intellij.platform.diagnostic.telemetry.exporters.Resource,java.util.List,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.ResourceSpans$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans$Companion
+- f:schemaUrl:java.lang.String
+- f:scope:com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope
+- f:spans:java.util.List
+- <init>():V
+- <init>(com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope,java.util.List,java.lang.String):V
+- b:<init>(com.intellij.platform.diagnostic.telemetry.exporters.InstrumentationScope,java.util.List,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.ScopeSpans$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.Span
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.Span$Companion
+- f:attributes:java.util.List
+- f:endTimeUnixNano:J
+- f:kind:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- f:name:java.lang.String
+- f:parentSpanId:B[]
+- f:spanId:B[]
+- f:startTimeUnixNano:J
+- f:traceId:B[]
+- f:traceState:java.lang.String
+- <init>(B[],B[],java.lang.String,B[],java.lang.String,com.intellij.platform.diagnostic.telemetry.exporters.SpanKind,J,J,java.util.List):V
+- b:<init>(B[],B[],java.lang.String,B[],java.lang.String,com.intellij.platform.diagnostic.telemetry.exporters.SpanKind,J,J,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.Span$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.Span$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.Span
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.Span):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.Span$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+e:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- java.lang.Enum
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind$Companion
+- sf:SPAN_KIND_CLIENT:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- sf:SPAN_KIND_CONSUMER:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- sf:SPAN_KIND_INTERNAL:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- sf:SPAN_KIND_PRODUCER:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- sf:SPAN_KIND_SERVER:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- sf:SPAN_KIND_UNSPECIFIED:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.diagnostic.telemetry.exporters.SpanKind
+- s:values():com.intellij.platform.diagnostic.telemetry.exporters.SpanKind[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.SpanKind$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.TracesData
+- sf:Companion:com.intellij.platform.diagnostic.telemetry.exporters.TracesData$Companion
+- f:resourceSpans:java.util.List
+- <init>():V
+- <init>(java.util.List):V
+- b:<init>(java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.diagnostic.telemetry.exporters.TracesData$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.diagnostic.telemetry.exporters.TracesData$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.diagnostic.telemetry.exporters.TracesData
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.diagnostic.telemetry.exporters.TracesData):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.diagnostic.telemetry.exporters.TracesData$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporterKt
+f:com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporterKt

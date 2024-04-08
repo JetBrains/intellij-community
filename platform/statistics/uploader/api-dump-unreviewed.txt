@@ -1,0 +1,102 @@
+f:com.intellij.internal.statistic.eventLog.DefaultEventLogFilesProvider
+- com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+- <init>(java.nio.file.Path,kotlin.jvm.functions.Function0):V
+- getLogFiles():java.util.List
+- getLogFilesExceptActive():java.util.List
+f:com.intellij.internal.statistic.eventLog.DefaultFilesToSendProvider
+- com.intellij.internal.statistic.eventLog.FilesToSendProvider
+- <init>(com.intellij.internal.statistic.eventLog.EventLogFilesProvider,I,Z):V
+- getFilesToSend():java.util.List
+f:com.intellij.internal.statistic.eventLog.EventLogFile
+- sf:Companion:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
+- <init>(java.io.File):V
+- f:component1():java.io.File
+- f:copy(java.io.File):com.intellij.internal.statistic.eventLog.EventLogFile
+- bs:copy$default(com.intellij.internal.statistic.eventLog.EventLogFile,java.io.File,I,java.lang.Object):com.intellij.internal.statistic.eventLog.EventLogFile
+- sf:create(java.nio.file.Path,com.intellij.internal.statistic.config.eventLog.EventLogBuildType,java.lang.String):com.intellij.internal.statistic.eventLog.EventLogFile
+- equals(java.lang.Object):Z
+- f:getFile():java.io.File
+- f:getType(com.intellij.internal.statistic.config.eventLog.EventLogBuildType):com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+- bs:getType$default(com.intellij.internal.statistic.eventLog.EventLogFile,com.intellij.internal.statistic.config.eventLog.EventLogBuildType,I,java.lang.Object):com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.internal.statistic.eventLog.EventLogFile$Companion
+- f:create(java.nio.file.Path,com.intellij.internal.statistic.config.eventLog.EventLogBuildType,java.lang.String):com.intellij.internal.statistic.eventLog.EventLogFile
+com.intellij.internal.statistic.eventLog.EventLogFilesProvider
+- a:getLogFiles():java.util.List
+- a:getLogFilesExceptActive():java.util.List
+com.intellij.internal.statistic.eventLog.EventLogSendConfig
+- a:getBucket():I
+- a:getDeviceId():java.lang.String
+- a:getFilesToSendProvider():com.intellij.internal.statistic.eventLog.FilesToSendProvider
+- a:getMachineId():com.intellij.internal.statistic.eventLog.MachineId
+- a:getRecorderId():java.lang.String
+- isEscapingEnabled():Z
+- a:isSendEnabled():Z
+com.intellij.internal.statistic.eventLog.FilesToSendProvider
+- a:getFilesToSend():java.util.List
+f:com.intellij.internal.statistic.eventLog.LogEventDeserializer
+- <init>(com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger):V
+- f:fromString(java.lang.String):com.jetbrains.fus.reporting.model.lion3.LogEvent
+- f:getLogger():com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger
+f:com.intellij.internal.statistic.eventLog.LogEventJsonDeserializer
+- com.fasterxml.jackson.databind.JsonDeserializer
+- <init>():V
+- f:createAction(com.fasterxml.jackson.databind.JsonNode):com.jetbrains.fus.reporting.model.lion3.LogEventAction
+- deserialize(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):com.jetbrains.fus.reporting.model.lion3.LogEvent
+f:com.intellij.internal.statistic.eventLog.LogEventRecord
+- <init>(java.util.List):V
+- equals(java.lang.Object):Z
+- f:getEvents():java.util.List
+- hashCode():I
+f:com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+- sf:Companion:com.intellij.internal.statistic.eventLog.LogEventRecordRequest$Companion
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.util.List,Z):V
+- equals(java.lang.Object):Z
+- f:getDevice():java.lang.String
+- f:getInternal():Z
+- f:getProduct():java.lang.String
+- f:getRecorder():java.lang.String
+- f:getRecords():java.util.List
+- hashCode():I
+f:com.intellij.internal.statistic.eventLog.LogEventRecordRequest$Companion
+- f:create(java.io.File,java.lang.String,java.lang.String,java.lang.String,I,com.intellij.internal.statistic.eventLog.filters.LogEventFilter,Z,com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger,com.intellij.internal.statistic.eventLog.MachineId,Z):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+- f:create(java.io.File,java.lang.String,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.filters.LogEventFilter,Z,com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger,com.intellij.internal.statistic.eventLog.MachineId,Z):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+- bs:create$default(com.intellij.internal.statistic.eventLog.LogEventRecordRequest$Companion,java.io.File,java.lang.String,java.lang.String,java.lang.String,I,com.intellij.internal.statistic.eventLog.filters.LogEventFilter,Z,com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger,com.intellij.internal.statistic.eventLog.MachineId,Z,I,java.lang.Object):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+- bs:create$default(com.intellij.internal.statistic.eventLog.LogEventRecordRequest$Companion,java.io.File,java.lang.String,java.lang.String,java.lang.String,com.intellij.internal.statistic.eventLog.filters.LogEventFilter,Z,com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger,com.intellij.internal.statistic.eventLog.MachineId,Z,I,java.lang.Object):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+- f:fillMachineId(com.jetbrains.fus.reporting.model.lion3.LogEvent,com.intellij.internal.statistic.eventLog.MachineId):V
+f:com.intellij.internal.statistic.eventLog.LogEventRecordRequestJsonDeserializer
+- com.fasterxml.jackson.databind.JsonDeserializer
+- <init>():V
+- deserialize(com.fasterxml.jackson.core.JsonParser,com.fasterxml.jackson.databind.DeserializationContext):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+f:com.intellij.internal.statistic.eventLog.LogEventRecordSizeEstimator
+- <init>(java.lang.String,java.lang.String):V
+- f:estimate(java.lang.String):I
+f:com.intellij.internal.statistic.eventLog.LogEventSerializer
+- sf:INSTANCE:com.intellij.internal.statistic.eventLog.LogEventSerializer
+- f:toString(com.intellij.internal.statistic.eventLog.LogEventRecordRequest):java.lang.String
+- f:toString(com.intellij.internal.statistic.eventLog.LogEventRecordRequest,java.io.OutputStreamWriter):V
+- f:toString(com.jetbrains.fus.reporting.model.lion3.LogEvent):java.lang.String
+f:com.intellij.internal.statistic.eventLog.MachineId
+- sf:Companion:com.intellij.internal.statistic.eventLog.MachineId$Companion
+- sf:DISABLED:com.intellij.internal.statistic.eventLog.MachineId
+- sf:UNKNOWN:com.intellij.internal.statistic.eventLog.MachineId
+- <init>(java.lang.String,I):V
+- f:component1():java.lang.String
+- f:component2():I
+- f:copy(java.lang.String,I):com.intellij.internal.statistic.eventLog.MachineId
+- bs:copy$default(com.intellij.internal.statistic.eventLog.MachineId,java.lang.String,I,I,java.lang.Object):com.intellij.internal.statistic.eventLog.MachineId
+- equals(java.lang.Object):Z
+- f:getId():java.lang.String
+- f:getRevision():I
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.internal.statistic.eventLog.MachineId$Companion
+f:com.intellij.internal.statistic.eventLog.SerializationHelper
+- sf:INSTANCE:com.intellij.internal.statistic.eventLog.SerializationHelper
+- f:deserializeLogEvent(java.lang.String):com.jetbrains.fus.reporting.model.lion3.LogEvent
+- f:deserializeLogEventRecordRequest(java.lang.String):com.intellij.internal.statistic.eventLog.LogEventRecordRequest
+f:com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser
+- <init>():V
+- s:parse(java.lang.String):java.util.Map
+- s:serialize(java.util.Map):java.lang.String

@@ -1,0 +1,137 @@
+f:com.intellij.execution.wsl.WslProcessToolsKt
+- sf:createProcess(com.intellij.execution.wsl.AbstractWslDistribution,java.lang.String[],com.intellij.execution.wsl.WSLCommandLineOptions):java.lang.Process
+- bs:createProcess$default(com.intellij.execution.wsl.AbstractWslDistribution,java.lang.String[],com.intellij.execution.wsl.WSLCommandLineOptions,I,java.lang.Object):java.lang.Process
+- sf:runCommand(com.intellij.execution.wsl.AbstractWslDistribution,java.lang.String[],com.intellij.execution.wsl.WSLCommandLineOptions):java.lang.Object
+- bs:runCommand$default(com.intellij.execution.wsl.AbstractWslDistribution,java.lang.String[],com.intellij.execution.wsl.WSLCommandLineOptions,I,java.lang.Object):java.lang.Object
+f:com.intellij.execution.wsl.WslProxy
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.execution.wsl.AbstractWslDistribution,I):V
+- dispose():V
+- f:getWslIngressPort():I
+f:com.intellij.execution.wsl.WslToolsKt
+f:com.intellij.execution.wsl.sync.FilePathRelativeToDir
+- <init>(java.lang.String):V
+- equals(java.lang.Object):Z
+- f:getAsUnixPath():java.lang.String
+- f:getAsWindowsPath():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+a:com.intellij.execution.wsl.sync.FileStorage
+- <init>(java.lang.Object,com.intellij.execution.wsl.AbstractWslDistribution):V
+- a:calculateSyncData(com.intellij.execution.wsl.sync.WslHashFilters,Z,Z):com.intellij.execution.wsl.sync.WslSyncData
+- bs:calculateSyncData$default(com.intellij.execution.wsl.sync.FileStorage,com.intellij.execution.wsl.sync.WslHashFilters,Z,Z,I,java.lang.Object):com.intellij.execution.wsl.sync.WslSyncData
+- a:createStubs(java.util.Collection):V
+- a:createSymLinks(java.util.Map):V
+- a:createTempFile():java.lang.Object
+- pf:getDir():java.lang.Object
+- pf:getDistro():com.intellij.execution.wsl.AbstractWslDistribution
+- a:isEmpty():Z
+- a:removeFiles(java.util.Collection):V
+- a:removeLinks(com.intellij.execution.wsl.sync.FilePathRelativeToDir[]):V
+- a:removeTempFile(java.lang.Object):V
+- a:tarAndCopyTo(java.util.Collection,java.lang.Object):V
+- a:unTar(java.lang.Object):V
+f:com.intellij.execution.wsl.sync.LinuxFileStorage
+- com.intellij.execution.wsl.sync.FileStorage
+- <init>(java.lang.String,com.intellij.execution.wsl.AbstractWslDistribution):V
+- calculateSyncData(com.intellij.execution.wsl.sync.WslHashFilters,Z,Z):com.intellij.execution.wsl.sync.WslSyncData
+- createStubs(java.util.Collection):V
+- createSymLinks(java.util.Map):V
+- createTempFile():java.lang.String
+- isEmpty():Z
+- f:markExec(java.lang.String):V
+- removeFiles(java.util.Collection):V
+- removeLinks(com.intellij.execution.wsl.sync.FilePathRelativeToDir[]):V
+- removeTempFile(java.lang.String):V
+- tarAndCopyTo(java.util.Collection,java.nio.file.Path):V
+- unTar(java.lang.String):V
+f:com.intellij.execution.wsl.sync.LinuxFileStorageKt
+f:com.intellij.execution.wsl.sync.WindowsFileStorage
+- com.intellij.execution.wsl.sync.FileStorage
+- <init>(java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution):V
+- calculateSyncData(com.intellij.execution.wsl.sync.WslHashFilters,Z,Z):com.intellij.execution.wsl.sync.WslSyncData
+- createStubs(java.util.Collection):V
+- createSymLinks(java.util.Map):V
+- createTempFile():java.nio.file.Path
+- isEmpty():Z
+- removeFiles(java.util.Collection):V
+- removeLinks(com.intellij.execution.wsl.sync.FilePathRelativeToDir[]):V
+- removeTempFile(java.nio.file.Path):V
+- tarAndCopyTo(java.util.Collection,java.lang.String):V
+- unTar(java.nio.file.Path):V
+f:com.intellij.execution.wsl.sync.WindowsFileStorageKt
+a:com.intellij.execution.wsl.sync.WslHashFilter
+- p:<init>(com.intellij.execution.wsl.sync.WslHashOperator,com.intellij.execution.wsl.sync.WslHashMatcher):V
+- f:matches(java.lang.String):Z
+- f:toArg():java.util.List
+f:com.intellij.execution.wsl.sync.WslHashFilter$WslHashExcludeFilter
+- com.intellij.execution.wsl.sync.WslHashFilter
+- <init>(com.intellij.execution.wsl.sync.WslHashMatcher):V
+f:com.intellij.execution.wsl.sync.WslHashFilter$WslHashIncludeFilter
+- com.intellij.execution.wsl.sync.WslHashFilter
+- <init>(com.intellij.execution.wsl.sync.WslHashMatcher):V
+f:com.intellij.execution.wsl.sync.WslHashFilters
+- sf:Companion:com.intellij.execution.wsl.sync.WslHashFilters$Companion
+- f:isFileNameOk(java.lang.String):Z
+- f:toArgs():java.util.List
+f:com.intellij.execution.wsl.sync.WslHashFilters$Companion
+- f:getEMPTY_FILTERS():com.intellij.execution.wsl.sync.WslHashFilters
+f:com.intellij.execution.wsl.sync.WslHashFilters$WslHashFiltersBuilder
+- <init>():V
+- f:build():com.intellij.execution.wsl.sync.WslHashFilters
+- f:exclude(java.lang.Iterable):com.intellij.execution.wsl.sync.WslHashFilters$WslHashFiltersBuilder
+- f:exclude(com.intellij.execution.wsl.sync.WslHashMatcher[]):com.intellij.execution.wsl.sync.WslHashFilters$WslHashFiltersBuilder
+- f:include(java.lang.Iterable):com.intellij.execution.wsl.sync.WslHashFilters$WslHashFiltersBuilder
+- f:include(com.intellij.execution.wsl.sync.WslHashMatcher[]):com.intellij.execution.wsl.sync.WslHashFilters$WslHashFiltersBuilder
+a:com.intellij.execution.wsl.sync.WslHashMatcher
+- sf:Factory:com.intellij.execution.wsl.sync.WslHashMatcher$Factory
+- <init>(java.lang.String,java.lang.String):V
+- f:getCode():java.lang.String
+- f:getPattern():java.lang.String
+- a:matches(java.lang.String):Z
+f:com.intellij.execution.wsl.sync.WslHashMatcher$Factory
+- f:basename(java.lang.String):com.intellij.execution.wsl.sync.WslHashMatcher
+- f:basenames(java.lang.String[]):com.intellij.execution.wsl.sync.WslHashMatcher[]
+- f:extension(java.lang.String):com.intellij.execution.wsl.sync.WslHashMatcher
+- f:extensions(java.lang.String[]):com.intellij.execution.wsl.sync.WslHashMatcher[]
+- f:fullname(java.lang.String):com.intellij.execution.wsl.sync.WslHashMatcher
+- f:fullnames(java.lang.String[]):com.intellij.execution.wsl.sync.WslHashMatcher[]
+e:com.intellij.execution.wsl.sync.WslHashOperator
+- java.lang.Enum
+- sf:EXCLUDE:com.intellij.execution.wsl.sync.WslHashOperator
+- sf:INCLUDE:com.intellij.execution.wsl.sync.WslHashOperator
+- f:getCode():C
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.execution.wsl.sync.WslHashOperator
+- s:values():com.intellij.execution.wsl.sync.WslHashOperator[]
+f:com.intellij.execution.wsl.sync.WslHashRecord
+- <init>(com.intellij.execution.wsl.sync.FilePathRelativeToDir,J,com.intellij.execution.wsl.sync.FilePathRelativeToDir):V
+- b:<init>(com.intellij.execution.wsl.sync.FilePathRelativeToDir,J,com.intellij.execution.wsl.sync.FilePathRelativeToDir,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getFile():com.intellij.execution.wsl.sync.FilePathRelativeToDir
+- f:getFileLowerCase():com.intellij.execution.wsl.sync.FilePathRelativeToDir
+- f:getHash():J
+f:com.intellij.execution.wsl.sync.WslSync
+- sf:Companion:com.intellij.execution.wsl.sync.WslSync$Companion
+f:com.intellij.execution.wsl.sync.WslSync$Companion
+- f:syncWslFolders(java.lang.String,java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution):V
+- f:syncWslFolders(java.lang.String,java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution,Z):V
+- f:syncWslFolders(java.lang.String,java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution,Z,com.intellij.execution.wsl.sync.WslHashFilters):V
+- f:syncWslFolders(java.lang.String,java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution,Z,com.intellij.execution.wsl.sync.WslHashFilters,Z):V
+- bs:syncWslFolders$default(com.intellij.execution.wsl.sync.WslSync$Companion,java.lang.String,java.nio.file.Path,com.intellij.execution.wsl.AbstractWslDistribution,Z,com.intellij.execution.wsl.sync.WslHashFilters,Z,I,java.lang.Object):V
+f:com.intellij.execution.wsl.sync.WslSyncData
+- <init>():V
+- <init>(java.util.List,java.util.Map,java.util.Set):V
+- b:<init>(java.util.List,java.util.Map,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.List
+- f:component2():java.util.Map
+- f:component3():java.util.Set
+- f:copy(java.util.List,java.util.Map,java.util.Set):com.intellij.execution.wsl.sync.WslSyncData
+- bs:copy$default(com.intellij.execution.wsl.sync.WslSyncData,java.util.List,java.util.Map,java.util.Set,I,java.lang.Object):com.intellij.execution.wsl.sync.WslSyncData
+- equals(java.lang.Object):Z
+- f:getHashes():java.util.List
+- f:getLinks():java.util.Map
+- f:getStubs():java.util.Set
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.execution.wsl.sync.WslSyncKt
+f:com.intellij.execution.wsl.sync.WslSyncSharedKt
