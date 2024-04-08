@@ -358,7 +358,7 @@ context(KtAnalysisSession)
 fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     val calleeText = calleeExpression?.text ?: return false
     val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
-    if (!targetFqNames.iterator().hasNext()) return false
+    if (targetFqNames.none()) return false
 
     val fqName = resolveCall()
         ?.singleFunctionCallOrNull()
