@@ -1,0 +1,11 @@
+com/intellij/configurationStore/StreamProvider
+com/intellij/ide/plugins/IdeaPluginDescriptorImpl
+com/intellij/openapi/roots/impl/ProjectRootManagerImpl$BatchSession
+com/intellij/openapi/roots/impl/RootConfigurationAccessor
+com/intellij/platform/workspace/jps/serialization/impl/FileInDirectorySourceNames
+com/intellij/platform/workspace/jps/serialization/impl/ModulePath
+com/intellij/platform/workspace/storage/VersionedEntityStorage
+com/intellij/workspaceModel/ide/impl/WorkspaceModelImpl
+com/intellij/workspaceModel/ide/impl/legacyBridge/sdk/SdkBridgeImpl
+com/intellij/workspaceModel/ide/legacyBridge/ModuleBridge
+com/intellij/workspaceModel/ide/legacyBridge/ModuleDependencyListener

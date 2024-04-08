@@ -1,0 +1,1212 @@
+f:com.intellij.ProjectTopics
+- sf:MODULES:com.intellij.util.messages.Topic
+- sf:PROJECT_ROOTS:com.intellij.util.messages.Topic
+f:com.intellij.configurationStore.ComponentSerializationUtil
+- <init>():V
+- s:getStateClass(java.lang.Class):java.lang.Class
+- s:loadComponentState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
+c:com.intellij.configurationStore.FileStorageAnnotation
+- com.intellij.openapi.components.Storage
+- pf:path:java.lang.String
+- <init>(java.lang.String,Z):V
+- <init>(java.lang.String,Z,java.lang.Class):V
+- annotationType():java.lang.Class
+- deprecated():Z
+- exclusive():Z
+- exportable():Z
+- file():java.lang.String
+- roamingType():com.intellij.openapi.components.RoamingType
+- stateSplitter():java.lang.Class
+- storageClass():java.lang.Class
+- usePathMacroManager():Z
+- useSaveThreshold():com.intellij.util.ThreeState
+- value():java.lang.String
+@:com.intellij.configurationStore.Property
+- java.lang.annotation.Annotation
+- a:description():java.lang.String
+- a:externalName():java.lang.String
+- a:ignore():Z
+com.intellij.configurationStore.SaveSession
+- com.intellij.configurationStore.StorageManagerFileWriteRequestor
+- a:save(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:saveBlocking():V
+com.intellij.configurationStore.SaveSessionProducer
+- com.intellij.configurationStore.StorageManagerFileWriteRequestor
+- a:createSaveSession():com.intellij.configurationStore.SaveSession
+- a:setState(java.lang.Object,java.lang.String,com.intellij.openapi.extensions.PluginId,java.lang.Object):V
+com.intellij.configurationStore.SettingsSavingComponentJavaAdapter
+- a:doSave():V
+- save(kotlin.coroutines.Continuation):java.lang.Object
+- bs:save$suspendImpl(com.intellij.configurationStore.SettingsSavingComponentJavaAdapter,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.configurationStore.StorageManagerFileWriteRequestor
+f:com.intellij.configurationStore.XmlSerializer
+- sf:deserialize(org.jdom.Element,java.lang.Class):java.lang.Object
+- sf:deserializeAndLoadState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
+- sf:deserializeAndLoadState(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element,java.lang.Class):V
+- bs:deserializeAndLoadState$default(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element,java.lang.Class,I,java.lang.Object):V
+- sf:deserializeInto(org.jdom.Element,java.lang.Object):V
+- sf:serialize(java.lang.Object):org.jdom.Element
+- sf:serialize(java.lang.Object,com.intellij.util.xmlb.SerializationFilter):org.jdom.Element
+- sf:serialize(java.lang.Object,com.intellij.util.xmlb.SerializationFilter,Z):org.jdom.Element
+- bs:serialize$default(java.lang.Object,com.intellij.util.xmlb.SerializationFilter,Z,I,java.lang.Object):org.jdom.Element
+- sf:serializeObjectInto(java.lang.Object,org.jdom.Element):V
+- sf:serializeObjectInto(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter):V
+- bs:serializeObjectInto$default(java.lang.Object,org.jdom.Element,com.intellij.util.xmlb.SerializationFilter,I,java.lang.Object):V
+- sf:serializeStateInto(com.intellij.openapi.components.PersistentStateComponent,org.jdom.Element):V
+f:com.intellij.ide.highlighter.ModuleFileType
+- com.intellij.openapi.fileTypes.InternalFileType
+- sf:DEFAULT_EXTENSION:java.lang.String
+- sf:DOT_DEFAULT_EXTENSION:java.lang.String
+- sf:INSTANCE:com.intellij.ide.highlighter.ModuleFileType
+- getCharset(com.intellij.openapi.vfs.VirtualFile,B[]):java.lang.String
+- getDefaultExtension():java.lang.String
+- getDescription():java.lang.String
+- getDisplayName():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- isBinary():Z
+f:com.intellij.ide.highlighter.ProjectFileType
+- com.intellij.openapi.fileTypes.InternalFileType
+- sf:DEFAULT_EXTENSION:java.lang.String
+- sf:DOT_DEFAULT_EXTENSION:java.lang.String
+- sf:INSTANCE:com.intellij.ide.highlighter.ProjectFileType
+- getCharset(com.intellij.openapi.vfs.VirtualFile,B[]):java.lang.String
+- getDefaultExtension():java.lang.String
+- getDescription():java.lang.String
+- getDisplayName():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- isBinary():Z
+a:com.intellij.openapi.components.BaseState
+- com.intellij.openapi.util.ModificationTracker
+- com.intellij.util.xmlb.SerializationFilter
+- sf:Companion:com.intellij.openapi.components.BaseState$Companion
+- <init>():V
+- accepts(com.intellij.util.xmlb.Accessor,java.lang.Object):Z
+- f:copyFrom(com.intellij.openapi.components.BaseState):V
+- f:copyFrom(com.intellij.openapi.components.BaseState,Z):V
+- bs:copyFrom$default(com.intellij.openapi.components.BaseState,com.intellij.openapi.components.BaseState,Z,I,java.lang.Object):V
+- f:doEnum(java.lang.Enum,java.lang.Class):com.intellij.openapi.components.StoredPropertyBase
+- bs:doEnum$default(com.intellij.openapi.components.BaseState,java.lang.Enum,java.lang.Class,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- equals(java.lang.Object):Z
+- getModificationCount():J
+- hashCode():I
+- pf:incrementModificationCount():V
+- f:isEqualToDefault():Z
+- pf:linkedMap():com.intellij.openapi.components.StoredPropertyBase
+- pf:list():com.intellij.openapi.components.StoredPropertyBase
+- pf:map():com.intellij.openapi.components.StoredPropertyBase
+- pf:property():com.intellij.openapi.components.StoredPropertyBase
+- pf:property(F,kotlin.jvm.functions.Function1):com.intellij.openapi.components.StoredPropertyBase
+- pf:property(I):com.intellij.openapi.components.StoredPropertyBase
+- pf:property(J):com.intellij.openapi.components.StoredPropertyBase
+- pf:property(com.intellij.openapi.components.BaseState):com.intellij.openapi.components.StoredPropertyBase
+- pf:property(java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.openapi.components.StoredPropertyBase
+- pf:property(java.nio.charset.Charset):com.intellij.openapi.components.StoredPropertyBase
+- pf:property(Z):com.intellij.openapi.components.StoredPropertyBase
+- bs:property$default(com.intellij.openapi.components.BaseState,F,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- bs:property$default(com.intellij.openapi.components.BaseState,I,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- bs:property$default(com.intellij.openapi.components.BaseState,J,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- bs:property$default(com.intellij.openapi.components.BaseState,Z,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- f:resetModificationCount():V
+- pf:string(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
+- bs:string$default(com.intellij.openapi.components.BaseState,java.lang.String,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- pf:stringSet():com.intellij.openapi.components.StoredPropertyBase
+- pf:stringSet(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
+- toString():java.lang.String
+- pf:treeSet():com.intellij.openapi.components.StoredPropertyBase
+f:com.intellij.openapi.components.BaseState$Companion
+f:com.intellij.openapi.components.BaseStateKt
+e:com.intellij.openapi.components.JsonSchemaType
+- java.lang.Enum
+- sf:ARRAY:com.intellij.openapi.components.JsonSchemaType
+- sf:BOOLEAN:com.intellij.openapi.components.JsonSchemaType
+- sf:INTEGER:com.intellij.openapi.components.JsonSchemaType
+- sf:NUMBER:com.intellij.openapi.components.JsonSchemaType
+- sf:OBJECT:com.intellij.openapi.components.JsonSchemaType
+- sf:STRING:com.intellij.openapi.components.JsonSchemaType
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getJsonName():java.lang.String
+- f:isScalar():Z
+- s:valueOf(java.lang.String):com.intellij.openapi.components.JsonSchemaType
+- s:values():com.intellij.openapi.components.JsonSchemaType[]
+a:com.intellij.openapi.components.MainConfigurationStateSplitter
+- com.intellij.openapi.components.StateSplitterEx
+- <init>():V
+- pa:getComponentStateFileName():java.lang.String
+- p:getSubStateFileName(org.jdom.Element):java.lang.String
+- pa:getSubStateTagName():java.lang.String
+- f:mergeStateInto(org.jdom.Element,org.jdom.Element):V
+- f:splitState(org.jdom.Element):java.util.List
+com.intellij.openapi.components.PersistentStateComponent
+- a:getState():java.lang.Object
+- initializeComponent():V
+- a:loadState(java.lang.Object):V
+- noStateLoaded():V
+com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+- com.intellij.openapi.components.PersistentStateComponent
+- a:getStateModificationCount():J
+@:com.intellij.openapi.components.ReportValue
+- java.lang.annotation.Annotation
+- a:possibleValues():java.lang.String[]
+com.intellij.openapi.components.ScalarProperty
+- a:parseAndSetValue(java.lang.String):V
+a:com.intellij.openapi.components.SerializablePersistentStateComponent
+- com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+- sf:Companion:com.intellij.openapi.components.SerializablePersistentStateComponent$Companion
+- <init>(java.lang.Object):V
+- f:getState():java.lang.Object
+- f:getStateModificationCount():J
+- loadState(java.lang.Object):V
+- f:setState(java.lang.Object):V
+- pf:updateState(kotlin.jvm.functions.Function1):java.lang.Object
+f:com.intellij.openapi.components.SerializablePersistentStateComponent$Companion
+- f:compareAndSet(com.intellij.openapi.components.SerializablePersistentStateComponent,java.lang.Object,java.lang.Object):Z
+e:com.intellij.openapi.components.SettingsCategory
+- java.lang.Enum
+- sf:CODE:com.intellij.openapi.components.SettingsCategory
+- sf:KEYMAP:com.intellij.openapi.components.SettingsCategory
+- sf:OTHER:com.intellij.openapi.components.SettingsCategory
+- sf:PLUGINS:com.intellij.openapi.components.SettingsCategory
+- sf:SYSTEM:com.intellij.openapi.components.SettingsCategory
+- sf:TOOLS:com.intellij.openapi.components.SettingsCategory
+- sf:UI:com.intellij.openapi.components.SettingsCategory
+- s:valueOf(java.lang.String):com.intellij.openapi.components.SettingsCategory
+- s:values():com.intellij.openapi.components.SettingsCategory[]
+a:com.intellij.openapi.components.SimplePersistentStateComponent
+- com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+- <init>(com.intellij.openapi.components.BaseState):V
+- f:getState():com.intellij.openapi.components.BaseState
+- f:getStateModificationCount():J
+- loadState(com.intellij.openapi.components.BaseState):V
+@:com.intellij.openapi.components.SkipReportingStatistics
+- java.lang.annotation.Annotation
+@:com.intellij.openapi.components.State
+- java.lang.annotation.Annotation
+- a:additionalExportDirectory():java.lang.String
+- a:additionalExportFile():java.lang.String
+- a:allowLoadInTests():Z
+- a:category():com.intellij.openapi.components.SettingsCategory
+- a:defaultStateAsResource():Z
+- a:exportable():Z
+- a:externalStorageOnly():Z
+- *a:getStateRequiresEdt():Z
+- a:name():java.lang.String
+- a:presentableName():java.lang.Class
+- a:reloadable():Z
+- a:reportStatistic():Z
+- a:storages():com.intellij.openapi.components.Storage[]
+a:com.intellij.openapi.components.State$NameGetter
+- java.util.function.Supplier
+- <init>():V
+- a:get():java.lang.String
+com.intellij.openapi.components.StatePropertyFactory
+- a:bool(Z):com.intellij.openapi.components.StoredPropertyBase
+- a:enum(java.lang.Enum,java.lang.Class):com.intellij.openapi.components.StoredPropertyBase
+- a:float(F,kotlin.jvm.functions.Function1):com.intellij.openapi.components.StoredPropertyBase
+- bs:float$default(com.intellij.openapi.components.StatePropertyFactory,F,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- a:int(I):com.intellij.openapi.components.StoredPropertyBase
+- a:list():com.intellij.openapi.components.StoredPropertyBase
+- a:long(J):com.intellij.openapi.components.StoredPropertyBase
+- a:map(java.util.Map):com.intellij.openapi.components.StoredPropertyBase
+- a:obj(java.lang.Object):com.intellij.openapi.components.StoredPropertyBase
+- a:obj(java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.openapi.components.StoredPropertyBase
+- a:stateObject(com.intellij.openapi.components.BaseState):com.intellij.openapi.components.StoredPropertyBase
+- a:string(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
+- a:stringSet(java.lang.String):com.intellij.openapi.components.StoredPropertyBase
+- a:treeSet():com.intellij.openapi.components.StoredPropertyBase
+com.intellij.openapi.components.StateSplitter
+- a:mergeStatesInto(org.jdom.Element,org.jdom.Element[]):V
+- a:splitState(org.jdom.Element):java.util.List
+a:com.intellij.openapi.components.StateSplitterEx
+- com.intellij.openapi.components.StateSplitter
+- <init>():V
+- ps:createItem(java.lang.String,com.intellij.util.text.UniqueNameGenerator,org.jdom.Element):com.intellij.openapi.util.Pair
+- mergeStateInto(org.jdom.Element,org.jdom.Element):V
+- ps:mergeStateInto(org.jdom.Element,org.jdom.Element,java.lang.String):V
+- f:mergeStatesInto(org.jdom.Element,org.jdom.Element[]):V
+- a:splitState(org.jdom.Element):java.util.List
+- ps:splitState(org.jdom.Element,java.lang.String):java.util.List
+com.intellij.openapi.components.StateStorageChooserEx
+- a:getResolution(com.intellij.openapi.components.Storage,com.intellij.openapi.components.StateStorageOperation):com.intellij.openapi.components.StateStorageChooserEx$Resolution
+e:com.intellij.openapi.components.StateStorageChooserEx$Resolution
+- java.lang.Enum
+- sf:CLEAR:com.intellij.openapi.components.StateStorageChooserEx$Resolution
+- sf:DO:com.intellij.openapi.components.StateStorageChooserEx$Resolution
+- sf:SKIP:com.intellij.openapi.components.StateStorageChooserEx$Resolution
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.components.StateStorageChooserEx$Resolution
+- s:values():com.intellij.openapi.components.StateStorageChooserEx$Resolution[]
+e:com.intellij.openapi.components.StateStorageOperation
+- java.lang.Enum
+- sf:READ:com.intellij.openapi.components.StateStorageOperation
+- sf:WRITE:com.intellij.openapi.components.StateStorageOperation
+- s:valueOf(java.lang.String):com.intellij.openapi.components.StateStorageOperation
+- s:values():com.intellij.openapi.components.StateStorageOperation[]
+@:com.intellij.openapi.components.Storage
+- java.lang.annotation.Annotation
+- a:deprecated():Z
+- a:exportable():Z
+- a:file():java.lang.String
+- a:roamingType():com.intellij.openapi.components.RoamingType
+- a:stateSplitter():java.lang.Class
+- a:storageClass():java.lang.Class
+- a:useSaveThreshold():com.intellij.util.ThreeState
+- a:value():java.lang.String
+f:com.intellij.openapi.components.StoragePathMacros
+- sf:APP_INTERNAL_STATE_DB:java.lang.String
+- sf:CACHE_FILE:java.lang.String
+- sf:MODULE_FILE:java.lang.String
+- sf:NON_ROAMABLE_FILE:java.lang.String
+- sf:PRODUCT_WORKSPACE_FILE:java.lang.String
+- sf:WORKSPACE_FILE:java.lang.String
+e:com.intellij.openapi.components.StorageScheme
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.openapi.components.StorageScheme
+- sf:DIRECTORY_BASED:com.intellij.openapi.components.StorageScheme
+- s:valueOf(java.lang.String):com.intellij.openapi.components.StorageScheme
+- s:values():com.intellij.openapi.components.StorageScheme[]
+com.intellij.openapi.components.StoredProperty
+- a:getJsonType():com.intellij.openapi.components.JsonSchemaType
+- getModificationCount():J
+- a:getName():java.lang.String
+- a:getValue(com.intellij.openapi.components.BaseState):java.lang.Object
+- a:isEqualToDefault():Z
+- a:setName(java.lang.String):V
+- a:setValue(com.intellij.openapi.components.BaseState,java.lang.Object):V
+- a:setValue(com.intellij.openapi.components.StoredProperty):Z
+a:com.intellij.openapi.components.StoredPropertyBase
+- com.intellij.openapi.components.StoredProperty
+- kotlin.properties.ReadWriteProperty
+- <init>():V
+- getName():java.lang.String
+- getValue(com.intellij.openapi.components.BaseState,kotlin.reflect.KProperty):java.lang.Object
+- f:provideDelegate(java.lang.Object,java.lang.String):com.intellij.openapi.components.StoredProperty
+- f:provideDelegate(java.lang.Object,kotlin.reflect.KProperty):kotlin.properties.ReadWriteProperty
+- setName(java.lang.String):V
+- setValue(com.intellij.openapi.components.BaseState,kotlin.reflect.KProperty,java.lang.Object):V
+com.intellij.openapi.module.ModifiableModuleModel
+- a:commit():V
+- a:dispose():V
+- a:disposeModule(com.intellij.openapi.module.Module):V
+- a:findModuleByName(java.lang.String):com.intellij.openapi.module.Module
+- a:getActualName(com.intellij.openapi.module.Module):java.lang.String
+- a:getModuleGroupPath(com.intellij.openapi.module.Module):java.lang.String[]
+- a:getModuleToBeRenamed(java.lang.String):com.intellij.openapi.module.Module
+- a:getModules():com.intellij.openapi.module.Module[]
+- a:getNewName(com.intellij.openapi.module.Module):java.lang.String
+- a:getProject():com.intellij.openapi.project.Project
+- a:isChanged():Z
+- a:loadModule(java.lang.String):com.intellij.openapi.module.Module
+- a:loadModule(java.nio.file.Path):com.intellij.openapi.module.Module
+- a:newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
+- newModule(java.nio.file.Path,java.lang.String):com.intellij.openapi.module.Module
+- *:newNonPersistentModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
+- a:renameModule(com.intellij.openapi.module.Module,java.lang.String):V
+- a:setModuleGroupPath(com.intellij.openapi.module.Module,java.lang.String[]):V
+com.intellij.openapi.module.ModuleComponent
+- com.intellij.openapi.components.BaseComponent
+*a:com.intellij.openapi.module.ModuleGrouper
+- *sf:Companion:com.intellij.openapi.module.ModuleGrouper$Companion
+- <init>():V
+- a:getAllModules():com.intellij.openapi.module.Module[]
+- a:getCompactGroupNodes():Z
+- a:getGroupPath(com.intellij.openapi.module.Module):java.util.List
+- a:getGroupPath(com.intellij.openapi.module.ModuleDescription):java.util.List
+- a:getGroupPathByModuleName(java.lang.String):java.util.List
+- a:getModuleAsGroupPath(com.intellij.openapi.module.Module):java.util.List
+- a:getModuleAsGroupPath(com.intellij.openapi.module.ModuleDescription):java.util.List
+- a:getShortenedName(com.intellij.openapi.module.Module):java.lang.String
+- a:getShortenedName(com.intellij.openapi.module.Module,java.lang.String):java.lang.String
+- a:getShortenedNameByFullModuleName(java.lang.String):java.lang.String
+- a:getShortenedNameByFullModuleName(java.lang.String,java.lang.String):java.lang.String
+- sf:instanceFor(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleGrouper
+- sf:instanceFor(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
+*f:com.intellij.openapi.module.ModuleGrouper$Companion
+- f:instanceFor(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleGrouper
+- f:instanceFor(com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
+- bs:instanceFor$default(com.intellij.openapi.module.ModuleGrouper$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.module.ModifiableModuleModel,I,java.lang.Object):com.intellij.openapi.module.ModuleGrouper
+f:com.intellij.openapi.module.ModuleGrouperKt
+- sf:isQualifiedModuleNamesEnabled(com.intellij.openapi.project.Project):Z
+a:com.intellij.openapi.module.ModuleManager
+- com.intellij.openapi.util.SimpleModificationTracker
+- sf:Companion:com.intellij.openapi.module.ModuleManager$Companion
+- <init>():V
+- a:disposeModule(com.intellij.openapi.module.Module):V
+- a:findModuleByName(java.lang.String):com.intellij.openapi.module.Module
+- *a:getAllModuleDescriptions():java.util.Collection
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
+- a:getModifiableModel():com.intellij.openapi.module.ModifiableModuleModel
+- a:getModuleDependentModules(com.intellij.openapi.module.Module):java.util.List
+- a:getModuleGrouper(com.intellij.openapi.module.ModifiableModuleModel):com.intellij.openapi.module.ModuleGrouper
+- a:getModules():com.intellij.openapi.module.Module[]
+- a:getSortedModules():com.intellij.openapi.module.Module[]
+- *a:getUnloadedModuleDescription(java.lang.String):com.intellij.openapi.module.UnloadedModuleDescription
+- *a:getUnloadedModuleDescriptions():java.util.Collection
+- a:isModuleDependent(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module):Z
+- a:loadModule(java.lang.String):com.intellij.openapi.module.Module
+- a:loadModule(java.nio.file.Path):com.intellij.openapi.module.Module
+- a:moduleDependencyComparator():java.util.Comparator
+- a:moduleGraph():com.intellij.util.graph.Graph
+- a:moduleGraph(Z):com.intellij.util.graph.Graph
+- a:newModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
+- f:newModule(java.nio.file.Path,java.lang.String):com.intellij.openapi.module.Module
+- *:newNonPersistentModule(java.lang.String,java.lang.String):com.intellij.openapi.module.Module
+- *:removeUnloadedModules(java.util.Collection):V
+- *a:setUnloadedModules(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- a:setUnloadedModulesSync(java.util.List):V
+f:com.intellij.openapi.module.ModuleManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
+- f:getInstanceIfDefined(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModuleManager
+com.intellij.openapi.module.ModulePointer
+- a:getModule():com.intellij.openapi.module.Module
+- a:getModuleName():java.lang.String
+a:com.intellij.openapi.module.ModulePointerManager
+- <init>():V
+- a:create(com.intellij.openapi.module.Module):com.intellij.openapi.module.ModulePointer
+- a:create(java.lang.String):com.intellij.openapi.module.ModulePointer
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.module.ModulePointerManager
+c:com.intellij.openapi.module.ModuleUtilCore
+- sf:KEY_MODULE:com.intellij.openapi.util.Key
+- <init>():V
+- s:collectModulesDependsOn(com.intellij.openapi.module.Module,java.util.Set):V
+- s:findModuleForFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.module.Module
+- s:findModuleForFile(com.intellij.psi.PsiFile):com.intellij.openapi.module.Module
+- s:findModuleForPsiElement(com.intellij.psi.PsiElement):com.intellij.openapi.module.Module
+- s:getAllDependentModules(com.intellij.openapi.module.Module):java.util.List
+- s:getDependencies(com.intellij.openapi.module.Module,java.util.Set):V
+- s:getModuleDirPath(com.intellij.openapi.module.Module):java.lang.String
+- s:getModuleNameInReadAction(com.intellij.openapi.module.Module):java.lang.String
+- s:isModuleDir(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile):Z
+- s:isModuleDisposed(com.intellij.psi.PsiElement):Z
+- s:isModuleFile(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile):Z
+- s:moduleContainsFile(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile,Z):Z
+- s:projectContainsFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):Z
+- s:visitMeAndDependentModules(com.intellij.openapi.module.Module,com.intellij.openapi.module.ModuleUtilCore$ModuleVisitor):Z
+com.intellij.openapi.module.ModuleUtilCore$ModuleVisitor
+- a:visit(com.intellij.openapi.module.Module):Z
+c:com.intellij.openapi.module.ModuleWithNameAlreadyExists
+- java.lang.Exception
+- <init>(java.lang.String,java.lang.String):V
+- getModuleName():java.lang.String
+a:com.intellij.openapi.module.PrimaryModuleManager
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- s:findPrimaryModule(com.intellij.openapi.project.Project):com.intellij.openapi.module.Module
+- a:getPrimaryModule(com.intellij.openapi.project.Project):com.intellij.openapi.module.Module
+com.intellij.openapi.project.ExternalStorageConfigurationManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.project.ExternalStorageConfigurationManager
+- a:isEnabled():Z
+- a:setEnabled(Z):V
+com.intellij.openapi.project.ModuleListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- beforeModuleRemoved(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):V
+- moduleAdded(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):V
+- moduleRemoved(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module):V
+- modulesAdded(com.intellij.openapi.project.Project,java.util.List):V
+- modulesRenamed(com.intellij.openapi.project.Project,java.util.List,com.intellij.util.Function):V
+com.intellij.openapi.project.ProjectCloseHandler
+- a:canClose(com.intellij.openapi.project.Project):Z
+*:com.intellij.openapi.project.ProjectCloseListener
+- *sf:Companion:com.intellij.openapi.project.ProjectCloseListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- projectClosed(com.intellij.openapi.project.Project):V
+- projectClosing(com.intellij.openapi.project.Project):V
+- projectClosingBeforeSave(com.intellij.openapi.project.Project):V
+*f:com.intellij.openapi.project.ProjectCloseListener$Companion
+a:com.intellij.openapi.project.ProjectManager
+- sf:TOPIC:com.intellij.util.messages.Topic
+- <init>():V
+- a:addProjectManagerListener(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectManagerListener):V
+- a:addProjectManagerListener(com.intellij.openapi.project.ProjectManagerListener):V
+- a:addProjectManagerListener(com.intellij.openapi.project.VetoableProjectManagerListener):V
+- a:closeAndDispose(com.intellij.openapi.project.Project):Z
+- a:closeProject(com.intellij.openapi.project.Project):Z
+- findOpenProjectByHash(java.lang.String):com.intellij.openapi.project.Project
+- a:getDefaultProject():com.intellij.openapi.project.Project
+- s:getInstance():com.intellij.openapi.project.ProjectManager
+- s:getInstanceIfCreated():com.intellij.openapi.project.ProjectManager
+- a:getOpenProjects():com.intellij.openapi.project.Project[]
+- a:loadAndOpenProject(java.lang.String):com.intellij.openapi.project.Project
+- a:reloadProject(com.intellij.openapi.project.Project):V
+- a:removeProjectManagerListener(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectManagerListener):V
+- a:removeProjectManagerListener(com.intellij.openapi.project.ProjectManagerListener):V
+- a:removeProjectManagerListener(com.intellij.openapi.project.VetoableProjectManagerListener):V
+com.intellij.openapi.project.ProjectManagerListener
+- java.util.EventListener
+- sf:EMPTY_ARRAY:com.intellij.openapi.project.ProjectManagerListener[]
+- canCloseProject(com.intellij.openapi.project.Project):Z
+- projectClosed(com.intellij.openapi.project.Project):V
+- projectClosing(com.intellij.openapi.project.Project):V
+- projectClosingBeforeSave(com.intellij.openapi.project.Project):V
+- projectOpened(com.intellij.openapi.project.Project):V
+f:com.intellij.openapi.project.ProjectType
+- <init>():V
+- <init>(java.lang.String):V
+- s:create(java.lang.String):com.intellij.openapi.project.ProjectType
+- equals(java.lang.Object):Z
+- getId():java.lang.String
+- hashCode():I
+- setId(java.lang.String):V
+f:com.intellij.openapi.project.ProjectTypeService
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- s:clearFieldsForLightProjectInTests(com.intellij.openapi.project.Project):V
+- s:getProjectType(com.intellij.openapi.project.Project):com.intellij.openapi.project.ProjectType
+- s:getProjectTypeIds(com.intellij.openapi.project.Project):java.util.Set
+- s:getProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
+- getState():com.intellij.openapi.project.ProjectType
+- loadState(com.intellij.openapi.project.ProjectType):V
+- s:setProjectType(com.intellij.openapi.project.Project,com.intellij.openapi.project.ProjectType):V
+*:com.intellij.openapi.project.ProjectTypesProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:inferProjectTypes(com.intellij.openapi.project.Project):java.util.Collection
+f:com.intellij.openapi.project.ProjectUtilCore
+- sf:appendModuleName(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z):java.lang.String
+- sf:decorateWithLibraryName(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+- sf:displayUrlRelativeToProject(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.project.Project,Z,Z):java.lang.String
+- sf:doNotEnableExternalStorageByDefaultInTests(kotlin.jvm.functions.Function0):V
+- sf:isExternalStorageEnabled(com.intellij.openapi.project.Project):Z
+com.intellij.openapi.project.VetoableProjectManagerListener
+- com.intellij.openapi.project.ProjectManagerListener
+- a:canClose(com.intellij.openapi.project.Project):Z
+a:com.intellij.openapi.projectRoots.ProjectJdkTable
+- sf:JDK_TABLE_TOPIC:com.intellij.util.messages.Topic
+- <init>():V
+- a:addJdk(com.intellij.openapi.projectRoots.Sdk):V
+- addJdk(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.Disposable):V
+- a:createSdk(java.lang.String,com.intellij.openapi.projectRoots.SdkTypeId):com.intellij.openapi.projectRoots.Sdk
+- a:findJdk(java.lang.String):com.intellij.openapi.projectRoots.Sdk
+- a:findJdk(java.lang.String,java.lang.String):com.intellij.openapi.projectRoots.Sdk
+- findMostRecentSdkOfType(com.intellij.openapi.projectRoots.SdkTypeId):com.intellij.openapi.projectRoots.Sdk
+- a:getAllJdks():com.intellij.openapi.projectRoots.Sdk[]
+- a:getDefaultSdkType():com.intellij.openapi.projectRoots.SdkTypeId
+- s:getInstance():com.intellij.openapi.projectRoots.ProjectJdkTable
+- a:getSdkTypeByName(java.lang.String):com.intellij.openapi.projectRoots.SdkTypeId
+- a:getSdksOfType(com.intellij.openapi.projectRoots.SdkTypeId):java.util.List
+- preconfigure():V
+- a:removeJdk(com.intellij.openapi.projectRoots.Sdk):V
+- saveOnDisk():V
+- a:updateJdk(com.intellij.openapi.projectRoots.Sdk,com.intellij.openapi.projectRoots.Sdk):V
+com.intellij.openapi.projectRoots.ProjectJdkTable$Listener
+- java.util.EventListener
+- jdkAdded(com.intellij.openapi.projectRoots.Sdk):V
+- jdkNameChanged(com.intellij.openapi.projectRoots.Sdk,java.lang.String):V
+- jdkRemoved(com.intellij.openapi.projectRoots.Sdk):V
+com.intellij.openapi.projectRoots.ProjectRootListener
+- java.util.EventListener
+- a:rootsChanged():V
+com.intellij.openapi.projectRoots.Sdk
+- com.intellij.openapi.util.UserDataHolder
+- a:clone():com.intellij.openapi.projectRoots.Sdk
+- a:getHomeDirectory():com.intellij.openapi.vfs.VirtualFile
+- a:getHomePath():java.lang.String
+- a:getName():java.lang.String
+- a:getRootProvider():com.intellij.openapi.roots.RootProvider
+- a:getSdkAdditionalData():com.intellij.openapi.projectRoots.SdkAdditionalData
+- a:getSdkModificator():com.intellij.openapi.projectRoots.SdkModificator
+- a:getSdkType():com.intellij.openapi.projectRoots.SdkTypeId
+- a:getVersionString():java.lang.String
+com.intellij.openapi.projectRoots.SdkAdditionalData
+- markAsCommited():V
+com.intellij.openapi.projectRoots.SdkModificator
+- a:addRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.OrderRootType):V
+- addRoot(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
+- a:commitChanges():V
+- a:getHomePath():java.lang.String
+- a:getName():java.lang.String
+- a:getRoots(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getSdkAdditionalData():com.intellij.openapi.projectRoots.SdkAdditionalData
+- getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+- a:getVersionString():java.lang.String
+- a:isWritable():Z
+- a:removeAllRoots():V
+- a:removeRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.OrderRootType):V
+- removeRoot(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
+- a:removeRoots(com.intellij.openapi.roots.OrderRootType):V
+- a:setHomePath(java.lang.String):V
+- a:setName(java.lang.String):V
+- a:setSdkAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData):V
+- a:setVersionString(java.lang.String):V
+com.intellij.openapi.projectRoots.SdkTypeId
+- allowWslSdkForLocalProject():Z
+- a:getName():java.lang.String
+- a:getVersionString(com.intellij.openapi.projectRoots.Sdk):java.lang.String
+- isLocalSdk(com.intellij.openapi.projectRoots.Sdk):Z
+- a:loadAdditionalData(com.intellij.openapi.projectRoots.Sdk,org.jdom.Element):com.intellij.openapi.projectRoots.SdkAdditionalData
+- a:saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
+- versionComparator():java.util.Comparator
+- versionStringComparator():java.util.Comparator
+*:com.intellij.openapi.roots.AdditionalLibraryRootsListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- s:fireAdditionalLibraryChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
+- a:libraryRootsChanged(java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
+com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper
+- s:getInstance():com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper
+- a:handleAdditionalLibraryRootsChanged(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection,java.util.Collection,java.lang.String):V
+a:com.intellij.openapi.roots.AdditionalLibraryRootsProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- getAdditionalProjectLibraries(com.intellij.openapi.project.Project):java.util.Collection
+- getRootsToWatch(com.intellij.openapi.project.Project):java.util.Collection
+a:com.intellij.openapi.roots.CompilerModuleExtension
+- com.intellij.openapi.roots.ModuleExtension
+- sf:PRODUCTION:java.lang.String
+- sf:TEST:java.lang.String
+- <init>():V
+- a:getCompilerOutputForTestsPointer():com.intellij.openapi.vfs.pointers.VirtualFilePointer
+- a:getCompilerOutputPath():com.intellij.openapi.vfs.VirtualFile
+- a:getCompilerOutputPathForTests():com.intellij.openapi.vfs.VirtualFile
+- a:getCompilerOutputPointer():com.intellij.openapi.vfs.pointers.VirtualFilePointer
+- a:getCompilerOutputUrl():java.lang.String
+- a:getCompilerOutputUrlForTests():java.lang.String
+- s:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.roots.CompilerModuleExtension
+- a:getOutputRootUrls(Z):java.lang.String[]
+- a:getOutputRoots(Z):com.intellij.openapi.vfs.VirtualFile[]
+- a:inheritCompilerOutputPath(Z):V
+- a:isCompilerOutputPathInherited():Z
+- a:isExcludeOutput():Z
+- a:setCompilerOutputPath(com.intellij.openapi.vfs.VirtualFile):V
+- a:setCompilerOutputPath(java.lang.String):V
+- a:setCompilerOutputPathForTests(com.intellij.openapi.vfs.VirtualFile):V
+- a:setCompilerOutputPathForTests(java.lang.String):V
+- a:setExcludeOutput(Z):V
+com.intellij.openapi.roots.ContentEntry
+- com.intellij.openapi.roots.Synthetic
+- a:addExcludeFolder(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.ExcludeFolder
+- a:addExcludeFolder(java.lang.String):com.intellij.openapi.roots.ExcludeFolder
+- a:addExcludeFolder(java.lang.String,Z):com.intellij.openapi.roots.ExcludeFolder
+- a:addExcludePattern(java.lang.String):V
+- a:addSourceFolder(com.intellij.openapi.vfs.VirtualFile,org.jetbrains.jps.model.module.JpsModuleSourceRootType):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(com.intellij.openapi.vfs.VirtualFile,org.jetbrains.jps.model.module.JpsModuleSourceRootType,org.jetbrains.jps.model.JpsElement):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(com.intellij.openapi.vfs.VirtualFile,Z,java.lang.String):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,org.jetbrains.jps.model.JpsElement):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,org.jetbrains.jps.model.JpsElement,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,org.jetbrains.jps.model.JpsElement,Z):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,org.jetbrains.jps.model.module.JpsModuleSourceRootType,Z):com.intellij.openapi.roots.SourceFolder
+- a:addSourceFolder(java.lang.String,Z):com.intellij.openapi.roots.SourceFolder
+- a:clearExcludeFolders():V
+- a:clearSourceFolders():V
+- a:getExcludeFolderFiles():com.intellij.openapi.vfs.VirtualFile[]
+- a:getExcludeFolderUrls():java.util.List
+- a:getExcludeFolders():com.intellij.openapi.roots.ExcludeFolder[]
+- a:getExcludePatterns():java.util.List
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+- a:getRootModel():com.intellij.openapi.roots.ModuleRootModel
+- a:getSourceFolderFiles():com.intellij.openapi.vfs.VirtualFile[]
+- a:getSourceFolders():com.intellij.openapi.roots.SourceFolder[]
+- a:getSourceFolders(java.util.Set):java.util.List
+- a:getSourceFolders(org.jetbrains.jps.model.module.JpsModuleSourceRootType):java.util.List
+- a:getUrl():java.lang.String
+- a:removeExcludeFolder(com.intellij.openapi.roots.ExcludeFolder):V
+- a:removeExcludeFolder(java.lang.String):Z
+- a:removeExcludePattern(java.lang.String):V
+- a:removeSourceFolder(com.intellij.openapi.roots.SourceFolder):V
+- a:setExcludePatterns(java.util.List):V
+com.intellij.openapi.roots.ContentFolder
+- com.intellij.openapi.roots.Synthetic
+- a:getContentEntry():com.intellij.openapi.roots.ContentEntry
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+- a:getUrl():java.lang.String
+e:com.intellij.openapi.roots.DependencyScope
+- java.lang.Enum
+- sf:COMPILE:com.intellij.openapi.roots.DependencyScope
+- sf:PROVIDED:com.intellij.openapi.roots.DependencyScope
+- sf:RUNTIME:com.intellij.openapi.roots.DependencyScope
+- sf:SCOPE_ATTR:java.lang.String
+- sf:TEST:com.intellij.openapi.roots.DependencyScope
+- s:coveringUseCasesOf(com.intellij.openapi.roots.DependencyScope,com.intellij.openapi.roots.DependencyScope):com.intellij.openapi.roots.DependencyScope
+- coversUseCasesOf(com.intellij.openapi.roots.DependencyScope):Z
+- getDisplayName():java.lang.String
+- isForProductionCompile():Z
+- isForProductionRuntime():Z
+- isForTestCompile():Z
+- isForTestRuntime():Z
+- s:readExternal(org.jdom.Element):com.intellij.openapi.roots.DependencyScope
+- toString():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.openapi.roots.DependencyScope
+- s:values():com.intellij.openapi.roots.DependencyScope[]
+- writeExternal(org.jdom.Element):V
+com.intellij.openapi.roots.ExcludeFolder
+- com.intellij.openapi.roots.ContentFolder
+com.intellij.openapi.roots.ExportableOrderEntry
+- com.intellij.openapi.roots.OrderEntry
+- a:getScope():com.intellij.openapi.roots.DependencyScope
+- a:isExported():Z
+- a:setExported(Z):V
+- a:setScope(com.intellij.openapi.roots.DependencyScope):V
+*:com.intellij.openapi.roots.ExternalProjectSystemRegistry
+- sf:EXTERNAL_SYSTEM_ID_KEY:java.lang.String
+- a:getExternalSource(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ProjectModelExternalSource
+- s:getInstance():com.intellij.openapi.roots.ExternalProjectSystemRegistry
+- a:getSourceById(java.lang.String):com.intellij.openapi.roots.ProjectModelExternalSource
+com.intellij.openapi.roots.FileIndex
+- a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInSourceContent(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInTestSourceContent(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isUnderSourceRootOfType(com.intellij.openapi.vfs.VirtualFile,java.util.Set):Z
+- a:iterateContent(com.intellij.openapi.roots.ContentIterator):Z
+- a:iterateContent(com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
+- a:iterateContentUnderDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.ContentIterator):Z
+- a:iterateContentUnderDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
+com.intellij.openapi.roots.InheritedJdkOrderEntry
+- com.intellij.openapi.roots.JdkOrderEntry
+a:com.intellij.openapi.roots.JavaModuleExternalPaths
+- com.intellij.openapi.roots.ModuleExtension
+- <init>():V
+- a:getExternalAnnotationsRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getExternalAnnotationsUrls():java.lang.String[]
+- s:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.roots.JavaModuleExternalPaths
+- a:getJavadocUrls():java.lang.String[]
+- a:setExternalAnnotationUrls(java.lang.String[]):V
+- a:setJavadocUrls(java.lang.String[]):V
+com.intellij.openapi.roots.JdkOrderEntry
+- com.intellij.openapi.roots.LibraryOrSdkOrderEntry
+- a:getJdk():com.intellij.openapi.projectRoots.Sdk
+- a:getJdkName():java.lang.String
+com.intellij.openapi.roots.LibraryOrSdkOrderEntry
+- com.intellij.openapi.roots.OrderEntry
+- getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getRootFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getRootUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+- getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+com.intellij.openapi.roots.LibraryOrderEntry
+- com.intellij.openapi.roots.ExportableOrderEntry
+- com.intellij.openapi.roots.LibraryOrSdkOrderEntry
+- a:getLibrary():com.intellij.openapi.roots.libraries.Library
+- a:getLibraryLevel():java.lang.String
+- a:getLibraryName():java.lang.String
+- a:isModuleLevel():Z
+com.intellij.openapi.roots.ModifiableRootModel
+- com.intellij.openapi.roots.ModuleRootModel
+- a:addContentEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.ContentEntry
+- a:addContentEntry(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.ContentEntry
+- a:addContentEntry(java.lang.String):com.intellij.openapi.roots.ContentEntry
+- a:addContentEntry(java.lang.String,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.ContentEntry
+- a:addContentEntry(java.lang.String,Z):com.intellij.openapi.roots.ContentEntry
+- a:addInvalidLibrary(java.lang.String,java.lang.String):com.intellij.openapi.roots.LibraryOrderEntry
+- a:addInvalidModuleEntry(java.lang.String):com.intellij.openapi.roots.ModuleOrderEntry
+- a:addLibraryEntries(java.util.List,com.intellij.openapi.roots.DependencyScope,Z):V
+- a:addLibraryEntry(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.roots.LibraryOrderEntry
+- a:addModuleEntries(java.util.List,com.intellij.openapi.roots.DependencyScope,Z):V
+- a:addModuleOrderEntry(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleOrderEntry
+- a:addOrderEntry(com.intellij.openapi.roots.OrderEntry):V
+- a:clear():V
+- a:commit():V
+- a:dispose():V
+- a:findLibraryOrderEntry(com.intellij.openapi.roots.libraries.Library):com.intellij.openapi.roots.LibraryOrderEntry
+- a:findModuleOrderEntry(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleOrderEntry
+- a:getModuleLibraryTable():com.intellij.openapi.roots.libraries.LibraryTable
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSdkName():java.lang.String
+- a:inheritSdk():V
+- a:isChanged():Z
+- a:isDisposed():Z
+- a:isWritable():Z
+- a:rearrangeOrderEntries(com.intellij.openapi.roots.OrderEntry[]):V
+- a:removeContentEntry(com.intellij.openapi.roots.ContentEntry):V
+- a:removeOrderEntry(com.intellij.openapi.roots.OrderEntry):V
+- a:setInvalidSdk(java.lang.String,java.lang.String):V
+- a:setSdk(com.intellij.openapi.projectRoots.Sdk):V
+a:com.intellij.openapi.roots.ModuleExtension
+- com.intellij.openapi.Disposable
+- <init>():V
+- a:commit():V
+- dispose():V
+- a:getModifiableModel(Z):com.intellij.openapi.roots.ModuleExtension
+- a:isChanged():Z
+- readExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element):V
+com.intellij.openapi.roots.ModuleFileIndex
+- com.intellij.openapi.roots.FileIndex
+- a:getOrderEntriesForFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
+- a:getOrderEntryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.OrderEntry
+com.intellij.openapi.roots.ModuleJdkOrderEntry
+- com.intellij.openapi.roots.JdkOrderEntry
+- a:getJdkTypeName():java.lang.String
+com.intellij.openapi.roots.ModuleOrderEntry
+- com.intellij.openapi.roots.ExportableOrderEntry
+- a:getModule():com.intellij.openapi.module.Module
+- a:getModuleName():java.lang.String
+- a:isProductionOnTestDependency():Z
+a:com.intellij.openapi.roots.ModuleRootAdapter
+- com.intellij.openapi.roots.ModuleRootListener
+- <init>():V
+a:com.intellij.openapi.roots.ModuleRootEvent
+- java.util.EventObject
+- p:<init>(com.intellij.openapi.project.Project):V
+- getProject():com.intellij.openapi.project.Project
+- a:isCausedByFileTypesChange():Z
+- a:isCausedByWorkspaceModelChangesOnly():Z
+com.intellij.openapi.roots.ModuleRootListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- beforeRootsChange(com.intellij.openapi.roots.ModuleRootEvent):V
+- rootsChanged(com.intellij.openapi.roots.ModuleRootEvent):V
+a:com.intellij.openapi.roots.ModuleRootManager
+- com.intellij.openapi.roots.ModuleRootModel
+- com.intellij.openapi.roots.ProjectModelElement
+- <init>():V
+- a:getDependencies():com.intellij.openapi.module.Module[]
+- a:getDependencies(Z):com.intellij.openapi.module.Module[]
+- a:getFileIndex():com.intellij.openapi.roots.ModuleFileIndex
+- s:getInstance(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleRootManager
+- a:getModifiableModel():com.intellij.openapi.roots.ModifiableRootModel
+- a:isDependsOn(com.intellij.openapi.module.Module):Z
+com.intellij.openapi.roots.ModuleRootModel
+- a:getContentEntries():com.intellij.openapi.roots.ContentEntry[]
+- a:getContentRootUrls():java.lang.String[]
+- a:getContentRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getDependencyModuleNames():java.lang.String[]
+- a:getExcludeRootUrls():java.lang.String[]
+- a:getExcludeRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getModule():com.intellij.openapi.module.Module
+- a:getModuleDependencies():com.intellij.openapi.module.Module[]
+- a:getModuleDependencies(Z):com.intellij.openapi.module.Module[]
+- a:getModuleExtension(java.lang.Class):java.lang.Object
+- a:getOrderEntries():com.intellij.openapi.roots.OrderEntry[]
+- a:getSdk():com.intellij.openapi.projectRoots.Sdk
+- a:getSourceRootUrls():java.lang.String[]
+- a:getSourceRootUrls(Z):java.lang.String[]
+- a:getSourceRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getSourceRoots(java.util.Set):java.util.List
+- a:getSourceRoots(org.jetbrains.jps.model.module.JpsModuleSourceRootType):java.util.List
+- a:getSourceRoots(Z):com.intellij.openapi.vfs.VirtualFile[]
+- a:isSdkInherited():Z
+- a:orderEntries():com.intellij.openapi.roots.OrderEnumerator
+- a:processOrder(com.intellij.openapi.roots.RootPolicy,java.lang.Object):java.lang.Object
+f:com.intellij.openapi.roots.ModuleRootModificationUtil
+- <init>():V
+- s:addContentRoot(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile):V
+- s:addContentRoot(com.intellij.openapi.module.Module,java.lang.String):V
+- s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module):V
+- s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module,com.intellij.openapi.roots.DependencyScope,Z):V
+- s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.roots.libraries.Library):V
+- s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.roots.libraries.Library,com.intellij.openapi.roots.DependencyScope,Z):V
+- s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String):V
+- s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String,java.util.List,java.util.List):V
+- s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String,java.util.List,java.util.List,com.intellij.openapi.roots.DependencyScope):V
+- s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String,java.util.List,java.util.List,java.util.List,com.intellij.openapi.roots.DependencyScope):V
+- s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String,java.util.List,java.util.List,java.util.List,com.intellij.openapi.roots.DependencyScope,Z):V
+- s:addModuleLibrary(com.intellij.openapi.module.Module,java.lang.String,java.util.List,java.util.List,java.util.List,com.intellij.openapi.roots.DependencyScope,Z,com.intellij.util.Consumer):V
+- s:modifyModel(com.intellij.openapi.module.Module,java.util.function.Function):V
+- s:removeDependency(com.intellij.openapi.module.Module,com.intellij.openapi.roots.libraries.Library):V
+- s:setModuleSdk(com.intellij.openapi.module.Module,com.intellij.openapi.projectRoots.Sdk):V
+- s:setSdkInherited(com.intellij.openapi.module.Module):V
+- s:updateExcludedFolders(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile,java.util.Collection,java.util.Collection):V
+- s:updateModel(com.intellij.openapi.module.Module,com.intellij.util.Consumer):V
+com.intellij.openapi.roots.ModuleSourceOrderEntry
+- com.intellij.openapi.roots.OrderEntry
+- a:getRootModel():com.intellij.openapi.roots.ModuleRootModel
+com.intellij.openapi.roots.OrderEntry
+- com.intellij.openapi.roots.Synthetic
+- java.lang.Comparable
+- sf:EMPTY_ARRAY:com.intellij.openapi.roots.OrderEntry[]
+- a:accept(com.intellij.openapi.roots.RootPolicy,java.lang.Object):java.lang.Object
+- a:getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getOwnerModule():com.intellij.openapi.module.Module
+- a:getPresentableName():java.lang.String
+- a:getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+- a:isValid():Z
+a:com.intellij.openapi.roots.OrderEnumerationHandler
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- addCustomModuleRoots(com.intellij.openapi.roots.OrderRootType,com.intellij.openapi.roots.ModuleRootModel,java.util.Collection,Z,Z):Z
+- addCustomRootsForLibraryOrSdk(com.intellij.openapi.roots.LibraryOrSdkOrderEntry,com.intellij.openapi.roots.OrderRootType,java.util.Collection):Z
+- areResourceFilesFromSourceRootsCopiedToOutput():Z
+- shouldAddDependency(com.intellij.openapi.roots.OrderEntry,com.intellij.openapi.roots.OrderEnumeratorSettings):com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType
+- shouldAddRuntimeDependenciesToTestCompilationClasspath():Z
+- shouldIncludeTestsFromDependentModulesToTestClasspath():Z
+- shouldProcessDependenciesRecursively():Z
+e:com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType
+- java.lang.Enum
+- sf:ADD:com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType
+- sf:DEFAULT:com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType
+- sf:DO_NOT_ADD:com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType
+- s:valueOf(java.lang.String):com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType
+- s:values():com.intellij.openapi.roots.OrderEnumerationHandler$AddDependencyType[]
+a:com.intellij.openapi.roots.OrderEnumerationHandler$Factory
+- <init>():V
+- a:createHandler(com.intellij.openapi.module.Module):com.intellij.openapi.roots.OrderEnumerationHandler
+- a:isApplicable(com.intellij.openapi.module.Module):Z
+a:com.intellij.openapi.roots.OrderEnumerator
+- <init>():V
+- a:classes():com.intellij.openapi.roots.OrderRootsEnumerator
+- a:compileOnly():com.intellij.openapi.roots.OrderEnumerator
+- a:exportedOnly():com.intellij.openapi.roots.OrderEnumerator
+- a:forEach(com.intellij.util.Processor):V
+- a:forEachLibrary(com.intellij.util.Processor):V
+- a:forEachModule(com.intellij.util.Processor):V
+- getAllLibrariesAndSdkClassesRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getAllSourceRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getClassesRoots():com.intellij.openapi.vfs.VirtualFile[]
+- getPathsList():com.intellij.util.PathsList
+- getSourcePathsList():com.intellij.util.PathsList
+- getSourceRoots():com.intellij.openapi.vfs.VirtualFile[]
+- librariesOnly():com.intellij.openapi.roots.OrderEnumerator
+- s:orderEntries(com.intellij.openapi.module.Module):com.intellij.openapi.roots.OrderEnumerator
+- s:orderEntries(com.intellij.openapi.project.Project):com.intellij.openapi.roots.OrderEnumerator
+- a:process(com.intellij.openapi.roots.RootPolicy,java.lang.Object):java.lang.Object
+- a:productionOnly():com.intellij.openapi.roots.OrderEnumerator
+- a:recursively():com.intellij.openapi.roots.OrderEnumerator
+- a:roots(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.roots.OrderRootsEnumerator
+- a:roots(com.intellij.util.NotNullFunction):com.intellij.openapi.roots.OrderRootsEnumerator
+- a:runtimeOnly():com.intellij.openapi.roots.OrderEnumerator
+- a:satisfying(com.intellij.openapi.util.Condition):com.intellij.openapi.roots.OrderEnumerator
+- sdkOnly():com.intellij.openapi.roots.OrderEnumerator
+- a:shouldRecurse(com.intellij.openapi.roots.ModuleOrderEntry,java.util.List):Z
+- a:sources():com.intellij.openapi.roots.OrderRootsEnumerator
+- a:using(com.intellij.openapi.roots.RootModelProvider):com.intellij.openapi.roots.OrderEnumerator
+- a:withoutDepModules():com.intellij.openapi.roots.OrderEnumerator
+- a:withoutLibraries():com.intellij.openapi.roots.OrderEnumerator
+- a:withoutModuleSourceEntries():com.intellij.openapi.roots.OrderEnumerator
+- a:withoutSdk():com.intellij.openapi.roots.OrderEnumerator
+com.intellij.openapi.roots.OrderEnumeratorSettings
+- a:isCompileOnly():Z
+- a:isProductionOnly():Z
+- a:isRuntimeOnly():Z
+c:com.intellij.openapi.roots.OrderRootType
+- sf:CLASSES:com.intellij.openapi.roots.OrderRootType
+- sf:DOCUMENTATION:com.intellij.openapi.roots.OrderRootType
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:SOURCES:com.intellij.openapi.roots.OrderRootType
+- p:<init>(java.lang.String):V
+- f:equals(java.lang.Object):Z
+- s:getAllPersistentTypes():com.intellij.openapi.roots.PersistentOrderRootType[]
+- s:getAllTypes():com.intellij.openapi.roots.OrderRootType[]
+- ps:getOrderRootType(java.lang.Class):java.lang.Object
+- s:getSortedRootTypes():java.util.List
+- f:hashCode():I
+- name():java.lang.String
+- skipWriteIfEmpty():Z
+- toString():java.lang.String
+c:com.intellij.openapi.roots.OrderRootType$DocumentationRootType
+- com.intellij.openapi.roots.OrderRootType
+- <init>():V
+- skipWriteIfEmpty():Z
+com.intellij.openapi.roots.OrderRootsEnumerator
+- a:collectPaths(com.intellij.util.PathsList):V
+- a:getPathsList():com.intellij.util.PathsList
+- a:getRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getUrls():java.lang.String[]
+- a:usingCache():com.intellij.openapi.roots.OrderRootsEnumerator
+- a:usingCustomSdkRootProvider(com.intellij.util.NotNullFunction):com.intellij.openapi.roots.OrderRootsEnumerator
+- a:withoutSelfModuleOutput():com.intellij.openapi.roots.OrderRootsEnumerator
+c:com.intellij.openapi.roots.PersistentOrderRootType
+- com.intellij.openapi.roots.OrderRootType
+- p:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
+- getModulePathsName():java.lang.String
+- getOldSdkRootName():java.lang.String
+- getSdkRootName():java.lang.String
+com.intellij.openapi.roots.ProjectFileIndex
+- com.intellij.openapi.roots.FileIndex
+- *a:findContainingLibraries(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- a:getClassRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- a:getContainingSourceRootType(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.jps.model.module.JpsModuleSourceRootType
+- a:getContentRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- a:getContentRootForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.vfs.VirtualFile
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ProjectFileIndex
+- a:getModuleForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.module.Module
+- a:getModuleForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.module.Module
+- a:getOrderEntriesForFile(com.intellij.openapi.vfs.VirtualFile):java.util.List
+- a:getPackageNameByDirectory(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getSourceFolder(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.roots.SourceFolder
+- a:getSourceRootForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- a:getUnloadedModuleNameForFile(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:isExcluded(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInGeneratedSources(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInLibrary(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInLibraryClasses(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInLibrarySource(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInProject(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInProjectOrExcluded(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInSource(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isLibraryClassFile(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isUnderIgnored(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.openapi.roots.ProjectFileIndex$SERVICE
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ProjectFileIndex
+com.intellij.openapi.roots.ProjectModelBuildableElement
+- com.intellij.openapi.roots.ProjectModelElement
+*:com.intellij.openapi.roots.ProjectModelElement
+- *a:getExternalSource():com.intellij.openapi.roots.ProjectModelExternalSource
+*:com.intellij.openapi.roots.ProjectModelExternalSource
+- a:getDisplayName():java.lang.String
+- a:getId():java.lang.String
+a:com.intellij.openapi.roots.ProjectRootManager
+- com.intellij.openapi.util.SimpleModificationTracker
+- <init>():V
+- a:getContentRootUrls():java.util.List
+- a:getContentRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getContentRootsFromAllModules():com.intellij.openapi.vfs.VirtualFile[]
+- a:getContentSourceRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getFileIndex():com.intellij.openapi.roots.ProjectFileIndex
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ProjectRootManager
+- a:getModuleSourceRoots(java.util.Set):java.util.List
+- a:getProjectSdk():com.intellij.openapi.projectRoots.Sdk
+- a:getProjectSdkName():java.lang.String
+- a:getProjectSdkTypeName():java.lang.String
+- a:orderEntries():com.intellij.openapi.roots.OrderEnumerator
+- a:orderEntries(java.util.Collection):com.intellij.openapi.roots.OrderEnumerator
+- a:setProjectSdk(com.intellij.openapi.projectRoots.Sdk):V
+- a:setProjectSdkName(java.lang.String,java.lang.String):V
+com.intellij.openapi.roots.RootModelProvider
+- a:getModules():com.intellij.openapi.module.Module[]
+- a:getRootModel(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ModuleRootModel
+c:com.intellij.openapi.roots.RootPolicy
+- <init>():V
+- visitInheritedJdkOrderEntry(com.intellij.openapi.roots.InheritedJdkOrderEntry,java.lang.Object):java.lang.Object
+- visitJdkOrderEntry(com.intellij.openapi.roots.JdkOrderEntry,java.lang.Object):java.lang.Object
+- visitLibraryOrderEntry(com.intellij.openapi.roots.LibraryOrderEntry,java.lang.Object):java.lang.Object
+- visitModuleJdkOrderEntry(com.intellij.openapi.roots.ModuleJdkOrderEntry,java.lang.Object):java.lang.Object
+- visitModuleOrderEntry(com.intellij.openapi.roots.ModuleOrderEntry,java.lang.Object):java.lang.Object
+- visitModuleSourceOrderEntry(com.intellij.openapi.roots.ModuleSourceOrderEntry,java.lang.Object):java.lang.Object
+- visitOrderEntry(com.intellij.openapi.roots.OrderEntry,java.lang.Object):java.lang.Object
+com.intellij.openapi.roots.RootProvider
+- a:addRootSetChangedListener(com.intellij.openapi.roots.RootProvider$RootSetChangedListener):V
+- a:addRootSetChangedListener(com.intellij.openapi.roots.RootProvider$RootSetChangedListener,com.intellij.openapi.Disposable):V
+- a:getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+- a:removeRootSetChangedListener(com.intellij.openapi.roots.RootProvider$RootSetChangedListener):V
+com.intellij.openapi.roots.RootProvider$RootSetChangedListener
+- java.util.EventListener
+- a:rootSetChanged(com.intellij.openapi.roots.RootProvider):V
+com.intellij.openapi.roots.SourceFolder
+- com.intellij.openapi.roots.ContentFolder
+- a:getJpsElement():org.jetbrains.jps.model.module.JpsModuleSourceRoot
+- a:getPackagePrefix():java.lang.String
+- a:getRootType():org.jetbrains.jps.model.module.JpsModuleSourceRootType
+- a:isTestSource():Z
+- a:setPackagePrefix(java.lang.String):V
+com.intellij.openapi.roots.Synthetic
+- a:isSynthetic():Z
+a:com.intellij.openapi.roots.SyntheticLibrary
+- pf:myConstantExcludeCondition:com.intellij.openapi.roots.SyntheticLibrary$ExcludeFileCondition
+- <init>():V
+- p:<init>(java.lang.String,com.intellij.openapi.roots.SyntheticLibrary$ExcludeFileCondition):V
+- f:contains(com.intellij.openapi.vfs.VirtualFile):Z
+- f:contains(com.intellij.openapi.vfs.VirtualFile,Z,Z):Z
+- a:equals(java.lang.Object):Z
+- f:getAllRoots():java.util.Collection
+- getBinaryRoots():java.util.Collection
+- f:getComparisonId():java.lang.String
+- getExcludeFileCondition():com.intellij.openapi.util.Condition
+- getExcludedRoots():java.util.Set
+- a:getSourceRoots():java.util.Collection
+- f:getUnitedExcludeCondition():com.intellij.openapi.util.Condition
+- a:hashCode():I
+- isShowInExternalLibrariesNode():Z
+- s:newImmutableLibrary(java.lang.String,java.util.List,java.util.List,java.util.Set,com.intellij.openapi.roots.SyntheticLibrary$ExcludeFileCondition):com.intellij.openapi.roots.SyntheticLibrary
+- s:newImmutableLibrary(java.util.List):com.intellij.openapi.roots.SyntheticLibrary
+- s:newImmutableLibrary(java.util.List,java.util.List,java.util.Set,com.intellij.openapi.util.Condition):com.intellij.openapi.roots.SyntheticLibrary
+- s:newImmutableLibrary(java.util.List,java.util.Set,com.intellij.openapi.util.Condition):com.intellij.openapi.roots.SyntheticLibrary
+com.intellij.openapi.roots.SyntheticLibrary$ExcludeFileCondition
+- a:shouldExclude(Z,java.lang.String,java.util.function.BooleanSupplier,java.util.function.BooleanSupplier,java.util.function.BooleanSupplier):Z
+- transformToCondition(java.util.Collection):com.intellij.openapi.util.Condition
+a:com.intellij.openapi.roots.TestSourcesFilter
+- <init>():V
+- a:isTestSource(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- s:isTestSources(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+a:com.intellij.openapi.roots.ex.ProjectRootManagerEx
+- com.intellij.openapi.roots.ProjectRootManager
+- <init>():V
+- a:addProjectJdkListener(com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener):V
+- a:clearScopesCachesForModules():V
+- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ex.ProjectRootManagerEx
+- a:makeRootsChange(java.lang.Runnable,com.intellij.openapi.project.RootsChangeRescanningInfo):V
+- a:makeRootsChange(java.lang.Runnable,Z,Z):V
+- a:markRootsForRefresh():java.util.List
+- a:mergeRootsChangesDuring(java.lang.Runnable):V
+- a:removeProjectJdkListener(com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener):V
+- a:withRootsChange(com.intellij.openapi.project.RootsChangeRescanningInfo):java.lang.AutoCloseable
+com.intellij.openapi.roots.ex.ProjectRootManagerEx$ProjectJdkListener
+- java.util.EventListener
+- a:projectJdkChanged():V
+com.intellij.openapi.roots.impl.FilePropertyPusher
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:acceptsDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- acceptsFile(com.intellij.openapi.vfs.VirtualFile):Z
+- acceptsFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
+- afterRootsChanged(com.intellij.openapi.project.Project):V
+- a:getDefaultValue():java.lang.Object
+- getFileDataKey():com.intellij.openapi.util.Key
+- getFilePropertyKey():com.intellij.psi.FilePropertyKey
+- a:getImmediateValue(com.intellij.openapi.module.Module):java.lang.Object
+- a:getImmediateValue(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
+- initExtra(com.intellij.openapi.project.Project):V
+- a:persistAttribute(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object):V
+- a:pushDirectoriesOnly():Z
+a:com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
+- <init>():V
+- a:filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile):V
+- a:filePropertiesChanged(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Condition):V
+- a:findAndUpdateValue(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.impl.FilePropertyPusher,java.lang.Object):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
+- a:pushAll(com.intellij.openapi.roots.impl.FilePropertyPusher[]):V
+- a:runConcurrentlyIfPossible(java.util.List):V
+com.intellij.openapi.roots.impl.libraries.LibraryEx
+- com.intellij.openapi.roots.libraries.Library
+- a:getExcludedRootUrls():java.lang.String[]
+- a:getExcludedRoots():com.intellij.openapi.vfs.VirtualFile[]
+- a:getInvalidRootUrls(com.intellij.openapi.roots.OrderRootType):java.util.List
+- a:getKind():com.intellij.openapi.roots.libraries.PersistentLibraryKind
+- a:getModifiableModel():com.intellij.openapi.roots.impl.libraries.LibraryEx$ModifiableModelEx
+- a:getModule():com.intellij.openapi.module.Module
+- a:getProperties():com.intellij.openapi.roots.libraries.LibraryProperties
+- a:isDisposed():Z
+com.intellij.openapi.roots.impl.libraries.LibraryEx$ModifiableModelEx
+- com.intellij.openapi.roots.libraries.Library$ModifiableModel
+- a:addExcludedRoot(java.lang.String):V
+- a:getExcludedRootUrls():java.lang.String[]
+- a:getKind():com.intellij.openapi.roots.libraries.PersistentLibraryKind
+- a:getProperties():com.intellij.openapi.roots.libraries.LibraryProperties
+- a:removeExcludedRoot(java.lang.String):Z
+- a:setKind(com.intellij.openapi.roots.libraries.PersistentLibraryKind):V
+- a:setProperties(com.intellij.openapi.roots.libraries.LibraryProperties):V
+com.intellij.openapi.roots.libraries.CustomLibraryTable
+- com.intellij.openapi.roots.libraries.LibraryTable
+- a:readExternal(org.jdom.Element):V
+- a:writeExternal(org.jdom.Element):V
+com.intellij.openapi.roots.libraries.CustomLibraryTableDescription
+- sf:CUSTOM_TABLES_EP:com.intellij.openapi.extensions.ExtensionPointName
+- a:getPresentation():com.intellij.openapi.roots.libraries.LibraryTablePresentation
+- a:getTableLevel():java.lang.String
+com.intellij.openapi.roots.libraries.Library
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.roots.ProjectModelElement
+- com.intellij.openapi.util.JDOMExternalizable
+- sf:EMPTY_ARRAY:com.intellij.openapi.roots.libraries.Library[]
+- a:getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getModifiableModel():com.intellij.openapi.roots.libraries.Library$ModifiableModel
+- a:getName():java.lang.String
+- a:getPresentableName():java.lang.String
+- a:getRootProvider():com.intellij.openapi.roots.RootProvider
+- a:getTable():com.intellij.openapi.roots.libraries.LibraryTable
+- a:getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+- a:hasSameContent(com.intellij.openapi.roots.libraries.Library):Z
+- a:isJarDirectory(java.lang.String):Z
+- a:isJarDirectory(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
+- a:isValid(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
+com.intellij.openapi.roots.libraries.Library$ModifiableModel
+- com.intellij.openapi.Disposable
+- a:addJarDirectory(com.intellij.openapi.vfs.VirtualFile,Z):V
+- a:addJarDirectory(com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.openapi.roots.OrderRootType):V
+- a:addJarDirectory(java.lang.String,Z):V
+- a:addJarDirectory(java.lang.String,Z,com.intellij.openapi.roots.OrderRootType):V
+- a:addRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.roots.OrderRootType):V
+- a:addRoot(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
+- a:commit():V
+- a:getFiles(com.intellij.openapi.roots.OrderRootType):com.intellij.openapi.vfs.VirtualFile[]
+- a:getName():java.lang.String
+- a:getUrls(com.intellij.openapi.roots.OrderRootType):java.lang.String[]
+- a:isChanged():Z
+- a:isJarDirectory(java.lang.String):Z
+- a:isJarDirectory(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
+- a:isValid(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
+- a:moveRootDown(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
+- a:moveRootUp(java.lang.String,com.intellij.openapi.roots.OrderRootType):V
+- a:removeRoot(java.lang.String,com.intellij.openapi.roots.OrderRootType):Z
+- a:setName(java.lang.String):V
+c:com.intellij.openapi.roots.libraries.LibraryKind
+- <init>(java.lang.String):V
+- s:create(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
+- s:findById(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
+- f:getKindId():java.lang.String
+- toString():java.lang.String
+c:com.intellij.openapi.roots.libraries.LibraryKindRegistry
+- sf:Companion:com.intellij.openapi.roots.libraries.LibraryKindRegistry$Companion
+- <init>():V
+- f:findKindById(java.lang.String):com.intellij.openapi.roots.libraries.LibraryKind
+- sf:getInstance():com.intellij.openapi.roots.libraries.LibraryKindRegistry
+f:com.intellij.openapi.roots.libraries.LibraryKindRegistry$Companion
+- f:getInstance():com.intellij.openapi.roots.libraries.LibraryKindRegistry
+a:com.intellij.openapi.roots.libraries.LibraryProperties
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- a:equals(java.lang.Object):Z
+- a:hashCode():I
+com.intellij.openapi.roots.libraries.LibraryTable
+- a:addListener(com.intellij.openapi.roots.libraries.LibraryTable$Listener):V
+- a:addListener(com.intellij.openapi.roots.libraries.LibraryTable$Listener,com.intellij.openapi.Disposable):V
+- a:createLibrary():com.intellij.openapi.roots.libraries.Library
+- a:createLibrary(java.lang.String):com.intellij.openapi.roots.libraries.Library
+- a:getLibraries():com.intellij.openapi.roots.libraries.Library[]
+- a:getLibraryByName(java.lang.String):com.intellij.openapi.roots.libraries.Library
+- a:getLibraryIterator():java.util.Iterator
+- a:getModifiableModel():com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
+- a:getPresentation():com.intellij.openapi.roots.libraries.LibraryTablePresentation
+- a:getTableLevel():java.lang.String
+- isEditable():Z
+- a:removeLibrary(com.intellij.openapi.roots.libraries.Library):V
+- a:removeListener(com.intellij.openapi.roots.libraries.LibraryTable$Listener):V
+com.intellij.openapi.roots.libraries.LibraryTable$Listener
+- java.util.EventListener
+- afterLibraryAdded(com.intellij.openapi.roots.libraries.Library):V
+- afterLibraryRemoved(com.intellij.openapi.roots.libraries.Library):V
+- afterLibraryRenamed(com.intellij.openapi.roots.libraries.Library):V
+- afterLibraryRenamed(com.intellij.openapi.roots.libraries.Library,java.lang.String):V
+- beforeLibraryRemoved(com.intellij.openapi.roots.libraries.Library):V
+com.intellij.openapi.roots.libraries.LibraryTable$ModifiableModel
+- com.intellij.openapi.Disposable
+- a:commit():V
+- a:createLibrary(java.lang.String):com.intellij.openapi.roots.libraries.Library
+- a:createLibrary(java.lang.String,com.intellij.openapi.roots.libraries.PersistentLibraryKind):com.intellij.openapi.roots.libraries.Library
+- a:createLibrary(java.lang.String,com.intellij.openapi.roots.libraries.PersistentLibraryKind,com.intellij.openapi.roots.ProjectModelExternalSource):com.intellij.openapi.roots.libraries.Library
+- a:getLibraries():com.intellij.openapi.roots.libraries.Library[]
+- a:getLibraryByName(java.lang.String):com.intellij.openapi.roots.libraries.Library
+- a:getLibraryIterator():java.util.Iterator
+- a:isChanged():Z
+- a:removeLibrary(com.intellij.openapi.roots.libraries.Library):V
+a:com.intellij.openapi.roots.libraries.LibraryTablePresentation
+- <init>():V
+- a:getDescription():java.lang.String
+- a:getDisplayName(Z):java.lang.String
+- a:getLibraryTableEditorTitle():java.lang.String
+a:com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+- sf:APPLICATION_LEVEL:java.lang.String
+- sf:PROJECT_LEVEL:java.lang.String
+- <init>():V
+- a:getCustomLibraryTableByLevel(java.lang.String):com.intellij.openapi.roots.libraries.LibraryTable
+- a:getCustomLibraryTables():java.util.List
+- s:getInstance():com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+- a:getLibraryTable():com.intellij.openapi.roots.libraries.LibraryTable
+- a:getLibraryTable(com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable
+- a:getLibraryTableByLevel(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.LibraryTable
+f:com.intellij.openapi.roots.libraries.LibraryUtil
+- s:createLibrary(com.intellij.openapi.roots.libraries.LibraryTable,java.lang.String):com.intellij.openapi.roots.libraries.Library
+- s:findLibrary(com.intellij.openapi.module.Module,java.lang.String):com.intellij.openapi.roots.libraries.Library
+- s:findLibraryByClass(java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.roots.libraries.Library
+- s:findLibraryEntry(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.roots.OrderEntry
+- s:getLibraryRoots(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.VirtualFile[]
+- s:getLibraryRoots(com.intellij.openapi.project.Project,Z,Z):com.intellij.openapi.vfs.VirtualFile[]
+- s:getLibraryRoots(com.intellij.openapi.module.Module[],Z,Z):com.intellij.openapi.vfs.VirtualFile[]
+- s:getPresentableName(com.intellij.openapi.roots.libraries.Library):java.lang.String
+- s:isClassAvailableInLibrary(com.intellij.openapi.roots.libraries.Library,java.lang.String):Z
+- s:isClassAvailableInLibrary(java.util.List,java.lang.String):Z
+- s:isClassAvailableInLibrary(com.intellij.openapi.vfs.VirtualFile[],java.lang.String):Z
+a:com.intellij.openapi.roots.libraries.PersistentLibraryKind
+- com.intellij.openapi.roots.libraries.LibraryKind
+- <init>(java.lang.String):V
+- a:createDefaultProperties():com.intellij.openapi.roots.libraries.LibraryProperties
+- getAdditionalRootTypes():com.intellij.openapi.roots.OrderRootType[]
+f:com.intellij.projectModel.ProjectModelBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+com.intellij.workspaceModel.ide.EntitiesOrphanage
+- sf:Companion:com.intellij.workspaceModel.ide.EntitiesOrphanage$Companion
+- sf:orphanageKey:java.lang.String
+- a:getCurrentSnapshot():com.intellij.platform.workspace.storage.ImmutableEntityStorage
+- a:update(kotlin.jvm.functions.Function1):V
+f:com.intellij.workspaceModel.ide.EntitiesOrphanage$Companion
+- sf:orphanageKey:java.lang.String
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.EntitiesOrphanage
+- f:isEnabled():Z
+com.intellij.workspaceModel.ide.JpsProjectLoadingManager
+- sf:Companion:com.intellij.workspaceModel.ide.JpsProjectLoadingManager$Companion
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.JpsProjectLoadingManager
+- a:jpsProjectLoaded(java.lang.Runnable):V
+f:com.intellij.workspaceModel.ide.JpsProjectLoadingManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.JpsProjectLoadingManager

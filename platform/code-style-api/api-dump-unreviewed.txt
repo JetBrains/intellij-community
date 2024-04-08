@@ -1,0 +1,1648 @@
+f:com.intellij.CodeStyleBundle
+- sf:BUNDLE:java.lang.String
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+f:com.intellij.application.options.CodeStyle
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- s:createTestSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- s:createTestSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:doWithTemporarySettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.lang.Runnable):V
+- s:doWithTemporarySettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Consumer):V
+- s:dropTemporarySettings(com.intellij.openapi.project.Project):V
+- s:getCustomSettings(com.intellij.psi.PsiFile,java.lang.Class):com.intellij.psi.codeStyle.CustomCodeStyleSettings
+- s:getDefaultSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getFacade(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.openapi.fileTypes.FileType):com.intellij.psi.codeStyle.CodeStyleSettingsFacade
+- s:getFacade(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CodeStyleSettingsFacade
+- s:getIndentOptions(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- s:getIndentOptions(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- s:getIndentOptions(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- s:getIndentSize(com.intellij.psi.PsiFile):I
+- s:getJoinedLinesSpacing(com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I,Z):I
+- s:getLanguageSettings(com.intellij.openapi.editor.Editor):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- s:getLanguageSettings(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- s:getLanguageSettings(com.intellij.psi.PsiFile,com.intellij.lang.Language):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- s:getLineIndent(com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I,Z):java.lang.String
+- s:getLocalLanguageSettings(com.intellij.openapi.editor.Editor,I):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- s:getProjectOrDefaultSettings(com.intellij.openapi.project.Project):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getSettings(com.intellij.openapi.editor.Editor):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getSettings(com.intellij.openapi.project.Project):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getSettings(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getSettings(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getSettings(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getSettingsPsi(com.intellij.psi.PsiFile):com.intellij.psi.PsiFile
+- s:isFormattingEnabled(com.intellij.psi.PsiFile):Z
+- s:reformatWithFileContext(com.intellij.psi.PsiFile,com.intellij.psi.PsiFile):V
+- s:runWithLocalSettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.lang.Runnable):V
+- s:runWithLocalSettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Consumer):V
+- s:setMainProjectSettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings):V
+- s:setTemporarySettings(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings):V
+- s:usesOwnSettings(com.intellij.openapi.project.Project):Z
+c:com.intellij.application.options.DefaultCodeStyleSettingsFacade
+- com.intellij.psi.codeStyle.CodeStyleSettingsFacade
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.fileTypes.FileType):V
+- f:getIndentSize():I
+- f:getTabSize():I
+- isSpaceAfterComma():Z
+- isSpaceAroundAssignmentOperators():Z
+- isSpaceBeforeComma():Z
+- withLanguage(com.intellij.lang.Language):com.intellij.application.options.DefaultCodeStyleSettingsFacade
+@:com.intellij.application.options.codeStyle.properties.CommaSeparatedValues
+- java.lang.annotation.Annotation
+a:com.intellij.codeStyle.CodeStyleFacade
+- <init>():V
+- a:getIndentSize(com.intellij.openapi.fileTypes.FileType):I
+- s:getInstance():com.intellij.codeStyle.CodeStyleFacade
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeStyle.CodeStyleFacade
+- a:getLineIndent(com.intellij.openapi.editor.Document,I):java.lang.String
+- getLineIndent(com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I,Z):java.lang.String
+- a:useTabCharacter(com.intellij.openapi.fileTypes.FileType):Z
+com.intellij.formatting.ASTBlock
+- com.intellij.formatting.Block
+- s:getElementType(com.intellij.formatting.Block):com.intellij.psi.tree.IElementType
+- a:getNode():com.intellij.lang.ASTNode
+- s:getNode(com.intellij.formatting.Block):com.intellij.lang.ASTNode
+- s:getPsiElement(com.intellij.formatting.Block):com.intellij.psi.PsiElement
+a:com.intellij.formatting.Alignment
+- <init>():V
+- s:createAlignment():com.intellij.formatting.Alignment
+- s:createAlignment(Z):com.intellij.formatting.Alignment
+- s:createAlignment(Z,com.intellij.formatting.Alignment$Anchor):com.intellij.formatting.Alignment
+- s:createChildAlignment(com.intellij.formatting.Alignment):com.intellij.formatting.Alignment
+e:com.intellij.formatting.Alignment$Anchor
+- java.lang.Enum
+- sf:LEFT:com.intellij.formatting.Alignment$Anchor
+- sf:RIGHT:com.intellij.formatting.Alignment$Anchor
+- s:valueOf(java.lang.String):com.intellij.formatting.Alignment$Anchor
+- s:values():com.intellij.formatting.Alignment$Anchor[]
+com.intellij.formatting.Block
+- a:getAlignment():com.intellij.formatting.Alignment
+- a:getChildAttributes(I):com.intellij.formatting.ChildAttributes
+- getDebugName():java.lang.String
+- a:getIndent():com.intellij.formatting.Indent
+- a:getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- a:getSubBlocks():java.util.List
+- a:getTextRange():com.intellij.openapi.util.TextRange
+- a:getWrap():com.intellij.formatting.Wrap
+- a:isIncomplete():Z
+- a:isLeaf():Z
+com.intellij.formatting.BlockEx
+- com.intellij.formatting.Block
+- a:getLanguage():com.intellij.lang.Language
+e:com.intellij.formatting.BraceStyle
+- java.lang.Enum
+- sf:EndOfLine:com.intellij.formatting.BraceStyle
+- sf:NextLine:com.intellij.formatting.BraceStyle
+- sf:NextLineEachShifted:com.intellij.formatting.BraceStyle
+- sf:NextLineIfWrapped:com.intellij.formatting.BraceStyle
+- sf:NextLineShifted:com.intellij.formatting.BraceStyle
+- s:fromInt(I):com.intellij.formatting.BraceStyle
+- f:intValue():I
+- s:valueOf(java.lang.String):com.intellij.formatting.BraceStyle
+- s:values():com.intellij.formatting.BraceStyle[]
+c:com.intellij.formatting.ChildAttributes
+- sf:DELEGATE_TO_NEXT_CHILD:com.intellij.formatting.ChildAttributes
+- sf:DELEGATE_TO_PREV_CHILD:com.intellij.formatting.ChildAttributes
+- <init>(com.intellij.formatting.Indent,com.intellij.formatting.Alignment):V
+- getAlignment():com.intellij.formatting.Alignment
+- getChildIndent():com.intellij.formatting.Indent
+com.intellij.formatting.CustomFormattingModelBuilder
+- com.intellij.formatting.FormattingModelBuilder
+- a:isEngagedToFormat(com.intellij.psi.PsiElement):Z
+f:com.intellij.formatting.DependentSpacingRule
+- sf:DEFAULT:com.intellij.formatting.DependentSpacingRule
+- <init>(com.intellij.formatting.DependentSpacingRule$Trigger):V
+- getData(com.intellij.formatting.DependentSpacingRule$Anchor):I
+- getTrigger():com.intellij.formatting.DependentSpacingRule$Trigger
+- hasData(com.intellij.formatting.DependentSpacingRule$Anchor):Z
+- registerData(com.intellij.formatting.DependentSpacingRule$Anchor,I):com.intellij.formatting.DependentSpacingRule
+e:com.intellij.formatting.DependentSpacingRule$Anchor
+- java.lang.Enum
+- sf:MAX_LINE_FEEDS:com.intellij.formatting.DependentSpacingRule$Anchor
+- sf:MIN_LINE_FEEDS:com.intellij.formatting.DependentSpacingRule$Anchor
+- s:valueOf(java.lang.String):com.intellij.formatting.DependentSpacingRule$Anchor
+- s:values():com.intellij.formatting.DependentSpacingRule$Anchor[]
+e:com.intellij.formatting.DependentSpacingRule$Trigger
+- java.lang.Enum
+- sf:DOES_NOT_HAVE_LINE_FEEDS:com.intellij.formatting.DependentSpacingRule$Trigger
+- sf:HAS_LINE_FEEDS:com.intellij.formatting.DependentSpacingRule$Trigger
+- s:valueOf(java.lang.String):com.intellij.formatting.DependentSpacingRule$Trigger
+- s:values():com.intellij.formatting.DependentSpacingRule$Trigger[]
+e:com.intellij.formatting.ForceBraces
+- java.lang.Enum
+- sf:Always:com.intellij.formatting.ForceBraces
+- sf:IfMultiline:com.intellij.formatting.ForceBraces
+- sf:Never:com.intellij.formatting.ForceBraces
+- s:fromInt(I):com.intellij.formatting.ForceBraces
+- intValue():I
+- s:valueOf(java.lang.String):com.intellij.formatting.ForceBraces
+- s:values():com.intellij.formatting.ForceBraces[]
+com.intellij.formatting.Formatter
+- a:createAlignment(Z,com.intellij.formatting.Alignment$Anchor):com.intellij.formatting.Alignment
+- a:createChildAlignment(com.intellij.formatting.Alignment):com.intellij.formatting.Alignment
+- a:createChildWrap(com.intellij.formatting.Wrap,com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
+- a:createDependentLFSpacing(I,I,com.intellij.openapi.util.TextRange,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
+- a:createDependentLFSpacing(I,I,java.util.List,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
+- a:createKeepingFirstColumnSpacing(I,I,Z,I):com.intellij.formatting.Spacing
+- a:createSafeSpacing(Z,I):com.intellij.formatting.Spacing
+- a:createSpacing(I,I,I,Z,I):com.intellij.formatting.Spacing
+- a:createSpacing(I,I,I,Z,I,I):com.intellij.formatting.Spacing
+- a:createWrap(com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
+- a:getAbsoluteLabelIndent():com.intellij.formatting.Indent
+- a:getAbsoluteNoneIndent():com.intellij.formatting.Indent
+- a:getContinuationIndent(Z):com.intellij.formatting.Indent
+- a:getContinuationWithoutFirstIndent(Z):com.intellij.formatting.Indent
+- a:getIndent(com.intellij.formatting.Indent$Type,I,Z,Z):com.intellij.formatting.Indent
+- a:getIndent(com.intellij.formatting.Indent$Type,Z,Z):com.intellij.formatting.Indent
+- *a:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
+- s:getInstance():com.intellij.formatting.Formatter
+- a:getLabelIndent():com.intellij.formatting.Indent
+- a:getNoneIndent():com.intellij.formatting.Indent
+- a:getNormalIndent(Z):com.intellij.formatting.Indent
+- a:getReadOnlySpacing():com.intellij.formatting.Spacing
+- a:getSmartIndent(com.intellij.formatting.Indent$Type):com.intellij.formatting.Indent
+- a:getSmartIndent(com.intellij.formatting.Indent$Type,Z):com.intellij.formatting.Indent
+- a:getSpaceIndent(I,Z):com.intellij.formatting.Indent
+c:com.intellij.formatting.FormattingContext
+- com.intellij.openapi.util.UserDataHolderBase
+- s:create(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingContext
+- s:create(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.FormattingContext
+- s:create(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingContext
+- getCodeStyleSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- getContainingFile():com.intellij.psi.PsiFile
+- getFormattingMode():com.intellij.formatting.FormattingMode
+- getFormattingRange():com.intellij.openapi.util.TextRange
+- getNode():com.intellij.lang.ASTNode
+- getProject():com.intellij.openapi.project.Project
+- getPsiElement():com.intellij.psi.PsiElement
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- toString():java.lang.String
+- withPsiElement(com.intellij.psi.PsiElement):com.intellij.formatting.FormattingContext
+com.intellij.formatting.FormattingDocumentModel
+- a:adjustWhiteSpaceIfNecessary(java.lang.CharSequence,I,I,com.intellij.lang.ASTNode,Z):java.lang.CharSequence
+- a:containsWhiteSpaceSymbolsOnly(I,I):Z
+- a:getDocument():com.intellij.openapi.editor.Document
+- a:getLineNumber(I):I
+- a:getLineStartOffset(I):I
+- a:getText(com.intellij.openapi.util.TextRange):java.lang.CharSequence
+- a:getTextLength():I
+com.intellij.formatting.FormattingModel
+- a:commitChanges():V
+- a:getDocumentModel():com.intellij.formatting.FormattingDocumentModel
+- a:getRootBlock():com.intellij.formatting.Block
+- a:replaceWhiteSpace(com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.openapi.util.TextRange
+- a:shiftIndentInsideRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):com.intellij.openapi.util.TextRange
+com.intellij.formatting.FormattingModelBuilder
+- createModel(com.intellij.formatting.FormattingContext):com.intellij.formatting.FormattingModel
+- createModel(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
+- createModel(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.FormattingModel
+- createModel(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.formatting.FormattingMode):com.intellij.formatting.FormattingModel
+- getRangeAffectingIndent(com.intellij.psi.PsiFile,I,com.intellij.lang.ASTNode):com.intellij.openapi.util.TextRange
+f:com.intellij.formatting.FormattingModelDumper
+- s:dumpFormattingModel(com.intellij.formatting.Block,I,java.io.PrintStream):V
+- s:dumpFormattingModel(com.intellij.formatting.Block,I,java.lang.StringBuilder):V
+- s:dumpFormattingModelToString(com.intellij.formatting.Block):java.lang.String
+com.intellij.formatting.FormattingModelEx
+- com.intellij.formatting.FormattingModel
+- a:replaceWhiteSpace(com.intellij.openapi.util.TextRange,com.intellij.lang.ASTNode,java.lang.String):com.intellij.openapi.util.TextRange
+f:com.intellij.formatting.FormattingModelProvider
+- <init>():V
+- s:createFormattingModelForPsiFile(com.intellij.psi.PsiFile,com.intellij.formatting.Block,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.formatting.FormattingModel
+com.intellij.formatting.FormattingModelWithShiftIndentInsideDocumentRange
+- com.intellij.formatting.FormattingModelEx
+- a:adjustWhiteSpaceInsideDocument(com.intellij.lang.ASTNode,java.lang.String):java.lang.String
+- a:shiftIndentInsideDocumentRange(com.intellij.openapi.editor.Document,com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):com.intellij.openapi.util.TextRange
+com.intellij.formatting.FormattingRangesInfo
+- a:getBoundRange():com.intellij.openapi.util.TextRange
+- a:getTextRanges():java.util.List
+- a:isOnInsertedLine(I):Z
+- a:isReadOnly(com.intellij.openapi.util.TextRange):Z
+- a:isWhitespaceReadOnly(com.intellij.openapi.util.TextRange):Z
+a:com.intellij.formatting.Indent
+- <init>():V
+- s:getAbsoluteLabelIndent():com.intellij.formatting.Indent
+- s:getAbsoluteNoneIndent():com.intellij.formatting.Indent
+- s:getContinuationIndent():com.intellij.formatting.Indent
+- s:getContinuationIndent(Z):com.intellij.formatting.Indent
+- s:getContinuationWithoutFirstIndent():com.intellij.formatting.Indent
+- s:getContinuationWithoutFirstIndent(Z):com.intellij.formatting.Indent
+- s:getIndent(com.intellij.formatting.Indent$Type,I,Z,Z):com.intellij.formatting.Indent
+- s:getIndent(com.intellij.formatting.Indent$Type,Z,Z):com.intellij.formatting.Indent
+- *s:getIndentEnforcedToChildrenToBeRelativeToMe():com.intellij.formatting.Indent
+- *s:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
+- s:getLabelIndent():com.intellij.formatting.Indent
+- s:getNoneIndent():com.intellij.formatting.Indent
+- s:getNormalIndent():com.intellij.formatting.Indent
+- s:getNormalIndent(Z):com.intellij.formatting.Indent
+- s:getSmartIndent(com.intellij.formatting.Indent$Type):com.intellij.formatting.Indent
+- s:getSmartIndent(com.intellij.formatting.Indent$Type,Z):com.intellij.formatting.Indent
+- s:getSpaceIndent(I):com.intellij.formatting.Indent
+- s:getSpaceIndent(I,Z):com.intellij.formatting.Indent
+- a:getType():com.intellij.formatting.Indent$Type
+f:com.intellij.formatting.Indent$Type
+- sf:CONTINUATION:com.intellij.formatting.Indent$Type
+- sf:CONTINUATION_WITHOUT_FIRST:com.intellij.formatting.Indent$Type
+- sf:LABEL:com.intellij.formatting.Indent$Type
+- sf:NONE:com.intellij.formatting.Indent$Type
+- sf:NORMAL:com.intellij.formatting.Indent$Type
+- *sf:OUTDENT_NORMAL:com.intellij.formatting.Indent$Type
+- *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
+- sf:SPACES:com.intellij.formatting.Indent$Type
+- toString():java.lang.String
+com.intellij.formatting.InjectedFormattingOptionsProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:shouldDelegateToTopLevel(com.intellij.psi.PsiFile):java.lang.Boolean
+a:com.intellij.formatting.Spacing
+- <init>():V
+- s:createDependentLFSpacing(I,I,com.intellij.openapi.util.TextRange,Z,I):com.intellij.formatting.Spacing
+- s:createDependentLFSpacing(I,I,com.intellij.openapi.util.TextRange,Z,I,com.intellij.formatting.DependentSpacingRule):com.intellij.formatting.Spacing
+- s:createDependentLFSpacing(I,I,java.util.List,Z,I):com.intellij.formatting.Spacing
+- s:createKeepingFirstColumnSpacing(I,I,Z,I):com.intellij.formatting.Spacing
+- s:createSafeSpacing(Z,I):com.intellij.formatting.Spacing
+- s:createSpacing(I,I,I,Z,I):com.intellij.formatting.Spacing
+- s:createSpacing(I,I,I,Z,I,I):com.intellij.formatting.Spacing
+- s:getReadOnlySpacing():com.intellij.formatting.Spacing
+c:com.intellij.formatting.SpacingBuilder
+- <init>(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.Language):V
+- <init>(com.intellij.psi.codeStyle.CommonCodeStyleSettings):V
+- after(com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- after(com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- afterInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- afterInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- afterInside(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- afterInside(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- append(com.intellij.formatting.SpacingBuilder):com.intellij.formatting.SpacingBuilder
+- around(com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- around(com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- aroundInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- aroundInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- aroundInside(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- aroundInside(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- before(com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- before(com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- beforeInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- beforeInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- beforeInside(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- between(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- between(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- between(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- between(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- betweenInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- betweenInside(com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.TokenSet,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- getSpacing(com.intellij.formatting.Block,com.intellij.formatting.Block,com.intellij.formatting.Block):com.intellij.formatting.Spacing
+- getSpacing(com.intellij.formatting.Block,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.Spacing
+- withinPair(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+- withinPairInside(com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType,com.intellij.psi.tree.IElementType):com.intellij.formatting.SpacingBuilder$RuleBuilder
+f:com.intellij.formatting.SpacingBuilder$RuleBuilder
+- blankLines(I):com.intellij.formatting.SpacingBuilder
+- lineBreakInCode():com.intellij.formatting.SpacingBuilder
+- lineBreakInCodeIf(Z):com.intellij.formatting.SpacingBuilder
+- lineBreakOrForceSpace(Z,Z):com.intellij.formatting.SpacingBuilder
+- none():com.intellij.formatting.SpacingBuilder
+- parentDependentLFSpacing(I,I,Z,I):com.intellij.formatting.SpacingBuilder
+- spaceIf(Z):com.intellij.formatting.SpacingBuilder
+- spaceIf(Z,Z):com.intellij.formatting.SpacingBuilder
+- spaces(I):com.intellij.formatting.SpacingBuilder
+- spaces(I,Z):com.intellij.formatting.SpacingBuilder
+- spacing(I,I,I,Z,I):com.intellij.formatting.SpacingBuilder
+a:com.intellij.formatting.Wrap
+- <init>():V
+- s:createChildWrap(com.intellij.formatting.Wrap,com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
+- s:createWrap(I,Z):com.intellij.formatting.Wrap
+- s:createWrap(com.intellij.formatting.WrapType,Z):com.intellij.formatting.Wrap
+- a:ignoreParentWraps():V
+e:com.intellij.formatting.WrapType
+- java.lang.Enum
+- sf:ALWAYS:com.intellij.formatting.WrapType
+- sf:CHOP_DOWN_IF_LONG:com.intellij.formatting.WrapType
+- sf:NONE:com.intellij.formatting.WrapType
+- sf:NORMAL:com.intellij.formatting.WrapType
+- s:byLegacyRepresentation(I):com.intellij.formatting.WrapType
+- getLegacyRepresentation():I
+- s:valueOf(java.lang.String):com.intellij.formatting.WrapType
+- s:values():com.intellij.formatting.WrapType[]
+c:com.intellij.formatting.fileSet.AnyFileDescriptor
+- com.intellij.formatting.fileSet.FileSetDescriptor
+- sf:TYPE:java.lang.String
+- <init>():V
+- getPattern():java.lang.String
+- getType():java.lang.String
+- matches(com.intellij.psi.PsiFile):Z
+- setPattern(java.lang.String):V
+com.intellij.formatting.fileSet.FileSetDescriptor
+- getName():java.lang.String
+- a:getPattern():java.lang.String
+- getState():com.intellij.formatting.fileSet.FileSetDescriptor$State
+- a:getType():java.lang.String
+- a:matches(com.intellij.psi.PsiFile):Z
+- a:setPattern(java.lang.String):V
+f:com.intellij.formatting.fileSet.FileSetDescriptor$State
+- name:java.lang.String
+- pattern:java.lang.String
+- type:java.lang.String
+- <init>():V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+com.intellij.formatting.fileSet.FileSetDescriptorFactory
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:createDescriptor(com.intellij.formatting.fileSet.FileSetDescriptor$State):com.intellij.formatting.fileSet.FileSetDescriptor
+a:com.intellij.formatting.service.AbstractDocumentFormattingService
+- com.intellij.formatting.service.FormattingService
+- <init>():V
+- a:formatDocument(com.intellij.openapi.editor.Document,java.util.List,com.intellij.formatting.FormattingContext,Z,Z):V
+- f:formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
+- f:formatElement(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- f:formatRanges(com.intellij.psi.PsiFile,com.intellij.formatting.FormattingRangesInfo,Z,Z):V
+- getImportOptimizers(com.intellij.psi.PsiFile):java.util.Set
+a:com.intellij.formatting.service.AsyncDocumentFormattingService
+- com.intellij.formatting.service.AbstractDocumentFormattingService
+- psf:DEFAULT_TIMEOUT:java.time.Duration
+- sf:FORMAT_DOCUMENT_SYNCHRONOUSLY:com.intellij.openapi.util.Key
+- <init>():V
+- pa:createFormattingTask(com.intellij.formatting.service.AsyncFormattingRequest):com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
+- f:formatDocument(com.intellij.openapi.editor.Document,java.util.List,com.intellij.formatting.FormattingContext,Z,Z):V
+- pa:getName():java.lang.String
+- pa:getNotificationGroupId():java.lang.String
+- p:getTimeout():java.time.Duration
+- p:getTimeoutActions(com.intellij.formatting.FormattingContext):com.intellij.openapi.actionSystem.AnAction[]
+- p:needToUpdate():Z
+p:com.intellij.formatting.service.AsyncDocumentFormattingService$FormattingTask
+- java.lang.Runnable
+- a:cancel():Z
+- isRunUnderProgress():Z
+com.intellij.formatting.service.AsyncFormattingRequest
+- a:canChangeWhitespaceOnly():Z
+- a:getContext():com.intellij.formatting.FormattingContext
+- a:getDocumentText():java.lang.String
+- a:getFormattingRanges():java.util.List
+- a:getIOFile():java.io.File
+- a:isQuickFormat():Z
+- a:onError(java.lang.String,java.lang.String):V
+- a:onError(java.lang.String,java.lang.String,I):V
+- a:onTextReady(java.lang.String):V
+com.intellij.formatting.service.DocumentMerger
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:updateDocument(com.intellij.openapi.editor.Document,java.lang.String):Z
+com.intellij.formatting.service.FormattingNotificationService
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.formatting.service.FormattingNotificationService
+- a:reportError(java.lang.String,java.lang.String,java.lang.String):V
+- reportError(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnAction[]):V
+- a:reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
+com.intellij.formatting.service.FormattingService
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:canFormat(com.intellij.psi.PsiFile):Z
+- a:formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
+- a:formatElement(com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiElement
+- a:formatRanges(com.intellij.psi.PsiFile,com.intellij.formatting.FormattingRangesInfo,Z,Z):V
+- a:getFeatures():java.util.Set
+- a:getImportOptimizers(com.intellij.psi.PsiFile):java.util.Set
+- runAfter():java.lang.Class
+e:com.intellij.formatting.service.FormattingService$Feature
+- java.lang.Enum
+- sf:AD_HOC_FORMATTING:com.intellij.formatting.service.FormattingService$Feature
+- sf:FORMAT_FRAGMENTS:com.intellij.formatting.service.FormattingService$Feature
+- sf:OPTIMIZE_IMPORTS:com.intellij.formatting.service.FormattingService$Feature
+- s:valueOf(java.lang.String):com.intellij.formatting.service.FormattingService$Feature
+- s:values():com.intellij.formatting.service.FormattingService$Feature[]
+com.intellij.lang.CustomAutoFormatSyntaxErrorsVerifier
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:checkValid(com.intellij.psi.PsiElement):Z
+- a:isApplicable(com.intellij.psi.PsiElement):Z
+com.intellij.lang.ImportOptimizer
+- a:processFile(com.intellij.psi.PsiFile):java.lang.Runnable
+- a:supports(com.intellij.psi.PsiFile):Z
+com.intellij.lang.ImportOptimizer$CollectingInfoRunnable
+- java.lang.Runnable
+- a:getUserNotificationInfo():java.lang.String
+f:com.intellij.lang.LanguageFormatting
+- com.intellij.lang.LanguageExtension
+- sf:INSTANCE:com.intellij.lang.LanguageFormatting
+- forContext(com.intellij.lang.Language,com.intellij.psi.PsiElement):com.intellij.formatting.FormattingModelBuilder
+- forContext(com.intellij.psi.PsiElement):com.intellij.formatting.FormattingModelBuilder
+- isAutoFormatAllowed(com.intellij.psi.PsiElement):Z
+com.intellij.lang.LanguageFormattingRestriction
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- isAutoFormatAllowed(com.intellij.psi.PsiElement):Z
+- a:isFormatterAllowed(com.intellij.psi.PsiElement):Z
+com.intellij.lang.VirtualFormattingListener
+- a:replaceWhiteSpace(com.intellij.openapi.util.TextRange,java.lang.String):V
+- a:shiftIndentInsideRange(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange,I):V
+c:com.intellij.openapi.editor.DefaultLineWrapPositionStrategy
+- com.intellij.openapi.editor.GenericLineWrapPositionStrategy
+- <init>():V
+c:com.intellij.openapi.editor.EditorModificationUtilEx
+- <init>():V
+- s:calcAfterLineEnd(com.intellij.openapi.editor.Editor):I
+- *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
+- s:calcStringToFillVirtualSpace(com.intellij.openapi.editor.Editor):java.lang.String
+- s:calcStringToFillVirtualSpace(com.intellij.openapi.editor.Editor,I):java.lang.String
+- s:deleteSelectedText(com.intellij.openapi.editor.Editor):V
+- s:insertStringAtCaret(com.intellij.openapi.editor.Editor,java.lang.String):V
+- s:insertStringAtCaret(com.intellij.openapi.editor.Editor,java.lang.String,Z):I
+- s:insertStringAtCaret(com.intellij.openapi.editor.Editor,java.lang.String,Z,I):I
+- s:insertStringAtCaret(com.intellij.openapi.editor.Editor,java.lang.String,Z,Z):I
+- s:insertStringAtCaret(com.intellij.openapi.editor.Editor,java.lang.String,Z,Z,I):I
+- ps:insertStringAtCaretNoScrolling(com.intellij.openapi.editor.Editor,java.lang.String,Z,Z,I):I
+- s:scrollToCaret(com.intellij.openapi.editor.Editor):V
+c:com.intellij.openapi.editor.GenericLineWrapPositionStrategy
+- com.intellij.openapi.editor.LineWrapPositionStrategy
+- <init>():V
+- addRule(com.intellij.openapi.editor.GenericLineWrapPositionStrategy$Rule):V
+- calculateWrapPosition(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,I,I,I,Z,Z):I
+- p:canUseOffset(com.intellij.openapi.editor.Document,I,Z):Z
+c:com.intellij.openapi.editor.GenericLineWrapPositionStrategy$Rule
+- sf:DEFAULT_WEIGHT:I
+- f:condition:com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition
+- f:symbol:C
+- f:weight:D
+- <init>(C):V
+- <init>(C,D):V
+- <init>(C,com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition):V
+- <init>(C,com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition,D):V
+e:com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition
+- java.lang.Enum
+- sf:AFTER:com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition
+- sf:BEFORE:com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition
+- sf:BOTH:com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition
+- s:valueOf(java.lang.String):com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition
+- s:values():com.intellij.openapi.editor.GenericLineWrapPositionStrategy$WrapCondition[]
+f:com.intellij.openapi.editor.LanguageLineWrapPositionStrategy
+- com.intellij.lang.LanguageExtension
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:INSTANCE:com.intellij.openapi.editor.LanguageLineWrapPositionStrategy
+- forEditor(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.LineWrapPositionStrategy
+- getDefaultImplementation():com.intellij.openapi.editor.LineWrapPositionStrategy
+f:com.intellij.psi.codeStyle.AppCodeStyleSettingsManager
+- com.intellij.psi.codeStyle.CodeStyleSettingsManager
+- <init>():V
+com.intellij.psi.codeStyle.CodeStyleConstraints
+- sf:MAX_INDENT_SIZE:I
+- sf:MAX_RIGHT_MARGIN:I
+- sf:MAX_TAB_SIZE:I
+- sf:MIN_INDENT_SIZE:I
+- sf:MIN_TAB_SIZE:I
+com.intellij.psi.codeStyle.CodeStyleDefaults
+- sf:DEFAULT_CONTINUATION_INDENT_SIZE:I
+- sf:DEFAULT_INDENT_SIZE:I
+- sf:DEFAULT_TAB_SIZE:I
+com.intellij.psi.codeStyle.CodeStyleScheme
+- com.intellij.openapi.options.Scheme
+- sf:CODE_STYLE_NAME_ATTR:java.lang.String
+- sf:CODE_STYLE_TAG_NAME:java.lang.String
+- sf:DEFAULT_SCHEME_NAME:java.lang.String
+- sf:PROJECT_SCHEME_NAME:java.lang.String
+- a:getCodeStyleSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- a:getName():java.lang.String
+- a:isDefault():Z
+a:com.intellij.psi.codeStyle.CodeStyleSchemes
+- <init>():V
+- a:addScheme(com.intellij.psi.codeStyle.CodeStyleScheme):V
+- a:createNewScheme(java.lang.String,com.intellij.psi.codeStyle.CodeStyleScheme):com.intellij.psi.codeStyle.CodeStyleScheme
+- a:deleteScheme(com.intellij.psi.codeStyle.CodeStyleScheme):V
+- findPreferredScheme(java.lang.String):com.intellij.psi.codeStyle.CodeStyleScheme
+- a:findSchemeByName(java.lang.String):com.intellij.psi.codeStyle.CodeStyleScheme
+- getAllSchemes():java.util.List
+- a:getCurrentScheme():com.intellij.psi.codeStyle.CodeStyleScheme
+- a:getDefaultScheme():com.intellij.psi.codeStyle.CodeStyleScheme
+- s:getInstance():com.intellij.psi.codeStyle.CodeStyleSchemes
+- a:setCurrentScheme(com.intellij.psi.codeStyle.CodeStyleScheme):V
+c:com.intellij.psi.codeStyle.CodeStyleSettings
+- com.intellij.psi.codeStyle.LegacyCodeStyleSettings
+- com.intellij.openapi.util.JDOMExternalizable
+- com.intellij.psi.codeStyle.ImportsLayoutSettings
+- java.lang.Cloneable
+- AUTODETECT_INDENTS:Z
+- CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND:I
+- CONSTRUCTORS_ORDER_WEIGHT:I
+- sf:CURR_VERSION:I
+- ENABLE_JAVADOC_FORMATTING:Z
+- FIELDS_ORDER_WEIGHT:I
+- FIELD_NAME_PREFIX:java.lang.String
+- FIELD_NAME_SUFFIX:java.lang.String
+- FORMATTER_OFF_TAG:java.lang.String
+- FORMATTER_ON_TAG:java.lang.String
+- FORMATTER_TAGS_ACCEPT_REGEXP:Z
+- FORMATTER_TAGS_ENABLED:Z
+- GENERATE_FINAL_LOCALS:Z
+- GENERATE_FINAL_PARAMETERS:Z
+- f:IMPORT_LAYOUT_TABLE:com.intellij.psi.codeStyle.PackageEntryTable
+- INNER_CLASSES_ORDER_WEIGHT:I
+- INSERT_INNER_CLASS_IMPORTS:Z
+- INSERT_OVERRIDE_ANNOTATION:Z
+- JD_LEADING_ASTERISKS_ARE_ENABLED:Z
+- JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST:Z
+- LAYOUT_STATIC_IMPORTS_SEPARATELY:Z
+- LINE_SEPARATOR:java.lang.String
+- LOCAL_VARIABLE_NAME_PREFIX:java.lang.String
+- LOCAL_VARIABLE_NAME_SUFFIX:java.lang.String
+- METHODS_ORDER_WEIGHT:I
+- NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND:I
+- f:OTHER_INDENT_OPTIONS:com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- f:PACKAGES_TO_USE_IMPORT_ON_DEMAND:com.intellij.psi.codeStyle.PackageEntryTable
+- PARAMETER_NAME_PREFIX:java.lang.String
+- PARAMETER_NAME_SUFFIX:java.lang.String
+- PARENTHESES_AROUND_METHOD_ARGUMENTS:Z
+- PREFER_LONGER_NAMES:Z
+- REPEAT_SYNCHRONIZED:Z
+- STATIC_FIELDS_ORDER_WEIGHT:I
+- STATIC_FIELD_NAME_PREFIX:java.lang.String
+- STATIC_FIELD_NAME_SUFFIX:java.lang.String
+- STATIC_INNER_CLASSES_ORDER_WEIGHT:I
+- STATIC_METHODS_ORDER_WEIGHT:I
+- USE_EXTERNAL_ANNOTATIONS:Z
+- USE_FQ_CLASS_NAMES:Z
+- USE_FQ_CLASS_NAMES_IN_JAVADOC:Z
+- USE_SINGLE_CLASS_IMPORTS:Z
+- sf:VERSION_ATTR:java.lang.String
+- VISIBILITY:java.lang.String
+- WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN:Z
+- <init>():V
+- <init>(Z):V
+- p:<init>(Z,Z):V
+- clearCodeStyleSettings():V
+- clone():com.intellij.psi.codeStyle.CodeStyleSettings
+- copyFrom(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- equals(java.lang.Object):Z
+- getClassCountToUseImportOnDemand():I
+- getCommonSettings(com.intellij.lang.Language):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- getCommonSettings(java.lang.String):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- getContinuationIndentSize(com.intellij.openapi.fileTypes.FileType):I
+- getCustomSettings(java.lang.Class):com.intellij.psi.codeStyle.CustomCodeStyleSettings
+- getCustomSettingsIfCreated(java.lang.Class):com.intellij.psi.codeStyle.CustomCodeStyleSettings
+- getDefaultRightMargin():I
+- getDefaultSoftMargins():java.util.List
+- s:getDefaults():com.intellij.psi.codeStyle.CodeStyleSettings
+- getExcludedFiles():com.intellij.psi.codeStyle.ExcludedFiles
+- getFormatterOffPattern():java.util.regex.Pattern
+- getFormatterOnPattern():java.util.regex.Pattern
+- getImportLayoutTable():com.intellij.psi.codeStyle.PackageEntryTable
+- getIndentOptions():com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentOptions(com.intellij.openapi.fileTypes.FileType):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentOptionsByDocument(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentOptionsByFile(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentSize(com.intellij.openapi.fileTypes.FileType):I
+- getLanguageIndentOptions(com.intellij.lang.Language):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getLineSeparator():java.lang.String
+- getModificationTracker():com.intellij.openapi.util.SimpleModificationTracker
+- getNamesCountToUseImportOnDemand():I
+- getPackagesToUseImportOnDemand():com.intellij.psi.codeStyle.PackageEntryTable
+- getParentSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- getRepeatAnnotations():java.util.List
+- getRightMargin(com.intellij.lang.Language):I
+- getSoftMargins(com.intellij.lang.Language):java.util.List
+- getTabSize(com.intellij.openapi.fileTypes.FileType):I
+- getVersion():I
+- isInsertInnerClassImports():Z
+- isLayoutStaticImportsSeparately():Z
+- isSmartTabs(com.intellij.openapi.fileTypes.FileType):Z
+- isUseFqClassNames():Z
+- isUseSingleClassImports():Z
+- isWrapOnTyping(com.intellij.lang.Language):Z
+- readExternal(org.jdom.Element):V
+- resetDeprecatedFields():V
+- setClassCountToUseImportOnDemand(I):V
+- setDefaultRightMargin(I):V
+- setDefaultSoftMargins(java.util.List):V
+- setFormatterOffPattern(java.util.regex.Pattern):V
+- setFormatterOnPattern(java.util.regex.Pattern):V
+- setInsertInnerClassImports(Z):V
+- setLayoutStaticImportsSeparately(Z):V
+- setNamesCountToUseImportOnDemand(I):V
+- setParentSettings(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- setRepeatAnnotations(java.util.List):V
+- setRightMargin(com.intellij.lang.Language,I):V
+- setSoftMargins(com.intellij.lang.Language,java.util.List):V
+- setUseFqClassNames(Z):V
+- setUseSingleClassImports(Z):V
+- useTabCharacter(com.intellij.openapi.fileTypes.FileType):Z
+- writeExternal(org.jdom.Element):V
+e:com.intellij.psi.codeStyle.CodeStyleSettings$HtmlTagNewLineStyle
+- java.lang.Enum
+- com.intellij.util.ui.PresentableEnum
+- sf:Never:com.intellij.psi.codeStyle.CodeStyleSettings$HtmlTagNewLineStyle
+- sf:WhenMultiline:com.intellij.psi.codeStyle.CodeStyleSettings$HtmlTagNewLineStyle
+- getPresentableText():java.lang.String
+- toString():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.CodeStyleSettings$HtmlTagNewLineStyle
+- s:values():com.intellij.psi.codeStyle.CodeStyleSettings$HtmlTagNewLineStyle[]
+e:com.intellij.psi.codeStyle.CodeStyleSettings$QuoteStyle
+- java.lang.Enum
+- com.intellij.util.ui.PresentableEnum
+- sf:Double:com.intellij.psi.codeStyle.CodeStyleSettings$QuoteStyle
+- sf:None:com.intellij.psi.codeStyle.CodeStyleSettings$QuoteStyle
+- sf:Single:com.intellij.psi.codeStyle.CodeStyleSettings$QuoteStyle
+- f:quote:java.lang.String
+- getPresentableText():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.CodeStyleSettings$QuoteStyle
+- s:values():com.intellij.psi.codeStyle.CodeStyleSettings$QuoteStyle[]
+e:com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- java.lang.Enum
+- com.intellij.util.ui.PresentableEnum
+- sf:DO_NOT_WRAP:com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- sf:WRAP_ALWAYS:com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- sf:WRAP_AS_NEEDED:com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- sf:WRAP_ON_EVERY_ITEM:com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- s:forWrapping(I):com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- getId():I
+- s:getId(com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle):I
+- getPresentableText():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle
+- s:values():com.intellij.psi.codeStyle.CodeStyleSettings$WrapStyle[]
+f:com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent
+- getProject():com.intellij.openapi.project.Project
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+a:com.intellij.psi.codeStyle.CodeStyleSettingsCustomDataSynchronizer
+- com.intellij.openapi.vfs.VirtualFileCustomDataConsumer
+- com.intellij.openapi.vfs.VirtualFileCustomDataProvider
+- sf:Companion:com.intellij.psi.codeStyle.CodeStyleSettingsCustomDataSynchronizer$Companion
+- <init>():V
+- f:consumeValue(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,B[],kotlin.coroutines.Continuation):java.lang.Object
+- pa:getCustomCodeStyleSettingsClass():java.lang.Class
+- f:getDataType():kotlin.reflect.KType
+- f:getId():java.lang.String
+- pa:getLanguage():com.intellij.lang.Language
+- f:getValues(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):kotlinx.coroutines.flow.Flow
+f:com.intellij.psi.codeStyle.CodeStyleSettingsCustomDataSynchronizer$Companion
+com.intellij.psi.codeStyle.CodeStyleSettingsListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:codeStyleSettingsChanged(com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent):V
+c:com.intellij.psi.codeStyle.CodeStyleSettingsManager
+- com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+- PER_PROJECT_SETTINGS:com.intellij.psi.codeStyle.CodeStyleSettings
+- PREFERRED_PROJECT_CODE_STYLE:java.lang.String
+- USE_PER_PROJECT_SETTINGS:Z
+- <init>():V
+- f:cloneSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
+- createSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- f:createTemporarySettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- s:createTestSettings(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CodeStyleSettings
+- doWithTemporarySettings(com.intellij.psi.codeStyle.CodeStyleSettings,java.lang.Runnable):V
+- doWithTemporarySettings(com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Consumer):V
+- dropTemporarySettings():V
+- p:enumSettings():java.util.Collection
+- fireCodeStyleSettingsChanged():V
+- fireCodeStyleSettingsChanged(com.intellij.openapi.vfs.VirtualFile):V
+- fireCodeStyleSettingsChanged(com.intellij.psi.PsiFile):V
+- getCurrentSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- s:getInstance():com.intellij.psi.codeStyle.CodeStyleSettingsManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.codeStyle.CodeStyleSettingsManager
+- getMainProjectCodeStyle():com.intellij.psi.codeStyle.CodeStyleSettings
+- p:getMessageBus():com.intellij.util.messages.MessageBus
+- p:getProject():com.intellij.openapi.project.Project
+- s:getSettings(com.intellij.openapi.project.Project):com.intellij.psi.codeStyle.CodeStyleSettings
+- getState():org.jdom.Element
+- getStateModificationCount():J
+- getTemporarySettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- p:isIgnoredOnSave(java.lang.String):Z
+- loadState(org.jdom.Element):V
+- f:notifyCodeStyleSettingsChanged():V
+- p:registerExtensionPointListeners(com.intellij.openapi.Disposable):V
+- runWithLocalSettings(com.intellij.psi.codeStyle.CodeStyleSettings,java.lang.Runnable):V
+- runWithLocalSettings(com.intellij.psi.codeStyle.CodeStyleSettings,java.util.function.Consumer):V
+- setMainProjectCodeStyle(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- setTemporarySettings(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- subscribe(com.intellij.psi.codeStyle.CodeStyleSettingsListener):V
+- subscribe(com.intellij.psi.codeStyle.CodeStyleSettingsListener,com.intellij.openapi.Disposable):V
+*:com.intellij.psi.codeStyle.CommentStyleSettings
+- a:isBlockCommentIncludesSpace():Z
+- a:isLineCommentFollowedWithSpace():Z
+- a:isLineCommentInTheFirstColumn():Z
+c:com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- com.intellij.psi.codeStyle.CommentStyleSettings
+- ALIGN_CONSECUTIVE_ASSIGNMENTS:Z
+- ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS:Z
+- ALIGN_GROUP_FIELD_DECLARATIONS:Z
+- ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION:Z
+- ALIGN_MULTILINE_ASSIGNMENT:Z
+- ALIGN_MULTILINE_BINARY_OPERATION:Z
+- ALIGN_MULTILINE_CHAINED_METHODS:Z
+- ALIGN_MULTILINE_EXTENDS_LIST:Z
+- ALIGN_MULTILINE_FOR:Z
+- ALIGN_MULTILINE_METHOD_BRACKETS:Z
+- ALIGN_MULTILINE_PARAMETERS:Z
+- ALIGN_MULTILINE_PARAMETERS_IN_CALLS:Z
+- ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION:Z
+- ALIGN_MULTILINE_RESOURCES:Z
+- ALIGN_MULTILINE_TERNARY_OPERATION:Z
+- ALIGN_MULTILINE_THROWS_LIST:Z
+- ALIGN_SUBSEQUENT_SIMPLE_METHODS:Z
+- ALIGN_THROWS_KEYWORD:Z
+- ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE:Z
+- ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE:Z
+- ARRAY_INITIALIZER_WRAP:I
+- ASSERT_STATEMENT_COLON_ON_NEXT_LINE:Z
+- ASSERT_STATEMENT_WRAP:I
+- ASSIGNMENT_WRAP:I
+- BINARY_OPERATION_SIGN_ON_NEXT_LINE:Z
+- BINARY_OPERATION_WRAP:I
+- BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER:I
+- BLANK_LINES_AFTER_CLASS_HEADER:I
+- BLANK_LINES_AFTER_IMPORTS:I
+- BLANK_LINES_AFTER_PACKAGE:I
+- BLANK_LINES_AROUND_CLASS:I
+- BLANK_LINES_AROUND_FIELD:I
+- BLANK_LINES_AROUND_FIELD_IN_INTERFACE:I
+- BLANK_LINES_AROUND_METHOD:I
+- BLANK_LINES_AROUND_METHOD_IN_INTERFACE:I
+- BLANK_LINES_BEFORE_CLASS_END:I
+- BLANK_LINES_BEFORE_IMPORTS:I
+- BLANK_LINES_BEFORE_METHOD_BODY:I
+- BLANK_LINES_BEFORE_PACKAGE:I
+- BLOCK_COMMENT_ADD_SPACE:Z
+- BLOCK_COMMENT_AT_FIRST_COLUMN:Z
+- BRACE_STYLE:I
+- BUILDER_METHODS:java.lang.String
+- CALL_PARAMETERS_LPAREN_ON_NEXT_LINE:Z
+- CALL_PARAMETERS_RPAREN_ON_NEXT_LINE:Z
+- CALL_PARAMETERS_WRAP:I
+- CASE_STATEMENT_ON_NEW_LINE:Z
+- CATCH_ON_NEW_LINE:Z
+- CLASS_ANNOTATION_WRAP:I
+- CLASS_BRACE_STYLE:I
+- DOWHILE_BRACE_FORCE:I
+- sf:DO_NOT_FORCE:I
+- DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS:Z
+- sf:DO_NOT_WRAP:I
+- ELSE_ON_NEW_LINE:Z
+- sf:END_OF_LINE:I
+- ENUM_CONSTANTS_WRAP:I
+- EXTENDS_KEYWORD_WRAP:I
+- EXTENDS_LIST_WRAP:I
+- FIELD_ANNOTATION_WRAP:I
+- FINALLY_ON_NEW_LINE:Z
+- sf:FORCE_BRACES_ALWAYS:I
+- sf:FORCE_BRACES_IF_MULTILINE:I
+- FORCE_REARRANGE_MODE:I
+- FOR_BRACE_FORCE:I
+- FOR_STATEMENT_LPAREN_ON_NEXT_LINE:Z
+- FOR_STATEMENT_RPAREN_ON_NEXT_LINE:Z
+- FOR_STATEMENT_WRAP:I
+- IF_BRACE_FORCE:I
+- INDENT_BREAK_FROM_CASE:Z
+- INDENT_CASE_FROM_SWITCH:Z
+- KEEP_BLANK_LINES_BEFORE_RBRACE:I
+- KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER:I
+- KEEP_BLANK_LINES_IN_CODE:I
+- KEEP_BLANK_LINES_IN_DECLARATIONS:I
+- KEEP_BUILDER_METHODS_INDENTS:Z
+- KEEP_CONTROL_STATEMENT_IN_ONE_LINE:Z
+- KEEP_FIRST_COLUMN_COMMENT:Z
+- KEEP_LINE_BREAKS:Z
+- KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE:Z
+- KEEP_SIMPLE_BLOCKS_IN_ONE_LINE:Z
+- KEEP_SIMPLE_CLASSES_IN_ONE_LINE:Z
+- KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE:Z
+- KEEP_SIMPLE_METHODS_IN_ONE_LINE:Z
+- LAMBDA_BRACE_STYLE:I
+- LINE_COMMENT_ADD_SPACE:Z
+- LINE_COMMENT_ADD_SPACE_ON_REFORMAT:Z
+- LINE_COMMENT_AT_FIRST_COLUMN:Z
+- METHOD_ANNOTATION_WRAP:I
+- METHOD_BRACE_STYLE:I
+- METHOD_CALL_CHAIN_WRAP:I
+- METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE:Z
+- METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE:Z
+- METHOD_PARAMETERS_WRAP:I
+- MODIFIER_LIST_WRAP:Z
+- sf:NEXT_LINE:I
+- sf:NEXT_LINE_IF_WRAPPED:I
+- sf:NEXT_LINE_SHIFTED:I
+- sf:NEXT_LINE_SHIFTED2:I
+- PARAMETER_ANNOTATION_WRAP:I
+- PARENTHESES_EXPRESSION_LPAREN_WRAP:Z
+- PARENTHESES_EXPRESSION_RPAREN_WRAP:Z
+- PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE:Z
+- PREFER_PARAMETERS_WRAP:Z
+- sf:REARRANGE_ACCORDIND_TO_DIALOG:I
+- sf:REARRANGE_ALWAYS:I
+- sf:REARRANGE_NEVER:I
+- RESOURCE_LIST_LPAREN_ON_NEXT_LINE:Z
+- RESOURCE_LIST_RPAREN_ON_NEXT_LINE:Z
+- RESOURCE_LIST_WRAP:I
+- RIGHT_MARGIN:I
+- SPACE_AFTER_COLON:Z
+- SPACE_AFTER_COMMA:Z
+- SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS:Z
+- SPACE_AFTER_QUEST:Z
+- SPACE_AFTER_SEMICOLON:Z
+- SPACE_AFTER_TYPE_CAST:Z
+- SPACE_AROUND_ADDITIVE_OPERATORS:Z
+- SPACE_AROUND_ASSIGNMENT_OPERATORS:Z
+- SPACE_AROUND_BITWISE_OPERATORS:Z
+- SPACE_AROUND_EQUALITY_OPERATORS:Z
+- SPACE_AROUND_LAMBDA_ARROW:Z
+- SPACE_AROUND_LOGICAL_OPERATORS:Z
+- SPACE_AROUND_METHOD_REF_DBL_COLON:Z
+- SPACE_AROUND_MULTIPLICATIVE_OPERATORS:Z
+- SPACE_AROUND_RELATIONAL_OPERATORS:Z
+- SPACE_AROUND_SHIFT_OPERATORS:Z
+- SPACE_AROUND_UNARY_OPERATOR:Z
+- SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE:Z
+- SPACE_BEFORE_ANOTATION_PARAMETER_LIST:Z
+- SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE:Z
+- SPACE_BEFORE_CATCH_KEYWORD:Z
+- SPACE_BEFORE_CATCH_LBRACE:Z
+- SPACE_BEFORE_CATCH_PARENTHESES:Z
+- SPACE_BEFORE_CLASS_LBRACE:Z
+- SPACE_BEFORE_COLON:Z
+- SPACE_BEFORE_COMMA:Z
+- SPACE_BEFORE_DO_LBRACE:Z
+- SPACE_BEFORE_ELSE_KEYWORD:Z
+- SPACE_BEFORE_ELSE_LBRACE:Z
+- SPACE_BEFORE_FINALLY_KEYWORD:Z
+- SPACE_BEFORE_FINALLY_LBRACE:Z
+- SPACE_BEFORE_FOR_LBRACE:Z
+- SPACE_BEFORE_FOR_PARENTHESES:Z
+- SPACE_BEFORE_IF_LBRACE:Z
+- SPACE_BEFORE_IF_PARENTHESES:Z
+- SPACE_BEFORE_METHOD_CALL_PARENTHESES:Z
+- SPACE_BEFORE_METHOD_LBRACE:Z
+- SPACE_BEFORE_METHOD_PARENTHESES:Z
+- SPACE_BEFORE_QUEST:Z
+- SPACE_BEFORE_SEMICOLON:Z
+- SPACE_BEFORE_SWITCH_LBRACE:Z
+- SPACE_BEFORE_SWITCH_PARENTHESES:Z
+- SPACE_BEFORE_SYNCHRONIZED_LBRACE:Z
+- SPACE_BEFORE_SYNCHRONIZED_PARENTHESES:Z
+- SPACE_BEFORE_TRY_LBRACE:Z
+- SPACE_BEFORE_TRY_PARENTHESES:Z
+- SPACE_BEFORE_TYPE_PARAMETER_LIST:Z
+- SPACE_BEFORE_WHILE_KEYWORD:Z
+- SPACE_BEFORE_WHILE_LBRACE:Z
+- SPACE_BEFORE_WHILE_PARENTHESES:Z
+- SPACE_WITHIN_ANNOTATION_PARENTHESES:Z
+- SPACE_WITHIN_ARRAY_INITIALIZER_BRACES:Z
+- SPACE_WITHIN_BRACES:Z
+- SPACE_WITHIN_BRACKETS:Z
+- SPACE_WITHIN_CAST_PARENTHESES:Z
+- SPACE_WITHIN_CATCH_PARENTHESES:Z
+- SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES:Z
+- SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES:Z
+- SPACE_WITHIN_EMPTY_METHOD_PARENTHESES:Z
+- SPACE_WITHIN_FOR_PARENTHESES:Z
+- SPACE_WITHIN_IF_PARENTHESES:Z
+- SPACE_WITHIN_METHOD_CALL_PARENTHESES:Z
+- SPACE_WITHIN_METHOD_PARENTHESES:Z
+- SPACE_WITHIN_PARENTHESES:Z
+- SPACE_WITHIN_SWITCH_PARENTHESES:Z
+- SPACE_WITHIN_SYNCHRONIZED_PARENTHESES:Z
+- SPACE_WITHIN_TRY_PARENTHESES:Z
+- SPACE_WITHIN_WHILE_PARENTHESES:Z
+- SPECIAL_ELSE_IF_TREATMENT:Z
+- SWITCH_EXPRESSIONS_WRAP:I
+- TERNARY_OPERATION_SIGNS_ON_NEXT_LINE:Z
+- TERNARY_OPERATION_WRAP:I
+- THROWS_KEYWORD_WRAP:I
+- THROWS_LIST_WRAP:I
+- VARIABLE_ANNOTATION_WRAP:I
+- WHILE_BRACE_FORCE:I
+- WHILE_ON_NEW_LINE:Z
+- sf:WRAP_ALWAYS:I
+- sf:WRAP_AS_NEEDED:I
+- WRAP_COMMENTS:Z
+- WRAP_FIRST_METHOD_IN_CALL_CHAIN:Z
+- WRAP_LONG_LINES:Z
+- sf:WRAP_ON_EVERY_ITEM:I
+- WRAP_ON_TYPING:I
+- <init>(com.intellij.lang.Language):V
+- p:arrangementSettingsEqual(com.intellij.psi.codeStyle.CommonCodeStyleSettings):Z
+- clone(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- copyFrom(com.intellij.psi.codeStyle.CommonCodeStyleSettings):V
+- ps:copyPublicFields(java.lang.Object,java.lang.Object):V
+- equals(java.lang.Object):Z
+- getArrangementSettings():com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- getIndentOptions():com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getLanguage():com.intellij.lang.Language
+- getRootSettings():com.intellij.psi.codeStyle.CodeStyleSettings
+- getSoftMargins():java.util.List
+- initIndentOptions():com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- isBlockCommentIncludesSpace():Z
+- isBuilderMethod(java.lang.String):Z
+- isForceArrangeMenuAvailable():Z
+- isLineCommentFollowedWithSpace():Z
+- isLineCommentInTheFirstColumn():Z
+- readExternal(org.jdom.Element):V
+- setArrangementSettings(com.intellij.psi.codeStyle.arrangement.ArrangementSettings):V
+- setForceArrangeMenuAvailable(Z):V
+- setSoftMargins(java.util.List):V
+- writeExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element,com.intellij.psi.codeStyle.LanguageCodeStyleProvider):V
+@:com.intellij.psi.codeStyle.CommonCodeStyleSettings$BraceStyleConstant
+- java.lang.annotation.Annotation
+@:com.intellij.psi.codeStyle.CommonCodeStyleSettings$ForceBraceConstant
+- java.lang.annotation.Annotation
+c:com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- com.intellij.openapi.util.JDOMExternalizable
+- java.lang.Cloneable
+- ARRAY_ELEMENT_INDENT:I
+- CALL_PARAMETER_INDENT:I
+- CHAINED_CALL_INDENT:I
+- CONTINUATION_INDENT_SIZE:I
+- DECLARATION_PARAMETER_INDENT:I
+- sf:DEFAULT_INDENT_OPTIONS:com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- GENERIC_TYPE_PARAMETER_INDENT:I
+- INDENT_SIZE:I
+- KEEP_INDENTS_ON_EMPTY_LINES:Z
+- LABEL_INDENT_ABSOLUTE:Z
+- LABEL_INDENT_SIZE:I
+- SMART_TABS:Z
+- TAB_SIZE:I
+- USE_RELATIVE_INDENTS:Z
+- USE_TAB_CHARACTER:Z
+- <init>():V
+- associateWithDocument(com.intellij.openapi.editor.Document):V
+- clone():java.lang.Object
+- copyFrom(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):V
+- deserialize(org.jdom.Element):V
+- equals(java.lang.Object):Z
+- getFileIndentOptionsProvider():com.intellij.psi.codeStyle.FileIndentOptionsProvider
+- hashCode():I
+- isOverrideLanguageOptions():Z
+- readExternal(org.jdom.Element):V
+- s:retrieveFromAssociatedDocument(com.intellij.openapi.editor.Document):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- s:retrieveFromAssociatedDocument(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- serialize(org.jdom.Element,com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):V
+- setOverrideLanguageOptions(Z):V
+- writeExternal(org.jdom.Element):V
+f:com.intellij.psi.codeStyle.CommonCodeStyleSettings$SupportedFieldsDiffFilter
+- com.intellij.openapi.util.DifferenceFilter
+- <init>(com.intellij.psi.codeStyle.CommonCodeStyleSettings,java.util.Set,com.intellij.psi.codeStyle.CommonCodeStyleSettings):V
+- test(java.lang.reflect.Field):Z
+@:com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapConstant
+- java.lang.annotation.Annotation
+e:com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapOnTyping
+- java.lang.Enum
+- sf:DEFAULT:com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapOnTyping
+- sf:NO_WRAP:com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapOnTyping
+- sf:WRAP:com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapOnTyping
+- intValue:I
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapOnTyping
+- s:values():com.intellij.psi.codeStyle.CommonCodeStyleSettings$WrapOnTyping[]
+a:com.intellij.psi.codeStyle.CustomCodeStyleSettings
+- java.lang.Cloneable
+- p:<init>(java.lang.String,com.intellij.psi.codeStyle.CodeStyleSettings):V
+- p:afterLoaded():V
+- p:beforeLoading():V
+- clone():java.lang.Object
+- equals(java.lang.Object):Z
+- f:getContainer():com.intellij.psi.codeStyle.CodeStyleSettings
+- getKnownTagNames():java.util.List
+- f:getTagName():java.lang.String
+- p:importLegacySettings(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- readExternal(org.jdom.Element):V
+- writeExternal(org.jdom.Element,com.intellij.psi.codeStyle.CustomCodeStyleSettings):V
+c:com.intellij.psi.codeStyle.ExcludedFiles
+- <init>():V
+- addDescriptor(com.intellij.formatting.fileSet.FileSetDescriptor):V
+- clear():V
+- contains(com.intellij.psi.PsiFile):Z
+- deserializeFrom(org.jdom.Element):V
+- equals(java.lang.Object):Z
+- getDescriptors():java.util.List
+- getDescriptors(java.lang.String):java.util.List
+- serializeInto(org.jdom.Element):V
+- setDescriptors(java.lang.String,java.util.List):V
+- setDescriptors(java.util.List):V
+c:com.intellij.psi.codeStyle.ExcludedFiles$State
+- <init>(com.intellij.psi.codeStyle.ExcludedFiles):V
+- getDescriptors():java.util.List
+- setDescriptors(java.util.List):V
+*:com.intellij.psi.codeStyle.ExternalFormatProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:activeExternalFormatProcessor(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.ExternalFormatProcessor
+- a:activeForFile(com.intellij.psi.PsiFile):Z
+- createConfiguration(com.intellij.openapi.project.Project):V
+- s:findExternalFormatter(java.lang.String):java.util.Optional
+- a:format(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,Z,I):com.intellij.openapi.util.TextRange
+- s:formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
+- s:formatRangeInFile(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z):com.intellij.openapi.util.TextRange
+- s:formatRangeInFile(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,Z,I):com.intellij.openapi.util.TextRange
+- a:getId():java.lang.String
+- a:indent(com.intellij.psi.PsiFile,I):java.lang.String
+- s:indentLine(com.intellij.psi.PsiFile,I):java.lang.String
+- s:useExternalFormatter(com.intellij.psi.PsiFile):Z
+com.intellij.psi.codeStyle.FileCodeStyleProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getSettings(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CodeStyleSettings
+a:com.intellij.psi.codeStyle.FileIndentOptionsProvider
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- getIndentOptions(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentOptions(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getIndentStatusBarUiContributor(com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
+- f:isAllowed(Z):Z
+- ps:notifyIndentOptionsChanged(com.intellij.openapi.project.Project):V
+- ps:notifyIndentOptionsChanged(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+- useOnFullReformat():Z
+com.intellij.psi.codeStyle.ImportsLayoutSettings
+- a:getClassCountToUseImportOnDemand():I
+- a:getImportLayoutTable():com.intellij.psi.codeStyle.PackageEntryTable
+- a:getNamesCountToUseImportOnDemand():I
+- a:getPackagesToUseImportOnDemand():com.intellij.psi.codeStyle.PackageEntryTable
+- a:isInsertInnerClassImports():Z
+- a:isLayoutStaticImportsSeparately():Z
+- a:isUseFqClassNames():Z
+- a:isUseSingleClassImports():Z
+- a:setClassCountToUseImportOnDemand(I):V
+- a:setInsertInnerClassImports(Z):V
+- a:setLayoutStaticImportsSeparately(Z):V
+- a:setNamesCountToUseImportOnDemand(I):V
+- a:setUseFqClassNames(Z):V
+- a:setUseSingleClassImports(Z):V
+c:com.intellij.psi.codeStyle.LegacyCodeStyleSettings
+- com.intellij.psi.codeStyle.CommonCodeStyleSettings
+- BLANK_LINES_AROUND_CLASS:I
+- INDENT_CASE_FROM_SWITCH:Z
+- KEEP_BLANK_LINES_IN_CODE:I
+- KEEP_BLANK_LINES_IN_DECLARATIONS:I
+- KEEP_LINE_BREAKS:Z
+- SPACE_AFTER_COLON:Z
+- SPACE_AFTER_COMMA:Z
+- SPACE_AFTER_QUEST:Z
+- SPACE_AFTER_SEMICOLON:Z
+- SPACE_AFTER_TYPE_CAST:Z
+- SPACE_AROUND_ADDITIVE_OPERATORS:Z
+- SPACE_AROUND_ASSIGNMENT_OPERATORS:Z
+- SPACE_AROUND_BITWISE_OPERATORS:Z
+- SPACE_AROUND_EQUALITY_OPERATORS:Z
+- SPACE_AROUND_LOGICAL_OPERATORS:Z
+- SPACE_AROUND_MULTIPLICATIVE_OPERATORS:Z
+- SPACE_AROUND_RELATIONAL_OPERATORS:Z
+- SPACE_AROUND_SHIFT_OPERATORS:Z
+- SPACE_BEFORE_CLASS_LBRACE:Z
+- SPACE_BEFORE_COLON:Z
+- SPACE_BEFORE_COMMA:Z
+- SPACE_BEFORE_IF_LBRACE:Z
+- SPACE_BEFORE_IF_PARENTHESES:Z
+- SPACE_BEFORE_METHOD_CALL_PARENTHESES:Z
+- SPACE_BEFORE_METHOD_LBRACE:Z
+- SPACE_BEFORE_METHOD_PARENTHESES:Z
+- SPACE_BEFORE_QUEST:Z
+- SPACE_BEFORE_SEMICOLON:Z
+- SPACE_BEFORE_WHILE_LBRACE:Z
+- SPACE_BEFORE_WHILE_PARENTHESES:Z
+- SPACE_WITHIN_BRACKETS:Z
+- SPACE_WITHIN_IF_PARENTHESES:Z
+- SPACE_WITHIN_METHOD_CALL_PARENTHESES:Z
+- SPACE_WITHIN_METHOD_PARENTHESES:Z
+- SPACE_WITHIN_PARENTHESES:Z
+- SPACE_WITHIN_WHILE_PARENTHESES:Z
+- <init>():V
+f:com.intellij.psi.codeStyle.LegacyCodeStyleSettingsManager
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+- getState():org.jdom.Element
+- loadState(org.jdom.Element):V
+c:com.intellij.psi.codeStyle.PackageEntry
+- sf:ALL_OTHER_IMPORTS_ENTRY:com.intellij.psi.codeStyle.PackageEntry
+- sf:ALL_OTHER_STATIC_IMPORTS_ENTRY:com.intellij.psi.codeStyle.PackageEntry
+- sf:BLANK_LINE_ENTRY:com.intellij.psi.codeStyle.PackageEntry
+- <init>(Z,java.lang.String,Z):V
+- equals(java.lang.Object):Z
+- getPackageName():java.lang.String
+- hashCode():I
+- isBetterMatchForPackageThan(com.intellij.psi.codeStyle.PackageEntry,java.lang.String,Z):Z
+- isSpecial():Z
+- isStatic():Z
+- isWithSubpackages():Z
+- matchesPackageName(java.lang.String):Z
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.PackageEntryTable
+- com.intellij.openapi.util.JDOMExternalizable
+- java.lang.Cloneable
+- <init>():V
+- addEntry(com.intellij.psi.codeStyle.PackageEntry):V
+- clone():java.lang.Object
+- contains(java.lang.String):Z
+- copyFrom(com.intellij.psi.codeStyle.PackageEntryTable):V
+- equals(java.lang.Object):Z
+- getEntries():com.intellij.psi.codeStyle.PackageEntry[]
+- getEntryAt(I):com.intellij.psi.codeStyle.PackageEntry
+- getEntryCount():I
+- hashCode():I
+- insertEntryAt(com.intellij.psi.codeStyle.PackageEntry,I):V
+- readExternal(org.jdom.Element):V
+- removeEmptyPackages():V
+- removeEntryAt(I):V
+- setEntryAt(com.intellij.psi.codeStyle.PackageEntry,I):V
+- writeExternal(org.jdom.Element):V
+a:com.intellij.psi.codeStyle.PredefinedCodeStyle
+- sf:EMPTY_ARRAY:com.intellij.psi.codeStyle.PredefinedCodeStyle[]
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>(java.lang.String,com.intellij.lang.Language):V
+- apply(com.intellij.psi.codeStyle.CodeStyleSettings):V
+- apply(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.Language):V
+- equals(java.lang.Object):Z
+- getLanguage():com.intellij.lang.Language
+- getName():java.lang.String
+- hashCode():I
+- isApplicableToLanguage(com.intellij.lang.Language):Z
+- toString():java.lang.String
+f:com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager
+- com.intellij.psi.codeStyle.CodeStyleSettingsManager
+- <init>(com.intellij.openapi.project.Project):V
+- getMainProjectCodeStyle():com.intellij.psi.codeStyle.CodeStyleSettings
+- getState():org.jdom.Element
+- initializeComponent():V
+- loadState(org.jdom.Element):V
+- setMainProjectCodeStyle(com.intellij.psi.codeStyle.CodeStyleSettings):V
+a:com.intellij.psi.codeStyle.PsiBasedFileIndentOptionsProvider
+- com.intellij.psi.codeStyle.FileIndentOptionsProvider
+- <init>():V
+- f:getIndentOptions(com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- a:getIndentOptionsByPsiFile(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:canBeMatched():Z
+- a:getChildren():java.util.List
+- a:getDependencies():java.util.List
+- a:getEndOffset():I
+- a:getParent():com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:getStartOffset():I
+com.intellij.psi.codeStyle.arrangement.ArrangementExtendableSettings
+- com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- a:getExtendedSectionRules():java.util.List
+- a:getRuleAliases():java.util.Set
+c:com.intellij.psi.codeStyle.arrangement.ArrangementSectionDetector
+- <init>(com.intellij.openapi.editor.Document,com.intellij.psi.codeStyle.arrangement.ArrangementSettings,com.intellij.util.Consumer):V
+- s:isSectionStartComment(com.intellij.psi.codeStyle.arrangement.ArrangementSettings,java.lang.String):com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
+- processComment(com.intellij.psi.PsiComment):Z
+c:com.intellij.psi.codeStyle.arrangement.ArrangementSectionDetector$ArrangementSectionEntryTemplate
+- <init>(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,com.intellij.openapi.util.TextRange,java.lang.String):V
+- getElement():com.intellij.psi.PsiElement
+- getText():java.lang.String
+- getTextRange():com.intellij.openapi.util.TextRange
+- getToken():com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- java.lang.Cloneable
+- a:clone():com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- a:getGroupings():java.util.List
+- a:getRules():java.util.List
+- a:getRulesSortedByPriority():java.util.List
+- a:getSections():java.util.List
+com.intellij.psi.codeStyle.arrangement.ArrangementSettingsSerializer
+- a:deserialize(org.jdom.Element):com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- a:serialize(com.intellij.psi.codeStyle.arrangement.ArrangementSettings,org.jdom.Element):V
+f:com.intellij.psi.codeStyle.arrangement.ArrangementUtil
+- s:buildMatcher(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- s:buildMatcher(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- s:collectMatchRules(java.util.List):java.util.List
+- s:combine(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition[]):com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+- s:expandToLineIfPossible(com.intellij.openapi.util.TextRange,com.intellij.openapi.editor.Document):com.intellij.openapi.util.TextRange
+- s:extractTokens(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):java.util.Map
+- s:flatten(com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken):java.util.List
+- s:flatten(java.lang.Iterable):java.util.Set
+- s:getArrangementSettings(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.Language):com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- s:getExtendedSectionRules(com.intellij.psi.codeStyle.arrangement.ArrangementSettings):java.util.List
+- s:isAliasedCondition(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):Z
+- s:parseType(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- s:readExternal(org.jdom.Element,com.intellij.lang.Language):com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- s:writeExternal(org.jdom.Element,com.intellij.psi.codeStyle.arrangement.ArrangementSettings,com.intellij.lang.Language):V
+c:com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry
+- com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- <init>(com.intellij.psi.codeStyle.arrangement.ArrangementEntry,I,I,Z):V
+- addChild(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):V
+- addDependency(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):V
+- canBeMatched():Z
+- getChildren():java.util.List
+- getDependencies():java.util.List
+- getEndOffset():I
+- getParent():com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- getStartOffset():I
+c:com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer
+- com.intellij.psi.codeStyle.arrangement.ArrangementSettingsSerializer
+- <init>(com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$Mixin,com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings):V
+- <init>(com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings):V
+- deserialize(org.jdom.Element):com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- serialize(com.intellij.psi.codeStyle.arrangement.ArrangementSettings,org.jdom.Element):V
+- serialize(com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule):org.jdom.Element
+- serialize(com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule):org.jdom.Element
+com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$Mixin
+- sf:NULL:com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$Mixin
+- a:deserializeToken(java.lang.String):com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+c:com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$MutableMixin
+- com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$Mixin
+- <init>(com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$Mixin):V
+- deserializeToken(java.lang.String):com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- setMyRuleAliases(java.util.Set):V
+com.intellij.psi.codeStyle.arrangement.LanguageAwareArrangementEntry
+- com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:getLanguage():com.intellij.lang.Language
+com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry
+- com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:getModifiers():java.util.Set
+com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry
+- com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:getName():java.lang.String
+com.intellij.psi.codeStyle.arrangement.NamespaceAwareArrangementEntry
+- a:getNamespace():java.lang.String
+com.intellij.psi.codeStyle.arrangement.Rearranger
+- sf:EXTENSION:com.intellij.lang.LanguageExtension
+- a:getBlankLines(com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.psi.codeStyle.arrangement.ArrangementEntry,com.intellij.psi.codeStyle.arrangement.ArrangementEntry,com.intellij.psi.codeStyle.arrangement.ArrangementEntry):I
+- a:getSerializer():com.intellij.psi.codeStyle.arrangement.ArrangementSettingsSerializer
+- a:parse(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,java.util.Collection,com.intellij.psi.codeStyle.arrangement.ArrangementSettings):java.util.List
+- a:parseWithNew(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,java.util.Collection,com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.arrangement.ArrangementSettings):com.intellij.openapi.util.Pair
+com.intellij.psi.codeStyle.arrangement.TextAwareArrangementEntry
+- com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:getText():java.lang.String
+com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry
+- com.intellij.psi.codeStyle.arrangement.ArrangementEntry
+- a:getTypes():java.util.Set
+c:com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):V
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):V
+- clone():com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
+- equals(java.lang.Object):Z
+- getGroupingType():com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- getOrderType():com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- hashCode():I
+- toString():java.lang.String
+a:com.intellij.psi.codeStyle.arrangement.match.AbstractRegexpArrangementMatcher
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- <init>(java.lang.String):V
+- equals(java.lang.Object):Z
+- getPattern():java.lang.String
+- pa:getTextToMatch(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):java.lang.String
+- hashCode():I
+- isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+- toString():java.lang.String
+com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- sf:EMPTY:com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- a:isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+c:com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule
+- sf:DEFAULT_ORDER_TYPE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- <init>(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher):V
+- <init>(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher,com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):V
+- equals(java.lang.Object):Z
+- getMatcher():com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- getOrderType():com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
+- java.lang.Cloneable
+- clone():com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
+- s:create(java.lang.String,java.lang.String,java.util.List):com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
+- s:create(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule[]):com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
+- s:create(com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule[]):com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule
+- equals(java.lang.Object):Z
+- getEndComment():java.lang.String
+- getMatchRules():java.util.List
+- getStartComment():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.ByModifierArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- <init>(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):V
+- <init>(java.util.Collection):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.ByNameArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.AbstractRegexpArrangementMatcher
+- <init>(java.lang.String):V
+- p:getTextToMatch(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.ByNamespaceArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.AbstractRegexpArrangementMatcher
+- <init>(java.lang.String):V
+- p:getTextToMatch(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.ByTextArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- <init>(java.lang.String):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.ByTypeArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- <init>(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):V
+- <init>(java.util.Collection):V
+- equals(java.lang.Object):Z
+- getTypes():java.util.Set
+- hashCode():I
+- isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.CompositeArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- <init>(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher[]):V
+- addMatcher(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher):V
+- equals(java.lang.Object):Z
+- hashCode():I
+- isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.match.DefaultArrangementEntryMatcherSerializer
+- <init>(com.intellij.psi.codeStyle.arrangement.DefaultArrangementSettingsSerializer$Mixin):V
+- deserialize(org.jdom.Element):com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
+- serialize(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher):org.jdom.Element
+f:com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- <init>(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):V
+- <init>(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition,com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher$StdMatcherBuilder):V
+- equals(java.lang.Object):Z
+- getCondition():com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+- hashCode():I
+- isMatched(com.intellij.psi.codeStyle.arrangement.ArrangementEntry):Z
+- toString():java.lang.String
+com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher$StdMatcherBuilder
+- a:addMatcher(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher):V
+- a:buildMatchers():java.util.Collection
+- a:onCondition(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):V
+c:com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher$StdMatcherBuilderImpl
+- com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher$StdMatcherBuilder
+- pf:context:com.intellij.util.containers.MultiMap
+- <init>():V
+- addMatcher(com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher):V
+- p:addToContext(com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken,com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):V
+- buildMatchers():java.util.Collection
+- onCondition(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):V
+c:com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
+- com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule
+- java.lang.Cloneable
+- java.lang.Comparable
+- <init>(com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher):V
+- <init>(com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher,com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):V
+- clone():com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
+- compareTo(com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule):I
+- getMatcher():com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
+c:com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
+- com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):V
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,java.lang.Object):V
+- clone():com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
+- equals(java.lang.Object):Z
+- getPresentableValue():java.lang.String
+- getType():com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- getValue():java.lang.Object
+- hashCode():I
+- invite(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor):V
+- toString():java.lang.String
+c:com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition
+- com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+- <init>():V
+- <init>(java.util.Collection):V
+- addOperand(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition
+- clone():com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition
+- equals(java.lang.Object):Z
+- getOperands():java.util.Set
+- hashCode():I
+- invite(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor):V
+- removeOperand(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):V
+- toString():java.lang.String
+com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+- java.lang.Cloneable
+- a:clone():com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
+- a:invite(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor):V
+com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor
+- a:visit(com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition):V
+- a:visit(com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition):V
+com.intellij.psi.codeStyle.arrangement.std.ArrangementSectionRuleAwareSettings
+- java.lang.Cloneable
+c:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- java.lang.Comparable
+- p:myId:java.lang.String
+- p:myRepresentationName:java.lang.String
+- <init>(java.lang.String,java.lang.String):V
+- compareTo(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):I
+- equals(java.lang.Object):Z
+- getId():java.lang.String
+- getRepresentationValue():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware
+- a:buildMatcher(com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher
+- getArrangementTabInfos():java.util.Collection
+- a:getDefaultSettings():com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
+- a:getMutexes():java.util.Collection
+- a:getSupportedGroupingTokens():java.util.List
+- a:getSupportedMatchingTokens():java.util.List
+- a:isEnabled(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition):Z
+c:com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware$ArrangementTabInfo
+- f:configurableId:java.lang.String
+- f:icon:javax.swing.Icon
+- f:languageDisplayName:java.lang.String
+- <init>(javax.swing.Icon,java.lang.String,java.lang.String):V
+c:com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):V
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole,java.util.List):V
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,java.util.Collection):V
+- <init>(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken,com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken[]):V
+- getChildren():java.util.List
+- getRole():com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- getToken():com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- toString():java.lang.String
+f:com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementToken
+- com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- s:create(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType,com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken[]):com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementToken
+- getAdditionalTokens():java.util.Set
+a:com.intellij.psi.codeStyle.arrangement.std.CustomArrangementOrderToken
+- com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- p:<init>(java.lang.String,java.lang.String):V
+- a:getEntryComparator():java.util.Comparator
+com.intellij.psi.codeStyle.arrangement.std.InvertibleArrangementSettingsToken
+- a:getInvertedRepresentationValue():java.lang.String
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementExtendableSettings
+- com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
+- com.intellij.psi.codeStyle.arrangement.ArrangementExtendableSettings
+- <init>():V
+- <init>(java.util.List,java.util.List,java.util.Collection):V
+- addRule(com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule):V
+- appendExpandedRules(com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule,java.util.List,java.util.Map):V
+- clone():com.intellij.psi.codeStyle.arrangement.std.StdArrangementExtendableSettings
+- s:createByMatchRules(java.util.List,java.util.List,java.util.Collection):com.intellij.psi.codeStyle.arrangement.std.StdArrangementExtendableSettings
+- equals(java.lang.Object):Z
+- getExtendedSectionRules():java.util.List
+- getRuleAliases():java.util.Set
+- getRulesSortedByPriority():java.util.List
+c:com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken
+- com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- java.lang.Cloneable
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.util.List):V
+- <init>(java.lang.String,java.util.List):V
+- p:clone():com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken
+- equals(java.lang.Object):Z
+- getDefinitionRules():java.util.List
+- getName():java.lang.String
+- hashCode():I
+- setDefinitionRules(java.util.List):V
+- setTokenName(java.lang.String):V
+c:com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
+- com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- pf:myRulesByPriority:java.util.List
+- <init>():V
+- <init>(java.util.List):V
+- <init>(java.util.List,java.util.List):V
+- addGrouping(com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule):V
+- addRule(com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule):V
+- addSectionRule(com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule):V
+- clone():com.intellij.psi.codeStyle.arrangement.ArrangementSettings
+- p:cloneGroupings():java.util.List
+- p:cloneSectionRules():java.util.List
+- s:createByMatchRules(java.util.List,java.util.List):com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
+- equals(java.lang.Object):Z
+- getGroupings():java.util.List
+- getRules():java.util.List
+- getRulesSortedByPriority():java.util.List
+- getSections():java.util.List
+- hashCode():I
+c:com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- <init>(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType):V
+- getTokenType():com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- s:token(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType):com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- s:tokenByBundle(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType):com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+c:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:ALIAS:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:ALIAS_ID:java.lang.String
+- sf:ENTRY_TYPE:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:ENTRY_TYPE_ID:java.lang.String
+- sf:GENERAL:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:GENERAL_ID:java.lang.String
+- sf:GROUPING:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:GROUPING_ID:java.lang.String
+- sf:MODIFIER:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:MODIFIER_ID:java.lang.String
+- sf:ORDER:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:ORDER_ID:java.lang.String
+- sf:REG_EXP:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType
+- sf:REG_EXP_ID:java.lang.String
+- <init>(com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole,java.lang.String):V
+- equals(java.lang.Object):Z
+- getUiRole():com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- hashCode():I
+- is(com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken):Z
+e:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- java.lang.Enum
+- sf:BULB:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- sf:CHECKBOX:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- sf:COMBO_BOX:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- sf:LABEL:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- sf:TEXT_FIELD:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- s:valueOf(java.lang.String):com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole
+- s:values():com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole[]
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens
+- s:byId(java.lang.String):com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$EntryType
+- sf:ANONYMOUS_CLASS:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:CLASS:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:CONST:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:CONSTRUCTOR:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:ENUM:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:EVENT_HANDLER:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:FIELD:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:INIT_BLOCK:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:INTERFACE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:METHOD:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:NAMESPACE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:PROPERTY:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:STATIC_INIT:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:TRAIT:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:VAR:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:XML_ATTRIBUTE:com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- sf:XML_TAG:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- s:values():java.util.Set
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$General
+- sf:ALIAS:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:MODIFIER:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:ORDER:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:TYPE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$Grouping
+- sf:DEPENDENT_METHODS:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:GETTERS_AND_SETTERS:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:GROUP_PROPERTY_FIELD_WITH_GETTER_SETTER:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:OVERRIDDEN_METHODS:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$Modifier
+- sf:ABSTRACT:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:FINAL:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:GETTER:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:MODIFIER_AS_TYPE:java.util.Set
+- sf:OVERRIDDEN:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:OVERRIDE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:PACKAGE_PRIVATE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:PRIVATE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:PROTECTED:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:PUBLIC:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:READONLY:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:SETTER:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:STATIC:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:SYNCHRONIZED:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:TRANSIENT:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:VOLATILE:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- s:values():java.util.Set
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$Order
+- sf:BREADTH_FIRST:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:BY_NAME:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:DEPTH_FIRST:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:KEEP:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$Regexp
+- sf:NAME:com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- sf:TEXT:com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- sf:XML_NAMESPACE:com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+f:com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens$Section
+- sf:END_SECTION:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+- sf:START_SECTION:com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+f:com.intellij.psi.codeStyle.arrangement.std.StdInvertibleArrangementSettingsToken
+- com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettingsToken
+- com.intellij.psi.codeStyle.arrangement.std.InvertibleArrangementSettingsToken
+- getInvertedRepresentationValue():java.lang.String
+- s:invertibleToken(java.lang.String,java.lang.String,java.lang.String,com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType):com.intellij.psi.codeStyle.arrangement.std.StdInvertibleArrangementSettingsToken
+com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator
+- getJoinedLinesSpacing(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I):I
+com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
+- sf:DO_NOT_ADJUST:java.lang.String
+- a:getLineIndent(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.lang.Language,I):java.lang.String
+- a:isSuitableFor(com.intellij.lang.Language):Z
+f:com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP
+- <init>():V
+- s:findLineIndentProvider(com.intellij.lang.Language):com.intellij.psi.codeStyle.lineIndent.LineIndentProvider
+*:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
+- a:getName():java.lang.String
+- a:getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
+- mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
+- a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z
+com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
+- a:areActionsAvailable(com.intellij.openapi.vfs.VirtualFile):Z
+- a:createDisableAction(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.AnAction
+- createShowAllAction(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.AnAction
+- getActionGroupTitle():java.lang.String
+- a:getActions(com.intellij.psi.PsiFile):com.intellij.openapi.actionSystem.AnAction[]
+- getIcon():javax.swing.Icon
+- getStatusText(com.intellij.psi.PsiFile):java.lang.String
+- a:getTooltip():java.lang.String
+f:com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
+- com.intellij.psi.codeStyle.CodeStyleSettings
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.psi.codeStyle.CodeStyleSettings):V
+- <init>(com.intellij.psi.PsiFile,com.intellij.psi.codeStyle.CodeStyleSettings):V
+- addDependencies(java.util.List):V
+- addDependency(com.intellij.openapi.util.ModificationTracker):V
+- getDependencies():java.util.List
+- getIndentOptionsByFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.TextRange,Z,com.intellij.util.Processor):com.intellij.psi.codeStyle.CommonCodeStyleSettings$IndentOptions
+- getModifier():com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
+- getPsiFile():com.intellij.psi.PsiFile
+- setModifier(com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier):V
+a:com.intellij.psi.impl.source.PostprocessReformattingAspect
+- com.intellij.pom.PomModelAspect
+- <init>():V
+- a:assertDocumentChangeIsAllowed(com.intellij.psi.FileViewProvider):V
+- a:clear():V
+- a:disablePostprocessFormattingInside(com.intellij.openapi.util.Computable):java.lang.Object
+- a:disablePostprocessFormattingInside(java.lang.Runnable):V
+- a:doPostponedFormatting():V
+- a:doPostponedFormatting(com.intellij.psi.FileViewProvider):V
+- a:forcePostprocessFormat(com.intellij.psi.PsiFile,com.intellij.openapi.Disposable):V
+- a:forcePostprocessFormatInside(com.intellij.psi.PsiFile,java.lang.Runnable):V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.impl.source.PostprocessReformattingAspect
+- a:isDisabled():Z
+- a:isDocumentLocked(com.intellij.openapi.editor.Document):Z
+- a:isViewProviderLocked(com.intellij.psi.FileViewProvider):Z
+- a:postponeFormattingInside(com.intellij.openapi.util.Computable):java.lang.Object
+- a:postponeFormattingInside(java.lang.Runnable):V
+- a:update(com.intellij.pom.event.PomModelEvent):V
+com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- isWhitespaceOnly():Z
+- a:processElement(com.intellij.psi.PsiElement,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.PsiElement
+- a:processText(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.openapi.util.TextRange
+com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- changesWhitespacesOnly():Z
+- a:process(com.intellij.lang.ASTNode,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange

@@ -1,0 +1,6 @@
+io/opentelemetry/api/metrics/Meter
+io/opentelemetry/api/trace/Span
+io/opentelemetry/api/trace/SpanBuilder
+io/opentelemetry/api/trace/Tracer
+io/opentelemetry/context/Context
+io/opentelemetry/sdk/metrics/data/MetricData

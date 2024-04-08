@@ -1,0 +1,307 @@
+a:com.intellij.concurrency.AsyncFutureFactory
+- <init>():V
+- a:createAsyncFutureResult():com.intellij.concurrency.AsyncFutureResult
+- s:getInstance():com.intellij.concurrency.AsyncFutureFactory
+- s:wrap(java.lang.Object):com.intellij.concurrency.AsyncFuture
+- s:wrapException(java.lang.Throwable):com.intellij.concurrency.AsyncFuture
+com.intellij.concurrency.AsyncFutureResult
+- com.intellij.concurrency.AsyncFuture
+- a:set(java.lang.Object):V
+- a:setException(java.lang.Throwable):V
+f:com.intellij.concurrency.ConcurrentCollectionFactory
+- <init>():V
+- s:createConcurrentIdentityMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentIdentitySet():java.util.Set
+- s:createConcurrentIdentitySet(I):java.util.Set
+- s:createConcurrentIntObjectMap():com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentIntObjectMap(I,F,I):com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentIntObjectSoftValueMap():com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentIntObjectWeakValueMap():com.intellij.util.containers.ConcurrentIntObjectMap
+- s:createConcurrentLongObjectMap():com.intellij.util.containers.ConcurrentLongObjectMap
+- s:createConcurrentLongObjectMap(I):com.intellij.util.containers.ConcurrentLongObjectMap
+- s:createConcurrentMap():java.util.concurrent.ConcurrentMap
+- s:createConcurrentMap(I,F,I,com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
+- s:createConcurrentMap(com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
+- s:createConcurrentSet():java.util.Set
+- s:createConcurrentSet(I,F,I,com.intellij.util.containers.HashingStrategy):java.util.Set
+- s:createConcurrentSet(I,com.intellij.util.containers.HashingStrategy):java.util.Set
+- s:createConcurrentSet(com.intellij.util.containers.HashingStrategy):java.util.Set
+c:com.intellij.openapi.util.AsyncResult
+- com.intellij.openapi.util.ActionCallback
+- p:myResult:java.lang.Object
+- <init>():V
+- doWhenDone(com.intellij.openapi.util.AsyncResult$Handler):com.intellij.openapi.util.AsyncResult
+- doWhenDone(com.intellij.util.Consumer):com.intellij.openapi.util.AsyncResult
+- s:done(java.lang.Object):com.intellij.openapi.util.AsyncResult
+- getResult():java.lang.Object
+- getResultSync():java.lang.Object
+- getResultSync(J):java.lang.Object
+- f:notify(com.intellij.openapi.util.ActionCallback):com.intellij.openapi.util.AsyncResult
+- setDone(java.lang.Object):com.intellij.openapi.util.AsyncResult
+- setRejected(java.lang.Object):com.intellij.openapi.util.AsyncResult
+com.intellij.openapi.util.AsyncResult$Handler
+- a:run(java.lang.Object):V
+f:com.intellij.openapi.util.SimpleTimer
+- s:getInstance():com.intellij.openapi.util.SimpleTimer
+- s:newInstance(java.lang.String):com.intellij.openapi.util.SimpleTimer
+- setUp(java.lang.Runnable,J):com.intellij.openapi.util.SimpleTimerTask
+- toString():java.lang.String
+com.intellij.openapi.util.SimpleTimerTask
+- a:cancel():V
+- a:isCancelled():Z
+c:com.intellij.openapi.util.TimedOutCallback
+- com.intellij.openapi.util.ActionCallback
+- java.lang.Runnable
+- <init>(I,J,java.lang.String,java.lang.Throwable,Z):V
+- <init>(J,java.lang.String,java.lang.Throwable,Z):V
+- dispose():V
+- p:dumpError():V
+- getAllocation():java.lang.Throwable
+- getMessage():java.lang.String
+- p:onTimeout():V
+- f:run():V
+f:com.intellij.util.MergeQuery
+- com.intellij.util.AbstractQuery
+- <init>(com.intellij.util.Query,com.intellij.util.Query):V
+- forEachAsync(com.intellij.util.Processor):com.intellij.concurrency.AsyncFuture
+c:com.intellij.util.TimedReference
+- com.intellij.openapi.Disposable
+- psf:SERVICE_DELAY:I
+- p:myT:java.lang.Object
+- <init>(com.intellij.openapi.Disposable):V
+- p:checkLocked():Z
+- dispose():V
+- s:disposeTimed():V
+- get():java.lang.Object
+- isCached():Z
+- p:isLocked():Z
+- pf:poll():V
+- pf:remove():V
+- set(java.lang.Object):V
+f:com.intellij.util.concurrency.AppJavaExecutorUtil
+f:com.intellij.util.concurrency.AtomicFieldUpdater
+- compareAndSet(java.lang.Object,java.lang.Object,java.lang.Object):Z
+- compareAndSetInt(java.lang.Object,I,I):Z
+- compareAndSetLong(java.lang.Object,J,J):Z
+- s:forField(java.lang.reflect.Field):com.intellij.util.concurrency.AtomicFieldUpdater
+- s:forFieldOfType(java.lang.Class,java.lang.Class):com.intellij.util.concurrency.AtomicFieldUpdater
+- s:forIntFieldIn(java.lang.Class):com.intellij.util.concurrency.AtomicFieldUpdater
+- s:forLongFieldIn(java.lang.Class):com.intellij.util.concurrency.AtomicFieldUpdater
+- getVolatile(java.lang.Object):java.lang.Object
+- setVolatile(java.lang.Object,java.lang.Object):V
+a:com.intellij.util.concurrency.EdtExecutorService
+- java.util.concurrent.AbstractExecutorService
+- <init>():V
+- s:getInstance():com.intellij.util.concurrency.EdtExecutorService
+- s:getScheduledExecutorInstance():java.util.concurrent.ScheduledExecutorService
+com.intellij.util.concurrency.EdtScheduledExecutorService
+- java.util.concurrent.ScheduledExecutorService
+- s:getInstance():com.intellij.util.concurrency.EdtScheduledExecutorService
+- a:schedule(java.lang.Runnable,com.intellij.openapi.application.ModalityState,J,java.util.concurrent.TimeUnit):java.util.concurrent.ScheduledFuture
+c:com.intellij.util.concurrency.FutureResult
+- java.util.concurrent.Future
+- <init>():V
+- <init>(java.lang.Object):V
+- cancel(Z):Z
+- get():java.lang.Object
+- get(J,java.util.concurrent.TimeUnit):java.lang.Object
+- isCancelled():Z
+- isDone():Z
+- reset():V
+- set(java.lang.Object):V
+- setException(java.lang.Throwable):V
+- tryGet():java.lang.Object
+f:com.intellij.util.concurrency.LockToken
+- com.intellij.openapi.application.AccessToken
+- s:acquireLock(java.util.concurrent.locks.Lock):com.intellij.util.concurrency.LockToken
+- s:attemptLock(java.util.concurrent.locks.Lock,J):com.intellij.util.concurrency.LockToken
+- finish():V
+f:com.intellij.util.concurrency.NonUrgentExecutor
+- java.util.concurrent.Executor
+- execute(java.lang.Runnable):V
+- s:getInstance():com.intellij.util.concurrency.NonUrgentExecutor
+f:com.intellij.util.concurrency.QueueProcessor
+- <init>(com.intellij.util.Consumer):V
+- <init>(com.intellij.util.Consumer,com.intellij.openapi.util.Condition):V
+- <init>(com.intellij.util.Consumer,com.intellij.openapi.util.Condition,Z):V
+- <init>(java.util.function.BiConsumer,Z,com.intellij.util.concurrency.QueueProcessor$ThreadToUse,com.intellij.openapi.util.Condition):V
+- add(java.lang.Object):V
+- add(java.lang.Object,com.intellij.openapi.application.ModalityState):V
+- addFirst(java.lang.Object):V
+- clear():V
+- s:createRunnableQueueProcessor():com.intellij.util.concurrency.QueueProcessor
+- s:createRunnableQueueProcessor(com.intellij.util.concurrency.QueueProcessor$ThreadToUse):com.intellij.util.concurrency.QueueProcessor
+- dismissLastTasks(I):V
+- hasPendingItemsToProcess():Z
+- isEmpty():Z
+- s:runSafely(java.lang.Runnable):V
+- start():V
+- waitFor():V
+e:com.intellij.util.concurrency.QueueProcessor$ThreadToUse
+- java.lang.Enum
+- sf:AWT:com.intellij.util.concurrency.QueueProcessor$ThreadToUse
+- sf:POOLED:com.intellij.util.concurrency.QueueProcessor$ThreadToUse
+- s:valueOf(java.lang.String):com.intellij.util.concurrency.QueueProcessor$ThreadToUse
+- s:values():com.intellij.util.concurrency.QueueProcessor$ThreadToUse[]
+f:com.intellij.util.concurrency.SameThreadExecutor
+- java.util.concurrent.Executor
+- sf:INSTANCE:java.util.concurrent.Executor
+- execute(java.lang.Runnable):V
+a:com.intellij.util.concurrency.SwingWorker
+- <init>():V
+- a:construct():java.lang.Object
+- finished():V
+- get():java.lang.Object
+- p:getValue():java.lang.Object
+- interrupt():V
+- onThrowable():V
+- start():V
+com.intellij.util.containers.ConcurrentBitSet
+- a:cardinality():I
+- a:clear():V
+- a:clear(I):Z
+- s:create():com.intellij.util.containers.ConcurrentBitSet
+- s:create(I):com.intellij.util.containers.ConcurrentBitSet
+- a:get(I):Z
+- a:nextClearBit(I):I
+- a:nextSetBit(I):I
+- s:readFrom(java.io.DataInputStream):com.intellij.util.containers.ConcurrentBitSet
+- a:set(I):Z
+- a:set(I,Z):V
+- a:size():I
+- a:writeTo(java.io.DataOutputStream):V
+com.intellij.util.containers.ConcurrentPackedBitsArray
+- a:clear():V
+- s:create(I):com.intellij.util.containers.ConcurrentPackedBitsArray
+- a:get(I):J
+- a:set(I,J):J
+com.intellij.util.containers.ConcurrentThreeStateBitSet
+- sf:Companion:com.intellij.util.containers.ConcurrentThreeStateBitSet$Companion
+- a:clear():V
+- a:compareAndSet(I,java.lang.Boolean,java.lang.Boolean):Z
+- a:get(I):java.lang.Boolean
+- a:set(I,java.lang.Boolean):V
+- a:size():I
+f:com.intellij.util.containers.ConcurrentThreeStateBitSet$Companion
+- f:create():com.intellij.util.containers.ConcurrentThreeStateBitSet
+- f:create(I):com.intellij.util.containers.ConcurrentThreeStateBitSet
+f:com.intellij.util.containers.ConcurrentThreeStateBitSetImpl
+- com.intellij.util.containers.ConcurrentThreeStateBitSet
+- <init>():V
+- <init>(I):V
+- b:<init>(I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- clear():V
+- compareAndSet(I,java.lang.Boolean,java.lang.Boolean):Z
+- get(I):java.lang.Boolean
+- set(I,java.lang.Boolean):V
+- size():I
+*f:org.jetbrains.concurrency.AsyncCache
+- <init>(java.util.function.Function,java.util.function.Function):V
+- f:computeOrGet(com.intellij.openapi.util.UserDataHolder):org.jetbrains.concurrency.AsyncPromise
+c:org.jetbrains.concurrency.AsyncPromise
+- org.jetbrains.concurrency.CancellablePromise
+- org.jetbrains.concurrency.Promise
+- sf:Companion:org.jetbrains.concurrency.AsyncPromise$Companion
+- <init>():V
+- blockingGet(I,java.util.concurrent.TimeUnit):java.lang.Object
+- cancel():V
+- cancel(Z):Z
+- get():java.lang.Object
+- get(J,java.util.concurrent.TimeUnit):java.lang.Object
+- getState():org.jetbrains.concurrency.Promise$State
+- isCancelled():Z
+- isDone():Z
+- onError(java.util.function.Consumer):org.jetbrains.concurrency.AsyncPromise
+- onProcessed(java.util.function.Consumer):org.jetbrains.concurrency.AsyncPromise
+- onSuccess(java.util.function.Consumer):org.jetbrains.concurrency.AsyncPromise
+- processed(org.jetbrains.concurrency.Promise):org.jetbrains.concurrency.Promise
+- f:setError(java.lang.String):Z
+- setError(java.lang.Throwable):Z
+- setResult(java.lang.Object):V
+- p:shouldLogErrors():Z
+- then(com.intellij.util.Function):org.jetbrains.concurrency.Promise
+- thenAsync(com.intellij.util.Function):org.jetbrains.concurrency.Promise
+f:org.jetbrains.concurrency.AsyncPromise$Companion
+f:org.jetbrains.concurrency.AsyncPromiseKt
+- sf:catchError(org.jetbrains.concurrency.AsyncPromise,kotlin.jvm.functions.Function0):java.lang.Object
+a:org.jetbrains.concurrency.AsyncValueLoader
+- <init>():V
+- p:disposeResult(java.lang.Object):V
+- f:get():org.jetbrains.concurrency.Promise
+- f:get(Z):org.jetbrains.concurrency.Promise
+- f:getResultIfFullFilled():java.lang.Object
+- p:isCancelOnReject():Z
+- pa:load(org.jetbrains.concurrency.AsyncPromise):org.jetbrains.concurrency.Promise
+- f:markDirty():V
+- f:reset():V
+- f:set(java.lang.Object):V
+f:org.jetbrains.concurrency.InternalPromiseUtilKt
+org.jetbrains.concurrency.Obsolescent
+- a:isObsolete():Z
+a:org.jetbrains.concurrency.ObsolescentConsumer
+- java.util.function.Consumer
+- org.jetbrains.concurrency.Obsolescent
+- <init>(org.jetbrains.concurrency.Obsolescent):V
+- isObsolete():Z
+org.jetbrains.concurrency.ObsolescentFunction
+- com.intellij.util.Function
+- org.jetbrains.concurrency.Obsolescent
+a:org.jetbrains.concurrency.PromiseManager
+- <init>(com.intellij.util.concurrency.AtomicFieldUpdater):V
+- <init>(java.lang.Class):V
+- f:get(java.lang.Object):org.jetbrains.concurrency.Promise
+- f:get(java.lang.Object,Z):org.jetbrains.concurrency.Promise
+- f:getState(java.lang.Object):org.jetbrains.concurrency.Promise$State
+- f:has(java.lang.Object):Z
+- isUpToDate(java.lang.Object,java.lang.Object):Z
+- a:load(java.lang.Object):org.jetbrains.concurrency.Promise
+- f:reset(java.lang.Object):V
+- f:set(java.lang.Object,java.lang.Object):V
+f:org.jetbrains.concurrency.Promises
+- sf:all(java.util.Collection):org.jetbrains.concurrency.Promise
+- sf:all(java.util.Collection,java.lang.Object):org.jetbrains.concurrency.Promise
+- sf:all(java.util.Collection,java.lang.Object,Z):org.jetbrains.concurrency.Promise
+- bs:all$default(java.util.Collection,java.lang.Object,Z,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- sf:any(java.util.Collection,java.lang.String):org.jetbrains.concurrency.Promise
+- sf:asCancellablePromise(java.util.concurrent.CompletableFuture):org.jetbrains.concurrency.CancellablePromise
+- sf:asCompletableFuture(org.jetbrains.concurrency.Promise):java.util.concurrent.CompletableFuture
+- sf:asDeferred(org.jetbrains.concurrency.Promise):kotlinx.coroutines.Deferred
+- sf:asPromise(java.util.concurrent.CompletableFuture):org.jetbrains.concurrency.Promise
+- sf:asPromise(kotlinx.coroutines.Job):org.jetbrains.concurrency.Promise
+- sf:await(org.jetbrains.concurrency.Promise,kotlin.coroutines.Continuation):java.lang.Object
+- sf:cancelledPromise():org.jetbrains.concurrency.Promise
+- sf:collectResults(java.util.Collection):org.jetbrains.concurrency.Promise
+- sf:collectResults(java.util.Collection,Z):org.jetbrains.concurrency.Promise
+- bs:collectResults$default(java.util.Collection,Z,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- sf:compute(org.jetbrains.concurrency.AsyncPromise,kotlin.jvm.functions.Function0):V
+- sf:createError(java.lang.String):java.lang.RuntimeException
+- sf:createError(java.lang.String,Z):java.lang.RuntimeException
+- bs:createError$default(java.lang.String,Z,I,java.lang.Object):java.lang.RuntimeException
+- sf:errorIfNotMessage(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable):Z
+- sf:isPending(org.jetbrains.concurrency.Promise):Z
+- sf:isRejected(org.jetbrains.concurrency.Promise):Z
+- sf:nullPromise():org.jetbrains.concurrency.Promise
+- sf:onError(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:onSuccess(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:processed(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function0):org.jetbrains.concurrency.Promise
+- sf:processedRun(org.jetbrains.concurrency.Promise,kotlin.jvm.functions.Function0):org.jetbrains.concurrency.Promise
+- sf:rejectedCancellablePromise(java.lang.String):org.jetbrains.concurrency.CancellablePromise
+- sf:rejectedPromise():org.jetbrains.concurrency.Promise
+- sf:rejectedPromise(java.lang.String):org.jetbrains.concurrency.Promise
+- sf:rejectedPromise(java.lang.Throwable):org.jetbrains.concurrency.Promise
+- sf:resolvedCancellablePromise(java.lang.Object):org.jetbrains.concurrency.CancellablePromise
+- sf:resolvedPromise():org.jetbrains.concurrency.Promise
+- sf:resolvedPromise(java.lang.Object):org.jetbrains.concurrency.Promise
+- sf:runAsync(kotlin.jvm.functions.Function0):org.jetbrains.concurrency.Promise
+- sf:then(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:thenAsync(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:thenAsyncAccept(org.jetbrains.concurrency.Promise,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:thenAsyncAccept(org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:thenRun(org.jetbrains.concurrency.Promise,kotlin.jvm.functions.Function0):org.jetbrains.concurrency.Promise
+- sf:toActionCallback(org.jetbrains.concurrency.Promise):com.intellij.openapi.util.ActionCallback
+- sf:toPromise(com.intellij.openapi.util.ActionCallback):org.jetbrains.concurrency.Promise
+a:org.jetbrains.concurrency.ValueNodeAsyncFunction
+- com.intellij.util.Function
+- org.jetbrains.concurrency.Obsolescent
+- <init>(org.jetbrains.concurrency.Obsolescent):V
+- isObsolete():Z
