@@ -57,13 +57,13 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     KotlinPluginBuilder.kotlinPlugin(KotlinPluginBuilder.KotlinUltimateSources.WITH_COMMUNITY_MODULES),
-    plugin("intellij.vcs.git") { spec ->
+    pluginAuto(listOf("intellij.vcs.git")) { spec ->
       spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
-    plugin("intellij.xpath") { spec ->
+    pluginAuto(listOf("intellij.xpath")) { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
-    plugin("intellij.platform.langInjection") { spec ->
+    pluginAuto(listOf("intellij.platform.langInjection")) { spec ->
       spec.withModule("intellij.java.langInjection", "IntelliLang.jar")
       spec.withModule("intellij.xml.langInjection", "IntelliLang.jar")
       spec.withModule("intellij.java.langInjection.jps")
@@ -77,7 +77,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("XmlRPC")
       spec.withProjectLibrary("jsonpath")
     },
-    plugin("intellij.xslt.debugger") { spec ->
+    pluginAuto(listOf("intellij.xslt.debugger")) { spec ->
       spec.withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
       spec.withModule("intellij.xslt.debugger.impl.rt", "rt/xslt-debugger-impl-rt.jar")
       spec.withModuleLibrary("Saxon-6.5.5", "intellij.xslt.debugger.impl.rt", "rt/saxon.jar")
@@ -131,7 +131,7 @@ object CommunityRepositoryModules {
         copyDir(mavenDist, targetLib.resolve("maven3"))
       }
     },
-    plugin(listOf(
+    pluginAuto(listOf(
       "intellij.gradle",
       "intellij.gradle.common",
       "intellij.gradle.toolingProxy",
@@ -171,21 +171,9 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("TestNG")
     },
     pluginAuto(listOf("intellij.dev", "intellij.platform.statistics.devkit")),
-    plugin("intellij.devkit") { spec ->
-      spec.withModule("intellij.devkit.core")
-      spec.withModule("intellij.devkit.git")
-      spec.withModule("intellij.devkit.themes")
-      spec.withModule("intellij.devkit.gradle")
-      spec.withModule("intellij.devkit.i18n")
-      spec.withModule("intellij.devkit.images")
-      spec.withModule("intellij.devkit.intelliLang")
-      spec.withModule("intellij.devkit.uiDesigner")
-      spec.withModule("intellij.devkit.workspaceModel")
-      spec.withModule("intellij.kotlin.devkit")
+    pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.withModule("intellij.devkit.jps")
       spec.withModule("intellij.devkit.runtimeModuleRepository.jps")
-
-      spec.withProjectLibrary("workspace-model-codegen")
 
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
@@ -209,19 +197,19 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.terminal.sh")
       spec.withResource("resources/shell-integrations", "shell-integrations")
     },
-    plugin("intellij.emojipicker") { spec ->
+    pluginAuto("intellij.emojipicker") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.LINUX)
     },
-    plugin("intellij.textmate") { spec ->
+    pluginAuto("intellij.textmate") { spec ->
       spec.withModule("intellij.textmate.core")
       spec.withResource("lib/bundles", "lib/bundles")
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout(),
     androidDesignPlugin(),
-    plugin("intellij.completionMlRankingModels") { spec ->
+    pluginAuto(listOf("intellij.completionMlRankingModels")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    plugin("intellij.statsCollector") { spec ->
+    pluginAuto(listOf("intellij.statsCollector")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
@@ -241,16 +229,16 @@ object CommunityRepositoryModules {
     ))
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
-    plugin("intellij.errorProne") { spec ->
+    pluginAuto("intellij.errorProne") { spec ->
       spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
-    plugin("intellij.cucumber.java") { spec ->
+    pluginAuto("intellij.cucumber.java") { spec ->
       spec.withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
       spec.withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
       spec.withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
       spec.withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
     },
-    plugin("intellij.serial.monitor") { spec ->
+    pluginAuto("intellij.serial.monitor") { spec ->
       spec.withProjectLibrary("io.github.java.native.jssc", LibraryPackMode.STANDALONE_SEPARATE)
     },
   )
@@ -766,9 +754,6 @@ object CommunityRepositoryModules {
     }
   }
 
-
-  @JvmStatic
-  @JvmOverloads
   fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return plugin("intellij.groovy") { spec ->
       spec.directoryName = "Groovy"
