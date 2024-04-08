@@ -10,22 +10,18 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 
 class PythonIndexableEntitiesProvider : FileIndexableEntitiesProvider {
+  override fun isEnabled(file: PsiFile) = file is PyFile
+
   override fun extractIndexableSymbols(file: PsiFile): List<IndexableSymbol> {
-    return when (file) {
-      is PyFile -> PsiTreeUtil.findChildrenOfAnyType(file, false, PyFunction::class.java)
-        .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableSymbol(it.name?.intern() ?: "") }
-      else -> emptyList()
-    }
+    return PsiTreeUtil.findChildrenOfAnyType(file, false, PyFunction::class.java)
+      .filter { it.name != ANONYMOUS_ID }
+      .map { IndexableSymbol(it.name?.intern() ?: "") }
   }
 
   override fun extractIndexableClasses(file: PsiFile): List<IndexableClass> {
-    return when (file) {
-      is PyFile -> PsiTreeUtil.getStubChildrenOfTypeAsList(file, PyClass::class.java)
-        .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableClass(it.name?.intern() ?: "") }
-      else -> emptyList()
-    }
+    return PsiTreeUtil.getStubChildrenOfTypeAsList(file, PyClass::class.java)
+      .filter { it.name != ANONYMOUS_ID }
+      .map { IndexableClass(it.name?.intern() ?: "") }
   }
 
   companion object {

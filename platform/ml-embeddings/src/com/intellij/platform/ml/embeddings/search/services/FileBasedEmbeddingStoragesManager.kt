@@ -2,9 +2,10 @@
 package com.intellij.platform.ml.embeddings.search.services
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionUndispatched
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
@@ -20,14 +21,18 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
+import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.utils.SEMANTIC_SEARCH_TRACER
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.psi.PsiManager
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -124,7 +129,11 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
         if (isFirstIndexing) onFirstIndexingStart()
         logger.debug { "Is first indexing: ${isFirstIndexing}" }
         val projectIndexingStartTime = System.nanoTime()
-        indexFiles(scanFiles().toList().sortedBy { it.name })
+        // Trigger model loading
+        launch {
+          serviceAsync<LocalEmbeddingServiceProvider>().getService()
+        }
+        indexFiles(scanFiles().toList().sortedByDescending { it.name.length })
         EmbeddingSearchLogger.indexingFinished(project, forActions = false, TimeoutUtil.getDurationMillis(projectIndexingStartTime))
       }
       catch (e: CancellationException) {
@@ -150,18 +159,28 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
       val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
       logger.debug { "Effective embedding indexing files limit: $total" }
 
+      val entityChannel = Channel<IndexableEntity>(capacity = 64)
       suspend fun iterate(reporter: ProgressReporter? = null) {
         for (file in files) {
           val limit = filesLimit
           if (limit != null && processedFiles >= limit) break
           if (file.isFile && file.isValid && file.isInLocalFileSystem) {
             reporter?.run {
-              itemStep(file.presentableName) { processFile(file, psiManager, settings) }
-            } ?: processFile(file, psiManager, settings)
+              itemStep(file.presentableName) { processFile(file, psiManager, settings, entityChannel) }
+            } ?: processFile(file, psiManager, settings, entityChannel)
             ++processedFiles
           }
           else {
             logger.debug { "File is not valid: ${file.name}" }
+          }
+        }
+        entityChannel.close()
+      }
+
+      repeat(4) {
+        launch {
+          for (entity in entityChannel) {
+            processEntity(entity)
           }
         }
       }
@@ -175,36 +194,40 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     }
   }
 
-  private suspend fun processFile(file: VirtualFile, psiManager: PsiManager, settings: EmbeddingIndexSettings) = coroutineScope {
+  private suspend fun processFile(file: VirtualFile, psiManager: PsiManager, settings: EmbeddingIndexSettings,
+                                  channel: SendChannel<IndexableEntity>) = coroutineScope {
     if (settings.shouldIndexFiles) { // TODO: consider caching this value
       launch {
-        val entity = IndexableFile(file)
-        val index = FileEmbeddingsStorage.getInstance(project).index
-        if (index.contains(entity.id)) return@launch
-        EmbeddingIndexingTask.Add(listOf(entity.id), listOf(entity.indexableRepresentation)).run(index)
+        channel.send(IndexableFile(file))
       }
     }
     if (settings.shouldIndexClasses) {
       launch {
-        val entities = readAction {
-          FileIndexableEntitiesProvider.extractClasses(psiManager.findFile(file) ?: return@readAction emptyFlow())
-        }
-        val index = ClassEmbeddingsStorage.getInstance(project).index
-        entities.filter { !index.contains(it.id) }.collect {
-          EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
-        }
+        readActionUndispatched {
+          FileIndexableEntitiesProvider.extractClasses(psiManager.findFile(file) ?: return@readActionUndispatched emptyFlow())
+        }.collect { channel.send(it) }
       }
     }
     if (settings.shouldIndexSymbols) {
       launch {
-        val entities = readAction {
-          FileIndexableEntitiesProvider.extractSymbols(psiManager.findFile(file) ?: return@readAction emptyFlow())
-        }
-        val index = SymbolEmbeddingStorage.getInstance(project).index
-        entities.filter { !index.contains(it.id) }.collect {
-          EmbeddingIndexingTask.Add(listOf(it.id), listOf(it.indexableRepresentation)).run(index)
-        }
+        readActionUndispatched {
+          FileIndexableEntitiesProvider.extractSymbols(psiManager.findFile(file) ?: return@readActionUndispatched emptyFlow())
+        }.collect { channel.send(it) }
       }
+    }
+  }
+
+  private fun getIndex(entity: IndexableEntity) = when (entity) {
+    is IndexableFile -> FileEmbeddingsStorage.getInstance(project).index
+    is IndexableClass -> ClassEmbeddingsStorage.getInstance(project).index
+    is IndexableSymbol -> SymbolEmbeddingStorage.getInstance(project).index
+    else -> throw IllegalArgumentException("Unexpected indexable entity type")
+  }
+
+  private suspend fun processEntity(entity: IndexableEntity) {
+    val index = getIndex(entity)
+    if (!index.contains(entity.id)) {
+      EmbeddingIndexingTask.Add(listOf(entity.id), listOf(entity.indexableRepresentation)).run(index)
     }
   }
 

@@ -10,22 +10,18 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 
 class KotlinIndexableEntitiesProvider : FileIndexableEntitiesProvider {
+  override fun isEnabled(file: PsiFile) = file is KtFile
+
   override fun extractIndexableSymbols(file: PsiFile): List<IndexableSymbol> {
-    return when (file) {
-      is KtFile -> PsiTreeUtil.findChildrenOfAnyType(file, false, KtFunction::class.java)
-        .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableSymbol(it.name?.intern() ?: "") }
-      else -> emptyList()
-    }
+    return PsiTreeUtil.findChildrenOfAnyType(file, false, KtFunction::class.java)
+      .filter { it.name != ANONYMOUS_ID }
+      .map { IndexableSymbol(it.name?.intern() ?: "") }
   }
 
   override fun extractIndexableClasses(file: PsiFile): List<IndexableClass> {
-    return when (file) {
-      is KtFile -> PsiTreeUtil.getStubChildrenOfTypeAsList(file, KtClass::class.java)
-        .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableClass(it.name?.intern() ?: "") }
-      else -> emptyList()
-    }
+    return PsiTreeUtil.getStubChildrenOfTypeAsList(file, KtClass::class.java)
+      .filter { it.name != ANONYMOUS_ID }
+      .map { IndexableClass(it.name?.intern() ?: "") }
   }
 
   companion object {

@@ -8,23 +8,19 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 
 class JavaIndexableEntitiesProvider : FileIndexableEntitiesProvider {
+  override fun isEnabled(file: PsiFile) = file is PsiJavaFile
+
   override fun extractIndexableSymbols(file: PsiFile): List<IndexableSymbol> {
-    return when (file) {
-      is PsiJavaFile -> file.classes.filterNotNull()
-        .flatMap { it.methods.toList() }
-        .filter { it.name != ANONYMOUS_ID }
-        .map { IndexableSymbol(it.name.intern()) }
-      else -> emptyList()
-    }
+    return (file as PsiJavaFile).classes.filterNotNull()
+      .flatMap { it.methods.toList() }
+      .filter { it.name != ANONYMOUS_ID }
+      .map { IndexableSymbol(it.name.intern()) }
   }
 
   override fun extractIndexableClasses(file: PsiFile): List<IndexableClass> {
-    return when (file) {
-      is PsiJavaFile -> file.classes.filterNotNull()
-        .filter { it !is PsiAnonymousClass }
-        .map { IndexableClass(it.name?.intern() ?: "") }
-      else -> emptyList()
-    }
+    return (file as PsiJavaFile).classes.filterNotNull()
+      .filter { it !is PsiAnonymousClass }
+      .map { IndexableClass(it.name?.intern() ?: "") }
   }
 
   companion object {
