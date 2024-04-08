@@ -146,7 +146,18 @@ public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLoca
       listDefinition = PsiUtil.skipParenthesizedExprDown(listDefinition);
       if(listDefinition instanceof PsiMethodCallExpression call) {
         if (ARRAYS_AS_LIST.test(call)) {
-          return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), "List");
+          PsiExpression[] expressions = call.getArgumentList().getExpressions();
+          if (!MethodCallUtils.isVarArgCall(call) && expressions.length == 1) {
+            PsiExpression arg = PsiUtil.skipParenthesizedExprDown(expressions[0]);
+            PsiVariable variable = ExpressionUtils.resolveVariable(arg);
+            if (variable != null) {
+              PsiExpression[] elements = ExpressionUtils.getConstantArrayElements(variable);
+              if (elements != null && ContainerUtil.all(elements, Objects::nonNull)) {
+                expressions = elements;
+              }
+            }
+          }
+          return new PrepopulatedCollectionModel(Arrays.asList(expressions), Collections.emptyList(), "List");
         }
         return fromCollect(call, "List", COLLECTORS_TO_LIST);
       }
