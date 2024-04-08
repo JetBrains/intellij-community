@@ -72,11 +72,13 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   private void runReadWrites(final int readIterations, final int writeIterations) {
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion(); // someone might've submitted a task depending on app events which we disable now
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
-    application.disableEventsUntil(disposable);
-    ThreadingAssertions.assertEventDispatchThread();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+      application.disableEventsUntil(disposable);
+      ThreadingAssertions.assertEventDispatchThread();
+    }); // someone might've submitted a task depending on app events which we disable now
 
     try {
       PlatformTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
@@ -86,17 +88,17 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           Job<Void> thread = JobLauncher.getInstance().submitToJobThread(() -> {
             assertFalse(application.isReadAccessAllowed());
             for (int i1 = 0; i1 < readIterations; i1++) {
-              application.runReadAction(() -> {
-              });
+              application.runReadAction(EmptyRunnable.getInstance());
             }
           }, null);
           threads.add(thread);
         }
 
-        for (int i = 0; i < writeIterations; i++) {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-          });
-        }
+        EdtTestUtil.runInEdtAndWait(() -> {
+          for (int i = 0; i < writeIterations; i++) {
+            ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+          }
+        });
         waitWithTimeout(threads);
       }).start();
     }
