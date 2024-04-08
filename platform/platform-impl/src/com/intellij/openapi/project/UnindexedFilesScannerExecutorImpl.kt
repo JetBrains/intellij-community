@@ -25,7 +25,7 @@ import java.util.concurrent.locks.LockSupport
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class UnindexedFilesScannerExecutor(project: Project)
+class UnindexedFilesScannerExecutorImpl(project: Project)
   : Disposable,
     MergingQueueGuiExecutor<FilesScanningTask>(project, MergingTaskQueue(), TaskQueueListener(),
                                                IndexingBundle.message("progress.indexing.scanning"),
@@ -119,7 +119,7 @@ class UnindexedFilesScannerExecutor(project: Project)
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
+    fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl = project.service<UnindexedFilesScannerExecutorImpl>()
 
     // TODO IJPL-578 - behavior should be the same in tests and prod. Temporary flag to ease tests migration.
     private val IS_UNDER_TEAMCITY: Boolean = System.getenv("TEAMCITY_VERSION") != null
