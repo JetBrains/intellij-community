@@ -174,14 +174,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
       spec.withProjectLibrary("TestNG")
     },
-    plugin("intellij.dev") { spec ->
-      spec.withModule("intellij.dev.psiViewer")
-      spec.withModule("intellij.dev.codeInsight")
-      spec.withModule("intellij.java.dev")
-      spec.withModule("intellij.groovy.dev")
-      spec.withModule("intellij.kotlin.dev")
-      spec.withModule("intellij.platform.statistics.devkit")
-    },
+    pluginAuto(listOf("intellij.dev", "intellij.platform.statistics.devkit")),
     plugin("intellij.devkit") { spec ->
       spec.withModule("intellij.devkit.core")
       spec.withModule("intellij.devkit.git")
