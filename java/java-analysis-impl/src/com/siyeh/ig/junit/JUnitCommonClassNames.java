@@ -12,6 +12,7 @@ public final class JUnitCommonClassNames {
   public static final String ORG_JUNIT_ASSUME = "org.junit.Assume";
   public static final String JUNIT_FRAMEWORK_ASSERT = "junit.framework.Assert";
   public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS = "org.junit.jupiter.api.Assertions";
+  public static final String ORG_JUNIT_JUPITER_API_ASSERTIONS_KT = "org.junit.jupiter.api.AssertionsKt";
   public static final String ORG_JUNIT_JUPITER_API_ASSUMPTIONS = "org.junit.jupiter.api.Assumptions";
   public static final String JUNIT_FRAMEWORK_TEST = "junit.framework.Test";
   public static final String JUNIT_FRAMEWORK_TEST_CASE = "junit.framework.TestCase";

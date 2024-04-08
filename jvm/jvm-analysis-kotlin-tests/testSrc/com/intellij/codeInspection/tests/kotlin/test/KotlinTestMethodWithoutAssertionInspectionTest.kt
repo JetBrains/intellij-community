@@ -98,4 +98,18 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
       }
     """.trimIndent())
   }
+
+  fun `test no highlighting kotlin JUnit 5 assertion`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.api.Test
+      import org.junit.jupiter.api.assertDoesNotThrow
+      
+      class TestMethodWithAssertion {
+        @Test
+        fun testFoo() {
+            assertDoesNotThrow<IllegalStateException> { throw IllegalStateException() }
+        }
+      }
+    """.trimIndent())
+  }
 }

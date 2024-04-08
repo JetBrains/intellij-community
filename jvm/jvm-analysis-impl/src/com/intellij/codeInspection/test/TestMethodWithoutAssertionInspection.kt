@@ -34,6 +34,7 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add(ORG_JUNIT_ASSERT, "assert.*|fail.*")
     .add(JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
     .add(ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
+    .add(ORG_JUNIT_JUPITER_API_ASSERTIONS_KT, "assert.*|fail.*")
     .add("org.assertj.core.api.Assertions", "assertThat")
     .add("org.assertj.core.api.WithAssertions", "assertThat")
     .add("com.google.common.truth.Truth", "assert.*")

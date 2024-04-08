@@ -22,6 +22,7 @@ abstract class TestMethodWithoutAssertionInspectionTestBase : JvmInspectionTestB
       super.configureModule(module, model, contentEntry)
       model.addJUnit3Library()
       model.addJUnit4Library()
+      model.addJUnit5Library()
     }
   }
 
