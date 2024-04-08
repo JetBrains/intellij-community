@@ -134,9 +134,7 @@ open class ProjectRootManagerComponent(
   }
 
   private fun registerListeners() {
-    val connection = project.messageBus.connect(this)
-
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       @Deprecated("Deprecated in Java")
       @Suppress("removal")
       override fun projectOpened(project: Project) {
@@ -152,6 +150,8 @@ open class ProjectRootManagerComponent(
         }
       }
     })
+
+    val connection = project.messageBus.connect(this)
 
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun beforeFileTypesChanged(event: FileTypeEvent) {
