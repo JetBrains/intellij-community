@@ -5171,11 +5171,6 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/postProcessing/IfToSafeCall.java");
         }
 
-        @TestMetadata("java8MapForEachWithFullJdk.java")
-        public void testJava8MapForEachWithFullJdk() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/postProcessing/java8MapForEachWithFullJdk.java");
-        }
-
         @TestMetadata("JoinDeclarationAndAssignment.java")
         public void testJoinDeclarationAndAssignment() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/JoinDeclarationAndAssignment.java");
@@ -5199,6 +5194,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("LiftReturnSingleStatement.java")
         public void testLiftReturnSingleStatement() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/LiftReturnSingleStatement.java");
+        }
+
+        @TestMetadata("MapForEach.java")
+        public void testMapForEach() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/MapForEach.java");
         }
 
         @TestMetadata("MapGetOrDefault.java")
