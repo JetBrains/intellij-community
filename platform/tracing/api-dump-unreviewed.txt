@@ -1,0 +1,12 @@
+f:com.intellij.tracing.Tracer
+- s:finishTracer(java.util.function.Consumer):V
+- s:isRunning():Z
+- s:runTracer(I,java.nio.file.Path,J,java.util.function.Consumer):V
+- s:start(java.lang.String):com.intellij.tracing.Tracer$Span
+- s:start(java.util.function.Supplier):com.intellij.tracing.Tracer$DelayedSpan
+c:com.intellij.tracing.Tracer$DelayedSpan
+- <init>(J,J,java.util.function.Supplier,J):V
+- complete():V
+c:com.intellij.tracing.Tracer$Span
+- <init>(J,J,java.lang.String,J):V
+- complete():V

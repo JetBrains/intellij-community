@@ -1,0 +1,6 @@
+com/intellij/webSymbols/context/impl/WebSymbolsContextProviderExtensionCollector
+com/intellij/webSymbols/customElements/CustomElementsJsonOrigin
+com/intellij/webSymbols/webTypes/WebTypesJsonOrigin
+com/intellij/webSymbols/webTypes/WebTypesScopeBase
+com/intellij/webSymbols/webTypes/WebTypesSymbol$Location
+com/intellij/webSymbols/webTypes/json/WebTypes

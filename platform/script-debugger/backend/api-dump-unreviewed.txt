@@ -1,0 +1,790 @@
+org.jetbrains.debugger.AttachStateManager
+- detach():org.jetbrains.concurrency.Promise
+- isAttached():Z
+org.jetbrains.debugger.Breakpoint
+- sf:Companion:org.jetbrains.debugger.Breakpoint$Companion
+- sf:EMPTY_VALUE:I
+- sf:INVALID_ID:I
+- a:getColumn():I
+- a:getCondition():java.lang.String
+- a:getEnabled():Z
+- a:getLine():I
+- a:getTarget():org.jetbrains.debugger.BreakpointTarget
+- isActualLineCorrect():Z
+- a:isResolved():Z
+- a:setCondition(java.lang.String):V
+- a:setEnabled(Z):V
+f:org.jetbrains.debugger.Breakpoint$Companion
+- sf:EMPTY_VALUE:I
+- sf:INVALID_ID:I
+org.jetbrains.debugger.BreakpointListener
+- java.util.EventListener
+- a:errorOccurred(org.jetbrains.debugger.Breakpoint,java.lang.String):V
+- nonProvisionalBreakpointRemoved(org.jetbrains.debugger.Breakpoint):V
+- a:resolved(org.jetbrains.debugger.Breakpoint):V
+org.jetbrains.debugger.BreakpointManager
+- a:addBreakpointListener(org.jetbrains.debugger.BreakpointListener):V
+- a:enableBreakpoints(Z):org.jetbrains.concurrency.Promise
+- a:flush(org.jetbrains.debugger.Breakpoint):org.jetbrains.concurrency.Promise
+- a:getBreakpoints():java.lang.Iterable
+- getFunctionSupport():kotlin.jvm.functions.Function1
+- getMuteMode():org.jetbrains.debugger.BreakpointManager$MUTE_MODE
+- getRegExpBreakpointSupported():Z
+- a:isBreakOnFirstStatement(org.jetbrains.debugger.SuspendContext):Z
+- a:remove(org.jetbrains.debugger.Breakpoint):org.jetbrains.concurrency.Promise
+- a:removeAll():org.jetbrains.concurrency.Promise
+- a:setBreakOnFirstStatement():V
+- a:setBreakpoint(org.jetbrains.debugger.BreakpointTarget,I,I,com.intellij.util.Url,java.lang.String,I):org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
+- bs:setBreakpoint$default(org.jetbrains.debugger.BreakpointManager,org.jetbrains.debugger.BreakpointTarget,I,I,com.intellij.util.Url,java.lang.String,I,I,java.lang.Object):org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
+f:org.jetbrains.debugger.BreakpointManager$BreakpointCreated
+- org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
+- <init>(org.jetbrains.debugger.Breakpoint,org.jetbrains.concurrency.Promise):V
+- f:component1():org.jetbrains.debugger.Breakpoint
+- f:component2():org.jetbrains.concurrency.Promise
+- f:copy(org.jetbrains.debugger.Breakpoint,org.jetbrains.concurrency.Promise):org.jetbrains.debugger.BreakpointManager$BreakpointCreated
+- bs:copy$default(org.jetbrains.debugger.BreakpointManager$BreakpointCreated,org.jetbrains.debugger.Breakpoint,org.jetbrains.concurrency.Promise,I,java.lang.Object):org.jetbrains.debugger.BreakpointManager$BreakpointCreated
+- equals(java.lang.Object):Z
+- f:getBreakpoint():org.jetbrains.debugger.Breakpoint
+- hashCode():I
+- f:isRegistered():org.jetbrains.concurrency.Promise
+- toString():java.lang.String
+f:org.jetbrains.debugger.BreakpointManager$BreakpointExist
+- org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
+- <init>(org.jetbrains.debugger.Breakpoint):V
+- f:component1():org.jetbrains.debugger.Breakpoint
+- f:copy(org.jetbrains.debugger.Breakpoint):org.jetbrains.debugger.BreakpointManager$BreakpointExist
+- bs:copy$default(org.jetbrains.debugger.BreakpointManager$BreakpointExist,org.jetbrains.debugger.Breakpoint,I,java.lang.Object):org.jetbrains.debugger.BreakpointManager$BreakpointExist
+- equals(java.lang.Object):Z
+- f:getExistingBreakpoint():org.jetbrains.debugger.Breakpoint
+- hashCode():I
+- toString():java.lang.String
+e:org.jetbrains.debugger.BreakpointManager$MUTE_MODE
+- java.lang.Enum
+- sf:ALL:org.jetbrains.debugger.BreakpointManager$MUTE_MODE
+- sf:NONE:org.jetbrains.debugger.BreakpointManager$MUTE_MODE
+- sf:ONE:org.jetbrains.debugger.BreakpointManager$MUTE_MODE
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.debugger.BreakpointManager$MUTE_MODE
+- s:values():org.jetbrains.debugger.BreakpointManager$MUTE_MODE[]
+org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
+a:org.jetbrains.debugger.BreakpointTarget
+- <init>():V
+- a:accept(org.jetbrains.debugger.BreakpointTarget$Visitor):java.lang.Object
+- a:toString():java.lang.String
+f:org.jetbrains.debugger.BreakpointTarget$ScriptId
+- org.jetbrains.debugger.BreakpointTarget
+- f:script:org.jetbrains.debugger.Script
+- <init>(org.jetbrains.debugger.Script):V
+- accept(org.jetbrains.debugger.BreakpointTarget$Visitor):java.lang.Object
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+f:org.jetbrains.debugger.BreakpointTarget$ScriptName
+- org.jetbrains.debugger.BreakpointTarget
+- <init>(java.lang.String):V
+- <init>(org.jetbrains.debugger.Script):V
+- accept(org.jetbrains.debugger.BreakpointTarget$Visitor):java.lang.Object
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- getScript():org.jetbrains.debugger.Script
+- hashCode():I
+- toString():java.lang.String
+org.jetbrains.debugger.BreakpointTarget$Visitor
+- a:visitScript(org.jetbrains.debugger.Script):java.lang.Object
+- a:visitScriptName(java.lang.String,org.jetbrains.debugger.Script):java.lang.Object
+- a:visitUnknown(org.jetbrains.debugger.BreakpointTarget):java.lang.Object
+org.jetbrains.debugger.CallFrame
+- a:getAsyncFunctionName():java.lang.String
+- a:getColumn():I
+- a:getEqualityObject():java.lang.Object
+- a:getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- a:getFunctionName():java.lang.String
+- a:getHasOnlyGlobalScope():Z
+- a:getLine():I
+- a:getReceiverVariable():org.jetbrains.concurrency.Promise
+- getReturnValue():org.jetbrains.debugger.Variable
+- a:getVariableScopes():java.util.List
+- a:isFromAsyncStack():Z
+a:org.jetbrains.debugger.CallFrameBase
+- org.jetbrains.debugger.CallFrame
+- <init>(java.lang.String,I,I,org.jetbrains.debugger.EvaluateContext):V
+- getAsyncFunctionName():java.lang.String
+- getColumn():I
+- getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- getFunctionName():java.lang.String
+- getHasOnlyGlobalScope():Z
+- getLine():I
+- getReturnValue():org.jetbrains.debugger.Variable
+- pf:getScopes():com.intellij.openapi.util.NotNullLazyValue
+- getVariableScopes():java.util.List
+- isFromAsyncStack():Z
+- p:setHasOnlyGlobalScope(Z):V
+- pf:setScopes(com.intellij.openapi.util.NotNullLazyValue):V
+f:org.jetbrains.debugger.CallFrameBaseKt
+- sf:RECEIVER_NAME:java.lang.String
+a:org.jetbrains.debugger.ContextDependentAsyncResultConsumer
+- java.util.function.Consumer
+- <init>(org.jetbrains.debugger.SuspendContext):V
+- f:accept(java.lang.Object):V
+- pa:accept(java.lang.Object,org.jetbrains.debugger.Vm):V
+org.jetbrains.debugger.DebugEventListener
+- java.util.EventListener
+- childVmAdded(org.jetbrains.debugger.Vm):V
+- errorOccurred(java.lang.String):V
+- navigated(java.lang.String):V
+- resumed(org.jetbrains.debugger.Vm):V
+- scriptAdded(org.jetbrains.debugger.Vm,org.jetbrains.debugger.Script,java.lang.String):V
+- scriptContentChanged(org.jetbrains.debugger.Script):V
+- scriptRemoved(org.jetbrains.debugger.Script):V
+- scriptsCleared():V
+- suspended(org.jetbrains.debugger.SuspendContext):V
+a:org.jetbrains.debugger.DeclarativeScope
+- org.jetbrains.debugger.ScopeBase
+- <init>(org.jetbrains.debugger.ScopeType,java.lang.String):V
+- b:<init>(org.jetbrains.debugger.ScopeType,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- pa:getChildrenManager():org.jetbrains.debugger.VariablesHost
+- getVariablesHost():org.jetbrains.debugger.VariablesHost
+- pf:loadScopeObjectProperties(org.jetbrains.debugger.values.ObjectValue):org.jetbrains.concurrency.Promise
+f:org.jetbrains.debugger.DummyBreakpointManager
+- org.jetbrains.debugger.BreakpointManager
+- <init>():V
+- addBreakpointListener(org.jetbrains.debugger.BreakpointListener):V
+- enableBreakpoints(Z):org.jetbrains.concurrency.Promise
+- flush(org.jetbrains.debugger.Breakpoint):org.jetbrains.concurrency.Promise
+- getBreakpoints():java.lang.Iterable
+- isBreakOnFirstStatement(org.jetbrains.debugger.SuspendContext):Z
+- remove(org.jetbrains.debugger.Breakpoint):org.jetbrains.concurrency.Promise
+- removeAll():org.jetbrains.concurrency.Promise
+- setBreakOnFirstStatement():V
+- setBreakpoint(org.jetbrains.debugger.BreakpointTarget,I,I,com.intellij.util.Url,java.lang.String,I):org.jetbrains.debugger.BreakpointManager$SetBreakpointResult
+org.jetbrains.debugger.EvaluateContext
+- a:evaluate(java.lang.String,java.util.Map,Z,com.intellij.openapi.project.Project):org.jetbrains.concurrency.Promise
+- bs:evaluate$default(org.jetbrains.debugger.EvaluateContext,java.lang.String,java.util.Map,Z,com.intellij.openapi.project.Project,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- a:refreshOnDone(org.jetbrains.concurrency.Promise):org.jetbrains.concurrency.Promise
+- releaseObjects():V
+- a:withValueManager(java.lang.String):org.jetbrains.debugger.EvaluateContext
+a:org.jetbrains.debugger.EvaluateContextBase
+- org.jetbrains.debugger.EvaluateContext
+- <init>(org.jetbrains.debugger.values.ValueManager):V
+- f:getValueManager():org.jetbrains.debugger.values.ValueManager
+- refreshOnDone(org.jetbrains.concurrency.Promise):org.jetbrains.concurrency.Promise
+- withValueManager(java.lang.String):org.jetbrains.debugger.EvaluateContextBase
+f:org.jetbrains.debugger.EvaluateResult
+- <init>(org.jetbrains.debugger.values.Value,Z):V
+- b:<init>(org.jetbrains.debugger.values.Value,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():org.jetbrains.debugger.values.Value
+- f:component2():Z
+- f:copy(org.jetbrains.debugger.values.Value,Z):org.jetbrains.debugger.EvaluateResult
+- bs:copy$default(org.jetbrains.debugger.EvaluateResult,org.jetbrains.debugger.values.Value,Z,I,java.lang.Object):org.jetbrains.debugger.EvaluateResult
+- equals(java.lang.Object):Z
+- f:getValue():org.jetbrains.debugger.values.Value
+- f:getWasThrown():Z
+- hashCode():I
+- toString():java.lang.String
+e:org.jetbrains.debugger.ExceptionCatchMode
+- java.lang.Enum
+- sf:ALL:org.jetbrains.debugger.ExceptionCatchMode
+- sf:NONE:org.jetbrains.debugger.ExceptionCatchMode
+- sf:UNCAUGHT:org.jetbrains.debugger.ExceptionCatchMode
+- s:valueOf(java.lang.String):org.jetbrains.debugger.ExceptionCatchMode
+- s:values():org.jetbrains.debugger.ExceptionCatchMode[]
+org.jetbrains.debugger.ExceptionData
+- a:getExceptionMessage():java.lang.String
+- a:getExceptionValue():org.jetbrains.debugger.values.Value
+- a:getSourceText():java.lang.String
+- a:isUncaught():com.intellij.util.ThreeState
+a:org.jetbrains.debugger.ExceptionDataBase
+- org.jetbrains.debugger.ExceptionData
+- p:<init>(org.jetbrains.debugger.values.Value):V
+- f:getExceptionValue():org.jetbrains.debugger.values.Value
+org.jetbrains.debugger.FunctionVisitor
+- org.jetbrains.debugger.BreakpointTarget$Visitor
+- a:visitFunction(java.lang.String):java.lang.Object
+f:org.jetbrains.debugger.MessagingLogger
+- sf:Companion:org.jetbrains.debugger.MessagingLogger$Companion
+- f:add(io.netty.buffer.ByteBuf,java.lang.String):V
+- f:add(java.lang.CharSequence,java.lang.String):V
+- bs:add$default(org.jetbrains.debugger.MessagingLogger,io.netty.buffer.ByteBuf,java.lang.String,I,java.lang.Object):V
+- bs:add$default(org.jetbrains.debugger.MessagingLogger,java.lang.CharSequence,java.lang.String,I,java.lang.Object):V
+- f:close():V
+- f:closeOnChannelClose(io.netty.channel.Channel):V
+f:org.jetbrains.debugger.MessagingLogger$Companion
+org.jetbrains.debugger.ObjectProperty
+- org.jetbrains.debugger.Variable
+- a:getGetter():org.jetbrains.debugger.values.FunctionValue
+- a:getSetter():org.jetbrains.debugger.values.FunctionValue
+- a:isConfigurable():Z
+- a:isEnumerable():Z
+- a:isWritable():Z
+f:org.jetbrains.debugger.ObjectPropertyImpl
+- org.jetbrains.debugger.VariableImpl
+- org.jetbrains.debugger.ObjectProperty
+- sf:CONFIGURABLE:I
+- sf:Companion:org.jetbrains.debugger.ObjectPropertyImpl$Companion
+- sf:ENUMERABLE:I
+- sf:WRITABLE:I
+- <init>(java.lang.String,org.jetbrains.debugger.values.Value,org.jetbrains.debugger.values.FunctionValue,org.jetbrains.debugger.values.FunctionValue,org.jetbrains.debugger.ValueModifier,I):V
+- b:<init>(java.lang.String,org.jetbrains.debugger.values.Value,org.jetbrains.debugger.values.FunctionValue,org.jetbrains.debugger.values.FunctionValue,org.jetbrains.debugger.ValueModifier,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- getGetter():org.jetbrains.debugger.values.FunctionValue
+- getSetter():org.jetbrains.debugger.values.FunctionValue
+- isConfigurable():Z
+- isEnumerable():Z
+- isWritable():Z
+f:org.jetbrains.debugger.ObjectPropertyImpl$Companion
+f:org.jetbrains.debugger.ObjectScope
+- org.jetbrains.debugger.ScopeBase
+- org.jetbrains.debugger.Scope
+- <init>(org.jetbrains.debugger.ScopeType,org.jetbrains.debugger.values.ObjectValue):V
+- getVariablesHost():org.jetbrains.debugger.VariablesHost
+org.jetbrains.debugger.Scope
+- a:getDescription():java.lang.String
+- a:getType():org.jetbrains.debugger.ScopeType
+- a:getVariablesHost():org.jetbrains.debugger.VariablesHost
+- a:isGlobal():Z
+a:org.jetbrains.debugger.ScopeBase
+- org.jetbrains.debugger.Scope
+- <init>(org.jetbrains.debugger.ScopeType,java.lang.String):V
+- getDescription():java.lang.String
+- getType():org.jetbrains.debugger.ScopeType
+- isGlobal():Z
+e:org.jetbrains.debugger.ScopeType
+- java.lang.Enum
+- sf:BLOCK:org.jetbrains.debugger.ScopeType
+- sf:CATCH:org.jetbrains.debugger.ScopeType
+- sf:CLASS:org.jetbrains.debugger.ScopeType
+- sf:CLOSURE:org.jetbrains.debugger.ScopeType
+- sf:GLOBAL:org.jetbrains.debugger.ScopeType
+- sf:INSTANCE:org.jetbrains.debugger.ScopeType
+- sf:LIBRARY:org.jetbrains.debugger.ScopeType
+- sf:LOCAL:org.jetbrains.debugger.ScopeType
+- sf:SCRIPT:org.jetbrains.debugger.ScopeType
+- sf:UNKNOWN:org.jetbrains.debugger.ScopeType
+- sf:WITH:org.jetbrains.debugger.ScopeType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.debugger.ScopeType
+- s:values():org.jetbrains.debugger.ScopeType[]
+org.jetbrains.debugger.Script
+- com.intellij.openapi.util.UserDataHolderEx
+- a:getColumn():I
+- a:getEndLine():I
+- getFunctionName():java.lang.String
+- a:getLine():I
+- a:getSourceMap():org.jetbrains.debugger.sourcemap.SourceMap
+- a:getType():org.jetbrains.debugger.Script$Type
+- a:getUrl():com.intellij.util.Url
+- a:getVm():org.jetbrains.debugger.Vm
+- a:setSourceMap(org.jetbrains.debugger.sourcemap.SourceMap):V
+e:org.jetbrains.debugger.Script$Type
+- java.lang.Enum
+- sf:EXTENSION:org.jetbrains.debugger.Script$Type
+- sf:NATIVE:org.jetbrains.debugger.Script$Type
+- sf:NORMAL:org.jetbrains.debugger.Script$Type
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.debugger.Script$Type
+- s:values():org.jetbrains.debugger.Script$Type[]
+a:org.jetbrains.debugger.ScriptBase
+- com.intellij.openapi.util.UserDataHolderBase
+- org.jetbrains.debugger.Script
+- <init>(org.jetbrains.debugger.Script$Type,com.intellij.util.Url,I,I,I,org.jetbrains.debugger.Vm):V
+- getColumn():I
+- getEndLine():I
+- getLine():I
+- getSourceMap():org.jetbrains.debugger.sourcemap.SourceMap
+- getType():org.jetbrains.debugger.Script$Type
+- getUrl():com.intellij.util.Url
+- getVm():org.jetbrains.debugger.Vm
+- setSourceMap(org.jetbrains.debugger.sourcemap.SourceMap):V
+- toString():java.lang.String
+f:org.jetbrains.debugger.ScriptDebuggerBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+f:org.jetbrains.debugger.ScriptDebuggerUrls
+- sf:INSTANCE:org.jetbrains.debugger.ScriptDebuggerUrls
+- sf:newLocalFileUrl(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.Url
+- sf:newLocalFileUrl(java.lang.String):com.intellij.util.Url
+- sf:parse(java.lang.String,Z):com.intellij.util.Url
+- f:toFilePath(com.intellij.util.Url):java.lang.String
+- f:toLocalFileUrl(java.lang.String):com.intellij.util.Url
+org.jetbrains.debugger.ScriptManager
+- a:containsScript(org.jetbrains.debugger.Script):Z
+- findScriptById(java.lang.String):org.jetbrains.debugger.Script
+- a:findScriptByUrl(com.intellij.util.Url):org.jetbrains.debugger.Script
+- a:findScriptByUrl(java.lang.String):org.jetbrains.debugger.Script
+- forEachScript(com.intellij.util.Processor):V
+- a:forEachScript(kotlin.jvm.functions.Function1):V
+- a:getScript(org.jetbrains.debugger.CallFrame):org.jetbrains.debugger.Script
+- a:getScript(org.jetbrains.debugger.values.FunctionValue):org.jetbrains.concurrency.Promise
+- a:getSource(org.jetbrains.debugger.Script):org.jetbrains.concurrency.Promise
+- a:hasSource(org.jetbrains.debugger.Script):Z
+a:org.jetbrains.debugger.ScriptManagerBase
+- org.jetbrains.debugger.ScriptManager
+- <init>():V
+- getSource(org.jetbrains.debugger.Script):org.jetbrains.concurrency.Promise
+- hasSource(org.jetbrains.debugger.Script):Z
+- pa:loadScriptSource(org.jetbrains.debugger.ScriptBase):org.jetbrains.concurrency.Promise
+- f:setSource(org.jetbrains.debugger.ScriptBase,java.lang.String):V
+a:org.jetbrains.debugger.ScriptManagerBaseEx
+- org.jetbrains.debugger.ScriptManagerBase
+- <init>():V
+- f:clear(org.jetbrains.debugger.DebugEventListener):V
+- f:findScriptById(java.lang.String):org.jetbrains.debugger.ScriptBase
+- f:findScriptByUrl(com.intellij.util.Url):org.jetbrains.debugger.ScriptBase
+- f:findScriptByUrl(java.lang.String):org.jetbrains.debugger.ScriptBase
+- f:forEachScript(kotlin.jvm.functions.Function1):V
+- pf:getIdToScript():java.util.concurrent.ConcurrentMap
+- rawUrlToOurUrl(java.lang.String):com.intellij.util.Url
+f:org.jetbrains.debugger.ScriptManagerBaseKt
+- sf:isSpecial(com.intellij.util.Url):Z
+f:org.jetbrains.debugger.ScriptManagerKt
+- sf:VM_SCHEME:java.lang.String
+- sf:WEBPACK_INTERNAL_SCHEME:java.lang.String
+f:org.jetbrains.debugger.ScriptRegExpBreakpointTarget
+- org.jetbrains.debugger.BreakpointTarget
+- <init>(java.lang.String):V
+- accept(org.jetbrains.debugger.BreakpointTarget$Visitor):java.lang.Object
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+org.jetbrains.debugger.ScriptRegExpSupportVisitor
+- org.jetbrains.debugger.BreakpointTarget$Visitor
+- a:visitRegExp(org.jetbrains.debugger.ScriptRegExpBreakpointTarget):java.lang.Object
+c:org.jetbrains.debugger.StandaloneVmHelper
+- org.jetbrains.debugger.AttachStateManager
+- <init>(org.jetbrains.debugger.Vm,org.jetbrains.rpc.MessageProcessor,io.netty.channel.Channel):V
+- p:closeChannel(io.netty.channel.Channel,org.jetbrains.concurrency.AsyncPromise):V
+- detach():org.jetbrains.concurrency.Promise
+- f:getChannelIfActive():io.netty.channel.Channel
+- isAttached():Z
+- f:write(java.lang.Object):Z
+org.jetbrains.debugger.StandaloneVmHelper$VmEx
+- org.jetbrains.debugger.Vm
+- a:createDisconnectRequest():org.jetbrains.jsonProtocol.Request
+f:org.jetbrains.debugger.StandaloneVmHelperKt
+- sf:doCloseChannel(io.netty.channel.Channel,org.jetbrains.concurrency.AsyncPromise):V
+e:org.jetbrains.debugger.StepAction
+- java.lang.Enum
+- sf:CONTINUE:org.jetbrains.debugger.StepAction
+- sf:IN:org.jetbrains.debugger.StepAction
+- sf:OUT:org.jetbrains.debugger.StepAction
+- sf:OVER:org.jetbrains.debugger.StepAction
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.debugger.StepAction
+- s:values():org.jetbrains.debugger.StepAction[]
+org.jetbrains.debugger.SuspendContext
+- a:getBreakpointsHit():java.util.List
+- getExceptionData():org.jetbrains.debugger.ExceptionData
+- a:getFrames():org.jetbrains.concurrency.Promise
+- getHasUnresolvedBreakpointsHit():Z
+- getMethodReturnValue():org.jetbrains.debugger.Variable
+- getScript():org.jetbrains.debugger.Script
+- a:getTopFrame():org.jetbrains.debugger.CallFrame
+- a:getValueManager():org.jetbrains.debugger.values.ValueManager
+- getVm():org.jetbrains.debugger.Vm
+- setMethodReturnValue(org.jetbrains.debugger.Variable):V
+a:org.jetbrains.debugger.SuspendContextBase
+- org.jetbrains.debugger.SuspendContext
+- <init>():V
+- getMethodReturnValue():org.jetbrains.debugger.Variable
+- setMethodReturnValue(org.jetbrains.debugger.Variable):V
+f:org.jetbrains.debugger.SuspendContextKt
+- sf:onError(org.jetbrains.concurrency.Promise,org.jetbrains.debugger.SuspendContext,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+- sf:onSuccess(org.jetbrains.concurrency.Promise,org.jetbrains.debugger.SuspendContext,kotlin.jvm.functions.Function1):org.jetbrains.concurrency.Promise
+org.jetbrains.debugger.SuspendContextManager
+- a:canRestartFrame(org.jetbrains.debugger.CallFrame):Z
+- a:continueVm(org.jetbrains.debugger.StepAction,I):org.jetbrains.concurrency.Promise
+- bs:continueVm$default(org.jetbrains.debugger.SuspendContextManager,org.jetbrains.debugger.StepAction,I,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- a:getContext():org.jetbrains.debugger.SuspendContext
+- a:getContextOrFail():org.jetbrains.debugger.SuspendContext
+- isContextObsolete(org.jetbrains.debugger.SuspendContext):Z
+- a:isRestartFrameSupported():Z
+- a:restartFrame(org.jetbrains.debugger.CallFrame):org.jetbrains.concurrency.Promise
+- a:setOverlayMessage(java.lang.String):V
+- a:suspend():org.jetbrains.concurrency.Promise
+a:org.jetbrains.debugger.SuspendContextManagerBase
+- org.jetbrains.debugger.SuspendContextManager
+- <init>():V
+- canRestartFrame(org.jetbrains.debugger.CallFrame):Z
+- f:contextDismissed(org.jetbrains.debugger.SuspendContext):V
+- pf:dismissContext():V
+- pf:dismissContextOnDone(org.jetbrains.concurrency.Promise):org.jetbrains.concurrency.Promise
+- pa:doSuspend():org.jetbrains.concurrency.Promise
+- getContext():org.jetbrains.debugger.SuspendContext
+- getContextOrFail():org.jetbrains.debugger.SuspendContext
+- f:getContextRef():java.util.concurrent.atomic.AtomicReference
+- pa:getDebugListener():org.jetbrains.debugger.DebugEventListener
+- isRestartFrameSupported():Z
+- restartFrame(org.jetbrains.debugger.CallFrame):org.jetbrains.concurrency.Promise
+- p:restartFrame(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.SuspendContext):org.jetbrains.concurrency.Promise
+- f:setContext(org.jetbrains.debugger.SuspendContext):V
+- setOverlayMessage(java.lang.String):V
+- suspend():org.jetbrains.concurrency.Promise
+- updateContext(org.jetbrains.debugger.SuspendContext):V
+org.jetbrains.debugger.TargetExtendedVisitor
+- org.jetbrains.debugger.FunctionVisitor
+- org.jetbrains.debugger.ScriptRegExpSupportVisitor
+f:org.jetbrains.debugger.UtilKt
+- sf:createDebugLogger(java.lang.String,java.lang.String):org.jetbrains.debugger.MessagingLogger
+- bs:createDebugLogger$default(java.lang.String,java.lang.String,I,java.lang.Object):org.jetbrains.debugger.MessagingLogger
+org.jetbrains.debugger.ValueModifier
+- a:evaluateGet(org.jetbrains.debugger.Variable,org.jetbrains.debugger.EvaluateContext):org.jetbrains.concurrency.Promise
+- a:setValue(org.jetbrains.debugger.Variable,java.lang.String,org.jetbrains.debugger.EvaluateContext):org.jetbrains.concurrency.Promise
+- a:setValue(org.jetbrains.debugger.Variable,org.jetbrains.debugger.values.Value,org.jetbrains.debugger.EvaluateContext):org.jetbrains.concurrency.Promise
+f:org.jetbrains.debugger.ValueModifierUtil
+- sf:INSTANCE:org.jetbrains.debugger.ValueModifierUtil
+- f:appendUnquotedName(java.lang.StringBuilder,java.lang.String):V
+- f:evaluateGet(org.jetbrains.debugger.Variable,java.lang.Object,org.jetbrains.debugger.EvaluateContext,java.lang.String):org.jetbrains.concurrency.Promise
+- f:propertyNamesToString(java.util.List,Z):java.lang.String
+- f:setValue(org.jetbrains.debugger.Variable,java.lang.String,org.jetbrains.debugger.EvaluateContext,org.jetbrains.debugger.ValueModifier):org.jetbrains.concurrency.Promise
+f:org.jetbrains.debugger.ValueModifierUtilKt
+org.jetbrains.debugger.Variable
+- a:getName():java.lang.String
+- a:getValue():org.jetbrains.debugger.values.Value
+- a:getValueModifier():org.jetbrains.debugger.ValueModifier
+- a:isMutable():Z
+- a:isReadable():Z
+- a:setValue(org.jetbrains.debugger.values.Value):V
+c:org.jetbrains.debugger.VariableImpl
+- org.jetbrains.debugger.Variable
+- p:value:org.jetbrains.debugger.values.Value
+- <init>(java.lang.String,org.jetbrains.debugger.values.Value):V
+- <init>(java.lang.String,org.jetbrains.debugger.values.Value,org.jetbrains.debugger.ValueModifier):V
+- forceValue(org.jetbrains.debugger.values.Value):V
+- f:getName():java.lang.String
+- f:getValue():org.jetbrains.debugger.values.Value
+- f:getValueModifier():org.jetbrains.debugger.ValueModifier
+- isMutable():Z
+- isReadable():Z
+- setValue(org.jetbrains.debugger.values.Value):V
+- toString():java.lang.String
+a:org.jetbrains.debugger.VariablesHost
+- f:valueManager:org.jetbrains.debugger.values.ValueManager
+- <init>(org.jetbrains.debugger.values.ValueManager):V
+- clearCaches():org.jetbrains.concurrency.Promise
+- f:get():org.jetbrains.concurrency.Promise
+- f:getState():org.jetbrains.concurrency.Promise$State
+- pa:load():org.jetbrains.concurrency.Promise
+- f:set(java.util.List):V
+- f:updateCacheStamp():V
+org.jetbrains.debugger.Vm
+- com.intellij.openapi.util.UserDataHolderEx
+- a:getAttachStateManager():org.jetbrains.debugger.AttachStateManager
+- a:getBreakpointManager():org.jetbrains.debugger.BreakpointManager
+- a:getDebugListener():org.jetbrains.debugger.DebugEventListener
+- a:getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- getPresentableName():java.lang.String
+- a:getScriptManager():org.jetbrains.debugger.ScriptManager
+- a:getSuspendContextManager():org.jetbrains.debugger.SuspendContextManager
+- setBreakOnException(org.jetbrains.debugger.ExceptionCatchMode):org.jetbrains.concurrency.Promise
+a:org.jetbrains.debugger.VmBase
+- com.intellij.openapi.util.UserDataHolderBase
+- org.jetbrains.debugger.AttachStateManager
+- org.jetbrains.debugger.Vm
+- <init>(org.jetbrains.debugger.DebugEventListener):V
+- p:computeEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- getAttachStateManager():org.jetbrains.debugger.AttachStateManager
+- getDebugListener():org.jetbrains.debugger.DebugEventListener
+- getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+f:org.jetbrains.debugger.sourcemap.FileBackedSourceMap
+- org.jetbrains.debugger.sourcemap.SourceMapBase
+- sf:Companion:org.jetbrains.debugger.sourcemap.FileBackedSourceMap$Companion
+- getGeneratedMappings():org.jetbrains.debugger.sourcemap.Mappings
+f:org.jetbrains.debugger.sourcemap.FileBackedSourceMap$Companion
+- f:newFileBackedSourceMap(java.nio.file.Path,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.FileBackedSourceMap
+org.jetbrains.debugger.sourcemap.MappingEntry
+- a:getGeneratedColumn():I
+- a:getGeneratedLine():I
+- getName():java.lang.String
+- a:getNextGenerated():org.jetbrains.debugger.sourcemap.MappingEntry
+- getSource():I
+- a:getSourceColumn():I
+- a:getSourceLine():I
+a:org.jetbrains.debugger.sourcemap.MappingList
+- org.jetbrains.debugger.sourcemap.Mappings
+- <init>(java.util.List):V
+- get(I,I):org.jetbrains.debugger.sourcemap.MappingEntry
+- getByIndex(I):org.jetbrains.debugger.sourcemap.MappingEntry
+- f:getEndOffset(org.jetbrains.debugger.sourcemap.MappingEntry,I,com.intellij.openapi.editor.Document):I
+- f:getMappingsInLine(I):java.lang.Iterable
+- getNext(org.jetbrains.debugger.sourcemap.MappingEntry):org.jetbrains.debugger.sourcemap.MappingEntry
+- getNextOnTheSameLine(I,Z):org.jetbrains.debugger.sourcemap.MappingEntry
+- f:getSize():I
+- indexOf(I,I):I
+- f:processMappingsInLine(I,org.jetbrains.debugger.sourcemap.MappingsProcessorInLine):Z
+org.jetbrains.debugger.sourcemap.Mappings
+- a:get(I,I):org.jetbrains.debugger.sourcemap.MappingEntry
+- a:getByIndex(I):org.jetbrains.debugger.sourcemap.MappingEntry
+- a:getColumn(org.jetbrains.debugger.sourcemap.MappingEntry):I
+- a:getLine(org.jetbrains.debugger.sourcemap.MappingEntry):I
+- a:getNext(org.jetbrains.debugger.sourcemap.MappingEntry):org.jetbrains.debugger.sourcemap.MappingEntry
+- a:getNextOnTheSameLine(I,Z):org.jetbrains.debugger.sourcemap.MappingEntry
+- getNextOnTheSameLine(org.jetbrains.debugger.sourcemap.MappingEntry):org.jetbrains.debugger.sourcemap.MappingEntry
+- bs:getNextOnTheSameLine$default(org.jetbrains.debugger.sourcemap.Mappings,I,Z,I,java.lang.Object):org.jetbrains.debugger.sourcemap.MappingEntry
+- a:indexOf(I,I):I
+org.jetbrains.debugger.sourcemap.MappingsProcessorInLine
+- a:process(org.jetbrains.debugger.sourcemap.MappingEntry,org.jetbrains.debugger.sourcemap.MappingEntry):Z
+- processIterable(java.lang.Iterable):Z
+org.jetbrains.debugger.sourcemap.MutableEntry
+- org.jetbrains.debugger.sourcemap.MappingEntry
+- a:getNextGenerated():org.jetbrains.debugger.sourcemap.MappingEntry
+- a:setNextGenerated(org.jetbrains.debugger.sourcemap.MappingEntry):V
+f:org.jetbrains.debugger.sourcemap.NestedSourceMap
+- org.jetbrains.debugger.sourcemap.SourceMap
+- <init>(org.jetbrains.debugger.sourcemap.SourceMap,org.jetbrains.debugger.sourcemap.SourceMap):V
+- findSourceIndex(com.intellij.openapi.vfs.VirtualFile,Z):I
+- findSourceIndex(com.intellij.util.Url,com.intellij.openapi.vfs.VirtualFile,kotlin.Lazy,Z):I
+- findSourceMappings(I):org.jetbrains.debugger.sourcemap.Mappings
+- getGeneratedMappings():org.jetbrains.debugger.sourcemap.Mappings
+- getHasNameMappings():Z
+- getOutFile():java.lang.String
+- getRawSource(org.jetbrains.debugger.sourcemap.MappingEntry):java.lang.String
+- getSourceContent(I):java.lang.String
+- getSourceContent(org.jetbrains.debugger.sourcemap.MappingEntry):java.lang.String
+- getSourceMappingsInLine(I,I):java.lang.Iterable
+- getSourceResolver():org.jetbrains.debugger.sourcemap.SourceResolver
+- getSources():com.intellij.util.Url[]
+f:org.jetbrains.debugger.sourcemap.OneLevelSourceMap
+- org.jetbrains.debugger.sourcemap.SourceMapBase
+- <init>(org.jetbrains.debugger.sourcemap.SourceMapDataEx,org.jetbrains.debugger.sourcemap.SourceResolver):V
+- getGeneratedMappings():org.jetbrains.debugger.sourcemap.Mappings
+org.jetbrains.debugger.sourcemap.SourceFileResolver
+- resolve(it.unimi.dsi.fastutil.objects.Object2IntMap):I
+- resolve(java.util.List):I
+org.jetbrains.debugger.sourcemap.SourceMap
+- a:findSourceIndex(com.intellij.openapi.vfs.VirtualFile,Z):I
+- a:findSourceIndex(com.intellij.util.Url,com.intellij.openapi.vfs.VirtualFile,kotlin.Lazy,Z):I
+- a:findSourceMappings(I):org.jetbrains.debugger.sourcemap.Mappings
+- findSourceMappings(com.intellij.util.Url,com.intellij.openapi.vfs.VirtualFile,kotlin.Lazy,Z):org.jetbrains.debugger.sourcemap.Mappings
+- a:getGeneratedMappings():org.jetbrains.debugger.sourcemap.Mappings
+- a:getHasNameMappings():Z
+- a:getOutFile():java.lang.String
+- a:getRawSource(org.jetbrains.debugger.sourcemap.MappingEntry):java.lang.String
+- a:getSourceContent(I):java.lang.String
+- a:getSourceContent(org.jetbrains.debugger.sourcemap.MappingEntry):java.lang.String
+- getSourceLineByRawLocation(I,I):I
+- a:getSourceMappingsInLine(I,I):java.lang.Iterable
+- getSourceMappingsInLine(com.intellij.util.Url,I,com.intellij.openapi.vfs.VirtualFile,kotlin.Lazy,Z):java.lang.Iterable
+- a:getSourceResolver():org.jetbrains.debugger.sourcemap.SourceResolver
+- a:getSources():com.intellij.util.Url[]
+- processSourceMappingsInLine(I,I,org.jetbrains.debugger.sourcemap.MappingsProcessorInLine):Z
+a:org.jetbrains.debugger.sourcemap.SourceMapBase
+- org.jetbrains.debugger.sourcemap.SourceMap
+- <init>(org.jetbrains.debugger.sourcemap.SourceMapData,org.jetbrains.debugger.sourcemap.SourceResolver):V
+- findSourceIndex(com.intellij.openapi.vfs.VirtualFile,Z):I
+- findSourceIndex(com.intellij.util.Url,com.intellij.openapi.vfs.VirtualFile,kotlin.Lazy,Z):I
+- findSourceMappings(I):org.jetbrains.debugger.sourcemap.MappingList
+- getHasNameMappings():Z
+- getOutFile():java.lang.String
+- getRawSource(org.jetbrains.debugger.sourcemap.MappingEntry):java.lang.String
+- getSourceContent(I):java.lang.String
+- getSourceContent(org.jetbrains.debugger.sourcemap.MappingEntry):java.lang.String
+- pa:getSourceIndexToMappings():org.jetbrains.debugger.sourcemap.MappingList[]
+- pf:getSourceMapData():org.jetbrains.debugger.sourcemap.SourceMapData
+- getSourceMappingsInLine(I,I):java.lang.Iterable
+- getSourceResolver():org.jetbrains.debugger.sourcemap.SourceResolver
+- getSources():com.intellij.util.Url[]
+- processSourceMappingsInLine(I,I,org.jetbrains.debugger.sourcemap.MappingsProcessorInLine):Z
+org.jetbrains.debugger.sourcemap.SourceMapData
+- a:getFile():java.lang.String
+- a:getHasNameMappings():Z
+- a:getMappings():java.util.List
+- a:getSources():java.util.List
+- a:getSourcesContent():java.util.List
+f:org.jetbrains.debugger.sourcemap.SourceMapDataCache
+- sf:INSTANCE:org.jetbrains.debugger.sourcemap.SourceMapDataCache
+- f:getOrCreate(java.lang.String,java.lang.String):org.jetbrains.debugger.sourcemap.SourceMapDataEx
+- bs:getOrCreate$default(org.jetbrains.debugger.sourcemap.SourceMapDataCache,java.lang.String,java.lang.String,I,java.lang.Object):org.jetbrains.debugger.sourcemap.SourceMapDataEx
+f:org.jetbrains.debugger.sourcemap.SourceMapDataEx
+- <init>(org.jetbrains.debugger.sourcemap.SourceMapDataImpl,org.jetbrains.debugger.sourcemap.MappingList[],org.jetbrains.debugger.sourcemap.Mappings):V
+- f:getGeneratedMappings():org.jetbrains.debugger.sourcemap.Mappings
+- f:getSourceIndexToMappings():org.jetbrains.debugger.sourcemap.MappingList[]
+- f:getSourceMapData():org.jetbrains.debugger.sourcemap.SourceMapDataImpl
+f:org.jetbrains.debugger.sourcemap.SourceMapDataImpl
+- org.jetbrains.debugger.sourcemap.SourceMapData
+- <init>(java.lang.String,java.util.List,java.util.List,Z,java.util.List):V
+- f:component1():java.lang.String
+- f:component2():java.util.List
+- f:component3():java.util.List
+- f:component4():Z
+- f:component5():java.util.List
+- f:copy(java.lang.String,java.util.List,java.util.List,Z,java.util.List):org.jetbrains.debugger.sourcemap.SourceMapDataImpl
+- bs:copy$default(org.jetbrains.debugger.sourcemap.SourceMapDataImpl,java.lang.String,java.util.List,java.util.List,Z,java.util.List,I,java.lang.Object):org.jetbrains.debugger.sourcemap.SourceMapDataImpl
+- equals(java.lang.Object):Z
+- getFile():java.lang.String
+- getHasNameMappings():Z
+- getMappings():java.util.List
+- getSources():java.util.List
+- getSourcesContent():java.util.List
+- hashCode():I
+- toString():java.lang.String
+f:org.jetbrains.debugger.sourcemap.SourceMapDecoderKt
+- sf:decodeSourceMap(java.lang.CharSequence,kotlin.jvm.functions.Function1):org.jetbrains.debugger.sourcemap.SourceMap
+- sf:decodeSourceMapFromFile(java.nio.file.Path,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.SourceMap
+- sf:decodeSourceMapSafely(java.lang.CharSequence,Z,com.intellij.util.Url,Z):org.jetbrains.debugger.sourcemap.SourceMap
+- sf:parseMapSafely(java.lang.CharSequence,java.lang.String):org.jetbrains.debugger.sourcemap.SourceMapDataImpl
+f:org.jetbrains.debugger.sourcemap.SourceResolver
+- sf:Companion:org.jetbrains.debugger.sourcemap.SourceResolver$Companion
+- <init>(java.util.List,Z,com.intellij.util.Url,Z):V
+- b:<init>(java.util.List,Z,com.intellij.util.Url,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:findSourceIndex(com.intellij.util.Url,com.intellij.openapi.vfs.VirtualFile,Z):I
+- f:getCanonicalizedUrls():com.intellij.util.Url[]
+- f:getSource(org.jetbrains.debugger.sourcemap.MappingEntry):com.intellij.util.Url
+- f:getSourceIndex(com.intellij.util.Url):I
+- f:getUrlIfLocalFile(org.jetbrains.debugger.sourcemap.MappingEntry):com.intellij.util.Url
+f:org.jetbrains.debugger.sourcemap.SourceResolver$Companion
+- f:isAbsolute(java.lang.String):Z
+f:org.jetbrains.debugger.sourcemap.SourceResolverKt
+- sf:canonicalizePath(java.lang.String,com.intellij.util.Url,Z):java.lang.String
+- sf:canonicalizeUrl(java.lang.String,com.intellij.util.Url,Z,Z):com.intellij.util.Url
+- bs:canonicalizeUrl$default(java.lang.String,com.intellij.util.Url,Z,Z,I,java.lang.Object):com.intellij.util.Url
+- sf:doCanonicalize(java.lang.String,com.intellij.util.Url,Z,Z):com.intellij.util.Url
+org.jetbrains.debugger.values.ArrayValue
+- org.jetbrains.debugger.values.ObjectValue
+- a:getLength():I
+org.jetbrains.debugger.values.FunctionValue
+- org.jetbrains.debugger.values.ObjectValue
+- a:getOpenParenColumn():I
+- a:getOpenParenLine():I
+- a:getScopes():org.jetbrains.debugger.Scope[]
+- hasScopes():com.intellij.util.ThreeState
+- a:resolve():org.jetbrains.concurrency.Promise
+a:org.jetbrains.debugger.values.IndexedVariablesConsumer
+- <init>():V
+- a:consumeRanges(I[]):V
+- a:consumeVariables(java.util.List):V
+- isObsolete():Z
+org.jetbrains.debugger.values.ObjectValue
+- org.jetbrains.debugger.values.Value
+- a:getClassName():java.lang.String
+- a:getIndexedProperties(I,I,I,org.jetbrains.debugger.values.IndexedVariablesConsumer,org.jetbrains.debugger.values.ValueType):org.jetbrains.concurrency.Promise
+- bs:getIndexedProperties$default(org.jetbrains.debugger.values.ObjectValue,I,I,I,org.jetbrains.debugger.values.IndexedVariablesConsumer,org.jetbrains.debugger.values.ValueType,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- a:getProperties():org.jetbrains.concurrency.Promise
+- a:getProperties(java.util.List,org.jetbrains.debugger.EvaluateContext,org.jetbrains.concurrency.Obsolescent):org.jetbrains.concurrency.Promise
+- a:getVariablesHost():org.jetbrains.debugger.VariablesHost
+- hasIndexedProperties():com.intellij.util.ThreeState
+- hasProperties():com.intellij.util.ThreeState
+a:org.jetbrains.debugger.values.ObjectValueBase
+- org.jetbrains.debugger.values.ValueBase
+- org.jetbrains.debugger.values.ObjectValue
+- <init>(org.jetbrains.debugger.values.ValueType):V
+- pa:getChildrenManager():org.jetbrains.debugger.VariablesHost
+- getIndexedProperties(I,I,I,org.jetbrains.debugger.values.IndexedVariablesConsumer,org.jetbrains.debugger.values.ValueType):org.jetbrains.concurrency.Promise
+- getProperties():org.jetbrains.concurrency.Promise
+- getProperties(java.util.List,org.jetbrains.debugger.EvaluateContext,org.jetbrains.concurrency.Obsolescent):org.jetbrains.concurrency.Promise
+- getValueString():java.lang.String
+- getVariablesHost():org.jetbrains.debugger.VariablesHost
+f:org.jetbrains.debugger.values.ObjectValueBaseKt
+- sf:getSpecifiedProperties(java.util.List,java.util.List,org.jetbrains.debugger.EvaluateContext):org.jetbrains.concurrency.Promise
+c:org.jetbrains.debugger.values.PrimitiveValue
+- org.jetbrains.debugger.values.ValueBase
+- sf:Companion:org.jetbrains.debugger.values.PrimitiveValue$Companion
+- sf:INFINITY_VALUE:java.lang.String
+- sf:NA_N_VALUE:java.lang.String
+- sf:NULL:org.jetbrains.debugger.values.PrimitiveValue
+- sf:UNDEFINED:org.jetbrains.debugger.values.PrimitiveValue
+- <init>(org.jetbrains.debugger.values.ValueType,I):V
+- <init>(org.jetbrains.debugger.values.ValueType,J):V
+- <init>(org.jetbrains.debugger.values.ValueType,java.lang.String):V
+- getValueString():java.lang.String
+f:org.jetbrains.debugger.values.PrimitiveValue$Companion
+- f:bool(java.lang.String):org.jetbrains.debugger.values.PrimitiveValue
+- f:getINFINITY():org.jetbrains.debugger.values.PrimitiveValue
+- f:getNAN():org.jetbrains.debugger.values.PrimitiveValue
+org.jetbrains.debugger.values.StringValue
+- org.jetbrains.debugger.values.Value
+- a:getFullString():org.jetbrains.concurrency.Promise
+- a:getLength():I
+- a:isTruncated():Z
+org.jetbrains.debugger.values.Value
+- a:getType():org.jetbrains.debugger.values.ValueType
+- a:getValueString():java.lang.String
+a:org.jetbrains.debugger.values.ValueBase
+- org.jetbrains.debugger.values.Value
+- <init>(org.jetbrains.debugger.values.ValueType):V
+- getType():org.jetbrains.debugger.values.ValueType
+a:org.jetbrains.debugger.values.ValueManager
+- org.jetbrains.concurrency.Obsolescent
+- <init>():V
+- clearCaches():V
+- f:getCacheStamp():I
+- f:isObsolete():Z
+- f:markObsolete():V
+e:org.jetbrains.debugger.values.ValueType
+- java.lang.Enum
+- sf:ARRAY:org.jetbrains.debugger.values.ValueType
+- sf:BIGINT:org.jetbrains.debugger.values.ValueType
+- sf:BOOLEAN:org.jetbrains.debugger.values.ValueType
+- sf:Companion:org.jetbrains.debugger.values.ValueType$Companion
+- sf:FUNCTION:org.jetbrains.debugger.values.ValueType
+- sf:NODE:org.jetbrains.debugger.values.ValueType
+- sf:NULL:org.jetbrains.debugger.values.ValueType
+- sf:NUMBER:org.jetbrains.debugger.values.ValueType
+- sf:OBJECT:org.jetbrains.debugger.values.ValueType
+- sf:STRING:org.jetbrains.debugger.values.ValueType
+- sf:SYMBOL:org.jetbrains.debugger.values.ValueType
+- sf:UNDEFINED:org.jetbrains.debugger.values.ValueType
+- s:getEntries():kotlin.enums.EnumEntries
+- f:isObjectType():Z
+- s:valueOf(java.lang.String):org.jetbrains.debugger.values.ValueType
+- s:values():org.jetbrains.debugger.values.ValueType[]
+f:org.jetbrains.debugger.values.ValueType$Companion
+- f:fromIndex(I):org.jetbrains.debugger.values.ValueType
+f:org.jetbrains.debugger.values.ValueTypeKt
+a:org.jetbrains.rpc.CommandProcessor
+- org.jetbrains.rpc.CommandSenderBase
+- org.jetbrains.rpc.MessageManager$Handler
+- org.jetbrains.rpc.MessageProcessor
+- org.jetbrains.rpc.ResultReader
+- <init>():V
+- cancelWaitingRequests():V
+- closed():V
+- pf:doSend(org.jetbrains.jsonProtocol.Request,org.jetbrains.rpc.RequestPromise):V
+- pf:getMessageManager():org.jetbrains.rpc.MessageManager
+- getUpdatedSequence(org.jetbrains.jsonProtocol.Request):I
+f:org.jetbrains.rpc.CommandProcessorKt
+- sf:getLOG():com.intellij.openapi.diagnostic.Logger
+- sf:requestToByteBuf(org.jetbrains.jsonProtocol.Request,Z):io.netty.buffer.ByteBuf
+- bs:requestToByteBuf$default(org.jetbrains.jsonProtocol.Request,Z,I,java.lang.Object):io.netty.buffer.ByteBuf
+a:org.jetbrains.rpc.CommandSenderBase
+- <init>():V
+- pa:doSend(org.jetbrains.jsonProtocol.Request,org.jetbrains.rpc.RequestPromise):V
+- f:send(org.jetbrains.jsonProtocol.Request):org.jetbrains.concurrency.Promise
+f:org.jetbrains.rpc.MessageManager
+- org.jetbrains.rpc.MessageManagerBase
+- <init>(org.jetbrains.rpc.MessageManager$Handler):V
+- f:cancelWaitingRequests():V
+- f:getCallbackAndRemove(I):org.jetbrains.rpc.RequestCallback
+- f:processIncoming(java.lang.Object):V
+- f:send(org.jetbrains.jsonProtocol.Request,org.jetbrains.rpc.RequestCallback):V
+org.jetbrains.rpc.MessageManager$Handler
+- a:acceptNonSequence(java.lang.Object):V
+- a:call(java.lang.Object,org.jetbrains.rpc.RequestCallback):V
+- getSequence(java.lang.Object):I
+- getSequence(java.lang.Object,java.lang.Object):I
+- a:getUpdatedSequence(java.lang.Object):I
+- a:readIfHasSequence(java.lang.Object):java.lang.Object
+- a:write(java.lang.Object):Z
+a:org.jetbrains.rpc.MessageManagerBase
+- <init>():V
+- f:closed():V
+- pf:getClosed():Z
+- pf:rejectIfClosed(org.jetbrains.rpc.RequestCallback):Z
+- pf:setClosed(Z):V
+f:org.jetbrains.rpc.MessageManagerBaseKt
+- sf:CONNECTION_CLOSED_MESSAGE:java.lang.String
+- sf:reject(org.jetbrains.rpc.RequestCallback):V
+org.jetbrains.rpc.MessageProcessor
+- a:cancelWaitingRequests():V
+- a:closed():V
+- a:send(org.jetbrains.jsonProtocol.Request):org.jetbrains.concurrency.Promise
+org.jetbrains.rpc.RequestCallback
+- onError(java.lang.String):V
+- a:onError(java.lang.Throwable):V
+- a:onSuccess(java.lang.Object,org.jetbrains.rpc.ResultReader):V
+f:org.jetbrains.rpc.RequestPromise
+- org.jetbrains.concurrency.AsyncPromise
+- org.jetbrains.rpc.RequestCallback
+- <init>(java.lang.String):V
+- onError(java.lang.Throwable):V
+- onSuccess(java.lang.Object,org.jetbrains.rpc.ResultReader):V
+org.jetbrains.rpc.ResultReader
+- a:readResult(java.lang.String,java.lang.Object):java.lang.Object

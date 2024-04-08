@@ -1,0 +1,179 @@
+f:com.intellij.configurationStore.XmlSerializerKt
+- sf:clearBindingCache():V
+- sf:deserializeBaseStateWithCustomNameFilter(com.intellij.openapi.components.BaseState,java.util.Collection):org.jdom.Element
+f:com.intellij.serialization.BeanBindingKt
+f:com.intellij.serialization.BindingKt
+f:com.intellij.serialization.CollectionBindingKt
+f:com.intellij.serialization.ContextKt
+f:com.intellij.serialization.IonBindingProducerKt
+f:com.intellij.serialization.IonKt
+f:com.intellij.serialization.IonObjectSerializerKt
+f:com.intellij.serialization.NonDefaultConstructorInfo
+- f:constructor:java.lang.reflect.Constructor
+- f:names:java.util.List
+- <init>(java.util.List,java.lang.reflect.Constructor):V
+f:com.intellij.serialization.ObjectIdReader
+- <init>():V
+- f:getObject(I):java.lang.Object
+- f:registerObject(java.lang.Object,I):V
+f:com.intellij.serialization.ObjectIdWriter
+- <init>():V
+- f:getId(java.lang.Object):I
+- f:registerObject(java.lang.Object):I
+f:com.intellij.serialization.ObjectSerializer
+- sf:Companion:com.intellij.serialization.ObjectSerializer$Companion
+- <init>():V
+- f:clearBindingCache():V
+- sf:getInstance():com.intellij.serialization.ObjectSerializer
+- f:read(java.lang.Class,java.io.InputStream,com.intellij.serialization.ReadConfiguration):java.lang.Object
+- f:read(java.lang.Class,java.io.Reader,com.intellij.serialization.ReadConfiguration):java.lang.Object
+- f:read(java.lang.Class,java.lang.String,com.intellij.serialization.ReadConfiguration):java.lang.Object
+- f:read(java.lang.Class,B[],com.intellij.serialization.ReadConfiguration):java.lang.Object
+- bs:read$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,java.io.InputStream,com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.lang.Object
+- bs:read$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,java.io.Reader,com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.lang.Object
+- bs:read$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,java.lang.String,com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.lang.Object
+- bs:read$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,B[],com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.lang.Object
+- f:readList(java.lang.Class,java.io.InputStream):java.util.List
+- f:readList(java.lang.Class,java.io.InputStream,com.intellij.serialization.ReadConfiguration):java.util.List
+- f:readList(java.lang.Class,java.io.Reader,com.intellij.serialization.ReadConfiguration):java.util.List
+- f:readList(java.lang.Class,B[]):java.util.List
+- f:readList(java.lang.Class,B[],com.intellij.serialization.ReadConfiguration):java.util.List
+- bs:readList$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,java.io.InputStream,com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.util.List
+- bs:readList$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,java.io.Reader,com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.util.List
+- bs:readList$default(com.intellij.serialization.ObjectSerializer,java.lang.Class,B[],com.intellij.serialization.ReadConfiguration,I,java.lang.Object):java.util.List
+- f:write(java.lang.Object,java.io.OutputStream):V
+- f:write(java.lang.Object,java.io.OutputStream,com.intellij.serialization.WriteConfiguration):V
+- bs:write$default(com.intellij.serialization.ObjectSerializer,java.lang.Object,java.io.OutputStream,com.intellij.serialization.WriteConfiguration,I,java.lang.Object):V
+- f:writeAsBytes(java.lang.Object):B[]
+- f:writeAsBytes(java.lang.Object,com.intellij.serialization.WriteConfiguration):B[]
+- bs:writeAsBytes$default(com.intellij.serialization.ObjectSerializer,java.lang.Object,com.intellij.serialization.WriteConfiguration,I,java.lang.Object):B[]
+- f:writeList(java.util.Collection,java.lang.Class,java.io.OutputStream):V
+- f:writeList(java.util.Collection,java.lang.Class,java.io.OutputStream,com.intellij.serialization.WriteConfiguration):V
+- bs:writeList$default(com.intellij.serialization.ObjectSerializer,java.util.Collection,java.lang.Class,java.io.OutputStream,com.intellij.serialization.WriteConfiguration,I,java.lang.Object):V
+f:com.intellij.serialization.ObjectSerializer$Companion
+- f:getInstance():com.intellij.serialization.ObjectSerializer
+f:com.intellij.serialization.ObjectSerializerKt
+- sf:getDefaultReadConfiguration():com.intellij.serialization.ReadConfiguration
+f:com.intellij.serialization.PrimitiveBindingsKt
+f:com.intellij.serialization.ReadConfiguration
+- f:allowAnySubTypes:Z
+- f:beanConstructed:kotlin.jvm.functions.Function1
+- f:loadClass:kotlin.jvm.functions.Function2
+- f:resolvePropertyMapping:kotlin.jvm.functions.Function1
+- <init>():V
+- <init>(Z,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):V
+- b:<init>(Z,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():Z
+- f:component2():kotlin.jvm.functions.Function2
+- f:component3():kotlin.jvm.functions.Function1
+- f:component4():kotlin.jvm.functions.Function1
+- f:copy(Z,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.serialization.ReadConfiguration
+- bs:copy$default(com.intellij.serialization.ReadConfiguration,Z,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.serialization.ReadConfiguration
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+com.intellij.serialization.SerializationFilter
+- getSkipEmptyArray():Z
+- getSkipEmptyCollection():Z
+- getSkipEmptyMap():Z
+- a:isSkipped(java.lang.Object):Z
+f:com.intellij.serialization.SkipNullAndEmptySerializationFilter
+- com.intellij.serialization.SerializationFilter
+- sf:INSTANCE:com.intellij.serialization.SkipNullAndEmptySerializationFilter
+- getSkipEmptyArray():Z
+- getSkipEmptyCollection():Z
+- getSkipEmptyMap():Z
+- isSkipped(java.lang.Object):Z
+f:com.intellij.serialization.VersionedFile
+- <init>(java.nio.file.Path,I):V
+- <init>(java.nio.file.Path,I,Z):V
+- b:<init>(java.nio.file.Path,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.nio.file.Path
+- f:component2():I
+- f:copy(java.nio.file.Path,I,Z):com.intellij.serialization.VersionedFile
+- bs:copy$default(com.intellij.serialization.VersionedFile,java.nio.file.Path,I,Z,I,java.lang.Object):com.intellij.serialization.VersionedFile
+- equals(java.lang.Object):Z
+- f:getFile():java.nio.file.Path
+- f:getVersion():I
+- hashCode():I
+- f:read(java.lang.Class):java.lang.Object
+- f:read(java.lang.Class,kotlin.jvm.functions.Function1):java.lang.Object
+- bs:read$default(com.intellij.serialization.VersionedFile,java.lang.Class,kotlin.jvm.functions.Function1,I,java.lang.Object):java.lang.Object
+- f:readList(java.lang.Class):java.util.List
+- f:readList(java.lang.Class,com.intellij.serialization.ReadConfiguration):java.util.List
+- f:readList(java.lang.Class,com.intellij.serialization.ReadConfiguration,Z):java.util.List
+- bs:readList$default(com.intellij.serialization.VersionedFile,java.lang.Class,com.intellij.serialization.ReadConfiguration,Z,I,java.lang.Object):java.util.List
+- toString():java.lang.String
+- f:writeList(java.util.Collection,java.lang.Class):V
+- f:writeList(java.util.Collection,java.lang.Class,com.intellij.serialization.WriteConfiguration):V
+- bs:writeList$default(com.intellij.serialization.VersionedFile,java.util.Collection,java.lang.Class,com.intellij.serialization.WriteConfiguration,I,java.lang.Object):V
+f:com.intellij.serialization.VersionedFileKt
+f:com.intellij.serialization.WriteConfiguration
+- f:allowAnySubTypes:Z
+- f:binary:Z
+- f:filter:com.intellij.serialization.SerializationFilter
+- f:orderMapEntriesByKeys:Z
+- <init>():V
+- <init>(Z,com.intellij.serialization.SerializationFilter,Z,Z):V
+- b:<init>(Z,com.intellij.serialization.SerializationFilter,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():Z
+- f:component2():com.intellij.serialization.SerializationFilter
+- f:component3():Z
+- f:component4():Z
+- f:copy(Z,com.intellij.serialization.SerializationFilter,Z,Z):com.intellij.serialization.WriteConfiguration
+- bs:copy$default(com.intellij.serialization.WriteConfiguration,Z,com.intellij.serialization.SerializationFilter,Z,Z,I,java.lang.Object):com.intellij.serialization.WriteConfiguration
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+c:com.intellij.serialization.stateProperties.CollectionStoredProperty
+- com.intellij.openapi.components.StoredPropertyBase
+- <init>(java.util.Collection,java.lang.String):V
+- f:__getValue():java.util.Collection
+- equals(java.lang.Object):Z
+- getJsonType():com.intellij.openapi.components.JsonSchemaType
+- pf:getValue():java.util.Collection
+- getValue(com.intellij.openapi.components.BaseState):java.util.Collection
+- hashCode():I
+- isEqualToDefault():Z
+- setValue(com.intellij.openapi.components.BaseState,java.util.Collection):V
+- setValue(com.intellij.openapi.components.StoredProperty):Z
+- toString():java.lang.String
+f:com.intellij.serialization.stateProperties.EnumStoredProperty
+- com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
+- com.intellij.openapi.components.ScalarProperty
+- <init>(java.lang.Enum,java.lang.Class):V
+- f:getClazz():java.lang.Class
+- getJsonType():com.intellij.openapi.components.JsonSchemaType
+- getModificationCount():J
+- isEqualToDefault():Z
+- parseAndSetValue(java.lang.String):V
+- setValue(com.intellij.openapi.components.BaseState,java.lang.Enum):V
+f:com.intellij.serialization.stateProperties.FloatStoredPropertyKt
+f:com.intellij.serialization.stateProperties.IntStoredPropertyKt
+f:com.intellij.serialization.stateProperties.LongStoredPropertyKt
+f:com.intellij.serialization.stateProperties.MapStoredProperty
+- com.intellij.openapi.components.StoredPropertyBase
+- <init>(java.util.Map):V
+- f:__getValue():java.util.Map
+- equals(java.lang.Object):Z
+- getJsonType():com.intellij.openapi.components.JsonSchemaType
+- getModificationCount():J
+- getValue(com.intellij.openapi.components.BaseState):java.util.Map
+- hashCode():I
+- isEqualToDefault():Z
+- setValue(com.intellij.openapi.components.BaseState,java.util.Map):V
+- setValue(com.intellij.openapi.components.StoredProperty):Z
+- toString():java.lang.String
+a:com.intellij.serialization.stateProperties.ObjectStateStoredPropertyBase
+- com.intellij.openapi.components.StoredPropertyBase
+- <init>(java.lang.Object):V
+- equals(java.lang.Object):Z
+- getJsonType():com.intellij.openapi.components.JsonSchemaType
+- pf:getValue():java.lang.Object
+- getValue(com.intellij.openapi.components.BaseState):java.lang.Object
+- hashCode():I
+- setValue(com.intellij.openapi.components.BaseState,java.lang.Object):V
+- setValue(com.intellij.openapi.components.StoredProperty):Z
+- pf:setValue(java.lang.Object):V
+- toString():java.lang.String
+f:com.intellij.serialization.xml.KotlinAwareBeanBindingKt

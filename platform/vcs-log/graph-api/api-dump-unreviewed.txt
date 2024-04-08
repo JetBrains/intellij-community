@@ -1,0 +1,119 @@
+com.intellij.vcs.log.graph.EdgePrintElement
+- com.intellij.vcs.log.graph.PrintElement
+- a:getLineStyle():com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- a:getPositionInOtherRow():I
+- a:getType():com.intellij.vcs.log.graph.EdgePrintElement$Type
+- a:hasArrow():Z
+e:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- java.lang.Enum
+- sf:DASHED:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- sf:DOTTED:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- sf:SOLID:com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.EdgePrintElement$LineStyle
+- s:values():com.intellij.vcs.log.graph.EdgePrintElement$LineStyle[]
+e:com.intellij.vcs.log.graph.EdgePrintElement$Type
+- java.lang.Enum
+- sf:DOWN:com.intellij.vcs.log.graph.EdgePrintElement$Type
+- sf:UP:com.intellij.vcs.log.graph.EdgePrintElement$Type
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.EdgePrintElement$Type
+- s:values():com.intellij.vcs.log.graph.EdgePrintElement$Type[]
+com.intellij.vcs.log.graph.GraphColorManager
+- a:getColor(java.lang.Object,I,I):I
+com.intellij.vcs.log.graph.GraphCommit
+- a:getId():java.lang.Object
+- a:getParents():java.util.List
+- a:getTimestamp():J
+com.intellij.vcs.log.graph.NodePrintElement
+- com.intellij.vcs.log.graph.PrintElement
+com.intellij.vcs.log.graph.PermanentGraph
+- a:createVisibleGraph(com.intellij.vcs.log.graph.PermanentGraph$Options,java.util.Set,java.util.Set):com.intellij.vcs.log.graph.VisibleGraph
+- createVisibleGraph(com.intellij.vcs.log.graph.PermanentGraph$SortType,java.util.Set,java.util.Set):com.intellij.vcs.log.graph.VisibleGraph
+- a:getAllCommits():java.util.List
+- a:getChildren(java.lang.Object):java.util.List
+- a:getContainedInBranchCondition(java.util.Collection):java.util.function.Predicate
+- a:getContainingBranches(java.lang.Object):java.util.Set
+a:com.intellij.vcs.log.graph.PermanentGraph$Options
+- sf:Companion:com.intellij.vcs.log.graph.PermanentGraph$Options$Companion
+- sf:Default:com.intellij.vcs.log.graph.PermanentGraph$Options$Base
+f:com.intellij.vcs.log.graph.PermanentGraph$Options$Base
+- com.intellij.vcs.log.graph.PermanentGraph$Options
+- <init>(com.intellij.vcs.log.graph.PermanentGraph$SortType):V
+- f:component1():com.intellij.vcs.log.graph.PermanentGraph$SortType
+- f:copy(com.intellij.vcs.log.graph.PermanentGraph$SortType):com.intellij.vcs.log.graph.PermanentGraph$Options$Base
+- bs:copy$default(com.intellij.vcs.log.graph.PermanentGraph$Options$Base,com.intellij.vcs.log.graph.PermanentGraph$SortType,I,java.lang.Object):com.intellij.vcs.log.graph.PermanentGraph$Options$Base
+- equals(java.lang.Object):Z
+- f:getSortType():com.intellij.vcs.log.graph.PermanentGraph$SortType
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.vcs.log.graph.PermanentGraph$Options$Companion
+f:com.intellij.vcs.log.graph.PermanentGraph$Options$FirstParent
+- com.intellij.vcs.log.graph.PermanentGraph$Options
+- sf:INSTANCE:com.intellij.vcs.log.graph.PermanentGraph$Options$FirstParent
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.vcs.log.graph.PermanentGraph$Options$LinearBek
+- com.intellij.vcs.log.graph.PermanentGraph$Options
+- sf:INSTANCE:com.intellij.vcs.log.graph.PermanentGraph$Options$LinearBek
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+e:com.intellij.vcs.log.graph.PermanentGraph$SortType
+- java.lang.Enum
+- sf:Bek:com.intellij.vcs.log.graph.PermanentGraph$SortType
+- sf:Normal:com.intellij.vcs.log.graph.PermanentGraph$SortType
+- f:getDescription():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getPresentation():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.PermanentGraph$SortType
+- s:values():com.intellij.vcs.log.graph.PermanentGraph$SortType[]
+com.intellij.vcs.log.graph.PrintElement
+- a:getColorId():I
+- a:getPositionInCurrentRow():I
+- a:getRowIndex():I
+- a:isSelected():Z
+com.intellij.vcs.log.graph.RowInfo
+- a:getAdjacentRows(Z):java.util.List
+- a:getCommit():java.lang.Object
+- a:getOneOfHeads():java.lang.Object
+- a:getPrintElements():java.util.Collection
+- a:getRowType():com.intellij.vcs.log.graph.RowType
+e:com.intellij.vcs.log.graph.RowType
+- java.lang.Enum
+- sf:NORMAL:com.intellij.vcs.log.graph.RowType
+- sf:UNMATCHED:com.intellij.vcs.log.graph.RowType
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.RowType
+- s:values():com.intellij.vcs.log.graph.RowType[]
+com.intellij.vcs.log.graph.VisibleGraph
+- a:getActionController():com.intellij.vcs.log.graph.actions.ActionController
+- a:getRecommendedWidth():I
+- a:getRowInfo(I):com.intellij.vcs.log.graph.RowInfo
+- a:getVisibleCommitCount():I
+- a:getVisibleRowIndex(java.lang.Object):java.lang.Integer
+com.intellij.vcs.log.graph.actions.ActionController
+- a:areLongEdgesHidden():Z
+- isActionSupported(com.intellij.vcs.log.graph.actions.GraphAction):Z
+- a:performAction(com.intellij.vcs.log.graph.actions.GraphAction):com.intellij.vcs.log.graph.actions.GraphAnswer
+- a:setLongEdgesHidden(Z):V
+com.intellij.vcs.log.graph.actions.GraphAction
+- a:getAffectedElement():com.intellij.vcs.log.graph.PrintElement
+- a:getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
+c:com.intellij.vcs.log.graph.actions.GraphAction$GraphActionImpl
+- com.intellij.vcs.log.graph.actions.GraphAction
+- <init>(com.intellij.vcs.log.graph.PrintElement,com.intellij.vcs.log.graph.actions.GraphAction$Type):V
+- getAffectedElement():com.intellij.vcs.log.graph.PrintElement
+- getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
+e:com.intellij.vcs.log.graph.actions.GraphAction$Type
+- java.lang.Enum
+- sf:BUTTON_COLLAPSE:com.intellij.vcs.log.graph.actions.GraphAction$Type
+- sf:BUTTON_EXPAND:com.intellij.vcs.log.graph.actions.GraphAction$Type
+- sf:MOUSE_CLICK:com.intellij.vcs.log.graph.actions.GraphAction$Type
+- sf:MOUSE_OVER:com.intellij.vcs.log.graph.actions.GraphAction$Type
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.actions.GraphAction$Type
+- s:values():com.intellij.vcs.log.graph.actions.GraphAction$Type[]
+com.intellij.vcs.log.graph.actions.GraphAnswer
+- a:doJump():Z
+- a:getCommitToJump():java.lang.Object
+- a:getCursorToSet():java.awt.Cursor
+- a:getGraphUpdater():java.lang.Runnable
+- a:isRepaintRequired():Z

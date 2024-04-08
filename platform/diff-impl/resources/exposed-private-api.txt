@@ -1,0 +1,6 @@
+com/intellij/diff/merge/BinaryMergeTool$BinaryMergeViewer$MyThreesideViewer
+com/intellij/diff/tools/util/FoldingModelSupport$DescriptionComputer
+com/intellij/diff/tools/util/FoldingModelSupport$FoldedGroup
+com/intellij/diff/util/DiffDrawUtil$PaintMode
+com/intellij/openapi/vcs/ex/DocumentTracker$Lock
+com/intellij/openapi/vcs/ex/LineStatusTrackerListener

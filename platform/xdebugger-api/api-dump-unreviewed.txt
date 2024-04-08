@@ -1,0 +1,759 @@
+com.intellij.debugger.ui.DebuggerContentInfo
+- sf:CONSOLE_CONTENT:java.lang.String
+- sf:FRAME_CONTENT:java.lang.String
+- sf:THREADS_CONTENT:java.lang.String
+- sf:VARIABLES_CONTENT:java.lang.String
+- sf:WATCHES_CONTENT:java.lang.String
+c:com.intellij.execution.executors.DefaultDebugExecutor
+- com.intellij.execution.Executor
+- sf:EXECUTOR_ID:java.lang.String
+- <init>():V
+- getActionName():java.lang.String
+- getContextActionId():java.lang.String
+- s:getDebugExecutorInstance():com.intellij.execution.Executor
+- getDescription():java.lang.String
+- getDisabledIcon():javax.swing.Icon
+- getHelpId():java.lang.String
+- getIcon():javax.swing.Icon
+- getId():java.lang.String
+- getRerunIcon():javax.swing.Icon
+- getStartActionText():java.lang.String
+- getStartActionText(java.lang.String):java.lang.String
+- getToolWindowIcon():javax.swing.Icon
+- getToolWindowId():java.lang.String
+- isSupportedOnTarget():Z
+com.intellij.xdebugger.AbstractDebuggerSession
+- a:isPaused():Z
+- a:isStopped():Z
+c:com.intellij.xdebugger.DefaultDebugProcessHandler
+- com.intellij.execution.process.ProcessHandler
+- <init>():V
+- p:destroyProcessImpl():V
+- detachIsDefault():Z
+- p:detachProcessImpl():V
+- getProcessInput():java.io.OutputStream
+com.intellij.xdebugger.Obsolescent
+- org.jetbrains.concurrency.Obsolescent
+- isObsolete():Z
+*:com.intellij.xdebugger.XAlternativeSourceHandler
+- a:getAlternativePosition(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.XSourcePosition
+- a:getAlternativeSourceKindState():kotlinx.coroutines.flow.StateFlow
+- a:isAlternativeSourceKindPreferred(com.intellij.xdebugger.frame.XSuspendContext):Z
+a:com.intellij.xdebugger.XDebugProcess
+- p:<init>(com.intellij.xdebugger.XDebugSession):V
+- checkCanInitBreakpoints():Z
+- checkCanPerformCommands():Z
+- createConsole():com.intellij.execution.ui.ExecutionConsole
+- createTabLayouter():com.intellij.xdebugger.ui.XDebugTabLayouter
+- createValueMarkerProvider():com.intellij.xdebugger.frame.XValueMarkerProvider
+- *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
+- p:doGetProcessHandler():com.intellij.execution.process.ProcessHandler
+- *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
+- getBreakpointHandlers():com.intellij.xdebugger.breakpoints.XBreakpointHandler[]
+- getCurrentStateHyperlinkListener():javax.swing.event.HyperlinkListener
+- getCurrentStateMessage():java.lang.String
+- *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
+- a:getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+- f:getProcessHandler():com.intellij.execution.process.ProcessHandler
+- f:getSession():com.intellij.xdebugger.XDebugSession
+- getSmartStepIntoHandler():com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+- isLibraryFrameFilterSupported():Z
+- isValuesCustomSorted():Z
+- logStack(com.intellij.xdebugger.frame.XSuspendContext,com.intellij.xdebugger.XDebugSession):V
+- registerAdditionalActions(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DefaultActionGroup):V
+- resume():V
+- resume(com.intellij.xdebugger.frame.XSuspendContext):V
+- runToPosition(com.intellij.xdebugger.XSourcePosition):V
+- runToPosition(com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.frame.XSuspendContext):V
+- sessionInitialized():V
+- startForceStepInto(com.intellij.xdebugger.frame.XSuspendContext):V
+- startPausing():V
+- startStepInto():V
+- startStepInto(com.intellij.xdebugger.frame.XSuspendContext):V
+- startStepOut():V
+- startStepOut(com.intellij.xdebugger.frame.XSuspendContext):V
+- startStepOver():V
+- startStepOver(com.intellij.xdebugger.frame.XSuspendContext):V
+- stop():V
+- stopAsync():org.jetbrains.concurrency.Promise
+a:com.intellij.xdebugger.XDebugProcessStarter
+- <init>():V
+- a:start(com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.XDebugProcess
+com.intellij.xdebugger.XDebugSession
+- com.intellij.xdebugger.AbstractDebuggerSession
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- a:addSessionListener(com.intellij.xdebugger.XDebugSessionListener):V
+- a:addSessionListener(com.intellij.xdebugger.XDebugSessionListener,com.intellij.openapi.Disposable):V
+- a:areBreakpointsMuted():Z
+- a:breakpointReached(com.intellij.xdebugger.breakpoints.XBreakpoint,java.lang.String,com.intellij.xdebugger.frame.XSuspendContext):Z
+- a:forceStepInto():V
+- a:getConsoleView():com.intellij.execution.ui.ConsoleView
+- a:getCurrentPosition():com.intellij.xdebugger.XSourcePosition
+- a:getCurrentStackFrame():com.intellij.xdebugger.frame.XStackFrame
+- a:getDebugProcess():com.intellij.xdebugger.XDebugProcess
+- a:getProject():com.intellij.openapi.project.Project
+- a:getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
+- a:getRunProfile():com.intellij.execution.configurations.RunProfile
+- a:getSessionName():java.lang.String
+- a:getSuspendContext():com.intellij.xdebugger.frame.XSuspendContext
+- a:getTopFramePosition():com.intellij.xdebugger.XSourcePosition
+- a:getUI():com.intellij.execution.ui.RunnerLayoutUi
+- a:initBreakpoints():V
+- a:isSuspended():Z
+- a:pause():V
+- a:positionReached(com.intellij.xdebugger.frame.XSuspendContext):V
+- a:rebuildViews():V
+- a:removeSessionListener(com.intellij.xdebugger.XDebugSessionListener):V
+- a:reportError(java.lang.String):V
+- a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType):V
+- a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType,javax.swing.event.HyperlinkListener):V
+- a:resume():V
+- a:runToPosition(com.intellij.xdebugger.XSourcePosition,Z):V
+- a:sessionResumed():V
+- a:setBreakpointInvalid(com.intellij.xdebugger.breakpoints.XLineBreakpoint,java.lang.String):V
+- a:setBreakpointMuted(Z):V
+- a:setBreakpointVerified(com.intellij.xdebugger.breakpoints.XLineBreakpoint):V
+- setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack,com.intellij.xdebugger.frame.XStackFrame):V
+- a:setCurrentStackFrame(com.intellij.xdebugger.frame.XExecutionStack,com.intellij.xdebugger.frame.XStackFrame,Z):V
+- a:setPauseActionSupported(Z):V
+- a:showExecutionPoint():V
+- a:smartStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoHandler,com.intellij.xdebugger.stepping.XSmartStepIntoVariant):V
+- a:stepInto():V
+- a:stepOut():V
+- a:stepOver(Z):V
+- a:stop():V
+- a:updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
+- a:updateExecutionPosition():V
+com.intellij.xdebugger.XDebugSessionListener
+- java.util.EventListener
+- beforeSessionResume():V
+- breakpointsMuted(Z):V
+- sessionPaused():V
+- sessionResumed():V
+- sessionStopped():V
+- settingsChanged():V
+- stackFrameChanged():V
+f:com.intellij.xdebugger.XDebuggerBundle
+- sf:BUNDLE:java.lang.String
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.xdebugger.XDebuggerManager
+- sf:TOPIC:com.intellij.util.messages.Topic
+- <init>():V
+- a:getBreakpointManager():com.intellij.xdebugger.breakpoints.XBreakpointManager
+- a:getCurrentSession():com.intellij.xdebugger.XDebugSession
+- a:getDebugProcesses(java.lang.Class):java.util.List
+- a:getDebugSession(com.intellij.execution.ui.ExecutionConsole):com.intellij.xdebugger.XDebugSession
+- a:getDebugSessions():com.intellij.xdebugger.XDebugSession[]
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.XDebuggerManager
+- a:startSession(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
+- a:startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
+- a:startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
+- a:startSessionAndShowTab(java.lang.String,com.intellij.xdebugger.XDebugProcessStarter,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugSession
+- a:startSessionAndShowTab(java.lang.String,javax.swing.Icon,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
+com.intellij.xdebugger.XDebuggerManagerListener
+- currentSessionChanged(com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.XDebugSession):V
+- processStarted(com.intellij.xdebugger.XDebugProcess):V
+- processStopped(com.intellij.xdebugger.XDebugProcess):V
+a:com.intellij.xdebugger.XDebuggerUtil
+- sf:INLINE_BREAKPOINTS_KEY:java.lang.String
+- <init>():V
+- s:areInlineBreakpointsEnabled(com.intellij.openapi.vfs.VirtualFile):Z
+- a:canPutBreakpointAt(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):Z
+- a:createExpression(java.lang.String,com.intellij.lang.Language,java.lang.String,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.XExpression
+- a:createPosition(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.XSourcePosition
+- a:createPosition(com.intellij.openapi.vfs.VirtualFile,I,I):com.intellij.xdebugger.XSourcePosition
+- a:createPositionByElement(com.intellij.psi.PsiElement):com.intellij.xdebugger.XSourcePosition
+- a:createPositionByOffset(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.XSourcePosition
+- a:disableValueLookup(com.intellij.openapi.editor.Editor):V
+- a:findBreakpointType(java.lang.Class):com.intellij.xdebugger.breakpoints.XBreakpointType
+- a:findContextElement(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project,Z):com.intellij.psi.PsiElement
+- a:getDebuggerSettings(java.lang.Class):com.intellij.xdebugger.settings.XDebuggerSettings
+- a:getGroupingByFileRule():com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
+- a:getGroupingByFileRuleAsList():java.util.List
+- s:getInstance():com.intellij.xdebugger.XDebuggerUtil
+- a:getLineBreakpointTypes():com.intellij.xdebugger.breakpoints.XLineBreakpointType[]
+- getSelectedEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
+- a:getValueContainer(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValueContainer
+- a:iterateLine(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I,com.intellij.util.Processor):V
+- a:logStack(com.intellij.xdebugger.frame.XSuspendContext,com.intellij.xdebugger.XDebugSession):V
+- a:openTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor):com.intellij.openapi.editor.Editor
+- a:removeBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):V
+- a:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I,Z):V
+- toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):V
+- a:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I,Z):V
+com.intellij.xdebugger.XExpression
+- a:getCustomInfo():java.lang.String
+- a:getExpression():java.lang.String
+- a:getLanguage():com.intellij.lang.Language
+- a:getMode():com.intellij.xdebugger.evaluation.EvaluationMode
+com.intellij.xdebugger.XNamedTreeNode
+- javax.swing.tree.TreeNode
+- a:getName():java.lang.String
+com.intellij.xdebugger.XSourcePosition
+- a:createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+- a:getLine():I
+- a:getOffset():I
+- s:isOnTheSameLine(com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.XSourcePosition):Z
+a:com.intellij.xdebugger.XSourcePositionWrapper
+- com.intellij.xdebugger.XSourcePosition
+- pf:myPosition:com.intellij.xdebugger.XSourcePosition
+- p:<init>(com.intellij.xdebugger.XSourcePosition):V
+- createNavigatable(com.intellij.openapi.project.Project):com.intellij.pom.Navigatable
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- f:getLine():I
+- f:getOffset():I
+*:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
+- *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
+- a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
+- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
+e:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- java.lang.Enum
+- sf:ALL:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- sf:NONE:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- sf:THREAD:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.SuspendPolicy
+- s:values():com.intellij.xdebugger.breakpoints.SuspendPolicy[]
+com.intellij.xdebugger.breakpoints.XBreakpoint
+- com.intellij.openapi.util.UserDataHolder
+- a:getConditionExpression():com.intellij.xdebugger.XExpression
+- a:getLogExpressionObject():com.intellij.xdebugger.XExpression
+- a:getNavigatable():com.intellij.pom.Navigatable
+- a:getProperties():com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- a:getSourcePosition():com.intellij.xdebugger.XSourcePosition
+- a:getSuspendPolicy():com.intellij.xdebugger.breakpoints.SuspendPolicy
+- a:getTimeStamp():J
+- a:getType():com.intellij.xdebugger.breakpoints.XBreakpointType
+- a:isEnabled():Z
+- a:isLogMessage():Z
+- a:isLogStack():Z
+- a:setCondition(java.lang.String):V
+- a:setConditionExpression(com.intellij.xdebugger.XExpression):V
+- a:setEnabled(Z):V
+- a:setLogExpression(java.lang.String):V
+- a:setLogExpressionObject(com.intellij.xdebugger.XExpression):V
+- a:setLogMessage(Z):V
+- a:setLogStack(Z):V
+- a:setSuspendPolicy(com.intellij.xdebugger.breakpoints.SuspendPolicy):V
+a:com.intellij.xdebugger.breakpoints.XBreakpointHandler
+- sf:EMPTY_ARRAY:com.intellij.xdebugger.breakpoints.XBreakpointHandler[]
+- p:<init>(java.lang.Class):V
+- f:getBreakpointTypeClass():java.lang.Class
+- a:registerBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- a:unregisterBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint,Z):V
+com.intellij.xdebugger.breakpoints.XBreakpointListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- breakpointAdded(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- breakpointChanged(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- breakpointPresentationUpdated(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession):V
+- breakpointRemoved(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+com.intellij.xdebugger.breakpoints.XBreakpointManager
+- a:addBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XBreakpoint
+- a:addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
+- a:addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener,com.intellij.openapi.Disposable):V
+- a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,Z):com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- a:findBreakpointAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- a:findBreakpointsAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):java.util.Collection
+- a:getAllBreakpoints():com.intellij.xdebugger.breakpoints.XBreakpoint[]
+- a:getBreakpoints(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.Collection
+- a:getBreakpoints(java.lang.Class):java.util.Collection
+- a:getDefaultBreakpoints(com.intellij.xdebugger.breakpoints.XBreakpointType):java.util.Set
+- a:isDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
+- a:removeBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- a:removeBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
+- a:updateBreakpointPresentation(com.intellij.xdebugger.breakpoints.XLineBreakpoint,javax.swing.Icon,java.lang.String):V
+a:com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- com.intellij.openapi.components.PersistentStateComponent
+- <init>():V
+a:com.intellij.xdebugger.breakpoints.XBreakpointType
+- sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- p:<init>(java.lang.String,java.lang.String):V
+- p:<init>(java.lang.String,java.lang.String,Z):V
+- addBreakpoint(com.intellij.openapi.project.Project,javax.swing.JComponent):com.intellij.xdebugger.breakpoints.XBreakpoint
+- createCustomConditionsPanel():com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+- createCustomPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+- createCustomRightPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+- createCustomTopPropertiesPanel(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+- createDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointType$XBreakpointCreator):com.intellij.xdebugger.breakpoints.XBreakpoint
+- createProperties():com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- getAdditionalPopupMenuActions(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession):java.util.List
+- getBreakpointComparator():java.util.Comparator
+- getBreakpointsDialogHelpTopic():java.lang.String
+- getDefaultSuspendPolicy():com.intellij.xdebugger.breakpoints.SuspendPolicy
+- getDisabledIcon():javax.swing.Icon
+- a:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- getEditorsProvider(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.openapi.project.Project):com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- getEnabledIcon():javax.swing.Icon
+- getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- getGroupingRules():java.util.List
+- f:getId():java.lang.String
+- getInactiveDependentIcon():javax.swing.Icon
+- getMutedDisabledIcon():javax.swing.Icon
+- getMutedEnabledIcon():javax.swing.Icon
+- getPendingIcon():javax.swing.Icon
+- getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
+- getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
+- getSourcePosition(com.intellij.xdebugger.breakpoints.XBreakpoint):com.intellij.xdebugger.XSourcePosition
+- getSuspendNoneIcon():javax.swing.Icon
+- getTitle():java.lang.String
+- getVisibleStandardPanels():java.util.EnumSet
+- isAddBreakpointButtonVisible():Z
+- isSuspendThreadSupported():Z
+- shouldShowInBreakpointsDialog(com.intellij.openapi.project.Project):Z
+- toString():java.lang.String
+e:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
+- java.lang.Enum
+- sf:ACTIONS:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
+- sf:DEPENDENCY:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
+- sf:SUSPEND_POLICY:com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
+- s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels
+- s:values():com.intellij.xdebugger.breakpoints.XBreakpointType$StandardPanels[]
+com.intellij.xdebugger.breakpoints.XBreakpointType$XBreakpointCreator
+- a:createBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XBreakpoint
+com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- com.intellij.xdebugger.breakpoints.XBreakpoint
+- sf:EMPTY_ARRAY:com.intellij.xdebugger.breakpoints.XLineBreakpoint[]
+- a:getFileUrl():java.lang.String
+- a:getLine():I
+- a:getPresentableFilePath():java.lang.String
+- a:getShortFilePath():java.lang.String
+- a:getType():com.intellij.xdebugger.breakpoints.XLineBreakpointType
+- a:isTemporary():Z
+- a:setTemporary(Z):V
+a:com.intellij.xdebugger.breakpoints.XLineBreakpointType
+- com.intellij.xdebugger.breakpoints.XBreakpointType
+- p:<init>(java.lang.String,java.lang.String):V
+- canBeHitInOtherPlaces():Z
+- canPutAt(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):Z
+- changeLine(com.intellij.xdebugger.breakpoints.XLineBreakpoint,I,com.intellij.openapi.project.Project):Z
+- computeVariants(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition):java.util.List
+- computeVariantsAsync(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
+- a:createBreakpointProperties(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- f:createDefaultBreakpoint(com.intellij.xdebugger.breakpoints.XBreakpointType$XBreakpointCreator):com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- getAdditionalPopupMenuActions(com.intellij.xdebugger.breakpoints.XLineBreakpoint,com.intellij.xdebugger.XDebugSession):java.util.List
+- getColumn(com.intellij.xdebugger.breakpoints.XLineBreakpoint):I
+- getDisplayText(com.intellij.xdebugger.breakpoints.XLineBreakpoint):java.lang.String
+- p:getGeneralDescription(com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant):java.lang.String
+- getHighlightRange(com.intellij.xdebugger.breakpoints.XLineBreakpoint):com.intellij.openapi.util.TextRange
+- getPriority():I
+- getShortText(com.intellij.xdebugger.breakpoints.XLineBreakpoint):java.lang.String
+- getSourcePosition(com.intellij.xdebugger.breakpoints.XBreakpoint):com.intellij.xdebugger.XSourcePosition
+- getTemporaryIcon():javax.swing.Icon
+- variantAndBreakpointMatch(com.intellij.xdebugger.breakpoints.XLineBreakpoint,com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant):Z
+c:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointAllVariant
+- com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant
+- pf:mySourcePosition:com.intellij.xdebugger.XSourcePosition
+- <init>(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.xdebugger.XSourcePosition):V
+- createProperties():com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- getHighlightRange():com.intellij.openapi.util.TextRange
+- getIcon():javax.swing.Icon
+- getText():java.lang.String
+- isMultiVariant():Z
+a:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointVariant
+- <init>(com.intellij.xdebugger.breakpoints.XLineBreakpointType):V
+- a:createProperties():com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- a:getHighlightRange():com.intellij.openapi.util.TextRange
+- a:getIcon():javax.swing.Icon
+- getPriority(com.intellij.openapi.project.Project):I
+- a:getText():java.lang.String
+- f:getTooltipDescription():java.lang.String
+- f:getType():com.intellij.xdebugger.breakpoints.XLineBreakpointType
+- isMultiVariant():Z
+- toString():java.lang.String
+c:com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLinePsiElementBreakpointVariant
+- com.intellij.xdebugger.breakpoints.XLineBreakpointType$XLineBreakpointAllVariant
+- <init>(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.xdebugger.XSourcePosition,com.intellij.psi.PsiElement):V
+- getHighlightRange():com.intellij.openapi.util.TextRange
+- getIcon():javax.swing.Icon
+- getText():java.lang.String
+- isMultiVariant():Z
+a:com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase
+- com.intellij.xdebugger.breakpoints.XLineBreakpointType
+- p:<init>(java.lang.String,java.lang.String,com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider):V
+- createBreakpointProperties(com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.breakpoints.XBreakpointProperties
+- getEditorsProvider(com.intellij.xdebugger.breakpoints.XLineBreakpoint,com.intellij.openapi.project.Project):com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+a:com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
+- com.intellij.openapi.Disposable
+- <init>():V
+- dispose():V
+- a:getComponent():javax.swing.JComponent
+- isVisibleOnPopup(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
+- a:loadFrom(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+- a:saveTo(com.intellij.xdebugger.breakpoints.XBreakpoint):V
+a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
+- java.lang.Comparable
+- <init>():V
+- compareTo(com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup):I
+- equals(java.lang.Object):Z
+- expandedByDefault():Z
+- getIcon(Z):javax.swing.Icon
+- a:getName():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
+- sf:EP:com.intellij.openapi.extensions.ExtensionPointName
+- sf:PRIORITY_COMPARATOR:java.util.Comparator
+- p:<init>(java.lang.String,java.lang.String):V
+- a:getGroup(java.lang.Object,java.util.Collection):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
+- getIcon():javax.swing.Icon
+- getId():java.lang.String
+- getPresentableName():java.lang.String
+- getPriority():I
+- isAlwaysEnabled():Z
+f:com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
+- sf:BY_CLASS:I
+- sf:BY_FILE:I
+- sf:BY_PACKAGE:I
+- sf:BY_TYPE:I
+- sf:DEFAULT:I
+- <init>():V
+e:com.intellij.xdebugger.evaluation.EvaluationMode
+- java.lang.Enum
+- sf:CODE_FRAGMENT:com.intellij.xdebugger.evaluation.EvaluationMode
+- sf:EXPRESSION:com.intellij.xdebugger.evaluation.EvaluationMode
+- s:valueOf(java.lang.String):com.intellij.xdebugger.evaluation.EvaluationMode
+- s:values():com.intellij.xdebugger.evaluation.EvaluationMode[]
+c:com.intellij.xdebugger.evaluation.ExpressionInfo
+- <init>(com.intellij.openapi.util.TextRange):V
+- <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
+- <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String):V
+- <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement):V
+- getDisplayText():java.lang.String
+- getElement():com.intellij.psi.PsiElement
+- getExpressionText():java.lang.String
+- getTextRange():com.intellij.openapi.util.TextRange
+a:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
+- sf:DEFAULT:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
+- <init>():V
+- a:shouldEvaluateChildrenByDefault(com.intellij.xdebugger.XNamedTreeNode):Z
+a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- <init>():V
+- afterEditorCreated(com.intellij.openapi.editor.Editor):V
+- createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
+- createDocument(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
+- createExpression(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,com.intellij.lang.Language,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.xdebugger.XExpression
+- a:getFileType():com.intellij.openapi.fileTypes.FileType
+- getInlineDebuggerHelper():com.intellij.xdebugger.evaluation.InlineDebuggerHelper
+- getSupportedLanguages(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition):java.util.Collection
+- *:isEvaluateExpressionFieldEnabled():Z
+a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase
+- com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- <init>():V
+- createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.psi.PsiElement,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
+- createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
+- p:createExpressionCodeFragment(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiFile
+- pa:createExpressionCodeFragment(com.intellij.openapi.project.Project,java.lang.String,com.intellij.psi.PsiElement,Z):com.intellij.psi.PsiFile
+- p:getContextElement(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):com.intellij.psi.PsiElement
+- getSupportedLanguages(com.intellij.psi.PsiElement):java.util.Collection
+a:com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+- <init>():V
+- evaluate(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback,com.intellij.xdebugger.XSourcePosition):V
+- a:evaluate(java.lang.String,com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback,com.intellij.xdebugger.XSourcePosition):V
+- formatTextForEvaluation(java.lang.String):java.lang.String
+- getEvaluationMode(java.lang.String,I,I,com.intellij.psi.PsiFile):com.intellij.xdebugger.evaluation.EvaluationMode
+- getExpressionInfoAtOffset(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I,Z):com.intellij.xdebugger.evaluation.ExpressionInfo
+- getExpressionInfoAtOffsetAsync(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I,Z):org.jetbrains.concurrency.Promise
+- getExpressionRangeAtOffset(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document,I,Z):com.intellij.openapi.util.TextRange
+- isCodeFragmentEvaluationSupported():Z
+com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback
+- com.intellij.xdebugger.frame.XValueCallback
+- a:evaluated(com.intellij.xdebugger.frame.XValue):V
+com.intellij.xdebugger.evaluation.XInstanceEvaluator
+- a:evaluate(com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback,com.intellij.xdebugger.frame.XStackFrame):V
+c:com.intellij.xdebugger.frame.ImmediateFullValueEvaluator
+- com.intellij.xdebugger.frame.XFullValueEvaluator
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.String):V
+- startEvaluation(com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback):V
+com.intellij.xdebugger.frame.XCompositeNode
+- com.intellij.xdebugger.Obsolescent
+- sf:MAX_CHILDREN_TO_SHOW:I
+- a:addChildren(com.intellij.xdebugger.frame.XValueChildrenList,Z):V
+- a:setAlreadySorted(Z):V
+- a:setErrorMessage(java.lang.String):V
+- a:setErrorMessage(java.lang.String,com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink):V
+- a:setMessage(java.lang.String,javax.swing.Icon,com.intellij.ui.SimpleTextAttributes,com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink):V
+- a:tooManyChildren(I):V
+- tooManyChildren(I,java.lang.Runnable):V
+a:com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
+- sf:TEXT_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
+- p:<init>(java.lang.String):V
+- p:<init>(java.lang.String,com.intellij.xdebugger.frame.XFullValueEvaluator$LinkAttributes):V
+- alwaysOnScreen():Z
+- getLinkIcon():javax.swing.Icon
+- getLinkText():java.lang.String
+- getLinkTooltip():java.lang.String
+- getShortcutSupplier():java.util.function.Supplier
+- getTextAttributes():com.intellij.ui.SimpleTextAttributes
+- a:onClick(java.awt.event.MouseEvent):V
+*:com.intellij.xdebugger.frame.XDropFrameHandler
+- a:canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
+- a:drop(com.intellij.xdebugger.frame.XStackFrame):V
+a:com.intellij.xdebugger.frame.XExecutionStack
+- sf:EMPTY_ARRAY:com.intellij.xdebugger.frame.XExecutionStack[]
+- p:<init>(java.lang.String):V
+- p:<init>(java.lang.String,javax.swing.Icon):V
+- a:computeStackFrames(I,com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer):V
+- f:getDisplayName():java.lang.String
+- getExecutionLineIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
+- f:getIcon():javax.swing.Icon
+- a:getTopFrame():com.intellij.xdebugger.frame.XStackFrame
+com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
+- com.intellij.xdebugger.Obsolescent
+- com.intellij.xdebugger.frame.XValueCallback
+- a:addStackFrames(java.util.List,Z):V
+a:com.intellij.xdebugger.frame.XFullValueEvaluator
+- p:<init>():V
+- p:<init>(I):V
+- p:<init>(java.lang.String):V
+- p:<init>(java.lang.String,com.intellij.xdebugger.frame.XFullValueEvaluator$LinkAttributes):V
+- getLinkAttributes():com.intellij.xdebugger.frame.XFullValueEvaluator$LinkAttributes
+- getLinkText():java.lang.String
+- isEnabled():Z
+- isShowValuePopup():Z
+- setIsEnabled(Z):com.intellij.xdebugger.frame.XFullValueEvaluator
+- setShowValuePopup(Z):com.intellij.xdebugger.frame.XFullValueEvaluator
+- a:startEvaluation(com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback):V
+c:com.intellij.xdebugger.frame.XFullValueEvaluator$LinkAttributes
+- <init>(java.lang.String,java.util.function.Supplier,javax.swing.Icon):V
+- getLinkIcon():javax.swing.Icon
+- getLinkTooltipText():java.lang.String
+- getShortcutSupplier():java.util.function.Supplier
+com.intellij.xdebugger.frame.XFullValueEvaluator$XFullValueEvaluationCallback
+- com.intellij.xdebugger.Obsolescent
+- com.intellij.xdebugger.frame.XValueCallback
+- a:evaluated(java.lang.String):V
+- a:evaluated(java.lang.String,java.awt.Font):V
+a:com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
+- <init>():V
+- a:computed(com.intellij.xdebugger.XSourcePosition):V
+a:com.intellij.xdebugger.frame.XNamedValue
+- com.intellij.xdebugger.frame.XValue
+- pf:myName:java.lang.String
+- p:<init>(java.lang.String):V
+- f:getName():java.lang.String
+- toString():java.lang.String
+com.intellij.xdebugger.frame.XNavigatable
+- a:setSourcePosition(com.intellij.xdebugger.XSourcePosition):V
+a:com.intellij.xdebugger.frame.XReferrersProvider
+- <init>():V
+- a:getReferringObjectsValue():com.intellij.xdebugger.frame.XValue
+a:com.intellij.xdebugger.frame.XStackFrame
+- com.intellij.xdebugger.frame.XValueContainer
+- <init>():V
+- customizePresentation(com.intellij.ui.ColoredTextContainer):V
+- getEqualityObject():java.lang.Object
+- getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+- getSourcePosition():com.intellij.xdebugger.XSourcePosition
+*:com.intellij.xdebugger.frame.XStringValueModifier
+- a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
+a:com.intellij.xdebugger.frame.XSuspendContext
+- <init>():V
+- computeExecutionStacks(com.intellij.xdebugger.frame.XSuspendContext$XExecutionStackContainer):V
+- getActiveExecutionStack():com.intellij.xdebugger.frame.XExecutionStack
+- getExecutionStacks():com.intellij.xdebugger.frame.XExecutionStack[]
+com.intellij.xdebugger.frame.XSuspendContext$XExecutionStackContainer
+- com.intellij.xdebugger.Obsolescent
+- com.intellij.xdebugger.frame.XValueCallback
+- a:addExecutionStack(java.util.List,Z):V
+a:com.intellij.xdebugger.frame.XValue
+- com.intellij.xdebugger.frame.XValueContainer
+- <init>():V
+- calculateEvaluationExpression():org.jetbrains.concurrency.Promise
+- canNavigateToSource():Z
+- canNavigateToTypeSource():Z
+- canNavigateToTypeSourceAsync():org.jetbrains.concurrency.Promise
+- computeInlineDebuggerData(com.intellij.xdebugger.frame.XInlineDebuggerDataCallback):com.intellij.util.ThreeState
+- a:computePresentation(com.intellij.xdebugger.frame.XValueNode,com.intellij.xdebugger.frame.XValuePlace):V
+- computeSourcePosition(com.intellij.xdebugger.frame.XNavigatable):V
+- computeTypeSourcePosition(com.intellij.xdebugger.frame.XNavigatable):V
+- getEvaluationExpression():java.lang.String
+- getInstanceEvaluator():com.intellij.xdebugger.evaluation.XInstanceEvaluator
+- getModifier():com.intellij.xdebugger.frame.XValueModifier
+- getReferrersProvider():com.intellij.xdebugger.frame.XReferrersProvider
+com.intellij.xdebugger.frame.XValueCallback
+- a:errorOccurred(java.lang.String):V
+c:com.intellij.xdebugger.frame.XValueChildrenList
+- sf:EMPTY:com.intellij.xdebugger.frame.XValueChildrenList
+- <init>():V
+- <init>(I):V
+- add(I,com.intellij.xdebugger.frame.XNamedValue):V
+- add(com.intellij.xdebugger.frame.XNamedValue):V
+- add(java.lang.String,com.intellij.xdebugger.frame.XValue):V
+- addBottomGroup(com.intellij.xdebugger.frame.XValueGroup):V
+- addTopGroup(com.intellij.xdebugger.frame.XValueGroup):V
+- s:bottomGroup(com.intellij.xdebugger.frame.XValueGroup):com.intellij.xdebugger.frame.XValueChildrenList
+- getBottomGroups():java.util.List
+- getName(I):java.lang.String
+- getTopGroups():java.util.List
+- getValue(I):com.intellij.xdebugger.frame.XValue
+- s:singleton(com.intellij.xdebugger.frame.XNamedValue):com.intellij.xdebugger.frame.XValueChildrenList
+- s:singleton(java.lang.String,com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.frame.XValueChildrenList
+- size():I
+- s:topGroups(java.util.List):com.intellij.xdebugger.frame.XValueChildrenList
+a:com.intellij.xdebugger.frame.XValueContainer
+- <init>():V
+- computeChildren(com.intellij.xdebugger.frame.XCompositeNode):V
+a:com.intellij.xdebugger.frame.XValueGroup
+- com.intellij.xdebugger.frame.XValueContainer
+- p:<init>(java.lang.String):V
+- getComment():java.lang.String
+- getIcon():javax.swing.Icon
+- getName():java.lang.String
+- getSeparator():java.lang.String
+- isAutoExpand():Z
+- isRestoreExpansion():Z
+a:com.intellij.xdebugger.frame.XValueMarkerProvider
+- p:<init>(java.lang.Class):V
+- a:canMark(com.intellij.xdebugger.frame.XValue):Z
+- a:getMarker(com.intellij.xdebugger.frame.XValue):java.lang.Object
+- f:getValueClass():java.lang.Class
+- markValue(com.intellij.xdebugger.frame.XValue):java.lang.Object
+- markValueAsync(com.intellij.xdebugger.frame.XValue):org.jetbrains.concurrency.Promise
+- unmarkValue(com.intellij.xdebugger.frame.XValue,java.lang.Object):V
+- unmarkValueAsync(com.intellij.xdebugger.frame.XValue,java.lang.Object):org.jetbrains.concurrency.Promise
+a:com.intellij.xdebugger.frame.XValueModifier
+- <init>():V
+- calculateInitialValueEditorText(com.intellij.xdebugger.frame.XValueModifier$XInitialValueCallback):V
+- getInitialValueEditorText():java.lang.String
+- setValue(com.intellij.xdebugger.XExpression,com.intellij.xdebugger.frame.XValueModifier$XModificationCallback):V
+- setValue(java.lang.String,com.intellij.xdebugger.frame.XValueModifier$XModificationCallback):V
+com.intellij.xdebugger.frame.XValueModifier$XInitialValueCallback
+- a:setValue(java.lang.String):V
+com.intellij.xdebugger.frame.XValueModifier$XModificationCallback
+- com.intellij.xdebugger.frame.XValueCallback
+- a:valueModified():V
+com.intellij.xdebugger.frame.XValueNode
+- com.intellij.xdebugger.Obsolescent
+- sf:MAX_VALUE_LENGTH:I
+- a:setFullValueEvaluator(com.intellij.xdebugger.frame.XFullValueEvaluator):V
+- a:setPresentation(javax.swing.Icon,com.intellij.xdebugger.frame.presentation.XValuePresentation,Z):V
+- a:setPresentation(javax.swing.Icon,java.lang.String,java.lang.String,Z):V
+e:com.intellij.xdebugger.frame.XValuePlace
+- java.lang.Enum
+- sf:TOOLTIP:com.intellij.xdebugger.frame.XValuePlace
+- sf:TREE:com.intellij.xdebugger.frame.XValuePlace
+- s:valueOf(java.lang.String):com.intellij.xdebugger.frame.XValuePlace
+- s:values():com.intellij.xdebugger.frame.XValuePlace[]
+c:com.intellij.xdebugger.frame.presentation.XErrorValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(java.lang.String):V
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+c:com.intellij.xdebugger.frame.presentation.XKeywordValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(java.lang.String):V
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+c:com.intellij.xdebugger.frame.presentation.XNumericValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(java.lang.String):V
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+c:com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- getSeparator():java.lang.String
+- getType():java.lang.String
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+c:com.intellij.xdebugger.frame.presentation.XStringValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(java.lang.String):V
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+a:com.intellij.xdebugger.frame.presentation.XValuePresentation
+- psf:DEFAULT_SEPARATOR:java.lang.String
+- <init>():V
+- getSeparator():java.lang.String
+- getType():java.lang.String
+- isShowName():Z
+- a:renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
+- a:renderComment(java.lang.String):V
+- a:renderError(java.lang.String):V
+- a:renderKeywordValue(java.lang.String):V
+- a:renderNumericValue(java.lang.String):V
+- a:renderSpecialSymbol(java.lang.String):V
+- a:renderStringValue(java.lang.String):V
+- a:renderStringValue(java.lang.String,java.lang.String,I):V
+- a:renderValue(java.lang.String):V
+- a:renderValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
+a:com.intellij.xdebugger.settings.DebuggerConfigurableProvider
+- sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- generalApplied(com.intellij.xdebugger.settings.DebuggerSettingsCategory):V
+- getConfigurables(com.intellij.xdebugger.settings.DebuggerSettingsCategory):java.util.Collection
+- isTargetedToProduct(com.intellij.openapi.options.Configurable):Z
+e:com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- java.lang.Enum
+- sf:DATA_VIEWS:com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- sf:GENERAL:com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- sf:HOTSWAP:com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- sf:ROOT:com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- sf:STEPPING:com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- s:valueOf(java.lang.String):com.intellij.xdebugger.settings.DebuggerSettingsCategory
+- s:values():com.intellij.xdebugger.settings.DebuggerSettingsCategory[]
+a:com.intellij.xdebugger.settings.XDebuggerSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- p:<init>(java.lang.String):V
+- createConfigurable():com.intellij.openapi.options.Configurable
+- createConfigurables(com.intellij.xdebugger.settings.DebuggerSettingsCategory):java.util.Collection
+- generalApplied(com.intellij.xdebugger.settings.DebuggerSettingsCategory):V
+- f:getId():java.lang.String
+- ps:getInstance(java.lang.Class):com.intellij.xdebugger.settings.XDebuggerSettings
+- isTargetedToProduct(com.intellij.openapi.options.Configurable):Z
+a:com.intellij.xdebugger.settings.XDebuggerSettingsManager
+- com.intellij.openapi.Disposable
+- <init>():V
+- a:getDataViewSettings():com.intellij.xdebugger.settings.XDebuggerSettingsManager$DataViewSettings
+- s:getInstance():com.intellij.xdebugger.settings.XDebuggerSettingsManager
+com.intellij.xdebugger.settings.XDebuggerSettingsManager$DataViewSettings
+- a:getValueLookupDelay():I
+- a:isAutoExpressions():Z
+- a:isShowLibraryStackFrames():Z
+- a:isShowValuesInline():Z
+- a:isSortValues():Z
+c:com.intellij.xdebugger.stepping.PsiBackedSmartStepIntoVariant
+- com.intellij.xdebugger.stepping.XSmartStepIntoVariant
+- <init>(com.intellij.psi.PsiNamedElement):V
+- getElement():com.intellij.psi.PsiNamedElement
+- getIcon():javax.swing.Icon
+- getText():java.lang.String
+a:com.intellij.xdebugger.stepping.XSmartStepIntoHandler
+- <init>():V
+- a:computeSmartStepVariants(com.intellij.xdebugger.XSourcePosition):java.util.List
+- computeSmartStepVariantsAsync(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
+- computeStepIntoVariants(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
+- a:getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
+- startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant):V
+- startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant,com.intellij.xdebugger.frame.XSuspendContext):V
+- stepIntoEmpty(com.intellij.xdebugger.XDebugSession):V
+a:com.intellij.xdebugger.stepping.XSmartStepIntoVariant
+- <init>():V
+- getDescription():java.lang.String
+- getHighlightRange():com.intellij.openapi.util.TextRange
+- getIcon():javax.swing.Icon
+- a:getText():java.lang.String
+com.intellij.xdebugger.ui.DebuggerColors
+- sf:BREAKPOINT_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:BREAKPOINT_HIGHLIGHTER_KEY:com.intellij.openapi.util.Key
+- sf:BREAKPOINT_HIGHLIGHTER_LAYER:I
+- sf:EVALUATED_EXPRESSION_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:EXECUTIONPOINT_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:EXECUTION_LINE_HIGHLIGHTERLAYER:I
+- sf:INLINED_VALUES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINED_VALUES_EXECUTION_LINE:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINED_VALUES_MODIFIED:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:INLINE_STACK_FRAMES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:NOT_TOP_FRAME_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:SMART_STEP_INTO_SELECTION:com.intellij.openapi.editor.colors.TextAttributesKey
+- sf:SMART_STEP_INTO_TARGET:com.intellij.openapi.editor.colors.TextAttributesKey
+c:com.intellij.xdebugger.ui.XDebugTabLayouter
+- <init>():V
+- registerAdditionalContent(com.intellij.execution.ui.RunnerLayoutUi):V
+- registerConsoleContent(com.intellij.execution.ui.RunnerLayoutUi,com.intellij.execution.ui.ExecutionConsole):com.intellij.ui.content.Content

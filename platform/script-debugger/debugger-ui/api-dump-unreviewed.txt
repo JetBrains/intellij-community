@@ -1,0 +1,384 @@
+com.intellij.javascript.debugger.ExpressionInfoFactory
+- a:create(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document):org.jetbrains.concurrency.Promise
+- a:createNameMapper(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.javascript.debugger.NameMapper
+c:com.intellij.javascript.debugger.NameMapper
+- sf:Companion:com.intellij.javascript.debugger.NameMapper$Companion
+- <init>(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Document,org.jetbrains.debugger.sourcemap.Mappings,org.jetbrains.debugger.sourcemap.SourceMap,com.intellij.openapi.vfs.VirtualFile):V
+- b:<init>(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Document,org.jetbrains.debugger.sourcemap.Mappings,org.jetbrains.debugger.sourcemap.SourceMap,com.intellij.openapi.vfs.VirtualFile,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:addMapping(java.lang.String,java.lang.String):V
+- pf:doMap(com.intellij.psi.PsiElement,Z,Z):java.lang.String
+- bs:doMap$default(com.intellij.javascript.debugger.NameMapper,com.intellij.psi.PsiElement,Z,Z,I,java.lang.Object):java.lang.String
+- p:extractName(java.lang.CharSequence,com.intellij.psi.PsiElement):java.lang.String
+- bs:extractName$default(com.intellij.javascript.debugger.NameMapper,java.lang.CharSequence,com.intellij.psi.PsiElement,I,java.lang.Object):java.lang.String
+- p:getGeneratedName(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,org.jetbrains.debugger.sourcemap.SourceMap,java.util.List):java.lang.CharSequence
+- p:getMappingsForElement(com.intellij.psi.PsiElement):java.util.List
+- f:getRawNameToSource():java.util.Map
+- pf:getSourceMap():org.jetbrains.debugger.sourcemap.SourceMap
+- f:map(com.intellij.psi.PsiElement):java.lang.String
+- map(com.intellij.psi.PsiElement,Z):java.lang.String
+- bs:map$default(com.intellij.javascript.debugger.NameMapper,com.intellij.psi.PsiElement,Z,I,java.lang.Object):java.lang.String
+f:com.intellij.javascript.debugger.NameMapper$Companion
+- f:trimName(java.lang.CharSequence,Z):java.lang.String
+f:com.intellij.javascript.debugger.NameMapperKt
+- sf:getNAME_TRIMMER():com.google.common.base.CharMatcher
+- sf:warnSeveralMapping(com.intellij.psi.PsiElement):V
+c:com.intellij.javascript.debugger.execution.DebuggableProgramRunner
+- com.intellij.execution.runners.AsyncProgramRunner
+- <init>():V
+- canRun(java.lang.String,com.intellij.execution.configurations.RunProfile):Z
+- p:execute(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
+- getRunnerId():java.lang.String
+f:com.intellij.javascript.debugger.execution.DebuggableProgramRunnerKt
+- sf:doExecuteDebuggableProgram(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
+- sf:startSession(com.intellij.execution.runners.ExecutionEnvironment,kotlin.jvm.functions.Function1):com.intellij.xdebugger.XDebugSession
+- sf:xDebugProcessStarter(kotlin.jvm.functions.Function1):com.intellij.xdebugger.XDebugProcessStarter
+a:com.jetbrains.javascript.debugger.FileUrlMapper
+- sf:Companion:com.jetbrains.javascript.debugger.FileUrlMapper$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- createSourceResolver(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):org.jetbrains.debugger.sourcemap.SourceFileResolver
+- a:getFile(com.intellij.util.Url,com.intellij.openapi.project.Project,com.intellij.util.Url):com.intellij.openapi.vfs.VirtualFile
+- getFileType(com.intellij.util.Url):com.intellij.openapi.fileTypes.FileType
+- getNavigatable(com.intellij.util.Url,com.intellij.openapi.project.Project,com.intellij.util.Url):com.intellij.pom.Navigatable
+- getUrls(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String):java.util.List
+f:com.jetbrains.javascript.debugger.FileUrlMapper$Companion
+a:com.jetbrains.javascript.debugger.JavaScriptDebugAware
+- sf:Companion:com.jetbrains.javascript.debugger.JavaScriptDebugAware$Companion
+- <init>():V
+- canGetEvaluationInfo(com.intellij.psi.PsiFile):Z
+- createMemberFilter(com.intellij.javascript.debugger.NameMapper,com.intellij.psi.PsiElement,I):org.jetbrains.debugger.MemberFilter
+- getBreakpointTypeClass():java.lang.Class
+- getEvaluationInfo(com.intellij.psi.PsiElement,com.intellij.openapi.editor.Document,com.intellij.javascript.debugger.ExpressionInfoFactory):org.jetbrains.concurrency.Promise
+- p:getFileType():com.intellij.openapi.fileTypes.LanguageFileType
+- getNavigationElementForSourcemapInspector(com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
+- sf:isBreakpointAware(com.intellij.openapi.fileTypes.FileType):Z
+- isOnlySourceMappedBreakpoints():Z
+- normalizeMemberName(java.lang.String):java.lang.String
+f:com.jetbrains.javascript.debugger.JavaScriptDebugAware$Companion
+- f:getBreakpointAware(com.intellij.openapi.fileTypes.FileType):com.jetbrains.javascript.debugger.JavaScriptDebugAware
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:isBreakpointAware(com.intellij.openapi.fileTypes.FileType):Z
+c:org.jetbrains.debugger.BasicDebuggerViewSupport
+- org.jetbrains.debugger.DebuggerViewSupport
+- org.jetbrains.debugger.MemberFilter
+- <init>():V
+- computeArrayPresentation(org.jetbrains.debugger.values.Value,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XValueNode,javax.swing.Icon):V
+- computeObjectPresentation(org.jetbrains.debugger.values.ObjectValue,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XValueNode,javax.swing.Icon):V
+- computeReceiverVariable(org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.CallFrame,com.intellij.xdebugger.frame.XCompositeNode):org.jetbrains.concurrency.Promise
+- pf:getDefaultMemberFilterPromise():org.jetbrains.concurrency.Promise
+- getMemberFilter(org.jetbrains.debugger.VariableContext):org.jetbrains.concurrency.Promise
+- propertyNamesToString(java.util.List,Z):java.lang.String
+f:org.jetbrains.debugger.CustomPropertiesValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(org.jetbrains.debugger.values.ObjectValue,java.util.List):V
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+org.jetbrains.debugger.DebuggableRunConfiguration
+- com.intellij.execution.configurations.RunConfiguration
+- canRun(java.lang.String,com.intellij.execution.configurations.RunProfile):Z
+- computeDebugAddress(com.intellij.execution.configurations.RunProfileState):java.net.InetSocketAddress
+- computeDebugAddressAsync(com.intellij.execution.configurations.RunProfileState):org.jetbrains.concurrency.Promise
+- a:createDebugProcess(java.net.InetSocketAddress,com.intellij.xdebugger.XDebugSession,com.intellij.execution.ExecutionResult,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.xdebugger.XDebugProcess
+f:org.jetbrains.debugger.DebuggerSupportUtils
+- <init>():V
+- s:calcSourcePosition(com.intellij.psi.PsiElement):com.intellij.xdebugger.XSourcePosition
+org.jetbrains.debugger.DebuggerViewSupport
+- canNavigateToSource(org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext):Z
+- computeAdditionalObjectProperties(org.jetbrains.debugger.values.ObjectValue,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XCompositeNode):org.jetbrains.concurrency.Promise
+- a:computeArrayPresentation(org.jetbrains.debugger.values.Value,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XValueNode,javax.swing.Icon):V
+- computeInlineDebuggerData(java.lang.String,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XInlineDebuggerDataCallback):com.intellij.util.ThreeState
+- a:computeObjectPresentation(org.jetbrains.debugger.values.ObjectValue,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XValueNode,javax.swing.Icon):V
+- a:computeReceiverVariable(org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.CallFrame,com.intellij.xdebugger.frame.XCompositeNode):org.jetbrains.concurrency.Promise
+- computeSourcePosition(java.lang.String,org.jetbrains.debugger.values.Value,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext,com.intellij.xdebugger.frame.XNavigatable):V
+- createFrameEvaluator(org.jetbrains.debugger.frame.CallFrameView):com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+- a:getMemberFilter(org.jetbrains.debugger.VariableContext):org.jetbrains.concurrency.Promise
+- getSourceInfo(java.lang.String,java.lang.String,I,I):org.jetbrains.debugger.SourceInfo
+- getSourceInfo(java.lang.String,org.jetbrains.debugger.Script,I,I):org.jetbrains.debugger.SourceInfo
+- getSourceInfo(org.jetbrains.debugger.Script,org.jetbrains.debugger.CallFrame):org.jetbrains.debugger.SourceInfo
+- getVm():org.jetbrains.debugger.Vm
+- isInLibraryContent(org.jetbrains.debugger.SourceInfo,org.jetbrains.debugger.Script):Z
+- a:propertyNamesToString(java.util.List,Z):java.lang.String
+- transformErrorOnGetUsedReferenceValue(org.jetbrains.debugger.values.Value,java.lang.String):org.jetbrains.debugger.values.Value
+f:org.jetbrains.debugger.ExecutionStackView
+- org.jetbrains.debugger.ScriptExecutionStack
+- <init>(org.jetbrains.debugger.SuspendContext,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo,java.lang.String,Z):V
+- b:<init>(org.jetbrains.debugger.SuspendContext,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo,java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- computeStackFrames(I,com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer):V
+- f:copyWithIsCurrent(Z):org.jetbrains.debugger.ExecutionStackView
+- f:getSuspendContext():org.jetbrains.debugger.SuspendContext
+- getTopFrame():org.jetbrains.debugger.frame.CallFrameView
+f:org.jetbrains.debugger.InactiveAtBreakpointExecutionStackView
+- org.jetbrains.debugger.ScriptExecutionStack
+- <init>(org.jetbrains.debugger.Vm):V
+- computeStackFrames(I,com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer):V
+- getTopFrame():com.intellij.xdebugger.frame.XStackFrame
+f:org.jetbrains.debugger.LazyVariablesGroup
+- com.intellij.xdebugger.frame.XValueGroup
+- <init>(org.jetbrains.debugger.values.ObjectValue,I,I,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.values.ValueType,Z):V
+- b:<init>(org.jetbrains.debugger.values.ObjectValue,I,I,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.values.ValueType,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- computeChildren(com.intellij.xdebugger.frame.XCompositeNode):V
+f:org.jetbrains.debugger.LazyVariablesGroupKt
+- sf:addRanges(org.jetbrains.debugger.values.ObjectValue,I[],com.intellij.xdebugger.frame.XCompositeNode,org.jetbrains.debugger.VariableContext,Z):V
+- sf:computeNotSparseGroups(org.jetbrains.debugger.values.ObjectValue,org.jetbrains.debugger.VariableContext,I,I,I):java.util.List
+f:org.jetbrains.debugger.Location
+- <init>(com.intellij.util.Url,I):V
+- <init>(com.intellij.util.Url,I,I):V
+- <init>(org.jetbrains.debugger.Script,I,I):V
+- equals(java.lang.Object):Z
+- getColumn():I
+- getLine():I
+- getScript():org.jetbrains.debugger.Script
+- getUrl():com.intellij.util.Url
+- hashCode():I
+- withoutColumn():org.jetbrains.debugger.Location
+org.jetbrains.debugger.MemberFilter
+- getAdditionalVariables():java.util.Collection
+- hasNameMappings():Z
+- isMemberVisible(org.jetbrains.debugger.Variable):Z
+- rawNameToSource(org.jetbrains.debugger.Variable):java.lang.String
+- sourceNameToRaw(java.lang.String):java.lang.String
+c:org.jetbrains.debugger.MemberFilterWithNameMappings
+- org.jetbrains.debugger.MemberFilter
+- <init>():V
+- <init>(java.util.Map):V
+- b:<init>(java.util.Map,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- hasNameMappings():Z
+- p:normalizeMemberName(java.lang.String):java.lang.String
+- rawNameToSource(org.jetbrains.debugger.Variable):java.lang.String
+- sourceNameToRaw(java.lang.String):java.lang.String
+org.jetbrains.debugger.MultiVmDebugProcess
+- a:getActiveOrMainVm():org.jetbrains.debugger.Vm
+- a:getCollectVMs():java.util.List
+- a:getMainVm():org.jetbrains.debugger.Vm
+c:org.jetbrains.debugger.ObjectValuePresentation
+- com.intellij.xdebugger.frame.presentation.XValuePresentation
+- <init>(java.lang.String):V
+- renderValue(com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer):V
+org.jetbrains.debugger.PresentationProvider
+- a:computePresentation(com.intellij.xdebugger.frame.XValueNode,javax.swing.Icon):Z
+f:org.jetbrains.debugger.ProcessHandlerWrapper
+- com.intellij.execution.process.ProcessHandler
+- com.intellij.execution.KillableProcess
+- <init>(com.intellij.xdebugger.XDebugProcess,com.intellij.execution.process.ProcessHandler):V
+- addProcessListener(com.intellij.execution.process.ProcessListener):V
+- addProcessListener(com.intellij.execution.process.ProcessListener,com.intellij.openapi.Disposable):V
+- canKillProcess():Z
+- detachIsDefault():Z
+- getProcessInput():java.io.OutputStream
+- isSilentlyDestroyOnClose():Z
+- killProcess():V
+- removeProcessListener(com.intellij.execution.process.ProcessListener):V
+- startNotify():V
+c:org.jetbrains.debugger.PromiseDebuggerEvaluator
+- com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+- <init>(org.jetbrains.debugger.VariableContext):V
+- p:evaluate(java.lang.String,com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
+- f:evaluate(java.lang.String,com.intellij.xdebugger.evaluation.XDebuggerEvaluator$XEvaluationCallback,com.intellij.xdebugger.XSourcePosition):V
+- pf:getContext():org.jetbrains.debugger.VariableContext
+f:org.jetbrains.debugger.PsiVisitors
+- <init>():V
+- s:visit(com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.project.Project,java.lang.Object,org.jetbrains.debugger.PsiVisitors$Visitor):java.lang.Object
+a:org.jetbrains.debugger.PsiVisitors$FilteringPsiRecursiveElementWalkingVisitor
+- com.intellij.psi.PsiRecursiveElementWalkingVisitor
+- <init>():V
+- visitComment(com.intellij.psi.PsiComment):V
+- visitElement(com.intellij.psi.PsiElement):V
+- visitOuterLanguageElement(com.intellij.psi.templateLanguages.OuterLanguageElement):V
+- visitWhiteSpace(com.intellij.psi.PsiWhiteSpace):V
+org.jetbrains.debugger.PsiVisitors$Visitor
+- a:visit(com.intellij.xdebugger.XSourcePosition,com.intellij.psi.PsiElement,I,com.intellij.openapi.editor.Document):java.lang.Object
+f:org.jetbrains.debugger.RejectErrorReporter
+- java.util.function.Consumer
+- <init>(com.intellij.xdebugger.XDebugSession):V
+- <init>(com.intellij.xdebugger.XDebugSession,java.lang.String):V
+- b:<init>(com.intellij.xdebugger.XDebugSession,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- accept(java.lang.Throwable):V
+a:org.jetbrains.debugger.RemoteDebugConfiguration
+- com.intellij.execution.configurations.LocatableConfigurationBase
+- com.intellij.execution.runners.RunConfigurationWithSuppressedDefaultRunAction
+- org.jetbrains.debugger.DebuggableRunConfiguration
+- <init>(com.intellij.openapi.project.Project,com.intellij.execution.configurations.ConfigurationFactory,java.lang.String,I):V
+- clone():com.intellij.execution.configurations.RunConfiguration
+- computeDebugAddress(com.intellij.execution.configurations.RunProfileState):java.net.InetSocketAddress
+- getConfigurationEditor():com.intellij.openapi.options.SettingsEditor
+- getHost():java.lang.String
+- getPort():I
+- getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
+- readExternal(org.jdom.Element):V
+- setHost(java.lang.String):V
+- setPort(I):V
+- writeExternal(org.jdom.Element):V
+f:org.jetbrains.debugger.RunningThreadExecutionStackView
+- org.jetbrains.debugger.ScriptExecutionStack
+- <init>(org.jetbrains.debugger.Vm):V
+- computeStackFrames(I,com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer):V
+- getTopFrame():com.intellij.xdebugger.frame.XStackFrame
+f:org.jetbrains.debugger.ScopeVariablesGroup
+- com.intellij.xdebugger.frame.XValueGroup
+- <init>(org.jetbrains.debugger.Scope,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.CallFrame,java.lang.Boolean):V
+- b:<init>(org.jetbrains.debugger.Scope,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.CallFrame,java.lang.Boolean,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- computeChildren(com.intellij.xdebugger.frame.XCompositeNode):V
+- getComment():java.lang.String
+- f:getScope():org.jetbrains.debugger.Scope
+- isAutoExpand():Z
+f:org.jetbrains.debugger.ScopeVariablesGroupKt
+- sf:createAndAddScopeList(com.intellij.xdebugger.frame.XCompositeNode,java.util.List,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.CallFrame):V
+- sf:createVariableContext(org.jetbrains.debugger.Scope,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.CallFrame):org.jetbrains.debugger.VariableContext
+a:org.jetbrains.debugger.ScriptExecutionStack
+- com.intellij.xdebugger.frame.XExecutionStack
+- <init>(org.jetbrains.debugger.Vm,java.lang.String,javax.swing.Icon):V
+- equals(java.lang.Object):Z
+- f:getVm():org.jetbrains.debugger.Vm
+- hashCode():I
+f:org.jetbrains.debugger.SourceInfo
+- com.intellij.xdebugger.XSourcePosition
+- <init>(com.intellij.openapi.vfs.VirtualFile,I):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url):V
+- b:<init>(com.intellij.openapi.vfs.VirtualFile,I,I,I,java.lang.String,com.intellij.util.Url,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- createNavigatable(com.intellij.openapi.project.Project):com.intellij.openapi.fileEditor.OpenFileDescriptor
+- f:getColumn():I
+- getFile():com.intellij.openapi.vfs.VirtualFile
+- f:getFunctionName():java.lang.String
+- getLine():I
+- getOffset():I
+- f:getUrl():com.intellij.util.Url
+- toString():java.lang.String
+a:org.jetbrains.debugger.SuspendContextView
+- com.intellij.xdebugger.frame.XSuspendContext
+- <init>(org.jetbrains.debugger.MultiVmDebugProcess,org.jetbrains.debugger.ExecutionStackView,org.jetbrains.debugger.Vm):V
+- f:evaluateExpression(java.lang.String):org.jetbrains.concurrency.Promise
+- getActiveExecutionStack():org.jetbrains.debugger.ScriptExecutionStack
+- f:getActiveVm():org.jetbrains.debugger.Vm
+- pf:getDebugProcess():org.jetbrains.debugger.MultiVmDebugProcess
+- getExecutionStacks():com.intellij.xdebugger.frame.XExecutionStack[]
+- f:hasPausedThreads():Z
+- f:pauseInactiveThread(org.jetbrains.debugger.ExecutionStackView):V
+- f:resume(org.jetbrains.debugger.Vm):V
+- f:resumeCurrentThread():V
+- f:setActiveThread(com.intellij.xdebugger.frame.XStackFrame):Z
+- f:setActiveVm(org.jetbrains.debugger.Vm):V
+f:org.jetbrains.debugger.SuspendContextViewKt
+org.jetbrains.debugger.VariableContext
+- a:getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- getMemberFilter():org.jetbrains.concurrency.Promise
+- getParent():org.jetbrains.debugger.VariableContext
+- getScope():org.jetbrains.debugger.Scope
+- getVariableName():java.lang.String
+- a:getViewSupport():org.jetbrains.debugger.DebuggerViewSupport
+- getVm():org.jetbrains.debugger.Vm
+- a:watchableAsEvaluationExpression():Z
+f:org.jetbrains.debugger.VariableView
+- com.intellij.xdebugger.frame.XNamedValue
+- org.jetbrains.debugger.VariableContext
+- sf:Companion:org.jetbrains.debugger.VariableView$Companion
+- <init>(java.lang.String,org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext):V
+- canNavigateToSource():Z
+- computeChildren(com.intellij.xdebugger.frame.XCompositeNode):V
+- computeInlineDebuggerData(com.intellij.xdebugger.frame.XInlineDebuggerDataCallback):com.intellij.util.ThreeState
+- computePresentation(com.intellij.xdebugger.frame.XValueNode,com.intellij.xdebugger.frame.XValuePlace):V
+- computeSourcePosition(com.intellij.xdebugger.frame.XNavigatable):V
+- getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- getEvaluationExpression():java.lang.String
+- getMemberFilter():org.jetbrains.concurrency.Promise
+- getModifier():com.intellij.xdebugger.frame.XValueModifier
+- getParent():org.jetbrains.debugger.VariableContext
+- getScope():org.jetbrains.debugger.Scope
+- f:getValue():org.jetbrains.debugger.values.Value
+- getVariableName():java.lang.String
+- getViewSupport():org.jetbrains.debugger.DebuggerViewSupport
+- getVm():org.jetbrains.debugger.Vm
+- watchableAsEvaluationExpression():Z
+f:org.jetbrains.debugger.VariableView$Companion
+- f:getIcon(org.jetbrains.debugger.values.Value):javax.swing.Icon
+- f:setArrayPresentation(org.jetbrains.debugger.values.Value,org.jetbrains.debugger.VariableContext,javax.swing.Icon,com.intellij.xdebugger.frame.XValueNode):V
+- f:setObjectPresentation(org.jetbrains.debugger.values.ObjectValue,javax.swing.Icon,com.intellij.xdebugger.frame.XValueNode):V
+a:org.jetbrains.debugger.VariableView$ObsolescentIndexedVariablesConsumer
+- org.jetbrains.debugger.values.IndexedVariablesConsumer
+- <init>(com.intellij.xdebugger.frame.XCompositeNode):V
+- pf:getNode():com.intellij.xdebugger.frame.XCompositeNode
+- isObsolete():Z
+a:org.jetbrains.debugger.VariableViewBase
+- com.intellij.xdebugger.frame.XNamedValue
+- p:<init>(java.lang.String):V
+- a:getValueType():org.jetbrains.debugger.values.ValueType
+- isDomPropertiesValue():Z
+f:org.jetbrains.debugger.VariableViewKt
+- sf:PROTOTYPE_PROP:java.lang.String
+- sf:PROTO_PROP:java.lang.String
+- sf:VariableView(org.jetbrains.debugger.Variable,org.jetbrains.debugger.VariableContext):org.jetbrains.debugger.VariableView
+- sf:getClassName(org.jetbrains.debugger.values.ObjectValue):java.lang.String
+- sf:getObjectValueDescription(org.jetbrains.debugger.values.ObjectValue):java.lang.String
+- sf:isPrototypeVariable(java.lang.String):Z
+- sf:trimFunctionDescription(java.lang.String):java.lang.String
+f:org.jetbrains.debugger.VariablesGroupKt
+f:org.jetbrains.debugger.VariablesKt
+- sf:createVariablesList(java.util.List,I,I,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.MemberFilter):com.intellij.xdebugger.frame.XValueChildrenList
+- sf:createVariablesList(java.util.List,org.jetbrains.debugger.VariableContext):com.intellij.xdebugger.frame.XValueChildrenList
+- sf:createVariablesList(java.util.List,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.MemberFilter):com.intellij.xdebugger.frame.XValueChildrenList
+- bs:createVariablesList$default(java.util.List,org.jetbrains.debugger.VariableContext,org.jetbrains.debugger.MemberFilter,I,java.lang.Object):com.intellij.xdebugger.frame.XValueChildrenList
+- sf:filterAndSort(java.util.List,org.jetbrains.debugger.MemberFilter):java.util.List
+- sf:processScopeVariables(org.jetbrains.debugger.Scope,com.intellij.xdebugger.frame.XCompositeNode,org.jetbrains.debugger.VariableContext,Z):org.jetbrains.concurrency.Promise
+- sf:processVariables(org.jetbrains.debugger.VariableContext,org.jetbrains.concurrency.Promise,org.jetbrains.concurrency.Obsolescent,kotlin.jvm.functions.Function2):org.jetbrains.concurrency.Promise
+a:org.jetbrains.debugger.connection.RemoteVmConnection
+- org.jetbrains.debugger.connection.VmConnection
+- <init>():V
+- p:connectedAddressToPresentation(java.net.InetSocketAddress,org.jetbrains.debugger.Vm):java.lang.String
+- pf:connectionSucceeded(org.jetbrains.debugger.Vm,java.net.InetSocketAddress):V
+- a:createBootstrap(java.net.InetSocketAddress,org.jetbrains.concurrency.AsyncPromise):io.netty.bootstrap.Bootstrap
+- detachAndClose():org.jetbrains.concurrency.Promise
+- p:doOpen(org.jetbrains.concurrency.AsyncPromise,java.net.InetSocketAddress,com.intellij.openapi.util.Condition):V
+- f:getAddress():java.net.InetSocketAddress
+- f:open(java.net.InetSocketAddress):org.jetbrains.concurrency.Promise
+- f:open(java.net.InetSocketAddress,com.intellij.openapi.util.Condition):org.jetbrains.concurrency.Promise
+- bs:open$default(org.jetbrains.debugger.connection.RemoteVmConnection,java.net.InetSocketAddress,com.intellij.openapi.util.Condition,I,java.lang.Object):org.jetbrains.concurrency.Promise
+- f:setAddress(java.net.InetSocketAddress):V
+f:org.jetbrains.debugger.connection.RemoteVmConnectionKt
+- sf:chooseDebuggee(java.util.Collection,I,kotlin.jvm.functions.Function2):org.jetbrains.concurrency.Promise
+- sf:open(org.jetbrains.debugger.connection.RemoteVmConnection,java.net.InetSocketAddress,com.intellij.execution.process.ProcessHandler):org.jetbrains.concurrency.Promise
+a:org.jetbrains.debugger.connection.VmConnection
+- com.intellij.openapi.Disposable
+- <init>():V
+- f:addDebugListener(org.jetbrains.debugger.DebugEventListener):V
+- f:addListener(com.intellij.util.io.socketConnection.SocketConnectionListener):V
+- f:close(java.lang.String,com.intellij.util.io.socketConnection.ConnectionStatus):V
+- detachAndClose():org.jetbrains.concurrency.Promise
+- dispose():V
+- f:executeOnStart(kotlin.jvm.functions.Function1):V
+- getBrowser():com.intellij.ide.browsers.WebBrowser
+- pf:getDebugEventListener():org.jetbrains.debugger.DebugEventListener
+- p:getDispatcher():com.intellij.util.EventDispatcher
+- f:getState():com.intellij.util.io.socketConnection.ConnectionState
+- f:getVm():org.jetbrains.debugger.Vm
+- f:opened():org.jetbrains.concurrency.Promise
+- pf:setState(com.intellij.util.io.socketConnection.ConnectionStatus,java.lang.String,javax.swing.event.HyperlinkListener):V
+- bs:setState$default(org.jetbrains.debugger.connection.VmConnection,com.intellij.util.io.socketConnection.ConnectionStatus,java.lang.String,javax.swing.event.HyperlinkListener,I,java.lang.Object):V
+- pf:setVm(org.jetbrains.debugger.Vm):V
+- shouldDisposeOnClose():Z
+- p:startProcessing():V
+- f:stateChanged(kotlin.jvm.functions.Function1):V
+f:org.jetbrains.debugger.frame.CallFrameView
+- com.intellij.xdebugger.frame.XStackFrame
+- org.jetbrains.debugger.VariableContext
+- <init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport):V
+- <init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script):V
+- <init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo):V
+- <init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo,java.lang.Boolean):V
+- <init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo,java.lang.Boolean,org.jetbrains.debugger.Vm):V
+- <init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo,java.lang.Boolean,org.jetbrains.debugger.Vm,org.jetbrains.debugger.Variable):V
+- b:<init>(org.jetbrains.debugger.CallFrame,org.jetbrains.debugger.DebuggerViewSupport,org.jetbrains.debugger.Script,org.jetbrains.debugger.SourceInfo,java.lang.Boolean,org.jetbrains.debugger.Vm,org.jetbrains.debugger.Variable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- computeChildren(com.intellij.xdebugger.frame.XCompositeNode):V
+- customizePresentation(com.intellij.ui.ColoredTextContainer):V
+- f:getCallFrame():org.jetbrains.debugger.CallFrame
+- getEqualityObject():java.lang.Object
+- getEvaluateContext():org.jetbrains.debugger.EvaluateContext
+- getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
+- getMemberFilter():org.jetbrains.concurrency.Promise
+- f:getMemberFilter(org.jetbrains.debugger.Scope):org.jetbrains.concurrency.Promise
+- f:getMethodReturnValue():org.jetbrains.debugger.Variable
+- f:getScript():org.jetbrains.debugger.Script
+- getSourcePosition():org.jetbrains.debugger.SourceInfo
+- getViewSupport():org.jetbrains.debugger.DebuggerViewSupport
+- getVm():org.jetbrains.debugger.Vm
+- watchableAsEvaluationExpression():Z

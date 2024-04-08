@@ -1,0 +1,14 @@
+com/intellij/internal/statistic/IdeActivityDefinition
+com/intellij/internal/statistic/StructuredIdeActivity
+com/intellij/internal/statistic/eventLog/FeatureUsageData
+com/intellij/internal/statistic/eventLog/events/ClassEventField
+com/intellij/internal/statistic/eventLog/events/EnumEventField
+com/intellij/internal/statistic/eventLog/events/FloatEventField
+com/intellij/internal/statistic/eventLog/events/IntEventField
+com/intellij/internal/statistic/eventLog/events/PrimitiveEventField
+com/intellij/internal/statistic/eventLog/events/RoundedIntEventField
+com/intellij/internal/statistic/eventLog/events/StringEventField
+com/intellij/internal/statistic/utils/PluginInfo
+com/intellij/openapi/externalSystem/service/project/ExternalProjectsWorkspaceImpl$State
+com/intellij/openapi/externalSystem/service/project/manage/ExternalProjectsDataStorage$State
+com/intellij/platform/diagnostic/telemetry/Scope

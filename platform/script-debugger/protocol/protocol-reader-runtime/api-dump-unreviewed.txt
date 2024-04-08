@@ -1,0 +1,121 @@
+f:org.jetbrains.jsonProtocol.EventMap
+- <init>(org.jetbrains.jsonProtocol.ResponseResultReader):V
+- f:add(org.jetbrains.jsonProtocol.EventType,kotlin.jvm.functions.Function1):V
+- f:addMulti(org.jetbrains.jsonProtocol.EventType[],kotlin.jvm.functions.Function1):V
+- f:handleEvent(java.lang.String,org.jetbrains.io.JsonReaderEx):V
+- f:handleEvent(org.jetbrains.jsonProtocol.EventType,java.lang.Object):V
+- f:remove(org.jetbrains.jsonProtocol.EventType,kotlin.jvm.functions.Function1):V
+a:org.jetbrains.jsonProtocol.EventType
+- <init>(java.lang.String):V
+- f:getMethodName():java.lang.String
+- a:read(org.jetbrains.jsonProtocol.ResponseResultReader,org.jetbrains.io.JsonReaderEx):java.lang.Object
+@:org.jetbrains.jsonProtocol.JsonField
+- java.lang.annotation.Annotation
+- a:allowAnyPrimitiveValue():Z
+- a:allowAnyPrimitiveValueAndMap():Z
+- a:primitiveValue():java.lang.String
+org.jetbrains.jsonProtocol.JsonObjectBased
+- a:getDeferredReader():org.jetbrains.io.JsonReaderEx
+@:org.jetbrains.jsonProtocol.JsonParseMethod
+- java.lang.annotation.Annotation
+f:org.jetbrains.jsonProtocol.JsonReaders
+- sf:STRING_OBJECT_FACTORY:org.jetbrains.jsonProtocol.ObjectFactory
+- s:convertRawEnumName(java.lang.String):java.lang.String
+- s:findBooleanField(java.lang.String,org.jetbrains.io.JsonReaderEx):Z
+- s:mapFactory(org.jetbrains.jsonProtocol.ObjectFactory):org.jetbrains.jsonProtocol.ObjectFactory
+- s:nextList(org.jetbrains.io.JsonReaderEx):java.util.List
+- s:nextObject(org.jetbrains.io.JsonReaderEx):java.util.Map
+- s:read(org.jetbrains.io.JsonReaderEx):java.lang.Object
+- s:readDoubleArray(org.jetbrains.io.JsonReaderEx):D[]
+- s:readEnum(org.jetbrains.io.JsonReaderEx,java.lang.Class):java.lang.Enum
+- s:readEnumArray(org.jetbrains.io.JsonReaderEx,java.lang.Class):java.util.List
+- s:readIntArray(org.jetbrains.io.JsonReaderEx):I[]
+- s:readIntStringPairs(org.jetbrains.io.JsonReaderEx):java.util.List
+- s:readLongArray(org.jetbrains.io.JsonReaderEx):J[]
+- s:readMap(org.jetbrains.io.JsonReaderEx,org.jetbrains.jsonProtocol.ObjectFactory):java.util.Map
+- s:readObjectArray(org.jetbrains.io.JsonReaderEx,org.jetbrains.jsonProtocol.ObjectFactory):java.util.List
+- s:readRawString(org.jetbrains.io.JsonReaderEx):java.lang.String
+- s:readRawStringArray(org.jetbrains.io.JsonReaderEx):java.util.List
+- s:readRawStringOrMap(org.jetbrains.io.JsonReaderEx):java.lang.Object
+- s:readsNull(org.jetbrains.io.JsonReaderEx):Z
+f:org.jetbrains.jsonProtocol.JsonReaders$EnumFactory
+- org.jetbrains.jsonProtocol.ObjectFactory
+- <init>(java.lang.Class):V
+- read(org.jetbrains.io.JsonReaderEx):java.lang.Enum
+f:org.jetbrains.jsonProtocol.JsonReaders$WrapperFactory
+- org.jetbrains.jsonProtocol.ObjectFactory
+- <init>(kotlin.jvm.functions.Function1):V
+- read(org.jetbrains.io.JsonReaderEx):java.lang.Object
+org.jetbrains.jsonProtocol.JsonSubtype
+- a:getBase():java.lang.Object
+@:org.jetbrains.jsonProtocol.JsonSubtypeCasting
+- java.lang.annotation.Annotation
+- a:reinterpret():Z
+@:org.jetbrains.jsonProtocol.JsonType
+- java.lang.annotation.Annotation
+f:org.jetbrains.jsonProtocol.JsonWriters
+- sf:INSTANCE:org.jetbrains.jsonProtocol.JsonWriters
+- f:writeStringList(com.google.gson.stream.JsonWriter,java.lang.String,java.util.Collection):V
+a:org.jetbrains.jsonProtocol.ObjectFactory
+- <init>():V
+- a:read(org.jetbrains.io.JsonReaderEx):java.lang.Object
+@:org.jetbrains.jsonProtocol.Optional
+- java.lang.annotation.Annotation
+- a:default():java.lang.String
+c:org.jetbrains.jsonProtocol.OutMessage
+- <init>():V
+- beginArguments():V
+- f:close():V
+- f:getBuffer():io.netty.buffer.ByteBuf
+- f:getWriter():com.google.gson.stream.JsonWriter
+- f:writeDoubleArray(java.lang.String,D[]):V
+- f:writeEnumList(java.lang.String,java.util.Collection):V
+- f:writeIntArray(java.lang.String,I[]):V
+- bs:writeIntArray$default(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,I[],I,java.lang.Object):V
+- f:writeIntList(java.lang.String,it.unimi.dsi.fastutil.ints.IntList):V
+- f:writeIntSet(java.lang.String,it.unimi.dsi.fastutil.ints.IntSet):V
+- f:writeList(java.lang.String,java.util.List):V
+- pf:writeLong(java.lang.String,J):V
+- pf:writeLongArray(java.lang.String,J[]):V
+- f:writeMap(java.lang.String,java.util.Map):V
+- bs:writeMap$default(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.util.Map,I,java.lang.Object):V
+- f:writeMessage(java.lang.String,org.jetbrains.jsonProtocol.OutMessage):V
+- f:writeNullableString(java.lang.String,java.lang.CharSequence):V
+- f:writeSingletonIntArray(java.lang.String,I):V
+- f:writeString(java.lang.String,java.lang.String):V
+- f:writeStringList(java.lang.String,java.util.Collection):V
+f:org.jetbrains.jsonProtocol.OutMessageKt
+- sf:doWriteRaw(org.jetbrains.jsonProtocol.OutMessage,java.lang.String):V
+- sf:prepareWriteRaw(org.jetbrains.jsonProtocol.OutMessage,java.lang.String):V
+- sf:writeBoolean(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.Boolean):V
+- sf:writeBoolean(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,Z,Z):V
+- sf:writeDouble(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,D):V
+- sf:writeDouble(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.Double,java.lang.Double):V
+- sf:writeEnum(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.Enum):V
+- sf:writeEnum(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.Enum,java.lang.Enum):V
+- sf:writeInt(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,I,I):V
+- sf:writeInt(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.Integer):V
+- sf:writeString(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.CharSequence):V
+- sf:writeString(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.CharSequence,java.lang.CharSequence):V
+@:org.jetbrains.jsonProtocol.ProtocolName
+- java.lang.annotation.Annotation
+- a:name():java.lang.String
+org.jetbrains.jsonProtocol.Request
+- a:finalize(I):V
+- a:getBuffer():io.netty.buffer.ByteBuf
+- a:getMethodName():java.lang.String
+a:org.jetbrains.jsonProtocol.RequestImpl
+- org.jetbrains.jsonProtocol.OutMessage
+- org.jetbrains.jsonProtocol.Request
+- <init>():V
+- pa:argumentsKeyName():java.lang.String
+- beginArguments():V
+- finalize(I):V
+- pa:getIdKeyName():java.lang.String
+org.jetbrains.jsonProtocol.ResponseResultReader
+- a:readResult(java.lang.String,org.jetbrains.io.JsonReaderEx):java.lang.Object
+f:org.jetbrains.jsonProtocol.StringIntPair
+- f:name:java.lang.String
+- f:value:I
+- <init>(I,java.lang.String):V
+- <init>(java.lang.String,I):V

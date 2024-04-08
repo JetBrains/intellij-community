@@ -1,0 +1,6 @@
+com/intellij/configurationStore/DataStateChanged
+com/intellij/configurationStore/DataWriterFilter
+com/intellij/configurationStore/StateStorageManagerImpl
+com/intellij/configurationStore/StreamProvider
+com/intellij/openapi/components/impl/stores/IComponentStore
+com/intellij/serviceContainer/ComponentManagerImpl

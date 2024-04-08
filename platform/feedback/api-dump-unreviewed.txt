@@ -1,0 +1,885 @@
+*:com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
+- com.intellij.platform.feedback.FeedbackSurveyConfig
+- a:getUrlToSurvey(com.intellij.openapi.project.Project):java.lang.String
+- a:updateStateAfterRespondActionInvoked(com.intellij.openapi.project.Project):V
+*f:com.intellij.platform.feedback.ExternalFeedbackSurveyType
+- com.intellij.platform.feedback.FeedbackSurveyType
+- <init>(com.intellij.platform.feedback.ExternalFeedbackSurveyConfig):V
+*a:com.intellij.platform.feedback.FeedbackSurvey
+- com.intellij.openapi.extensions.PluginAware
+- <init>():V
+- pa:getFeedbackSurveyType():com.intellij.platform.feedback.FeedbackSurveyType
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+- f:showNotification(com.intellij.openapi.project.Project,Z):V
+- bs:showNotification$default(com.intellij.platform.feedback.FeedbackSurvey,com.intellij.openapi.project.Project,Z,I,java.lang.Object):V
+*:com.intellij.platform.feedback.FeedbackSurveyConfig
+- a:checkExtraConditionSatisfied(com.intellij.openapi.project.Project):Z
+- a:checkIdeIsSuitable():Z
+- a:createNotification(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+- getCancelNotificationAction(com.intellij.openapi.project.Project):kotlin.jvm.functions.Function0
+- getCancelNotificationActionLabel():java.lang.String
+- a:getLastDayOfFeedbackCollection():kotlinx.datetime.LocalDate
+- a:getRequireIdeEAP():Z
+- getRespondNotificationActionLabel():java.lang.String
+- a:getSurveyId():java.lang.String
+- a:updateStateAfterNotificationShowed(com.intellij.openapi.project.Project):V
+*a:com.intellij.platform.feedback.FeedbackSurveyType
+*:com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
+- com.intellij.platform.feedback.FeedbackSurveyConfig
+- a:createFeedbackDialog(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+- a:updateStateAfterDialogClosedOk(com.intellij.openapi.project.Project):V
+*f:com.intellij.platform.feedback.InIdeFeedbackSurveyType
+- com.intellij.platform.feedback.FeedbackSurveyType
+- <init>(com.intellij.platform.feedback.InIdeFeedbackSurveyConfig):V
+f:com.intellij.platform.feedback.aqua.TestShowAquaNewUserFeedbackAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+f:com.intellij.platform.feedback.aqua.TestShowAquaOldUserFeedbackAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+f:com.intellij.platform.feedback.aqua.bundle.AquaFeedbackBundleKt
+f:com.intellij.platform.feedback.aqua.dialog.AquaNewUserFeedbackDialog
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+- <init>(com.intellij.openapi.project.Project,Z):V
+- getZendeskFeedbackType():java.lang.String
+- getZendeskTicketTitle():java.lang.String
+f:com.intellij.platform.feedback.aqua.dialog.AquaOldUserFeedbackDialog
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+- <init>(com.intellij.openapi.project.Project,Z):V
+- getZendeskFeedbackType():java.lang.String
+- getZendeskTicketTitle():java.lang.String
+f:com.intellij.platform.feedback.aqua.state.AquaNewUserFeedbackService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.aqua.state.AquaNewUserFeedbackService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.platform.feedback.aqua.state.AquaNewUserFeedbackService
+- getState():com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState
+- loadState(com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState):V
+f:com.intellij.platform.feedback.aqua.state.AquaNewUserFeedbackService$Companion
+- f:getInstance():com.intellij.platform.feedback.aqua.state.AquaNewUserFeedbackService
+f:com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState
+- sf:Companion:com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState$Companion
+- <init>():V
+- <init>(I,Z,Z):V
+- b:<init>(I,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():Z
+- f:component3():Z
+- f:copy(I,Z,Z):com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState
+- bs:copy$default(com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState,I,Z,Z,I,java.lang.Object):com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState
+- equals(java.lang.Object):Z
+- f:getFeedbackSent():Z
+- f:getNumberNotificationShowed():I
+- f:getUserTypedInEditor():Z
+- hashCode():I
+- f:setFeedbackSent(Z):V
+- f:setNumberNotificationShowed(I):V
+- f:setUserTypedInEditor(Z):V
+- toString():java.lang.String
+f:com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.aqua.state.AquaNewUserInfoState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService
+- getState():com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
+- loadState(com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState):V
+f:com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService$Companion
+- f:getInstance():com.intellij.platform.feedback.aqua.state.AquaOldUserFeedbackService
+f:com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
+- sf:Companion:com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState$Companion
+- <init>():V
+- <init>(I,Z,Z,kotlinx.datetime.LocalDateTime):V
+- b:<init>(I,Z,Z,kotlinx.datetime.LocalDateTime,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():Z
+- f:component3():Z
+- f:component4():kotlinx.datetime.LocalDateTime
+- f:copy(I,Z,Z,kotlinx.datetime.LocalDateTime):com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
+- bs:copy$default(com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState,I,Z,Z,kotlinx.datetime.LocalDateTime,I,java.lang.Object):com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
+- equals(java.lang.Object):Z
+- f:getFeedbackSent():Z
+- f:getFirstUsageTime():kotlinx.datetime.LocalDateTime
+- f:getNumberNotificationShowed():I
+- f:getUserTypedInEditor():Z
+- hashCode():I
+- f:setFeedbackSent(Z):V
+- f:setFirstUsageTime(kotlinx.datetime.LocalDateTime):V
+- f:setNumberNotificationShowed(I):V
+- f:setUserTypedInEditor(Z):V
+- toString():java.lang.String
+f:com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.aqua.track.AquaEditorTypingChecker
+- com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+- <init>():V
+- charTyped(C,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.editorActions.TypedHandlerDelegate$Result
+f:com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey
+- com.intellij.platform.feedback.FeedbackSurvey
+- <init>():V
+f:com.intellij.platform.feedback.demo.DemoExternalFeedbackSurveyConfig
+- com.intellij.platform.feedback.ExternalFeedbackSurveyConfig
+- <init>():V
+- checkExtraConditionSatisfied(com.intellij.openapi.project.Project):Z
+- checkIdeIsSuitable():Z
+- createNotification(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+- getLastDayOfFeedbackCollection():kotlinx.datetime.LocalDate
+- getRequireIdeEAP():Z
+- getSurveyId():java.lang.String
+- getUrlToSurvey(com.intellij.openapi.project.Project):java.lang.String
+- updateStateAfterNotificationShowed(com.intellij.openapi.project.Project):V
+- updateStateAfterRespondActionInvoked(com.intellij.openapi.project.Project):V
+f:com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey
+- com.intellij.platform.feedback.FeedbackSurvey
+- <init>():V
+f:com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurveyConfig
+- com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
+- <init>():V
+- checkExtraConditionSatisfied(com.intellij.openapi.project.Project):Z
+- checkIdeIsSuitable():Z
+- createFeedbackDialog(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+- createNotification(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+- getLastDayOfFeedbackCollection():kotlinx.datetime.LocalDate
+- getRequireIdeEAP():Z
+- getSurveyId():java.lang.String
+- updateStateAfterDialogClosedOk(com.intellij.openapi.project.Project):V
+- updateStateAfterNotificationShowed(com.intellij.openapi.project.Project):V
+f:com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.platform.feedback.demo.action.ShowExternalDemoFeedbackWithStatsAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.platform.feedback.demo.action.ShowInIdeDemoFeedbackWithStatsAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundleKt
+f:com.intellij.platform.feedback.demo.dialog.DemoFeedbackDialog
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+- <init>(com.intellij.openapi.project.Project,Z):V
+f:com.intellij.platform.feedback.demo.dialog.DemoFeedbackDialogWithEmail
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+- <init>(com.intellij.openapi.project.Project,Z):V
+- getZendeskFeedbackType():java.lang.String
+- getZendeskTicketTitle():java.lang.String
+*f:com.intellij.platform.feedback.dialog.BaseFeedbackSystemInfoDialogKt
+- sf:showFeedbackSystemInfoDialog(com.intellij.openapi.project.Project,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData,kotlin.jvm.functions.Function1):V
+- bs:showFeedbackSystemInfoDialog$default(com.intellij.openapi.project.Project,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+*a:com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+- com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,Z):V
+- p:addFooterToPanel(com.intellij.ui.dsl.builder.Panel):V
+- pf:collectDataToJsonObject():kotlinx.serialization.json.JsonObject
+- p:createActions():javax.swing.Action[]
+- p:createCenterPanel():javax.swing.JComponent
+- p:doOKAction():V
+- p:getCancelAction():javax.swing.Action
+- pa:getMyBlocks():java.util.List
+- p:getMyFeedbackJsonVersion():I
+- pa:getMyFeedbackReportId():java.lang.String
+- pf:getMyForTest():Z
+- pf:getMyProject():com.intellij.openapi.project.Project
+- pa:getMyShowFeedbackSystemInfoDialog():kotlin.jvm.functions.Function0
+- pa:getMySystemInfoData():com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+- pa:getMyTitle():java.lang.String
+- p:getOKAction():javax.swing.Action
+- p:sendFeedbackData():V
+- f:setTitle():V
+- p:showThanksNotification():V
+*f:com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogKt
+- sf:BLOCK_BASED_FEEDBACK_VERSION:I
+*a:com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+- <init>(com.intellij.openapi.project.Project,Z):V
+- p:addFooterToPanel(com.intellij.ui.dsl.builder.Panel):V
+- p:collectDataToPlainText():java.lang.String
+- p:computeZendeskTicketTags(kotlinx.serialization.json.JsonObject):java.util.List
+- pf:getEmailBlockWithAgreement():com.intellij.platform.feedback.dialog.uiBlocks.EmailBlock
+- p:getMyFeedbackJsonVersion():I
+- a:getZendeskFeedbackType():java.lang.String
+- a:getZendeskTicketTitle():java.lang.String
+- p:sendFeedbackData():V
+- p:shouldAutoCloseZendeskTicket():Z
+*f:com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmailKt
+- sf:BLOCK_BASED_FEEDBACK_WITH_EMAIL_VERSION:I
+*f:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+- *sf:Companion:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData$Companion
+- <init>(java.lang.String,J,I,java.lang.String,java.lang.Boolean,java.util.List,java.lang.String,Z,java.util.List,java.util.List,java.util.List):V
+- f:component1():java.lang.String
+- f:component3():I
+- f:component4():java.lang.String
+- f:component7():java.lang.String
+- f:copy(java.lang.String,J,I,java.lang.String,java.lang.Boolean,java.util.List,java.lang.String,Z,java.util.List,java.util.List,java.util.List):com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- bs:copy$default(com.intellij.platform.feedback.dialog.CommonFeedbackSystemData,java.lang.String,J,I,java.lang.String,java.lang.Boolean,java.util.List,java.lang.String,Z,java.util.List,java.util.List,java.util.List,I,java.lang.Object):com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- equals(java.lang.Object):Z
+- f:getAppVersionWithBuild():java.lang.String
+- f:getCoresNumber():I
+- f:getDisabledBundledPluginsForDialog():java.lang.String
+- f:getIsInternalModeForDialog():java.lang.String
+- f:getIsLicenseEvaluationForDialog():java.lang.String
+- f:getLicenseRestrictionsForDialog():java.lang.String
+- f:getMemorySizeForDialog():java.lang.String
+- f:getNonBundledPluginsForDialog():java.lang.String
+- f:getOsVersion():java.lang.String
+- f:getRegistryKeysForDialog():java.lang.String
+- f:getRuntimeVersion():java.lang.String
+- hashCode():I
+- serializeToJson(kotlinx.serialization.json.Json):kotlinx.serialization.json.JsonElement
+- toString():java.lang.String
+*f:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+*f:com.intellij.platform.feedback.dialog.CommonFeedbackSystemData$Companion
+- f:getCurrentData():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.feedback.dialog.CommonFeedbackSystemDataKt
+- sf:COMMON_FEEDBACK_SYSTEM_INFO_VERSION:I
+*f:com.intellij.platform.feedback.dialog.FeedbackUIUtilsKt
+- sf:TEXT_AREA_ROW_SIZE:I
+- sf:adjustBehaviourForFeedbackForm(com.intellij.ui.components.JBTextArea):V
+- sf:createBoldJBLabel(java.lang.String):com.intellij.ui.components.JBLabel
+*:com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+- a:serializeToJson(kotlinx.serialization.json.Json):kotlinx.serialization.json.JsonElement
+f:com.intellij.platform.feedback.dialog.components.RatingComponent
+- javax.swing.JComponent
+- sf:Companion:com.intellij.platform.feedback.dialog.components.RatingComponent$Companion
+- sf:RATING_PROPERTY:java.lang.String
+- <init>():V
+- getMinimumSize():java.awt.Dimension
+- f:getMyRating():I
+- getPreferredSize():java.awt.Dimension
+f:com.intellij.platform.feedback.dialog.components.RatingComponent$Companion
+*f:com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.util.List,java.lang.String):V
+- f:addOtherTextField():com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:requireAnswer():com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxGroupBlock
+*f:com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
+- bs:copy$default(com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData
+- equals(java.lang.Object):Z
+- f:getJsonElementName():java.lang.String
+- f:getLabel():java.lang.String
+- f:getProperty():Z
+- hashCode():I
+- f:setProperty(Z):V
+- toString():java.lang.String
+*f:com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.util.List,java.lang.String):V
+- f:addComment(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:randomizeOptionOrder():com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+- f:setColumnSize(I):com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+- f:useFillAlign():com.intellij.platform.feedback.dialog.uiBlocks.ComboBoxBlock
+*f:com.intellij.platform.feedback.dialog.uiBlocks.DescriptionBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+*f:com.intellij.platform.feedback.dialog.uiBlocks.EmailBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- f:getEmailAddressIfSpecified():java.lang.String
+- f:setEmailCheckBoxLabel(java.lang.String):V
+*:com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- a:addToPanel(com.intellij.ui.dsl.builder.Panel):V
+*:com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- a:collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+*f:com.intellij.platform.feedback.dialog.uiBlocks.NoEmailAgreementBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+*f:com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonGroupBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.util.List,java.lang.String):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:requireAnswer():com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonGroupBlock
+*f:com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonItemData
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonItemData
+- bs:copy$default(com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonItemData,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.feedback.dialog.uiBlocks.RadioButtonItemData
+- equals(java.lang.Object):Z
+- f:getJsonElementName():java.lang.String
+- f:getLabel():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.lang.String):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:doNotRequireAnswer():com.intellij.platform.feedback.dialog.uiBlocks.RatingBlock
+*f:com.intellij.platform.feedback.dialog.uiBlocks.RatingBlockKt
+*f:com.intellij.platform.feedback.dialog.uiBlocks.RatingGroupBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.util.List):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:setHint(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.RatingGroupBlock
+- f:setRandomOrder(Z):com.intellij.platform.feedback.dialog.uiBlocks.RatingGroupBlock
+*f:com.intellij.platform.feedback.dialog.uiBlocks.RatingItem
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.RatingItem
+- bs:copy$default(com.intellij.platform.feedback.dialog.uiBlocks.RatingItem,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.platform.feedback.dialog.uiBlocks.RatingItem
+- equals(java.lang.Object):Z
+- f:getJsonElementName():java.lang.String
+- f:getLabel():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+*f:com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.util.List,java.lang.String):V
+- f:addLeftBottomLabel(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
+- f:addMiddleBottomLabel(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
+- f:addRightBottomLabel(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.SegmentedButtonBlock
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+*f:com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.lang.String):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:requireNotEmpty(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+- f:setPlaceholder(java.lang.String):com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+- f:setRowSize(I):com.intellij.platform.feedback.dialog.uiBlocks.TextAreaBlock
+*:com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- a:collectBlockTextDescription(java.lang.StringBuilder):V
+*f:com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+- f:setBottomGap(com.intellij.ui.dsl.builder.BottomGap):com.intellij.platform.feedback.dialog.uiBlocks.TopLabelBlock
+f:com.intellij.platform.feedback.eap.EAPApplicationInitializedListener
+- <init>():V
+- execute(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.feedback.eap.EAPApplicationInitializedListenerKt
+- sf:executeEAPFeedbackAction():V
+- sf:isEAPEnv():Z
+- sf:isEAPFeedbackAvailable():Z
+- sf:setEAPFeedbackShown(com.intellij.ide.util.PropertiesComponent):V
+- bs:setEAPFeedbackShown$default(com.intellij.ide.util.PropertiesComponent,I,java.lang.Object):V
+f:com.intellij.platform.feedback.eap.EAPFeedbackBundleKt
+f:com.intellij.platform.feedback.eap.EAPFeedbackToolbarAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ex.CustomComponentAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
+- displayTextInToolbar():Z
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackBundleKt
+f:com.intellij.platform.feedback.general.general.GeneralFeedbackBundleKt
+f:com.intellij.platform.feedback.impl.FeedbackRequestData
+- com.intellij.platform.feedback.impl.FeedbackRequestDataHolder
+- <init>(java.lang.String,kotlinx.serialization.json.JsonObject):V
+- f:component1():java.lang.String
+- f:component2():kotlinx.serialization.json.JsonObject
+- f:copy(java.lang.String,kotlinx.serialization.json.JsonObject):com.intellij.platform.feedback.impl.FeedbackRequestData
+- bs:copy$default(com.intellij.platform.feedback.impl.FeedbackRequestData,java.lang.String,kotlinx.serialization.json.JsonObject,I,java.lang.Object):com.intellij.platform.feedback.impl.FeedbackRequestData
+- equals(java.lang.Object):Z
+- getCollectedData():kotlinx.serialization.json.JsonObject
+- getFeedbackType():java.lang.String
+- hashCode():I
+- toJsonObject():kotlinx.serialization.json.JsonObject
+- toString():java.lang.String
+com.intellij.platform.feedback.impl.FeedbackRequestDataHolder
+- a:getCollectedData():kotlinx.serialization.json.JsonObject
+- a:getFeedbackType():java.lang.String
+- a:toJsonObject():kotlinx.serialization.json.JsonObject
+f:com.intellij.platform.feedback.impl.FeedbackRequestDataWithDetailedAnswer
+- com.intellij.platform.feedback.impl.FeedbackRequestDataHolder
+- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.util.List,java.lang.String,kotlinx.serialization.json.JsonObject):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:component3():java.lang.String
+- f:component4():java.lang.String
+- f:component5():Z
+- f:component6():java.util.List
+- f:component7():java.lang.String
+- f:component8():kotlinx.serialization.json.JsonObject
+- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.util.List,java.lang.String,kotlinx.serialization.json.JsonObject):com.intellij.platform.feedback.impl.FeedbackRequestDataWithDetailedAnswer
+- bs:copy$default(com.intellij.platform.feedback.impl.FeedbackRequestDataWithDetailedAnswer,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,java.util.List,java.lang.String,kotlinx.serialization.json.JsonObject,I,java.lang.Object):com.intellij.platform.feedback.impl.FeedbackRequestDataWithDetailedAnswer
+- equals(java.lang.Object):Z
+- f:getAutoSolveTicket():Z
+- getCollectedData():kotlinx.serialization.json.JsonObject
+- f:getDescription():java.lang.String
+- f:getEmail():java.lang.String
+- getFeedbackType():java.lang.String
+- f:getPrivacyConsentType():java.lang.String
+- f:getTicketTags():java.util.List
+- f:getTitle():java.lang.String
+- hashCode():I
+- toJsonObject():kotlinx.serialization.json.JsonObject
+- toString():java.lang.String
+e:com.intellij.platform.feedback.impl.FeedbackRequestType
+- java.lang.Enum
+- sf:NO_REQUEST:com.intellij.platform.feedback.impl.FeedbackRequestType
+- sf:PRODUCTION_REQUEST:com.intellij.platform.feedback.impl.FeedbackRequestType
+- sf:TEST_REQUEST:com.intellij.platform.feedback.impl.FeedbackRequestType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.feedback.impl.FeedbackRequestType
+- s:values():com.intellij.platform.feedback.impl.FeedbackRequestType[]
+f:com.intellij.platform.feedback.impl.FeedbackSurveyUtilsKt
+f:com.intellij.platform.feedback.impl.GeneralFeedbackSubmitKt
+- sf:DEFAULT_FEEDBACK_CONSENT_ID:java.lang.String
+- sf:FEEDBACK_REPORT_ID_KEY:java.lang.String
+- sf:cleanFeedbackFromEmails(kotlinx.serialization.json.JsonElement):kotlinx.serialization.json.JsonElement
+- sf:submitFeedback(com.intellij.platform.feedback.impl.FeedbackRequestDataHolder,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,com.intellij.platform.feedback.impl.FeedbackRequestType):V
+- bs:submitFeedback$default(com.intellij.platform.feedback.impl.FeedbackRequestDataHolder,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,com.intellij.platform.feedback.impl.FeedbackRequestType,I,java.lang.Object):V
+f:com.intellij.platform.feedback.impl.IdleFeedbackResolver
+- sf:Companion:com.intellij.platform.feedback.impl.IdleFeedbackResolver$Companion
+- <init>():V
+- sf:getInstance$intellij_platform_feedback():com.intellij.platform.feedback.impl.IdleFeedbackResolver
+f:com.intellij.platform.feedback.impl.IdleFeedbackResolver$Companion
+e:com.intellij.platform.feedback.impl.IdleFeedbackTypes
+- java.lang.Enum
+- sf:AQUA_NEW_USER_FEEDBACK:com.intellij.platform.feedback.impl.IdleFeedbackTypes
+- sf:AQUA_OLD_USER_FEEDBACK:com.intellij.platform.feedback.impl.IdleFeedbackTypes
+- sf:PYCHARM_CE_FEEDBACK:com.intellij.platform.feedback.impl.IdleFeedbackTypes
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- pf:checkIdeVersionIsSuitable():Z
+- pa:createFeedbackDialog(com.intellij.openapi.project.Project,Z):com.intellij.openapi.ui.DialogWrapper
+- pa:createNotification(Z):com.intellij.notification.Notification
+- p:getCancelFeedbackNotificationLabel():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- pa:getFusFeedbackId():java.lang.String
+- p:getGiveFeedbackNotificationLabel():java.lang.String
+- p:getNotificationOnCancelAction(com.intellij.openapi.project.Project):kotlin.jvm.functions.Function0
+- pa:getSuitableIdeVersion():java.lang.String
+- p:getWebFormUrl():java.lang.String
+- pf:isIdeEAP():Z
+- a:isSuitable():Z
+- f:showNotification(com.intellij.openapi.project.Project,Z):V
+- bs:showNotification$default(com.intellij.platform.feedback.impl.IdleFeedbackTypes,com.intellij.openapi.project.Project,Z,I,java.lang.Object):V
+- pa:updateStateAfterDialogClosedOk():V
+- pa:updateStateAfterNotificationShowed():V
+- s:valueOf(java.lang.String):com.intellij.platform.feedback.impl.IdleFeedbackTypes
+- s:values():com.intellij.platform.feedback.impl.IdleFeedbackTypes[]
+f:com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
+- sf:Companion:com.intellij.platform.feedback.impl.OnDemandFeedbackResolver$Companion
+- <init>():V
+- sf:getInstance():com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
+- f:showFeedbackNotification(kotlin.reflect.KClass,com.intellij.openapi.project.Project):Z
+f:com.intellij.platform.feedback.impl.OnDemandFeedbackResolver$Companion
+- f:getInstance():com.intellij.platform.feedback.impl.OnDemandFeedbackResolver
+f:com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl
+- com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs
+- <init>():V
+- createEvaluationFeedbackDialog(com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
+- createGeneralFeedbackDialog(com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
+- getDisableFeedbackDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
+- getUninstallFeedbackDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project):com.intellij.openapi.ui.DialogWrapper
+f:com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundleKt
+c:com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+- com.intellij.notification.Notification
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+c:com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+- com.intellij.notification.Notification
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- b:<init>(java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+f:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService$Companion
+- <init>():V
+- sf:checkIsFeedbackSurveyAnswerSent(java.lang.String):Z
+- sf:feedbackSurveyAnswerSent(java.lang.String):V
+- sf:feedbackSurveyDisableActionInvoked(java.lang.String):V
+- sf:feedbackSurveyRespondActionInvoked(java.lang.String):V
+- sf:feedbackSurveyShowed(java.lang.String):V
+- sf:getAllAnsweredFeedbackSurveys():java.util.Set
+- sf:getNumberDisableActionInvokedForAllSurveys():java.util.Map
+- sf:getNumberRespondActionInvokedForAllSurveys():java.util.Map
+- sf:getNumberShowsForAllSurveys():java.util.Map
+- sf:getNumberShowsOfFeedbackSurvey(java.lang.String):I
+- getState():com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState
+- loadState(com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState):V
+f:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService$Companion
+- f:checkIsFeedbackSurveyAnswerSent(java.lang.String):Z
+- f:feedbackSurveyAnswerSent(java.lang.String):V
+- f:feedbackSurveyDisableActionInvoked(java.lang.String):V
+- f:feedbackSurveyRespondActionInvoked(java.lang.String):V
+- f:feedbackSurveyShowed(java.lang.String):V
+- f:getAllAnsweredFeedbackSurveys():java.util.Set
+- f:getNumberDisableActionInvokedForAllSurveys():java.util.Map
+- f:getNumberRespondActionInvokedForAllSurveys():java.util.Map
+- f:getNumberShowsForAllSurveys():java.util.Map
+- f:getNumberShowsOfFeedbackSurvey(java.lang.String):I
+f:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState
+- sf:Companion:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState$Companion
+- <init>():V
+- <init>(java.util.Map,java.util.Map,java.util.Map,java.util.Set):V
+- b:<init>(java.util.Map,java.util.Map,java.util.Map,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Map
+- f:component2():java.util.Map
+- f:component3():java.util.Map
+- f:component4():java.util.Set
+- f:copy(java.util.Map,java.util.Map,java.util.Map,java.util.Set):com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState
+- bs:copy$default(com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState,java.util.Map,java.util.Map,java.util.Map,java.util.Set,I,java.lang.Object):com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState
+- equals(java.lang.Object):Z
+- f:getAnsweredFeedbackSurveys():java.util.Set
+- f:getFeedbackSurveyToNumberDisableActionInvoked():java.util.Map
+- f:getFeedbackSurveyToNumberNotificationShows():java.util.Map
+- f:getFeedbackSurveyToNumberRespondActionInvoked():java.util.Map
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.impl.state.CommonFeedbackSurveysState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService$Companion
+- <init>():V
+- sf:checkIsAllowedToShowFeedback():Z
+- sf:dontShowFeedbackInCurrentVersion():V
+- sf:getAllIdeVersionWithDisabledFeedback():java.util.List
+- getState():com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState
+- loadState(com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState):V
+f:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService$Companion
+- f:checkIsAllowedToShowFeedback():Z
+- f:dontShowFeedbackInCurrentVersion():V
+- f:getAllIdeVersionWithDisabledFeedback():java.util.List
+f:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState
+- sf:Companion:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState$Companion
+- <init>():V
+- <init>(java.util.Set):V
+- b:<init>(java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.util.Set
+- f:copy(java.util.Set):com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState
+- bs:copy$default(com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState,java.util.Set,I,java.lang.Object):com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState
+- equals(java.lang.Object):Z
+- f:getDontShowAgainIdeVersions():java.util.Set
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.impl.statistics.FeedbackSurveyIdValidationRule
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- <init>():V
+- getRuleId():java.lang.String
+f:com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector
+- <init>():V
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- getMetrics():java.util.Set
+f:com.intellij.platform.feedback.impl.track.EditorInputEventTracker
+- com.intellij.codeInsight.editorActions.TypedHandlerDelegate
+- com.intellij.openapi.editor.event.EditorMouseListener
+- com.intellij.openapi.editor.event.EditorMouseMotionListener
+- <init>():V
+- charTyped(C,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.editorActions.TypedHandlerDelegate$Result
+- mouseClicked(com.intellij.openapi.editor.event.EditorMouseEvent):V
+- mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
+f:com.intellij.platform.feedback.impl.track.EditorInputEventTrackerKt
+f:com.intellij.platform.feedback.localization.bundle.LocalizationFeedbackBundleKt
+f:com.intellij.platform.feedback.localization.dialog.LocalizationFeedbackDialog
+- com.intellij.openapi.ui.DialogWrapper
+- <init>(com.intellij.openapi.project.Project,Z):V
+f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackNotificationService
+- sf:Companion:com.intellij.platform.feedback.localization.service.LocalizationFeedbackNotificationService$Companion
+- <init>():V
+- f:showNotification():V
+f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackNotificationService$Companion
+- f:getInstance():com.intellij.platform.feedback.localization.service.LocalizationFeedbackNotificationService
+f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.localization.service.LocalizationFeedbackService$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:getLanguagePack():kotlin.Pair
+- getState():com.intellij.platform.feedback.localization.service.LocalizationFeedbackService$State
+- f:isEnabled():Z
+- loadState(com.intellij.platform.feedback.localization.service.LocalizationFeedbackService$State):V
+- f:runWatcher():V
+- f:setInteraction():V
+- f:tryRecordInstallation():Z
+f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackService$Companion
+- f:getInstance():com.intellij.platform.feedback.localization.service.LocalizationFeedbackService
+- f:isTesting():Z
+f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackService$State
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getBalloonWasInteractedWith():Z
+- f:getTimeSincePluginInstallation():J
+- f:setBalloonWasInteractedWith(Z):V
+- f:setTimeSincePluginInstallation(J):V
+f:com.intellij.platform.feedback.localization.service.LocalizationFeedbackStartupListener
+- com.intellij.ide.AppLifecycleListener
+- <init>():V
+- appStarted():V
+f:com.intellij.platform.feedback.newUi.CancelFeedbackNotification
+- com.intellij.notification.Notification
+- <init>():V
+f:com.intellij.platform.feedback.newUi.NewUIFeedbackBundleKt
+f:com.intellij.platform.feedback.newUi.NewUIFeedbackDialog
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+- <init>(com.intellij.openapi.project.Project,Z):V
+- doCancelAction():V
+- getZendeskFeedbackType():java.lang.String
+- getZendeskTicketTitle():java.lang.String
+f:com.intellij.platform.feedback.newUi.NewUIFeedbackDialogKt
+f:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData
+- com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+- sf:Companion:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData$Companion
+- <init>(Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):V
+- f:component1():Z
+- f:component2():kotlinx.datetime.LocalDateTime
+- f:component3():kotlinx.datetime.LocalDateTime
+- f:component4():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- f:copy(Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData
+- bs:copy$default(com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData,Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData,I,java.lang.Object):com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData
+- equals(java.lang.Object):Z
+- f:getCommonSystemInfo():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- f:getDisableNewUIDate():kotlinx.datetime.LocalDateTime
+- f:getEnableNewUIDate():kotlinx.datetime.LocalDateTime
+- hashCode():I
+- f:isNewUINowEnabled():Z
+- serializeToJson(kotlinx.serialization.json.Json):kotlinx.serialization.json.JsonElement
+- toString():java.lang.String
+f:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.newUi.NewUIFeedbackSystemData$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.newUi.NewUIInfoService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.newUi.NewUIInfoService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.platform.feedback.newUi.NewUIInfoService
+- getState():com.intellij.platform.feedback.newUi.NewUIInfoState
+- loadState(com.intellij.platform.feedback.newUi.NewUIInfoState):V
+- f:updateDisableNewUIDate():V
+- f:updateEnableNewUIDate():V
+f:com.intellij.platform.feedback.newUi.NewUIInfoService$Companion
+- f:getInstance():com.intellij.platform.feedback.newUi.NewUIInfoService
+f:com.intellij.platform.feedback.newUi.NewUIInfoState
+- sf:Companion:com.intellij.platform.feedback.newUi.NewUIInfoState$Companion
+- <init>():V
+- <init>(I,Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime):V
+- b:<init>(I,Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():Z
+- f:component3():kotlinx.datetime.LocalDateTime
+- f:component4():kotlinx.datetime.LocalDateTime
+- f:copy(I,Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime):com.intellij.platform.feedback.newUi.NewUIInfoState
+- bs:copy$default(com.intellij.platform.feedback.newUi.NewUIInfoState,I,Z,kotlinx.datetime.LocalDateTime,kotlinx.datetime.LocalDateTime,I,java.lang.Object):com.intellij.platform.feedback.newUi.NewUIInfoState
+- equals(java.lang.Object):Z
+- f:getDisableNewUIDate():kotlinx.datetime.LocalDateTime
+- f:getEnableNewUIDate():kotlinx.datetime.LocalDateTime
+- f:getFeedbackSent():Z
+- f:getNumberNotificationShowed():I
+- hashCode():I
+- f:setDisableNewUIDate(kotlinx.datetime.LocalDateTime):V
+- f:setEnableNewUIDate(kotlinx.datetime.LocalDateTime):V
+- f:setFeedbackSent(Z):V
+- f:setNumberNotificationShowed(I):V
+- toString():java.lang.String
+f:com.intellij.platform.feedback.newUi.NewUIInfoState$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.newUi.NewUIInfoState$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.newUi.NewUIInfoState
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.newUi.NewUIInfoState):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.newUi.NewUIInfoState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.pluginPage.PluginPageFeedbackBundleKt
+f:com.intellij.platform.feedback.pluginPage.PluginPageFeedbackDialogKt
+f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService
+- com.intellij.openapi.components.PersistentStateComponent
+- sf:Companion:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService
+- getState():com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState
+- loadState(com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState):V
+f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService$Companion
+- f:getInstance():com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackService
+f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState
+- sf:Companion:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState$Companion
+- <init>():V
+- <init>(I,Z):V
+- b:<init>(I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():I
+- f:component2():Z
+- f:copy(I,Z):com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState
+- bs:copy$default(com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState,I,Z,I,java.lang.Object):com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState
+- equals(java.lang.Object):Z
+- f:getFeedbackSent():Z
+- f:getNumberNotificationShowed():I
+- hashCode():I
+- f:setFeedbackSent(Z):V
+- f:setNumberNotificationShowed(I):V
+- toString():java.lang.String
+f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.pycharmce.PyCharmCeFeedbackState$Companion
+- f:serializer():kotlinx.serialization.KSerializer
+f:com.intellij.platform.feedback.pycharmce.PyCharmFeedbackBundleKt
+f:com.intellij.platform.feedback.startup.IdeStartupFeedbackConfigSurvey
+- com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
+- <init>():V
+- checkExtraConditionSatisfied(com.intellij.openapi.project.Project):Z
+- checkIdeIsSuitable():Z
+- createFeedbackDialog(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+- createNotification(com.intellij.openapi.project.Project,Z):com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
+- getLastDayOfFeedbackCollection():kotlinx.datetime.LocalDate
+- getRequireIdeEAP():Z
+- getSurveyId():java.lang.String
+- updateStateAfterDialogClosedOk(com.intellij.openapi.project.Project):V
+- updateStateAfterNotificationShowed(com.intellij.openapi.project.Project):V
+f:com.intellij.platform.feedback.startup.IdeStartupFeedbackShowAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.platform.feedback.startup.IdeStartupFeedbackSurvey
+- com.intellij.platform.feedback.FeedbackSurvey
+- <init>():V
+f:com.intellij.platform.feedback.startup.bundle.IdeStartupFeedbackMessagesBundleKt
+f:com.intellij.platform.feedback.startup.dialog.CustomCheckBoxGroupBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.FeedbackBlock
+- com.intellij.platform.feedback.dialog.uiBlocks.JsonDataProvider
+- com.intellij.platform.feedback.dialog.uiBlocks.TextDescriptionProvider
+- <init>(java.lang.String,java.util.List,com.intellij.platform.feedback.dialog.uiBlocks.CheckBoxItemData,java.lang.String):V
+- addToPanel(com.intellij.ui.dsl.builder.Panel):V
+- collectBlockDataToJson(kotlinx.serialization.json.JsonObjectBuilder):V
+- collectBlockTextDescription(java.lang.StringBuilder):V
+f:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog
+- com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+- sf:Companion:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog$Companion
+- <init>(com.intellij.openapi.project.Project,Z):V
+- getZendeskFeedbackType():java.lang.String
+- getZendeskTicketTitle():java.lang.String
+f:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog$Companion
+f:com.intellij.platform.feedback.twnames.TwNamesFeedbackDialogKt
+f:com.intellij.platform.feedback.twnames.TwNamesFeedbackMessagesBundleKt
+f:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
+- com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+- sf:Companion:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$Companion
+- <init>(Z,I,I,I,I,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):V
+- f:component1():Z
+- f:component2():I
+- f:component3():I
+- f:component4():I
+- f:component5():I
+- f:component6():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- f:copy(Z,I,I,I,I,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
+- bs:copy$default(com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData,Z,I,I,I,I,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData,I,java.lang.Object):com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
+- equals(java.lang.Object):Z
+- f:getBottom():I
+- f:getCommonSystemInfo():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+- f:getLeft():I
+- f:getRight():I
+- f:getTop():I
+- hashCode():I
+- f:isToolWindowNamesEnabled():Z
+- serializeToJson(kotlinx.serialization.json.Json):kotlinx.serialization.json.JsonElement
+- toString():java.lang.String
+f:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$$serializer
+- childSerializers():kotlinx.serialization.KSerializer[]
+- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
+- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$Companion
+- f:serializer():kotlinx.serialization.KSerializer
