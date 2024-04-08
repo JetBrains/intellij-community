@@ -20,7 +20,7 @@ abstract class AbstractK2MoveTopLevelToInnerTest : AbstractMultifileMoveRefactor
     }
 }
 
-private object K2MoveTopLevelToInnerRefactoringAction : KotlinMoveRefactoringAction {
+internal object K2MoveTopLevelToInnerRefactoringAction : KotlinMoveRefactoringAction {
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val project = mainFile.project
         if (mainFile.name.endsWith(".java")) {

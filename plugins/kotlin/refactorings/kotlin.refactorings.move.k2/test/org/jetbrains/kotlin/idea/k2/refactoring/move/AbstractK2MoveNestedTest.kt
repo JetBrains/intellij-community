@@ -10,11 +10,7 @@ import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2ChangePackageRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class AbstractK2MoveNestedTest : AbstractMultifileMoveRefactoringTest() {
@@ -23,7 +19,7 @@ abstract class AbstractK2MoveNestedTest : AbstractMultifileMoveRefactoringTest()
     }
 }
 
-private object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
+internal object K2MoveNestedRefactoringAction : KotlinMoveRefactoringAction {
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val project = mainFile.project
         val type = config.getString("type")

@@ -29,11 +29,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAn
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinCallChainHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
-import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.hints.*
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1LocalInspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.idea.kdoc.AbstractSharedK1KDocHighlightingTest
@@ -110,8 +106,8 @@ import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineMultiFileTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTest
 import org.jetbrains.kotlin.idea.refactoring.inline.AbstractInlineTestWithSomeDescriptors
 import org.jetbrains.kotlin.idea.refactoring.introduce.AbstractExtractionTest
+import org.jetbrains.kotlin.idea.refactoring.move.AbstractK1MultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.move.AbstractMoveTest
-import org.jetbrains.kotlin.idea.refactoring.move.AbstractMultiModuleMoveTest
 import org.jetbrains.kotlin.idea.refactoring.pullUp.AbstractPullUpTest
 import org.jetbrains.kotlin.idea.refactoring.pushDown.AbstractPushDownTest
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractInplaceRenameTest
@@ -148,13 +144,7 @@ import org.jetbrains.kotlin.shortenRefs.AbstractShortenRefsTest
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.*
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.COMPLETION
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.DEBUGGER
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.FIND_USAGES
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.GRADLE
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INSPECTIONS
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.INTENTIONS
-import org.jetbrains.kotlin.testGenerator.model.GroupCategory.REFACTORING
+import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.JAVA
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
@@ -799,7 +789,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/moveNested", pattern = TEST, flatten = true)
         }
 
-        testClass<AbstractMultiModuleMoveTest> {
+        testClass<AbstractK1MultiModuleMoveTest> {
             model("refactoring/moveMultiModule", pattern = TEST, flatten = true)
         }
     }

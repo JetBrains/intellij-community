@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.isFile
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
@@ -20,9 +19,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
-import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.jupiter.api.fail
@@ -33,7 +30,7 @@ abstract class AbstractK2MoveFileTest : AbstractMultifileMoveRefactoringTest() {
     }
 }
 
-private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
+internal object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val project = mainFile.project
         if (mainFile.name.endsWith(".java")) {
@@ -63,12 +60,14 @@ private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
             val targetDir = config.getNullableString("targetDirectory")
             val targetDescriptor = when {
                 targetDir != null -> {
-                    val directory = runWriteAction { VfsUtil.createDirectoryIfMissing(rootDir, targetDir) }.toPsiDirectory(project)!!
+                    val targetDirectory = runWriteAction {
+                        VfsUtil.createDirectoryIfMissing(rootDir, targetDir)
+                    }.toPsiDirectory(project)!!
                     if (targetPackage != null) {
-                        K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), directory)
+                        K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), targetDirectory)
                     } else {
-                        val pkg = JavaDirectoryService.getInstance().getPackage(directory) ?: error("No package was found")
-                        K2MoveTargetDescriptor.SourceDirectory(FqName(pkg.qualifiedName), directory)
+                        val pkgFqn = JavaDirectoryService.getInstance().getPackage(targetDirectory)?.qualifiedName
+                        K2MoveTargetDescriptor.SourceDirectory(if (pkgFqn == null) FqName.ROOT else FqName(pkgFqn), targetDirectory)
                     }
                 }
 
@@ -82,7 +81,9 @@ private object K2MoveFileRefactoringAction : KotlinMoveRefactoringAction {
                 project,
                 sourceDescriptor,
                 targetDescriptor,
-                config.searchReferences(), config.searchInComments(), config.searchReferences()
+                shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
+                config.searchInComments(),
+                config.searchReferences()
             )
             K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor).run()
         }

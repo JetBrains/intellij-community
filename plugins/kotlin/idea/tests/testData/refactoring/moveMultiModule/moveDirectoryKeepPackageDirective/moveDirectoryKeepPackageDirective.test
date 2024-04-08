@@ -2,5 +2,7 @@
   "mainFile": "A/src/x/test.kt",
   "type": "MOVE_DIRECTORY_WITH_CLASSES",
   "sourceDir": "A/src/x",
-  "targetDir": "A/src/z"
+  "targetDir": "A/src/z",
+  "enabledInK1": "true",
+  "enabledInK2": "false"
 }

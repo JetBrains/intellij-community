@@ -19,7 +19,7 @@ abstract class AbstractK2ChangePackageTest : AbstractMultifileMoveRefactoringTes
     }
 }
 
-private object K2ChangePackageRefactoringAction : KotlinMoveRefactoringAction {
+internal object K2ChangePackageRefactoringAction : KotlinMoveRefactoringAction {
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val newPkgName = config.getString("newPackageName")
         val descriptor = K2ChangePackageDescriptor(

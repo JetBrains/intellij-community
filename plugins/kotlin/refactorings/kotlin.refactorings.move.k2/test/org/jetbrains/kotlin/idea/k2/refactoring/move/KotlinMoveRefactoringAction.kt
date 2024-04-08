@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.google.gson.JsonObject
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 
@@ -14,4 +17,11 @@ interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.Refacto
 
     fun JsonObject.searchReferences() = get("searchReferences")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
+
+    fun shouldUpdateReferences(config: JsonObject, source: PsiElement, target: PsiElement): Boolean {
+        fun PsiElement.virtualFile() = if (this is PsiDirectory) virtualFile else containingFile.virtualFile
+        val fileIndex = ProjectFileIndex.getInstance(source.project)
+        if (!fileIndex.isInSource(source.virtualFile()) || !fileIndex.isInSource(target.virtualFile())) return false
+        return config.searchReferences()
+    }
 }

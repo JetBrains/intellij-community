@@ -5,5 +5,7 @@
   "targetSourceRoot": "A/src",
   "withRuntime": "true",
   "modulesWithRuntime": ["B"],
-  "modulesWithCommonRuntime": ["A"]
+  "modulesWithCommonRuntime": ["A"],
+  "enabledInK1": "true",
+  "enabledInK2": "true"
 }

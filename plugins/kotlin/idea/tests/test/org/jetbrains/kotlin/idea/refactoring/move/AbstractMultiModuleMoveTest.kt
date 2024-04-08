@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
+import com.google.gson.JsonObject
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -22,8 +25,15 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
+    protected abstract fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project)
+
+    abstract val isFirPlugin: Boolean
+
     fun doTest(path: String) {
         val config = loadTestConfiguration(File(path))
+
+        val isEnabled = if (isFirPlugin) config.get("enabledInK2").asBoolean else config.get("enabledInK1").asBoolean
+        if (!isEnabled) return
 
         isMultiModule = true
 
@@ -56,7 +66,7 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
             }
 
             try {
-                runMoveRefactoring(path, config, rootDir, project)
+                runRefactoring(path, config, rootDir, project)
             } finally {
                 modulesWithJvmRuntime.forEach {
                     ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(it, IdeaTestUtil.getMockJdk18())
