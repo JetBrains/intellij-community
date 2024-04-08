@@ -57,15 +57,8 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     KotlinPluginBuilder.kotlinPlugin(KotlinPluginBuilder.KotlinUltimateSources.WITH_COMMUNITY_MODULES),
-    plugin("intellij.properties") { spec ->
-      spec.withModule("intellij.properties.psi", "properties.jar")
-      spec.withModule("intellij.properties.psi.impl", "properties.jar")
-    },
     plugin("intellij.vcs.git") { spec ->
       spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
-    },
-    plugin("intellij.vcs.svn") { spec ->
-      spec.withProjectLibrary("sqlite")
     },
     plugin("intellij.xpath") { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
@@ -160,7 +153,10 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.gradle.dsl.kotlin")
       spec.withModule("intellij.android.gradle.dsl.toml")
     },
-    plugin(listOf("intellij.gradle.java", "intellij.gradle.jps")),
+    pluginAuto(listOf("intellij.gradle.java", "intellij.gradle.jps")) {
+      it.excludeProjectLibrary("Ant")
+      it.excludeProjectLibrary("Gradle")
+    },
     plugin("intellij.junit") { spec ->
       spec.mainJarName = "idea-junit.jar"
       spec.withModule("intellij.junit.rt", "junit-rt.jar")
