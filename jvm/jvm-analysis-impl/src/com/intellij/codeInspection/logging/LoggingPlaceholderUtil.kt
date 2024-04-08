@@ -364,10 +364,10 @@ internal fun getPlaceholderContext(
   mapper: CallMapper<LoggerTypeSearcher>,
   log4jAsImplementationForSlf4j: Boolean? = null
 ): PlaceholderContext? {
-  val method = uCallExpression.resolveToUElement() as? UMethod ?: return null
-
   val searcher = mapper.mapFirst(uCallExpression) ?: return null
   val arguments = uCallExpression.valueArguments
+
+  val method = uCallExpression.resolveToUElement() as? UMethod ?: return null
 
   val loggerType = searcher.findType(uCallExpression, LoggerContext(
     log4jAsImplementationForSlf4j ?: LoggingUtil.hasBridgeFromSlf4jToLog4j2(uCallExpression)
