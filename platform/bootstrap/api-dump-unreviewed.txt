@@ -1,0 +1,21 @@
+com.intellij.ide.BytecodeTransformer
+- isApplicable(java.lang.String,java.lang.ClassLoader,java.security.ProtectionDomain):Z
+- a:transform(java.lang.ClassLoader,java.lang.String,java.security.ProtectionDomain,B[]):B[]
+f:com.intellij.ide.WindowsCommandLineProcessor
+- <init>():V
+- s:processWindowsLauncherCommandLine(java.lang.String,java.lang.String[]):I
+f:com.intellij.idea.Main
+- sf:main(java.lang.String[]):V
+f:com.intellij.platform.bootstrap.MarketplaceKt
+- sf:initMarketplace():V
+f:com.intellij.platform.bootstrap.ModularMain
+- <init>():V
+- s:main(com.intellij.platform.runtime.repository.RuntimeModuleRepository,java.lang.String[],java.util.ArrayList,J):V
+f:com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategyKt
+f:com.intellij.platform.bootstrap.RuntimeModuleIntrospection
+- sf:INSTANCE:com.intellij.platform.bootstrap.RuntimeModuleIntrospection
+- f:getModuleRepository():com.intellij.platform.runtime.repository.RuntimeModuleRepository
+- f:getModuleRepositoryPath():java.nio.file.Path
+f:com.intellij.platform.ide.impl.startup.multiProcess.CustomConfigFiles
+- <init>():V
+- s:prepareConfigDir(java.nio.file.Path,java.nio.file.Path):V

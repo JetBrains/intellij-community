@@ -1,0 +1,6 @@
+f:com.intellij.platform.cdsAgent.LogLoadedApplicationClassesAgent
+- sf:TARGET_FILE:java.lang.String
+- sf:USE_APP_CDS:java.lang.String
+- <init>():V
+- s:agentmain(java.lang.String,java.lang.instrument.Instrumentation):V
+- s:premain(java.lang.String,java.lang.instrument.Instrumentation):V

@@ -1,0 +1,291 @@
+f:org.jetbrains.sqlite.AlreadyClosedException
+- java.util.concurrent.CancellationException
+- <init>():V
+a:org.jetbrains.sqlite.BaseBinder
+- org.jetbrains.sqlite.Binder
+- p:batchPosition:I
+- getBatchQueryCount():I
+- p:setBatchQueryCount(I):V
+a:org.jetbrains.sqlite.Binder
+- a:addBatch():V
+- a:getBatchQueryCount():I
+a:org.jetbrains.sqlite.BusyHandler
+- <init>():V
+- pa:callback(I):I
+- s:clearHandler(org.jetbrains.sqlite.SqliteConnection):V
+- s:setHandler(org.jetbrains.sqlite.SqliteConnection,org.jetbrains.sqlite.BusyHandler):V
+f:org.jetbrains.sqlite.EmptyBinder
+- org.jetbrains.sqlite.Binder
+- sf:INSTANCE:org.jetbrains.sqlite.EmptyBinder
+- addBatch():java.lang.Void
+- getBatchQueryCount():I
+f:org.jetbrains.sqlite.IntBinder
+- org.jetbrains.sqlite.BaseBinder
+- <init>(I,I):V
+- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addBatch():V
+- f:bind(I):V
+- f:bind(I,I):V
+- f:bind(I,I,I):V
+- toString():java.lang.String
+f:org.jetbrains.sqlite.LongBinder
+- org.jetbrains.sqlite.BaseBinder
+- <init>(I,I):V
+- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addBatch():V
+- f:bind(J):V
+- f:bind(J,J):V
+- f:bind(J,J,J):V
+- f:bind(J,J,J,J):V
+- toString():java.lang.String
+a:org.jetbrains.sqlite.MyObjectBinder
+- org.jetbrains.sqlite.Binder
+- b:<init>(I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addBatch():V
+- getBatchQueryCount():I
+- pf:getMyBinder():org.jetbrains.sqlite.ObjectBinder
+f:org.jetbrains.sqlite.ObjectBinder
+- org.jetbrains.sqlite.BaseBinder
+- <init>(I,I):V
+- b:<init>(I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addBatch():V
+- f:bind(java.lang.Object):V
+- f:bind(java.lang.Object,java.lang.Object):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+- f:bindMultiple(java.lang.Object[]):V
+- toString():java.lang.String
+f:org.jetbrains.sqlite.ObjectBinder1
+- org.jetbrains.sqlite.MyObjectBinder
+- <init>(I):V
+- f:bind(java.lang.Object):V
+f:org.jetbrains.sqlite.ObjectBinder2
+- org.jetbrains.sqlite.MyObjectBinder
+- <init>(I):V
+- f:bind(java.lang.Object,java.lang.Object):V
+f:org.jetbrains.sqlite.ObjectBinder3
+- org.jetbrains.sqlite.MyObjectBinder
+- <init>(I):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object):V
+f:org.jetbrains.sqlite.ObjectBinder4
+- org.jetbrains.sqlite.MyObjectBinder
+- <init>(I):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+f:org.jetbrains.sqlite.ObjectBinder5
+- org.jetbrains.sqlite.MyObjectBinder
+- <init>(I):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+f:org.jetbrains.sqlite.ObjectBinder6
+- org.jetbrains.sqlite.MyObjectBinder
+- <init>(I):V
+- f:bind(java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object,java.lang.Object):V
+f:org.jetbrains.sqlite.ObjectBinderFactory
+- sf:INSTANCE:org.jetbrains.sqlite.ObjectBinderFactory
+- f:verifyTypes(java.lang.Class[]):V
+f:org.jetbrains.sqlite.SQLiteConfig
+- <init>():V
+f:org.jetbrains.sqlite.SqlStatementPool
+- f:use(kotlin.jvm.functions.Function2):java.lang.Object
+f:org.jetbrains.sqlite.SqliteCodes
+- sf:INSTANCE:org.jetbrains.sqlite.SqliteCodes
+- sf:SQLITE_DONE:I
+- sf:SQLITE_INTERRUPT:I
+- sf:SQLITE_MISUSE:I
+- sf:SQLITE_OK:I
+- sf:SQLITE_ROW:I
+f:org.jetbrains.sqlite.SqliteConnection
+- java.lang.AutoCloseable
+- <init>(java.nio.file.Path,Z):V
+- b:<init>(java.nio.file.Path,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:affectedRows():I
+- f:beginTransaction():V
+- close():V
+- f:commit():V
+- f:execute(java.lang.String):V
+- f:execute(java.lang.String,java.lang.Object):V
+- f:interruptAndClose():V
+- f:isClosed():Z
+- f:prepareStatement(java.lang.String,org.jetbrains.sqlite.Binder):org.jetbrains.sqlite.SqlitePreparedStatement
+- f:prepareStatement(B[],org.jetbrains.sqlite.Binder):org.jetbrains.sqlite.SqlitePreparedStatement
+- f:rollback():V
+- f:selectBoolean(java.lang.String,java.lang.Object):Z
+- bs:selectBoolean$default(org.jetbrains.sqlite.SqliteConnection,java.lang.String,java.lang.Object,I,java.lang.Object):Z
+- f:selectInt(java.lang.String,java.lang.Object):java.lang.Integer
+- bs:selectInt$default(org.jetbrains.sqlite.SqliteConnection,java.lang.String,java.lang.Object,I,java.lang.Object):java.lang.Integer
+- f:selectString(java.lang.String,java.lang.Object):java.lang.String
+- bs:selectString$default(org.jetbrains.sqlite.SqliteConnection,java.lang.String,java.lang.Object,I,java.lang.Object):java.lang.String
+- f:statementPool(java.lang.String,kotlin.jvm.functions.Function0):org.jetbrains.sqlite.SqlStatementPool
+- f:withSavePoint(kotlin.jvm.functions.Function0):java.lang.Object
+f:org.jetbrains.sqlite.SqliteConnectionKt
+- sf:getSQLITE_ALLOWED_TYPES():java.util.Set
+f:org.jetbrains.sqlite.SqliteDbKt
+e:org.jetbrains.sqlite.SqliteErrorCode
+- java.lang.Enum
+- sf:Companion:org.jetbrains.sqlite.SqliteErrorCode$Companion
+- sf:SQLITE_ABORT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_ABORT_ROLLBACK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_AUTH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_AUTH_USER:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_BUSY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_BUSY_RECOVERY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_BUSY_SNAPSHOT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_BUSY_TIMEOUT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN_CONVPATH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN_DIRTYWAL:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN_FULLPATH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN_ISDIR:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN_NOTEMPDIR:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CANTOPEN_SYMLINK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_CHECK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_COMMITHOOK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_DATATYPE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_FOREIGNKEY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_FUNCTION:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_NOTNULL:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_PINNED:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_PRIMARYKEY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_ROWID:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_TRIGGER:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_UNIQUE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CONSTRAINT_VTAB:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CORRUPT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CORRUPT_INDEX:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CORRUPT_SEQUENCE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_CORRUPT_VTAB:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_DONE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_EMPTY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_ERROR:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_ERROR_MISSING_COLLSEQ:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_ERROR_RETRY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_ERROR_SNAPSHOT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_FORMAT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_FULL:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_INTERNAL:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_INTERRUPT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_ACCESS:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_AUTH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_BEGIN_ATOMIC:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_BLOCKED:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_CHECKRESERVEDLOCK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_CLOSE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_COMMIT_ATOMIC:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_CONVPATH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_CORRUPTFS:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_DATA:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_DELETE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_DELETE_NOENT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_DIR_CLOSE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_DIR_FSYNC:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_FSTAT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_FSYNC:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_GETTEMPPATH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_LOCK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_MMAP:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_NOMEM:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_RDLOCK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_READ:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_ROLLBACK_ATOMIC:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_SEEK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_SHMLOCK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_SHMMAP:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_SHMOPEN:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_SHMSIZE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_SHORT_READ:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_TRUNCATE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_UNLOCK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_VNODE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_IOERR_WRITE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_LOCKED:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_LOCKED_SHAREDCACHE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_LOCKED_VTAB:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_MISMATCH:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_MISUSE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOLFS:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOMEM:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOTADB:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOTFOUND:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOTICE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOTICE_RECOVER_ROLLBACK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_NOTICE_RECOVER_WAL:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_OK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_OK_LOAD_PERMANENTLY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_PERM:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_PROTOCOL:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_RANGE:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY_CANTINIT:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY_CANTLOCK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY_DBMOVED:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY_DIRECTORY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY_RECOVERY:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_READONLY_ROLLBACK:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_ROW:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_SCHEMA:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_TOOBIG:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_WARNING:org.jetbrains.sqlite.SqliteErrorCode
+- sf:SQLITE_WARNING_AUTOINDEX:org.jetbrains.sqlite.SqliteErrorCode
+- sf:UNKNOWN_ERROR:org.jetbrains.sqlite.SqliteErrorCode
+- f:code:I
+- f:message:java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- toString():java.lang.String
+- s:valueOf(java.lang.String):org.jetbrains.sqlite.SqliteErrorCode
+- s:values():org.jetbrains.sqlite.SqliteErrorCode[]
+f:org.jetbrains.sqlite.SqliteErrorCode$Companion
+f:org.jetbrains.sqlite.SqliteException
+- java.io.IOException
+- f:getResultCode():org.jetbrains.sqlite.SqliteErrorCode
+f:org.jetbrains.sqlite.SqliteIntPreparedStatement
+- org.jetbrains.sqlite.SqliteStatement
+- f:addBatch():V
+- close():V
+- f:ensureCapacity(I):V
+- executeBatch():V
+- f:getBinder():org.jetbrains.sqlite.IntBinder
+- toString():java.lang.String
+f:org.jetbrains.sqlite.SqliteLibLoaderKt
+f:org.jetbrains.sqlite.SqlitePreparedStatement
+- org.jetbrains.sqlite.SqliteStatement
+- close():V
+- executeBatch():V
+- f:executeQuery():org.jetbrains.sqlite.SqliteResultSet
+- f:executeUpdate():V
+- f:getBinder():org.jetbrains.sqlite.Binder
+- f:selectBoolean():Z
+- f:selectByteArray():B[]
+- f:selectInt():java.lang.Integer
+- f:selectNotNullInt():I
+- toString():java.lang.String
+f:org.jetbrains.sqlite.SqliteResultSet
+- <init>(org.jetbrains.sqlite.SqlitePreparedStatement):V
+- f:getBoolean(I):Z
+- f:getBytes(I):B[]
+- f:getDouble(I):D
+- f:getFloat(I):F
+- f:getInt(I):I
+- f:getLong(I):J
+- f:getRow():I
+- f:getString(I):java.lang.String
+- f:isClosed():Z
+- f:isOpen():Z
+- f:next():Z
+- f:wasNull():Z
+f:org.jetbrains.sqlite.SqliteResultSetKt
+f:org.jetbrains.sqlite.SqliteSavepoint
+- getSavepointId():I
+- getSavepointName():java.lang.String
+org.jetbrains.sqlite.SqliteStatement
+- java.lang.AutoCloseable
+- a:executeBatch():V
+f:org.jetbrains.sqlite.StatementCollection
+- <init>(org.jetbrains.sqlite.SqliteConnection):V
+- f:close(Z):V
+- f:executeBatch():V
+- f:prepareIntStatement(java.lang.String):org.jetbrains.sqlite.SqliteIntPreparedStatement
+- f:prepareStatement(java.lang.String,org.jetbrains.sqlite.Binder):org.jetbrains.sqlite.SqlitePreparedStatement

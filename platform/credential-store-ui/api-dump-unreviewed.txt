@@ -1,0 +1,20 @@
+f:com.intellij.credentialStore.CredentialStoreUiServiceImpl
+- com.intellij.credentialStore.CredentialStoreUiService
+- <init>():V
+- notify(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.notification.NotificationAction):V
+- openSettings(com.intellij.openapi.project.Project):V
+- showChangeMainPasswordDialog(java.awt.Component,kotlin.jvm.functions.Function2):Z
+- showErrorMessage(java.awt.Component,java.lang.String,java.lang.String):V
+- showRequestMainPasswordDialog(java.lang.String,java.lang.String,java.awt.Component,kotlin.jvm.functions.Function1):Z
+f:com.intellij.credentialStore.CredentialStoreUiServiceImplKt
+f:com.intellij.credentialStore.PasswordSafeConfigurable
+- com.intellij.openapi.options.ConfigurableBase
+- <init>():V
+f:com.intellij.credentialStore.PasswordSafeConfigurableKt
+f:com.intellij.credentialStore.PasswordSafeConfigurableUi
+- com.intellij.openapi.options.ConfigurableUi
+- <init>(com.intellij.credentialStore.PasswordSafeSettings):V
+- apply(com.intellij.credentialStore.PasswordSafeSettings):V
+- getComponent():javax.swing.JPanel
+- isModified(com.intellij.credentialStore.PasswordSafeSettings):Z
+- reset(com.intellij.credentialStore.PasswordSafeSettings):V

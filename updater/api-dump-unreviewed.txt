@@ -1,0 +1,329 @@
+f:com.intellij.updater.Bootstrap
+- <init>():V
+- s:main(java.lang.String[]):V
+c:com.intellij.updater.ConsoleUpdaterUI
+- com.intellij.updater.UpdaterUI
+- <init>(Z):V
+- askUser(java.util.List):java.util.Map
+- checkCancelled():V
+- setDescription(java.lang.String):V
+- setProgress(I):V
+- setProgressIndeterminate():V
+- showError(java.lang.String):V
+- startProcess(java.lang.String):V
+c:com.intellij.updater.CreateAction
+- com.intellij.updater.PatchAction
+- <init>(com.intellij.updater.Patch,java.io.DataInputStream):V
+- <init>(com.intellij.updater.Patch,java.lang.String):V
+- p:doApply(java.util.zip.ZipFile,java.io.File,java.io.File):V
+- p:doBuildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- p:doRevert(java.io.File,java.io.File):V
+- p:isModified(java.io.File):Z
+- validate(java.io.File):com.intellij.updater.ValidationResult
+c:com.intellij.updater.DeleteAction
+- com.intellij.updater.PatchAction
+- <init>(com.intellij.updater.Patch,java.io.DataInputStream):V
+- <init>(com.intellij.updater.Patch,java.lang.String,J):V
+- p:doApply(java.util.zip.ZipFile,java.io.File,java.io.File):V
+- p:doBackup(java.io.File,java.io.File):V
+- doBuildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- p:doRevert(java.io.File,java.io.File):V
+- p:doShouldApply(java.io.File):Z
+- validate(java.io.File):com.intellij.updater.ValidationResult
+f:com.intellij.updater.DiffCalculator
+- <init>():V
+- s:calculate(java.util.Map,java.util.Map):com.intellij.updater.DiffCalculator$Result
+- s:calculate(java.util.Map,java.util.Map,java.util.Set,java.util.Set,Z):com.intellij.updater.DiffCalculator$Result
+- s:groupFilesByContent(java.util.Map):java.util.Map
+c:com.intellij.updater.DiffCalculator$Result
+- commonFiles:java.util.Map
+- filesToCreate:java.util.Map
+- filesToDelete:java.util.Map
+- filesToUpdate:java.util.Map
+- <init>():V
+c:com.intellij.updater.DiffCalculator$Update
+- f:checksum:J
+- f:move:Z
+- f:source:java.lang.String
+- <init>(java.lang.String,J,Z):V
+f:com.intellij.updater.Digester
+- sf:DIRECTORY:J
+- sf:EXECUTABLE:J
+- sf:FLAG_MASK:J
+- sf:INVALID:J
+- sf:SYM_LINK:J
+- <init>():V
+- s:digest(java.nio.file.Path):J
+- s:digestRegularFile(java.io.File):J
+- s:digestStream(java.io.InputStream):J
+- s:isFile(J):Z
+- s:isSymlink(J):Z
+f:com.intellij.updater.NativeFileManager
+- <init>():V
+- s:getProcessesUsing(java.io.File):java.util.List
+- s:getProcessesUsing(java.io.File,I):java.util.List
+f:com.intellij.updater.NativeFileManager$Process
+- f:name:java.lang.String
+- f:pid:I
+- <init>(I,java.lang.String):V
+- terminate():Z
+c:com.intellij.updater.OperationCancelledException
+- java.lang.Exception
+- <init>():V
+c:com.intellij.updater.Patch
+- <init>(com.intellij.updater.PatchSpec):V
+- <init>(java.io.InputStream):V
+- apply(java.util.zip.ZipFile,java.io.File,java.io.File,java.util.Map,com.intellij.updater.UpdaterUI):com.intellij.updater.PatchFileCreator$ApplicationResult
+- digestFile(java.io.File):J
+- digestFile(java.nio.file.Path):J
+- digestFiles(java.io.File,java.util.Set):java.util.Map
+- digestFiles(java.nio.file.Path,java.util.Set):java.util.Map
+- getActions():java.util.List
+- getNewBuild():java.lang.String
+- getOldBuild():java.lang.String
+- getTimeout():I
+- isStrict():Z
+- revert(java.util.List,java.io.File,java.io.File,com.intellij.updater.UpdaterUI):V
+- validate(java.io.File,com.intellij.updater.UpdaterUI):java.util.List
+- validateDeletion(java.lang.String):Z
+- write(java.io.OutputStream):V
+a:com.intellij.updater.PatchAction
+- pf:myPatch:com.intellij.updater.Patch
+- <init>(com.intellij.updater.Patch,java.io.DataInputStream):V
+- <init>(com.intellij.updater.Patch,java.lang.String,J):V
+- apply(java.util.zip.ZipFile,java.io.File,java.io.File):V
+- backup(java.io.File,java.io.File):V
+- buildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- p:doApply(java.util.zip.ZipFile,java.io.File,java.io.File):V
+- p:doBackup(java.io.File,java.io.File):V
+- pa:doBuildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- p:doRevert(java.io.File,java.io.File):V
+- p:doShouldApply(java.io.File):Z
+- p:doValidateAccess(java.io.File,com.intellij.updater.ValidationResult$Action,Z):com.intellij.updater.ValidationResult
+- p:doValidateNotChanged(java.io.File,com.intellij.updater.ValidationResult$Action):com.intellij.updater.ValidationResult
+- equals(java.lang.Object):Z
+- getChecksum():J
+- p:getFile(java.io.File):java.io.File
+- ps:getFileType(java.io.File):com.intellij.updater.PatchAction$FileType
+- getPath():java.lang.String
+- p:getReportPath():java.lang.String
+- hashCode():I
+- isCritical():Z
+- p:isModified(java.io.File):Z
+- isOptional():Z
+- isStrict():Z
+- mandatoryBackup():Z
+- ps:readFileType(java.io.InputStream):com.intellij.updater.PatchAction$FileType
+- revert(java.io.File,java.io.File):V
+- setCritical(Z):V
+- setOptional(Z):V
+- setStrict(Z):V
+- shouldApply(java.io.File,java.util.Map):Z
+- toString():java.lang.String
+- pa:validate(java.io.File):com.intellij.updater.ValidationResult
+- write(java.io.DataOutputStream):V
+- ps:writeFileType(java.io.OutputStream,com.intellij.updater.PatchAction$FileType):V
+e:com.intellij.updater.PatchAction$FileType
+- java.lang.Enum
+- sf:EXECUTABLE_FILE:com.intellij.updater.PatchAction$FileType
+- sf:REGULAR_FILE:com.intellij.updater.PatchAction$FileType
+- sf:SYMLINK:com.intellij.updater.PatchAction$FileType
+- s:valueOf(java.lang.String):com.intellij.updater.PatchAction$FileType
+- s:values():com.intellij.updater.PatchAction$FileType[]
+f:com.intellij.updater.PatchFileCreator
+- <init>():V
+- s:apply(com.intellij.updater.PatchFileCreator$PreparationResult,java.util.Map,java.io.File,com.intellij.updater.UpdaterUI):com.intellij.updater.PatchFileCreator$ApplicationResult
+- s:create(com.intellij.updater.PatchSpec,java.io.File,java.nio.file.Path):com.intellij.updater.Patch
+- s:prepareAndValidate(java.io.File,java.io.File,com.intellij.updater.UpdaterUI):com.intellij.updater.PatchFileCreator$PreparationResult
+- s:revert(com.intellij.updater.PatchFileCreator$PreparationResult,java.util.List,java.io.File,com.intellij.updater.UpdaterUI):V
+c:com.intellij.updater.PatchFileCreator$ApplicationResult
+- f:applied:Z
+- f:appliedActions:java.util.List
+- f:error:java.lang.Throwable
+- <init>(Z,java.util.List):V
+- <init>(Z,java.util.List,java.lang.Throwable):V
+c:com.intellij.updater.PatchFileCreator$PreparationResult
+- f:patch:com.intellij.updater.Patch
+- f:patchFile:java.io.File
+- f:toDir:java.io.File
+- f:validationResults:java.util.List
+- <init>(com.intellij.updater.Patch,java.io.File,java.io.File,java.util.List):V
+c:com.intellij.updater.PatchSpec
+- <init>():V
+- getCriticalFiles():java.util.List
+- getDeleteFiles():java.util.List
+- getIgnoredFiles():java.util.List
+- getJarFile():java.lang.String
+- getNewFolder():java.lang.String
+- getNewVersionDescription():java.lang.String
+- getOldFolder():java.lang.String
+- getOldVersionDescription():java.lang.String
+- getOptionalFiles():java.util.List
+- getPatchFile():java.lang.String
+- getRoot():java.lang.String
+- getStrictFiles():java.util.List
+- getTimeout():I
+- isStrict():Z
+- setCriticalFiles(java.util.List):com.intellij.updater.PatchSpec
+- setDeleteFiles(java.util.List):com.intellij.updater.PatchSpec
+- setIgnoredFiles(java.util.List):com.intellij.updater.PatchSpec
+- setJarFile(java.lang.String):com.intellij.updater.PatchSpec
+- setNewFolder(java.lang.String):com.intellij.updater.PatchSpec
+- setNewVersionDescription(java.lang.String):com.intellij.updater.PatchSpec
+- setOldFolder(java.lang.String):com.intellij.updater.PatchSpec
+- setOldVersionDescription(java.lang.String):com.intellij.updater.PatchSpec
+- setOptionalFiles(java.util.List):com.intellij.updater.PatchSpec
+- setPatchFile(java.lang.String):com.intellij.updater.PatchSpec
+- setRoot(java.lang.String):com.intellij.updater.PatchSpec
+- setStrict(Z):com.intellij.updater.PatchSpec
+- setStrictFiles(java.util.List):com.intellij.updater.PatchSpec
+- setTimeout(I):com.intellij.updater.PatchSpec
+f:com.intellij.updater.Runner
+- <init>():V
+- s:checkCaseSensitivity(java.lang.String):V
+- s:extractArguments(java.lang.String[],java.lang.String):java.util.List
+- s:getArgument(java.lang.String[],java.lang.String):java.lang.String
+- s:isCaseSensitiveFs():Z
+- s:main(java.lang.String[]):V
+c:com.intellij.updater.SwingUpdaterUI
+- com.intellij.updater.UpdaterUI
+- askUser(java.util.List):java.util.Map
+- bold(java.lang.String):java.lang.String
+- checkCancelled():V
+- s:createUI():com.intellij.updater.SwingUpdaterUI
+- setDescription(java.lang.String):V
+- setProgress(I):V
+- setProgressIndeterminate():V
+- showError(java.lang.String):V
+- startProcess(java.lang.String):V
+c:com.intellij.updater.UpdateAction
+- com.intellij.updater.PatchAction
+- <init>(com.intellij.updater.Patch,java.io.DataInputStream):V
+- <init>(com.intellij.updater.Patch,java.lang.String,J):V
+- <init>(com.intellij.updater.Patch,java.lang.String,java.lang.String,J,Z):V
+- backup(java.io.File,java.io.File):V
+- buildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- p:doApply(java.util.zip.ZipFile,java.io.File,java.io.File):V
+- p:doBuildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- p:doRevert(java.io.File,java.io.File):V
+- p:doShouldApply(java.io.File):Z
+- equals(java.lang.Object):Z
+- p:getReportPath():java.lang.String
+- hashCode():I
+- p:isMove():Z
+- mandatoryBackup():Z
+- toString():java.lang.String
+- validate(java.io.File):com.intellij.updater.ValidationResult
+- write(java.io.DataOutputStream):V
+com.intellij.updater.UpdaterUI
+- sf:BUNDLE:java.lang.String
+- a:askUser(java.util.List):java.util.Map
+- bold(java.lang.String):java.lang.String
+- a:checkCancelled():V
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- a:setDescription(java.lang.String):V
+- a:setProgress(I):V
+- a:setProgressIndeterminate():V
+- a:showError(java.lang.String):V
+- a:startProcess(java.lang.String):V
+@:com.intellij.updater.UpdaterUI$Message
+- java.lang.annotation.Annotation
+@:com.intellij.updater.UpdaterUI$Title
+- java.lang.annotation.Annotation
+f:com.intellij.updater.Utils
+- sf:IS_MAC:Z
+- sf:IS_WINDOWS:Z
+- <init>():V
+- s:cleanup():V
+- s:collectRelativePaths(java.nio.file.Path):java.util.LinkedHashSet
+- s:copy(java.io.File,java.io.File,Z):V
+- s:copy(java.nio.file.Path,java.nio.file.Path,Z):V
+- s:copyDirectory(java.nio.file.Path,java.nio.file.Path):V
+- s:copyFileToStream(java.io.File,java.io.OutputStream):V
+- s:copyStream(java.io.InputStream,java.io.OutputStream):V
+- s:copyStreamToFile(java.io.InputStream,java.io.File):V
+- s:createLink(java.lang.String,java.io.File):V
+- s:delete(java.io.File):V
+- s:delete(java.nio.file.Path):V
+- s:findEntryInputStream(java.util.zip.ZipFile,java.lang.String):java.io.InputStream
+- s:findEntryInputStreamForEntry(java.util.zip.ZipFile,java.util.zip.ZipEntry):java.io.InputStream
+- s:getEntryInputStream(java.util.zip.ZipFile,java.lang.String):java.io.InputStream
+- s:getTempFile(java.lang.String):java.io.File
+- s:getZipEntry(java.util.zip.ZipFile,java.lang.String):java.util.zip.ZipEntry
+- s:isExecutable(java.io.File):Z
+- s:isLink(java.io.File):Z
+- s:move(java.nio.file.Path,java.nio.file.Path,Z):V
+- s:newFileInputStream(java.io.File):java.io.InputStream
+- s:pause(J):V
+- s:readBytes(java.io.InputStream):B[]
+- s:readBytes(java.io.InputStream,I):B[]
+- s:readLink(java.io.File):java.lang.String
+- s:setExecutable(java.io.File):V
+- s:setExecutable(java.nio.file.Path):V
+- s:writeBytes(B[],I,java.io.OutputStream):V
+- s:writeString(java.nio.file.Path,java.lang.String):V
+c:com.intellij.updater.Utils$OpenByteArrayOutputStream
+- java.io.ByteArrayOutputStream
+- <init>():V
+- writeTo(java.io.OutputStream):V
+c:com.intellij.updater.ValidateAction
+- com.intellij.updater.PatchAction
+- <init>(com.intellij.updater.Patch,java.io.DataInputStream):V
+- <init>(com.intellij.updater.Patch,java.lang.String,J):V
+- p:doBuildPatchFile(java.io.File,java.io.File,java.util.zip.ZipOutputStream):V
+- validate(java.io.File):com.intellij.updater.ValidationResult
+c:com.intellij.updater.ValidationResult
+- java.lang.Comparable
+- f:action:com.intellij.updater.ValidationResult$Action
+- f:details:java.lang.String
+- f:kind:com.intellij.updater.ValidationResult$Kind
+- f:message:java.lang.String
+- f:options:java.util.List
+- f:path:java.lang.String
+- <init>(com.intellij.updater.ValidationResult$Kind,java.lang.String,com.intellij.updater.ValidationResult$Action,java.lang.String,java.lang.String,com.intellij.updater.ValidationResult$Option[]):V
+- <init>(com.intellij.updater.ValidationResult$Kind,java.lang.String,com.intellij.updater.ValidationResult$Action,java.lang.String,com.intellij.updater.ValidationResult$Option[]):V
+- compareTo(com.intellij.updater.ValidationResult):I
+- equals(java.lang.Object):Z
+- hashCode():I
+- toString():java.lang.String
+e:com.intellij.updater.ValidationResult$Action
+- java.lang.Enum
+- sf:CREATE:com.intellij.updater.ValidationResult$Action
+- sf:DELETE:com.intellij.updater.ValidationResult$Action
+- sf:UPDATE:com.intellij.updater.ValidationResult$Action
+- sf:VALIDATE:com.intellij.updater.ValidationResult$Action
+- s:valueOf(java.lang.String):com.intellij.updater.ValidationResult$Action
+- s:values():com.intellij.updater.ValidationResult$Action[]
+e:com.intellij.updater.ValidationResult$Kind
+- java.lang.Enum
+- sf:CONFLICT:com.intellij.updater.ValidationResult$Kind
+- sf:ERROR:com.intellij.updater.ValidationResult$Kind
+- sf:INFO:com.intellij.updater.ValidationResult$Kind
+- s:valueOf(java.lang.String):com.intellij.updater.ValidationResult$Kind
+- s:values():com.intellij.updater.ValidationResult$Kind[]
+e:com.intellij.updater.ValidationResult$Option
+- java.lang.Enum
+- sf:DELETE:com.intellij.updater.ValidationResult$Option
+- sf:IGNORE:com.intellij.updater.ValidationResult$Option
+- sf:KEEP:com.intellij.updater.ValidationResult$Option
+- sf:KILL_PROCESS:com.intellij.updater.ValidationResult$Option
+- sf:NONE:com.intellij.updater.ValidationResult$Option
+- sf:REPLACE:com.intellij.updater.ValidationResult$Option
+- s:valueOf(java.lang.String):com.intellij.updater.ValidationResult$Option
+- s:values():com.intellij.updater.ValidationResult$Option[]
+c:com.intellij.updater.ZipOutputWrapper
+- java.lang.AutoCloseable
+- <init>(java.io.OutputStream):V
+- <init>(java.io.OutputStream,I):V
+- close():V
+- finish():V
+- zipEntry(java.lang.String,java.io.InputStream):V
+- zipEntry(java.util.zip.ZipEntry,java.io.InputStream):V
+- zipFile(java.lang.String,java.io.File):V
+- zipStream(java.lang.String):java.io.OutputStream
+f:ie.wombat.jbdiff.JBDiff
+- <init>():V
+- s:bsdiff(java.io.InputStream,java.io.InputStream,java.io.ByteArrayOutputStream,I):B[]
+f:ie.wombat.jbdiff.JBPatch
+- <init>():V
+- s:bspatch(java.io.InputStream,java.io.OutputStream,java.io.InputStream):V

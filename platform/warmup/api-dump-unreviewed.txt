@@ -1,0 +1,94 @@
+f:com.intellij.warmup.ProjectCachesWarmupKt
+com.intellij.warmup.WarmupBuildStatus
+- sf:Companion:com.intellij.warmup.WarmupBuildStatus$Companion
+f:com.intellij.warmup.WarmupBuildStatus$Companion
+- f:currentStatus():com.intellij.warmup.WarmupBuildStatus
+f:com.intellij.warmup.WarmupBuildStatus$Failure
+- com.intellij.warmup.WarmupBuildStatus$InvocationStatus
+- <init>(java.lang.String):V
+a:com.intellij.warmup.WarmupBuildStatus$InvocationStatus
+- com.intellij.warmup.WarmupBuildStatus
+- f:getMessage():java.lang.String
+f:com.intellij.warmup.WarmupBuildStatus$NotInvoked
+- com.intellij.warmup.WarmupBuildStatus
+- sf:INSTANCE:com.intellij.warmup.WarmupBuildStatus$NotInvoked
+f:com.intellij.warmup.WarmupBuildStatus$Success
+- com.intellij.warmup.WarmupBuildStatus$InvocationStatus
+- <init>(java.lang.String):V
+f:com.intellij.warmup.WarmupUtilsKt
+- sf:waitIndexInitialization(kotlin.coroutines.Continuation):java.lang.Object
+- sf:waitUntilProgressTasksAreFinishedOrFail(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfiguratorsKt
+f:com.intellij.warmup.util.ActivityBasedWarmupKt
+- sf:configureProjectByActivities(com.intellij.warmup.util.OpenProjectArgs,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.warmup.util.ConsoleLog
+- sf:INSTANCE:com.intellij.warmup.util.ConsoleLog
+- f:error(java.lang.String,java.lang.Throwable):V
+- bs:error$default(com.intellij.warmup.util.ConsoleLog,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
+- f:info(java.lang.String):V
+- f:warn(java.lang.String):V
+f:com.intellij.warmup.util.DefaultWarmupLogger
+- com.intellij.ide.warmup.WarmupLogger
+- <init>():V
+- logError(java.lang.String,java.lang.Throwable):V
+- logFatalError(java.lang.String,java.lang.Throwable):V
+- logInfo(java.lang.String):V
+com.intellij.warmup.util.HeadlessConfigurableArgs
+- a:getPathToConfigurationFile():java.nio.file.Path
+c:com.intellij.warmup.util.HeadlessConfigurableArgsImpl
+- com.intellij.warmup.util.HeadlessConfigurableArgs
+- <init>(com.intellij.platform.util.ArgsParser):V
+- getPathToConfigurationFile():java.nio.file.Path
+f:com.intellij.warmup.util.LoggingKt
+- sf:withLoggingProgressReporter(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:withLoggingProgresses(kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.warmup.util.OpenProjectArgs
+- com.intellij.warmup.util.HeadlessConfigurableArgs
+- a:getConfigureProject():Z
+- a:getConvertProject():Z
+- a:getDisabledConfigurators():java.util.Set
+- a:getProjectDir():java.nio.file.Path
+c:com.intellij.warmup.util.OpenProjectArgsImpl
+- com.intellij.warmup.util.HeadlessConfigurableArgsImpl
+- com.intellij.warmup.util.OpenProjectArgs
+- <init>(com.intellij.platform.util.ArgsParser):V
+- getConfigureProject():Z
+- getConvertProject():Z
+- getDisabledConfigurators():java.util.Set
+- getProjectDir():java.nio.file.Path
+f:com.intellij.warmup.util.ProjectUtilKt
+- sf:importOrOpenProject(com.intellij.warmup.util.OpenProjectArgs):com.intellij.openapi.project.Project
+- sf:importOrOpenProjectAsync(com.intellij.warmup.util.OpenProjectArgs,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.warmup.util.TimeCookie
+- <init>():V
+- f:formatDuration():java.lang.String
+f:com.intellij.warmup.util.UtilsKt
+- sf:callProjectConversion(com.intellij.warmup.util.OpenProjectArgs,kotlin.coroutines.Continuation):java.lang.Object
+- sf:checkProjectRoots(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- sf:getProjectFile(com.intellij.warmup.util.OpenProjectArgs,kotlin.coroutines.Continuation):java.lang.Object
+- sf:runAndCatchNotNull(java.lang.String,kotlin.jvm.functions.Function0):java.lang.Object
+- sf:yieldAndWaitForDumbModeEnd(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- sf:yieldThroughInvokeLater(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.warmup.util.Utils_time_loggerKt
+- sf:runTaskAndLogTime(java.lang.String,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.warmup.util.WarmupLogger
+- sf:INSTANCE:com.intellij.warmup.util.WarmupLogger
+- f:logError(java.lang.String,java.lang.Throwable):V
+- bs:logError$default(com.intellij.warmup.util.WarmupLogger,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
+- f:logInfo(java.lang.String):V
+f:com.intellij.warmup.util.WarmupProgressListener
+- <init>():V
+- afterTaskFinished(com.intellij.openapi.progress.Task):V
+- beforeTaskStart(com.intellij.openapi.progress.Task,com.intellij.openapi.progress.ProgressIndicator):V
+com.intellij.warmup.util.WarmupProjectArgs
+- com.intellij.warmup.util.OpenProjectArgs
+- a:getBuild():Z
+- a:getIndexGitLog():Z
+- a:getRebuild():Z
+f:com.intellij.warmup.util.WarmupProjectArgsImpl
+- com.intellij.warmup.util.OpenProjectArgsImpl
+- com.intellij.warmup.util.WarmupProjectArgs
+- <init>(com.intellij.platform.util.ArgsParser):V
+- getBuild():Z
+- getIndexGitLog():Z
+- getRebuild():Z

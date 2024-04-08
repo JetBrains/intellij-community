@@ -1,0 +1,82 @@
+com.intellij.externalProcessAuthHelper.AuthenticationGate
+- a:cancel():V
+- a:getSavedInput(java.lang.String):java.lang.String
+- a:saveInput(java.lang.String,java.lang.String):V
+- a:waitAndCompute(java.util.function.Supplier):java.lang.Object
+f:com.intellij.externalProcessAuthHelper.AuthenticationGatesKt
+e:com.intellij.externalProcessAuthHelper.AuthenticationMode
+- java.lang.Enum
+- sf:FULL:com.intellij.externalProcessAuthHelper.AuthenticationMode
+- sf:NONE:com.intellij.externalProcessAuthHelper.AuthenticationMode
+- sf:SILENT:com.intellij.externalProcessAuthHelper.AuthenticationMode
+- s:valueOf(java.lang.String):com.intellij.externalProcessAuthHelper.AuthenticationMode
+- s:values():com.intellij.externalProcessAuthHelper.AuthenticationMode[]
+f:com.intellij.externalProcessAuthHelper.ExternalProcessAuthHelperBundle
+- sf:BUNDLE:java.lang.String
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService
+- sf:Companion:com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService$Companion
+- <init>(java.lang.String,java.lang.Class):V
+- f:getCallbackScriptPath(java.lang.String,com.intellij.externalProcessAuthHelper.ScriptGenerator,Z):java.io.File
+- f:getIdePort():I
+- pa:handleRequest(externalApp.ExternalAppHandler,java.lang.String):java.lang.String
+- f:registerHandler(externalApp.ExternalAppHandler,com.intellij.openapi.Disposable):java.util.UUID
+f:com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService$Companion
+a:com.intellij.externalProcessAuthHelper.ExternalProcessRest
+- org.jetbrains.ide.RestService
+- sf:Companion:com.intellij.externalProcessAuthHelper.ExternalProcessRest$Companion
+- <init>(java.lang.String):V
+- execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
+- pa:getExternalProcessHandler():com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService
+- p:getReportErrorsAsPlainText():Z
+- p:getRequesterId(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.Object
+- p:getServiceName():java.lang.String
+- p:isMethodSupported(io.netty.handler.codec.http.HttpMethod):Z
+f:com.intellij.externalProcessAuthHelper.ExternalProcessRest$Companion
+f:com.intellij.externalProcessAuthHelper.NativeSshAuthService
+- com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService
+- sf:Companion:com.intellij.externalProcessAuthHelper.NativeSshAuthService$Companion
+- <init>():V
+- sf:getInstance():com.intellij.externalProcessAuthHelper.NativeSshAuthService
+f:com.intellij.externalProcessAuthHelper.NativeSshAuthService$Companion
+- f:getInstance():com.intellij.externalProcessAuthHelper.NativeSshAuthService
+f:com.intellij.externalProcessAuthHelper.NativeSshExternalProcessRest
+- com.intellij.externalProcessAuthHelper.ExternalProcessRest
+- <init>():V
+f:com.intellij.externalProcessAuthHelper.NativeSshGuiAuthenticator
+- externalApp.nativessh.NativeSshAskPassAppHandler
+- sf:Companion:com.intellij.externalProcessAuthHelper.NativeSshGuiAuthenticator$Companion
+- <init>(com.intellij.openapi.project.Project,com.intellij.externalProcessAuthHelper.AuthenticationGate,com.intellij.externalProcessAuthHelper.AuthenticationMode,Z):V
+- handleInput(java.lang.String):java.lang.String
+f:com.intellij.externalProcessAuthHelper.NativeSshGuiAuthenticator$Companion
+f:com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
+- com.intellij.externalProcessAuthHelper.AuthenticationGate
+- sf:Companion:com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate$Companion
+- <init>():V
+- cancel():V
+- sf:getInstance():com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
+- getSavedInput(java.lang.String):java.lang.String
+- saveInput(java.lang.String,java.lang.String):V
+- waitAndCompute(java.util.function.Supplier):java.lang.Object
+f:com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate$Companion
+- f:getInstance():com.intellij.externalProcessAuthHelper.PassthroughAuthenticationGate
+f:com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
+- com.intellij.externalProcessAuthHelper.AuthenticationGate
+- <init>():V
+- cancel():V
+- getSavedInput(java.lang.String):java.lang.String
+- saveInput(java.lang.String,java.lang.String):V
+- waitAndCompute(java.util.function.Supplier):java.lang.Object
+com.intellij.externalProcessAuthHelper.ScriptGenerator
+- a:commandLine(java.lang.Class,Z):java.lang.String
+c:com.intellij.externalProcessAuthHelper.ScriptGeneratorImpl
+- com.intellij.externalProcessAuthHelper.ScriptGenerator
+- <init>():V
+- addParameters(java.lang.String[]):com.intellij.externalProcessAuthHelper.ScriptGeneratorImpl
+- commandLine(java.lang.Class,Z):java.lang.String
+- p:getJavaExecutablePath():java.lang.String
+f:com.intellij.externalProcessAuthHelper.ScriptGeneratorUtil
+- <init>():V
+- s:createTempScript(java.lang.String,java.lang.String,Z):java.io.File
+- s:getJarFileFor(java.lang.Class):java.io.File

@@ -1,0 +1,52 @@
+f:com.intellij.platform.experiment.ab.impl.bundle.ABExperimentBundleKt
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
+- sf:Companion:com.intellij.platform.experiment.ab.impl.experiment.ABExperiment$Companion
+- <init>():V
+- f:isControlExperimentOptionEnabled():Z
+- f:isExperimentOptionEnabled(java.lang.Class):Z
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperiment$Companion
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentKt
+- sf:getABExperimentInstance():com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
+com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
+- com.intellij.openapi.extensions.PluginAware
+- a:getGroupSizeForIde(Z):com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- a:getId-d3vBMqI():java.lang.String
+- a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+a:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionBase
+- com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
+- <init>():V
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
+- bsf:box-impl(java.lang.String):com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
+- s:constructor-impl(java.lang.String):java.lang.String
+- equals(java.lang.Object):Z
+- s:equals-impl(java.lang.String,java.lang.Object):Z
+- sf:equals-impl0(java.lang.String,java.lang.String):Z
+- f:getValue():java.lang.String
+- hashCode():I
+- s:hashCode-impl(java.lang.String):I
+- toString():java.lang.String
+- s:toString-impl(java.lang.String):java.lang.String
+- bf:unbox-impl():java.lang.String
+f:com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOptionKt
+- sf:isControlOptionEnabled():Z
+e:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- java.lang.Enum
+- sf:BIG:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- sf:MEDIUM:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- sf:SMALL:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- f:getCount():I
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize
+- s:values():com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize[]
+f:com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+- sf:INSTANCE:com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector
+- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- f:logABExperimentOptionUsed():V
+f:com.intellij.platform.experiment.ab.impl.statistic.ABExperimentOptionIdValidationRule
+- com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
+- com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule
+- com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule
+- <init>():V
+- getRuleId():java.lang.String

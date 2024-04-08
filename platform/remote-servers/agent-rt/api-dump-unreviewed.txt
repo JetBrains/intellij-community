@@ -1,0 +1,131 @@
+com.intellij.remoteServer.agent.RemoteAgent
+@:com.intellij.remoteServer.agent.annotation.AsyncCall
+- java.lang.annotation.Annotation
+@:com.intellij.remoteServer.agent.annotation.ChildCall
+- java.lang.annotation.Annotation
+@:com.intellij.remoteServer.agent.annotation.FinalCall
+- java.lang.annotation.Annotation
+@:com.intellij.remoteServer.agent.annotation.ImmediateCall
+- java.lang.annotation.Annotation
+com.intellij.remoteServer.agent.util.CloudAgent
+- com.intellij.remoteServer.agent.RemoteAgent
+- a:getApplications():com.intellij.remoteServer.agent.util.CloudRemoteApplication[]
+com.intellij.remoteServer.agent.util.CloudAgentApplication
+- a:undeploy(com.intellij.remoteServer.agent.util.CloudAgentDeploymentCallback):V
+com.intellij.remoteServer.agent.util.CloudAgentBase
+- com.intellij.remoteServer.agent.util.CloudAgent
+- a:connect(com.intellij.remoteServer.agent.util.CloudAgentConfig,com.intellij.remoteServer.agent.util.CloudAgentCallback,com.intellij.remoteServer.agent.util.CloudAgentLogger,com.intellij.remoteServer.agent.util.CloudAgentErrorHandler):V
+- a:createApplication(com.intellij.remoteServer.agent.util.CloudRemoteApplication):com.intellij.remoteServer.agent.util.CloudAgentApplication
+- a:disconnect():V
+com.intellij.remoteServer.agent.util.CloudAgentCallback
+- a:connected():V
+- a:errorOccurred(java.lang.String):V
+com.intellij.remoteServer.agent.util.CloudAgentConfig
+com.intellij.remoteServer.agent.util.CloudAgentConfigBase
+- com.intellij.remoteServer.agent.util.CloudAgentConfig
+- com.intellij.remoteServer.agent.util.CloudAgentProxyConfig
+- a:getEmail():java.lang.String
+- a:getPassword():java.lang.String
+- a:getPasswordSafe():java.lang.String
+com.intellij.remoteServer.agent.util.CloudAgentDeployment
+- com.intellij.remoteServer.agent.util.CloudAgentApplication
+- a:deploy(com.intellij.remoteServer.agent.util.CloudAgentDeploymentCallback):V
+com.intellij.remoteServer.agent.util.CloudAgentDeploymentCallback
+- a:errorOccurred(java.lang.String):V
+- a:succeeded():V
+com.intellij.remoteServer.agent.util.CloudAgentDeploymentConfig
+- a:getDeploymentName():java.lang.String
+- a:getFile():java.io.File
+com.intellij.remoteServer.agent.util.CloudAgentErrorHandler
+- a:onError(java.lang.String):V
+com.intellij.remoteServer.agent.util.CloudAgentLogger
+- a:debug(java.lang.String):V
+- a:debugEx(java.lang.Exception):V
+com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler
+- a:createTerminal(java.lang.String,java.io.OutputStream,java.io.InputStream,java.io.InputStream):com.intellij.remoteServer.agent.util.log.TerminalListener
+- a:getOrCreateLogListener(java.lang.String):com.intellij.remoteServer.agent.util.log.LogListener
+- a:getProjectHash():java.lang.String
+- a:isTtySupported():Z
+- a:println(java.lang.String):V
+com.intellij.remoteServer.agent.util.CloudAgentProxyConfig
+- com.intellij.remoteServer.agent.util.CloudAgentConfig
+- a:getProxySettings():com.intellij.remoteServer.agent.util.CloudProxySettings
+com.intellij.remoteServer.agent.util.CloudAgentWithDeployment
+- com.intellij.remoteServer.agent.util.CloudAgentBase
+- a:createDeployment(com.intellij.remoteServer.agent.util.CloudAgentDeploymentConfig,com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler):com.intellij.remoteServer.agent.util.CloudAgentDeployment
+com.intellij.remoteServer.agent.util.CloudProxySettings
+- a:getHost():java.lang.String
+- a:getLogin():java.lang.String
+- a:getPassword():java.lang.String
+- a:getPort():I
+- a:useAuthentication():Z
+- a:useHttpProxy():Z
+com.intellij.remoteServer.agent.util.CloudRemoteApplication
+- a:getName():java.lang.String
+- a:getWebUrl():java.lang.String
+com.intellij.remoteServer.agent.util.DeploymentData
+- a:getName():java.lang.String
+- a:isStarted():Z
+- a:setStarted(Z):V
+c:com.intellij.remoteServer.agent.util.DeploymentDataImpl
+- com.intellij.remoteServer.agent.util.DeploymentData
+- <init>(java.lang.String,Z):V
+- getName():java.lang.String
+- isStarted():Z
+- setStarted(Z):V
+com.intellij.remoteServer.agent.util.ILogger
+- a:debug(java.lang.String):V
+- a:debugEx(java.lang.Exception):V
+- a:error(java.lang.String):V
+- a:errorEx(java.lang.Exception):V
+- a:info(java.lang.String):V
+c:com.intellij.remoteServer.agent.util.log.LogAgentManager
+- <init>():V
+- startListeningLog(java.lang.String,com.intellij.remoteServer.agent.util.log.LogPipeProvider):V
+- startOrContinueListeningLog(java.lang.String,com.intellij.remoteServer.agent.util.log.LogPipeProvider):V
+- stopListeningAllLogs():V
+- stopListeningLog(java.lang.String):V
+com.intellij.remoteServer.agent.util.log.LogListener
+- sf:NULL:com.intellij.remoteServer.agent.util.log.LogListener
+- a:clear():V
+- a:close():V
+- a:lineLogged(java.lang.String):V
+- a:printHyperlink(java.lang.String,java.lang.Runnable):V
+- a:scrollTo(I):V
+a:com.intellij.remoteServer.agent.util.log.LogPipe
+- com.intellij.remoteServer.agent.util.log.LogPipeBase
+- <init>(java.lang.String,java.lang.String,com.intellij.remoteServer.agent.util.CloudAgentLogger,com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler):V
+- close():V
+- pa:createInputStream(java.lang.String):java.io.InputStream
+- pf:cutTail():V
+- p:debug(java.lang.String):V
+- p:debugEx(java.lang.Exception):V
+- pf:getLogListener():com.intellij.remoteServer.agent.util.log.LogListener
+- pf:isClosed():Z
+- p:isLogDebugEnabled():Z
+- p:onStartListening(com.intellij.remoteServer.agent.util.log.LogListener):V
+- open():V
+- pf:setLogDebugEnabled(Z):V
+- toString():java.lang.String
+a:com.intellij.remoteServer.agent.util.log.LogPipeBase
+- <init>():V
+- a:close():V
+- a:open():V
+com.intellij.remoteServer.agent.util.log.LogPipeProvider
+- a:createLogPipes(java.lang.String):java.util.List
+com.intellij.remoteServer.agent.util.log.TerminalListener
+- sf:NULL:com.intellij.remoteServer.agent.util.log.TerminalListener
+- a:close():V
+- a:setTtyResizeHandler(com.intellij.remoteServer.agent.util.log.TerminalListener$TtyResizeHandler):V
+com.intellij.remoteServer.agent.util.log.TerminalListener$TtyResizeHandler
+- a:onTtyResizeRequest(I,I):V
+a:com.intellij.remoteServer.agent.util.log.TerminalPipe
+- com.intellij.remoteServer.agent.util.log.LogPipeBase
+- <init>(java.lang.String,com.intellij.remoteServer.agent.util.CloudAgentLoggingHandler):V
+- close():V
+- pa:getInputStream():java.io.InputStream
+- pa:getOutputStream():java.io.OutputStream
+- p:getStderr():java.io.InputStream
+- p:getTtyResizeHandler():com.intellij.remoteServer.agent.util.log.TerminalListener$TtyResizeHandler
+- p:hookTerminal(com.intellij.remoteServer.agent.util.log.TerminalListener):V
+- open():V

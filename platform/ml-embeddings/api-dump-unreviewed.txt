@@ -1,0 +1,335 @@
+f:com.intellij.platform.ml.embeddings.EmbeddingsBundle
+- com.intellij.DynamicBundle
+- sf:INSTANCE:com.intellij.platform.ml.embeddings.EmbeddingsBundle
+f:com.intellij.platform.ml.embeddings.models.LocalEmbeddingNetwork
+- sf:Companion:com.intellij.platform.ml.embeddings.models.LocalEmbeddingNetwork$Companion
+- sf:DEFAULT_MAX_LEN:I
+- <init>(io.kinference.model.Model,I):V
+- b:<init>(io.kinference.model.Model,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getMaxLen():I
+- f:predict(io.kinference.ndarray.arrays.NumberNDArray,io.kinference.ndarray.arrays.NumberNDArray,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.models.LocalEmbeddingNetwork$Companion
+- f:invoke(B[],java.lang.Integer,kotlin.coroutines.Continuation):java.lang.Object
+- bs:invoke$default(com.intellij.platform.ml.embeddings.models.LocalEmbeddingNetwork$Companion,B[],java.lang.Integer,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+- ai.grazie.emb.SuspendableTextEmbeddingsService
+- <init>(com.intellij.platform.ml.embeddings.models.LocalEmbeddingNetwork,ai.grazie.nlp.encoder.PreTrainedTextEncoder):V
+- embed(java.util.List,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:embed(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
+- sf:Companion:com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader$Companion
+- sf:MODEL_FILENAME:java.lang.String
+- sf:MODEL_NAME:java.lang.String
+- <init>():V
+- f:load(ai.grazie.utils.mpp.RootDataLoader,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader$Companion
+f:com.intellij.platform.ml.embeddings.models.TextEncoderConfig
+- sf:Companion:com.intellij.platform.ml.embeddings.models.TextEncoderConfig$Companion
+- <init>(java.lang.Integer):V
+- f:component1():java.lang.Integer
+- f:copy(java.lang.Integer):com.intellij.platform.ml.embeddings.models.TextEncoderConfig
+- bs:copy$default(com.intellij.platform.ml.embeddings.models.TextEncoderConfig,java.lang.Integer,I,java.lang.Object):com.intellij.platform.ml.embeddings.models.TextEncoderConfig
+- equals(java.lang.Object):Z
+- f:getMaxLen():java.lang.Integer
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ml.embeddings.models.TextEncoderConfig$Companion
+- f:loadConfig(ai.grazie.utils.mpp.DataLoader,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+- com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
+- <init>(java.nio.file.Path,java.lang.Integer):V
+- b:<init>(java.nio.file.Path,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addEntries(java.lang.Iterable,Z,kotlin.coroutines.Continuation):java.lang.Object
+- f:addEntry(java.lang.String,ai.grazie.emb.FloatTextEmbedding,kotlin.coroutines.Continuation):java.lang.Object
+- checkCanAddEntry(kotlin.coroutines.Continuation):java.lang.Object
+- clear(kotlin.coroutines.Continuation):java.lang.Object
+- contains(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:deleteEntry(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- estimateLimitByMemory(J):I
+- estimateMemoryUsage(kotlin.coroutines.Continuation):java.lang.Object
+- findClosest(ai.grazie.emb.FloatTextEmbedding,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- f:getChanged():Z
+- getLimit():java.lang.Integer
+- f:getRoot():java.nio.file.Path
+- getSize(kotlin.coroutines.Continuation):java.lang.Object
+- loadFromDisk(kotlin.coroutines.Continuation):java.lang.Object
+- lookup(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- onIndexingFinish(kotlin.coroutines.Continuation):java.lang.Object
+- onIndexingStart(kotlin.coroutines.Continuation):java.lang.Object
+- saveToDisk(kotlin.coroutines.Continuation):java.lang.Object
+- f:setChanged(Z):V
+- setLimit(java.lang.Integer):V
+- setLimit(java.lang.Integer,kotlin.coroutines.Continuation):java.lang.Object
+- streamFindClose(ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- f:updateEntry(java.lang.String,java.lang.String,ai.grazie.emb.FloatTextEmbedding,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
+- a:addEntries(java.lang.Iterable,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:addEntries$default(com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex,java.lang.Iterable,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:checkCanAddEntry(kotlin.coroutines.Continuation):java.lang.Object
+- a:clear(kotlin.coroutines.Continuation):java.lang.Object
+- a:contains(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:estimateLimitByMemory(J):I
+- a:estimateMemoryUsage(kotlin.coroutines.Continuation):java.lang.Object
+- a:findClosest(ai.grazie.emb.FloatTextEmbedding,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- bs:findClosest$default(com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex,ai.grazie.emb.FloatTextEmbedding,I,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- a:getLimit():java.lang.Integer
+- a:getSize(kotlin.coroutines.Continuation):java.lang.Object
+- a:loadFromDisk(kotlin.coroutines.Continuation):java.lang.Object
+- a:lookup(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- a:onIndexingFinish(kotlin.coroutines.Continuation):java.lang.Object
+- a:onIndexingStart(kotlin.coroutines.Continuation):java.lang.Object
+- a:saveToDisk(kotlin.coroutines.Continuation):java.lang.Object
+- a:setLimit(java.lang.Integer):V
+- a:setLimit(java.lang.Integer,kotlin.coroutines.Continuation):java.lang.Object
+- a:streamFindClose(ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- bs:streamFindClose$default(com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex,ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndexKt
+com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider
+- sf:Companion:com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider$Companion
+- a:extractIndexableClasses(com.intellij.psi.PsiFile):java.util.List
+- a:extractIndexableSymbols(com.intellij.psi.PsiFile):java.util.List
+- a:isEnabled(com.intellij.psi.PsiFile):Z
+f:com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider$Companion
+- f:extractClasses(com.intellij.psi.PsiFile):kotlinx.coroutines.flow.Flow
+- f:extractSymbols(com.intellij.psi.PsiFile):kotlinx.coroutines.flow.Flow
+f:com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
+- com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex
+- <init>(java.nio.file.Path,java.lang.Integer):V
+- b:<init>(java.nio.file.Path,java.lang.Integer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addEntries(java.lang.Iterable,Z,kotlin.coroutines.Continuation):java.lang.Object
+- checkCanAddEntry(kotlin.coroutines.Continuation):java.lang.Object
+- clear(kotlin.coroutines.Continuation):java.lang.Object
+- contains(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- estimateLimitByMemory(J):I
+- estimateMemoryUsage(kotlin.coroutines.Continuation):java.lang.Object
+- findClosest(ai.grazie.emb.FloatTextEmbedding,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- getLimit():java.lang.Integer
+- getSize(kotlin.coroutines.Continuation):java.lang.Object
+- loadFromDisk(kotlin.coroutines.Continuation):java.lang.Object
+- lookup(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- onIndexingFinish(kotlin.coroutines.Continuation):java.lang.Object
+- onIndexingStart(kotlin.coroutines.Continuation):java.lang.Object
+- saveToDisk(kotlin.coroutines.Continuation):java.lang.Object
+- setLimit(java.lang.Integer):V
+- setLimit(java.lang.Integer,kotlin.coroutines.Continuation):java.lang.Object
+- streamFindClose(ai.grazie.emb.FloatTextEmbedding,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
+- a:getId():java.lang.String
+- a:getIndexableRepresentation():java.lang.String
+f:com.intellij.platform.ml.embeddings.search.indices.LocalEmbeddingIndexFileManager
+- sf:Companion:com.intellij.platform.ml.embeddings.search.indices.LocalEmbeddingIndexFileManager$Companion
+- sf:DEFAULT_DIMENSIONS:I
+- sf:EMBEDDING_ELEMENT_SIZE:I
+- <init>(java.nio.file.Path,I):V
+- b:<init>(java.nio.file.Path,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:get(I,kotlin.coroutines.Continuation):java.lang.Object
+- f:getEmbeddingSizeInBytes():I
+- f:loadIndex(kotlin.coroutines.Continuation):java.lang.Object
+- f:removeAtIndex(I,kotlin.coroutines.Continuation):java.lang.Object
+- f:saveIds(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- f:saveIndex(java.util.List,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- f:set(I,ai.grazie.emb.FloatTextEmbedding,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.indices.LocalEmbeddingIndexFileManager$Companion
+f:com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- f:prepareForSearch(com.intellij.openapi.project.Project):kotlinx.coroutines.Job
+- bs:prepareForSearch$default(com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager,com.intellij.openapi.project.Project,I,java.lang.Object):kotlinx.coroutines.Job
+- f:triggerIndexing():V
+f:com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingStorageManager
+f:com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingsStorage
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage$Companion
+- <init>():V
+- f:getIndex():com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearchIndex
+- searchNeighbours(java.lang.String,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- f:streamSearchNeighbours(java.lang.String,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- bs:streamSearchNeighbours$default(com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage,java.lang.String,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
+f:com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
+- com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- getIndex():com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+f:com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.ClassEmbeddingsStorage
+a:com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingsStorage
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- a:getIndex():com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+- f:getProject():com.intellij.openapi.project.Project
+- searchNeighbours(java.lang.String,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- f:streamSearchNeighbours(java.lang.String,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- bs:streamSearchNeighbours$default(com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage,java.lang.String,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexMemoryManager
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexMemoryManager$Companion
+- <init>():V
+- f:checkCanAddEntry(kotlin.coroutines.Continuation):java.lang.Object
+- f:registerIndex(com.intellij.platform.ml.embeddings.search.indices.EmbeddingSearchIndex):Z
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexMemoryManager$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexMemoryManager
+com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings
+- getShouldIndexActions():Z
+- getShouldIndexClasses():Z
+- getShouldIndexFiles():Z
+- getShouldIndexSymbols():Z
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl$Companion
+- <init>():V
+- getShouldIndexActions():Z
+- f:getShouldIndexAnythingFileBased():Z
+- getShouldIndexClasses():Z
+- getShouldIndexFiles():Z
+- getShouldIndexSymbols():Z
+- f:registerClientSettings(com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings):V
+- f:unregisterClientSettings(com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettings):Z
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexSettingsImpl
+com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask
+- a:run(com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask$Add
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask
+- <init>(java.util.List,java.util.List,kotlin.jvm.functions.Function0):V
+- b:<init>(java.util.List,java.util.List,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- run(com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask$AddDiskSynchronized
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask
+- <init>(java.util.List,java.util.List,kotlin.jvm.functions.Function0):V
+- b:<init>(java.util.List,java.util.List,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- run(com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask$DeleteDiskSynchronized
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask
+- <init>(java.util.List,kotlin.jvm.functions.Function0):V
+- b:<init>(java.util.List,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- run(com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask$RenameDiskSynchronized
+- com.intellij.platform.ml.embeddings.search.services.EmbeddingIndexingTask
+- <init>(java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function0):V
+- b:<init>(java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- run(com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.platform.ml.embeddings.search.services.EmbeddingsStorage
+- a:searchNeighbours(java.lang.String,I,java.lang.Double,kotlin.coroutines.Continuation):java.lang.Object
+- bs:searchNeighbours$default(com.intellij.platform.ml.embeddings.search.services.EmbeddingsStorage,java.lang.String,I,java.lang.Double,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager$Companion
+- sf:INDEXING_SPAN_NAME:java.lang.String
+- sf:SCANNING_SPAN_NAME:java.lang.String
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:indexFiles(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- f:prepareForSearch():kotlinx.coroutines.Job
+- f:stopIndexingIfDisabled():V
+- f:triggerIndexing():V
+f:com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.FileBasedEmbeddingStoragesManager
+f:com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage
+- com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- getIndex():com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+f:com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.FileEmbeddingsStorage
+c:com.intellij.platform.ml.embeddings.search.services.IndexableClass
+- com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
+- <init>(java.lang.String):V
+- getId():java.lang.String
+- getIndexableRepresentation():java.lang.String
+f:com.intellij.platform.ml.embeddings.search.services.IndexableFile
+- com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
+- <init>(com.intellij.openapi.vfs.VirtualFile):V
+- getId():java.lang.String
+- getIndexableRepresentation():java.lang.String
+c:com.intellij.platform.ml.embeddings.search.services.IndexableSymbol
+- com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
+- <init>(java.lang.String):V
+- getId():java.lang.String
+- getIndexableRepresentation():java.lang.String
+f:com.intellij.platform.ml.embeddings.search.services.SemanticSearchCoroutineScope
+- com.intellij.openapi.Disposable
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.SemanticSearchCoroutineScope$Companion
+- <init>(kotlinx.coroutines.CoroutineScope):V
+- dispose():V
+f:com.intellij.platform.ml.embeddings.search.services.SemanticSearchCoroutineScope$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.SemanticSearchCoroutineScope
+- f:getScope(com.intellij.openapi.project.Project):kotlinx.coroutines.CoroutineScope
+f:com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
+- com.intellij.openapi.vfs.AsyncFileListener
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:clearEvents():V
+- prepareChange(java.util.List):com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
+f:com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.SemanticSearchFileChangeListener
+f:com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage
+- com.intellij.platform.ml.embeddings.search.services.DiskSynchronizedEmbeddingsStorage
+- sf:Companion:com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage$Companion
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- getIndex():com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
+f:com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ml.embeddings.search.services.SymbolEmbeddingStorage
+f:com.intellij.platform.ml.embeddings.search.utils.LockedSequenceWrapper
+- kotlin.sequences.Sequence
+- <init>(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0):V
+- iterator():java.util.Iterator
+f:com.intellij.platform.ml.embeddings.search.utils.LowMemoryNotificationManager
+- sf:Companion:com.intellij.platform.ml.embeddings.search.utils.LowMemoryNotificationManager$Companion
+- <init>():V
+- f:showNotification():V
+f:com.intellij.platform.ml.embeddings.search.utils.LowMemoryNotificationManager$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.search.utils.LowMemoryNotificationManager
+f:com.intellij.platform.ml.embeddings.search.utils.ScoredText
+- <init>(java.lang.String,D):V
+- f:component1():java.lang.String
+- f:component2():D
+- f:copy(java.lang.String,D):com.intellij.platform.ml.embeddings.search.utils.ScoredText
+- bs:copy$default(com.intellij.platform.ml.embeddings.search.utils.ScoredText,java.lang.String,D,I,java.lang.Object):com.intellij.platform.ml.embeddings.search.utils.ScoredText
+- equals(java.lang.Object):Z
+- f:getSimilarity():D
+- f:getText():java.lang.String
+- hashCode():I
+- toString():java.lang.String
+f:com.intellij.platform.ml.embeddings.search.utils.SuspendingReadWriteLock
+- <init>():V
+- f:read(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- f:write(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.search.utils.TracingUtilsKt
+f:com.intellij.platform.ml.embeddings.services.CustomRootDataLoader
+- ai.grazie.utils.mpp.RootDataLoader
+- ai.grazie.utils.mpp.RootStreamDataLoader
+- <init>(java.nio.file.Path):V
+- bytes(ai.grazie.utils.mpp.DataLoader$Path,kotlin.coroutines.Continuation):java.lang.Object
+- stream(ai.grazie.utils.mpp.DataLoader$Path):java.io.InputStream
+- text(ai.grazie.utils.mpp.DataLoader$Path,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+- sf:Companion:com.intellij.platform.ml.embeddings.services.LocalArtifactsManager$Companion
+- sf:SEMANTIC_SEARCH_RESOURCES_DIR:java.lang.String
+- <init>():V
+- f:checkArtifactsPresent():Z
+- f:downloadArtifactsIfNecessary(com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:downloadArtifactsIfNecessary$default(com.intellij.platform.ml.embeddings.services.LocalArtifactsManager,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:getCustomRootDataLoader():com.intellij.platform.ml.embeddings.services.CustomRootDataLoader
+- f:getModelVersion():java.lang.String
+f:com.intellij.platform.ml.embeddings.services.LocalArtifactsManager$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
+f:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
+- sf:Companion:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider$Companion
+- <init>():V
+- f:getService(Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:getService$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:getServiceBlocking(Z):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+- bs:getServiceBlocking$default(com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider,Z,I,java.lang.Object):com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
+f:com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider$Companion
+- f:getInstance():com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
+- f:getTestDataPath():java.nio.file.Path
+f:com.intellij.platform.ml.embeddings.utils.IndexingUtilsKt
+- sf:convertNameToNaturalLanguage(java.lang.String):java.lang.String
+- sf:generateEmbedding(java.lang.String,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:generateEmbedding$default(java.lang.String,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:generateEmbeddingBlocking(java.lang.String,Z):ai.grazie.emb.FloatTextEmbedding
+- bs:generateEmbeddingBlocking$default(java.lang.String,Z,I,java.lang.Object):ai.grazie.emb.FloatTextEmbedding
+- sf:generateEmbeddings(java.util.List,Z,kotlin.coroutines.Continuation):java.lang.Object
+- bs:generateEmbeddings$default(java.util.List,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- sf:normalized(ai.grazie.emb.FloatTextEmbedding):ai.grazie.emb.FloatTextEmbedding
+- sf:splitIdentifierIntoTokens(java.lang.String):java.util.List
