@@ -12,6 +12,8 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extension
 import com.intellij.util.ui.html.*
 import com.intellij.util.ui.html.CssAttributesEx.BORDER_RADIUS
+import com.intellij.util.ui.html.image.AdaptiveImageView
+import com.intellij.util.ui.html.image.FitToWidthAdaptiveImageView
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -157,6 +159,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val FIT_TO_WIDTH_IMAGES: Extension = FitToWidthImageViewExtension()
+
+    @JvmField
+    val ADAPTIVE_IMAGE_EXTENSION: Extension = AdaptiveImageViewExtension()
+
+    @JvmField
+    val FIT_TO_WIDTH_ADAPTIVE_IMAGE_EXTENSION: Extension = FitToWidthAdaptiveImageViewExtension()
 
     /**
      * Adds support for `<wbr>` tags
@@ -453,6 +461,17 @@ private class LineViewExExtension : Extension {
 
 private class FitToWidthImageViewExtension : Extension {
   override fun invoke(element: Element, view: View): View? = if (view is ImageView) FitToWidthImageView(element) else null
+}
+
+private class AdaptiveImageViewExtension : Extension {
+  override fun invoke(element: Element, view: View): View? = when (view) {
+    is ImageView -> AdaptiveImageView(element)
+    else -> null
+  }
+}
+
+private class FitToWidthAdaptiveImageViewExtension : Extension {
+  override fun invoke(element: Element, view: View): View? = if (view is ImageView) FitToWidthAdaptiveImageView(element) else null
 }
 
 private class WbrSupportExtension : Extension {
