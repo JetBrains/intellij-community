@@ -37,6 +37,8 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
   }
 
   fun expandAll(timeoutMs: Int) {
-    TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
+    computeOnEdt {
+      TreeUtil.promiseExpandAll(component).blockingGet(timeoutMs)
+    }
   }
 }
