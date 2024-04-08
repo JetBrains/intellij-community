@@ -10,18 +10,19 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElementOfType
 
 class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
-    val literalExpression = element.toUElementOfType<UExpression>() ?: return emptyList()
-    if (literalExpression !is ULiteralExpression && literalExpression !is UPolyadicExpression) return emptyList()
+    val literalExpression = element.toUElementOfType<UInjectionHost>() ?: return emptyList()
     return getLogArgumentReferences(literalExpression) ?: emptyList()
   }
 
-  override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> {
-    return listOf()
-  }
+  override fun getSearchRequests(project: Project, target: Symbol): Collection<SearchRequest> = emptyList()
 }
 
 fun getLogArgumentReferences(uExpression: UExpression): List<PsiSymbolReference>? {
