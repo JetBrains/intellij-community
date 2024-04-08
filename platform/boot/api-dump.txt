@@ -1,8 +1,3 @@
-f:com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
-- java.util.concurrent.ForkJoinPool$ForkJoinWorkerThreadFactory
-- <init>():V
-- newThread(java.util.concurrent.ForkJoinPool):java.util.concurrent.ForkJoinWorkerThread
-- s:setupForkJoinCommonPool(Z):V
 f:com.intellij.lang.properties.charset.Native2AsciiCharset
 - java.nio.charset.Charset
 - contains(java.nio.charset.Charset):Z
@@ -13,8 +8,3 @@ f:com.intellij.lang.properties.charset.Native2AsciiCharset
 - newDecoder():java.nio.charset.CharsetDecoder
 - newEncoder():java.nio.charset.CharsetEncoder
 - s:wrap(java.nio.charset.Charset):java.nio.charset.Charset
-f:com.intellij.lang.properties.charset.Native2AsciiCharsetProvider
-- java.nio.charset.spi.CharsetProvider
-- <init>():V
-- charsetForName(java.lang.String):java.nio.charset.Charset
-- charsets():java.util.Iterator
