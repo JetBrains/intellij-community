@@ -47,6 +47,7 @@ import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
+import com.intellij.util.PlatformUtils
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -81,7 +82,7 @@ private const val TAG_REGULAR_SHOW = "regular-show"
 private const val TAG_HIDDEN = "hidden"
 
 class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification {
-  override fun getBehavior() = ActionRemoteBehavior.BackendOnly
+  override fun getBehavior() = if (PlatformUtils.isRider()) ActionRemoteBehavior.FrontendThenBackend else ActionRemoteBehavior.BackendOnly
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
