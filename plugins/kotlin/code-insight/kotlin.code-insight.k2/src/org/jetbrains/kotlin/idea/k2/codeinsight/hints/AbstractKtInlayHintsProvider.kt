@@ -6,9 +6,11 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
     final override fun createCollector(
@@ -23,7 +25,14 @@ abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
                 element: PsiElement,
                 sink: InlayTreeSink
             ) {
-                this@AbstractKtInlayHintsProvider.collectFromElement(element, sink)
+                try {
+                    this@AbstractKtInlayHintsProvider.collectFromElement(element, sink)
+                } catch (e: ProcessCanceledException) {
+                    throw e
+                } catch (e: Exception) {
+                    throw KotlinExceptionWithAttachments("Unable to provide inlay hint for $element", e)
+                        .withPsiAttachment("element", element)
+                }
             }
         }
     }
