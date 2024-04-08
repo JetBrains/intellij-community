@@ -691,6 +691,10 @@ fun <T : CommandChain> T.importGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}importGradleProject")
 }
 
+fun <T : CommandChain> T.awaitCompleteProjectConfiguration(): T = apply {
+  addCommand("${CMD_PREFIX}awaitCompleteProjectConfiguration")
+}
+
 fun <T : CommandChain> T.executeGradleTask(taskInfo: GradleTaskInfoDto): T {
   val options = objectMapper.writeValueAsString(taskInfo)
   addCommand("${CMD_PREFIX}executeGradleTask $options")
