@@ -259,7 +259,7 @@ private suspend fun preloadNonHeadlessServices(
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
-    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
+    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "true").toBoolean()) {
       // ActionManager can use UISettings (KeymapManager doesn't use, but just to be sure)
       initLafJob.join()
     }
