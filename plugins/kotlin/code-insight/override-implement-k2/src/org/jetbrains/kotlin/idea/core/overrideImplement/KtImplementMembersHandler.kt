@@ -40,19 +40,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
         context(KtAnalysisSession)
         fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
             classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
-                .map { unimplementedMemberSymbol ->
-                    val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
-
-                    @NlsSafe
-                    val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
-                    KtClassMemberInfo.create(
-                        symbol = unimplementedMemberSymbol,
-                        memberText = unimplementedMemberSymbol.render(renderer),
-                        memberIcon = getIcon(unimplementedMemberSymbol),
-                        containingSymbolText = fqName,
-                        containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
-                    )
-                }
+                .mapToKtClassMemberInfo()
 
         context(KtAnalysisSession)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KtClassOrObjectSymbol): List<KtCallableSymbol> {
@@ -151,5 +139,22 @@ object MemberNotImplementedQuickfixFactories {
                 }
             }
         }
+    }
+}
+
+context(KtAnalysisSession)
+private fun List<KtCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
+    return map { unimplementedMemberSymbol ->
+        val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
+
+        @NlsSafe
+        val fqName = (containingSymbol?.classIdIfNonLocal?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())
+        KtClassMemberInfo.create(
+            symbol = unimplementedMemberSymbol,
+            memberText = unimplementedMemberSymbol.render(KtGenerateMembersHandler.renderer),
+            memberIcon = getIcon(unimplementedMemberSymbol),
+            containingSymbolText = fqName,
+            containingSymbolIcon = containingSymbol?.let { symbol -> getIcon(symbol) }
+        )
     }
 }
