@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.MathUtil;
 import org.HdrHistogram.Histogram;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -90,29 +91,35 @@ public final class JVMResponsivenessMonitor implements Disposable, AutoCloseable
   private final Histogram taskDurationHisto = new Histogram(3);
 
   private void samplingLoop() {
-    for (int sampleNo = 0;
-         !Thread.currentThread().isInterrupted();
-         sampleNo++) {
-      long timeTakenNs = runCpuAndMemoryTask();
+    try {
+      for (int sampleNo = 0;
+           !Thread.currentThread().isInterrupted();
+           sampleNo++) {
+        long timeTakenNs = runCpuAndMemoryTask();
 
-      taskDurationHisto.recordValue((int)timeTakenNs);
+        taskDurationHisto.recordValue(MathUtil.clamp(timeTakenNs, 0, Long.MAX_VALUE));
 
-      try {
-        //noinspection BusyWait
-        Thread.sleep(SAMPLING_PERIOD_MS);
-      }
-      catch (InterruptedException e) {
-        LOG.info("Sampling thread interrupted -> stop sampling");
-        return;
-      }
+        try {
+          //noinspection BusyWait
+          Thread.sleep(SAMPLING_PERIOD_MS);
+        }
+        catch (InterruptedException e) {
+          LOG.info("Sampling thread interrupted -> stop sampling");
+          return;
+        }
 
-      if (sampleNo % REPORTING_EACH_N_SAMPLES == REPORTING_EACH_N_SAMPLES - 1) {
-        reportAccumulatedStats(taskDurationHisto);
-        taskDurationHisto.reset();
+        if (sampleNo % REPORTING_EACH_N_SAMPLES == REPORTING_EACH_N_SAMPLES - 1) {
+          reportAccumulatedStats(taskDurationHisto);
+          taskDurationHisto.reset();
+        }
       }
     }
-
-    LOG.info("Sampling thread exiting");
+    catch (Throwable e) {
+      LOG.error("Sampling thread exiting because of error", e);
+    }
+    finally {
+      LOG.info("Sampling thread exiting normally");
+    }
   }
 
   private static void reportAccumulatedStats(@NotNull Histogram taskDurationHisto) {
