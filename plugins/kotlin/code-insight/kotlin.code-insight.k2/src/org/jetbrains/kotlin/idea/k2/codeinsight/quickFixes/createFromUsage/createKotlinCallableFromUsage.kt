@@ -63,62 +63,62 @@ internal fun buildRequests(callExpression: KtCallExpression): List<Pair<JvmClass
     val receiverExpression = calleeExpression.getReceiverExpression()
 
     // Register default create-from-usage request.
-        // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
-        val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
-        val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass(defaultContainerPsi)
-        if (defaultClassForReceiverOrFile != null) {
-            val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
-            val modifiers = computeModifiers(
-                defaultContainerPsi?:calleeExpression.containingFile,
-                calleeExpression,
+    // TODO: Check whether this class or file can be edited (Use `canRefactor()`).
+    val defaultContainerPsi = calleeExpression.getReceiverOrContainerPsiElement()
+    val defaultClassForReceiverOrFile = calleeExpression.getReceiverOrContainerClass(defaultContainerPsi)
+    if (defaultClassForReceiverOrFile != null) {
+        val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
+        val modifiers = computeModifiers(
+            defaultContainerPsi?:calleeExpression.containingFile,
+            calleeExpression,
+            callExpression,
+            shouldCreateCompanionClass, false
+        )
+        requests.add(defaultClassForReceiverOrFile to CreateMethodFromKotlinUsageRequest(
+            functionCall = callExpression,
+            modifiers = modifiers,
+            receiverExpression = receiverExpression,
+            receiverType = computeImplicitReceiverType(calleeExpression),
+            isExtension = false,
+            isAbstractClassOrInterface = false,
+            isForCompanion = shouldCreateCompanionClass
+        ))
+    }
+    // Register create-abstract/extension-callable-from-usage request.
+    val abstractTypeOfContainer = calleeExpression.getAbstractTypeOfReceiver()
+    val abstractContainerClass = abstractTypeOfContainer?.convertToClass()
+    if (abstractContainerClass != null) {
+        val jvmClass = abstractContainerClass.toLightClass()
+        if (jvmClass != null) {
+            requests.add(jvmClass to CreateMethodFromKotlinUsageRequest(
                 callExpression,
-                shouldCreateCompanionClass, false
-            )
-            requests.add(defaultClassForReceiverOrFile to CreateMethodFromKotlinUsageRequest(
-                functionCall = callExpression,
-                modifiers = modifiers,
-                receiverExpression = receiverExpression,
-                receiverType = computeImplicitReceiverType(calleeExpression),
-                isExtension = false,
-                isAbstractClassOrInterface = false,
-                isForCompanion = shouldCreateCompanionClass
-            ))
-        }
-        // Register create-abstract/extension-callable-from-usage request.
-        val abstractTypeOfContainer = calleeExpression.getAbstractTypeOfReceiver()
-        val abstractContainerClass = abstractTypeOfContainer?.convertToClass()
-        if (abstractContainerClass != null) {
-            val jvmClass = abstractContainerClass.toLightClass()
-            if (jvmClass != null) {
-                requests.add(jvmClass to CreateMethodFromKotlinUsageRequest(
-                    callExpression,
-                    setOf(),
-                    receiverExpression,
-                    receiverType = null,
-                    isAbstractClassOrInterface = true,
-                    isExtension = false,
-                    isForCompanion = false,
-                ))
-            }
-        }
-        if (receiverExpression != null || computeImplicitReceiverClass(calleeExpression) != null) {
-            val implicitReceiverType = computeImplicitReceiverType(calleeExpression)
-            val containerClassForExtension: KtElement =
-                implicitReceiverType?.convertToClass() ?: calleeExpression.getNonStrictParentOfType<KtClassOrObject>()
-                ?: calleeExpression.containingKtFile
-            val jvmClassWrapper = JvmClassWrapperForKtClass(containerClassForExtension)
-            val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
-            val modifiers = computeModifiers(defaultContainerPsi?:calleeExpression.containingFile, calleeExpression, callExpression, shouldCreateCompanionClass, true)
-            requests.add(jvmClassWrapper to CreateMethodFromKotlinUsageRequest(
-                callExpression,
-                modifiers,
+                setOf(),
                 receiverExpression,
-                receiverType = implicitReceiverType,
-                isExtension = true,
-                isAbstractClassOrInterface = false,
-                isForCompanion = shouldCreateCompanionClass,
+                receiverType = null,
+                isAbstractClassOrInterface = true,
+                isExtension = false,
+                isForCompanion = false,
             ))
         }
+    }
+    if (receiverExpression != null || computeImplicitReceiverClass(calleeExpression) != null) {
+        val implicitReceiverType = computeImplicitReceiverType(calleeExpression)
+        val containerClassForExtension: KtElement =
+            implicitReceiverType?.convertToClass() ?: calleeExpression.getNonStrictParentOfType<KtClassOrObject>()
+            ?: calleeExpression.containingKtFile
+        val jvmClassWrapper = JvmClassWrapperForKtClass(containerClassForExtension)
+        val shouldCreateCompanionClass = shouldCreateCompanionClass(calleeExpression)
+        val modifiers = computeModifiers(defaultContainerPsi?:calleeExpression.containingFile, calleeExpression, callExpression, shouldCreateCompanionClass, true)
+        requests.add(jvmClassWrapper to CreateMethodFromKotlinUsageRequest(
+            callExpression,
+            modifiers,
+            receiverExpression,
+            receiverType = implicitReceiverType,
+            isExtension = true,
+            isAbstractClassOrInterface = false,
+            isForCompanion = shouldCreateCompanionClass,
+        ))
+    }
     return requests
 }
 

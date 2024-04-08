@@ -108,9 +108,7 @@ internal fun KtElement.getExpectedKotlinType(): ExpectedType? {
         }
     }
     if (expectedType == null) return null
-    if (!isAccessibleInCreationPlace(expectedType, this)) {
-        return null
-    }
+    expectedType = makeAccessibleInCreationPlace(expectedType, this) ?: return null
     val jvmType = expectedType.convertToJvmType(this) ?: return null
     return ExpectedKotlinType(expectedType, jvmType)
 }
@@ -156,14 +154,14 @@ internal fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val sy
 }?.psi
 
 context (KtAnalysisSession)
-internal fun KtValueArgument.getExpectedParameterInfo(parameterIndex: Int): ExpectedParameter {
+internal fun ValueArgument.getExpectedParameterInfo(defaultParameterName: ()->String): ExpectedParameter {
     val parameterNameAsString = getArgumentName()?.asName?.asString()
     val argumentExpression = getArgumentExpression()
     val expectedArgumentType = argumentExpression?.getKtType()
     val parameterNames = parameterNameAsString?.let { sequenceOf(it) } ?: expectedArgumentType?.let { NAME_SUGGESTER.suggestTypeNames(it) }
-    val parameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
-    val expectedType = if (parameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, parameterType)
-    val names = parameterNames?.toList()?.toTypedArray() ?: arrayOf("p$parameterIndex")
+    val jvmParameterType = expectedArgumentType?.convertToJvmType(argumentExpression)
+    val expectedType = if (jvmParameterType == null) ExpectedTypeWithNullability.INVALID_TYPE else ExpectedKotlinType(expectedArgumentType, jvmParameterType)
+    val names = parameterNames?.toList()?.toTypedArray() ?: arrayOf(defaultParameterName.invoke())
     return expectedParameter(expectedType, *names)
 }
 
@@ -279,27 +277,38 @@ private fun accept(type: KtType?, visited: MutableSet<KtType>, predicate: (KtTyp
     }
 }
 
-// true if this type is accessible in the newly created method
+/**
+ * return [type] if it's accessible in the newly created method, or some other sensible type that is (e.g. super type), or null if can't figure out which type to use
+ */
 context (KtAnalysisSession)
-fun isAccessibleInCreationPlace(ktType: KtType, call: KtElement?): Boolean {
-    if (call == null) return true
+fun makeAccessibleInCreationPlace(ktType: KtType, call: KtElement): KtType? {
+    var type = ktType
+    do {
+        if (allTypesInsideAreAccessible(type, call)) return ktType
+        type = type.expandedClassSymbol?.superTypes?.firstOrNull() ?: return null
+    }
+    while(true);
+}
+
+context (KtAnalysisSession)
+fun allTypesInsideAreAccessible(ktType: KtType, call: KtElement) : Boolean {
     fun KtTypeParameter.getOwningTypeParameterOwner(): KtTypeParameterListOwner? {
         val parameterList = parent as? KtTypeParameterList ?: return null
         return parameterList.parent as? KtTypeParameterListOwner
     }
     return accept(ktType, mutableSetOf()) { ktLeaf ->
-        if (ktLeaf is KtTypeParameterType) {
-            // having `<T> caller(T t) { unknownMethod(t); }` the type `T` is not accessible in created method unknownMethod(t)
-            val owner = (ktLeaf.symbol.psi as? KtTypeParameter)?.getOwningTypeParameterOwner()
-            // todo must have been "insertion point" instead of `call`
-            if (owner == null) true
-            else if (owner is KtCallableDeclaration) false
-            else PsiTreeUtil.isAncestor(owner, call, false)
-        } else {
-            // KtErrorType means this type is unresolved in the context of container
-            ktLeaf !is KtErrorType
+            if (ktLeaf is KtTypeParameterType) {
+                // having `<T> caller(T t) { unknownMethod(t); }` the type `T` is not accessible in created method unknownMethod(t)
+                val owner = (ktLeaf.symbol.psi as? KtTypeParameter)?.getOwningTypeParameterOwner()
+                // todo must have been "insertion point" instead of `call`
+                if (owner == null) true
+                else if (owner is KtCallableDeclaration) false
+                else PsiTreeUtil.isAncestor(owner, call, false)
+            } else {
+                // KtErrorType means this type is unresolved in the context of container
+                ktLeaf !is KtErrorType
+            }
         }
-    }
 }
 
 fun JvmClass.toKtClassOrFile(): KtElement? = if (this is JvmClassWrapperForKtClass<*>) {

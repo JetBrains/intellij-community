@@ -22,9 +22,9 @@ internal abstract class CreateExecutableFromKotlinUsageRequest<out T : KtCallEle
 
     private fun computeExpectedParams(call: T): List<ExpectedParameter> {
         return analyze(call) {
-            call.valueArgumentList?.arguments?.mapIndexed { index, valueArgument ->
-                valueArgument.getExpectedParameterInfo(index)
-            } ?: emptyList()
+            call.valueArguments.mapIndexed { index, valueArgument ->
+                valueArgument.getExpectedParameterInfo { "p$index" }
+            }
         }
     }
 
