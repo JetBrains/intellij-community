@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,10 @@ public class ToolAction extends AnAction implements DumbAware {
   private final String myActionId;
 
   public ToolAction(@NotNull Tool tool) {
-    super(ToolsBundle.message("action.text.external.tool"));
+    String toolName = tool.getName();
+    String text = StringUtil.isNotEmpty(toolName) ? toolName :
+                  ToolsBundle.message("action.text.external.tool");
+    getTemplatePresentation().setText(text, false);
     myActionId = tool.getActionId();
   }
 
