@@ -2,16 +2,12 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.IndexingBundle
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -24,25 +20,25 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.LockSupport
 
 @ApiStatus.Internal
-@Service(Service.Level.PROJECT)
 class UnindexedFilesScannerExecutorImpl(project: Project)
   : Disposable,
     MergingQueueGuiExecutor<FilesScanningTask>(project, MergingTaskQueue(), TaskQueueListener(),
                                                IndexingBundle.message("progress.indexing.scanning"),
-                                               IndexingBundle.message("progress.indexing.scanning.paused")) {
+                                               IndexingBundle.message("progress.indexing.scanning.paused")),
+    UnindexedFilesScannerExecutor {
   private val runningDumbTask = AtomicReference<ProgressIndicator>()
   override val taskId = DumbServiceGuiExecutor.IndexingType.SCANNING
 
   // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
   private val pauseReason = MutableStateFlow<PersistentList<String>>(persistentListOf())
-  fun getPauseReason(): StateFlow<PersistentList<String>> = pauseReason
+  override fun getPauseReason(): StateFlow<PersistentList<String>> = pauseReason
 
   private class TaskQueueListener : ExecutorStateListener {
     override fun beforeFirstTask(): Boolean = true
     override fun afterLastTask(latestReceipt: SubmissionReceipt?) = Unit
   }
 
-  fun submitTask(task: FilesScanningTask) {
+  override fun submitTask(task: FilesScanningTask) {
     thisLogger().debug(Throwable("submit task, thread=${Thread.currentThread()}"))
 
     // Two tasks with limited checks should be just run one after another.
@@ -54,7 +50,7 @@ class UnindexedFilesScannerExecutorImpl(project: Project)
       cancelAllTasks()
       cancelRunningScannerTaskInDumbQueue()
     }
-    if (shouldScanInSmartMode()) {
+    if (UnindexedFilesScannerExecutor.shouldScanInSmartMode()) {
       startTaskInSmartMode(task)
     }
     else {
@@ -87,7 +83,7 @@ class UnindexedFilesScannerExecutorImpl(project: Project)
     }
   }
 
-  fun cancelAllTasksAndWait() {
+  override fun cancelAllTasksAndWait() {
     cancelAllTasks() // this also cancels a running task even if they paused by ProgressSuspender
     while (isRunning.value && !project.isDisposed) {
       PingProgress.interactWithEdtProgress()
@@ -105,7 +101,7 @@ class UnindexedFilesScannerExecutorImpl(project: Project)
    * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
    */
-  fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
+  override fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
     suspendAndRun(activityName) { // we only need this call to suspend legacy dumb scanning mode
       pauseReason.update { it.add(activityName) }
       try {
@@ -113,25 +109,6 @@ class UnindexedFilesScannerExecutorImpl(project: Project)
       }
       finally {
         pauseReason.update { it.remove(activityName) }
-      }
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl = project.service<UnindexedFilesScannerExecutorImpl>()
-
-    // TODO IJPL-578 - behavior should be the same in tests and prod. Temporary flag to ease tests migration.
-    private val IS_UNDER_TEAMCITY: Boolean = System.getenv("TEAMCITY_VERSION") != null
-
-    @JvmStatic
-    fun shouldScanInSmartMode(): Boolean {
-      val registryValue = Registry.get("scanning.in.smart.mode")
-      return if (registryValue.isChangedFromDefault) {
-        registryValue.asBoolean()
-      }
-      else {
-        SystemProperties.getBooleanProperty("scanning.in.smart.mode", !(IS_UNDER_TEAMCITY && DumbServiceImpl.isSynchronousTaskExecution))
       }
     }
   }

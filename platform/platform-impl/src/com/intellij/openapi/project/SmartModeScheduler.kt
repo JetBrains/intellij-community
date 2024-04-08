@@ -53,7 +53,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   private val dumbServiceImpl get() = DumbService.getInstance(project) as DumbServiceImpl
   private val filesScannerExecutor get() = UnindexedFilesScannerExecutor.getInstance(project)
   private val projectDumbState: StateFlow<DumbServiceImpl.DumbState> = dumbServiceImpl.dumbStateAsFlow
-  private val projectScanningChanged: Flow<*> = filesScannerExecutor.startedOrStoppedEvent
+  private val projectScanningChanged: Flow<*> = (filesScannerExecutor as UnindexedFilesScannerExecutorImpl).startedOrStoppedEvent
   internal val runWhenSmartCondition: BooleanSupplier = BooleanSupplier { getCurrentMode() == 0 }
 
   init {
