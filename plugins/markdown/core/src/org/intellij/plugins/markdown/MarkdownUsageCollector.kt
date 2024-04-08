@@ -7,11 +7,11 @@ import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerPlace
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.RunnerType
 
 internal object MarkdownUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("markdown.events", 1)
+  private val GROUP = EventLogGroup("markdown.events", 2)
 
   val RUNNER_EXECUTED = GROUP.registerEvent(
     "runner.executed",
-    EventFields.Enum("place", RunnerPlace::class.java),
+    EventFields.Enum("location", RunnerPlace::class.java),
     EventFields.Enum("type", RunnerType::class.java),
     EventFields.Class("runner")
   )
