@@ -256,8 +256,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     return productModules.mainModuleGroup.optionalModuleIds.contains(RuntimeModuleId.raw(moduleName))
   }
 
-  override fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path {
-    val paths = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
+  override fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path? {
+    val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleName)).resolvedModule
+                         ?: return null
+    val paths = resolvedModule.resourceRootPaths
     return paths.singleOrNull() 
            ?: error("Content modules are supposed to have only one resource root, but $moduleName have multiple: $paths")
   }

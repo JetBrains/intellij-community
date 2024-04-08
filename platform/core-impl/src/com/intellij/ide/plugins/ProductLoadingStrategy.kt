@@ -77,9 +77,10 @@ abstract class ProductLoadingStrategy {
   abstract fun isOptionalProductModule(moduleName: String): Boolean
 
   /**
-   * Returns the path to a JAR or directory containing classes from [moduleName] registered as a content module in the product. 
+   * Returns the path to a JAR or directory containing classes from [moduleName] registered as a content module in the product, or `null`
+   * if the mentioned content module isn't present in the distribution.
    */
-  abstract fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path
+  abstract fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path?
 
   /**
    * Returns `true` if the loader should search for META-INF/plugin.xml files in the core application classpath and load them.

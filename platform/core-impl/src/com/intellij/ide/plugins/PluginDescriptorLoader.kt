@@ -739,22 +739,28 @@ private fun loadModuleDescriptors(
 
     if (moduleDirExists && !pathResolver.isRunningFromSources && moduleName.startsWith("intellij.")) {
       val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName, moduleDir)
-      val resolver = pool.load(jarFile)
-      try {
-        moduleRaw = resolver.loadZipEntry(subDescriptorFile)?.let {
-          readModuleDescriptor(
-            input = it,
-            readContext = context,
-            pathResolver = pathResolver,
-            dataLoader = dataLoader,
-            includeBase = null,
-            readInto = null,
-            locationSource = jarFile.toString(),
-          )
+      moduleRaw = if (jarFile != null) {
+        val resolver = pool.load(jarFile)
+        try {
+          resolver.loadZipEntry(subDescriptorFile)?.let {
+            readModuleDescriptor(
+              input = it,
+              readContext = context,
+              pathResolver = pathResolver,
+              dataLoader = dataLoader,
+              includeBase = null,
+              readInto = null,
+              locationSource = jarFile.toString(),
+            )
+          }
+        }
+        finally {
+          (resolver as? Closeable)?.close()
         }
       }
-      finally {
-        (resolver as? Closeable)?.close()
+      else {
+        LOG.debug("Skip loading product content module $moduleName because its classes root isn't present")
+        RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
       }
 
       if (moduleRaw != null) {
@@ -764,7 +770,7 @@ private fun loadModuleDescriptors(
           context = context,
           moduleName = moduleName,
         )
-        subDescriptor.jarFiles = Java11Shim.INSTANCE.listOf(jarFile)
+        subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()
         module.descriptor = subDescriptor
         continue
       }
