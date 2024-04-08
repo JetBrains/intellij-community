@@ -3850,8 +3850,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return execute(() -> myDelegate.getSelectedText(attributes));
     }
 
-    private static <T> T execute(@NotNull Computable<T> computable) {
-      return UIUtil.invokeAndWaitIfNeeded(computable);
+    private static <T> T execute(@NotNull ThrowableComputable<T, RuntimeException> computable) {
+      return UIUtil.invokeAndWaitIfNeeded(() -> ReadAction.compute(computable));
     }
   }
 

@@ -1371,7 +1371,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
     @Override
     public @Nullable String getSelectedText() {
-      return myEditor.getSelectionModel().getSelectedText();
+      return ReadAction.compute(() -> myEditor.getSelectionModel().getSelectedText());
     }
 
     // ---- Implements AccessibleEditableText ----
