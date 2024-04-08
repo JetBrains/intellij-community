@@ -403,7 +403,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   override fun isWriteActionInProgress(): Boolean = myWriteAcquired != null
 
-  override fun isWriteActionPending(): Boolean = isWriteActionInProgress() || myWriteActionPending.get() > 0
+  override fun isWriteActionPending(): Boolean = myWriteActionPending.get() > 0
 
   override fun isWriteAccessAllowed(): Boolean = myWriteAcquired == Thread.currentThread()
 
