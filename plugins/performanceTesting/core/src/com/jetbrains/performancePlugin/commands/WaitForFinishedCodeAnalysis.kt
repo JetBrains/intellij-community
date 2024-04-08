@@ -113,7 +113,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
   fun registerOpenedEditors(openedEditors: List<TextEditor>) {
     val listener = SimpleEditedDocumentsListener(project)
     synchronized(stateLock) {
-      for (fileEditor in openedEditors) {
+      for (fileEditor in openedEditors.getWorthy()) {
         sessions[fileEditor] = ExceptionWithTime.createForOpenedEditor(fileEditor)
         fileEditor.editor.document.addDocumentListener(listener, fileEditor)
       }
@@ -123,7 +123,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
 
   fun registerEditedDocuments(textEditors: List<TextEditor>) {
     synchronized(stateLock) {
-      for (fileEditor in textEditors) {
+      for (fileEditor in textEditors.getWorthy()) {
         sessions[fileEditor] = ExceptionWithTime.createForEditedEditor(fileEditor)
       }
       ensureLockedIfNeeded()
@@ -250,7 +250,11 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
 
 // See DaemonFusReporter. Reality in DaemonCodeAnalyzerImpl is a bit more complicated, probably including other editors if the file has Psi
 private fun Collection<FileEditor>.getWorthy(): List<TextEditor> =
-  mapNotNull { if (it is TextEditor && it.editor.editorKind == EditorKind.MAIN_EDITOR) return@mapNotNull it else null }
+  mapNotNull {
+    if (it !is TextEditor || it.editor.editorKind != EditorKind.MAIN_EDITOR) null
+    else if (it is TextEditorWithPreview) it.textEditor
+    else it
+  }
 
 internal class WaitForFinishedCodeAnalysisFileEditorListener : FileOpenedSyncListener {
   init {
