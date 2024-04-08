@@ -78,6 +78,10 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
+    return launch(urlToOpen, emptyList(), lifetime, errorReporter)
+  }
+
+  fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
     val launcherData = findJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
@@ -86,14 +90,16 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
         launcherData, 
         workingDirectory,
         clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
-        urlToOpen, 
+        url,
+        extraArguments,
         lifetime
       )
     }
 
     val processLifetimeDef = lifetime.createNested()
-    
-    val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, urlToOpen)
+
+    val arguments = listOf("thinClient", url) + extraArguments
+    val javaParameters = createProcessParameters(moduleRepository, moduleRepositoryPath, arguments)
     val commandLine = javaParameters.toCommandLine()
     LOG.debug { "Starting embedded client: $commandLine" }
     val handler = OSProcessHandler.Silent(commandLine)
@@ -155,7 +161,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     }
   }
 
-  private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, urlToOpen: String): SimpleJavaParameters {
+  private fun createProcessParameters(moduleRepository: RuntimeModuleRepository, moduleRepositoryPath: Path, arguments: List<String>): SimpleJavaParameters {
     val javaParameters = SimpleJavaParameters()
     javaParameters.jdk = SimpleJavaSdkType.getInstance().createJdk("", SystemProperties.getJavaHome())
     javaParameters.setShortenCommandLine(ShortenCommandLine.ARGS_FILE)
@@ -176,8 +182,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     val runtimeLoaderModule = RuntimeModuleId.module("intellij.platform.runtime.loader")
     javaParameters.classPath.addAllFiles(moduleRepository.getModule(runtimeLoaderModule).moduleClasspath.map { it.toFile() })
     addVmOptions(javaParameters.vmParametersList, moduleRepositoryPath)
-    javaParameters.programParametersList.add("thinClient")
-    javaParameters.programParametersList.add(urlToOpen)
+    javaParameters.programParametersList.addAll(arguments)
     return javaParameters
   }
 

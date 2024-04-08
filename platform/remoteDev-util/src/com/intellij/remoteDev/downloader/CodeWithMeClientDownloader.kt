@@ -732,7 +732,16 @@ object CodeWithMeClientDownloader {
                                          clientVersion: String,
                                          url: String,
                                          lifetime: Lifetime): Lifetime {
-    val parameters = listOf("thinClient", url)
+    return runJetBrainsClientProcess(launcherData, workingDirectory, clientVersion, url, emptyList(),  lifetime)
+  }
+
+  internal fun runJetBrainsClientProcess(launcherData: JetBrainsClientLauncherData,
+                                         workingDirectory: Path,
+                                         clientVersion: String,
+                                         url: String,
+                                         extraArguments: List<String>,
+                                         lifetime: Lifetime): Lifetime {
+    val parameters = listOf("thinClient", url) + extraArguments
     val processLifetimeDef = lifetime.createNested()
 
     val vmOptionsFile = if (SystemInfoRt.isMac) {
