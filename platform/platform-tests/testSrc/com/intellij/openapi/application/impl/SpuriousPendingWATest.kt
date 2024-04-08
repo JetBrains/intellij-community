@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.isNewLockEnabled
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndGet
@@ -10,6 +11,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertFalse
@@ -18,6 +20,8 @@ import kotlin.test.assertFalse
 class SpuriousPendingWATest {
   @Test
   fun testNoSpuriousWAOnBackgroundThreadProbabilistic() {
+    assumeFalse(isNewLockEnabled)
+
     val repetitions = 1000000;
     val app = ApplicationManagerEx.getApplicationEx()
     val start = Semaphore(1, 1)

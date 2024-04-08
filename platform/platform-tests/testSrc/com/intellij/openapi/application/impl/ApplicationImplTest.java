@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunFirst;
@@ -38,6 +39,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.openapi.application.RuntimeFlagsKt.isNewLockEnabled;
+import static org.junit.Assume.assumeFalse;
 
 @RunFirst
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -420,6 +424,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   }
 
   public void testWriteActionIsAllowedFromEDTOnly() throws TimeoutException, ExecutionException, InterruptedException {
+    assumeFalse(isNewLockEnabled());
     Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(()-> {
         try {
           ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
