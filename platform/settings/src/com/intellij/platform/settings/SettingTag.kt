@@ -57,7 +57,7 @@ class OldLocalValueSupplierTag(private val supplier: Supplier<JsonElement?>) : S
 }
 
 // TODO move rdct-specific tags to some extension
-object HostSettingTag : SettingTag {
+object HostOnlySettingTag : SettingTag {
   override fun toString(): String = this::class.java.simpleName
 }
 

@@ -228,13 +228,13 @@ private fun createTags(componentName: String, component: Any?, roamingType: Roam
 
   // TODO move rdct-specific code to some extension
   if (component != null) {
-    if (hasAnnotationInSuperclass<HostSetting>(componentName)) {
-      tags.add(HostSettingTag)
+    if (hasAnnotationInSuperclass<HostOnlySetting>(component)) {
+      tags.add(HostOnlySettingTag)
     }
-    if (hasAnnotationInSuperclass<ClientSetting>(componentName)) {
+    if (hasAnnotationInSuperclass<ClientSetting>(component)) {
       tags.add(ClientSettingTag)
     }
-    if (hasAnnotationInSuperclass<DoNotSynchronizeSetting>(componentName)) {
+    if (hasAnnotationInSuperclass<DoNotSynchronizeSetting>(component)) {
       tags.add(DoNotSynchronizeSettingTag)
     }
   }
