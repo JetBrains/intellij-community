@@ -18,6 +18,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.VisibilityIcons;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -157,9 +158,15 @@ public final class ElementPresentationUtil {
     BASE_ICON.put(CLASS_KIND_RUNNABLE, iconManager.getPlatformIcon(PlatformIcons.Class));
   }
 
-  public static Icon getClassIconOfKind(PsiClass aClass, int classKind) {
+  public static @NotNull Icon getClassIconOfKind(@NotNull PsiClass aClass, int classKind) {
     final boolean isAbstract = aClass.hasModifierProperty(PsiModifier.ABSTRACT);
-    return BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
+    Icon result = BASE_ICON.get(classKind | (isAbstract ? FLAGS_ABSTRACT : 0));
+    if (result == null) {
+      throw new NullPointerException(
+        "No icon registered for the class " + aClass + " of kind " + classKind + " (isAbstract=" + isAbstract + ")"
+      );
+    }
+    return result;
   }
 
   public static String getDescription(PsiModifierListOwner member) {
