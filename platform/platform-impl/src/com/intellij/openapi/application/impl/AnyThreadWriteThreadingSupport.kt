@@ -34,10 +34,11 @@ import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-private class ThreadState(var permit: Permit? = null, var inListener: Boolean = false, var impatientReader: Boolean = false) {
+private class ThreadState(var permit: Permit? = null, var prevPermit: WriteIntentPermit? = null, var inListener: Boolean = false, var impatientReader: Boolean = false) {
   fun release() {
     permit?.release()
-    permit = null
+    permit = prevPermit
+    prevPermit = null
   }
 
   val hasPermit get() = permit != null
@@ -64,7 +65,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   private val myWriteActionPending = AtomicInteger(0)
   private var myNoWriteActionCounter = AtomicInteger()
 
-  private val myState = ThreadLocal.withInitial { ThreadState(null, false) }
+  private val myState = ThreadLocal.withInitial { ThreadState(null, null,false) }
 
   @Volatile
   private var myWriteAcquired: Thread? = null
@@ -331,7 +332,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
-  private fun startWrite(ts: ThreadState, clazz: Class<*>): Pair<Permit?, Boolean> {
+  private fun startWrite(ts: ThreadState, clazz: Class<*>): Boolean {
     if (ts.hasRead) {
       throw IllegalStateException("WriteAction can not be called from ReadAction")
     }
@@ -343,17 +344,13 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
       throwCannotWriteException()
     }
 
-    var oldPermit: Permit? = null
     val release = !ts.hasWrite
 
     myWriteActionPending.incrementAndGet()
     fireBeforeWriteActionStart(ts, clazz)
-    if (ts.hasWriteIntent) {
-      oldPermit = ts.permit
-      ts.permit = measureWriteLock { runSuspend { (ts.permit as WriteIntentPermit).acquireWritePermit() } }
-    }
-    else if (!ts.hasPermit) {
-      ts.permit = measureWriteLock { getWritePermit() }
+
+    if (release) {
+      ts.permit = measureWriteLock { getWritePermit(ts) }
     }
     myWriteAcquired = Thread.currentThread()
     myWriteActionPending.decrementAndGet()
@@ -361,19 +358,16 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     myWriteActionsStack.push(clazz)
     fireWriteActionStarted(ts, clazz)
 
-    return Pair(oldPermit, release)
+    return release
   }
 
-  private fun endWrite(ts: ThreadState, clazz: Class<*>, state: Pair<Permit?, Boolean>) {
+  private fun endWrite(ts: ThreadState, clazz: Class<*>, release: Boolean) {
     fireWriteActionFinished(ts, clazz)
     myWriteActionsStack.pop()
-    if (state.second) {
+    if (release) {
       myWriteAcquired = null
       ts.release()
       fireAfterWriteActionFinished(ts, clazz)
-    }
-    if (state.first != null) {
-      ts.permit = state.first
     }
   }
 
@@ -390,13 +384,15 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     // We have write access
     val prevBase = myWriteStackBase
     myWriteStackBase = myWriteActionsStack.size
+    myWriteAcquired = null
     ts.release()
     try {
       runModalProgress(project, title, runnable)
     }
     finally {
       ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite()
-      ts.permit = getWritePermit()
+      ts.permit = getWritePermit(ts)
+      myWriteAcquired = Thread.currentThread()
       myWriteStackBase = prevBase
     }
   }
@@ -613,6 +609,17 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     }
   }
 
+  private fun getWritePermit(state: ThreadState): WritePermit {
+    return when (state.permit) {
+      null -> getWritePermit()
+      is WriteIntentPermit -> {
+        state.prevPermit = state.permit as WriteIntentPermit
+        runSuspend { (state.permit as WriteIntentPermit).acquireWritePermit()  }
+      }
+      else -> error("Can not acquire write permit when hold ${state.permit}")
+    }
+  }
+
   private fun getReadPermit(): ReadPermit {
     return runSuspend {
       lock.acquireReadPermit(false)
@@ -644,7 +651,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
   @Deprecated
   private class WriteAccessToken(private val clazz: Class<*>) : AccessToken() {
     val ts = myState.get()
-    val state: Pair<Permit?, Boolean> = startWrite(ts, clazz)
+    val release = startWrite(ts, clazz)
 
     init {
       markThreadNameInStackTrace()
@@ -652,7 +659,7 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
     override fun finish() {
       try {
-        endWrite(ts, clazz, state)
+        endWrite(ts, clazz, release)
       }
       finally {
         unmarkThreadNameInStackTrace()
