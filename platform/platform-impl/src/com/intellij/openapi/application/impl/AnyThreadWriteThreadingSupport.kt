@@ -347,7 +347,9 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     val release = !ts.hasWrite
 
     myWriteActionPending.incrementAndGet()
-    fireBeforeWriteActionStart(ts, clazz)
+    if (myWriteActionsStack.isEmpty()) {
+      fireBeforeWriteActionStart(ts, clazz)
+    }
 
     if (release) {
       ts.permit = measureWriteLock { getWritePermit(ts) }
