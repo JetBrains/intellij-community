@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
+@file:Suppress("LiftReturnOrAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
 
@@ -200,7 +200,7 @@ object CommunityRepositoryModules {
 
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
-    plugin("intellij.eclipse") { spec ->
+    pluginAuto(listOf("intellij.eclipse")) { spec ->
       spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
       spec.withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
@@ -235,37 +235,23 @@ object CommunityRepositoryModules {
     plugin("intellij.statsCollector") { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    plugin(listOf("intellij.lombok", "intellij.lombok.generated")),
-    plugin(listOf(
-      "intellij.markdown",
-      "intellij.markdown.fenceInjection",
-      "intellij.markdown.frontmatter",
-      "intellij.markdown.frontmatter.yaml",
-      "intellij.markdown.frontmatter.toml",
-      "intellij.markdown.images",
-      "intellij.markdown.xml",
-      "intellij.markdown.model",
-      "intellij.markdown.spellchecker"
-    )),
-    plugin("intellij.featuresTrainer") { spec ->
-      spec.withModule("intellij.vcs.git.featuresTrainer")
-      spec.withProjectLibrary("assertJ")
-      spec.withProjectLibrary("assertj-swing")
-      spec.withProjectLibrary("git-learning-project")
-    },
+    pluginAuto(listOf("intellij.lombok", "intellij.lombok.generated")),
     plugin("intellij.platform.testFramework.ui") { spec ->
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
     },
-    pluginAuto(listOf("intellij.performanceTesting", "intellij.performanceTesting.remoteDriver")) { spec ->
-      spec.withModule("intellij.driver.model")
-      spec.withModule("intellij.driver.impl")
-      spec.withModule("intellij.driver.client")
-    }
-  )
+    pluginAuto(
+      listOf(
+        "intellij.performanceTesting",
+        "intellij.performanceTesting.remoteDriver",
+        "intellij.driver.model",
+        "intellij.driver.impl",
+        "intellij.driver.client"
+      )
+    ))
 
-  val CONTRIB_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
+  val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
     plugin("intellij.errorProne") { spec ->
       spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
