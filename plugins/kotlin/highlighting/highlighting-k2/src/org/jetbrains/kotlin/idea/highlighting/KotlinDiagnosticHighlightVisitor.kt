@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
@@ -85,8 +86,11 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
             KotlinSuppressableWarningProblemGroup(factoryName)
         } else null
 
+        val message = diagnostic.getMessageToRender()
+        val htmlMessage = XmlStringUtil.escapeString(message).replace("\n", "<br>")
         val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
-            .descriptionAndTooltip(diagnostic.getMessageToRender())
+            .escapedToolTip(htmlMessage)
+            .description(message)
             .range(range)
         if (problemGroup != null) {
             infoBuilder.problemGroup(problemGroup)
