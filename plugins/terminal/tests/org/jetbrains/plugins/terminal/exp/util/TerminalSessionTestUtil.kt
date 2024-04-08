@@ -56,7 +56,7 @@ object TerminalSessionTestUtil {
     val initializedFuture = CompletableFuture<Boolean>()
     val listenersDisposable = Disposer.newDisposable()
     session.addCommandListener(object : ShellCommandListener {
-      override fun initialized(rawShellInfo: String) {
+      override fun initialized() {
         initializedFuture.complete(true)
       }
     }, listenersDisposable)

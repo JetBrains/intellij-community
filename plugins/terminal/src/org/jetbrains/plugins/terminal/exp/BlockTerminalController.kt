@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -81,13 +82,17 @@ class BlockTerminalController(
     TerminalUsageLocalStorage.getInstance().recordCommandExecuted(session.shellIntegration.shellType.toString())
   }
 
-  override fun initialized(rawShellInfo: String) {
-    finishCommandBlock(exitCode = 0)
+  override fun shellInfoReceived(rawShellInfo: String) {
+    thisLogger().info("Started shell info: $rawShellInfo")
     ApplicationManager.getApplication().executeOnPooledThread {
       TerminalShellInfoStatistics.getLoggableShellInfo(rawShellInfo)?.let {
         TerminalUsageTriggerCollector.triggerLocalShellStarted(project, session.shellIntegration.shellType.toString(), it)
       }
     }
+  }
+
+  override fun initialized() {
+    finishCommandBlock(exitCode = 0)
   }
 
   override fun commandFinished(event: CommandFinishedEvent) {
