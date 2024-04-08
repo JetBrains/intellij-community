@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.Mutability;
+import com.intellij.codeInspection.dataFlow.MutationSignature;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -1306,23 +1308,48 @@ public final class ExpressionUtils {
   private static boolean isConstantArray(PsiVariable array) {
     PsiElement scope = PsiTreeUtil.getParentOfType(array, array instanceof PsiField ? PsiClass.class : PsiCodeBlock.class);
     if (scope == null) return false;
-    return PsiTreeUtil.processElements(scope, e -> {
-      if (!(e instanceof PsiReferenceExpression ref)) return true;
-      if (!ref.isReferenceTo(array)) return true;
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
-      if (parent instanceof PsiForeachStatement && PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), ref, false)) {
-        return true;
+    return PsiTreeUtil.processElements(
+      scope, e -> !(e instanceof PsiReferenceExpression ref && ref.isReferenceTo(array) && canBeMutated(ref)));
+  }
+
+  private static boolean canBeMutated(@NotNull PsiExpression expr) {
+    while (expr.getParent() instanceof PsiParenthesizedExpression parent) {
+      expr = parent;
+    }
+    if (isVoidContext(expr)) return false;
+    if (PsiUtil.isAccessedForWriting(expr)) return true;
+    PsiElement parent = expr.getParent();
+    if (parent instanceof PsiForeachStatement forEach && PsiTreeUtil.isAncestor(forEach.getIteratedValue(), expr, false)) {
+      return false;
+    }
+    if (parent instanceof PsiReferenceExpression refParent) {
+      if (getArrayFromLengthExpression(refParent) != null) return false;
+      if (parent.getParent() instanceof PsiMethodCallExpression call &&
+          MethodCallUtils.isCallToMethod(
+            call, JAVA_LANG_OBJECT, null, "clone", PsiType.EMPTY_ARRAY)) {
+        return false;
       }
-      if (parent instanceof PsiReferenceExpression) {
-        if (isReferenceTo(getArrayFromLengthExpression((PsiExpression)parent), array)) return true;
-        if (parent.getParent() instanceof PsiMethodCallExpression &&
-            MethodCallUtils.isCallToMethod((PsiMethodCallExpression)parent.getParent(), JAVA_LANG_OBJECT,
-                                           null, "clone", PsiType.EMPTY_ARRAY)) {
-          return true;
-        }
+    }
+    if (parent instanceof PsiExpressionList list && list.getParent() instanceof PsiMethodCallExpression call) {
+      PsiMethod method = call.resolveMethod();
+      if (method == null) return true;
+      MutationSignature signature = MutationSignature.fromCall(call);
+      if (signature == MutationSignature.unknown()) return true;
+      if (!signature.isPure()) {
+        PsiParameter parameter = MethodCallUtils.getParameterForArgument(expr);
+        if (parameter == null || !(parameter.getParent() instanceof PsiParameterList paramList)) return true;
+        int index = paramList.getParameterIndex(parameter);
+        if (signature.mutatesArg(index)) return true;
       }
-      return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting((PsiExpression)parent);
-    });
+      PsiType type = method.getReturnType();
+      boolean okReturnType = type instanceof PsiPrimitiveType || TypeUtils.isJavaLangString(type)
+                             || Mutability.getMutability(method).isUnmodifiable();
+      return !okReturnType && canBeMutated(call);
+    }
+    if (parent instanceof PsiArrayAccessExpression arrayAccess) {
+      return PsiUtil.isAccessedForWriting(arrayAccess);
+    }
+    return true;
   }
 
   /**
