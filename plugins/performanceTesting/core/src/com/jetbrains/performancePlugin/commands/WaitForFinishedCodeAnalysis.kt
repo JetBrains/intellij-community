@@ -185,19 +185,29 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  internal fun registerAnalysisFinished(highlightedEditors: List<HighlightedEditor>) {
+  internal fun registerAnalysisFinished(highlightedEditors: Map<TextEditor, HighlightedEditor>) {
     val currentTime = System.currentTimeMillis()
     synchronized(stateLock) {
-      for (highlightedEditor in highlightedEditors) {
-        LOG.info("daemon stopped for ${highlightedEditor.editor.description}, " +
-                 "shouldWaitForHighlighting=${highlightedEditor.shouldWaitForNextHighlighting}")
-        val exceptionWithTime: ExceptionWithTime? = sessions[highlightedEditor.editor]
-        if (highlightedEditor.shouldWaitForNextHighlighting || exceptionWithTime?.wasStartedInLimitedSetup == true) {
-          ExceptionWithTime.markAnalysisFinished(exceptionWithTime)
+      val iterator = sessions.entries.iterator()
+      while (iterator.hasNext()) {
+        val (editor, exceptionWithTime) = iterator.next()
+        val highlightedEditor = highlightedEditors[editor]
+        if (highlightedEditor == null) {
+          if (!UIUtil.isShowing(editor.getComponent())) {
+            iterator.remove()
+          }
         }
         else {
-          val oldData = sessions.remove(highlightedEditor.editor)
-          LOG.info(ExceptionWithTime.getLogHighlightingMessage(currentTime, highlightedEditor.editor, oldData))
+          val shouldWait = highlightedEditor.shouldWaitForNextHighlighting || exceptionWithTime.wasStartedInLimitedSetup
+          LOG.info("daemon stopped for ${highlightedEditor.editor.description}, " +
+                   "shouldWaitForHighlighting=${shouldWait}")
+          if (shouldWait) {
+            ExceptionWithTime.markAnalysisFinished(exceptionWithTime)
+          }
+          else {
+            iterator.remove()
+            LOG.info(ExceptionWithTime.getLogHighlightingMessage(currentTime, highlightedEditor.editor, exceptionWithTime))
+          }
         }
       }
       unlockIfNeeded()
@@ -238,9 +248,9 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 
-    val highlightedEditors: List<ListenerState.HighlightedEditor> = runReadAction {
+    val highlightedEditors: Map<TextEditor, ListenerState.HighlightedEditor> = runReadAction {
       val isFinishedInDumbMode = DumbService.isDumb(project)
-      worthy.map { ListenerState.HighlightedEditor.create(it, project, isCancelled = isCancelled, isFinishedInDumbMode = isFinishedInDumbMode) }
+      worthy.associateWith { ListenerState.HighlightedEditor.create(it, project, isCancelled = isCancelled, isFinishedInDumbMode = isFinishedInDumbMode) }
     }
 
     project.service<ListenerState>().registerAnalysisFinished(highlightedEditors)
