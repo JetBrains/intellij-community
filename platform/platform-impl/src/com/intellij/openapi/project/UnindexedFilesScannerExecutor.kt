@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 interface UnindexedFilesScannerExecutor {
   val isRunning: StateFlow<Boolean>
   val taskQueue: MergingTaskQueue<FilesScanningTask>
+  val startedOrStoppedEvent: Flow<*>
 
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
   fun suspendQueue()

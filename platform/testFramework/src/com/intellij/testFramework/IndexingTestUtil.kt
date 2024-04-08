@@ -1,11 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.namedChildScope
 import kotlinx.coroutines.*
@@ -18,7 +22,7 @@ class IndexingTestUtil(private val project: Project) {
     if (project.isDisposed) return
 
     val listenerDisposable = Disposer.newDisposable()
-    val parentDisposable = UnindexedFilesScannerExecutor.getInstance(project) as UnindexedFilesScannerExecutorImpl
+    val parentDisposable = UnindexedFilesScannerExecutor.getInstance(project) as Disposable
     Disposer.register(parentDisposable, listenerDisposable)
 
     ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {

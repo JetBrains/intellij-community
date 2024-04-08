@@ -273,7 +273,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
    *
    * TODO: [isRunning] should be a shared flow without deduplication, then we wont need [startedOrStoppedEvent]
    */
-  internal val startedOrStoppedEvent: Flow<*> = mySingleTaskExecutor.modificationTrackerAsFlow
+  val startedOrStoppedEvent: Flow<*> = mySingleTaskExecutor.modificationTrackerAsFlow
 
   /**
    * Suspends queue in this executor: new tasks will be added to the queue, but they will not be executed until [resumeQueue]
@@ -297,11 +297,11 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
   }
 
-  internal fun suspendAndRun(activityName: @ProgressText String, activity: Runnable) {
+  fun suspendAndRun(activityName: @ProgressText String, activity: Runnable) {
     guiSuspender.suspendAndRun(activityName, activity)
   }
 
-  internal fun cancelAllTasks() {
+  fun cancelAllTasks() {
     taskQueue.cancelAllTasks()
     guiSuspender.resumeProgressIfPossible()
   }
