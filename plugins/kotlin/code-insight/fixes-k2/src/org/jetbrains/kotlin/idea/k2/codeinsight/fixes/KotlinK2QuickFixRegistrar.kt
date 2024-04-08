@@ -135,6 +135,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(MemberNotImplementedQuickfixFactories.abstractClassMemberNotImplemented)
         registerFactory(MemberNotImplementedQuickfixFactories.manyInterfacesMemberNotImplemented)
         registerFactory(MemberNotImplementedQuickfixFactories.manyImplMemberNotImplemented)
+        registerFactory(MemberNotImplementedQuickfixFactories.abstractMemberNotImplementedByEnumEntry)
     }
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {

@@ -2169,6 +2169,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/override/implementMember.kt");
         }
 
+        @TestMetadata("implementMemberByEnumEntry.kt")
+        public void testImplementMemberByEnumEntry() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/implementMemberByEnumEntry.kt");
+        }
+
         @TestMetadata("implementMemberFromAbstractClass.kt")
         public void testImplementMemberFromAbstractClass() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/override/implementMemberFromAbstractClass.kt");

@@ -121,6 +121,13 @@ object MemberNotImplementedQuickfixFactories {
             getUnimplementedMemberFixes(diagnostic.psi, false)
         }
 
+    val abstractMemberNotImplementedByEnumEntry =
+        diagnosticFixFactoryFromIntentionActions(KtFirDiagnostic.AbstractMemberNotImplementedByEnumEntry::class) { diagnostic ->
+            val missingDeclarations = diagnostic.missingDeclarations
+            if (missingDeclarations.isEmpty()) return@diagnosticFixFactoryFromIntentionActions emptyList()
+            listOf(KtImplementMembersQuickfix(missingDeclarations.mapToKtClassMemberInfo()))
+        }
+
     context(KtAnalysisSession)
     private fun getUnimplementedMemberFixes(
         classWithUnimplementedMembers: KtClassOrObject,
