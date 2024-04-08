@@ -185,13 +185,22 @@ public class ExtractClassTest extends LightMultiFileTestCase {
   }
 
   public void testInnerClass() {
-    doTest(() -> {
-      PsiClass aClass = myFixture.findClass("Test");
+    doTestExtractInnerFromField("Test", "myT");
+  }
 
-      assertNotNull("Class Test not found", aClass);
+  public void testInnerClass2() {
+    // IDEA-350071
+    doTestExtractInnerFromField("test", "mylist");
+  }
+
+  private void doTestExtractInnerFromField(String className, String fieldName) {
+    doTest(() -> {
+      PsiClass aClass = myFixture.findClass(className);
+
+      assertNotNull("Class " + className + " not found", aClass);
 
       final ArrayList<PsiField> fields = new ArrayList<>();
-      fields.add(aClass.findFieldByName("myT", false));
+      fields.add(aClass.findFieldByName(fieldName, false));
 
       doTest(aClass, new ArrayList<>(), fields, null, true, true);
     });
