@@ -9,9 +9,10 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.search.services.*
+import kotlin.math.round
 
 internal object EmbeddingSearchLogger : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("ml.embeddings", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("ml.embeddings", 2)
 
   private val MODEL_VERSION = EventFields.StringValidatedByInlineRegexp("model_version", "\\d+.\\d+.\\d+")
   private val ENABLED_INDICES = EventFields.StringList("enabled_indices", listOf("actions", "files", "classes", "symbols"))
@@ -113,8 +114,13 @@ internal object EmbeddingSearchLogger : CounterUsagesCollector() {
       if (settings.shouldIndexClasses) totalMemory += ClassEmbeddingsStorage.getInstance(project).index.estimateMemoryUsage()
       if (settings.shouldIndexSymbols) totalMemory += SymbolEmbeddingStorage.getInstance(project).index.estimateMemoryUsage()
     }
-    return totalMemory.toDouble() / BYTES_IN_MEGABYTE
+    return roundDouble(totalMemory.toDouble() / BYTES_IN_MEGABYTE)
   }
 
   enum class Index { ACTIONS, FILES, CLASSES, SYMBOLS }
+
+  private fun roundDouble(value: Double): Double {
+    if (!value.isFinite()) return -1.0
+    return round(value * 10000) / 10000
+  }
 }
