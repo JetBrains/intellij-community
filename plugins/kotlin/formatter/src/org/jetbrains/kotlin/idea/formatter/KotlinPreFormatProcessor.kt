@@ -43,7 +43,7 @@ private class Visitor(var range: TextRange) : KtTreeVisitorVoid() {
 
             val semicolon = psiFactory.createSemicolon()
             delta += if (lastEntry != null) {
-                classBody.addAfter(semicolon, lastEntry)
+                lastEntry.add(semicolon)
                 semicolon.textLength
             } else {
                 val newLine = psiFactory.createNewLine()
