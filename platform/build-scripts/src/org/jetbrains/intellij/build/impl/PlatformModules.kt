@@ -85,7 +85,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.webSymbols",
   "intellij.xml.dom.impl",
 
-  "intellij.platform.vcs.log",
+  "intellij.platform.vcs.dvcs",
   "intellij.smart.update",
 
   "intellij.platform.collaborationTools",
@@ -556,17 +556,10 @@ private fun collectProductModules(root: XmlElement, result: LinkedHashSet<Module
   }
 }
 
-// Contrary to what it looks like, this is not a step back.
-// Previously, it was specified in PLATFORM_IMPLEMENTATION_MODULES/PLATFORM_API_MODULES.
-// Once the shape of the extracted module becomes fully discernible,
-// we can consider ways to improve `pluginAuto` and eliminate the need for an explicit declaration here.
 private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.platform.vcs.log.impl", listOf(
     "intellij.platform.vcs.log.graph.impl"
-  ),
-  "intellij.platform.vcs.dvcs.impl", listOf(
-    "intellij.platform.vcs.dvcs"
-  ),
+  )
 )
 
 internal object ModuleIncludeReasons {
