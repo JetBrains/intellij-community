@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public class StubInconsistencyReporterImpl implements StubInconsistencyReporter {
   @Override
-  public void reportStubInconsistency(@NotNull Project project,
-                                      @Nullable SourceOfCheck reason,
-                                      @NotNull InconsistencyType type) {
-    StubInconsistencyReportUtil.reportStubInconsistency(project, reason, type);
+  public void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project,
+                                                       @Nullable SourceOfCheck reason,
+                                                       @NotNull InconsistencyType type) {
+    StubInconsistencyReportUtil.reportStubInconsistencyBetweenPsiAndText(project, reason, type);
   }
 
   @Override
@@ -24,10 +24,10 @@ public class StubInconsistencyReporterImpl implements StubInconsistencyReporter 
   }
 
   @Override
-  public void reportStubInconsistency(@NotNull Project project,
-                                      @NotNull StubInconsistencyReporter.SourceOfCheck reason,
-                                      @NotNull InconsistencyType type,
-                                      @SuppressWarnings("deprecation") @Nullable EnforcedInconsistencyType enforcedInconsistencyType) {
+  public void reportStubInconsistencyBetweenPsiAndText(@NotNull Project project,
+                                                       @NotNull StubInconsistencyReporter.SourceOfCheck reason,
+                                                       @NotNull InconsistencyType type,
+                                                       @SuppressWarnings("deprecation") @Nullable EnforcedInconsistencyType enforcedInconsistencyType) {
     //ignore
   }
 
