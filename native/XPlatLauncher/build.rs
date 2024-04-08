@@ -171,37 +171,73 @@ fn extract_tar_bz2(archive: &Path, dest: &Path, extract_marker: &Path) -> Result
 
     let dest_file_name = get_file_name(dest)?;
 
-    let tmp_dest = &dest.parent()
-        .context(format!("No parent for {dest:?}"))?
-        .join(format!("{dest_file_name}.tmp"));
+    let dest_parent = dest.parent()
+        .context(format!("No parent for {dest:?}"))?;
+
+    let tmp_dest = &dest_parent.join(format!("{dest_file_name}.tmp"));
 
     fs_remove(tmp_dest)?;
     std::fs::create_dir_all(tmp_dest)?;
 
     trace!("Extracting to temp destination {tmp_dest:?}");
-    let status = Command::new("tar")
-        .arg("-xjvf")
-        .arg(get_non_unc_string(archive)?)
-        .arg("-C")
-        .arg(get_non_unc_string(tmp_dest)?)
-        .arg("--strip-components=1")
-        .status()?;
 
-    trace!("Extraction command finished successfully");
+    let status = match is_7z_available_in_path() {
+        true => {
+            trace!("Using 7-zip");
+
+            let tar_dest_string = get_non_unc_string(&dest_parent.join(format!("{dest_file_name}.tar")))?;
+            Command::new("7z")
+                .arg("x")
+                .arg(get_non_unc_string(archive)?)
+                .arg(format!("-o{tar_dest_string}"))
+                .status()?;
+
+            let tmp_dest_string = get_non_unc_string(tmp_dest)?;
+            Command::new("7z")
+                .arg("x")
+                .arg(tar_dest_string)
+                .arg(format!("-o{tmp_dest_string}"))
+                .status()?
+        }
+
+        false => {
+            trace!("Using tar");
+            Command::new("tar")
+                .arg("-xjvf")
+                .arg(get_non_unc_string(archive)?)
+                .arg("-C")
+                .arg(get_non_unc_string(tmp_dest)?)
+                .status()?
+        }
+    };
+
+    trace!("Extraction command finished");
 
     if !status.success() {
         bail!("Failed to extract CEF sandbox archive at {archive:?}")
     }
 
-    assert!(tmp_dest.exists());
-    assert!(tmp_dest.is_dir());
+    // typical structure: archive.tar.bz2 contains archive dir as a root item
+    let non_stripped_internal_dir = tmp_dest.join(dest_file_name);
 
-    std::fs::rename(tmp_dest, dest)?;
+    assert!(non_stripped_internal_dir.exists());
+    assert!(non_stripped_internal_dir.is_dir());
+
+    std::fs::rename(non_stripped_internal_dir, dest)?;
     File::create(extract_marker)?;
 
     trace!("Created extraction marker at {extract_marker:?}");
 
     Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn is_7z_available_in_path() -> bool {
+    let status = Command::new("7z")
+        .arg("--help")
+        .status();
+
+    status.is_ok()
 }
 
 #[cfg(target_os = "windows")]
