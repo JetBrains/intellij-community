@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.embeddings.utils
 
 import ai.grazie.emb.FloatTextEmbedding
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import kotlin.math.sqrt
@@ -62,7 +63,7 @@ suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts
 }
 
 suspend fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
-  return LocalEmbeddingServiceProvider.getInstance().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
+  return serviceAsync<LocalEmbeddingServiceProvider>().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
 }
 
 fun FloatTextEmbedding.normalized(): FloatTextEmbedding {

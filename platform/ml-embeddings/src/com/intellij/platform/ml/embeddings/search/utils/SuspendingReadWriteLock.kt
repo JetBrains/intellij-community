@@ -31,7 +31,7 @@ class SuspendingReadWriteLock {
   }
 }
 
-class Lightswitch {
+private class Lightswitch {
   private var counter = 0
   private val mutex = Semaphore(1)
 
