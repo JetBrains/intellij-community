@@ -171,13 +171,11 @@ object TerminalUiUtils {
 
   internal fun TextStyle.toTextAttributes(palette: TerminalColorPalette): TextAttributes {
     return TextAttributes().also { attr ->
-      backgroundForRun?.let {
-        // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
-        // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
-        // paint the background uniformly.
-        attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(it))
-      }
-      attr.foregroundColor = getForegroundColor(this, palette)
+      // [TerminalColorPalette.getDefaultBackground] is not applied to [TextAttributes].
+      // It's passed to [EditorEx.setBackgroundColor] / [JComponent.setBackground] to
+      // paint the background uniformly.
+      attr.backgroundColor = getEffectiveBackgroundNoDefault(this, palette)
+      attr.foregroundColor = getResultForeground(this, palette)
       if (hasOption(TextStyle.Option.BOLD)) {
         attr.fontType = attr.fontType or Font.BOLD
       }
@@ -198,10 +196,10 @@ object TerminalUiUtils {
     return AwtTransformers.toAwtColor(color)!!
   }
 
-  private fun getForegroundColor(style: TextStyle, palette: TerminalColorPalette): Color {
-    val foreground = getEffectiveForegroundColor(style.foregroundForRun, palette)
+  private fun getResultForeground(style: TextStyle, palette: TerminalColorPalette): Color {
+    val foreground = getEffectiveForegroundOrDefault(style, palette)
     return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = getEffectiveBackgroundColor(style.backgroundForRun, palette)
+      val background = getEffectiveBackgroundOrDefault(style, palette)
       @Suppress("UseJBColor")
       Color((foreground.red + background.red) / 2,
             (foreground.green + background.green) / 2,
@@ -211,12 +209,31 @@ object TerminalUiUtils {
     else foreground
   }
 
-  private fun getEffectiveForegroundColor(color: TerminalColor?, palette: TerminalColorPalette): Color {
-    return AwtTransformers.toAwtColor(color?.let { palette.getForeground(it) } ?: palette.defaultForeground)!!
+  private fun getEffectiveForegroundOrDefault(style: TextStyle, palette: TerminalColorPalette): Color {
+    return if (style.hasOption(TextStyle.Option.INVERSE)) toBackground(style, palette) else toForeground(style, palette)
   }
 
-  private fun getEffectiveBackgroundColor(color: TerminalColor?, palette: TerminalColorPalette): Color {
-    return AwtTransformers.toAwtColor(color?.let { palette.getBackground(it) } ?: palette.defaultBackground)!!
+  private fun getEffectiveBackgroundOrDefault(style: TextStyle, palette: TerminalColorPalette): Color {
+    return if (style.hasOption(TextStyle.Option.INVERSE)) toForeground(style, palette) else toBackground(style, palette)
+  }
+
+  private fun getEffectiveBackgroundNoDefault(style: TextStyle, palette: TerminalColorPalette): Color? {
+    return if (style.hasOption(TextStyle.Option.INVERSE)) {
+      toForeground(style, palette)
+    }
+    else {
+      style.background?.let { AwtTransformers.toAwtColor(palette.getBackground(it)) }
+    }
+  }
+
+  private fun toForeground(style: TextStyle, palette: TerminalColorPalette): Color {
+    val color = style.foreground?.let { palette.getForeground(it) } ?: palette.defaultForeground
+    return AwtTransformers.toAwtColor(color)!!
+  }
+
+  private fun toBackground(style: TextStyle, palette: TerminalColorPalette): Color {
+    val color = style.background?.let { palette.getBackground(it) } ?: palette.defaultBackground
+    return AwtTransformers.toAwtColor(color)!!
   }
 
   fun plainAttributesProvider(foregroundColorIndex: Int, palette: TerminalColorPalette): TextAttributesProvider {
