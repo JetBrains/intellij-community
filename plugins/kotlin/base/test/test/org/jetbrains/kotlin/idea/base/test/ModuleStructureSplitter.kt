@@ -23,7 +23,7 @@ object ModuleStructureSplitter {
         var isMainFile = false
 
         fun dumpFile(currentPlatform: String?, currentFileName: String?, currentText: String?) {
-            if (currentText != null && currentFileName != null && currentPlatform != null) {
+            if (!currentText.isNullOrEmpty() && currentFileName != null && currentPlatform != null) {
                 result.getOrPut(currentPlatform) { mutableListOf() }.add(TestFile(currentFileName, currentText, isMainFile))
             }
         }
@@ -31,10 +31,13 @@ object ModuleStructureSplitter {
         lines.forEach { line ->
             if (line == IS_MAIN) {
                 isMainFile = true
-            } else if (line.startsWith(PLATFORM_PREFIX)) {
+            } else if (line.startsWith(PLATFORM_PREFIX, true)) {
                 dumpFile(currentPlatform, currentFileName, currentText)
-                currentPlatform = line.substringAfter(PLATFORM_PREFIX).trim()
+                currentText = ""
+                currentFileName = null
+                currentPlatform = line.substring(PLATFORM_PREFIX.length).trim()
             } else if (line.startsWith(FILE_PATH_PREFIX)) {
+                dumpFile(currentPlatform, currentFileName, currentText)
                 isMainFile = false
                 currentFileName = line.substringAfter(FILE_PATH_PREFIX).trim()
                 currentText = ""

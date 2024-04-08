@@ -11,8 +11,6 @@ import java.io.File
 
 abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
 
-    private val exceptions = ArrayList<Throwable>()
-
     @Deprecated("Migrate to 'testDataDirectory'.", ReplaceWith("testDataDirectory"))
     final override fun getTestDataPath(): String = testDataDirectory.slashedPath
 
@@ -37,7 +35,7 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
      */
     fun configureModuleStructure(abstractFilePath: String): VirtualFile? {
         val map = ModuleStructureSplitter.splitPerModule(File(abstractFilePath))
-        var currentFile: VirtualFile? = null
+        var mainFile: VirtualFile? = null
         map.forEach { (platform, files) ->
             val platformDescriptor = when (platform) {
                 "Common" -> KotlinMultiPlatformProjectDescriptor.PlatformDescriptor.COMMON
@@ -49,13 +47,13 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
                 for (testFile in files) {
                     val virtualFile = VfsTestUtil.createFile(platformDescriptor.sourceRoot()!!, testFile.relativePath, testFile.text)
                     if (testFile.isMain) {
-                        currentFile = virtualFile
+                        mainFile = virtualFile
                     }
                     myFixture.configureFromExistingVirtualFile(virtualFile)
                 }
             }
         }
-        return currentFile
+        return mainFile
     }
 
     override fun tearDown() {
@@ -64,11 +62,6 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
             { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() },
         )
-
-        if (exceptions.isNotEmpty()) {
-            exceptions.forEach { it.printStackTrace() }
-            throw AssertionError("Exceptions in other threads happened")
-        }
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinMultiPlatformProjectDescriptor

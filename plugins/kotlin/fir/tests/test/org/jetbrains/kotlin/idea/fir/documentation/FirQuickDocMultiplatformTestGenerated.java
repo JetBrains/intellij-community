@@ -28,6 +28,11 @@ public class FirQuickDocMultiplatformTestGenerated extends AbstractFirQuickDocMu
         runTest("../../idea/tests/testData/editor/quickDoc/multiplatform/OnActualClassWithConstructorFromExpect.kt");
     }
 
+    @TestMetadata("OnActualDeclarationWithDocWhenInheritedDocPresent.kt")
+    public void testOnActualDeclarationWithDocWhenInheritedDocPresent() throws Exception {
+        runTest("../../idea/tests/testData/editor/quickDoc/multiplatform/OnActualDeclarationWithDocWhenInheritedDocPresent.kt");
+    }
+
     @TestMetadata("OnActualDeclarationWithInheritedDoc.kt")
     public void testOnActualDeclarationWithInheritedDoc() throws Exception {
         runTest("../../idea/tests/testData/editor/quickDoc/multiplatform/OnActualDeclarationWithInheritedDoc.kt");
