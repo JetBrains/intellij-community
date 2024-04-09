@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltip;
@@ -1002,7 +1003,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
       myFadeoutAlarm.cancelAllRequests();
       myFadeoutRequestMillis = System.currentTimeMillis();
       myFadeoutRequestDelay = fadeoutDelay;
-      myFadeoutAlarm.addRequest(() -> {
+      myFadeoutAlarm.addRequest((ContextAwareRunnable)() -> {
         if (mySmartFadeout) {
           setAnimationEnabled(true);
         }

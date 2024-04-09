@@ -3,6 +3,7 @@
 
 package com.intellij.ui.tabs.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
@@ -402,7 +403,7 @@ open class JBTabsImpl(
   private fun setRecentlyActive() {
     relayoutAlarm.cancelAllRequests()
     isRecentlyActive = true
-    relayoutAlarm.addRequest({
+    relayoutAlarm.addRequest(ContextAwareRunnable {
                                isRecentlyActive = false
                                relayout(false, false)
                              }, RELAYOUT_DELAY)
