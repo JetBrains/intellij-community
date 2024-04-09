@@ -328,9 +328,17 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   }
 
   @ICUtil
-  class InlineCompletionElementDescriptor(val text: String, val clazz: KClass<out InlineCompletionElement.Presentable>) {
+  abstract class InlineCompletionElementPredicate(val text: String) {
+    abstract fun assertMatches(actual: InlineCompletionElement.Presentable)
+  }
+
+  @ICUtil
+  class InlineCompletionElementDescriptor(
+    text: String,
+    val clazz: KClass<out InlineCompletionElement.Presentable>
+  ) : InlineCompletionElementPredicate(text) {
     @ICUtil
-    fun assertMatches(actual: InlineCompletionElement.Presentable) {
+    override fun assertMatches(actual: InlineCompletionElement.Presentable) {
       assertInstanceOf(clazz.java, actual) {
         "Expected '${clazz.simpleName}' inline completion element, but '${actual::class.simpleName}' found."
       }
@@ -341,9 +349,9 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
   }
 
   @ICUtil
-  interface ExpectedInlineCompletionElementsBuilder {
+  sealed interface ExpectedInlineCompletionElementsBuilder {
 
-    fun add(descriptor: InlineCompletionElementDescriptor)
+    fun add(descriptor: InlineCompletionElementPredicate)
   }
 
   @ICUtil
@@ -356,16 +364,16 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     add(InlineCompletionElementDescriptor(text, InlineCompletionSkipTextElement.Presentable::class))
   }
 
-  private class ExpectedInlineCompletionElementsBuilderImpl : ExpectedInlineCompletionElementsBuilder {
+  private class ExpectedInlineCompletionElementsBuilderImpl() : ExpectedInlineCompletionElementsBuilder {
 
-    private val elements = mutableListOf<InlineCompletionElementDescriptor>()
+    private val elements = mutableListOf<InlineCompletionElementPredicate>()
 
-    override fun add(descriptor: InlineCompletionElementDescriptor) {
+    override fun add(descriptor: InlineCompletionElementPredicate) {
       elements += descriptor
     }
 
     @ICUtil
-    fun build(): List<InlineCompletionElementDescriptor> = elements
+    fun build(): List<InlineCompletionElementPredicate> = elements
   }
 }
 
