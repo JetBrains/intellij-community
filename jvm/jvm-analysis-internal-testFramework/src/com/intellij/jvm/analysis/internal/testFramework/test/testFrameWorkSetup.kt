@@ -41,3 +41,7 @@ internal fun ModifiableRootModel.addMockitoLibrary(version: String = "1.10.19") 
 internal fun ModifiableRootModel.addEasyMockLibrary(version: String = "5.2.0") {
   MavenDependencyUtil.addFromMaven(this, "org.easymock:easymock:$version")
 }
+
+internal fun ModifiableRootModel.addMockKLibrary(version: String = "1.13.10") {
+  MavenDependencyUtil.addFromMaven(this, "io.mockk:mockk-jvm:$version")
+}

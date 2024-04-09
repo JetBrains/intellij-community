@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -42,6 +42,7 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add("org.mockito.Mockito", "verify.*")
     .add("org.mockito.InOrder", "verify")
     .add("org.junit.rules.ExpectedException", "expect.*")
+    .add("io.mockk.MockKKt", "verify.*")
     .add("org.hamcrest.MatcherAssert", "assertThat")
     .add("mockit.Verifications", "Verifications")
     .add("kotlin.PreconditionsKt__AssertionsJVMKt", "assert")

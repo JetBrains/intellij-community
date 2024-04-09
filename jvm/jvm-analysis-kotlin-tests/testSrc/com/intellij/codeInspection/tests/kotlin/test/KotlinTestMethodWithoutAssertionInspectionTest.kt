@@ -13,7 +13,7 @@ import com.intellij.util.PathUtil
 import java.io.File
 
 class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertionInspectionTestBase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : JUnitProjectDescriptor(LanguageLevel.HIGHEST) {
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : TestFrameworkDescriptor(LanguageLevel.HIGHEST) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       val stdLibJar = File(PathUtil.getJarPathForClass(JvmStatic::class.java))
@@ -108,6 +108,20 @@ class KotlinTestMethodWithoutAssertionInspectionTest : TestMethodWithoutAssertio
         @Test
         fun testFoo() {
             assertDoesNotThrow<IllegalStateException> { throw IllegalStateException() }
+        }
+      }
+    """.trimIndent())
+  }
+
+  fun `test no highlighting mockk assertion`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import org.junit.jupiter.api.Test
+      import io.mockk.verify
+      
+      class TestMethodWithAssertion {
+        @Test
+        fun testFoo() {
+            verify { }
         }
       }
     """.trimIndent())

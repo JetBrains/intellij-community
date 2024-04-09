@@ -15,14 +15,15 @@ abstract class TestMethodWithoutAssertionInspectionTestBase : JvmInspectionTestB
     ignoreIfExceptionThrown = true
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
+  override fun getProjectDescriptor(): LightProjectDescriptor = TestFrameworkDescriptor(LanguageLevel.HIGHEST)
 
-  protected open class JUnitProjectDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
+  protected open class TestFrameworkDescriptor(languageLevel: LanguageLevel) : ProjectDescriptor(languageLevel) {
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
       super.configureModule(module, model, contentEntry)
       model.addJUnit3Library()
       model.addJUnit4Library()
       model.addJUnit5Library()
+      model.addMockKLibrary()
     }
   }
 
