@@ -101,7 +101,7 @@ object KotlinUnusedSymbolUtil {
                     || modifierList.hasModifier(KtTokens.EXPECT_KEYWORD)
                     || modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)
                     || modifierList.hasModifier(KtTokens.OPEN_KEYWORD))
-        ) { // maybe one of overriders does use this parameter
+        ) { // maybe one of the overriders does use this parameter
             return true
         }
         return ownerFunction.containingClass()?.isInterface() == true
@@ -128,7 +128,7 @@ object KotlinUnusedSymbolUtil {
       if (declaration.isFinalizeMethod()) return null
       if (declaration is KtProperty && declaration.isSerializationImplicitlyUsedField()) return null
       if (declaration is KtNamedFunction && declaration.isSerializationImplicitlyUsedMethod()) return null
-      // properties can be referred by component1/component2, which is too expensive to search, don't mark them as unused
+      // properties can be referred by `component1`/`component2`, which is too expensive to search, don't mark them as unused
       val declarationContainingClass = declaration.containingClass()
       if (declaration.isConstructorDeclaredProperty() &&
           declarationContainingClass?.mustHaveNonEmptyPrimaryConstructor() == true
@@ -178,7 +178,7 @@ object KotlinUnusedSymbolUtil {
       val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
       if (!findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
-          // Not all script configuration are loaded; behave like it is used
+          // Not all script configurations are loaded; behave like it is used
           return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
       }
 
@@ -203,13 +203,13 @@ object KotlinUnusedSymbolUtil {
   }
 
   /**
-   * returns list of declaration accessor names e.g. pair of getter/setter for property declaration
+   * returns list of declaration accessor names, e.g., a pair of getter/setter for property declaration
    *
    * note: could be more than declaration.getAccessorNames()
    * as declaration.getAccessorNames() relies on LightClasses and therefore some of them could be not available
-   * (as not accessible outside of class)
+   * (as not accessible outside class)
    *
-   * e.g.: private setter w/o body is not visible outside of class and could not be used
+   * e.g.: private setter w/o body is not visible outside class and could not be used
    */
   private fun declarationAccessorNames(declaration: KtNamedDeclaration): List<String> =
       when (declaration) {
@@ -244,7 +244,7 @@ object KotlinUnusedSymbolUtil {
   private fun KtProperty.getCustomSetterName(): String? = setter?.annotationEntries?.getCustomAccessorName()
       ?: annotationEntries.filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_SETTER }.getCustomAccessorName()
 
-  // If the property or its accessor has 'JvmName' annotation it should be used instead
+  // If the property or its accessor has 'JvmName' annotation, it should be used instead
   private fun List<KtAnnotationEntry>.getCustomAccessorName(): String? {
       val customJvmNameAnnotation = firstOrNull { it.shortName?.asString() == "JvmName" } ?: return null
       return customJvmNameAnnotation.valueArguments.firstOrNull()?.getArgumentExpression()?.let { ElementManipulators.getValueText(it) }
@@ -317,7 +317,7 @@ object KotlinUnusedSymbolUtil {
 
           if (zeroOccurrences && !declaration.hasActualModifier()) {
               if (declaration is KtObjectDeclaration && declaration.isCompanion()) {
-                  // go on: companion object can be used only in containing class
+                  // go on: the companion object can be used only in containing class
               } else {
                   return false
               }
@@ -376,7 +376,7 @@ object KotlinUnusedSymbolUtil {
       val refElement = ref.element
       if (declaration.isAncestor(refElement)) return true // usages inside element's declaration are not counted
 
-      if (refElement.parent is KtValueArgumentName) return true // usage of parameter in form of named argument is not counted
+      if (refElement.parent is KtValueArgumentName) return true // usage of parameter in the form of named argument is not counted
 
       val import = refElement.getParentOfType<KtImportDirective>(false) ?: return false
       val aliasName = import.aliasName
@@ -462,7 +462,7 @@ object KotlinUnusedSymbolUtil {
   }
 
     /**
-   * Return true if [declaration] is a private nested class or object that is referenced by an import directive and the target symbol of
+   * Return true if [declaration] is a private nested class or object referenced by an import directive and the target symbol of
    * the import directive is used by other references.
    *
    * Note that we need this function to handle the case [declaration] is not directly referenced by any expressions other than an import
@@ -511,7 +511,7 @@ object KotlinUnusedSymbolUtil {
     isEnumValuesSoftDeprecateEnabled() && this.getReferencedNameAsName() == StandardNames.ENUM_ENTRIES && isSynthesizedFunction()
 
   /**
-   * Checks calls inside the enum class without receiver expression. Example: values(), ::values
+   * Checks calls inside the enum class without receiver expression. Example: `values()`, `::values`
    */
   context(KtAnalysisSession)
   private fun hasEnumFunctionReferenceInEnumClass(enumClass: KtClass): Boolean {
@@ -754,7 +754,7 @@ object KotlinUnusedSymbolUtil {
                       }
                   }
               }
-              // can't rely on light element, check annotation ourselves
+              // can't rely on a light element, check annotation ourselves
               val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
               return checkAnnotatedUsingPatterns(
                   declaration,
