@@ -16559,6 +16559,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedSymbol/loopParameter.kt");
             }
 
+            @TestMetadata("mainWithUnusedParameter.kt")
+            public void testMainWithUnusedParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unusedSymbol/mainWithUnusedParameter.kt");
+            }
+
             @TestMetadata("namedFunctionalParameter.kt")
             public void testNamedFunctionalParameter() throws Exception {
                 runTest("testData/inspectionsLocal/unusedSymbol/namedFunctionalParameter.kt");

@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
+import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
@@ -736,7 +737,14 @@ object KotlinUnusedSymbolUtil {
           }
           is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
           is KtProperty, is KtParameter -> {
-              if (declaration is KtParameter && !declaration.hasValOrVar()) return false
+              if (declaration is KtParameter) {
+                  val ownerFunction = declaration.ownerFunction
+                  if (ownerFunction is KtNamedFunction && KotlinMainFunctionDetector.getInstance().isMain(ownerFunction)) {
+                      // @JvmStatic main() must have parameters
+                      return ownerFunction.findAnnotation(ClassId(FqName("kotlin.jvm"), FqName("JvmStatic"), false)) != null
+                  }
+                  if (!declaration.hasValOrVar()) return false
+              }
               // we may handle only annotation parameters so far
               if (declaration is KtParameter && isAnnotationParameter(declaration)) {
                   val lightAnnotationMethods = LightClassUtil.getLightClassPropertyMethods(declaration).toList()
@@ -756,8 +764,9 @@ object KotlinUnusedSymbolUtil {
           else -> return false
       } ?: return false
 
-      if (isCheapEnough.value == com.intellij.psi.search.PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false
+      if (isCheapEnough.value == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false
 
       return isJavaEntryPoint.isEntryPoint(lightElement)
   }
+
 }

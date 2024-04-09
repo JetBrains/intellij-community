@@ -399,6 +399,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/loopParameter.kt");
         }
 
+        @TestMetadata("mainWithUnusedParameter.kt")
+        public void testMainWithUnusedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/mainWithUnusedParameter.kt");
+        }
+
         @TestMetadata("namedFunctionalParameter.kt")
         public void testNamedFunctionalParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/namedFunctionalParameter.kt");

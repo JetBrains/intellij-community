@@ -164,6 +164,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
             if (mustBeLocallyReferenced
                 && declaration.annotationEntries.isEmpty() //instead of slow implicit usages checks
                 && declaration !is KtClass // look globally for private classes too, since they could be referenced from some fancy .xml
+                && (((declaration as? KtParameter)?.parent?.parent as? KtAnnotated)?.annotationEntries?.isEmpty() != false)
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
