@@ -7,7 +7,6 @@ import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.ide.ui.grammar.tabs.rules.component.allRules
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.collectors.fus.LangCustomRuleValidator
-import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
@@ -15,7 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("grazie.state", 7)
+  private val GROUP = EventLogGroup("grazie.state", 8)
   private val ENABLE_LANGUAGE = GROUP.registerEvent(
     "enabled.language",
     EventFields.Enum("value", LanguageISO::class.java) { it.name.lowercase() }
@@ -24,7 +23,7 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
   private val RULE = GROUP.registerEvent(
     "rule",
     EventFields.PluginInfo,
-    EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java),
+    EventFields.StringValidatedByEnum("id", "grazie_rule_long_ids"),
     EventFields.Enabled
   )
 
