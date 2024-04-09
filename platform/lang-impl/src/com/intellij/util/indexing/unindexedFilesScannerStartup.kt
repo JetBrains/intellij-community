@@ -94,12 +94,8 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
   return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) null
   else {
     val projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(project.getQueueFile(), ManagingFS.getInstance().creationTimestamp)
-    if (projectDirtyFilesQueue.lastSeenIdsInOrphanQueue > (fileBasedIndex.orphanDirtyFileIds?.lastId ?: 0)) {
-      LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
-                "projectQueue.lastSeenIdsInOrphanQueue=${projectDirtyFilesQueue.lastSeenIdsInOrphanQueue}, orphanQueue.lastId=${fileBasedIndex.orphanDirtyFileIds?.lastId}, " +
-                "project=$project")
-    }
-    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, fileBasedIndex.orphanDirtyFileIds?.fileIds ?: emptyList())
+    val orphanDirtyFileIds = fileBasedIndex.orphanDirtyFileIds
+    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, orphanDirtyFileIds?.getNotSeenIds(project, projectDirtyFilesQueue) ?: emptyList())
     val allProjectDirtyFileIds = projectDirtyFilesQueue.fileIds + projectDirtyFilesFromOrphanQueue.mapNotNull { (it as? VirtualFileWithId)?.id }
     fileBasedIndex.ensureDirtyFileIndexesDeleted(allProjectDirtyFileIds)
     removeCurrentFile(project.getQueueFile())
@@ -117,6 +113,23 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
     scheduleForIndexing(projectDirtyFiles, fileBasedIndex, dumbModeThreshold - 1)
     ResultOfClearIndexesForDirtyFiles(projectDirtyFilesFromProjectQueue, projectDirtyFilesFromOrphanQueue)
   }
+}
+
+fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue): List<Int> {
+  if (projectQueue.lastSeenIndexInOrphanQueue > untrimmedSize) {
+    LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
+              "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.lastId=${untrimmedSize}, " +
+              "project=$project")
+    return emptyList()
+  }
+
+  val untrimmedIndexOfFirstElementInOrphanQueue = untrimmedSize - fileIds.size
+  val trimmedIndexOfFirstUnseenElement = (projectQueue.lastSeenIndexInOrphanQueue - untrimmedIndexOfFirstElementInOrphanQueue).toInt()
+  if (trimmedIndexOfFirstUnseenElement < 0) {
+    LOG.error("Full scanning has to be requested")
+    return fileIds
+  }
+  return fileIds.subList(trimmedIndexOfFirstUnseenElement, fileIds.size)
 }
 
 private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection<Int>, limit: Int = -1): List<VirtualFile> {

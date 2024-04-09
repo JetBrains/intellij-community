@@ -571,7 +571,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private void persistDirtyFiles(@NotNull Project project) {
     IntSet dirtyFileIds = getAllDirtyFiles(project);
     OrphanDirtyFilesQueue orphanQueue = myOrphanDirtyFileIds;
-    new ProjectDirtyFilesQueue(dirtyFileIds, orphanQueue == null ? 0 : orphanQueue.getLastId()).store(project, vfsCreationStamp);
+    new ProjectDirtyFilesQueue(dirtyFileIds, orphanQueue == null ? 0 : orphanQueue.getUntrimmedSize()).store(project, vfsCreationStamp);
   }
 
   @NotNull

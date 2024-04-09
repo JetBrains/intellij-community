@@ -142,20 +142,20 @@ object PersistentDirtyFilesQueue {
   }
 }
 
-class ProjectDirtyFilesQueue(val fileIds: IntCollection, val lastSeenIdsInOrphanQueue: Long) {
+class ProjectDirtyFilesQueue(val fileIds: IntCollection, val lastSeenIndexInOrphanQueue: Long) {
   fun store(project: Project, vfsVersion: Long) {
-    PersistentDirtyFilesQueue.storeIndexingQueue(project.getQueueFile(), fileIds, lastSeenIdsInOrphanQueue, vfsVersion)
+    PersistentDirtyFilesQueue.storeIndexingQueue(project.getQueueFile(), fileIds, lastSeenIndexInOrphanQueue, vfsVersion)
   }
 }
 
-class OrphanDirtyFilesQueue(val fileIds: IntList, val lastId: Long) {
+class OrphanDirtyFilesQueue(val fileIds: IntList, val untrimmedSize: Long) {
   fun store(vfsVersion: Long) {
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), fileIds, lastId, vfsVersion)
+    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), fileIds, untrimmedSize, vfsVersion)
   }
 
   fun plus(ids: IntCollection): OrphanDirtyFilesQueue {
     val newIds = IntArrayList(fileIds)
     newIds.addAll(ids)
-    return OrphanDirtyFilesQueue(newIds, lastId + ids.size)
+    return OrphanDirtyFilesQueue(newIds, untrimmedSize + ids.size)
   }
 }
