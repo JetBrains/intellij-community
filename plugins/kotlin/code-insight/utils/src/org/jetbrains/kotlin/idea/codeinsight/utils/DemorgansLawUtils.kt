@@ -31,13 +31,21 @@ object DemorgansLawUtils {
             else -> throw IllegalArgumentException()
         }
         val newExpression = KtPsiFactory(expression.project).buildExpression {
-            val negatedOperands = context.pointers.map { it.element }
+            val negatedOperands = context.pointers.map { it.element?.withoutDoubleNegation() }
             appendExpressions(negatedOperands, separator = operatorText)
         }
         expression.parents.match(KtParenthesizedExpression::class, last = KtPrefixExpression::class)
             ?.takeIf { it.operationReference.getReferencedNameElementType() == KtTokens.EXCL }
             ?.replace(newExpression)
             ?: expression.replace(newExpression.negate())
+    }
+
+    private fun KtExpression.withoutDoubleNegation(): KtExpression {
+        if (this is KtPrefixExpression && operationToken == KtTokens.EXCL) {
+            val baseExpr = baseExpression as? KtPrefixExpression ?: return this
+            if (baseExpr.operationToken == KtTokens.EXCL) return baseExpr.baseExpression ?: this
+        }
+        return this
     }
 
     fun splitBooleanSequence(expression: KtBinaryExpression): List<KtExpression>? {

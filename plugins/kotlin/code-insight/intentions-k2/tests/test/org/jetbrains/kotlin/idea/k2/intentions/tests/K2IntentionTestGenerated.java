@@ -5257,11 +5257,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/dontAddRedundantParenthesis.kt");
         }
 
-        @TestMetadata("doubleNegation.kt")
-        public void testDoubleNegation() throws Exception {
-            runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/doubleNegation.kt");
-        }
-
         @TestMetadata("hasBreak.kt")
         public void testHasBreak() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertBinaryExpressionWithDemorgansLaw/hasBreak.kt");
@@ -5373,6 +5368,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("binaryExpression.kt")
         public void testBinaryExpression() throws Exception {
             runTest("../../../idea/tests/testData/intentions/invertIfCondition/binaryExpression.kt");
+        }
+
+        @TestMetadata("binaryExpressionWithNegation.kt")
+        public void testBinaryExpressionWithNegation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/invertIfCondition/binaryExpressionWithNegation.kt");
         }
 
         @TestMetadata("booleanLiteral.kt")
