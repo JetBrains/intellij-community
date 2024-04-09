@@ -548,6 +548,19 @@ object IconUtil {
   fun rowIcon(left: Icon?, right: Icon?): Icon? {
     return if (left != null && right != null) RowIcon(left, right) else left ?: right
   }
+
+  @Internal
+  @JvmStatic
+  fun deepRetrieveIconNow(icon: Icon): Icon {
+    val replacer: IconReplacer = object : IconReplacer {
+      override fun replaceIcon(icon: Icon?): Icon? = when (icon) {
+        is RetrievableIcon -> icon.retrieveIcon().let { if (it === icon) it else replaceIcon(it) }
+        is ReplaceableIcon -> icon.replaceBy(this)
+        else -> icon
+      }
+    }
+    return replacer.replaceIcon(icon)
+  }
 }
 
 private fun computeFileIconImpl(file: VirtualFile, project: Project?, flags: Int): Icon {

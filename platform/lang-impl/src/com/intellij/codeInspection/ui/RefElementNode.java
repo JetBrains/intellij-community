@@ -9,6 +9,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,8 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
                         @NotNull InspectionTreeNode parent) {
     super(presentation, parent);
     myRefEntity = refEntity;
-    myIcon = refEntity == null ? null : refEntity.getIcon(false);
+    Icon icon = refEntity == null ? null : refEntity.getIcon(false);
+    myIcon = icon == null ? null : IconUtil.deepRetrieveIconNow(icon);
   }
 
   @Override
