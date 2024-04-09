@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.codeInsight.hint.LineTooltipRenderer;
@@ -24,6 +24,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -46,6 +48,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
@@ -123,9 +126,18 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
       private void updateActiveNonLineBreakpointGutterIconRenderer(@NotNull XBreakpoint<?> breakpoint) {
         XDebugSessionImpl session = getCurrentSession();
-        if (session != null && breakpoint == session.getActiveNonLineBreakpoint()) {
-          session.updateExecutionPointGutterIconRenderer();
-        }
+        if (session == null) return;
+        ReadAction
+          .nonBlocking(() -> session.getActiveNonLineBreakpoint())
+          .coalesceBy(myProject, breakpoint)
+          .expireWith(myProject)
+          .finishOnUiThread(ModalityState.defaultModalityState(), activeNonLineBreakpoint -> {
+            // also verify that the session has not changed
+            if (getCurrentSession() == session && breakpoint == activeNonLineBreakpoint) {
+              session.updateExecutionPointGutterIconRenderer();
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
 
