@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -299,6 +300,7 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
     /**
      * Caches if the project contains a Kotlin file.
      */
+    @OptIn(UnsafeCastFunction::class)
     internal suspend fun hasKotlinFiles(): Boolean {
         hasKotlinFile?.let { return it }
         return readAction {
