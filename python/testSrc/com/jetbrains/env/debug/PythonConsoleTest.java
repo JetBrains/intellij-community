@@ -431,4 +431,21 @@ public class PythonConsoleTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testPromptsPrinting() {
+    runPythonTest(new PyConsoleTask() {
+      @Override
+      public void testing() throws Exception {
+        exec("print('>?')");
+        waitForOutput(">?");
+
+        exec("print('...')");
+        waitForOutput("...");
+
+        exec("print('>>>')");
+        waitForOutput(">>>");
+      }
+    });
+  }
 }
