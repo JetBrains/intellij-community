@@ -313,7 +313,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !nullabilityChanged() && !visibilityChanged();
+      return !nullabilityChanged() && !visibilityChanged() && !customAccessorAdded();
     }
 
     public boolean nullabilityChanged() {
@@ -344,12 +344,26 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return getVisibilityLevel(getSetterVisibility(now)) < getVisibilityLevel(getSetterVisibility(past));
     }
 
+    public boolean customAccessorAdded() {
+      return (!hasCustomGetter(past) && hasCustomGetter(now)) || (!hasCustomSetter(past) && hasCustomSetter(now));
+    }
+
     private static Visibility getGetterVisibility(KmProperty prop) {
       return Attributes.getVisibility(prop.getGetter());
     }
 
     private static Visibility getSetterVisibility(KmProperty prop) {
-      return Attributes.getVisibility(prop.getGetter());
+      KmPropertyAccessorAttributes setter = prop.getSetter();
+      return setter != null? Attributes.getVisibility(setter) : Visibility.PUBLIC /*use default visibility if setter is not defined*/;
+    }
+
+    private static boolean hasCustomGetter(KmProperty prop) {
+      return Attributes.isNotDefault(prop.getGetter());
+    }
+
+    private static boolean hasCustomSetter(KmProperty prop) {
+      KmPropertyAccessorAttributes setter = prop.getSetter();
+      return setter != null && Attributes.isNotDefault(setter);
     }
   }
 

@@ -232,8 +232,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       for (Difference.Change<KmProperty, KotlinMeta.KmPropertiesDiff> propChange : metaDiff.properties().changed()) {
         KmProperty changedProp = propChange.getPast();
         KotlinMeta.KmPropertiesDiff propDiff = propChange.getDiff();
-        if (propDiff.accessRestricted()) {
-          debug("A property has become less accessible; affecting its lookup usages ", changedProp.getName());
+        if (propDiff.accessRestricted() || propDiff.customAccessorAdded()) {
+          debug("A property has become less accessible or got custom accessors; affecting its lookup usages ", changedProp.getName());
           affectMemberLookupUsages(context, changedClass, changedProp.getName(), future);
         }
 
