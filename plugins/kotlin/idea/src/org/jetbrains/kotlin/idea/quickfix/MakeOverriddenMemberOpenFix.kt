@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.isOverridable
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
@@ -56,7 +56,7 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
         for (overriddenDescriptor in getAllDeclaredNonOverridableOverriddenDescriptors(descriptor)) {
             assert(overriddenDescriptor.kind == DECLARATION) { "Can only be applied to declarations." }
             val overriddenMember = DescriptorToSourceUtils.descriptorToDeclaration(overriddenDescriptor)
-            if (overriddenMember == null || !overriddenMember.canRefactor() || overriddenMember !is KtCallableDeclaration ||
+            if (overriddenMember == null || !overriddenMember.canRefactorElement() || overriddenMember !is KtCallableDeclaration ||
                 overriddenMember.modifierList?.hasModifier(OPEN_KEYWORD) == true
             ) {
                 return QUICKFIX_UNAVAILABLE
@@ -65,7 +65,7 @@ class MakeOverriddenMemberOpenFix(declaration: KtDeclaration) : KotlinQuickFixAc
             overriddenDescriptor.takeIf { overriddenMember.isExpectDeclaration() }?.actualsForExpected()?.forEach {
                 if (it is MemberDescriptor && it.modality < Modality.OPEN) {
                     val member = DescriptorToSourceUtils.descriptorToDeclaration(it)
-                    if (member == null || !member.canRefactor() || member !is KtCallableDeclaration) {
+                    if (member == null || !member.canRefactorElement() || member !is KtCallableDeclaration) {
                         return QUICKFIX_UNAVAILABLE
                     }
                     overriddenNonOverridableMembers.add(member.createSmartPointer())
