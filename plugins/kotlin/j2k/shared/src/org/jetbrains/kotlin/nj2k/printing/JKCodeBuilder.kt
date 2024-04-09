@@ -2,10 +2,6 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiMethodCallExpression
-import com.intellij.psi.PsiNewExpression
-import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
@@ -18,8 +14,6 @@ import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PUBLIC
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
 import org.jetbrains.kotlin.nj2k.types.*
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
@@ -197,7 +191,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             val primaryConstructor = klass.primaryConstructor()
             primaryConstructor?.accept(this)
 
-            if (klass.inheritance.present()) {
+            if (klass.inheritance.isPresent()) {
                 printer.printWithSurroundingSpaces(":")
                 klass.inheritance.accept(this)
             }
@@ -241,7 +235,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
             renderModifiersList(field)
             field.name.accept(this)
-            if (field.type.present()) {
+            if (field.type.isPresent()) {
                 printer.print(": ")
                 field.type.accept(this)
             }
@@ -307,7 +301,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         private fun renderVariableDeclarationNameAndType(variable: JKVariable) {
             variable.name.accept(this)
-            if (variable.type.present() && variable.type.type !is JKContextType) {
+            if (variable.type.isPresent() && variable.type.type !is JKContextType) {
                 printer.print(": ")
                 variable.type.accept(this)
             }
@@ -326,7 +320,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         override fun visitForLoopVariableRaw(forLoopVariable: JKForLoopVariable) {
             forLoopVariable.annotationList.accept(this)
             forLoopVariable.name.accept(this)
-            if (!forLoopVariable.type.present() || forLoopVariable.type.type is JKContextType) return
+            if (!forLoopVariable.type.isPresent() || forLoopVariable.type.type is JKContextType) return
 
             val needExplicitType = isK1Mode() || // for K1 nullability inference
                     settings.specifyLocalVariableTypeByDefault ||
@@ -806,7 +800,7 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
         }
 
         override fun visitLambdaExpressionRaw(lambdaExpression: JKLambdaExpression) {
-            if (lambdaExpression.functionalType.present()) {
+            if (lambdaExpression.functionalType.isPresent()) {
                 // print SAM constructor
                 printer.renderType(lambdaExpression.functionalType.type, lambdaExpression)
                 printer.print(" ")

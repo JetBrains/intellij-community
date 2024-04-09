@@ -349,7 +349,7 @@ val JKElement.psi: PsiElement?
 inline fun <reified Elem : PsiElement> JKElement.psi(): Elem? =
     (this as? PsiOwner)?.psi as? Elem
 
-fun JKTypeElement.present(): Boolean = type != JKNoType
+fun JKTypeElement.isPresent(): Boolean = type != JKNoType
 
 fun JKStatement.isEmpty(): Boolean = when (this) {
     is JKEmptyStatement -> true
@@ -358,7 +358,7 @@ fun JKStatement.isEmpty(): Boolean = when (this) {
     else -> false
 }
 
-fun JKInheritanceInfo.present(): Boolean =
+fun JKInheritanceInfo.isPresent(): Boolean =
     extends.isNotEmpty() || implements.isNotEmpty()
 
 fun JKInheritanceInfo.supertypeCount(): Int =

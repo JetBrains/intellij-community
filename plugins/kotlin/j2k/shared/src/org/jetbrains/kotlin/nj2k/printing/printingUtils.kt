@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.nj2k.escaped
-import org.jetbrains.kotlin.nj2k.present
+import org.jetbrains.kotlin.nj2k.isPresent
 import org.jetbrains.kotlin.nj2k.psi
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.types.isKotlinFunctionalType
@@ -41,7 +41,7 @@ internal fun canMoveLambdaOutsideParentheses(argumentList: JKArgumentList): Bool
         return true
     }
 
-    if (lambda.functionalType.present()) {
+    if (lambda.functionalType.isPresent()) {
         // If the functional type (SAM constructor) exists and is not redundant,
         // then the lambda can't be moved outside the parentheses.
         // However, if it is redundant, we can move the lambda and not print the functional type.
