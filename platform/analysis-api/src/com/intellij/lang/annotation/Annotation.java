@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -79,6 +79,8 @@ public final class Annotation implements Segment {
       return localQuickFix;
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
 
   /**
    * Creates an instance of the annotation.
@@ -223,6 +225,8 @@ public final class Annotation implements Segment {
     myNeedsUpdateOnTyping = b;
   }
 
+  //</editor-fold>
+
   /**
    * Gets a flag indicating what happens with the annotation when the user starts typing.
    *
@@ -348,6 +352,8 @@ public final class Annotation implements Segment {
     return myTooltip;
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * Sets the tooltip for the annotation (shown when hovering the mouse in the gutter bar).
    * @deprecated Use {@link AnnotationBuilder#tooltip(String)} instead
@@ -381,6 +387,8 @@ public final class Annotation implements Segment {
   public void setTextAttributes(final TextAttributesKey enforcedAttributes) {
     myEnforcedAttributesKey = enforcedAttributes;
   }
+
+  //</editor-fold>
 
   /**
    * Returns the flag indicating whether the annotation is shown after the end of line containing it.
@@ -471,6 +479,8 @@ public final class Annotation implements Segment {
            ")";
   }
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
@@ -487,4 +497,6 @@ public final class Annotation implements Segment {
   public PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }
+
+  //</editor-fold>
 }

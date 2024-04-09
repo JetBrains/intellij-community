@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public interface AnnotationHolder {
+
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * Creates an error annotation with the specified message over the specified PSI element.
    *
@@ -183,6 +186,8 @@ public interface AnnotationHolder {
                               @NotNull TextRange range,
                               @Nullable @InspectionMessage String message,
                               @Nullable String htmlTooltip);
+
+  //</editor-fold>
 
   /**
    * @return the session in which the annotators are running.
