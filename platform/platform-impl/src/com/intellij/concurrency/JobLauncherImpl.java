@@ -544,8 +544,13 @@ public final class JobLauncherImpl extends JobLauncher {
       throw t;
     }
     finally {
-      // do not call future.get() to avoid overcompensation
-      completer.invoke();
+      // FJP may execute tasks in the same stackframe.
+      // This is the behavior similar to the manual pumping the event queue,
+      // so we need to prepare the stackframe for installation of context.
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        // do not call future.get() to avoid overcompensation
+        completer.invoke();
+      }
     }
     return futureResult.get();
   }

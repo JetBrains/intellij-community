@@ -375,7 +375,9 @@ final class PassExecutorService implements Disposable {
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
         try {
-          ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
+          try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
+            ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> doRun());
+          };
         }
         catch (ApplicationUtil.CannotRunReadActionException e) {
           myUpdateProgress.cancel();
