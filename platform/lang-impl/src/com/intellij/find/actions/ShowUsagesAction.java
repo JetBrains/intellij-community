@@ -534,9 +534,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     Set<Usage> visibleUsages = new LinkedHashSet<>();
     table.setTableModel(new SmartList<>(new StringNode(UsageViewBundle.message("progress.searching"))));
 
+    ShowUsagesPopupData showUsagesPopupData = new ShowUsagesPopupData(parameters, table, actionHandler, usageView);
+
     Runnable itemChosenCallback = table.prepareTable(
       showMoreUsagesRunnable(parameters, actionHandler),
-      showUsagesInMaximalScopeRunnable(parameters, actionHandler), actionHandler
+      showUsagesInMaximalScopeRunnable(parameters, actionHandler, showUsagesPopupData),
+      actionHandler
     );
 
     Consumer<AbstractPopup> tableResizer = popup -> {
@@ -547,9 +550,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       }
     };
 
-    ShowUsagesPopupData showUsagesPopupData = new ShowUsagesPopupData(parameters, table, actionHandler, usageView);
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
-
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
     Ref<Long> popupShownTimeRef = new Ref<>();
     popup.addListener(new JBPopupListener() {
@@ -735,7 +736,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
               if (areAllUsagesInOneLine(visibleUsage, usages)) {
                 String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScope.getDisplayName());
                 navigateAndHint(project, visibleUsage, hint, parameters, actionHandler, () -> cancel(popup));
-                cancel(popup);
               }
             }
           }
@@ -953,8 +953,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
-          showUsagesInMaximalScope(parameters, actionHandler);
+          showUsagesInMaximalScope(parameters, actionHandler, showUsagesPopupData);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
@@ -1515,7 +1514,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         );
 
         ShowUsagesActionState state = getState(project);
-        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
+        state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler, null);
         Runnable clearContinuation = () -> state.continuation = null;
 
         if (editor == null || editor.isDisposed() || !UIUtil.isShowing(editor.getContentComponent())) {
@@ -1637,12 +1636,15 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   }
 
   private static @NotNull Runnable showUsagesInMaximalScopeRunnable(@NotNull ShowUsagesParameters parameters,
-                                                                    @NotNull ShowUsagesActionHandler actionHandler) {
-    return () -> showUsagesInMaximalScope(parameters, actionHandler);
+                                                                    @NotNull ShowUsagesActionHandler actionHandler,
+                                                                    @Nullable ShowUsagesPopupData showUsagesPopupData) {
+    return () -> showUsagesInMaximalScope(parameters, actionHandler, showUsagesPopupData);
   }
 
   private static void showUsagesInMaximalScope(@NotNull ShowUsagesParameters parameters,
-                                               @NotNull ShowUsagesActionHandler actionHandler) {
+                                               @NotNull ShowUsagesActionHandler actionHandler,
+                                               @Nullable ShowUsagesPopupData showUsagesPopupData) {
+    cancel(showUsagesPopupData.popupRef.get(), actionHandler, CLOSE_REASON_CHANGE_SCOPE);
     ShowUsagesActionHandler handler = actionHandler.withScope(actionHandler.getMaximalScope());
     if (handler != null) {
       showElementUsages(parameters, handler);

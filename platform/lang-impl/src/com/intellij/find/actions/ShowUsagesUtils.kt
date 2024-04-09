@@ -20,7 +20,12 @@ fun navigateAndHint(project: Project,
                     onReady: Runnable) {
   (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.Main) {
     NavigationService.getInstance(project).navigate(usage, NavigationOptions.defaultOptions().requestFocus(true))
-    val newEditor = getEditorFor(usage) ?: return@launch
+    val newEditor = getEditorFor(usage)
+    if (newEditor == null) {
+      onReady.run()
+      return@launch
+    }
+
     ShowUsagesAction.hint(false, hint, parameters.withEditor(newEditor), actionHandler)
     onReady.run()
   }
