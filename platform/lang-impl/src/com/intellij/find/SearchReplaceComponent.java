@@ -674,19 +674,15 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private void updateBindings() {
     updateBindings(mySearchFieldActions, mySearchFieldWrapper);
-    updateBindings(mySearchActionsToolbar, mySearchFieldWrapper);
+    updateBindings((DefaultActionGroup)mySearchActionsToolbar.getActionGroup(), mySearchFieldWrapper);
     updateBindings(Collections.singletonList(modeAction), mySearchFieldWrapper);
 
     updateBindings(myReplaceFieldActions, myReplaceFieldWrapper);
-    updateBindings(myReplaceActionsToolbar, myReplaceToolbarWrapper);
+    updateBindings((DefaultActionGroup)myReplaceActionsToolbar.getActionGroup(), myReplaceToolbarWrapper);
   }
 
   private void updateBindings(@NotNull DefaultActionGroup group, @NotNull JComponent shortcutHolder) {
     updateBindings(List.of(group.getChildActionsOrStubs()), shortcutHolder);
-  }
-
-  private void updateBindings(@NotNull ActionToolbarImpl toolbar, @NotNull JComponent shortcutHolder) {
-    updateBindings(toolbar.getActions(), shortcutHolder);
   }
 
   private void updateBindings(@NotNull List<? extends AnAction> actions, @NotNull JComponent shortcutHolder) {
