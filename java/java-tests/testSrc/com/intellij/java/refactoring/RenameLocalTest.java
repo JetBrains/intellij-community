@@ -12,6 +12,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenameWrongRefHandler;
@@ -103,6 +104,18 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   
   public void testRenameFieldWithConstructorParamAutomatic() {
     doTest("pp");
+  }
+  
+  public void testConflictWithPattern() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+                 "There is already a pattern variable <b><code>s</code></b>. It will conflict with the renamed local variable",
+                 () -> doTest("s"));
+  }
+
+  public void testConflictWithFutureVar() {
+    assertThrows(BaseRefactoringProcessor.ConflictsInTestsException.class, 
+                 "There is already a local variable <b><code>y</code></b>. It will conflict with the renamed local variable",
+                 () -> doTest("y"));
   }
 
   public void testRenameInPlaceParamInOverriderAutomaticRenamerConflict() {
