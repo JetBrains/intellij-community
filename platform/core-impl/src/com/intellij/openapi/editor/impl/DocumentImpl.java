@@ -128,8 +128,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     myAssertThreading = !forUseInNonAWTThread;
   }
 
+  @ApiStatus.Internal
+  public static final Key<Boolean> IGNORE_RANGE_GUARDS_ON_FULL_UPDATE = Key.create("IGNORE_RANGE_GUARDS_ON_FULL_UPDATE");
   static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> RANGE_MARKERS_KEY = Key.create("RANGE_MARKERS_KEY");
   static final Key<Reference<RangeMarkerTree<RangeMarkerEx>>> PERSISTENT_RANGE_MARKERS_KEY = Key.create("PERSISTENT_RANGE_MARKERS_KEY");
+
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
     processQueue();
@@ -170,6 +173,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
   // track GC of RangeMarkerTree: means no one is interested in range markers for this file anymore
   private static final ReferenceQueue<RangeMarkerTree<RangeMarkerEx>> rmTreeQueue = new ReferenceQueue<>();
+
   private static class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMarkerEx>> {
     private final @NotNull VirtualFile virtualFile;
 
@@ -188,36 +192,11 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
-  /**
-   * makes range marker without creating the document (which could be expensive)
-   */
-  static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
-                                                     int offset,
-                                                     int startLine,
-                                                     int startCol,
-                                                     int endLine,
-                                                     int endCol,
-                                                     boolean persistent) {
-    int estimatedLength = RangeMarkerImpl.estimateDocumentLength(file);
-    offset = Math.min(offset, estimatedLength);
-    RangeMarkerImpl marker = persistent
-                             ? new PersistentRangeMarker(file, offset, offset, startLine, startCol, endLine, endCol, estimatedLength, false)
-                             : new RangeMarkerImpl(file, offset, offset, estimatedLength, false);
-    Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key = persistent ? PERSISTENT_RANGE_MARKERS_KEY : RANGE_MARKERS_KEY;
-    RangeMarkerTree<RangeMarkerEx> tree;
-    while (true) {
-      Reference<RangeMarkerTree<RangeMarkerEx>> oldRef = file.getUserData(key);
-      tree = dereference(oldRef);
-      if (tree != null) break;
-      tree = new RangeMarkerTree<>();
-      RMTreeReference reference = new RMTreeReference(tree, file);
-      if (file.replace(key, oldRef, reference)) break;
-    }
-    tree.addInterval(marker, offset, offset, false, false, false, 0);
-
-    return marker;
-
+  @TestOnly
+  int getRangeMarkersNodeSize() {
+    return myRangeMarkers.nodeSize() + myPersistentRangeMarkers.nodeSize();
   }
+
   public boolean setAcceptSlashR(boolean accept) {
     try {
       return myAcceptSlashR;
@@ -361,23 +340,31 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return markAsNeedsStrippingLater;
   }
 
-  private static int getMaxSpacesToLeave(int line, @NotNull List<? extends StripTrailingSpacesFilter> filters) {
-    for (StripTrailingSpacesFilter filter :  filters) {
-      if (filter instanceof SmartStripTrailingSpacesFilter) {
-        return ((SmartStripTrailingSpacesFilter)filter).getTrailingSpacesToLeave(line);
-      }
-      else  if (!filter.isStripSpacesAllowedForLine(line)) {
-        return -1;
-      }
-    }
-    return 0;
+  @Override
+  public void moveText(int srcStart, int srcEnd, int dstOffset) {
+    assertBounds(srcStart, srcEnd);
+    if (dstOffset == srcStart || dstOffset == srcEnd) return;
+    ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
+    assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" +
+                                                 srcStart +
+                                                 "; " +
+                                                 srcEnd +
+                                                 ") to offset " +
+                                                 dstOffset;
+
+    String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
+    int shift = dstOffset < srcStart ? srcEnd - srcStart : 0;
+
+    // a pair of insert/remove modifications
+    replaceString(dstOffset, dstOffset, srcStart + shift, replacement, LocalTimeCounter.currentTime(), false);
+    replaceString(srcStart + shift, srcEnd + shift, dstOffset, "", LocalTimeCounter.currentTime(), false);
   }
 
   @Override
   public void setReadOnly(boolean isReadOnly) {
     if (myIsReadOnly != isReadOnly) {
       myIsReadOnly = isReadOnly;
-      myPropertyChangeSupport.firePropertyChange(Document.PROP_WRITABLE, !isReadOnly, isReadOnly);
+      myPropertyChangeSupport.firePropertyChange(PROP_WRITABLE, !isReadOnly, isReadOnly);
     }
   }
 
@@ -407,6 +394,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   private RangeMarkerTree<RangeMarkerEx> treeFor(@NotNull RangeMarkerEx rangeMarker) {
     return rangeMarker instanceof PersistentRangeMarker ? myPersistentRangeMarkers : myRangeMarkers;
   }
+
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     return treeFor(rangeMarker).removeInterval(rangeMarker);
@@ -427,9 +415,71 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return myRangeMarkers.size() + myPersistentRangeMarkers.size();
   }
 
-  @TestOnly
-  int getRangeMarkersNodeSize() {
-    return myRangeMarkers.nodeSize()+myPersistentRangeMarkers.nodeSize();
+  @ApiStatus.Internal
+  public void replaceString(int startOffset, int endOffset, int moveOffset, @NotNull CharSequence s,
+                            long newModificationStamp, boolean wholeTextReplaced) {
+    assertBounds(startOffset, endOffset);
+
+    assertWriteAccess();
+    assertValidSeparators(s);
+
+    if (moveOffset != startOffset && startOffset != endOffset && s.length() != 0) {
+      throw new IllegalArgumentException(
+        "moveOffset != startOffset for a modification which is neither an insert nor deletion." +
+        " startOffset: " + startOffset + "; endOffset: " + endOffset + ";" + "; moveOffset: " + moveOffset + ";");
+    }
+
+    int initialStartOffset = startOffset;
+    int initialOldLength = endOffset - startOffset;
+
+    int newStringLength = s.length();
+    CharSequence chars = myText;
+    int newStartInString = 0;
+    while (newStartInString < newStringLength &&
+           startOffset < endOffset &&
+           s.charAt(newStartInString) == chars.charAt(startOffset)) {
+      startOffset++;
+      newStartInString++;
+    }
+    if (newStartInString == newStringLength &&
+        startOffset == endOffset &&
+        !wholeTextReplaced) {
+      return;
+    }
+
+    int newEndInString = newStringLength;
+    while (endOffset > startOffset &&
+           newEndInString > newStartInString &&
+           s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)) {
+      newEndInString--;
+      endOffset--;
+    }
+
+    if (startOffset == 0 && endOffset == getTextLength()) {
+      wholeTextReplaced = true;
+    }
+
+    CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
+    CharSequence sToDelete = myText.subtext(startOffset, endOffset);
+    if (!wholeTextReplaced || getUserData(IGNORE_RANGE_GUARDS_ON_FULL_UPDATE) != Boolean.TRUE) {
+      RangeMarker guard = getRangeGuard(startOffset, endOffset);
+      if (guard != null) {
+        throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
+      }
+    }
+
+    ImmutableCharSequence newText;
+    if (wholeTextReplaced && s instanceof ImmutableCharSequence) {
+      newText = (ImmutableCharSequence)s;
+    }
+    else {
+      newText = myText.replace(startOffset, endOffset, changedPart);
+      changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
+    }
+    boolean wasOptimized = initialStartOffset != startOffset || endOffset - startOffset != initialOldLength;
+    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp,
+               initialStartOffset, initialOldLength, wasOptimized ? startOffset : moveOffset);
+    trimToSize();
   }
 
   @Override
@@ -575,91 +625,6 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
                startOffset, endOffset - startOffset, startOffset);
   }
 
-  @Override
-  public void moveText(int srcStart, int srcEnd, int dstOffset) {
-    assertBounds(srcStart, srcEnd);
-    if (dstOffset == srcStart || dstOffset == srcEnd) return;
-    ProperTextRange srcRange = new ProperTextRange(srcStart, srcEnd);
-    assert !srcRange.containsOffset(dstOffset) : "Can't perform text move from range [" + srcStart + "; " + srcEnd + ") to offset " + dstOffset;
-
-    String replacement = getCharsSequence().subSequence(srcStart, srcEnd).toString();
-    int shift = dstOffset < srcStart ? srcEnd - srcStart : 0;
-
-    // a pair of insert/remove modifications
-    replaceString(dstOffset, dstOffset, srcStart + shift, replacement, LocalTimeCounter.currentTime(), false);
-    replaceString(srcStart + shift, srcEnd + shift, dstOffset, "", LocalTimeCounter.currentTime(), false);
-  }
-
-  @Override
-  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-    replaceString(startOffset, endOffset, startOffset, s, LocalTimeCounter.currentTime(), false);
-  }
-
-  @ApiStatus.Internal
-  public void replaceString(int startOffset, int endOffset, int moveOffset, @NotNull CharSequence s,
-                            long newModificationStamp, boolean wholeTextReplaced) {
-    assertBounds(startOffset, endOffset);
-
-    assertWriteAccess();
-    assertValidSeparators(s);
-
-    if (moveOffset != startOffset && startOffset != endOffset && s.length() != 0) {
-      throw new IllegalArgumentException(
-        "moveOffset != startOffset for a modification which is neither an insert nor deletion." +
-        " startOffset: " + startOffset + "; endOffset: " + endOffset + ";" + "; moveOffset: " + moveOffset + ";");
-    }
-
-    int initialStartOffset = startOffset;
-    int initialOldLength = endOffset - startOffset;
-
-    int newStringLength = s.length();
-    CharSequence chars = myText;
-    int newStartInString = 0;
-    while (newStartInString < newStringLength &&
-           startOffset < endOffset &&
-           s.charAt(newStartInString) == chars.charAt(startOffset)) {
-      startOffset++;
-      newStartInString++;
-    }
-    if (newStartInString == newStringLength &&
-        startOffset == endOffset &&
-        !wholeTextReplaced) {
-      return;
-    }
-
-    int newEndInString = newStringLength;
-    while (endOffset > startOffset &&
-           newEndInString > newStartInString &&
-           s.charAt(newEndInString - 1) == chars.charAt(endOffset - 1)) {
-      newEndInString--;
-      endOffset--;
-    }
-
-    if (startOffset == 0 && endOffset == getTextLength()) {
-      wholeTextReplaced = true;
-    }
-
-    CharSequence changedPart = s.subSequence(newStartInString, newEndInString);
-    CharSequence sToDelete = myText.subtext(startOffset, endOffset);
-    RangeMarker guard = getRangeGuard(startOffset, endOffset);
-    if (guard != null) {
-      throwGuardedFragment(guard, startOffset, sToDelete, changedPart);
-    }
-
-    ImmutableCharSequence newText;
-    if (wholeTextReplaced && s instanceof ImmutableCharSequence) {
-      newText = (ImmutableCharSequence)s;
-    }
-    else {
-      newText = myText.replace(startOffset, endOffset, changedPart);
-      changedPart = newText.subtext(startOffset, startOffset + changedPart.length());
-    }
-    boolean wasOptimized = initialStartOffset != startOffset || endOffset - startOffset != initialOldLength;
-    updateText(newText, startOffset, sToDelete, changedPart, wholeTextReplaced, newModificationStamp,
-               initialStartOffset, initialOldLength, wasOptimized ? startOffset : moveOffset);
-    trimToSize();
-  }
-
   private void assertBounds(int startOffset, int endOffset) {
     if (startOffset < 0 || startOffset > getTextLength()) {
       throw new IndexOutOfBoundsException("Wrong startOffset: " + startOffset + "; documentLength: " + getTextLength());
@@ -668,8 +633,56 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       throw new IndexOutOfBoundsException("Wrong endOffset: " + endOffset + "; documentLength: " + getTextLength());
     }
     if (endOffset < startOffset) {
-      throw new IllegalArgumentException("endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
+      throw new IllegalArgumentException(
+        "endOffset < startOffset: " + endOffset + " < " + startOffset + "; documentLength: " + getTextLength());
     }
+  }
+
+  @Override
+  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
+    replaceString(startOffset, endOffset, startOffset, s, LocalTimeCounter.currentTime(), false);
+  }
+
+  private void throwGuardedFragment(@NotNull RangeMarker guard,
+                                    int offset,
+                                    @NotNull CharSequence oldString,
+                                    @NotNull CharSequence newString) {
+    if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
+      DocumentEvent event =
+        new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false, offset, oldString.length(),
+                              offset);
+      throw new ReadOnlyFragmentModificationException(event, guard);
+    }
+  }
+
+  private void beforeChangedUpdate(DocumentEvent event, DelayedExceptions exceptions) {
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      FileDocumentManager manager = FileDocumentManager.getInstance();
+      VirtualFile file = manager.getFile(this);
+      if (file != null && !file.isValid()) {
+        LOG.error("File of this document has been deleted: " + file);
+      }
+    }
+    assertInsideCommand();
+
+    getLineSet(); // initialize line set to track changed lines
+
+    if (!ShutDownTracker.isShutdownHookRunning()) {
+      DocumentListener[] listeners = getListeners();
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        for (int i = listeners.length - 1; i >= 0; i--) {
+          try {
+            listeners[i].beforeDocumentChange(event);
+          }
+          catch (Throwable e) {
+            exceptions.register(e);
+          }
+        }
+      });
+    }
+
+    myEventsHandling = true;
   }
 
   @ApiStatus.Internal
@@ -741,11 +754,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     }
   }
 
-  private void throwGuardedFragment(@NotNull RangeMarker guard, int offset, @NotNull CharSequence oldString, @NotNull CharSequence newString) {
-    if (myCheckGuardedBlocks > 0 && !myGuardsSuppressed) {
-      DocumentEvent event = new DocumentEventImpl(this, offset, oldString, newString, myModificationStamp, false, offset, oldString.length(),
-                                                  offset);
-      throw new ReadOnlyFragmentModificationException(event, guard);
+  private void assertInsideCommand() {
+    if (!myAssertThreading) return;
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    if (!commandProcessor.isUndoTransparentActionInProgress() &&
+        commandProcessor.getCurrentCommand() == null) {
+      throw new IncorrectOperationException(
+        "Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
     }
   }
 
@@ -855,56 +870,39 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     return sequence.get();
   }
 
-  private void beforeChangedUpdate(DocumentEvent event, DelayedExceptions exceptions) {
-    Application app = ApplicationManager.getApplication();
-    if (app != null) {
-      FileDocumentManager manager = FileDocumentManager.getInstance();
-      VirtualFile file = manager.getFile(this);
-      if (file != null && !file.isValid()) {
-        LOG.error("File of this document has been deleted: "+file);
-      }
-    }
-    assertInsideCommand();
-
-    getLineSet(); // initialize line set to track changed lines
-
-    if (!ShutDownTracker.isShutdownHookRunning()) {
-      DocumentListener[] listeners = getListeners();
-      ProgressManager.getInstance().executeNonCancelableSection(() -> {
-        for (int i = listeners.length - 1; i >= 0; i--) {
-          try {
-            listeners[i].beforeDocumentChange(event);
-          }
-          catch (Throwable e) {
-            exceptions.register(e);
-          }
-        }
-      });
-    }
-
-    myEventsHandling = true;
-  }
-
-  private void assertInsideCommand() {
-    if (!myAssertThreading) return;
-    CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    if (!commandProcessor.isUndoTransparentActionInProgress() &&
-        commandProcessor.getCurrentCommand() == null) {
-      throw new IncorrectOperationException("Must not change document outside command or undo-transparent action. See com.intellij.openapi.command.WriteCommandAction or com.intellij.openapi.command.CommandProcessor");
-    }
-  }
-
-  private void changedUpdate(@NotNull DocumentEvent event, long newModificationStamp, @NotNull CharSequence prevText, DelayedExceptions exceptions) {
+  private void changedUpdate(@NotNull DocumentEvent event,
+                             long newModificationStamp,
+                             @NotNull CharSequence prevText,
+                             DelayedExceptions exceptions) {
     try {
-      if (LOG.isTraceEnabled()) LOG.trace(new Throwable(event.toString()));
+      if (LOG.isTraceEnabled()) {
+        LOG.trace(new Throwable(event.toString()));
+      }
       else if (LOG.isDebugEnabled()) LOG.debug(event.toString());
 
-      assert event.getOldFragment().length() ==  event.getOldLength() : "event.getOldFragment().length() = " + event.getOldFragment().length()+"; event.getOldLength() = " + event.getOldLength();
-      assert event.getNewFragment().length() ==  event.getNewLength() : "event.getNewFragment().length() = " + event.getNewFragment().length()+"; event.getNewLength() = " + event.getNewLength();
-      assert prevText.length() + event.getNewLength() - event.getOldLength() == getTextLength() : "prevText.length() = " + prevText.length()+ "; event.getNewLength() = " + event.getNewLength()+ "; event.getOldLength() = " + event.getOldLength()+ "; getTextLength() = " + getTextLength();
+      assert event.getOldFragment().length() == event.getOldLength() : "event.getOldFragment().length() = " +
+                                                                       event.getOldFragment().length() +
+                                                                       "; event.getOldLength() = " +
+                                                                       event.getOldLength();
+      assert event.getNewFragment().length() == event.getNewLength() : "event.getNewFragment().length() = " +
+                                                                       event.getNewFragment().length() +
+                                                                       "; event.getNewLength() = " +
+                                                                       event.getNewLength();
+      assert prevText.length() + event.getNewLength() - event.getOldLength() == getTextLength() : "prevText.length() = " +
+                                                                                                  prevText.length() +
+                                                                                                  "; event.getNewLength() = " +
+                                                                                                  event.getNewLength() +
+                                                                                                  "; event.getOldLength() = " +
+                                                                                                  event.getOldLength() +
+                                                                                                  "; getTextLength() = " +
+                                                                                                  getTextLength();
 
-      myLineSet = getLineSet().update(prevText, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment(), event.isWholeTextReplaced());
-      assert getTextLength() == myLineSet.getLength() : "getTextLength() = " + getTextLength()+ "; myLineSet.getLength() = " + myLineSet.getLength();
+      myLineSet = getLineSet().update(prevText, event.getOffset(), event.getOffset() + event.getOldLength(), event.getNewFragment(),
+                                      event.isWholeTextReplaced());
+      assert getTextLength() == myLineSet.getLength() : "getTextLength() = " +
+                                                        getTextLength() +
+                                                        "; myLineSet.getLength() = " +
+                                                        myLineSet.getLength();
 
       myFrozen = null;
       setModificationStamp(newModificationStamp);
@@ -926,6 +924,48 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     finally {
       myEventsHandling = false;
     }
+  }
+
+  /**
+   * makes range marker without creating the document (which could be expensive)
+   */
+  static @NotNull RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
+                                                              int offset,
+                                                              int startLine,
+                                                              int startCol,
+                                                              int endLine,
+                                                              int endCol,
+                                                              boolean persistent) {
+    int estimatedLength = RangeMarkerImpl.estimateDocumentLength(file);
+    offset = Math.min(offset, estimatedLength);
+    RangeMarkerImpl marker = persistent
+                             ? new PersistentRangeMarker(file, offset, offset, startLine, startCol, endLine, endCol, estimatedLength, false)
+                             : new RangeMarkerImpl(file, offset, offset, estimatedLength, false);
+    Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key = persistent ? PERSISTENT_RANGE_MARKERS_KEY : RANGE_MARKERS_KEY;
+    RangeMarkerTree<RangeMarkerEx> tree;
+    while (true) {
+      Reference<RangeMarkerTree<RangeMarkerEx>> oldRef = file.getUserData(key);
+      tree = dereference(oldRef);
+      if (tree != null) break;
+      tree = new RangeMarkerTree<>();
+      RMTreeReference reference = new RMTreeReference(tree, file);
+      if (file.replace(key, oldRef, reference)) break;
+    }
+    tree.addInterval(marker, offset, offset, false, false, false, 0);
+
+    return marker;
+  }
+
+  private static int getMaxSpacesToLeave(int line, @NotNull List<? extends StripTrailingSpacesFilter> filters) {
+    for (StripTrailingSpacesFilter filter : filters) {
+      if (filter instanceof SmartStripTrailingSpacesFilter) {
+        return ((SmartStripTrailingSpacesFilter)filter).getTrailingSpacesToLeave(line);
+      }
+      else if (!filter.isStripSpacesAllowedForLine(line)) {
+        return -1;
+      }
+    }
+    return 0;
   }
 
   @Override
@@ -1224,7 +1264,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
     private UnexpectedBulkUpdateStateException(Throwable enteringTrace) {
       super("Current operation is not permitted in bulk mode, see Document.isInBulkUpdate() javadoc");
       myAttachments = enteringTrace == null ? Attachment.EMPTY_ARRAY
-                                            : new Attachment[] {new Attachment("enteringTrace.txt", enteringTrace)};
+                                            : new Attachment[]{new Attachment("enteringTrace.txt", enteringTrace)};
     }
 
     @Override
