@@ -20,12 +20,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeContainer.Entry
@@ -67,12 +74,19 @@ public fun SelectableLazyColumn(
             latestOnSelectedIndexesChanged.value.invoke(indices)
         }
     }
+    val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     LazyColumn(
         modifier = modifier.onFocusChanged { isFocused = it.hasFocus }
             .focusRequester(focusRequester)
             .focusable(interactionSource = interactionSource)
             .onPreviewKeyEvent { event ->
+                // Handle Tab key press to move focus to next item
+                if (event.type == KeyEventType.KeyDown && event.key == Key.Tab) {
+                    val focusDirection = if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next
+                    focusManager.moveFocus(focusDirection)
+                    return@onPreviewKeyEvent true
+                }
                 if (state.lastActiveItemIndex != null) {
                     val actionHandled =
                         keyActions.handleOnKeyEvent(event, keys, state, selectionMode)
