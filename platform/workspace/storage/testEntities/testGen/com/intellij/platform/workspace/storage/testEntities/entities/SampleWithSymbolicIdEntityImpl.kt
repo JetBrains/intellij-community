@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
@@ -296,7 +295,7 @@ open class SampleWithSymbolicIdEntityImpl(private val dataSource: SampleWithSymb
   }
 }
 
-class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SampleWithSymbolicIdEntity>() {
+class SampleWithSymbolicIdEntityData : WorkspaceEntityData<SampleWithSymbolicIdEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String
   lateinit var stringListProperty: MutableList<String>
@@ -338,10 +337,6 @@ class SampleWithSymbolicIdEntityData : WorkspaceEntityData.WithCalculableSymboli
     clonedEntity as SampleWithSymbolicIdEntityData
     clonedEntity.stringListProperty = clonedEntity.stringListProperty.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return SampleSymbolicId(stringProperty)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

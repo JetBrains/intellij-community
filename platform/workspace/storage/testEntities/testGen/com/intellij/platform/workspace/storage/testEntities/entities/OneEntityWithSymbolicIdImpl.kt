@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
@@ -121,7 +120,7 @@ open class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymb
   }
 }
 
-class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId<OneEntityWithSymbolicId>() {
+class OneEntityWithSymbolicIdData : WorkspaceEntityData<OneEntityWithSymbolicId>() {
   lateinit var myName: String
 
   internal fun isMyNameInitialized(): Boolean = ::myName.isInitialized
@@ -147,10 +146,6 @@ class OneEntityWithSymbolicIdData : WorkspaceEntityData.WithCalculableSymbolicId
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWithSymbolicId") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return OneSymbolicId(myName)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

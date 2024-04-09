@@ -141,7 +141,7 @@ open class ComposedIdSoftRefEntityImpl(private val dataSource: ComposedIdSoftRef
   }
 }
 
-class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ComposedIdSoftRefEntity>(), SoftLinkable {
+class ComposedIdSoftRefEntityData : WorkspaceEntityData<ComposedIdSoftRefEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var link: NameId
 
@@ -206,10 +206,6 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculableSymbolicId
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.ComposedIdSoftRefEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return ComposedId(myName, link)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

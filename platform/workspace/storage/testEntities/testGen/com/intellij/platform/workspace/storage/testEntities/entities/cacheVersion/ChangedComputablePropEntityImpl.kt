@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -118,7 +117,7 @@ open class ChangedComputablePropEntityImpl(private val dataSource: ChangedComput
   }
 }
 
-class ChangedComputablePropEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ChangedComputablePropEntity>() {
+class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComputablePropEntity>() {
   lateinit var text: String
 
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
@@ -144,10 +143,6 @@ class ChangedComputablePropEntityData : WorkspaceEntityData.WithCalculableSymbol
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntityId(text)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

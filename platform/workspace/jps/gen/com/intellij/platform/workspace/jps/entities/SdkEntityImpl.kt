@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -240,7 +239,7 @@ open class SdkEntityImpl(private val dataSource: SdkEntityData) : SdkEntity, Wor
   }
 }
 
-class SdkEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkEntity>() {
+class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   lateinit var name: String
   lateinit var type: String
   var version: String? = null
@@ -280,10 +279,6 @@ class SdkEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkEntity>() 
     clonedEntity as SdkEntityData
     clonedEntity.roots = clonedEntity.roots.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return SdkId(name, type)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

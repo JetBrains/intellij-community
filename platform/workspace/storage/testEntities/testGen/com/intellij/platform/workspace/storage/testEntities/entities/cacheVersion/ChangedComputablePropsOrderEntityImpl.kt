@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -170,7 +169,7 @@ open class ChangedComputablePropsOrderEntityImpl(private val dataSource: Changed
   }
 }
 
-class ChangedComputablePropsOrderEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ChangedComputablePropsOrderEntity>() {
+class ChangedComputablePropsOrderEntityData : WorkspaceEntityData<ChangedComputablePropsOrderEntity>() {
   var someKey: Int = 0
   lateinit var names: MutableList<String>
   var value: Int = 0
@@ -207,10 +206,6 @@ class ChangedComputablePropsOrderEntityData : WorkspaceEntityData.WithCalculable
     clonedEntity as ChangedComputablePropsOrderEntityData
     clonedEntity.names = clonedEntity.names.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntityId(names)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

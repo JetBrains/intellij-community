@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
@@ -195,7 +194,7 @@ open class FacetTestEntityImpl(private val dataSource: FacetTestEntityData) : Fa
   }
 }
 
-class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTestEntity>() {
+class FacetTestEntityData : WorkspaceEntityData<FacetTestEntity>() {
   lateinit var data: String
   lateinit var moreData: String
 
@@ -223,10 +222,6 @@ class FacetTestEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetTe
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.FacetTestEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return FacetTestEntitySymbolicId(data)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -118,7 +118,7 @@ open class ChangedComputablePropEntityImpl(private val dataSource: ChangedComput
   }
 }
 
-class ChangedComputablePropEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ChangedComputablePropEntity>() {
+class ChangedComputablePropEntityData : WorkspaceEntityData<ChangedComputablePropEntity>() {
   lateinit var text: String
 
   internal fun isTextInitialized(): Boolean = ::text.isInitialized
@@ -144,11 +144,6 @@ class ChangedComputablePropEntityData : WorkspaceEntityData.WithCalculableSymbol
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropEntityId(
-      listOf(text, "more text", text))
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

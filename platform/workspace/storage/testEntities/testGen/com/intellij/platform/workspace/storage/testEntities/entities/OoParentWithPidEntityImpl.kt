@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.ConnectionId
@@ -210,7 +209,7 @@ open class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEnti
   }
 }
 
-class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<OoParentWithPidEntity>() {
+class OoParentWithPidEntityData : WorkspaceEntityData<OoParentWithPidEntity>() {
   lateinit var parentProperty: String
 
   internal fun isParentPropertyInitialized(): Boolean = ::parentProperty.isInitialized
@@ -236,10 +235,6 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculableSymbolicId<O
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithPidEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return OoParentEntityId(parentProperty)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

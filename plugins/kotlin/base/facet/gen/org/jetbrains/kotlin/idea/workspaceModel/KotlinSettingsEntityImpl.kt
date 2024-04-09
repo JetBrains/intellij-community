@@ -683,7 +683,7 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
   }
 }
 
-class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinSettingsEntity>(), SoftLinkable {
+class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var moduleId: ModuleId
   lateinit var sourceRoots: MutableList<String>
@@ -843,10 +843,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     clonedEntity.pureKotlinSourceFolders = clonedEntity.pureKotlinSourceFolders.toMutableWorkspaceList()
     clonedEntity.externalSystemRunTasks = clonedEntity.externalSystemRunTasks.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return KotlinSettingsId(name, moduleId)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -164,7 +164,7 @@ open class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntityData
   }
 }
 
-class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<KotlinScriptEntity>(), SoftLinkable {
+class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(), SoftLinkable {
   lateinit var path: String
   lateinit var dependencies: MutableSet<KotlinScriptLibraryId>
 
@@ -249,10 +249,6 @@ class KotlinScriptEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Kotl
     clonedEntity as KotlinScriptEntityData
     clonedEntity.dependencies = clonedEntity.dependencies.toMutableWorkspaceSet()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return KotlinScriptId(path)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -162,7 +162,7 @@ open class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftLinks
   }
 }
 
-class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId<WithListSoftLinksEntity>(), SoftLinkable {
+class WithListSoftLinksEntityData : WorkspaceEntityData<WithListSoftLinksEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var links: MutableList<NameId>
 
@@ -248,10 +248,6 @@ class WithListSoftLinksEntityData : WorkspaceEntityData.WithCalculableSymbolicId
     clonedEntity as WithListSoftLinksEntityData
     clonedEntity.links = clonedEntity.links.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return AnotherNameId(myName)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

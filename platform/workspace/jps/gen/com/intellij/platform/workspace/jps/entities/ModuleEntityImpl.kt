@@ -312,7 +312,7 @@ open class ModuleEntityImpl(private val dataSource: ModuleEntityData) : ModuleEn
   }
 }
 
-class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEntity>(), SoftLinkable {
+class ModuleEntityData : WorkspaceEntityData<ModuleEntity>(), SoftLinkable {
   lateinit var name: String
   var type: ModuleTypeId? = null
   lateinit var dependencies: MutableList<ModuleDependencyItem>
@@ -490,10 +490,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ModuleEnti
     clonedEntity as ModuleEntityData
     clonedEntity.dependencies = clonedEntity.dependencies.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return ModuleId(name)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

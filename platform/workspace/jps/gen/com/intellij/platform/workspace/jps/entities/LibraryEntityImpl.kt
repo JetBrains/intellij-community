@@ -286,7 +286,7 @@ open class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Librar
   }
 }
 
-class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEntity>(), SoftLinkable {
+class LibraryEntityData : WorkspaceEntityData<LibraryEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var tableId: LibraryTableId
   var typeId: LibraryTypeId? = null
@@ -409,10 +409,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LibraryEn
     clonedEntity as LibraryEntityData
     clonedEntity.roots = clonedEntity.roots.toMutableWorkspaceList()
     return clonedEntity
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return LibraryId(name, tableId)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -138,7 +138,7 @@ open class LinkedListEntityImpl(private val dataSource: LinkedListEntityData) : 
   }
 }
 
-class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<LinkedListEntity>(), SoftLinkable {
+class LinkedListEntityData : WorkspaceEntityData<LinkedListEntity>(), SoftLinkable {
   lateinit var myName: String
   lateinit var next: LinkedListEntityId
 
@@ -203,10 +203,6 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Linked
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
       "com.intellij.platform.workspace.storage.testEntities.entities.LinkedListEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return LinkedListEntityId(myName)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

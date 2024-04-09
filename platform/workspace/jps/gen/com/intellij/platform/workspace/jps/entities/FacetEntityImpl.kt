@@ -277,7 +277,7 @@ open class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetEntit
   }
 }
 
-class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity>(), SoftLinkable {
+class FacetEntityData : WorkspaceEntityData<FacetEntity>(), SoftLinkable {
   lateinit var name: String
   lateinit var moduleId: ModuleId
   lateinit var typeId: FacetEntityTypeId
@@ -344,10 +344,6 @@ class FacetEntityData : WorkspaceEntityData.WithCalculableSymbolicId<FacetEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.platform.workspace.jps.entities.FacetEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return FacetId(name, typeId, moduleId)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

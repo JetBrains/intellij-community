@@ -10,7 +10,6 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
@@ -339,7 +338,7 @@ open class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : Arti
   }
 }
 
-class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<ArtifactEntity>() {
+class ArtifactEntityData : WorkspaceEntityData<ArtifactEntity>() {
   lateinit var name: String
   lateinit var artifactType: String
   var includeInProjectBuild: Boolean = false
@@ -369,10 +368,6 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Artifact
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.java.workspace.entities.ArtifactEntity") as EntityMetadata
-  }
-
-  override fun symbolicId(): SymbolicEntityId<*> {
-    return ArtifactId(name)
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
