@@ -2,10 +2,10 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.UsageTracker;
 import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.feedback.UsageTracker;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
