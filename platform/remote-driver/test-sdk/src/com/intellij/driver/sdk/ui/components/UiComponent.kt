@@ -100,6 +100,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }.isNotEmpty()
   }
 
+  fun hasSubtext(subtext: String): Boolean {
+    return findAllText {
+      it.text.contains(subtext)
+    }.isNotEmpty()
+  }
+
   fun findText(predicate: (TextData) -> Boolean): UiText {
     return searchService.findAllText(component).single(predicate).let { UiText(this, it) }
   }
