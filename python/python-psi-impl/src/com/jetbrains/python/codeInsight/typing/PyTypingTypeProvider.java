@@ -29,6 +29,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeA
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
@@ -543,6 +544,25 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
             .nonNull()
             .findFirst()
             .orElse(null);
+        }
+      }
+    } else if (referenceTarget instanceof PyNamedParameterImpl namedParameter) {
+      if (namedParameter.getParent() instanceof PyParameterList parameterList) {
+        if (parameterList.getParent() instanceof PyLambdaExpression lambdaExpression) {
+          var lambdaParameters = lambdaExpression.getParameters(context.getTypeContext());
+          var parameterIndex = 0;
+
+          for (var parameter : lambdaExpression.getParameterList().getParameters()) {
+            if (Objects.equals(parameter.getName(), namedParameter.getName())) {
+              break;
+            }
+            parameterIndex++;
+          }
+
+          var type = lambdaParameters.get(parameterIndex).getType(context.getTypeContext());
+          if (type != null) {
+            return Ref.create(type);
+          }
         }
       }
     }

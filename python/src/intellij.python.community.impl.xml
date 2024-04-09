@@ -720,6 +720,7 @@
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
 
     <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.lambda.PyLambdaTypeProvider"/>
 
     <!-- NumPy -->
     <documentationLinkProvider implementation="com.jetbrains.python.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
