@@ -5,6 +5,7 @@
 
 package com.intellij.configurationStore
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
@@ -120,7 +121,9 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
 
   final override fun setState(component: Any?, componentName: String, pluginId: PluginId, state: Any?) {
     if (state == null) {
-      setSerializedState(componentName = componentName, element = null)
+      if (ClientId.isCurrentlyUnderLocalId) {
+        setSerializedState(componentName = componentName, element = null)
+      }
       return
     }
 
@@ -137,7 +140,9 @@ abstract class SaveSessionProducerBase : SaveSessionProducer, SafeWriteRequestor
       return
     }
 
-    setSerializedState(componentName = componentName, element = element)
+    if (ClientId.isCurrentlyUnderLocalId) {
+      setSerializedState(componentName = componentName, element = element)
+    }
   }
 
   abstract fun setSerializedState(componentName: String, element: Element?)

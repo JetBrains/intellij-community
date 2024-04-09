@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.Disposable;
@@ -214,10 +213,6 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
 
   @Override
   public Element getState() {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      throw new RuntimeException("Settings must be saved only under local clientId, current is " + ClientId.getCurrentOrNull());
-    }
-
     Element element = new Element("state");
     writeExternal(element);
     return element;
