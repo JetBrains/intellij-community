@@ -58,13 +58,10 @@ final class SettingsHelper {
       settings.log_file = null;
     //todo[tav] IDEA-260446 & IDEA-260344 However, without proper background the CEF component flashes white in dark themes
     //settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
-    int port = Registry.intValue("ide.browser.jcef.debug.port", -1);
-    if (ApplicationManager.getApplication().isInternal() && port > 0) {
-      settings.remote_debugging_port = port;
-    }
-    // The registry key defined only in Aqua WI plugin.xml as not intended to be used anywhere else
-    else if (Registry.is("ide.browser.jcef.debug.port.random.enabled", false)) {
-      settings.remote_debugging_port = 0;
+
+    int debuggingPort = getRemoteDebugPort();
+    if (debuggingPort > 0) {
+       settings.remote_debugging_port = debuggingPort;
     }
 
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
@@ -205,16 +202,14 @@ final class SettingsHelper {
 
     if (settings.remote_debugging_port > 0) {
       args = ArrayUtil.mergeArrays(args, "--remote-allow-origins=*");
+    } else if (getRemoteDebugPort() == 0) {
+      args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
     }
 
     args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
 
     if (isOffScreenRenderingModeEnabled()) {
       args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
-    }
-
-    if (settings.remote_debugging_port == 0) {
-      args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
     }
 
     return args;
@@ -398,7 +393,7 @@ final class SettingsHelper {
     return true;
   }
 
-  static String getMacAppBundlePath() {
+  private static String getMacAppBundlePath() {
     String command = ProcessHandle.current().info().command().orElse(null);
     if (command == null) {
       return null;
@@ -415,5 +410,28 @@ final class SettingsHelper {
       p = p.getParent();
     }
     return p == null ? null : p.toString();
+  }
+
+  /**
+   * Returns the DevTools debug port.
+   * Possible values:
+   * -1 - remote DevTools are disabled
+   * 0 - allocate a random port
+   * > 0 - the port number
+   * <p>
+   * 'ide.browser.jcef.debug.port' has priority over 'ide.browser.jcef.debug.port.random.enabled'.
+   * It means that if 'ide.browser.jcef.debug.port' value >= 0, 'ide.browser.jcef.debug.port.random.enabled' is ignored.
+   */
+  private static int getRemoteDebugPort() {
+    int result = Registry.intValue("ide.browser.jcef.debug.port", -1);
+    if (result >= 0) {
+      return result;
+    }
+
+    if (Registry.is("ide.browser.jcef.debug.port.random.enabled", false)) {
+      return 0;
+    }
+
+    return -1;
   }
 }
