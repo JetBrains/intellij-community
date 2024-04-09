@@ -33,7 +33,7 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 29)
+  val GROUP: EventLogGroup = EventLogGroup("new.project.wizard.interactions", 30)
 
   private val LANGUAGES = listOf(
     NewProjectWizardConstants.Language.JAVA, NewProjectWizardConstants.Language.KOTLIN,
@@ -82,16 +82,16 @@ object NewProjectWizardCollector : CounterUsagesCollector() {
   private val prev = GROUP.registerVarargEvent("navigate.prev", *baseFields, inputMaskField)
   private val projectCreated = GROUP.registerVarargEvent("project.created", *baseFields)
   private val search = GROUP.registerVarargEvent("search", *baseFields, typedCharField, hitField)
-  private val generatorSelected = GROUP.registerVarargEvent("generator.selected", *baseFields, generatorTypeField)
-  private val generatorFinished = GROUP.registerVarargEvent("generator.finished", *baseFields, generatorTypeField)
+  private val generatorSelected = GROUP.registerVarargEvent("generator.selected", *baseFields, generatorTypeField, EventFields.PluginInfo)
+  private val generatorFinished = GROUP.registerVarargEvent("generator.finished", *baseFields, generatorTypeField, EventFields.PluginInfo)
   private val templateSelected = GROUP.registerVarargEvent("select.custom.template", *baseFields)
   private val helpNavigation = GROUP.registerVarargEvent("navigate.help", *baseFields)
   private val morePluginLinkClicked = GROUP.registerVarargEvent("more.plugin.link.clicked", *baseFields)
   private val managePluginLinkClicked = GROUP.registerVarargEvent("manage.plugin.link.clicked", *baseFields)
   private val installPluginItemSelected = GROUP.registerVarargEvent("more.plugin.item.selected", *baseFields, pluginField)
 
-  private val locationChanged = GROUP.registerVarargEvent("project.location.changed", *baseFields, generatorTypeField)
-  private val nameChanged = GROUP.registerVarargEvent("project.name.changed", *baseFields, generatorTypeField)
+  private val locationChanged = GROUP.registerVarargEvent("project.location.changed", *baseFields, generatorTypeField, EventFields.PluginInfo)
+  private val nameChanged = GROUP.registerVarargEvent("project.name.changed", *baseFields, generatorTypeField, EventFields.PluginInfo)
   private val gitChanged = GROUP.registerVarargEvent("git.changed", *baseFields)
   private val gitFinish = GROUP.registerVarargEvent("git.finished", *baseFields, gitField)
   private val addSampleCodeChangedEvent = GROUP.registerVarargEvent("build.system.add.sample.code.changed", *buildSystemFields, addSampleCodeField)
