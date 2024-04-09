@@ -17,7 +17,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.*
-import org.jetbrains.uast.generate.UastCommentSaverFactory
+import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -142,9 +142,9 @@ class LoggingGuardedByConditionInspection : AbstractBaseUastLocalInspectionTool(
 
       val ifStatementSourcePsi = uIfExpression.sourcePsi ?: return
 
-      val commentSaverFactory = UastCommentSaverFactory.byLanguage(ifStatementSourcePsi.language)
+      val uastCodeGenerationPlugin = UastCodeGenerationPlugin.byLanguage(ifStatementSourcePsi.language)
 
-      val commentSaver = commentSaverFactory?.grabComments(uIfExpression)
+      val commentSaver = uastCodeGenerationPlugin?.grabComments(uIfExpression)
 
       val expressions = thenExpression.expressions
       if (expressions.isEmpty()) return

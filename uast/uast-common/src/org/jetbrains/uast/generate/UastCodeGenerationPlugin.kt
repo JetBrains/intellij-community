@@ -114,6 +114,32 @@ interface UastCodeGenerationPlugin {
    * @return new return expression with changed label if return is explicit, otherwise same expression if return is implicit 
    */
   fun changeLabel(returnExpression: UReturnExpression, context: PsiElement) : UReturnExpression
+
+  /**
+   * Retrieves the comments associated with the given UElement and restore after modifications.
+   *
+   * Example:
+   * ```
+   * if(a()){
+   *  //some comments
+   *  doSomething();
+   * }
+   * ```
+   * Becomes after grabbing and restoring comments:
+   * ```
+   * //some comments
+   * doSomething();
+   * ```
+   * The process includes three steps:
+   * - grab comments (collect comments from the range)
+   * - mark unchanged comments (optional step. Comments, which are not changed, should be marked and they will not be restored)
+   * - restore comments after modification (Usually comments will be restored before anchors)
+   *
+   * The implementation and places for new comments can be different for different languages and rely on language plugins
+   *
+   * @return The UastCommentSaver containing the comments associated with the UElement, null if it is impossible to create
+   */
+  fun grabComments(firstResultUElement: UElement, lastResultUElement: UElement = firstResultUElement): UastCommentSaver? = null
 }
 
 /**
@@ -232,3 +258,22 @@ val UElement.generationPlugin: UastCodeGenerationPlugin?
 fun UElement.getUastElementFactory(project: Project): UastElementFactory? =
   generationPlugin?.getElementFactory(project)
 
+/**
+ * Represents an interface for restoring comments which are not included in resultUElements.
+ */
+@ApiStatus.Experimental
+interface UastCommentSaver {
+  /**
+   * Restore comments.
+   * Given range of elements is used as an anchor
+   * and can be used to calculate what comments should be restored.
+   * This method can be called only once.
+   */
+  fun restore(firstResultUElement: UElement, lastResultUElement: UElement = firstResultUElement)
+
+  /**
+   * Marks comments inside the given range of UElements as unchanged.
+   * These comments will not be restored
+   */
+  fun markUnchanged(firstResultUElement: UElement?, lastResultUElement: UElement? = firstResultUElement)
+}

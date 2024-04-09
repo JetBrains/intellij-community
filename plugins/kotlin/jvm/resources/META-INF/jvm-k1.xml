@@ -103,7 +103,6 @@
         <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
         <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
         <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>
-        <generate.uastCommentSaverFactory implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCommentSaverFactory"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">

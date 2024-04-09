@@ -54,9 +54,6 @@
     <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCodeGenerationPlugin"
                     interface="org.jetbrains.uast.generate.UastCodeGenerationPlugin"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.generate.uastCommentSaverFactory"
-                    interface="org.jetbrains.uast.generate.UastCommentSaverFactory"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.evaluation.uastEvaluatorExtension"
                     interface="org.jetbrains.uast.evaluation.UEvaluatorExtension"
                     dynamic="true"/>
@@ -147,7 +144,6 @@
     <uastLanguagePlugin implementation="org.jetbrains.uast.java.JavaUastLanguagePlugin"/>
     <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.java.analysis.JavaUastAnalysisPlugin"/>
     <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.java.generate.JavaUastCodeGenerationPlugin"/>
-    <generate.uastCommentSaverFactory implementation="org.jetbrains.uast.java.generate.JavaUastCommentSaverFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

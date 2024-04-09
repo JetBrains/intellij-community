@@ -22,8 +22,10 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
+import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UQualifiedReferenceExpression
+import org.jetbrains.uast.generate.UastCommentSaver
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.toUElementOfType
 
@@ -68,4 +70,8 @@ class KotlinUastCodeGenerationPlugin : KotlinUastBaseCodeGenerationPlugin() {
       }
     }
   }
+
+    override fun grabComments(firstResultUElement: UElement, lastResultUElement: UElement): UastCommentSaver? {
+        return createUastCommentSaver(firstResultUElement, lastResultUElement)
+    }
 }

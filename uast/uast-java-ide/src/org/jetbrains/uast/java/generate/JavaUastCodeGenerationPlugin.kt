@@ -17,10 +17,12 @@ import com.intellij.psi.impl.source.tree.ElementType
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.util.*
 import com.intellij.util.asSafely
+import com.siyeh.ig.psiutils.CommentTracker
 import com.siyeh.ig.psiutils.ParenthesesUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
+import org.jetbrains.uast.generate.UastCommentSaver
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.java.*
 
@@ -134,6 +136,35 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
   }
 
   override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression = returnExpression
+
+  override fun grabComments(firstResultUElement: UElement, lastResultUElement: UElement): UastCommentSaver? {
+    val firstSourcePsiElement = firstResultUElement.sourcePsi ?: return null
+    val lastSourcePsiElement = lastResultUElement.sourcePsi ?: firstSourcePsiElement
+    val commentTracker = CommentTracker()
+    var e = firstSourcePsiElement
+    commentTracker.grabComments(e)
+    while (e !== lastSourcePsiElement) {
+      e = e.getNextSibling() ?: break
+      commentTracker.grabComments(e)
+    }
+    return object : UastCommentSaver {
+      override fun restore(firstResultUElement: UElement, lastResultUElement: UElement) {
+        var target: PsiElement? = firstResultUElement.sourcePsi ?: return
+        while (target?.parent.toUElement()?.sourcePsi == firstResultUElement.sourcePsi) {
+          target = target?.parent
+        }
+        if (target != null) {
+          commentTracker.insertCommentsBefore(target)
+        }
+      }
+
+      override fun markUnchanged(firstResultUElement: UElement?, lastResultUElement: UElement?) {
+        val firstPsiElement = firstResultUElement?.sourcePsi ?: return
+        val lastPsiElement = lastResultUElement?.sourcePsi ?: firstPsiElement
+        commentTracker.markRangeUnchanged(firstPsiElement, lastPsiElement)
+      }
+    }
+  }
 }
 
 private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression, oldElement: UElement? = null): PsiStatement? {
