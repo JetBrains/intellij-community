@@ -2480,7 +2480,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     @NotNull
     @Override
     public ActionRemoteBehavior getBehavior() {
-      return ActionRemoteBehavior.BackendOnly;
+      if (PlatformUtils.isRider()) return ActionRemoteBehavior.FrontendThenBackend;
+      else return ActionRemoteBehavior.BackendOnly;
     }
 
     @Override
