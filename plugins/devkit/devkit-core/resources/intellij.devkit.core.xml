@@ -434,7 +434,7 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ListenerImplementationMustNotBeDisposableInspection"/>
 
     <localInspection language="UAST"
-                     key="inspection.read.or.write.action.in.service.init.display.name"
+                     key="inspection.read.or.write.action.during.service.init.display.name"
                      shortName="ReadOrWriteActionInServiceInitialization"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"

@@ -165,8 +165,8 @@ internal class ReadOrWriteActionInServiceInitializationInspection : DevKitUastIn
     val anchor = uCallExpression.methodIdentifier?.sourcePsi ?: return
     holder.registerProblem(
       anchor,
-      if (actionType == ActionType.READ) DevKitBundle.message("inspection.read.or.write.action.in.service.init.message.read")
-      else DevKitBundle.message("inspection.read.or.write.action.in.service.init.message.write")
+      if (actionType == ActionType.READ) DevKitBundle.message("inspection.read.or.write.action.during.service.init.message.read")
+      else DevKitBundle.message("inspection.read.or.write.action.during.service.init.message.write")
     )
   }
 
