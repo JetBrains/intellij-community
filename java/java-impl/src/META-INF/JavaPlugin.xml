@@ -476,6 +476,8 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.compiler.impl.BuildUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.statistics.DebuggerStatistics"/>
 
+    <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
+
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
 
@@ -2534,6 +2536,9 @@
             class="com.intellij.openapi.projectRoots.impl.ParseSdkmanrcAction">
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </action>
+
+    <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
+            class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
