@@ -142,7 +142,7 @@ internal class CreateKotlinCallableAction(
             append(KtTokens.FUN_KEYWORD)
             append(" ")
 
-            val (receiver, receiverTypeText) = if (request is CreateMethodFromKotlinUsageRequest) CreateKotlinCallableActionTextBuilder.renderReceiver(request) else "" to ""
+            val (receiver, receiverTypeText) = if (request is CreateMethodFromKotlinUsageRequest) CreateKotlinCallableActionTextBuilder.renderReceiver(request, container) else "" to ""
             append(renderTypeParameterDeclarations(request, container, receiverTypeText))
             if ((request as? CreateMethodFromKotlinUsageRequest)?.isExtension == true) {
                 if (receiver.isNotEmpty()) {

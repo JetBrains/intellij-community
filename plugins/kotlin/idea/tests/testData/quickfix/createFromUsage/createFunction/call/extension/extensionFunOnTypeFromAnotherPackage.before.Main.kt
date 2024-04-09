@@ -1,4 +1,4 @@
-// "Create extension function 'A.foo'" "true"
+// "/(Create extension function 'A.foo')|(Create extension function 'package2.A.foo')/" "true"
 // ERROR: Unresolved reference: foo
 
 import package1.A

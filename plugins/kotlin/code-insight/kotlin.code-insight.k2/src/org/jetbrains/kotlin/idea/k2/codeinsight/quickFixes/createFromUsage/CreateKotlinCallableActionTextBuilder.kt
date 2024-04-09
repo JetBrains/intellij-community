@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.Variance
 
 /**
@@ -32,7 +34,7 @@ object CreateKotlinCallableActionTextBuilder {
             append(callableKindAsString)
 
             if (request.methodName.isNotEmpty()) {
-                val (receiver,_) = renderReceiver(request)
+                val (receiver,_) = renderReceiver(request, request.call)
                 append(" '$receiver${request.methodName}'")
             }
         }
@@ -46,7 +48,7 @@ object CreateKotlinCallableActionTextBuilder {
     }
 
     // text, receiverTypeText
-    fun renderReceiver(request: CreateMethodFromKotlinUsageRequest): Pair<String,String> {
+    fun renderReceiver(request: CreateMethodFromKotlinUsageRequest, container: KtElement): Pair<String,String> {
         analyze(request.call) {
             val receiverSymbol: KtSymbol?
             val receiverTypeText: String
@@ -55,13 +57,15 @@ object CreateKotlinCallableActionTextBuilder {
                 receiverSymbol = null
                 receiverTypeText = request.receiverType.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
             } else {
-                // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and
-                // its type rendering.
                 receiverSymbol = request.receiverExpression.resolveExpression()
                 val receiverType = request.receiverType ?: request.receiverExpression.getKtType()
-                receiverTypeText = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType)
+                val recPackageFqName = request.receiverExpression.getKtType()?.convertToClass()?.classIdIfNonLocal?.packageFqName
+                val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
+                // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
+                val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType)
                     ?: receiverType?.render(RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT, Variance.INVARIANT)
                     ?: request.receiverExpression.text
+                receiverTypeText = addedPackage + renderedReceiver
             }
             return if (request.isExtension && receiverSymbol is KtCallableSymbol) {
                 val receiverType = receiverSymbol.returnType

@@ -58,9 +58,8 @@ internal class CreateKotlinCallablePsiEditor(
     fun execute(anchor: PsiElement, request: CreateMethodRequest) {
         val factory = KtPsiFactory(project)
         var function = factory.createFunction(callableInfo.definitionAsString)
-        val passedContainerElement = pointerToContainer.element
-        if (passedContainerElement == null) return
-        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile
+        val passedContainerElement = pointerToContainer.element ?: return
+        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && (request as? CreateMethodFromKotlinUsageRequest)?.isExtension != true
             else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             (anchor.getExtractionContainers().firstOrNull() ?: return)
