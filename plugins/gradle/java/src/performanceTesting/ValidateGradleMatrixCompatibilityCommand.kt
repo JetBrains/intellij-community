@@ -8,6 +8,7 @@ import com.intellij.util.io.HttpRequests
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilityDataParser
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import kotlin.time.Duration.Companion.seconds
 
 class ValidateGradleMatrixCompatibilityCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -17,6 +18,7 @@ class ValidateGradleMatrixCompatibilityCommand(text: String, line: Int) : Perfor
 
   override suspend fun doExecute(context: PlaybackContext) {
     val url = Registry.stringValue("gradle.compatibility.config.url")
+    val expectedUpdateTime = System.currentTimeMillis() - Registry.intValue("gradle.compatibility.update.interval").seconds.inWholeMilliseconds
     val json = HttpRequests.request(url)
       .productNameAsUserAgent()
       .readString()
@@ -31,6 +33,9 @@ class ValidateGradleMatrixCompatibilityCommand(text: String, line: Int) : Perfor
     }
     if (!actual.compatibility.containsAll(expected.compatibility)) {
       throw IllegalStateException("Compatibility Expected: ${expected.compatibility} but ${actual.compatibility} ")
+    }
+    if (actual.lastUpdateTime < expectedUpdateTime) {
+      throw IllegalStateException("Last update time less then expected")
     }
   }
 
