@@ -8,7 +8,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTestCase {
-  public void testRenameToIgnored() {
+  public void testRenameToIgnoredSwitchRule() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
       myFixture.configureByText("Test.java", """
       class Scratch {
@@ -30,6 +30,34 @@ public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTes
                                   case String ignored -> System.out.println("String");
                                   case Integer ignored -> System.out.println("Integer");
                                   default -> System.out.println("Other");
+                                  }
+                                }
+                              }""");
+    });
+  }
+
+  public void testRenameToIgnoredSwitch() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByText("Test.java", """
+       class Scratch {
+         void test(Object obj) {
+           switch (obj) {
+             case String ignored: System.out.println("String");  break;
+             case Integer <caret>a: System.out.println("Integer"); break;
+             default: System.out.println("Other");  break;
+           }
+         }
+       }""");
+      myFixture.enableInspections(new UnusedDeclarationInspection());
+      IntentionAction intention = myFixture.findSingleIntention("Rename 'a' to 'ignored'");
+      myFixture.launchAction(intention);
+      myFixture.checkResult("""
+                              class Scratch {
+                                void test(Object obj) {
+                                  switch (obj) {
+                                    case String ignored: System.out.println("String");  break;
+                                    case Integer ignored: System.out.println("Integer"); break;
+                                    default: System.out.println("Other");  break;
                                   }
                                 }
                               }""");

@@ -7,7 +7,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,44 +22,31 @@ public final class JavaUnresolvableLocalCollisionDetector {
       return;
     }
 
-
+    PsiVariable variable = (PsiVariable)element;
     PsiElement scope;
-    PsiElement anchor = null;
-    if (element instanceof PsiLocalVariable) {
-      scope = CommonJavaRefactoringUtil.getVariableScope((PsiLocalVariable)element);
-      if (!(element instanceof ImplicitVariable)) {
-        anchor = element.getParent();
-      }
+    if (variable instanceof PsiLocalVariable local) {
+      scope = CommonJavaRefactoringUtil.getVariableScope(local);
     }
     else {
       // element is a PsiParameter
       scope = ((PsiParameter)element).getDeclarationScope();
-      // Declaration scope returned for pattern variable in case is the whole switch.
-      // Let's reduce it to the single rule to avoid conflicts with other branches.  
-      if (element instanceof PsiPatternVariable patternVariable) {
-        PsiPattern pattern = patternVariable.getPattern();
-        while (pattern != null && pattern.getParent() instanceof PsiDeconstructionList list) {
-          pattern = ObjectUtils.tryCast(list.getParent(), PsiPattern.class);
-        }
-        if (pattern != null && pattern.getParent() instanceof PsiCaseLabelElementList list &&
-            list.getParent() instanceof PsiSwitchLabeledRuleStatement rule) {
-          scope = rule;
-        }
-      }
     }
     LOG.assertTrue(scope != null, element.getClass().getName());
 
+    PsiResolveHelper helper = PsiResolveHelper.getInstance(element.getProject());
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
       @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
         if (collidingVariable.isUnnamed()) return;
+        if (helper.resolveAccessibleReferencedVariable(newName, element) == null &&
+            helper.resolveAccessibleReferencedVariable(variable.getName(), collidingVariable) == null) return;
         LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
         result.add(collision);
       }
     };
 
-    visitLocalsCollisions(element, newName, scope, anchor, collidingNameVisitor);
+    visitLocalsCollisions(element, newName, scope, null, collidingNameVisitor);
 
 
     /*PsiElement place = scope.getLastChild();
