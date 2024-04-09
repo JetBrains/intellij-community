@@ -34,7 +34,7 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
         val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(event.filePosition.file.toPath()) ?: return@BuildProgressListener
         val problem = FileBuildProblem(event, virtualFile, this)
 
-        val problems = buildIdToFileProblems.getOrPut(buildId, { HashSet() })
+        val problems = buildIdToFileProblems.getOrPut(buildId) { HashSet() }
         if (problems.add(problem)) {
           collector.problemAppeared(problem)
         } else {

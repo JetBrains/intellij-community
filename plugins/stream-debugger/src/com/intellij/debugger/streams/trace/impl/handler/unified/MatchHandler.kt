@@ -50,7 +50,7 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
 
   override fun transformCall(call: TerminatorStreamCall): TerminatorStreamCall {
     val args = call.arguments
-    assert(args.size == 1, { "Only predicate should be specified" })
+    assert(args.size == 1) { "Only predicate should be specified" }
     val predicate = args.first()
     val newPredicateBody = if (call.name == "allMatch") "false" else "true"
     val newPredicate = dsl.lambda("x") { doReturn(TextExpression(newPredicateBody)) }.toCode()

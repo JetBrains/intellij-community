@@ -201,7 +201,7 @@ class TestJbService private constructor(): JbService {
     private val map = mutableMapOf<String, List<Icon>>()
 
     fun getProductIcon(itemId: String, size: IconProductSize): Icon {
-      val icons = map.getOrPut(itemId, { list.get(Random.nextInt(list.size - 1)) })
+      val icons = map.getOrPut(itemId) { list[Random.nextInt(list.size - 1)] }
 
       return when (size) {
         IconProductSize.SMALL -> icons.get(0)

@@ -40,7 +40,7 @@ class ExternalProjectSystemRegistryImpl : ExternalProjectSystemRegistry {
     return null
   }
 
-  override fun getSourceById(id: String): ProjectModelExternalSource = idToSource.computeIfAbsent(id, { ProjectModelExternalSourceImpl(it) })
+  override fun getSourceById(id: String): ProjectModelExternalSource = idToSource.computeIfAbsent(id) { ProjectModelExternalSourceImpl(it) }
 
   private class ProjectModelExternalSourceImpl(private val myId: String) : ProjectModelExternalSource {
     //todo specify display name explicitly instead, the current code is copied from ProjectSystemId constructor

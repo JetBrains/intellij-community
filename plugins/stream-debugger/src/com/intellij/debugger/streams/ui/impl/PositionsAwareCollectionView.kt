@@ -39,7 +39,7 @@ open class PositionsAwareCollectionView(tree: CollectionTree,
     }
 
     if (changed) {
-      ApplicationManager.getApplication().invokeLater({ myDispatcher.multicaster.valuesPositionsChanged() })
+      ApplicationManager.getApplication().invokeLater { myDispatcher.multicaster.valuesPositionsChanged() }
     }
   }
 

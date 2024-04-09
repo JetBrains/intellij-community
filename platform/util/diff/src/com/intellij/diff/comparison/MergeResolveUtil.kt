@@ -256,8 +256,8 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
     val text = side.select(leftText, rightText)!!
 
     val empty: CharSequence = ""
-    return fragments.subList(start, end).fold(empty, { prefix, fragment ->
+    return fragments.subList(start, end).fold(empty) { prefix, fragment ->
       MergingCharSequence(prefix, text.subSequence(fragment.startOffset2, fragment.endOffset2))
-    })
+    }
   }
 }

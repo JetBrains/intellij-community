@@ -138,7 +138,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   @RequiresEdt
   override fun doFrozen(task: Runnable) {
-    documentTracker.doFrozen({ task.run() })
+    documentTracker.doFrozen { task.run() }
   }
 
   override fun <T> readLock(task: () -> T): T {

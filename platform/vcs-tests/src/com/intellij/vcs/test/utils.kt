@@ -62,7 +62,7 @@ fun cleanupForAssertion(content: String): String {
   val nobr = content.replace("<br/>", "\n").replace("<br>", "\n").replace("<hr/>", "\n")
     .replace("&nbsp;", " ").replace(" {2,}".toRegex(), " ")
   return nobr.lines()
-    .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim({ it <= ' ' }) }
+    .map { line -> line.replace(" href='[^']*'".toRegex(), "").trim { it <= ' ' } }
     .filter { line -> !line.isEmpty() }
     .joinToString(" ")
 }

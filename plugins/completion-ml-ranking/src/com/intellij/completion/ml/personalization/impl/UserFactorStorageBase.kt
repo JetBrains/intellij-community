@@ -38,7 +38,7 @@ abstract class UserFactorStorageBase : UserFactorStorage, PersistentStateCompone
   }
 
   private fun getAggregateFactor(factorId: String): MutableDoubleFactor =
-    state.aggregateFactors.computeIfAbsent(factorId, { DailyAggregateFactor() })
+    state.aggregateFactors.computeIfAbsent(factorId) { DailyAggregateFactor() }
 
   private class CollectorState {
     val aggregateFactors: MutableMap<String, DailyAggregateFactor> = HashMap()
@@ -104,7 +104,7 @@ abstract class UserFactorStorageBase : UserFactorStorage, PersistentStateCompone
 
     override fun incrementOnToday(key: String): Boolean {
       return updateOnDate(DateUtil.today()) {
-        compute(key, { _, oldValue -> if (oldValue == null) 1.0 else oldValue + 1.0 })
+        compute(key) { _, oldValue -> if (oldValue == null) 1.0 else oldValue + 1.0 }
       }
     }
 

@@ -8,7 +8,7 @@ object FileTextUtil {
   fun computeChecksum(text: String): String {
     val sha = MessageDigest.getInstance("SHA-256")
     val digest = sha.digest(text.toByteArray())
-    return digest.fold("", { str, it -> str + "%02x".format(it) })
+    return digest.fold("") { str, it -> str + "%02x".format(it) }
   }
 
   fun getDiff(text1: String, text2: String): String {

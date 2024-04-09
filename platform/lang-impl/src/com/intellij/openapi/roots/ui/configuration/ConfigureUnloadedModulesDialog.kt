@@ -246,12 +246,12 @@ private class ModuleDescriptionsTree(project: Project) {
 
   private fun getAllModulesUnder(node: ModuleDescriptionTreeNode): List<ModuleDescription> {
     val modules = ArrayList<ModuleDescription>()
-    TreeUtil.traverse(node, { node ->
+    TreeUtil.traverse(node) { node ->
       if (node is ModuleDescriptionNode) {
         modules.add(node.moduleDescription)
       }
       return@traverse true
-    })
+    }
     return modules
   }
 
@@ -280,12 +280,12 @@ private class ModuleDescriptionsTree(project: Project) {
 
   private fun findNodes(condition: (ModuleDescriptionNode) -> Boolean): List<ModuleDescriptionNode> {
     val result = ArrayList<ModuleDescriptionNode>()
-    TreeUtil.traverse(root, { node ->
+    TreeUtil.traverse(root) { node ->
       if (node is ModuleDescriptionNode && condition(node)) {
         result.add(node)
       }
       return@traverse true
-    })
+    }
     return result
   }
 

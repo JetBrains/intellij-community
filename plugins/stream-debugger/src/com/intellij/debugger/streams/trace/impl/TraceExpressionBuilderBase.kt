@@ -97,8 +97,8 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
   private fun buildDeclarations(intermediateCallsHandlers: List<IntermediateCallHandler>,
                                 terminatorHandler: TerminatorCallHandler): CodeBlock {
     return dsl.block {
-      intermediateCallsHandlers.flatMap { it.additionalVariablesDeclaration() }.forEach({ declare(it) })
-      terminatorHandler.additionalVariablesDeclaration().forEach({ declare(it) })
+      intermediateCallsHandlers.flatMap { it.additionalVariablesDeclaration() }.forEach { declare(it) }
+      terminatorHandler.additionalVariablesDeclaration().forEach { declare(it) }
     }
   }
 
