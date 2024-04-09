@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 /**
  * Base class for particular scoped bundles (e.g. {@code 'vcs'} bundles, {@code 'aop'} bundles etc).
  * <br/>
- * <b>This class is not supposed to be extended directly. Extend your bundle from {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle}</b>
+ * <b>This class is not supposed to be extended directly. Use {@link com.intellij.DynamicBundle} or {@link org.jetbrains.jps.api.JpsDynamicBundle} instead.</b>
  */
 public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
