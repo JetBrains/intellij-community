@@ -39,24 +39,14 @@ public final class JavaUnresolvableLocalCollisionDetector {
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
         if (collidingVariable.isUnnamed()) return;
-        if (helper.resolveAccessibleReferencedVariable(newName, element) == null &&
-            helper.resolveAccessibleReferencedVariable(variable.getName(), collidingVariable) == null) return;
+        if (helper.resolveAccessibleReferencedVariable(newName, element) != collidingVariable &&
+            helper.resolveAccessibleReferencedVariable(variable.getName(), collidingVariable) != element) return;
         LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
         result.add(collision);
       }
     };
 
     visitLocalsCollisions(element, newName, scope, null, collidingNameVisitor);
-
-
-    /*PsiElement place = scope.getLastChild();
-    PsiResolveHelper helper = place.getManager().getResolveHelper();
-    PsiVariable refVar = helper.resolveReferencedVariable(newName, place, null);
-
-    if (refVar != null) {
-      LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, refVar);
-      result.add(collision);
-    }*/
   }
 
   public static void visitLocalsCollisions(PsiElement element, final String newName,
