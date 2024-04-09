@@ -13,7 +13,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -42,7 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.XmlUtil;
@@ -53,6 +52,7 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
@@ -74,15 +74,17 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     if (project == null || !(editor instanceof EditorImpl)) {
       return;
     }
-    Document document = editor.getDocument();
-    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    Language language;
-    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-340634, EA-912927")) {
-      language = findXmlLikeLanguage(project, file);
-    }
-    if (language != null) {
-      new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
-    }
+    ReadAction.nonBlocking((Callable<Void>)() -> {
+      if (editor.isDisposed() || project.isDisposed())
+        return null;
+      Document document = editor.getDocument();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      Language language = findXmlLikeLanguage(project, file);
+      if (language != null) {
+        new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
+      }
+      return null;
+    }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static void recreateSynchronizers() {
