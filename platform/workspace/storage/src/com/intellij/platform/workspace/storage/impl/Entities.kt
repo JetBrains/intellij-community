@@ -667,13 +667,4 @@ public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   public open fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
     throw NotImplementedError()
   }
-
-  /**
-   * Temporally solution.
-   * Get symbolic Id without creating of TypedEntity. Should be in sync with TypedEntityWithSymbolicId.
-   * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating symbolic id.
-   */
-  public abstract class WithCalculableSymbolicId<E : WorkspaceEntity> : WorkspaceEntityData<E>() {
-    public abstract fun symbolicId(): SymbolicEntityId<*>
-  }
 }

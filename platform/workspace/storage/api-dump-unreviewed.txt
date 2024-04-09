@@ -325,10 +325,6 @@ a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - f:setId(I):V
 - toString():java.lang.String
 - a:wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
-a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData$WithCalculableSymbolicId
-- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-- <init>():V
-- a:symbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 c:com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
 - <init>():V
 - getValue(com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.reflect.KProperty):java.lang.Object

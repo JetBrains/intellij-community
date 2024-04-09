@@ -104,7 +104,7 @@ f:com.intellij.java.workspace.entities.ArtifactEntity$Companion
 - f:create(java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.java.workspace.entities.ArtifactEntity$Builder
 - bs:create$default(com.intellij.java.workspace.entities.ArtifactEntity$Companion,java.lang.String,java.lang.String,Z,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.java.workspace.entities.ArtifactEntity$Builder
 f:com.intellij.java.workspace.entities.ArtifactEntityData
-- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData$WithCalculableSymbolicId
+- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - artifactType:java.lang.String
 - name:java.lang.String
 - <init>():V
@@ -125,7 +125,6 @@ f:com.intellij.java.workspace.entities.ArtifactEntityData
 - f:setIncludeInProjectBuild(Z):V
 - f:setName(java.lang.String):V
 - f:setOutputUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
-- symbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.java.workspace.entities.ArtifactEntityImpl
 - com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -1716,7 +1715,7 @@ f:com.intellij.platform.workspace.jps.entities.FacetEntity$Companion
 - f:create(java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
 - bs:create$default(com.intellij.platform.workspace.jps.entities.FacetEntity$Companion,java.lang.String,com.intellij.platform.workspace.jps.entities.ModuleId,com.intellij.platform.workspace.jps.entities.FacetEntityTypeId,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.FacetEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.FacetEntityData
-- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData$WithCalculableSymbolicId
+- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - com.intellij.platform.workspace.storage.impl.SoftLinkable
 - moduleId:com.intellij.platform.workspace.jps.entities.ModuleId
 - name:java.lang.String
@@ -1741,7 +1740,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetEntityData
 - f:setModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - f:setName(java.lang.String):V
 - f:setTypeId(com.intellij.platform.workspace.jps.entities.FacetEntityTypeId):V
-- symbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -1874,7 +1872,7 @@ f:com.intellij.platform.workspace.jps.entities.LibraryEntity$Companion
 - f:create(java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
 - bs:create$default(com.intellij.platform.workspace.jps.entities.LibraryEntity$Companion,java.lang.String,com.intellij.platform.workspace.jps.entities.LibraryTableId,java.util.List,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.LibraryEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.LibraryEntityData
-- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData$WithCalculableSymbolicId
+- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - com.intellij.platform.workspace.storage.impl.SoftLinkable
 - name:java.lang.String
 - roots:java.util.List
@@ -1900,7 +1898,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryEntityData
 - f:setRoots(java.util.List):V
 - f:setTableId(com.intellij.platform.workspace.jps.entities.LibraryTableId):V
 - f:setTypeId(com.intellij.platform.workspace.jps.entities.LibraryTypeId):V
-- symbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -2117,7 +2114,7 @@ f:com.intellij.platform.workspace.jps.entities.ModuleEntityAndExtensions
 - sf:modifyEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.platform.workspace.jps.entities.ModuleEntity,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.ModuleEntity
 - sf:setSourceRoots(com.intellij.platform.workspace.jps.entities.ModuleEntity$Builder,java.util.List):V
 f:com.intellij.platform.workspace.jps.entities.ModuleEntityData
-- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData$WithCalculableSymbolicId
+- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - com.intellij.platform.workspace.storage.impl.SoftLinkable
 - dependencies:java.util.List
 - name:java.lang.String
@@ -2140,7 +2137,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleEntityData
 - f:setDependencies(java.util.List):V
 - f:setName(java.lang.String):V
 - f:setType(com.intellij.platform.workspace.jps.entities.ModuleTypeId):V
-- symbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -2300,7 +2296,7 @@ f:com.intellij.platform.workspace.jps.entities.SdkEntity$Companion
 - f:create(java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
 - bs:create$default(com.intellij.platform.workspace.jps.entities.SdkEntity$Companion,java.lang.String,java.lang.String,java.util.List,java.lang.String,com.intellij.platform.workspace.storage.EntitySource,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.workspace.jps.entities.SdkEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.SdkEntityData
-- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData$WithCalculableSymbolicId
+- com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
 - additionalData:java.lang.String
 - name:java.lang.String
 - roots:java.util.List
@@ -2328,7 +2324,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkEntityData
 - f:setRoots(java.util.List):V
 - f:setType(java.lang.String):V
 - f:setVersion(java.lang.String):V
-- symbolicId():com.intellij.platform.workspace.storage.SymbolicEntityId
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.platform.workspace.jps.entities.SdkEntityImpl
 - com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
