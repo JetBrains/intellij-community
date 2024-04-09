@@ -12,7 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public class PatternVariableCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new PatternVariableCanBeUsedInspection()};
+    PatternVariableCanBeUsedInspection inspection = new PatternVariableCanBeUsedInspection();
+    inspection.reportOnCastOnly = true;
+    return new LocalInspectionTool[]{inspection};
   }
 
   @Override
