@@ -16,8 +16,12 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPs
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 open class AddAnnotationFix(
     element: KtElement,
@@ -69,4 +73,10 @@ open class AddAnnotationFix(
         }
     }
 
+    object AddConsistentDataCopyVisibilityAnnotationFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+            val clazz = psiElement.parentsWithSelf.firstIsInstanceOrNull<KtClass>() ?: return emptyList()
+            return listOf(AddAnnotationFix(clazz, StandardClassIds.Annotations.ConsistentCopyVisibility))
+        }
+    }
 }

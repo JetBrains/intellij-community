@@ -54,6 +54,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/specifySuperType", pattern = pattern)
             model("$idea/quickfix/convertToBlockBody", pattern = pattern)
             model("$idea/quickfix/supertypeInitialization", pattern = pattern)
+            model("$idea/quickfix/dataClassPrivateConstructor", pattern = pattern)
             model("$idea/quickfix/addAnnotationTarget", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addAnnotationUseSiteTarget", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addConstructorParameter", pattern = pattern, isIgnored = true)

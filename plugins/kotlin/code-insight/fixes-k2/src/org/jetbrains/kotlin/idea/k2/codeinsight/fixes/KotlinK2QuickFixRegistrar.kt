@@ -292,6 +292,17 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             RemoveAnnotationFix.UseSiteGetDoesntHaveAnyEffect,
             RemoveUseSiteTargetFix.UseSiteGetDoesntHaveAnyEffect
         )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.DataClassCopyVisibilityWillBeChangedWarning::class,
+            AddAnnotationFix.AddConsistentDataCopyVisibilityAnnotationFactory,
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.DataClassCopyVisibilityWillBeChangedError::class,
+            AddAnnotationFix.AddConsistentDataCopyVisibilityAnnotationFactory,
+        )
+        registerPsiQuickFixes(KtFirDiagnostic.RedundantAnnotation::class, RemoveAnnotationFix)
+        registerPsiQuickFixes(KtFirDiagnostic.DataClassConsistentCopyWrongAnnotationTarget::class, RemoveAnnotationFix)
+        registerPsiQuickFixes(KtFirDiagnostic.DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations::class, RemoveAnnotationFix)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {
