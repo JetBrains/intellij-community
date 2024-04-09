@@ -183,6 +183,10 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean =
             ?: lastLambdaExpression.parentLabeledExpression()?.let(call.argumentMapping::get)
             ?: return false
 
+        if (lastParameter.symbol.isVararg) {
+            // Passing value as a vararg is allowed only inside a parenthesized argument list
+            return false
+        }
         if (lastParameter.symbol != call.partiallyAppliedSymbol.signature.valueParameters.lastOrNull()?.symbol) {
             return false
         }

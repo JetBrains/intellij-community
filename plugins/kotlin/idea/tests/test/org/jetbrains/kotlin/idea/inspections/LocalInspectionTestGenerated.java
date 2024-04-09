@@ -7433,6 +7433,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testTypeParameter2() throws Exception {
             runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/typeParameter2.kt");
         }
+
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/vararg.kt");
+        }
+
+        @TestMetadata("vararg2.kt")
+        public void testVararg2() throws Exception {
+            runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/vararg2.kt");
+        }
+
+        @TestMetadata("varargOther.kt")
+        public void testVarargOther() throws Exception {
+            runTest("testData/inspectionsLocal/moveLambdaOutsideParentheses/varargOther.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
