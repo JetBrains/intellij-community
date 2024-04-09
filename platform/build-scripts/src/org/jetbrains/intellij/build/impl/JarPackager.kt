@@ -32,6 +32,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.*
 import java.util.*
+import kotlin.collections.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readLines
 
@@ -288,24 +289,6 @@ class JarPackager private constructor(
       )
     }
 
-    // check verifier in all included modules
-    for (includedModule in layout.includedModules) {
-      for (name in helper.getModuleDependencies(includedModule.moduleName)) {
-        if (name != "intellij.platform.commercial.verifier" || addedModules.contains(name)) {
-          continue
-        }
-
-        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
-        addedModules.add(name)
-        computeSourcesForModule(
-          item = moduleItem,
-          moduleOutputPatcher = moduleOutputPatcher,
-          layout = layout,
-          moduleWithSearchableOptions = moduleWithSearchableOptions,
-        )
-      }
-    }
-
     if (layout.mainModule == "intellij.pycharm.ds.remoteInterpreter") {
       // todo PyCharm team why this module is being incorrectly published
       return
@@ -316,7 +299,7 @@ class JarPackager private constructor(
     readXmlAsModel(file).getChild("content")?.let { content ->
       for (module in content.children("module")) {
         val moduleName = module.attributes.get("name")
-        if (moduleName == null || moduleName.contains('/') || addedModules.contains(moduleName)) {
+        if (moduleName == null || moduleName.contains('/') || !addedModules.add(moduleName)) {
           continue
         }
 
@@ -326,6 +309,28 @@ class JarPackager private constructor(
             relativeOutputFile = layout.getMainJarName(),
             reason = "<- ${layout.mainModule} (plugin content)",
           ),
+          moduleOutputPatcher = moduleOutputPatcher,
+          layout = layout,
+          moduleWithSearchableOptions = moduleWithSearchableOptions,
+        )
+      }
+    }
+
+    // check verifier in all included modules
+    val effectiveIncludedNonMainModules = LinkedHashSet<String>(layout.includedModules.size + addedModules.size)
+    layout.includedModules.mapTo(effectiveIncludedNonMainModules) { it.moduleName }
+    effectiveIncludedNonMainModules.remove(layout.mainModule)
+    effectiveIncludedNonMainModules.addAll(addedModules)
+    for (moduleName in effectiveIncludedNonMainModules) {
+      for (name in helper.getModuleDependencies(moduleName)) {
+        if (name != "intellij.platform.commercial.verifier" || addedModules.contains(name)) {
+          continue
+        }
+
+        val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = layout.getMainJarName(), reason = "<- ${layout.mainModule}")
+        addedModules.add(name)
+        computeSourcesForModule(
+          item = moduleItem,
           moduleOutputPatcher = moduleOutputPatcher,
           layout = layout,
           moduleWithSearchableOptions = moduleWithSearchableOptions,
