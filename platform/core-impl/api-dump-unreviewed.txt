@@ -616,8 +616,6 @@ f:com.intellij.ide.plugins.XmlReader
 - sf:readModuleDescriptor(java.io.InputStream,com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.PathResolver,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor,java.lang.String):com.intellij.ide.plugins.RawPluginDescriptor
 - sf:readModuleDescriptor(B[],com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.PathResolver,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor,java.lang.String):com.intellij.ide.plugins.RawPluginDescriptor
 - sf:readModuleDescriptorForTest(B[]):com.intellij.ide.plugins.RawPluginDescriptor
-bc:com.intellij.ide.plugins.XmlReader$EntriesMappings
-- bsf:entries$0:kotlin.enums.EnumEntries
 f:com.intellij.ide.plugins.cl.PluginClassLoaderKt
 a:com.intellij.indentation.AbstractIndentParser
 - com.intellij.lang.PsiParser
