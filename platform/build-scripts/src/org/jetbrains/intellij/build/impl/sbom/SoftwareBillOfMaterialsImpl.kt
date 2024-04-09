@@ -801,7 +801,8 @@ private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildCo
     suspendingRetryWithExponentialBackOff {
       runProcess(
         "docker", "build", ".", "--tag", ntiaChecker,
-        workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker")
+        workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
+        inheritOut = true,
       )
     }
     coroutineScope {
@@ -811,7 +812,8 @@ private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildCo
             runProcess(
               "docker", "run", "--rm",
               "--volume=${it.parent}:${it.parent}:ro",
-              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose"
+              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose",
+              inheritOut = true,
             )
           }
           catch (e: Exception) {
