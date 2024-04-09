@@ -33,6 +33,8 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -58,6 +60,7 @@ import java.util.regex.Pattern;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
   private final boolean myIgnoreSameLineLocations;
+  private volatile String myMethodName = null;
 
   static final Logger LOG = Logger.getInstance(LineBreakpoint.class);
 
@@ -347,7 +350,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       final int columnNumber = getColumnNumberOrZero();
       String className = getClassName();
       final boolean hasClassInfo = className != null && !className.isEmpty();
-      final String methodName = getMethodName();
+      final String methodName = myMethodName;
       final String displayName = methodName != null ? methodName + "()" : null;
       final boolean hasMethodInfo = displayName != null;
       if (hasClassInfo || hasMethodInfo) {
@@ -497,8 +500,16 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     return canAdd[0];
   }
 
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  @Override
+  public void reload() {
+    super.reload();
+    myMethodName = computeMethodName();
+  }
+
   @Nullable
-  public String getMethodName() {
+  protected String computeMethodName() {
     SourcePosition position = getSourcePosition();
     if (position != null) {
       return findOwnerMethod(position.getFile(), position.getOffset());

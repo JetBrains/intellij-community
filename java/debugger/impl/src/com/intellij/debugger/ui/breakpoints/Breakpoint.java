@@ -213,6 +213,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   void scheduleReload() {
     ReadAction.nonBlocking(this::reload)
       .coalesceBy(myProject, this)
+      .expireWith(myProject)
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
