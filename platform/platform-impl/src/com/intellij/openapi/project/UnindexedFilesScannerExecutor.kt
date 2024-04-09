@@ -38,5 +38,9 @@ interface UnindexedFilesScannerExecutor {
         SystemProperties.getBooleanProperty("scanning.in.smart.mode", true)
       }
     }
+
+    fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {
+      return task.task
+    }
   }
 }

@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -64,7 +65,7 @@ import static com.intellij.openapi.project.UnindexedFilesScannerExecutor.shouldS
 import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.FIRST_SCANNING_REQUESTED;
 
 @ApiStatus.Internal
-public final class UnindexedFilesScanner extends FilesScanningTaskBase {
+public final class UnindexedFilesScanner implements FilesScanningTask {
 
   private static final int DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0);
 
@@ -166,7 +167,6 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
                                 @Nullable Boolean shouldHideProgressInSmartMode,
                                 @NotNull SettableFuture<@NotNull ProjectScanningHistory> futureScanningHistory,
                                 @Nullable Predicate<IndexedFile> forceReindexTrigger) {
-    super(project);
     myProject = project;
     myStartSuspended = startSuspended;
     myOnProjectOpen = onProjectOpen;
@@ -200,8 +200,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
            myProject.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.REQUESTED;
   }
 
-  @Override
-  final protected boolean shouldHideProgressInSmartMode() {
+  boolean shouldHideProgressInSmartMode() {
     if (shouldHideProgressInSmartMode != null) {
       return shouldHideProgressInSmartMode;
     }
@@ -614,6 +613,16 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
   }
 
   @Override
+  public void perform(@NotNull ProgressIndicator indicator) {
+    perform(new IndexingProgressReporter.CheckPauseOnlyProgressIndicator() {
+      @Override
+      public void onPausedStateChanged(@NotNull Consumer<Boolean> action) { }
+
+      @Override
+      public void freezeIfPaused() { }
+    }, new IndexingProgressReporter(indicator));
+  }
+
   public void perform(@NotNull IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator, @NotNull IndexingProgressReporter progressReporter) {
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != Boolean.TRUE, "Scanning is already in progress");
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
@@ -712,7 +721,6 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
         serviceIfCreated.completeToken(myFutureScanningRequestToken);
       }
     }
-    super.dispose();
   }
 
   @Nullable List<IndexableFilesIterator> getPredefinedIndexableFilesIterators() {

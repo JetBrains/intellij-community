@@ -1,21 +1,26 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbServiceGuiExecutor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressText
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.flow.mapStateIn
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.application
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
 
@@ -38,12 +43,61 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
     indicator.isIndeterminate = value
   }
 
-  fun setText(value: @NlsContexts.ProgressText String) {
+  fun setText(value: @ProgressText String) {
     indicator.text = value
   }
 
   fun getSubTaskReporter(): IndexingSubTaskProgressReporter {
     return IndexingSubTaskProgressReporter()
+  }
+
+  companion object {
+    fun launchIndexingProgressUIReporter(
+      progressReportingScope: CoroutineScope,
+      project: Project,
+      shouldShowProgress: Flow<Boolean>,
+      progressReporter: IndexingProgressReporter,
+      progressTitle: @ProgressTitle String,
+      pauseReason: Flow<@ProgressText String?>,
+    ) {
+      progressReportingScope.launch(DumbServiceGuiExecutor.IndexingType.SCANNING) {
+        while (true) {
+          shouldShowProgress.first { it }
+
+          withBackgroundProgress(project, progressTitle, cancellable = false) {
+            reportRawProgress { reporter ->
+              async(Dispatchers.EDT) {
+                pauseReason.collect { paused ->
+                  reporter.text(
+                    if (paused != null) IdeBundle.message("dumb.service.indexing.paused.due.to", paused)
+                    else progressTitle
+                  )
+                }
+              }
+              async(Dispatchers.EDT) {
+                progressReporter.subTaskTexts.collect {
+                  reporter.details(it.firstOrNull())
+                }
+              }
+              async(Dispatchers.EDT) {
+                progressReporter.subTasksFinished.collect {
+                  val subTasksCount = progressReporter.subTasksCount
+                  if (subTasksCount > 0) {
+                    val newValue = (it.toDouble() / subTasksCount).coerceIn(0.0, 1.0)
+                    reporter.fraction(newValue)
+                  }
+                  else {
+                    reporter.fraction(0.0)
+                  }
+                }
+              }
+              shouldShowProgress.first { !it }
+              coroutineContext.cancelChildren() // cancel started async coroutines
+            }
+          }
+        }
+      }
+    }
   }
 
   // This class is not thread safe
@@ -71,11 +125,19 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
   }
 
   @Internal
-  class CheckPauseOnlyProgressIndicator(private val taskScope: CoroutineScope,
-                                        private val pauseReason: StateFlow<PersistentList<@NlsContexts.ProgressText String>>) {
+  interface CheckPauseOnlyProgressIndicator {
+    fun freezeIfPaused()
+    fun onPausedStateChanged(action: Consumer<Boolean>)
+  }
+
+  @Internal
+  internal class CheckPauseOnlyProgressIndicatorImpl(private val taskScope: CoroutineScope,
+                                                     private val pauseReason: StateFlow<PersistentList<@ProgressText String>>
+  ) : CheckPauseOnlyProgressIndicator {
     private var paused = getPauseReason().mapStateIn(taskScope) { it != null }
-    fun getPauseReason(): StateFlow<@NlsContexts.ProgressText String?> = pauseReason.mapStateIn(taskScope) { it.firstOrNull() }
-    fun onPausedStateChanged(action: Consumer<Boolean>) {
+    internal fun getPauseReason(): StateFlow<@ProgressText String?> = pauseReason.mapStateIn(taskScope) { it.firstOrNull() }
+
+    override fun onPausedStateChanged(action: Consumer<Boolean>) {
       taskScope.launch {
         paused.collect {
           action.accept(it)
@@ -83,7 +145,7 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
       }
     }
 
-    fun freezeIfPaused() {
+    override fun freezeIfPaused() {
       ProgressManager.checkCanceled()
       if (!paused.value) return
       if (application.isUnitTestMode) return // do not pause in unit tests, because some tests do not expect pausing
