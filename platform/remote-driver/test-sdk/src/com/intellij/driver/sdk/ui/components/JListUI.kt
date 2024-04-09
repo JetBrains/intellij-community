@@ -20,7 +20,7 @@ class JListUiComponent(data: ComponentData) : UiComponent(data) {
   fun clickItem(itemText: String, fullMatch: Boolean = true) {
     findItemIndex(itemText, fullMatch)?.let {
       fixture.clickItemAtIndex(it)
-    } ?: throw IllegalArgumentException("item with text $itemText not found")
+    } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
 
   private fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
