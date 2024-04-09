@@ -118,7 +118,7 @@ internal class CommitMessageCellEditor(
 
   private fun createHint(): JLabel {
     val hint = GitBundle.message("rebase.interactive.dialog.reword.hint.text",
-                                 KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.CTRL_ENTER))
+                                 KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getCtrlEnter()))
     val hintLabel = HintUtil.createAdComponent(hint, JBUI.CurrentTheme.BigPopup.advertiserBorder(), SwingConstants.LEFT).apply {
       foreground = JBUI.CurrentTheme.BigPopup.advertiserForeground()
       background = JBUI.CurrentTheme.BigPopup.advertiserBackground()

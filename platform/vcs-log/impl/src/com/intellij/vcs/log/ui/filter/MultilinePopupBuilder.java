@@ -76,13 +76,13 @@ class MultilinePopupBuilder {
         popup.closeOk(e.getInputEvent());
       }
     };
-    okAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, popup.getContent());
+    okAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), popup.getContent());
     return popup;
   }
 
   private @NotNull @NlsContexts.PopupAdvertisement String getAdText() {
     return VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", getSeparatorsText(mySeparators),
-                                KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()));
+                                KeymapUtil.getShortcutsText(CommonShortcuts.getCtrlEnter().getShortcuts()));
   }
 
   @NotNull

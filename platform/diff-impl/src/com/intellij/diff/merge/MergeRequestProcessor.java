@@ -208,7 +208,7 @@ public abstract class MergeRequestProcessor implements Disposable {
         public void actionPerformed(@NotNull AnActionEvent e) {
           resolveAction.actionPerformed(null);
         }
-      }.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, getRootPane(), this);
+      }.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), getRootPane(), this);
     }
 
     List<Action> leftActions = ContainerUtil.packNullables(applyLeft, applyRight);

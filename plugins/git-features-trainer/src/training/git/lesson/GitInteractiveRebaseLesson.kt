@@ -212,7 +212,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     task {
-      val applyRewordShortcut = CommonShortcuts.CTRL_ENTER.shortcuts.first() as KeyboardShortcut
+      val applyRewordShortcut = CommonShortcuts.getCtrlEnter().shortcuts.first() as KeyboardShortcut
       text(GitLessonsBundle.message("git.interactive.rebase.apply.reword", code("Fix style"),
                                     LessonUtil.rawKeyStroke(applyRewordShortcut.firstKeyStroke)))
       stateCheck { previous.ui?.isShowing != true }

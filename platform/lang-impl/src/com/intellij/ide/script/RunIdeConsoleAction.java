@@ -141,7 +141,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     for (FileEditor fileEditor : source.getEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      runAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
+      runAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), editor.getComponent());
     }
   }
 

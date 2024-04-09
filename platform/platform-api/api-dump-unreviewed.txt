@@ -1692,6 +1692,7 @@ f:com.intellij.openapi.actionSystem.CommonShortcuts
 - s:getCloseActiveWindow():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getContextHelp():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getCopy():com.intellij.openapi.actionSystem.ShortcutSet
+- s:getCtrlEnter():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getDelete():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getDiff():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getDuplicate():com.intellij.openapi.actionSystem.ShortcutSet

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.BitUtil;
 
@@ -18,6 +19,11 @@ public final class CommonShortcuts {
 
   public static final ShortcutSet ALT_ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK));
   public static final ShortcutSet ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
+
+  /**
+   * @deprecated use {@link #getCtrlEnter()} instead to support remote development and code-with-me scenarios
+   */
+  @Deprecated(forRemoval = true)
   public static final ShortcutSet CTRL_ENTER = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER,
                                                                                             SystemInfo.isMac
                                                                                             ? InputEvent.META_DOWN_MASK
@@ -140,5 +146,10 @@ public final class CommonShortcuts {
 
   public static ShortcutSet getDelete() {
     return getActiveKeymapShortcuts(IdeActions.ACTION_DELETE);
+  }
+
+  public static ShortcutSet getCtrlEnter() {
+    return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ClientSystemInfo.isMac() ? InputEvent.META_DOWN_MASK
+                                                                                                    : InputEvent.CTRL_DOWN_MASK));
   }
 }

@@ -302,7 +302,7 @@ public class XDebuggerTextPopup<D> extends XDebuggerPopupPanel {
 
     private SetTextValueAction() {
       super(XDebuggerBundle.message("xdebugger.set.text.value.action.title"));
-      setShortcutSet(CommonShortcuts.CTRL_ENTER);
+      setShortcutSet(CommonShortcuts.getCtrlEnter());
     }
 
     @Override
