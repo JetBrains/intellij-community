@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities
 
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -229,12 +228,6 @@ class ChildSubEntityData : WorkspaceEntityData<ChildSubEntity>() {
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildSubEntity::class.java
-  }
-
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {

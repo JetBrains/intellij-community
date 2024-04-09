@@ -590,7 +590,7 @@ public interface SoftLinkable {
   public fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean
 }
 
-public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, SerializableEntityData {
+public abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
   public lateinit var entitySource: EntitySource
   public var id: Int = -1
 

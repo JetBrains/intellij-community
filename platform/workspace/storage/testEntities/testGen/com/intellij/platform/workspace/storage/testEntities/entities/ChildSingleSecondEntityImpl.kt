@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -227,12 +226,6 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildSingleSecondEntity::class.java
-  }
-
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {

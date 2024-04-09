@@ -35,25 +35,3 @@ public sealed class SerializationResult {
   public class Success(public val size: Long) : SerializationResult()
   public class Fail(public val problem: Throwable) : SerializationResult()
 }
-
-public sealed interface EntityInformation {
-  public interface Serializer : EntityInformation {
-    public fun saveInt(i: Int)
-    public fun saveString(s: String)
-    public fun saveBoolean(b: Boolean)
-    public fun saveBlob(b: Any, javaSimpleName: String)
-    public fun saveNull()
-  }
-
-  public interface Deserializer : EntityInformation {
-    public fun readBoolean(): Boolean
-    public fun readString(): String
-    public fun readInt(): Int
-    public fun acceptNull(): Boolean
-  }
-}
-
-public interface SerializableEntityData {
-  public fun serialize(ser: EntityInformation.Serializer)
-  public fun deserialize(de: EntityInformation.Deserializer)
-}

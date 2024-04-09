@@ -3,7 +3,6 @@
 
 package com.intellij.platform.workspace.jps.entities
 
-import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -241,12 +240,6 @@ class ExcludeUrlOrderEntityData : WorkspaceEntityData<ExcludeUrlOrderEntity>() {
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ExcludeUrlOrderEntity::class.java
-  }
-
-  override fun serialize(ser: EntityInformation.Serializer) {
-  }
-
-  override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
