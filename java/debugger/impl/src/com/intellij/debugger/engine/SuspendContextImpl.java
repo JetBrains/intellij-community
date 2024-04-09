@@ -337,9 +337,6 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
       setThread(activeThread);
     }
     if (activeThread != null) {
-      if (getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && activeThread != myThread) {
-        LOG.error("Context with suspend-thread policy must have only the corresponding myActiveExecutionStack");
-      }
       myActiveExecutionStack = new JavaExecutionStack(activeThread, myDebugProcess, myThread == activeThread);
       myActiveExecutionStack.initTopFrame();
     }
