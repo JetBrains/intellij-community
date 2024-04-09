@@ -118,6 +118,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       layout.withProjectLibrary("assertJ", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
       layout.withProjectLibrary("hamcrest", TEST_FRAMEWORK_JAR) // Used by the CIDR test framework (b/295336541).
 
+      layout.withProjectLibrary("jetbrains.intellij.deps.eclipse.jgit") // Used by settings repository plugin (b/332587380)
+
       // TODO(b/330399456): error-prone-annotations and grpc are used by ASwB only; these libs should be moved outside the platform.
       layout.withProjectLibrary("error-prone-annotations")
       layout.withProjectLibrary("grpc-core")
