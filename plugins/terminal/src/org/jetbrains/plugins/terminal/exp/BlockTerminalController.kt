@@ -73,6 +73,10 @@ class BlockTerminalController(
     val disposable = Disposer.newDisposable(session)
     outputController.outputModel.addListener(object : TerminalOutputListener {
       override fun blockCreated(block: CommandBlock) {
+        if (focusModel.isActive) {
+          // Focus the output before hiding the prompt to keep the focus on the terminal component.
+          focusModel.focusOutput()
+        }
         promptController.promptIsVisible = false
         Disposer.dispose(disposable)
       }
@@ -109,6 +113,9 @@ class BlockTerminalController(
     invokeLater(getDisposed(), ModalityState.any()) {
       promptController.reset()
       promptController.promptIsVisible = true
+      if (focusModel.isActive) {
+        focusModel.focusPrompt()
+      }
     }
   }
 
