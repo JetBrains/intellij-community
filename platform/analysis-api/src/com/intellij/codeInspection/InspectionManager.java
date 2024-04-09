@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class InspectionManager {
-  public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION = ExtensionPointName.create("com.intellij.cantBeStatic");
+  public static final ExtensionPointName<Condition<PsiElement>> CANT_BE_STATIC_EXTENSION =
+    ExtensionPointName.create("com.intellij.cantBeStatic");
 
   public static InspectionManager getInstance(Project project) {
     return project.getService(InspectionManager.class);
@@ -44,10 +45,10 @@ public abstract class InspectionManager {
    */
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @Nullable LocalQuickFix fix,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            boolean onTheFly);
+                                                                     @NotNull @InspectionMessage String descriptionTemplate,
+                                                                     @Nullable LocalQuickFix fix,
+                                                                     @NotNull ProblemHighlightType highlightType,
+                                                                     boolean onTheFly);
 
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
@@ -88,15 +89,17 @@ public abstract class InspectionManager {
                                                                      boolean onTheFly,
                                                                      @NotNull LocalQuickFix @Nullable ... fixes);
 
+  //<editor-fold desc="Deprecated stuff.">
+
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
    */
   @Deprecated
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @Nullable LocalQuickFix fix,
-                                                            @NotNull ProblemHighlightType highlightType);
+                                                                     @NotNull @InspectionMessage String descriptionTemplate,
+                                                                     @Nullable LocalQuickFix fix,
+                                                                     @NotNull ProblemHighlightType highlightType);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, boolean, LocalQuickFix[], ProblemHighlightType)} instead
@@ -104,9 +107,9 @@ public abstract class InspectionManager {
   @Deprecated(forRemoval = true)
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @NotNull LocalQuickFix @Nullable [] fixes,
-                                                            @NotNull ProblemHighlightType highlightType);
+                                                                     @NotNull @InspectionMessage String descriptionTemplate,
+                                                                     @NotNull LocalQuickFix @Nullable [] fixes,
+                                                                     @NotNull ProblemHighlightType highlightType);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, String, LocalQuickFix[], ProblemHighlightType, boolean, boolean)} instead
@@ -114,10 +117,10 @@ public abstract class InspectionManager {
   @Deprecated(forRemoval = true)
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @NotNull LocalQuickFix @Nullable [] fixes,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            boolean isAfterEndOfLine);
+                                                                     @NotNull @InspectionMessage String descriptionTemplate,
+                                                                     @NotNull LocalQuickFix @Nullable [] fixes,
+                                                                     @NotNull ProblemHighlightType highlightType,
+                                                                     boolean isAfterEndOfLine);
 
   /**
    * @deprecated use {@link #createProblemDescriptor(PsiElement, PsiElement, String, ProblemHighlightType, boolean, LocalQuickFix...)} instead
@@ -125,10 +128,10 @@ public abstract class InspectionManager {
   @Deprecated
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
-                                                            @NotNull PsiElement endElement,
-                                                            @NotNull @InspectionMessage String descriptionTemplate,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            @NotNull LocalQuickFix @Nullable ... fixes);
+                                                                     @NotNull PsiElement endElement,
+                                                                     @NotNull @InspectionMessage String descriptionTemplate,
+                                                                     @NotNull ProblemHighlightType highlightType,
+                                                                     @NotNull LocalQuickFix @Nullable ... fixes);
 
 
   /**
@@ -137,6 +140,8 @@ public abstract class InspectionManager {
   @Deprecated(forRemoval = true)
   @Contract(pure = true)
   public abstract @NotNull GlobalInspectionContext createNewGlobalContext(boolean reuse);
+
+  //</editor-fold>
 
   @Contract(pure = true)
   public abstract @NotNull GlobalInspectionContext createNewGlobalContext();
