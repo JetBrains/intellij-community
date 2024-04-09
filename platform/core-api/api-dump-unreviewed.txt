@@ -462,6 +462,10 @@ com.intellij.lang.ASTNode
 - a:replaceAllChildrenToChildrenOf(com.intellij.lang.ASTNode):V
 - a:replaceChild(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):V
 - a:textContains(C):Z
+f:com.intellij.lang.AstUtilKt
+- sf:children(com.intellij.lang.ASTNode):kotlin.sequences.Sequence
+- sf:parents(com.intellij.lang.ASTNode,Z):kotlin.sequences.Sequence
+- sf:siblings(com.intellij.lang.ASTNode,Z,Z):kotlin.sequences.Sequence
 com.intellij.lang.CodeDocumentationAwareCommenter
 - com.intellij.lang.Commenter
 - a:getBlockCommentTokenType():com.intellij.psi.tree.IElementType
