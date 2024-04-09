@@ -1,0 +1,29 @@
+package com.jetbrains.performancePlugin.commands
+
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.ui.playback.PlaybackContext
+
+class RenameModuleCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+  companion object {
+    const val NAME = "renameModule"
+    const val PREFIX = "$CMD_PREFIX$NAME"
+  }
+
+  override suspend fun doExecute(context: PlaybackContext) {
+    val project = context.project
+    val (oldName, newName) = extractCommandList(PREFIX, " ")
+    val moduleManager = getInstance(project)
+    val modifiableModel = moduleManager.getModifiableModel()
+    val module = moduleManager.modules.firstOrNull { it.name == oldName }
+    if (module == null) {
+      throw IllegalArgumentException("No module with name: $oldName")
+    }
+    modifiableModel.renameModule(module, newName)
+    writeAction { modifiableModel.commit() }
+  }
+
+  override fun getName(): String {
+    return NAME
+  }
+}
