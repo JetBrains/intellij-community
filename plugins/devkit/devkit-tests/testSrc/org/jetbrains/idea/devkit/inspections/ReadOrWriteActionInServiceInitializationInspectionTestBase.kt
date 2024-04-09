@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -27,9 +26,7 @@ abstract class ReadOrWriteActionInServiceInitializationInspectionTestBase : DevK
     moduleBuilder.addLibrary("platform-extensions", PathUtil.getJarPathForClass(ComponentManager::class.java))
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(ProcessCanceledException::class.java))
     moduleBuilder.addLibrary("util-rt", PathUtil.getJarPathForClass(ThrowableComputable::class.java))
-
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_17)
-    moduleBuilder.addJdk(PathManager.getCommunityHomePath() + "/java/mockJDK-11") // it contains java.util.concurrent
   }
 
   override fun setUp() {
