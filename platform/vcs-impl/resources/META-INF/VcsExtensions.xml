@@ -84,6 +84,9 @@
     <editorActionHandler action="Find"
                          implementationClass="com.intellij.openapi.diff.impl.combined.search.CombinedDiffSearchEditorActionHandler"
                          id="combinedDiffFind" order="first"/>
+    <editorActionHandler action="Replace"
+                         implementationClass="com.intellij.openapi.diff.impl.combined.search.CombinedDiffReplaceEditorActionHandler"
+                         id="combinedDiffReplace" order="first"/>
     <editorActionHandler action="FindNext" implementationClass="com.intellij.openapi.diff.impl.combined.search.SearchNextHandler"
                          id="combinedDiffFindNext" order="first"/>
     <editorActionHandler action="FindPrevious" implementationClass="com.intellij.openapi.diff.impl.combined.search.SearchPreviousHandler"
