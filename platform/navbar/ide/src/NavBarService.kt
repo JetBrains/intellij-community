@@ -18,7 +18,7 @@ import com.intellij.platform.navbar.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.platform.navbar.ide.ui.NewNavBarPanel
 import com.intellij.platform.navbar.ide.ui.showHint
 import com.intellij.platform.navbar.ide.ui.staticNavBarPanel
-import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
+import com.intellij.platform.navbar.ide.vm.impl.NavBarVmImpl
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.serviceContainer.instance

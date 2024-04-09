@@ -8,10 +8,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.backend.NavBarItem
 import com.intellij.platform.navbar.ide.ui.StaticNavBarPanel
-import com.intellij.platform.navbar.vm.NavBarVm
-import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
+import com.intellij.platform.navbar.ide.vm.NavBarVm
+import com.intellij.platform.navbar.ide.vm.impl.NavBarVmImpl
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.update.Activatable

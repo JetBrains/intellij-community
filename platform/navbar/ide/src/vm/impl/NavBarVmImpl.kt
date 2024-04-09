@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.navbar.vm.impl
+package com.intellij.platform.navbar.ide.vm.impl
 
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.vm.NavBarItemVm
-import com.intellij.platform.navbar.vm.NavBarPopupVm
-import com.intellij.platform.navbar.vm.NavBarVm
-import com.intellij.platform.navbar.vm.NavBarVm.SelectionShift
+import com.intellij.platform.navbar.ide.vm.NavBarItemVm
+import com.intellij.platform.navbar.ide.vm.NavBarPopupVm
+import com.intellij.platform.navbar.ide.vm.NavBarVm
+import com.intellij.platform.navbar.ide.vm.NavBarVm.SelectionShift
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

@@ -6,8 +6,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.navbar.ide.actions.navBarContextMenuActionGroup
-import com.intellij.platform.navbar.vm.NavBarPopupItem
-import com.intellij.platform.navbar.vm.NavBarPopupVm
+import com.intellij.platform.navbar.ide.vm.NavBarPopupItem
+import com.intellij.platform.navbar.ide.vm.NavBarPopupVm
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.PopupHandler

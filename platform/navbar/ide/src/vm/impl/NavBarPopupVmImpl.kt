@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.navbar.vm.impl
+package com.intellij.platform.navbar.ide.vm.impl
 
-import com.intellij.platform.navbar.vm.NavBarPopupItem
-import com.intellij.platform.navbar.vm.NavBarPopupVm
+import com.intellij.platform.navbar.ide.vm.NavBarPopupItem
+import com.intellij.platform.navbar.ide.vm.NavBarPopupVm
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CompletableDeferred
 

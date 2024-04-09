@@ -4,8 +4,8 @@ package com.intellij.platform.navbar.ide.ui
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarVmItem
-import com.intellij.platform.navbar.vm.NavBarVm
-import com.intellij.platform.navbar.vm.impl.NavBarVmImpl
+import com.intellij.platform.navbar.ide.vm.NavBarVm
+import com.intellij.platform.navbar.ide.vm.impl.NavBarVmImpl
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.ui.components.JBPanel
 import kotlinx.coroutines.*

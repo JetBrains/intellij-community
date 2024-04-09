@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.platform.navbar.ide.NavBarRootPaneExtension;
 import com.intellij.platform.navbar.ide.ui.StaticNavBarPanel;
-import com.intellij.platform.navbar.vm.NavBarVm;
+import com.intellij.platform.navbar.ide.vm.NavBarVm;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NonNls;

@@ -19,7 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.platform.navbar.vm" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.navbar" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

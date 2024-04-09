@@ -17,9 +17,9 @@ import com.intellij.platform.navbar.NavBarVmItem.Companion.SELECTED_ITEMS
 import com.intellij.platform.navbar.ide.actions.NavBarActionHandler.NAV_BAR_ACTION_HANDLER
 import com.intellij.platform.navbar.ide.actions.NavBarActionHandlerImpl
 import com.intellij.platform.navbar.ide.ui.NavBarItemComponent.Companion.isItemComponentFocusable
-import com.intellij.platform.navbar.vm.NavBarItemVm
-import com.intellij.platform.navbar.vm.NavBarPopupVm
-import com.intellij.platform.navbar.vm.NavBarVm
+import com.intellij.platform.navbar.ide.vm.NavBarItemVm
+import com.intellij.platform.navbar.ide.vm.NavBarPopupVm
+import com.intellij.platform.navbar.ide.vm.NavBarVm
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.PopupOwner

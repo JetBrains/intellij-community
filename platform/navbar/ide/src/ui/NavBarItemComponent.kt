@@ -14,7 +14,7 @@ import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.ide.actions.navBarContextMenuActionGroup
 import com.intellij.platform.navbar.ide.ui.AbstractNavBarUI.getDecorationOffset
 import com.intellij.platform.navbar.ide.ui.AbstractNavBarUI.getFirstElementLeftOffset
-import com.intellij.platform.navbar.vm.NavBarItemVm
+import com.intellij.platform.navbar.ide.vm.NavBarItemVm
 import com.intellij.ui.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext

@@ -17,7 +17,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.platform.navbar.vm.NavBarVm;
+import com.intellij.platform.navbar.ide.vm.NavBarVm;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
