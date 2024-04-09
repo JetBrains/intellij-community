@@ -24,12 +24,7 @@ val ObjClass<*>.isEntityWithSymbolicId: Boolean
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {
-  val entityDataBaseClass = if (isEntityWithSymbolicId) {
-    "${WorkspaceEntityData}.WithCalculableSymbolicId<$javaFullName>()"
-  }
-  else {
-    "${WorkspaceEntityData}<$javaFullName>()"
-  }
+  val entityDataBaseClass = "${WorkspaceEntityData}<$javaFullName>()"
   val hasSoftLinks = hasSoftLinks()
   val softLinkable = if (hasSoftLinks) SoftLinkable else null
   return lines {
@@ -79,30 +74,6 @@ fun ObjClass<*>.implWsDataClassCode(): String {
             }
           }
           line("return $fieldName")
-        }
-      }
-
-      if (isEntityWithSymbolicId) {
-        val symbolicIdField = fields.first { it.name == "symbolicId" }
-        val valueKind = symbolicIdField.valueKind
-        val methodBody = (valueKind as ObjProperty.ValueKind.Computable).expression
-        if (methodBody.contains("return")) {
-          if (methodBody.startsWith("{")) {
-            line("override fun symbolicId(): ${SymbolicEntityId}<*> $methodBody \n")
-          } else {
-            sectionNl("override fun symbolicId(): ${SymbolicEntityId}<*>") {
-                line(methodBody)
-            }
-          }
-        } else {
-          sectionNl("override fun symbolicId(): ${SymbolicEntityId}<*>") {
-            if (methodBody.startsWith("=")) {
-              line("return ${methodBody.substring(2)}")
-            }
-            else {
-              line("return $methodBody")
-            }
-          }
         }
       }
 
