@@ -203,13 +203,14 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         private fun configureSettingsFile(project: Project, settingsFile: VirtualFile) {
             if (!canUseFoojay) return
-            val psiFile = settingsFile.findPsiFile(project) ?: return
-            val document = settingsFile.findDocument() ?: return
-            val psiDocumentManager = PsiDocumentManager.getInstance(project)
-            psiDocumentManager.commitDocument(document)
 
             CommandProcessor.getInstance().executeCommand(project, {
                 ApplicationManager.getApplication().runWriteAction {
+                    val psiFile = settingsFile.findPsiFile(project) ?: return@runWriteAction
+                    val document = settingsFile.findDocument() ?: return@runWriteAction
+                    val psiDocumentManager = PsiDocumentManager.getInstance(project)
+                    psiDocumentManager.commitDocument(document)
+
                     val buildScriptSupport = GradleBuildScriptSupport.getManipulator(psiFile)
                     buildScriptSupport.addFoojayPlugin(psiFile)
                 }
