@@ -88,7 +88,9 @@ internal class CoroutineScopeModel internal constructor(
             else -> dataContextFromFocusPromise().await()
           }
           fireScopesUpdated(getScopeDescriptors(effectiveDataContext, filter))
-        }.getOrLogException(LOG)
+        }.getOrLogException {
+          LOG.error("Error while refreshing scopes", it)
+        }
       }
     }
   }
@@ -140,13 +142,11 @@ internal class CoroutineScopeModel internal constructor(
 
     for (provider in ScopeDescriptorProvider.EP_NAME.extensionList) {
       val scopes = readAction {
-        try {
+        runCatching {
           provider.getScopeDescriptors(project, dataContext)
-        }
-        catch (e: Exception) {
-          LOG.error("Couldn't retrieve scopes from $provider", e)
-          emptyArray()
-        }
+        }.getOrLogException {
+          LOG.error("Couldn't retrieve scope descriptors from $provider", it)
+        } ?: emptyArray()
       }
       for (descriptor in scopes) {
         if (filter.test(descriptor)) {
@@ -159,13 +159,11 @@ internal class CoroutineScopeModel internal constructor(
       val separatorName = provider.displayName
       if (separatorName.isNullOrEmpty()) continue
       val scopes = readAction {
-        try {
+        runCatching {
           provider.getSearchScopes(project, dataContext)
-        }
-        catch (e: Exception) {
-          LOG.error("Couldn't retrieve scopes from $provider", e)
-          emptyList()
-        }
+        }.getOrLogException {
+          LOG.error("Couldn't retrieve scopes from $provider", it)
+        } ?: emptyList()
       }
       if (scopes.isEmpty()) continue
       val scopeSeparator = ScopeSeparator(separatorName)

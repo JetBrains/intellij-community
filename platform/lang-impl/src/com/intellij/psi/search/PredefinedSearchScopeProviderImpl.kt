@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -243,15 +244,11 @@ open class PredefinedSearchScopeProviderImpl : PredefinedSearchScopeProvider() {
       ) {
         val adjustedContext = dataContext ?: SimpleDataContext.getProjectContext(project)
         for (each in SearchScopeProvider.EP_NAME.extensionList) {
-          result.addAll(
-            try {
-              each.getGeneralSearchScopes(project, adjustedContext)
-            }
-            catch (e: Exception) {
-              LOG.error("Couldn't retrieve general scopes from $each", e)
-              emptyList()
-            }
-          )
+          runCatching {
+            result.addAll(each.getGeneralSearchScopes(project, adjustedContext))
+          }.getOrLogException {
+            LOG.error("Couldn't retrieve general scopes from $each", it)
+          }
         }
       }
 

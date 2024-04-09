@@ -2,6 +2,7 @@
 package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.CancellationException
@@ -63,12 +64,19 @@ inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
 }
 
 fun <T> Result<T>.getOrLogException(logger: Logger): T? {
+  return getOrLogException {
+    logger.error(it)
+  }
+}
+
+@Internal
+inline fun <T> Result<T>.getOrLogException(log: (Throwable) -> Unit): T? {
   return onFailure { e ->
     if (e is ProcessCanceledException || e is CancellationException) {
       throw e
     }
     else {
-      logger.error(e)
+      log(e)
     }
   }.getOrNull()
 }
