@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -9,9 +9,8 @@ object JavaPluginLayout {
   const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return PluginLayout.plugin(MAIN_MODULE_NAME) { spec ->
+    return PluginLayout.plugin(MAIN_MODULE_NAME, auto = true) { spec ->
       spec.directoryName = "java"
-
       spec.mainJarName = "java-impl.jar"
 
       spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
@@ -50,7 +49,6 @@ object JavaPluginLayout {
         "intellij.java.uast.ide",
       ))
 
-      @Suppress("SpellCheckingInspection")
       for (moduleName in listOf(
         "intellij.java.frontback.impl",
         "intellij.java.frontback.psi",
@@ -104,6 +102,8 @@ object JavaPluginLayout {
       spec.withResourceArchive("../jdkAnnotations", "lib/resources/jdkAnnotations.jar")
 
       addition?.invoke(spec)
+
+      spec.excludeProjectLibrary("jetbrains-annotations-java5")
     }
   }
 
