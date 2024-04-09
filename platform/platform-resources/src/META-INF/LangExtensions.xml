@@ -1622,7 +1622,7 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.WolfPassFactory"/>
 
-    <highlightingPassFactory implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPassFactory$Registrar"/>
+    <highlightingPassFactory implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPassFactory"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryKindRegistry"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryKindRegistryImpl"
