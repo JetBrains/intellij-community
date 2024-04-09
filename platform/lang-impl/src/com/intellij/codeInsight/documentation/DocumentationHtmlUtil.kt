@@ -150,7 +150,7 @@ object DocumentationHtmlUtil {
   private class HtmlEditorPaneInputTranspiler(text: String) {
     private val codePoints = text.codePoints().iterator()
     private val result = StringBuilder(text.length + 50)
-    private var codePoint = codePoints.nextInt()
+    private var codePoint = if (!codePoints.hasNext()) -1 else codePoints.nextInt()
     private var openingTag = false
     private val tagStart = StringBuilder()
     private val tagName = StringBuilder()
@@ -301,9 +301,6 @@ object DocumentationHtmlUtil {
     }
 
     fun process(): String {
-      if (!codePoints.hasNext()) return ""
-
-
       while (codePoint >= 0) {
         when {
           // break after dot if surrounded by letters
