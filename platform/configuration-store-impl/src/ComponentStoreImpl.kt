@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ResourceUtil
 import com.intellij.util.ThreeState
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.SettingsInternalApi
@@ -742,20 +743,42 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
+  private fun tryReloadPerClientState(componentClass: Class<out PersistentStateComponent<*>>,
+                                      info: ComponentInfo,
+                                      changedStorages: Set<StateStorage>): Boolean {
+    val perClientComponent = (project ?: application).getService(componentClass)
+    if (perClientComponent == null || perClientComponent === info.component) {
+      return false
+    }
+
+    val newInfo = ComponentInfoImpl(info.pluginId, perClientComponent, info.stateSpec)
+    initComponent(info = newInfo, changedStorages = changedStorages.ifEmpty { null }, reloadData = ThreeState.YES)
+    return true
+  }
+
   final override fun reloadState(componentClass: Class<out PersistentStateComponent<*>>) {
     val stateSpec = getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
+      if (tryReloadPerClientState(it.javaClass, info, emptySet())) {
+        return
+      }
+
       initComponent(info = info, changedStorages = emptySet(), reloadData = ThreeState.YES)
     }
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     val info = components.get(componentName) ?: return false
-    if (info.component !is PersistentStateComponent<*>) {
+    val component = info.component
+    if (component !is PersistentStateComponent<*>) {
       return false
     }
 
+    if (tryReloadPerClientState(component.javaClass, info, changedStorages)) {
+      return true
+    }
+    
     val isChangedStoragesEmpty = changedStorages.isEmpty()
     initComponent(info = info, changedStorages = if (isChangedStoragesEmpty) null else changedStorages, reloadData = ThreeState.UNSURE)
     return true
