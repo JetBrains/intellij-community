@@ -28,7 +28,6 @@ f:com.intellij.java.workspace.entities.ArchivePackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ArchivePackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -37,7 +36,6 @@ f:com.intellij.java.workspace.entities.ArchivePackagingElementEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setFileName(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.java.workspace.entities.ArchivePackagingElementEntityImpl
@@ -112,7 +110,6 @@ f:com.intellij.java.workspace.entities.ArtifactEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ArtifactEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getArtifactType():java.lang.String
@@ -124,7 +121,6 @@ f:com.intellij.java.workspace.entities.ArtifactEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setArtifactType(java.lang.String):V
 - f:setIncludeInProjectBuild(Z):V
 - f:setName(java.lang.String):V
@@ -227,7 +223,6 @@ f:com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getArtifact():com.intellij.java.workspace.entities.ArtifactId
@@ -238,7 +233,6 @@ f:com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setArtifact(com.intellij.java.workspace.entities.ArtifactId):V
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
@@ -295,7 +289,6 @@ f:com.intellij.java.workspace.entities.ArtifactPropertiesEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ArtifactPropertiesEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -305,7 +298,6 @@ f:com.intellij.java.workspace.entities.ArtifactPropertiesEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setPropertiesXmlTag(java.lang.String):V
 - f:setProviderType(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -361,7 +353,6 @@ f:com.intellij.java.workspace.entities.ArtifactRootElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ArtifactRootElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -369,7 +360,6 @@ f:com.intellij.java.workspace.entities.ArtifactRootElementEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.java.workspace.entities.ArtifactRootElementEntityImpl
 - com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -421,7 +411,6 @@ f:com.intellij.java.workspace.entities.ArtifactsOrderEntityData
 - clone():com.intellij.java.workspace.entities.ArtifactsOrderEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ArtifactsOrderEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -430,7 +419,6 @@ f:com.intellij.java.workspace.entities.ArtifactsOrderEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setOrderOfArtifacts(java.util.List):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.java.workspace.entities.ArtifactsOrderEntityImpl
@@ -511,7 +499,6 @@ f:com.intellij.java.workspace.entities.CustomPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.CustomPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -521,7 +508,6 @@ f:com.intellij.java.workspace.entities.CustomPackagingElementEntityData
 - f:getTypeId():java.lang.String
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setPropertiesXmlTag(java.lang.String):V
 - f:setTypeId(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -582,7 +568,6 @@ f:com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -591,7 +576,6 @@ f:com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.java.workspace.entities.DirectoryCopyPackagingElementEntityImpl
@@ -647,7 +631,6 @@ f:com.intellij.java.workspace.entities.DirectoryPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.DirectoryPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getDirectoryName():java.lang.String
@@ -656,7 +639,6 @@ f:com.intellij.java.workspace.entities.DirectoryPackagingElementEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setDirectoryName(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.java.workspace.entities.DirectoryPackagingElementEntityImpl
@@ -717,7 +699,6 @@ f:com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityD
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -727,7 +708,6 @@ f:com.intellij.java.workspace.entities.ExtractedDirectoryPackagingElementEntityD
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:setPathInArchive(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -785,7 +765,6 @@ f:com.intellij.java.workspace.entities.FileCopyPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -795,7 +774,6 @@ f:com.intellij.java.workspace.entities.FileCopyPackagingElementEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setFilePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:setRenamedOutputFileName(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -885,7 +863,6 @@ f:com.intellij.java.workspace.entities.JavaModuleSettingsEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.JavaModuleSettingsEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getCompilerOutput():com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -899,7 +876,6 @@ f:com.intellij.java.workspace.entities.JavaModuleSettingsEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setCompilerOutput(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:setCompilerOutputForTests(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:setExcludeOutput(Z):V
@@ -980,7 +956,6 @@ f:com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -990,7 +965,6 @@ f:com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setGenerated(Z):V
 - f:setRelativeOutputPath(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -1061,7 +1035,6 @@ f:com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1071,7 +1044,6 @@ f:com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setGenerated(Z):V
 - f:setPackagePrefix(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -1127,7 +1099,6 @@ f:com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1138,7 +1109,6 @@ f:com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setLibrary(com.intellij.platform.workspace.jps.entities.LibraryId):V
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
@@ -1195,7 +1165,6 @@ f:com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1206,7 +1175,6 @@ f:com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setModule(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
@@ -1260,7 +1228,6 @@ f:com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1271,7 +1238,6 @@ f:com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setModule(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
@@ -1325,7 +1291,6 @@ f:com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityDat
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1336,7 +1301,6 @@ f:com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntityDat
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setModule(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
@@ -1533,7 +1497,6 @@ f:com.intellij.platform.workspace.jps.entities.ContentRootEntityData
 - clone():com.intellij.platform.workspace.jps.entities.ContentRootEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ContentRootEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsByKey(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
@@ -1545,7 +1508,6 @@ f:com.intellij.platform.workspace.jps.entities.ContentRootEntityData
 - hashCode():I
 - hashCodeByKey():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setExcludedPatterns(java.util.List):V
 - f:setUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -1592,7 +1554,6 @@ f:com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntityD
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1601,7 +1562,6 @@ f:com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntityD
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setPropertiesXmlTag(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.DependenciesKt
@@ -1645,7 +1605,6 @@ f:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1654,7 +1613,6 @@ f:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityData
 - f:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityImpl
@@ -1684,7 +1642,6 @@ f:com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntityData
 - clone():com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1693,7 +1650,6 @@ f:com.intellij.platform.workspace.jps.entities.ExcludeUrlOrderEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setOrder(java.util.List):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.ExtensionsKt
@@ -1705,7 +1661,6 @@ f:com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1720,7 +1675,6 @@ f:com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
 - f:getRootProjectPath():java.lang.String
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setExternalSystem(java.lang.String):V
 - f:setExternalSystemModuleGroup(java.lang.String):V
 - f:setExternalSystemModuleType(java.lang.String):V
@@ -1770,7 +1724,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.FacetEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getConfigurationXmlTag():java.lang.String
@@ -1784,7 +1737,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setConfigurationXmlTag(java.lang.String):V
 - f:setModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - f:setName(java.lang.String):V
@@ -1864,7 +1816,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetsOrderEntityData
 - clone():com.intellij.platform.workspace.jps.entities.FacetsOrderEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.FacetsOrderEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1873,7 +1824,6 @@ f:com.intellij.platform.workspace.jps.entities.FacetsOrderEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setOrderOfFacets(java.util.List):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
@@ -1933,7 +1883,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryEntityData
 - clone():com.intellij.platform.workspace.jps.entities.LibraryEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.LibraryEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1947,7 +1896,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setName(java.lang.String):V
 - f:setRoots(java.util.List):V
 - f:setTableId(com.intellij.platform.workspace.jps.entities.LibraryTableId):V
@@ -2009,7 +1957,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -2018,7 +1965,6 @@ f:com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setPropertiesXmlTag(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.LibraryRoot
@@ -2106,7 +2052,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getCustomModuleOptions():java.util.Map
@@ -2116,7 +2061,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntityData
 - f:getRootManagerTagCustomData():java.lang.String
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setCustomModuleOptions(java.util.Map):V
 - f:setRootManagerTagCustomData(java.lang.String):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -2181,7 +2125,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleEntityData
 - clone():com.intellij.platform.workspace.jps.entities.ModuleEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ModuleEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getDependencies():java.util.List
@@ -2194,7 +2137,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setDependencies(java.util.List):V
 - f:setName(java.lang.String):V
 - f:setType(com.intellij.platform.workspace.jps.entities.ModuleTypeId):V
@@ -2251,7 +2193,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntityData
 - clone():com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -2260,7 +2201,6 @@ f:com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setPath(java.util.List):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.ModuleId
@@ -2369,7 +2309,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkEntityData
 - clone():com.intellij.platform.workspace.jps.entities.SdkEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.SdkEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - f:getAdditionalData():java.lang.String
@@ -2383,7 +2322,6 @@ f:com.intellij.platform.workspace.jps.entities.SdkEntityData
 - f:getVersion():java.lang.String
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setAdditionalData(java.lang.String):V
 - f:setHomePath(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - f:setName(java.lang.String):V
@@ -2495,7 +2433,6 @@ f:com.intellij.platform.workspace.jps.entities.SourceRootEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.SourceRootEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -2505,7 +2442,6 @@ f:com.intellij.platform.workspace.jps.entities.SourceRootEntityData
 - f:getUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setRootTypeId(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):V
 - f:setUrl(com.intellij.platform.workspace.storage.url.VirtualFileUrl):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
@@ -2542,7 +2478,6 @@ f:com.intellij.platform.workspace.jps.entities.SourceRootOrderEntityData
 - clone():com.intellij.platform.workspace.jps.entities.SourceRootOrderEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -2551,7 +2486,6 @@ f:com.intellij.platform.workspace.jps.entities.SourceRootOrderEntityData
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setOrderOfSourceRoots(java.util.List):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 f:com.intellij.platform.workspace.jps.entities.SourceRootTypeId
@@ -2570,7 +2504,6 @@ f:com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntityData
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -2581,7 +2514,6 @@ f:com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntityData
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
 - index(com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setProductionModuleId(com.intellij.platform.workspace.jps.entities.ModuleId):V
 - updateLink(com.intellij.platform.workspace.storage.SymbolicEntityId,com.intellij.platform.workspace.storage.SymbolicEntityId):Z
 - updateLinksIndex(java.util.Set,com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex):V

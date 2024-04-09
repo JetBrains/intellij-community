@@ -45,20 +45,6 @@
 - getOldEntity():com.intellij.platform.workspace.storage.WorkspaceEntity
 - hashCode():I
 - toString():java.lang.String
-*:com.intellij.platform.workspace.storage.EntityInformation
-*:com.intellij.platform.workspace.storage.EntityInformation$Deserializer
-- com.intellij.platform.workspace.storage.EntityInformation
-- a:acceptNull():Z
-- a:readBoolean():Z
-- a:readInt():I
-- a:readString():java.lang.String
-*:com.intellij.platform.workspace.storage.EntityInformation$Serializer
-- com.intellij.platform.workspace.storage.EntityInformation
-- a:saveBlob(java.lang.Object,java.lang.String):V
-- a:saveBoolean(Z):V
-- a:saveInt(I):V
-- a:saveNull():V
-- a:saveString(java.lang.String):V
 *:com.intellij.platform.workspace.storage.EntityPointer
 - a:isPointerTo(com.intellij.platform.workspace.storage.WorkspaceEntity):Z
 - a:resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -142,9 +128,6 @@
 - a:addMapping(com.intellij.platform.workspace.storage.WorkspaceEntity,java.lang.Object):V
 - a:getOrPutDataByEntity(com.intellij.platform.workspace.storage.WorkspaceEntity,kotlin.jvm.functions.Function0):java.lang.Object
 - a:removeMapping(com.intellij.platform.workspace.storage.WorkspaceEntity):java.lang.Object
-*:com.intellij.platform.workspace.storage.SerializableEntityData
-- a:deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
-- a:serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 *a:com.intellij.platform.workspace.storage.SerializationResult
 *f:com.intellij.platform.workspace.storage.SerializationResult$Fail
 - com.intellij.platform.workspace.storage.SerializationResult
@@ -319,7 +302,6 @@ a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 - f:setSnapshot(com.intellij.platform.workspace.storage.EntityStorage):V
 - toString():java.lang.String
 a:com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
-- com.intellij.platform.workspace.storage.SerializableEntityData
 - java.lang.Cloneable
 - entitySource:com.intellij.platform.workspace.storage.EntitySource
 - <init>():V

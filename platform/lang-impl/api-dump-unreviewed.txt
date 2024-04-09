@@ -17723,7 +17723,6 @@ f:com.intellij.ide.scratch.workspace.ScratchRootsEntityData
 - clone():com.intellij.ide.scratch.workspace.ScratchRootsEntityData
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.ide.scratch.workspace.ScratchRootsEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -17732,7 +17731,6 @@ f:com.intellij.ide.scratch.workspace.ScratchRootsEntityData
 - f:getRoots():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setRoots(java.util.List):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.ide.scratch.workspace.ScratchRootsEntityImpl

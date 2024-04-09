@@ -1420,7 +1420,6 @@ f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBu
 - <init>():V
 - createDetachedEntity(java.util.List):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 - createEntity(com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
-- deserialize(com.intellij.platform.workspace.storage.EntityInformation$Deserializer):V
 - equals(java.lang.Object):Z
 - equalsIgnoringEntitySource(java.lang.Object):Z
 - getEntityInterface():java.lang.Class
@@ -1429,7 +1428,6 @@ f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBu
 - getRequiredParents():java.util.List
 - hashCode():I
 - hashCodeIgnoringEntitySource():I
-- serialize(com.intellij.platform.workspace.storage.EntityInformation$Serializer):V
 - f:setProjectsBuildClasspath(java.util.Map):V
 - wrapAsModifiable(com.intellij.platform.workspace.storage.MutableEntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntity$Builder
 c:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntityImpl
