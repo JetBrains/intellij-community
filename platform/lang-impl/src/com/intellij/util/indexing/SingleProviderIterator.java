@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import com.intellij.util.indexing.FilesScanningTaskBase.CheckCancelOnlyProgressIndicator;
+import com.intellij.util.indexing.IndexingProgressReporter.CheckCancelOnlyProgressIndicator;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
