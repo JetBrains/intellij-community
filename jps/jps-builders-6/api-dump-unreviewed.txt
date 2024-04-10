@@ -164,6 +164,7 @@ f:org.jetbrains.jps.javac.Iterators
 - s:notNullFilter():org.jetbrains.jps.javac.Iterators$BooleanFunction
 - s:recurse(java.lang.Object,org.jetbrains.jps.javac.Iterators$Function,Z):java.lang.Iterable
 - s:recurseDepth(java.lang.Object,org.jetbrains.jps.javac.Iterators$Function,Z):java.lang.Iterable
+- s:reverse(java.util.List):java.lang.Iterable
 - s:unique(java.lang.Iterable):java.lang.Iterable
 - s:unique(java.util.Iterator):java.util.Iterator
 - s:uniqueBy(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$Provider):java.lang.Iterable

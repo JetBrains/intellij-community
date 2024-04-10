@@ -227,6 +227,30 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         }
       }
 
+      for (KmConstructor removedCons : metaDiff.constructors().removed()) {
+        Visibility visibility = Attributes.getVisibility(removedCons);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+          continue;
+        }
+        if (find(removedCons.getValueParameters(), Attributes::getDeclaresDefaultValue) != null) {
+          debug("Removed constructor's contained default value declarations: ", changedClass.getName());
+          affectClassLookupUsages(context, changedClass);
+        }
+      }
+      
+      for (Difference.Change<KmConstructor, KotlinMeta.KmConstructorsDiff> conChange : metaDiff.constructors().changed()) {
+        KmConstructor changedCons = conChange.getPast();
+        Visibility visibility = Attributes.getVisibility(changedCons);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+          continue;
+        }
+        KotlinMeta.KmConstructorsDiff conDiff = conChange.getDiff();
+        if (conDiff.argsBecameNotNull() || conDiff.accessRestricted() || conDiff.defaultValueDeclarationChanged()) {
+          debug("Constructor's args became non-nullable; or the constructor has become less accessible or default value declaration changed: ", changedClass.getName());
+          affectClassLookupUsages(context, changedClass);
+        }
+      }
+
       for (KmProperty removedProp : metaDiff.properties().removed()) {
 
         if (Attributes.isInline(removedProp.getGetter()) || (removedProp.getSetter() != null && Attributes.isInline(removedProp.getSetter()))) {
