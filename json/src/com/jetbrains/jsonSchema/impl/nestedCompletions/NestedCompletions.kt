@@ -6,11 +6,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.json.pointer.JsonPointerPosition
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.parents
-import com.intellij.psi.util.startOffset
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.*
 import com.intellij.util.containers.Stack
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter
@@ -59,7 +60,7 @@ internal fun LookupElementBuilder.prefixedBy(path: SchemaPath?, treeWalker: Json
           insertHandler?.handleInsert(context, element) // Perform existing handler.
           context.file.findElementAt(context.startOffset)
             ?.sideEffect { completedElement ->
-              createMoveData(treeWalker.findContainingObjectAdapter(completedElement), path.accessor())
+              createMoveData(treeWalker.findContainingObjectAdapter(completedElement), path.accessor(), context.document)
                 .performMove(treeWalker, context, completedElement)
             }
         }
@@ -119,6 +120,8 @@ private fun NestedCompletionMoveData.performMove(completedRange: CompletedRange,
   val fullText = fullTextWithoutCorrectingNewline
     .letIf(takePrecedingNewline) { '\n' + it }
     .letIf(takeSucceedingNewline) { it + '\n' }
+
+  PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(editor.document)
 
   editor.document.applyChangesOrdered(
     documentChangeAt(startOfLine) {
@@ -352,7 +355,7 @@ private fun TextWithAdditionalCaretOffset.withTextPrefixedBy(prefix: String) =
  */
 private class NestedCompletionMoveData(val destination: PsiElement?, val wrappingPath: List<String>)
 
-private fun createMoveData(objectWhereUserIsWithCursor: JsonObjectValueAdapter?, accessor: List<String>): NestedCompletionMoveData {
+private fun createMoveData(objectWhereUserIsWithCursor: JsonObjectValueAdapter?, accessor: List<String>, document: Document): NestedCompletionMoveData {
   var currentNode: JsonObjectValueAdapter? = objectWhereUserIsWithCursor
   var i = 0
   while (i < accessor.size) {
@@ -363,9 +366,38 @@ private fun createMoveData(objectWhereUserIsWithCursor: JsonObjectValueAdapter?,
   }
 
   return NestedCompletionMoveData(
-    destination = currentNode?.takeUnless { i == 0 }?.delegate,
+    destination = adjustDestinationIfNeeded(currentNode?.takeUnless { i == 0 }?.delegate, document),
     wrappingPath = accessor.subList(i, accessor.size),
   )
+}
+
+private fun adjustDestinationIfNeeded(element: PsiElement?, document: Document): PsiElement? {
+  element ?: return null
+  // need to turn a single-liner into multiline for the insertion
+  // expand any element that has brackets or braces by default
+  val text = element.text
+  if ((text.contains('{') || text.contains('[')) && !text.contains("\n")) {
+    // commit the document before changes
+    PsiDocumentManager.getInstance(element.project).commitDocument(document)
+    val lbrace = element.childrenOfType<LeafPsiElement>().firstOrNull { it.text == "{" || it.text == "[" }
+    if (lbrace != null) {
+      val rbraceText = if (lbrace.text == "{") "}" else "]"
+      val rbrace = element.childrenOfType<LeafPsiElement>().lastOrNull { it.text == rbraceText }
+      if (rbrace != null) {
+        element.addBefore(createLeaf("\n", element)!!, rbrace)
+      }
+      element.addAfter(createLeaf("\n", element)!!, lbrace)
+    }
+  }
+  return element
+}
+
+@Suppress("SameParameterValue")
+private fun createLeaf(content: String, context: PsiElement): LeafPsiElement? {
+  val psiFileFactory = PsiFileFactory.getInstance(context.project)
+  return psiFileFactory.createFileFromText("dummy." + context.containingFile.virtualFile.extension,
+                                           context.containingFile.fileType, content)
+    .descendantsOfType<LeafPsiElement>().firstOrNull { it.text == content }
 }
 
 private class CapturedCaretState(
