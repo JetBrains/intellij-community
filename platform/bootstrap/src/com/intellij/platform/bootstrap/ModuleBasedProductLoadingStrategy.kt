@@ -258,7 +258,13 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
   override fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path? {
     val resolvedModule = moduleRepository.resolveModule(RuntimeModuleId.module(moduleName)).resolvedModule
-                         ?: return null
+    if (resolvedModule == null) {
+      // https://youtrack.jetbrains.com/issue/CPP-38280
+      // we log here, as only for JetBrainsClient it is expected that some module is not resolved
+      thisLogger().debug("Skip loading product content module $moduleName because its classes root isn't present")
+      return null
+    }
+
     val paths = resolvedModule.resourceRootPaths
     return paths.singleOrNull() 
            ?: error("Content modules are supposed to have only one resource root, but $moduleName have multiple: $paths")
