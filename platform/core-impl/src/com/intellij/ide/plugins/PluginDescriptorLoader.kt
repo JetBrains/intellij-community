@@ -24,6 +24,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
+import com.intellij.util.xml.dom.createXmlStreamReader
 import kotlinx.coroutines.*
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -738,29 +739,41 @@ private fun loadModuleDescriptors(
     val subDescriptorFile = "$moduleName.xml"
 
     if (moduleDirExists && !pathResolver.isRunningFromSources && moduleName.startsWith("intellij.")) {
-      val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName, moduleDir)
-      moduleRaw = if (jarFile != null) {
-        val resolver = pool.load(jarFile)
-        try {
-          resolver.loadZipEntry(subDescriptorFile)?.let {
-            readModuleDescriptor(
-              input = it,
-              readContext = context,
-              pathResolver = pathResolver,
-              dataLoader = dataLoader,
-              includeBase = null,
-              readInto = null,
-              locationSource = jarFile.toString(),
-            )
-          }
+      if (module.descriptorContent == null) {
+        val jarFile = loadingStrategy.findProductContentModuleClassesRoot(moduleName, moduleDir)
+        if (jarFile == null) {
+          LOG.warn("Skip loading product content module $moduleName because its classes root isn't present")
+          moduleRaw = RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
         }
-        finally {
-          (resolver as? Closeable)?.close()
+        else {
+          val resolver = pool.load(jarFile)
+          try {
+            moduleRaw = resolver.loadZipEntry(subDescriptorFile)?.let {
+              readModuleDescriptor(
+                input = it,
+                readContext = context,
+                pathResolver = pathResolver,
+                dataLoader = dataLoader,
+                includeBase = null,
+                readInto = null,
+                locationSource = jarFile.toString(),
+              )
+            }
+          }
+          finally {
+            (resolver as? Closeable)?.close()
+          }
         }
       }
       else {
-        LOG.debug("Skip loading product content module $moduleName because its classes root isn't present")
-        RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
+        moduleRaw = readModuleDescriptor(
+          reader = createXmlStreamReader(module.descriptorContent.reader()),
+          readContext = context,
+          pathResolver = pathResolver,
+          dataLoader = dataLoader,
+          includeBase = null,
+          readInto = null,
+        )
       }
 
       if (moduleRaw != null) {
@@ -957,29 +970,6 @@ internal fun CoroutineScope.loadDescriptorsFromDir(
       async(Dispatchers.IO) {
         loadDescriptorFromFileOrDir(file = file, context = context, isBundled = isBundled, pool = pool)
       }
-    }
-  }
-}
-
-// urls here expected to be a file urls to plugin.xml
-private fun CoroutineScope.loadDescriptorsFromClassPath(
-  urlToFilename: Map<URL, String>,
-  context: DescriptorListLoadingContext,
-  pathResolver: ClassPathXmlPathResolver,
-  useCoreClassLoader: Boolean,
-  pool: ZipFilePool,
-): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  return urlToFilename.map { (url, filename) ->
-    async(Dispatchers.IO) {
-      loadDescriptorFromResource(
-        resource = url,
-        filename = filename,
-        context = context,
-        pathResolver = pathResolver,
-        useCoreClassLoader = useCoreClassLoader,
-        pool = pool,
-        libDir = null,
-      )
     }
   }
 }

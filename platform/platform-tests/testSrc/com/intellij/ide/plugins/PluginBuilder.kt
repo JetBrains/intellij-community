@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -103,7 +103,7 @@ class PluginBuilder {
   fun module(moduleName: String, moduleDescriptor: PluginBuilder): PluginBuilder {
     val fileName = "$moduleName.xml"
     subDescriptors.put(fileName, moduleDescriptor)
-    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null))
+    content.add(PluginContentDescriptor.ModuleItem(name = moduleName, configFile = null, descriptorContent = null))
 
     // remove default dependency on lang
     moduleDescriptor.noDepends()
