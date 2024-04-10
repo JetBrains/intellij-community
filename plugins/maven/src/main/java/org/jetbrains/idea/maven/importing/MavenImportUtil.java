@@ -204,7 +204,7 @@ public final class MavenImportUtil {
     return level;
   }
 
-  private static boolean isPreviewText(Element child) {
+  public static boolean isPreviewText(Element child) {
     return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY.equals(child.getTextTrim());
   }
 
