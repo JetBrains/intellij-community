@@ -607,10 +607,6 @@ f:com.intellij.ide.plugins.PluginXmlPathResolver$Companion
 com.intellij.ide.plugins.ReadModuleContext
 - a:getInterner():com.intellij.util.xml.dom.XmlInterner
 - isMissingIncludeIgnored():Z
-f:com.intellij.ide.plugins.SortedModuleGraph
-- com.intellij.util.graph.Graph
-- <init>(java.util.Comparator,java.util.Collection,java.util.Map,java.util.Map):V
-- f:getTopologicalComparator():java.util.Comparator
 f:com.intellij.ide.plugins.XmlReader
 - sf:isKotlinPlugin(com.intellij.openapi.extensions.PluginId):Z
 - sf:readModuleDescriptor(java.io.InputStream,com.intellij.ide.plugins.ReadModuleContext,com.intellij.ide.plugins.PathResolver,com.intellij.ide.plugins.DataLoader,java.lang.String,com.intellij.ide.plugins.RawPluginDescriptor,java.lang.String):com.intellij.ide.plugins.RawPluginDescriptor

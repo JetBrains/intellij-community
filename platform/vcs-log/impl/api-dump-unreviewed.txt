@@ -1,3 +1,34 @@
+a:com.intellij.util.ui.FilterComponent
+- com.intellij.ui.components.JBPanel
+- psf:ARC_SIZE:I
+- psf:BORDER_SIZE:I
+- p:<init>(java.util.function.Supplier):V
+- p:createFocusedBorder():javax.swing.border.Border
+- pa:createResetAction():java.lang.Runnable
+- p:createUnfocusedBorder():javax.swing.border.Border
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- a:getCurrentText():java.lang.String
+- a:getEmptyFilterValue():java.lang.String
+- initUi():javax.swing.JComponent
+- a:installChangeListener(java.lang.Runnable):V
+- pa:isValueSelected():Z
+- setEnabled(Z):V
+- setShowPopupAction(java.lang.Runnable):V
+- p:shouldDrawLabel():com.intellij.util.ui.FilterComponent$DrawLabelMode
+- p:shouldIndicateHovering():Z
+e:com.intellij.util.ui.FilterComponent$DrawLabelMode
+- java.lang.Enum
+- sf:ALWAYS:com.intellij.util.ui.FilterComponent$DrawLabelMode
+- sf:NEVER:com.intellij.util.ui.FilterComponent$DrawLabelMode
+- sf:WHEN_VALUE_NOT_SET:com.intellij.util.ui.FilterComponent$DrawLabelMode
+- s:valueOf(java.lang.String):com.intellij.util.ui.FilterComponent$DrawLabelMode
+- s:values():com.intellij.util.ui.FilterComponent$DrawLabelMode[]
+c:com.intellij.util.ui.FilterComponent$FilledRoundedBorder
+- javax.swing.border.Border
+- <init>(java.awt.Color,I,I,Z):V
+- getBorderInsets(java.awt.Component):java.awt.Insets
+- isBorderOpaque():Z
+- paintBorder(java.awt.Component,java.awt.Graphics,I,I,I,I):V
 a:com.intellij.vcs.log.BaseSingleTaskController
 - com.intellij.vcs.log.data.SingleTaskController
 - <init>(java.lang.String,kotlin.jvm.functions.Function1,com.intellij.openapi.util.CheckedDisposable):V
