@@ -81,8 +81,9 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
   private static final CallMatcher CHANGE_CASE = anyOf(exactInstanceCall(JAVA_LANG_STRING, "toLowerCase").parameterCount(0),
                                                        exactInstanceCall(JAVA_LANG_STRING, "toUpperCase").parameterCount(0));
   private static final CallMatcher STRING_VALUE_OF = staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char[]");
-  private static final CallMatcher STRIP =
+  private static final CallMatcher STRING_STRIP =
     exactInstanceCall(JAVA_LANG_STRING, "strip", "stripLeading", "stripTrailing").parameterCount(0);
+  private static final CallMatcher STRING_TO_CHAR_ARRAY = exactInstanceCall(JAVA_LANG_STRING, "toCharArray").parameterCount(0);
 
   public boolean ignoreStringConstructor = false;
   public boolean ignoreSingleArgSubstring = true;
@@ -158,6 +159,19 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
       if (descriptor != null) {
         myHolder.registerProblem(descriptor);
       }
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(expression.getQualifierExpression());
+      if (!(qualifier instanceof PsiMethodCallExpression call) ||
+          !"length".equals(expression.getReferenceName()) ||
+          !STRING_TO_CHAR_ARRAY.test(call)) {
+        return;
+      }
+      myHolder.registerProblem(Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement()),
+                               InspectionGadgetsBundle.message("unnecessary.tostring.call.problem.descriptor"),
+                               new RemoveToCharArrayCallFix());
     }
 
     @Override
@@ -472,7 +486,7 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
     @Nullable
     private ProblemDescriptor getStripIsEmptyProblem(PsiMethodCallExpression call) {
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-      if (!STRIP.test(qualifierCall)) return null;
+      if (!STRING_STRIP.test(qualifierCall)) return null;
       PsiElement anchor = qualifierCall.getMethodExpression().getReferenceNameElement();
       if (anchor == null) return null;
       String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "isBlank");
@@ -1232,6 +1246,34 @@ public final class RedundantStringOperationInspection extends AbstractBaseJavaLo
           template.replace(literal);
         }
       }
+    }
+  }
+
+  private static class RemoveToCharArrayCallFix extends PsiUpdateModCommandQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return InspectionGadgetsBundle.message("remove.unnecessary.0.call.quickfix", "toCharArray");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiReferenceExpression ref)) {
+        return;
+      }
+      PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return;
+      }
+      PsiElement greatGrandParent = grandParent.getParent();
+      if (!(greatGrandParent instanceof PsiReferenceExpression)) {
+        return;
+      }
+      PsiExpression qualifier = ref.getQualifierExpression();
+      if (qualifier == null) {
+        return;
+      }
+      new CommentTracker().replaceAndRestoreComments(greatGrandParent, qualifier.getText() + ".length()");
     }
   }
 }
