@@ -92,7 +92,7 @@ public final class ActionsTreeUtil {
       return Objects.requireNonNullElse(getTemplatePresentation(stub.getId(), null), presentation);
     }
     else {
-      return action.getTemplatePresentation();
+      return presentation;
     }
   }
 
@@ -224,8 +224,10 @@ public final class ActionsTreeUtil {
   }
 
   public static Group createGroup(ActionGroup actionGroup, boolean forceAsPopup, Condition<? super AnAction> filtered) {
-    String groupName = getName(actionGroup);
-    return createGroup(actionGroup, groupName, getTemplatePresentation(actionGroup).getIconSupplier(), forceAsPopup, filtered, true);
+    Presentation presentation = getTemplatePresentation(actionGroup);
+    String text = presentation.getText();
+    String groupName = StringUtil.isNotEmpty(text) ? text : getName(actionGroup);
+    return createGroup(actionGroup, groupName, presentation.getIconSupplier(), forceAsPopup, filtered, true);
   }
 
   public static @NlsActions.ActionText String getName(@NotNull AnAction action) {
@@ -766,20 +768,23 @@ public final class ActionsTreeUtil {
 
   private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
     try {
-      if (group instanceof ActionGroupStub) {
-        AnAction[] stubChildren = ((DefaultActionGroup)group).getChildActionsOrStubs();
+      if (group instanceof ActionGroupStub stub) {
+        AnAction[] stubChildren = stub.getChildActionsOrStubs();
         if (stubChildren.length > 0) return stubChildren;
-        String actionId = ((ActionGroupStub)group).getId();
-        AnAction action = actionManager.getAction(actionId);
-        if (action instanceof ActionGroup) {
-          LOG.info("No children in '" + actionId + "' stub. Creating its instance");
-          return group.getChildren(null);
+        String actionId = stub.getId();
+        LOG.info("No children in '" + actionId + "' stub. Creating its instance");
+        AnAction unstubbed = actionManager.getAction(actionId);
+        if (unstubbed instanceof ActionGroup g && !(unstubbed instanceof ActionGroupStub)) {
+          return getActions(g, actionManager);
         }
         else {
           PluginException.logPluginError(LOG, "'" + actionId + "' is not an action group. " +
-                                              action.getClass().getName(), null, action.getClass());
+                                              unstubbed.getClass().getName(), null, unstubbed.getClass());
           return AnAction.EMPTY_ARRAY;
         }
+      }
+      else if (group instanceof DefaultActionGroup g && ActionClassMetaData.isDefaultGetChildren(g)) {
+        return g.getChildActionsOrStubs();
       }
       else {
         return group.getChildren(null);
