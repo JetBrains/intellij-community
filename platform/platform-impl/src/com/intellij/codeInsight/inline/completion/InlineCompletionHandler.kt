@@ -122,7 +122,7 @@ class InlineCompletionHandler(
       // At this point, the previous session must be removed, otherwise, `init` will throw.
       val newSession = InlineCompletionSession.init(editor, provider, request, parentDisposable).apply {
         sessionManager.sessionCreated(this)
-        guardCaretModifications(request)
+        guardCaretModifications()
       }
 
       executor.switchJobSafely(newSession::assignJob) {
@@ -440,10 +440,10 @@ class InlineCompletionHandler(
   }
 
   @RequiresEdt
-  private fun InlineCompletionSession.guardCaretModifications(request: InlineCompletionRequest) {
+  private fun InlineCompletionSession.guardCaretModifications() {
     val expectedOffset = {
       // This caret listener might be disposed after context: ML-1438
-      if (!context.isDisposed) context.startOffset() ?: request.endOffset else -1
+      if (!context.isDisposed) context.expectedStartOffset else -1
     }
     val cancel = {
       if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)
