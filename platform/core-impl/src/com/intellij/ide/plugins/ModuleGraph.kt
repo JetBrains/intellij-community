@@ -78,13 +78,14 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     collectDirectDependenciesInNewFormat(module, moduleMap, result)
 
     if (module.pluginId != PluginManagerCore.CORE_ID) {
-      if (module.moduleName == null) {
-        if (isDependsOnPluginAlias(module, VCS_ALIAS_ID)) {
-          moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
-          moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
-        }
+      // Check modules as well, for example, intellij.diagram.impl.vcs.
+      // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
+      if (doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
+        moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
       }
-      else {
+
+      if (module.moduleName != null) {
         // add main as implicit dependency
         val main = moduleMap.get(module.pluginId.idString)!!
         assert(main !== module)
@@ -118,7 +119,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
 }
 
 // alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
-private fun isDependsOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
+private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
   return plugin.pluginDependencies.any { it.pluginId == aliasId } || plugin.dependencies.plugins.any { it.id == aliasId }
 }
 
