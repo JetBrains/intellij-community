@@ -346,6 +346,10 @@ private fun countFormattedBasedPlaceholders(holders: List<LoggingStringPartEvalu
     return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
   }
 
+  if (validators.any { it == null }) {
+    return PlaceholderCountResult(emptyList(), PlaceholdersStatus.ERROR_TO_PARSE_STRING)
+  }
+
   val placeholderRangeList = validators.map { metaValidator ->
     PlaceholderRanges(
       if (metaValidator is FormatDecode.MultiValidator) metaValidator.validators.map { validator -> validator.range }
