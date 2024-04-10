@@ -77,6 +77,8 @@ object LoggingTestUtils {
           LogBuilder atWarn();
           LogBuilder atFatal();
           LogBuilder atError();
+          LogBuilder atTrace();
+          LogBuilder atLevel(Level level);
           boolean isInfoEnabled(){return true;}
         }
       """.trimIndent())
@@ -163,7 +165,8 @@ public interface Logger {
            LoggingEventBuilder atInfo(); 
            LoggingEventBuilder atDebug(); 
            LoggingEventBuilder atWarn(); 
-           LoggingEventBuilder atError(); 
+           LoggingEventBuilder atError();
+           LoggingEventBuilder atTrace();
         }
       """.trimIndent())
   }
