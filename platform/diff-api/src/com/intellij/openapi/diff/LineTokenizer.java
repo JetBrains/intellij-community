@@ -7,6 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated See {@link com.intellij.openapi.util.text.LineTokenizer} and
+ * {@link com.intellij.openapi.util.text.StringUtil#tokenize(String, String)}.
+ */
+@Deprecated
 public class LineTokenizer extends LineTokenizerBase<String> {
   private final char[] myChars;
   private final String myText;
