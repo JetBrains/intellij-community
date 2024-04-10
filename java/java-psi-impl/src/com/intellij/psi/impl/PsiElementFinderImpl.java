@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +66,9 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
       PsiDirectory[] subDirs = dir.getSubdirectories();
       for (PsiDirectory subDir : subDirs) {
+        if (JavaMultiReleaseUtil.getVersion(subDir.getVirtualFile()) != null) {
+          continue;
+        }
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subDir);
         if (aPackage != null) {
           final String subQualifiedName = aPackage.getQualifiedName();
@@ -152,9 +156,17 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
       .forEach(new ReadActionProcessor<VirtualFile>() {
         @Override
         public boolean processInReadAction(final VirtualFile dir) {
-          if (!scope.contains(dir)) return true;
-          PsiDirectory psiDir = psiManager.findDirectory(dir);
-          return psiDir == null || consumer.process(psiDir);
+          if (scope.contains(dir)) {
+            PsiDirectory psiDir = psiManager.findDirectory(dir);
+            if (psiDir != null && !consumer.process(psiDir)) return false;
+          }
+          for (VirtualFile verSpec : JavaMultiReleaseUtil.findVersionSpecificFiles(dir)) {
+            if (scope.contains(verSpec)) {
+              PsiDirectory psiDir = psiManager.findDirectory(verSpec);
+              if (psiDir != null && !consumer.process(psiDir)) return false;
+            }
+          }
+          return true;
         }
       });
   }

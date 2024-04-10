@@ -10,6 +10,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Utility methods to support Multi-Release JARs (MR-JARs, <a href="https://openjdk.org/jeps/238">JEP 238</a>)
  */
@@ -120,6 +124,37 @@ public final class JavaMultiReleaseUtil {
       feature--;
     }
     return file;
+  }
+
+  /**
+   * @param file file that represents a non-version-specific file from an MR-JAR
+   * @return a list of files that represent the same file in version-specific directories. 
+   * Returns an empty list if there are no version-specific files for this file, 
+   * or the input file is not located inside MR-JAR.
+   */
+  public static @NotNull List<@NotNull VirtualFile> findVersionSpecificFiles(@NotNull VirtualFile file) {
+    VirtualFile root = VfsUtilCore.getRootFile(file);
+    if (!(root.getFileType() instanceof ArchiveFileType)) return Collections.emptyList();
+    String relativePath = VfsUtilCore.getRelativePath(file, root);
+    if (relativePath == null) return Collections.emptyList();
+    VirtualFile versions = root.findFileByRelativePath("META-INF/versions");
+    if (versions == null || !versions.isDirectory()) return Collections.emptyList();
+    List<VirtualFile> versionSpecificRoots = new ArrayList<>();
+    for (VirtualFile versionRoot : versions.getChildren()) {
+      String name = versionRoot.getName();
+      try {
+        int parsed = Integer.parseInt(name);
+        if (parsed < MIN_MULTI_RELEASE_VERSION.feature() || parsed > LanguageLevel.JDK_X.feature()) continue;
+      }
+      catch (NumberFormatException e) {
+        continue;
+      }
+      VirtualFile target = versionRoot.findFileByRelativePath(relativePath);
+      if (target != null) {
+        versionSpecificRoots.add(target);
+      }
+    }
+    return versionSpecificRoots;
   }
 
 

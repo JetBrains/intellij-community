@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassType
@@ -15,6 +16,7 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.testFramework.DumbModeTestUtils.runInDumbModeSynchronously
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.indexing.FileBasedIndex
 import org.assertj.core.api.Assertions.assertThat
@@ -46,6 +48,21 @@ class MultiReleaseJarTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     IdeaTestUtil.withLevel(module, LanguageLevel.JDK_1_9) {
       myFixture.configureByText("a.java", "import com.example.*;\nclass a { <caret>MultiReleaseClass f; }")
       assertVersioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element })
+    }
+  }
+
+  fun testResolve11DumbMode() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_11) {
+      runInDumbModeSynchronously(project) {
+        getInstance(project).withAlternativeResolveEnabled {
+          myFixture.configureByText("a.java", """
+            import com.example.MultiReleaseClass;
+            class a {
+              <caret>MultiReleaseClass f;
+            }""".trimIndent())
+          assertVersioned((myFixture.getReferenceAtCaretPosition() as PsiJavaReference).multiResolve(false).map { it.element })
+        }
+      }
     }
   }
 
