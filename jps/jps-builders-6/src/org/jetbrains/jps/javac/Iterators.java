@@ -36,6 +36,17 @@ public final class Iterators {
     return false;
   }
 
+  public static int count(Iterable<?> iterable) {
+    if (iterable instanceof Collection) {
+      return ((Collection<?>)iterable).size();
+    }
+    int count = 0;
+    for (Object obj: iterable) {
+      count += 1;
+    }
+    return count;
+  }
+
   public static <T> T find(Iterable<? extends T> iterable, BooleanFunction<? super T> cond) {
     if (iterable != null) {
       for (T o : iterable) {

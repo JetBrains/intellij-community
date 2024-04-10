@@ -271,7 +271,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged() && !defaultValueDeclarationChanged();
+      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged() && !hasDefaultDeclarationChanges();
     }
 
     public boolean becameNullable() {
@@ -313,20 +313,13 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return nowType == null || !Objects.equals(pastType.getClassifier(), nowType.getClassifier());
     }
 
-    public boolean defaultValueDeclarationChanged() {
-      Iterator<KmValueParameter> nowParams = Iterators.reverse(now.getValueParameters()).iterator();
-      for (KmValueParameter pastParam : Iterators.reverse(past.getValueParameters())) {
-        KmValueParameter nowParam = nowParams.hasNext()? nowParams.next() : null;
-        if (nowParam != null? Attributes.getDeclaresDefaultValue(nowParam) != Attributes.getDeclaresDefaultValue(pastParam) : Attributes.getDeclaresDefaultValue(pastParam)) {
-          return true;
-        }
+    public boolean hasDefaultDeclarationChanges() {
+      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      if (before == 0) {
+        return after > 0; // there were no default declarations, but some parameters now define default values
       }
-      while (nowParams.hasNext()) {
-        if (Attributes.getDeclaresDefaultValue(nowParams.next())) {
-          return true;
-        }
-      }
-      return false;
+      return after < before; // default definitions still exist, but some parameters do not define default values anymore
     }
 
     private static Iterable<KmType> getParameterTypes(KmFunction f) {
@@ -346,7 +339,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !argsBecameNotNull() && !visibilityChanged() && !defaultValueDeclarationChanged();
+      return !argsBecameNotNull() && !visibilityChanged() && !hasDefaultDeclarationChanges();
     }
 
     public boolean visibilityChanged() {
@@ -373,20 +366,13 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return false;
     }
 
-    public boolean defaultValueDeclarationChanged() {
-      Iterator<KmValueParameter> nowParams = Iterators.reverse(now.getValueParameters()).iterator();
-      for (KmValueParameter pastParam : Iterators.reverse(past.getValueParameters())) {
-        KmValueParameter nowParam = nowParams.hasNext()? nowParams.next() : null;
-        if (nowParam != null? Attributes.getDeclaresDefaultValue(nowParam) != Attributes.getDeclaresDefaultValue(pastParam) : Attributes.getDeclaresDefaultValue(pastParam)) {
-          return true;
-        }
+    public boolean hasDefaultDeclarationChanges() {
+      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      if (before == 0) {
+        return after > 0; // there were no default declarations, but some parameters now define default values
       }
-      while (nowParams.hasNext()) {
-        if (Attributes.getDeclaresDefaultValue(nowParams.next())) {
-          return true;
-        }
-      }
-      return false;
+      return after < before; // default definitions still exist, but some parameters do not define default values anymore
     }
 
     private static Iterable<KmType> getParameterTypes(KmConstructor f) {

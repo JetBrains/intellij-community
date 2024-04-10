@@ -196,6 +196,15 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         }
       }
 
+      for (KmFunction func : flat(metaDiff.functions().removed(), metaDiff.functions().added())) {
+        Visibility visibility = Attributes.getVisibility(func);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS || find(func.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
+          continue;
+        }
+        debug("Removed or added function declares default values: ", changedClass.getName());
+        affectMemberLookupUsages(context, changedClass, func.getName(), future);
+      }
+
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
         KmFunction changedKmFunction = funChange.getPast();
         Visibility visibility = Attributes.getVisibility(changedKmFunction);
@@ -221,21 +230,19 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
             affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
           }
         }
-        if (funDiff.receiverParameterChanged() || funDiff.defaultValueDeclarationChanged()) {
-          debug("Function's receiver parameter changed or parameter default value declaration changed: ", changedKmFunction.getName());
+        if (funDiff.receiverParameterChanged() || funDiff.hasDefaultDeclarationChanges()) {
+          debug("Function's receiver parameter changed or function has breaking changes in default value declarations: ", changedKmFunction.getName());
           affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
         }
       }
 
-      for (KmConstructor removedCons : metaDiff.constructors().removed()) {
-        Visibility visibility = Attributes.getVisibility(removedCons);
-        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+      for (KmConstructor con : flat(metaDiff.constructors().removed(), metaDiff.constructors().added())) {
+        Visibility visibility = Attributes.getVisibility(con);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS || find(con.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
           continue;
         }
-        if (find(removedCons.getValueParameters(), Attributes::getDeclaresDefaultValue) != null) {
-          debug("Removed constructor's contained default value declarations: ", changedClass.getName());
-          affectClassLookupUsages(context, changedClass);
-        }
+        debug("Removed or added constructor declares default values: ", changedClass.getName());
+        affectClassLookupUsages(context, changedClass);
       }
       
       for (Difference.Change<KmConstructor, KotlinMeta.KmConstructorsDiff> conChange : metaDiff.constructors().changed()) {
@@ -245,8 +252,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           continue;
         }
         KotlinMeta.KmConstructorsDiff conDiff = conChange.getDiff();
-        if (conDiff.argsBecameNotNull() || conDiff.accessRestricted() || conDiff.defaultValueDeclarationChanged()) {
-          debug("Constructor's args became non-nullable; or the constructor has become less accessible or default value declaration changed: ", changedClass.getName());
+        if (conDiff.argsBecameNotNull() || conDiff.accessRestricted() || conDiff.hasDefaultDeclarationChanges()) {
+          debug("Constructor's args became non-nullable; or the constructor has become less accessible or has breaking changes in default value declarations: ", changedClass.getName());
           affectClassLookupUsages(context, changedClass);
         }
       }
