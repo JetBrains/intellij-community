@@ -26,7 +26,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
@@ -45,8 +44,9 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   private static final NotificationGroup NOTIFICATION_GROUP =
     NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
 
-  private static final NotificationGroup PREVIEW_NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
+  private static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
+  }
 
   private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
 
@@ -71,14 +71,14 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
 
       int previewFeature = languageLevel.feature();
       if (languageLevel.isUnsupported()) {
-        PREVIEW_NOTIFICATION_GROUP.createNotification(
+        getNotificationGroup().createNotification(
             JavaBundle.message("java.preview.features.unsupported.title"),
             JavaBundle.message("java.preview.features.unsupported", previewFeature),
             NotificationType.ERROR)
           .notify(project);
       }
       else if (!PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
-        PREVIEW_NOTIFICATION_GROUP.createNotification(
+        getNotificationGroup().createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
             NotificationType.WARNING)
@@ -188,9 +188,8 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     return ApplicationManager.getApplication().getService(AcceptedLanguageLevelsSettings.class);
   }
 
-  @Nullable
   @Override
-  public AcceptedLanguageLevelsSettings getState() {
+  public @NotNull AcceptedLanguageLevelsSettings getState() {
     return this;
   }
 
