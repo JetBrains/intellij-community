@@ -3,6 +3,7 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
 import org.jetbrains.annotations.ApiStatus
@@ -47,6 +48,8 @@ open class ModuleGraphBase protected constructor(
   }
 }
 
+private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
+
 internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraphBase {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
   val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
@@ -65,7 +68,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   }
 
   val hasAllModules = moduleMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER.idString)
-  val result = Collections.newSetFromMap<IdeaPluginDescriptorImpl>(IdentityHashMap())
+  val result: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
   for (module in modules) {
     val implicitDep = if (hasAllModules) getImplicitDependency(module, moduleMap) else null
@@ -81,11 +84,19 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     collectDirectDependenciesInOldFormat(module, moduleMap, result)
     collectDirectDependenciesInNewFormat(module, moduleMap, result)
 
-    if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {
-      // add main as implicit dependency
-      val main = moduleMap.get(module.pluginId.idString)!!
-      assert(main !== module)
-      result.add(main)
+    if (module.pluginId != PluginManagerCore.CORE_ID) {
+      if (module.moduleName == null) {
+        if (isDependsOnPluginAlias(module, VCS_ALIAS_ID)) {
+          moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
+          moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
+        }
+      }
+      else {
+        // add main as implicit dependency
+        val main = moduleMap.get(module.pluginId.idString)!!
+        assert(main !== module)
+        result.add(main)
+      }
     }
 
     if (!result.isEmpty()) {
@@ -106,6 +117,11 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   }
 
   return object : ModuleGraphBase(modules = modules, directDependencies = directDependencies, directDependents = directDependents) {}
+}
+
+// alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
+private fun isDependsOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
+  return plugin.pluginDependencies.any { it.pluginId == aliasId } || plugin.dependencies.plugins.any { it.id == aliasId }
 }
 
 private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
@@ -153,13 +169,17 @@ private fun copySorted(
  * classes without declaring explicit dependency on the Java module. This method is intended to add implicit dependency on the Java plugin
  * for such plugins to avoid breaking compatibility with them.
  */
-private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
-                                  idMap: Map<String, IdeaPluginDescriptorImpl>): IdeaPluginDescriptorImpl? {
+private fun getImplicitDependency(
+  descriptor: IdeaPluginDescriptorImpl,
+  idMap: Map<String, IdeaPluginDescriptorImpl>,
+): IdeaPluginDescriptorImpl? {
   // skip our plugins as expected to be up to date whether bundled or not
   if (descriptor.isBundled ||
       descriptor.packagePrefix != null ||
       descriptor.implementationDetail ||
-      descriptor.content.modules.isNotEmpty()) {
+      descriptor.content.modules.isNotEmpty() ||
+      descriptor.dependencies.modules.isNotEmpty() ||
+      descriptor.dependencies.plugins.isNotEmpty()) {
     return null
   }
 
