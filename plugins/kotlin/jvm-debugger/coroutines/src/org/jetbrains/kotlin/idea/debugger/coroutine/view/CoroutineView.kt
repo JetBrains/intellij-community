@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBund
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CreationCoroutineStackFrameItem
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.LazyCoroutineInfoData
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import java.awt.BorderLayout
@@ -306,8 +305,9 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
                 doubleFrameList?.frames?.forEach {
                     children.add(CoroutineFrameValue(it))
                 }
-                doubleFrameList?.creationFrames?.let {
-                    children.add(CreationFramesContainer(it))
+                val creationFrames = doubleFrameList?.creationFrames
+                if (!creationFrames.isNullOrEmpty()) {
+                    children.add(CreationFramesContainer(creationFrames))
                 }
                 node.addChildren(children, true)
             }
