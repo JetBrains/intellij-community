@@ -1,7 +1,8 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
 import pandas as pd
-import typing
+from typing import Hashable, Union
+from geopandas import GeoSeries, GeoDataFrame
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH_PYTHON_2 = 100000
@@ -104,7 +105,7 @@ def __get_describe(table):
                                     exclude=[np.complex64, np.complex128])
     except (TypeError, OverflowError, ValueError):
         return
-    if type(table) is pd.Series:
+    if type(table) is pd.Series or type(table) is GeoSeries:
         return described_
     else:
         return described_.reindex(columns=table.columns, copy=False)
@@ -220,8 +221,8 @@ def add_custom_key_value_separator(pairs_list):
 
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
-    # type: (Union[pd.DataFrame, pd.Series, pd.Categorical]) -> pd.DataFrame
-    if type(table) is pd.Series:
+    # type: (Union[pd.DataFrame, pd.Series, GeoSeries, pd.Categorical]) -> Union[pd.DataFrame, GeoDataFrame]
+    if type(table) is pd.Series or type(table) is GeoSeries:
         return __series_to_df(table)
     if type(table) is pd.Categorical:
         return __categorical_to_df(table)
@@ -230,7 +231,7 @@ def __convert_to_df(table):
 
 # pandas.Series support
 def __get_column_name(table):
-    # type: (pd.Series) -> str
+    # type: (Union[pd.Series, GeoSeries]) -> str
     if table.name is not None:
         # noinspection PyTypeChecker
         return table.name
@@ -238,7 +239,7 @@ def __get_column_name(table):
 
 
 def __series_to_df(table):
-    # type: (pd.Series) -> pd.DataFrame
+    # type: (Union[pd.Series, GeoSeries]) -> Union[pd.DataFrame, GeoDataFrame]
     return table.to_frame(name=__get_column_name(table))
 
 
