@@ -451,7 +451,7 @@ public final class HighlightMethodUtil {
       if (builder == null) {
         builder = createIncompatibleTypeHighlightInfo(methodCall, resolveHelper, (MethodCandidateInfo)resolveResult, methodCall);
       }
-      
+
       if (builder == null) {
         builder = checkInferredReturnTypeAccessible((MethodCandidateInfo)resolveResult, methodCall);
       }
@@ -524,7 +524,7 @@ public final class HighlightMethodUtil {
     }
   }
 
-  private static void registerImplementsExtendsFix(@NotNull HighlightInfo.Builder builder, @NotNull PsiMethodCallExpression methodCall, 
+  private static void registerImplementsExtendsFix(@NotNull HighlightInfo.Builder builder, @NotNull PsiMethodCallExpression methodCall,
                                                    @NotNull PsiMethod resolvedMethod) {
     if (!JavaPsiConstructorUtil.isSuperConstructorCall(methodCall)) return;
     if (!resolvedMethod.isConstructor() || !resolvedMethod.getParameterList().isEmpty()) return;
@@ -584,13 +584,15 @@ public final class HighlightMethodUtil {
           toolTip = createMismatchedArgumentCountTooltip(parameters.length, expressions.length);
         }
         else {
-          toolTip = mismatchedExpressions.isEmpty() ? description : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
+          toolTip = mismatchedExpressions.isEmpty()
+                    ? XmlStringUtil.escapeString(description)
+                    : createMismatchedArgumentsHtmlTooltip(candidateInfo, list);
         }
       }
     }
     else {
       mismatchedExpressions = Collections.emptyList();
-      toolTip = description;
+      toolTip = XmlStringUtil.escapeString(description);
     }
 
     if (mismatchedExpressions.size() == list.getExpressions().length || mismatchedExpressions.isEmpty()) {
@@ -632,7 +634,7 @@ public final class HighlightMethodUtil {
       HtmlChunk reason = getTypeMismatchErrorHtml(errorMessage);
       return HighlightUtil.createIncompatibleTypesTooltip(
         paramType, argType, (lRawType, lTypeArguments, rRawType, rTypeArguments) ->
-          JavaErrorBundle.message("incompatible.types.html.tooltip", 
+          JavaErrorBundle.message("incompatible.types.html.tooltip",
                                   lRawType, lTypeArguments, rRawType, rTypeArguments, reason, ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())));
     }
     return null;
