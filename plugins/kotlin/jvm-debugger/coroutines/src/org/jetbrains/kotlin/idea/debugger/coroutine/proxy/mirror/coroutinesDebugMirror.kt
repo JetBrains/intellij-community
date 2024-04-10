@@ -22,8 +22,6 @@ class DebugProbesImpl private constructor(context: DefaultExecutionContext) :
 
     private val dumpMethod by MethodMirrorDelegate("dumpCoroutinesInfo", javaLangListMirror, "()Ljava/util/List;")
 
-    private val currentThreadCoroutineIdMethod by MethodDelegate<LongValue>("getCurrentThreadCoroutineId", "()J")
-
     private val dumpCoroutinesInfoAsJsonAndReferences by MethodDelegate<ArrayReference>("dumpCoroutinesInfoAsJsonAndReferences", "()[Ljava/lang/Object;")
 
     val isInstalled: Boolean by lazy { isInstalled(context) }

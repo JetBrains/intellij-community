@@ -1,4 +1,4 @@
-// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-debug:1.6.4)-javaagent
+// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
 
 package runToCursorSuspendSameLambda
 
@@ -36,4 +36,3 @@ fun startMethod(i: Int) { }
 fun endMethod(k: Int) { }
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
-

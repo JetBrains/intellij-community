@@ -19,10 +19,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.CoroutinesDebugHelper
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.sun.jdi.ArrayReference
-import com.sun.jdi.Location
-import com.sun.jdi.LongValue
-import com.sun.jdi.ObjectReference
+import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
@@ -31,8 +28,10 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFram
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): XStackFrame? {
@@ -64,39 +63,130 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
         val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
         val defaultExecutionContext = DefaultExecutionContext(suspendContext, frameProxy)
+        // First try to extract Continuation filter
+        val continuationFilter = tryComputeContinuationFilter(frameProxy, defaultExecutionContext)
+        if (continuationFilter != null) return continuationFilter
+        // If continuation could not be extracted or the root continuation was not an instance of BaseContinuationImpl, 
+        // dump coroutines running on the current thread and compute [CoroutineIdFilter].
         val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
-            // first try the helper, it is the fastest way
-            var currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
-
-            // then try the mirror
-            if (currentCoroutines == null) {
-                currentCoroutines = debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
-            }
-            return when {
-                currentCoroutines.isEmpty() -> null
-                else -> CoroutineIdFilter(currentCoroutines)
-            }
+        val coroutineIdFilter = if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+            // first try the helper, it is the fastest way, then try the mirror
+            val currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl) ?: 
+                debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
+            CoroutineIdFilter(currentCoroutines)
         } else {
             //TODO: IDEA-341142 show nice notification about this
-            thisLogger().warn("No ThreadLocal coroutine tracking is found")
+            thisLogger().warn("[coroutine filter]: kotlinx-coroutines debug agent was not enabled, DebugProbesImpl class is not found.")
+            null
         }
-        return continuationObjectFilter(suspendContext, defaultExecutionContext)
+        return coroutineIdFilter
     }
 
+    /**
+     * This function computes [CoroutineFilter] given an instance of the current continuation
+     * (passed as an argument to the suspend function, or instance of suspend lambda).
+     * To distinguish coroutines, we need to go up the continuation stack and extract the continuation corresponding the root suspending frame.
+     *
+     * 1. Tries to extract continuation id (if the root continuation is an instance of CoroutineOwner) and return [ContinuationIdFilter].
+     * 2. If continuation was extracted though it was not an instance of CoroutineOwner (if coroutines debug agent was not enabled), return [ContinuationObjectFilter].
+     * 3. If computing the continuation filter fails, create [ContinuationObjectFilter].
+     */
+    private fun tryComputeContinuationFilter(
+        frameProxy: StackFrameProxyImpl,
+        defaultExecutionContext: DefaultExecutionContext
+    ): CoroutineFilter? {
+        // if continuation cannot be extracted, fall to CoroutineIdFilter
+        val currentContinuation = extractContinuation(frameProxy) ?: return null
+        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
+        // First try to get a ContinuationFilter from helper
+        getContinuationFilterFromHelper(currentContinuation, debugProbesImpl, defaultExecutionContext)?.let { return it }
+        // If helper class failed
+        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+            extractContinuationId(currentContinuation, defaultExecutionContext)?.let { return it }
+        }
+        return extractBaseContinuation(currentContinuation, defaultExecutionContext)
+    }
+
+    private fun extractBaseContinuation(
+        continuation: ObjectReference,
+        defaultExecutionContext: DefaultExecutionContext
+    ): CoroutineFilter? {
+        val baseContinuationImpl = BaseContinuationImplLight(defaultExecutionContext)
+        var loopContinuation = continuation
+        while (true) {
+            val continuationMirror = baseContinuationImpl.mirror(loopContinuation, defaultExecutionContext)
+            if (continuationMirror == null) {
+                // for now, if continuation is not an instance of BaseContinuationImpl, fall to CoroutineIdFilter
+                thisLogger().warn("[coroutine filter]: extracted completion field was not an instance of BaseContinuationImpl, ${defaultExecutionContext.frameProxy?.location()}")
+                return null
+            }
+            val nextContinuation = continuationMirror.nextContinuation
+            if (nextContinuation == null) {
+                return ContinuationObjectFilter(continuationMirror.that)
+            }
+            loopContinuation = nextContinuation
+        }
+    }
+
+    private fun extractContinuationId(
+        continuation: ObjectReference,
+        defaultExecutionContext: DefaultExecutionContext
+    ): CoroutineFilter? {
+        val baseContinuationImpl = BaseContinuationImplLight(defaultExecutionContext)
+        var loopContinuation = continuation
+        while (true) {
+            val continuationMirror = baseContinuationImpl.mirror(loopContinuation, defaultExecutionContext)
+            if (continuationMirror == null) {
+                // for now, if continuation is not an instance of BaseContinuationImpl, fall to CoroutineIdFilter
+                thisLogger().warn("[coroutine filter]: extracted completion field was not an instance of BaseContinuationImpl, ${defaultExecutionContext.frameProxy?.location()}")
+                return null
+            }
+            if (continuationMirror.coroutineOwner != null) {
+                val coroutineOwner = DebugProbesImplCoroutineOwner(null, defaultExecutionContext)
+                val coroutineOwnerMirror = coroutineOwner.mirror(continuationMirror.coroutineOwner, defaultExecutionContext)
+                coroutineOwnerMirror?.coroutineInfo?.sequenceNumber?.let { return CoroutineIdFilter(setOf(it)) }
+            }
+            val nextContinuation = continuationMirror.nextContinuation
+            if (nextContinuation == null) {
+                return ContinuationObjectFilter(continuationMirror.that)
+            }
+            loopContinuation = nextContinuation
+        }
+    }
+
+    private fun getContinuationFilterFromHelper(
+        currentContinuation: ObjectReference,
+        debugProbesImpl: DebugProbesImpl?,
+        context: DefaultExecutionContext
+    ): CoroutineFilter? {
+        if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+            val continuationId = (callMethodFromHelper(context, "tryGetContinuationId", listOf(currentContinuation)) as LongValue).value()
+            if (continuationId != -1L) return CoroutineIdFilter(setOf(continuationId))
+            thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
+        }
+        val rootContinuation = callMethodFromHelper(context, "getRootContinuation", listOf(currentContinuation))
+        if (rootContinuation == null) thisLogger().warn("[coroutine filter]: Could not extract continuation instance")
+        return rootContinuation?.let { ContinuationObjectFilter(it as ObjectReference) }
+    }
+    
     private fun getCoroutinesRunningOnCurrentThreadFromHelper(
         context: DefaultExecutionContext,
         debugProbesImpl: DebugProbesImpl
     ): Set<Long>? {
+        val result = callMethodFromHelper(context, "getCoroutinesRunningOnCurrentThread", listOf(debugProbesImpl.getObject()))
+        result ?: return null
+        return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
+    }
+
+    private fun callMethodFromHelper(context: DefaultExecutionContext, methodName: String, args: List<Value?>): Value? {
         try {
             val helperClass = ClassLoadingUtils.getHelperClass(CoroutinesDebugHelper::class.java, context.evaluationContext)
             if (helperClass != null) {
-                val method = DebuggerUtils.findMethod(helperClass, "getCoroutinesRunningOnCurrentThread", null)
+                val method = DebuggerUtils.findMethod(helperClass, methodName, null)
                 if (method != null) {
-                    val array = context.evaluationContext.computeAndKeep {
-                        context.invokeMethod(helperClass, method, listOf(debugProbesImpl.getObject())) as ArrayReference
+                    return context.evaluationContext.computeAndKeep {
+                        context.invokeMethod(helperClass, method, args)
                     }
-                    return array.values.asSequence().map { (it as LongValue).value() }.toHashSet()
                 }
             }
         } catch (e: Exception) {
@@ -105,20 +195,23 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         return null
     }
 
-    private fun continuationObjectFilter(
-        suspendContext: SuspendContextImpl,
-        defaultExecutionContext: DefaultExecutionContext
-    ): ContinuationObjectFilter? {
-        val frameProxy = suspendContext.getStackFrameProxyImpl() ?: return null
-        val continuation = extractContinuation(frameProxy) ?: return null
-        val baseContinuation = extractBaseContinuation(continuation, defaultExecutionContext) ?: return null
-        return ContinuationObjectFilter(baseContinuation)
-    }
-
     private fun extractContinuation(frameProxy: StackFrameProxyImpl): ObjectReference? {
         val suspendExitMode = frameProxy.location().getSuspendExitMode()
         return when (suspendExitMode) {
-            SuspendExitMode.SUSPEND_LAMBDA -> frameProxy.thisVariableValue()
+            SuspendExitMode.SUSPEND_LAMBDA -> {
+                frameProxy.thisVariableValue()?.let { return it }
+                // Extract the previous stack frame at BaseContinuationImpl#resumeWith where invokeSuspend is invoked
+                // and extract `this` reference to the current SuspendLambda there.
+                // This is a WA for this problem: IDEA-349851, KT-67136.
+                val prevStackFrame = frameProxy.threadProxy().frames().getOrNull(frameProxy.frameIndex + 1)
+                if (prevStackFrame == null) {
+                    thisLogger().error("[coroutine filtering]: Could not extract the previous stack frame for the frame ${frameProxy.stackFrame}:\n" +
+                                               "thread = ${frameProxy.threadProxy().name()} \n" +
+                                               "frames = ${frameProxy.threadProxy().frames()}")
+                    return null
+                }
+                prevStackFrame.thisObject()
+            }
             // If the final call within a function body is a suspend call, and it's the only suspend call,
             // then tail call optimization is applied, and no state machine is generated, hence only completion variable is available.
             SuspendExitMode.SUSPEND_METHOD_PARAMETER -> frameProxy.continuationVariableValue() ?: frameProxy.completionVariableValue()
@@ -138,22 +231,6 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         return DebuggerUtilsEx.findOrCreateLocation(suspendContext.debugProcess, stackTraceElement)
     }
 
-    private fun extractBaseContinuation(
-        continuation: ObjectReference,
-        defaultExecutionContext: DefaultExecutionContext
-    ): ObjectReference? {
-        val baseContinuationImpl = BaseContinuationImplLight(defaultExecutionContext)
-        var loopContinuation = continuation
-        while (true) {
-            val continuationMirror = baseContinuationImpl.mirror(loopContinuation, defaultExecutionContext) ?: return null
-            val nextContinuation = continuationMirror.nextContinuation
-            if (nextContinuation == null) {
-                return continuationMirror.coroutineOwner
-            }
-            loopContinuation = nextContinuation
-        }
-    }
-
     private fun SuspendContextImpl.getStackFrameProxyImpl(): StackFrameProxyImpl? =
         activeExecutionStack?.threadProxy?.frame(0) ?: this.frameProxy
 
@@ -164,10 +241,8 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         init {
             require(coroutinesRunningOnCurrentThread.isNotEmpty()) { "Coroutines set can not be empty" }
         }
-        override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean {
-            return nextCoroutineFilter is CoroutineIdFilter &&
-                    coroutinesRunningOnCurrentThread.intersect(nextCoroutineFilter.coroutinesRunningOnCurrentThread).isNotEmpty()
-        }
+        override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
+            (nextCoroutineFilter is CoroutineIdFilter && coroutinesRunningOnCurrentThread.intersect(nextCoroutineFilter.coroutinesRunningOnCurrentThread).isNotEmpty())
     }
     
     /**
