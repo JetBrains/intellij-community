@@ -31,6 +31,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.migrateRegistryToAdvSettings
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -275,6 +276,10 @@ private fun CoroutineScope.postOpenUiTasks() {
     launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }
+  }
+
+  launch {
+    migrateRegistryToAdvSettings()
   }
 
   launch {

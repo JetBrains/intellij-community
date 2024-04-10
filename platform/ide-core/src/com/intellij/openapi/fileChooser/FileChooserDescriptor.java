@@ -30,6 +30,9 @@ import java.util.*;
  * Please consider using common variants provided by {@link FileChooserDescriptorFactory}.
  */
 public class FileChooserDescriptor implements Cloneable {
+  @ApiStatus.Internal
+  public static final DataKey<String> FILTER_TYPE = DataKey.create("file.chooser.filter.kind");
+
   private final boolean myChooseFiles;
   private final boolean myChooseFolders;
   private final boolean myChooseJars;
@@ -206,13 +209,14 @@ public class FileChooserDescriptor implements Cloneable {
    * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
    */
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
-    myFileFilter = filter;
-    return this;
+    return withFileFilter(filter, "other");
   }
 
   @ApiStatus.Internal
-  @Nullable Condition<? super VirtualFile> getFileFilter() {
-    return myFileFilter;
+  FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter, String type) {
+    myFileFilter = filter;
+    putUserData(FILTER_TYPE, type);
+    return this;
   }
 
   /**

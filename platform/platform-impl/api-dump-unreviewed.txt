@@ -19435,6 +19435,7 @@ f:com.intellij.openapi.util.ZipperUpdater
 f:com.intellij.openapi.util.io.FileUtilKt
 - sf:endsWithName(java.lang.String,java.lang.String):Z
 - sf:getSystemIndependentPath(java.io.File):java.lang.String
+f:com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigrationKt
 com.intellij.openapi.vcs.changes.RefreshablePanel
 - a:getPanel():javax.swing.JPanel
 - a:refresh():V
@@ -29321,12 +29322,6 @@ f:com.intellij.ui.list.TargetPopup
 f:com.intellij.ui.mac.MacColorSpaceLoader
 - <init>():V
 - s:getGenericRgbColorSpace():java.awt.color.ColorSpace
-f:com.intellij.ui.mac.MacFileSaverDialog
-- com.intellij.openapi.fileChooser.FileSaverDialog
-- <init>(com.intellij.openapi.fileChooser.FileSaverDescriptor,com.intellij.openapi.project.Project):V
-- <init>(com.intellij.openapi.fileChooser.FileSaverDescriptor,java.awt.Component):V
-- save(com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
-- save(java.nio.file.Path,java.lang.String):com.intellij.openapi.vfs.VirtualFileWrapper
 f:com.intellij.ui.mac.MacFullScreenSupport
 - com.intellij.ui.FullScreenSupport
 - <init>():V
@@ -31272,12 +31267,6 @@ c:com.intellij.util.ui.LocalPathCellEditor
 - getFileChooserDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - getTableCellEditorComponent(javax.swing.JTable,java.lang.Object,Z,I,I):java.awt.Component
 - normalizePath(Z):com.intellij.util.ui.LocalPathCellEditor
-f:com.intellij.util.ui.OwnerOptional
-- s:fromComponent(java.awt.Component):com.intellij.util.ui.OwnerOptional
-- get():java.awt.Window
-- ifDialog(java.util.function.Consumer):com.intellij.util.ui.OwnerOptional
-- ifFrame(java.util.function.Consumer):com.intellij.util.ui.OwnerOptional
-- ifNull(java.util.function.Consumer):com.intellij.util.ui.OwnerOptional
 a:com.intellij.util.ui.ReloadableComboBoxPanel
 - com.intellij.util.ui.ReloadablePanel
 - p:myActionPanel:javax.swing.JPanel
