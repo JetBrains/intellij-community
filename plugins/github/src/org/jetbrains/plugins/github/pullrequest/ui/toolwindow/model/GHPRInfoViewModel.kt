@@ -83,7 +83,7 @@ class GHPRInfoViewModel internal constructor(
       dataProvider.reviewData.signalPendingReviewNeedsReload()
       dataProvider.reviewData.signalThreadsNeedReload()
       dataProvider.changesData.signalChangesNeedReload()
-      dataProvider.viewedStateData.reset()
+      dataProvider.viewedStateData.signalViewedStateNeedsReload()
     }
   }
 }

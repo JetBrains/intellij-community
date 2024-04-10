@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
 import org.jetbrains.plugins.github.api.data.pullrequest.mapToLocation
@@ -114,10 +115,12 @@ internal class GHPRDiffChangeViewModelImpl(
 
   override fun markViewed() {
     if (!diffData.isCumulative) return
-    val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
-    val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
-
-    dataProvider.viewedStateData.updateViewedState(repositoryRelativePath, true)
+    cs.launch {
+      val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
+      val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, change.filePath)
+      // TODO: handle error
+      dataProvider.viewedStateData.updateViewedState(listOf(repositoryRelativePath), true)
+    }
   }
 }
 

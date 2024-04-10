@@ -129,7 +129,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val changesService = GHPRChangesServiceImpl(cs, project, requestExecutor,
                                                   remoteCoordinates, apiRepositoryCoordinates)
       val reviewService = GHPRReviewServiceImpl(securityService, requestExecutor, apiRepositoryCoordinates)
-      val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val filesService = GHPRFilesServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val reactionsService = GHReactionsServiceImpl(requestExecutor, apiRepositoryCoordinates)
 
       val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)

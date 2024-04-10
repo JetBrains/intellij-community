@@ -106,16 +106,16 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     }
 
     val changesData = GHPRChangesDataProviderImpl(providerCs, changesService, { detailsData.loadDetails().refs }, id)
+    val reviewData = GHPRReviewDataProviderImpl(providerCs, reviewService, changesData, id, messageBus)
+    val viewedStateData = GHPRViewedStateDataProviderImpl(providerCs, filesService, id)
+    val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
+
     providerCs.launch {
       detailsData.loadedDetailsState.distinctUntilChangedBy { it?.refs }.drop(1).collect {
         changesData.signalChangesNeedReload()
+        viewedStateData.signalViewedStateNeedsReload()
       }
     }
-    val reviewData = GHPRReviewDataProviderImpl(providerCs, reviewService, changesData, id, messageBus)
-    val viewedStateData = GHPRViewedStateDataProviderImpl(filesService, id).also {
-      Disposer.register(parentDisposable, it)
-    }
-    val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
 
     val timelineLoaderHolder = DisposalCountingHolder { timelineDisposable ->
       timelineLoaderFactory(id).also { loader ->
