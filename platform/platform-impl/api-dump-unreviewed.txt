@@ -15988,8 +15988,6 @@ f:com.intellij.openapi.fileEditor.TextEditorWithPreview$MyFileEditorState
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
 - readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
 - writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
-*bc:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider$EntriesMappings
-- bsf:entries$0:kotlin.enums.EnumEntries
 f:com.intellij.openapi.fileEditor.TextEditorWithPreviewProviderKt
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager

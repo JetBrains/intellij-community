@@ -934,8 +934,6 @@ f:com.intellij.vcs.log.impl.VcsFileStatusInfo
 - f:getTypeByte():B
 - hashCode():I
 - toString():java.lang.String
-bc:com.intellij.vcs.log.impl.VcsFileStatusInfo$EntriesMappings
-- bsf:entries$0:kotlin.enums.EnumEntries
 f:com.intellij.vcs.log.impl.VcsFileStatusInfoKt
 - sf:isRenamed(com.intellij.vcs.log.impl.VcsFileStatusInfo):Z
 f:com.intellij.vcs.log.impl.VcsFileStatusInfoMerger
@@ -1375,8 +1373,6 @@ f:com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector
 - f:getSORT_TYPE_FIELD():com.intellij.internal.statistic.eventLog.events.StringEventField
 - f:getVCS_LIST_FIELD():com.intellij.internal.statistic.eventLog.events.StringListEventField
 - f:getVCS_LOG_FILTER():com.intellij.internal.statistic.eventLog.events.VarargEventId
-bc:com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector$EntriesMappings
-- bsf:entries$0:kotlin.enums.EnumEntries
 c:com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector
 - sf:VCS_FIELD:com.intellij.internal.statistic.eventLog.events.StringEventField
 - <init>():V
@@ -2867,8 +2863,6 @@ f:com.intellij.vcs.log.util.GraphOptionsUtil
 - sf:getLocalizedName(com.intellij.vcs.log.graph.PermanentGraph$Options):java.lang.String
 - sf:getLocalizedName(com.intellij.vcs.log.graph.PermanentGraph$SortType):java.lang.String
 - sf:getOptionKindNames():java.util.List
-bc:com.intellij.vcs.log.util.GraphOptionsUtil$EntriesMappings
-- bsf:entries$0:kotlin.enums.EnumEntries
 f:com.intellij.vcs.log.util.IntCollectionUtil
 - <init>():V
 - s:add(java.util.Map,java.lang.Object,I):V
