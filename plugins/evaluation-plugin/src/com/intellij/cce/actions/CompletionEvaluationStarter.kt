@@ -20,6 +20,7 @@ import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.bootstrap.commandNameFromExtension
 import com.intellij.warmup.util.importOrOpenProject
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -31,9 +32,6 @@ import kotlin.system.exitProcess
 internal class CompletionEvaluationStarter : ApplicationStarter {
   override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
-
-  override val commandName: String
-    get() = "ml-evaluate"
 
   override fun main(args: List<String>) {
     MainEvaluationCommand()
@@ -90,7 +88,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     }
   }
 
-  inner class MainEvaluationCommand : EvaluationCommand(commandName, "Evaluate code completion quality in headless mode") {
+  inner class MainEvaluationCommand : EvaluationCommand(commandNameFromExtension!!, "Evaluate code completion quality in headless mode") {
     override fun run() = Unit
   }
 
