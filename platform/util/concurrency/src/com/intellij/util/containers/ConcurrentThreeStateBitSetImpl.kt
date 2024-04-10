@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers
 
-class ConcurrentThreeStateBitSetImpl(estimatedSize: Int = 1024) : ConcurrentThreeStateBitSet {
+internal class ConcurrentThreeStateBitSetImpl(estimatedSize: Int = 1024) : ConcurrentThreeStateBitSet {
   private val bitSet = ConcurrentBitSet.create(estimatedSize * 2)
 
   override operator fun set(bitIndex: Int, value: Boolean?) {
