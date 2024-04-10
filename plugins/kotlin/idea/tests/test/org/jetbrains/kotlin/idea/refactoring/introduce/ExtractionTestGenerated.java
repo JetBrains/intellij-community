@@ -503,6 +503,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/introduceToFile.kt");
             }
 
+            @TestMetadata("invalidInplaceName.kt")
+            public void testInvalidInplaceName() throws Exception {
+                runTest("testData/refactoring/introduceVariable/invalidInplaceName.kt");
+            }
+
             @TestMetadata("It.kt")
             public void testIt() throws Exception {
                 runTest("testData/refactoring/introduceVariable/It.kt");

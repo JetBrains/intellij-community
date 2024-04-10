@@ -501,6 +501,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/introduceToFile.kt");
         }
 
+        @TestMetadata("invalidInplaceName.kt")
+        public void testInvalidInplaceName() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/invalidInplaceName.kt");
+        }
+
         @TestMetadata("It.kt")
         public void testIt() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/It.kt");
