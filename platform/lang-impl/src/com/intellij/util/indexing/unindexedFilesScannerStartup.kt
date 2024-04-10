@@ -115,7 +115,7 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
   }
 }
 
-fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue): List<Int> {
+private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: ProjectDirtyFilesQueue): Collection<Int> {
   if (projectQueue.lastSeenIndexInOrphanQueue > untrimmedSize) {
     LOG.error("It should not happen that project has seen file id in orphan queue at index larger than number of files that orphan queue ever had. " +
               "projectQueue.lastSeenIdsInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}, orphanQueue.lastId=${untrimmedSize}, " +
@@ -213,9 +213,9 @@ private enum class ReusingPersistentFilterConditions {
                           service: ProjectIndexingDependenciesService): Boolean
 }
 
-val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
+private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
 
-fun invalidatePersistentIndexableFilesFilter(project: Project) {
+internal fun invalidatePersistentIndexableFilesFilter(project: Project) {
   project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, true)
 }
 

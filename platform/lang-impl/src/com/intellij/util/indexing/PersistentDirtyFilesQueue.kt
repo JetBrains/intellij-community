@@ -9,8 +9,7 @@ import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.ints.IntCollection
-import it.unimi.dsi.fastutil.ints.IntList
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInputStream
 import java.io.EOFException
 import java.io.IOException
@@ -19,13 +18,14 @@ import java.nio.file.Path
 import kotlin.io.path.*
 
 
+@ApiStatus.Internal
 object PersistentDirtyFilesQueue {
   private val isUnittestMode: Boolean
     get() = ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode
 
-  val currentVersion = 2L
+  const val currentVersion = 2L
 
-  val queuesDirName: String = "dirty-file-queues"
+  const val queuesDirName: String = "dirty-file-queues"
 
   @JvmStatic
   fun getQueuesDir(): Path = PathManager.getIndexRoot() / queuesDirName
@@ -66,7 +66,7 @@ object PersistentDirtyFilesQueue {
    * Orphan queue: [version, vfs version, last index in queue, ids...]
    */
   @JvmStatic
-  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): Pair<IntList, Long?> {
+  fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): Pair<List<Int>, Long?> {
     try {
       return DataInputStream(queueFile.inputStream().buffered()).use {
         val result = IntArrayList()
@@ -112,12 +112,12 @@ object PersistentDirtyFilesQueue {
   }
 
   @JvmStatic
-  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, index: Long, vfsVersion: Long) {
+  fun storeIndexingQueue(queueFile: Path, fileIds: List<Int>, index: Long, vfsVersion: Long) {
     storeIndexingQueue(queueFile, fileIds, index, vfsVersion, currentVersion)
   }
 
   @JvmStatic
-  fun storeIndexingQueue(queueFile: Path, fileIds: IntCollection, index: Long, vfsVersion: Long, version: Long) {
+  fun storeIndexingQueue(queueFile: Path, fileIds: List<Int>, index: Long, vfsVersion: Long, version: Long) {
     try {
       if (fileIds.isEmpty()) {
         queueFile.deleteIfExists()
@@ -142,18 +142,20 @@ object PersistentDirtyFilesQueue {
   }
 }
 
-class ProjectDirtyFilesQueue(val fileIds: IntCollection, val lastSeenIndexInOrphanQueue: Long) {
+@ApiStatus.Internal
+class ProjectDirtyFilesQueue(val fileIds: Collection<Int>, val lastSeenIndexInOrphanQueue: Long) {
   fun store(project: Project, vfsVersion: Long) {
-    PersistentDirtyFilesQueue.storeIndexingQueue(project.getQueueFile(), fileIds, lastSeenIndexInOrphanQueue, vfsVersion)
+    PersistentDirtyFilesQueue.storeIndexingQueue(project.getQueueFile(), IntArrayList(fileIds), lastSeenIndexInOrphanQueue, vfsVersion)
   }
 }
 
-class OrphanDirtyFilesQueue(val fileIds: IntList, val untrimmedSize: Long) {
+@ApiStatus.Internal
+class OrphanDirtyFilesQueue(val fileIds: List<Int>, val untrimmedSize: Long) {
   fun store(vfsVersion: Long) {
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), fileIds, untrimmedSize, vfsVersion)
+    PersistentDirtyFilesQueue.storeIndexingQueue(getQueueFile(), fileIds, untrimmedSize, vfsVersion)
   }
 
-  fun plus(ids: IntCollection): OrphanDirtyFilesQueue {
+  fun plus(ids: Collection<Int>): OrphanDirtyFilesQueue {
     val newIds = IntArrayList(fileIds)
     newIds.addAll(ids)
     return OrphanDirtyFilesQueue(newIds, untrimmedSize + ids.size)

@@ -29019,15 +29019,6 @@ f:com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl
 *:com.intellij.util.indexing.CustomizingIndexingPresentationContributor
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 - a:customizeIteratorPresentation(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.util.indexing.roots.IndexableIteratorPresentation
-f:com.intellij.util.indexing.DirtyFilesIndexableFilesIterator
-- com.intellij.util.indexing.roots.IndexableFilesIterator
-- <init>(kotlinx.coroutines.Deferred):V
-- getDebugName():java.lang.String
-- getIndexingProgressText():java.lang.String
-- getOrigin():com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- getRootUrls(com.intellij.openapi.project.Project):java.util.Set
-- getRootsScanningProgressText():java.lang.String
-- iterateFiles(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
 f:com.intellij.util.indexing.DirtyFilesOrigin
 - com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 - sf:INSTANCE:com.intellij.util.indexing.DirtyFilesOrigin
@@ -29267,17 +29258,6 @@ com.intellij.util.indexing.PerProjectIndexingQueue$PerProviderSink
 f:com.intellij.util.indexing.PerProjectIndexingQueue$TestCompanion
 - <init>(com.intellij.util.indexing.PerProjectIndexingQueue):V
 - f:getAndResetQueuedFiles():kotlin.Pair
-f:com.intellij.util.indexing.PersistentDirtyFilesQueue
-- sf:INSTANCE:com.intellij.util.indexing.PersistentDirtyFilesQueue
-- f:getCurrentVersion():J
-- sf:getQueueFile():java.nio.file.Path
-- sf:getQueueFile(com.intellij.openapi.project.Project):java.nio.file.Path
-- sf:getQueuesDir():java.nio.file.Path
-- f:getQueuesDirName():java.lang.String
-- sf:readIndexingQueue(java.nio.file.Path,java.lang.Long):it.unimi.dsi.fastutil.ints.IntList
-- sf:removeCurrentFile(java.nio.file.Path):V
-- sf:storeIndexingQueue(java.nio.file.Path,it.unimi.dsi.fastutil.ints.IntCollection,J):V
-- sf:storeIndexingQueue(java.nio.file.Path,it.unimi.dsi.fastutil.ints.IntCollection,J,J):V
 f:com.intellij.util.indexing.PersistentIndexingStampEnumeratorKt
 e:com.intellij.util.indexing.RebuildStatus
 - java.lang.Enum
@@ -29327,8 +29307,6 @@ f:com.intellij.util.indexing.UnindexedFilesIndexer
 - toString():java.lang.String
 - tryMergeWith(com.intellij.openapi.project.DumbModeTask):com.intellij.util.indexing.UnindexedFilesIndexer
 f:com.intellij.util.indexing.UnindexedFilesScannerStartupKt
-- sf:getPERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED():com.intellij.openapi.util.Key
-- sf:invalidatePersistentIndexableFilesFilter(com.intellij.openapi.project.Project):V
 f:com.intellij.util.indexing.UnindexedFilesUpdater
 - s:getAvailablePhysicalCoresNumber():I
 - s:getMaxNumberOfIndexingThreads():I

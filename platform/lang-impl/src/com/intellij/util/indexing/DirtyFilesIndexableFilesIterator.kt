@@ -10,7 +10,9 @@ import com.intellij.util.indexing.roots.IndexableFilesIterationMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DirtyFilesIndexableFilesIterator(private val dirtyFileIndexesCleanupFuture: Deferred<List<VirtualFile>>,
                                        private val fromOrphanQueue: Boolean) : IndexableFilesIterator {
   override fun getDebugName(): String = "dirty files iterator (from orphan queue=$fromOrphanQueue)"
