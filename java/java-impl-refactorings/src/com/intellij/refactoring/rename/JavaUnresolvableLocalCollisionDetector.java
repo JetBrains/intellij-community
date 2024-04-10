@@ -31,17 +31,20 @@ public final class JavaUnresolvableLocalCollisionDetector {
       // element is a PsiParameter
       scope = ((PsiParameter)element).getDeclarationScope();
     }
+    String oldName = variable.getName();
     LOG.assertTrue(scope != null, element.getClass().getName());
-
+    boolean methodParameter = element instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod;
+    
     PsiResolveHelper helper = PsiResolveHelper.getInstance(element.getProject());
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
       @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
         if (collidingVariable.isUnnamed()) return;
-        if (helper.resolveAccessibleReferencedVariable(newName, element) != collidingVariable &&
-            helper.resolveAccessibleReferencedVariable(variable.getName(), collidingVariable) != element) return;
-        LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
+        if (!methodParameter &&
+            helper.resolveAccessibleReferencedVariable(newName, element) != collidingVariable &&
+            helper.resolveAccessibleReferencedVariable(oldName, collidingVariable) != element) return;
+        LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(collidingVariable, element);
         result.add(collision);
       }
     };
