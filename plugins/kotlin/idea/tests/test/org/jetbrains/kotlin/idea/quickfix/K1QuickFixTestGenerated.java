@@ -5257,6 +5257,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/memberVarDelegateRuntime.kt");
                     }
 
+                    @TestMetadata("noInferCheck.kt")
+                    public void testNoInferCheck() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/noInferCheck.kt");
+                    }
+
                     @TestMetadata("notExactArgument.kt")
                     public void testNotExactArgument() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/notExactArgument.kt");
