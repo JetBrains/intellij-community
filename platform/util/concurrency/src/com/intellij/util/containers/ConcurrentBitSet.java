@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
@@ -119,7 +118,7 @@ public interface ConcurrentBitSet {
    */
   int cardinality();
 
-  void writeTo(@NotNull DataOutputStream outputStream) throws IOException;
+  int @NotNull [] toIntArray();
 
   @NotNull
   static ConcurrentBitSet readFrom(@NotNull DataInputStream inputStream) throws IOException {

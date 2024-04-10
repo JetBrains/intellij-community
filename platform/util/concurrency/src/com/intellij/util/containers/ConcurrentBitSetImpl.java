@@ -270,22 +270,9 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     return b.toString();
   }
 
+  @Override
   public int @NotNull [] toIntArray() {
     return array.clone();
-  }
-
-  public void writeTo(@NotNull File file) throws IOException {
-    try (DataOutputStream bitSetStorage = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
-      writeTo(bitSetStorage);
-    }
-  }
-
-  @Override
-  public void writeTo(@NotNull DataOutputStream outputStream) throws IOException {
-    int[] words = toIntArray();
-    for (int word : words) {
-      outputStream.writeInt(word);
-    }
   }
 
   @NotNull

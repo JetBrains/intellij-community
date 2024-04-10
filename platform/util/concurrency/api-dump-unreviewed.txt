@@ -169,7 +169,7 @@ com.intellij.util.containers.ConcurrentBitSet
 - a:set(I):Z
 - a:set(I,Z):V
 - a:size():I
-- a:writeTo(java.io.DataOutputStream):V
+- a:toIntArray():I[]
 com.intellij.util.containers.ConcurrentPackedBitsArray
 - a:clear():V
 - s:create(I):com.intellij.util.containers.ConcurrentPackedBitsArray
