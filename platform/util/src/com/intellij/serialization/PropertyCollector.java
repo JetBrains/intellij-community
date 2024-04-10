@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization;
 
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.BitUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -43,7 +42,7 @@ public class PropertyCollector {
   }
 
   /**
-   * Result is not cached because callers should cache it if needed.
+   * The result is not cached because callers should cache it if needed.
    */
   public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
     return doCollect(aClass, configuration, classToOwnFields);
@@ -113,12 +112,12 @@ public class PropertyCollector {
 
       Pair<Method, Method> candidate = candidates.get(propertyData.name);
       if (candidate == null) {
-        candidate = Couple.getEmpty();
+        candidate = Pair.empty();
       }
       if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
         continue;
       }
-      candidate = new Couple<>(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
+      candidate = new Pair<>(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
       candidates.put(propertyData.name, candidate);
     }
 
@@ -187,7 +186,7 @@ public class PropertyCollector {
 
     if (setter == null) {
       // check hasStoreAnnotations to ensure that this addition will not lead to regression
-      // (since there is a chance that there are some existing not-annotated list getters without setter)
+      // (since there is a chance that there are some existing not-annotated list getters without a setter)
       return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) &&
              configuration.hasStoreAnnotations(getter);
     }
