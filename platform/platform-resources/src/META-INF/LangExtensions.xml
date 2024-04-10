@@ -121,7 +121,7 @@
                  description="Pause dumb queue (including indexing) while scanning is in progress."/>
     <registryKey defaultValue="true" key="scanning.trust.indexing.flag" restartRequired="true"
                  description="Use previously stored 'indexed flag' while scanning. To store 'indexing flag' please set registry option 'indexing.disable.virtual.file.system.entry.is.file.indexed=false'."/>
-    <registryKey defaultValue="false" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
+    <registryKey defaultValue="true" key="full.scanning.on.startup.can.be.skipped" restartRequired="false"
                  description="Full scanning on startup will be skipped when possible."/>
     <registryKey defaultValue="true" key="indexing.over.fast.attributes" restartRequired="true"
                  description="Store indexing data (including IndexingStamps) in regular (false) or fast (true) attributes storage"/>
