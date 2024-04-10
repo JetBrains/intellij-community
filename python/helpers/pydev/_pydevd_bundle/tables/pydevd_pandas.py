@@ -104,6 +104,14 @@ def __get_describe(table):
                                     exclude=[np.complex64, np.complex128])
     except (TypeError, OverflowError, ValueError):
         return
+
+    try:
+        import geopandas
+        if type(table) is geopandas.GeoSeries:
+            return described_
+    except ImportError:
+        pass
+
     if type(table) is pd.Series:
         return described_
     else:
@@ -214,6 +222,13 @@ def add_custom_key_value_separator(pairs_list):
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
     # type: (Union[pd.DataFrame, pd.Series, pd.Categorical]) -> pd.DataFrame
+    try:
+        import geopandas
+        if type(table) is geopandas.GeoSeries:
+            return __series_to_df(table)
+    except ImportError:
+        pass
+
     if type(table) is pd.Series:
         return __series_to_df(table)
     if type(table) is pd.Categorical:
