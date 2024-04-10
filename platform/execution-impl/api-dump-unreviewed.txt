@@ -3959,6 +3959,8 @@ c:com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 - getCloseSessionActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCopyActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getCursorShape():com.jediterm.terminal.CursorShape
+- getDefaultBackground():com.jediterm.terminal.TerminalColor
+- getDefaultForeground():com.jediterm.terminal.TerminalColor
 - getDefaultStyle():com.jediterm.terminal.TextStyle
 - getFindActionPresentation():com.jediterm.terminal.ui.TerminalActionPresentation
 - getFoundPatternColor():com.jediterm.terminal.TextStyle

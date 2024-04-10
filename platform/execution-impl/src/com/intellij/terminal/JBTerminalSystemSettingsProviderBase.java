@@ -212,9 +212,18 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultSettingsProvide
   }
 
   @Override
-  public TextStyle getDefaultStyle() {
-    return new TextStyle(new TerminalColor(() -> getTerminalColorPalette().getDefaultForeground()),
-                         new TerminalColor(() -> getTerminalColorPalette().getDefaultBackground()));
+  public @NotNull TerminalColor getDefaultBackground() {
+    return new TerminalColor(() -> getTerminalColorPalette().getDefaultBackground());
+  }
+
+  @Override
+  public @NotNull TerminalColor getDefaultForeground() {
+    return new TerminalColor(() -> getTerminalColorPalette().getDefaultForeground());
+  }
+
+  @Override
+  public @NotNull TextStyle getDefaultStyle() {
+    return new TextStyle(getDefaultForeground(), getDefaultBackground());
   }
 
   @Override
