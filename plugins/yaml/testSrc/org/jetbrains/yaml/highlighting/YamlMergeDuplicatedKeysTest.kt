@@ -27,6 +27,26 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
+  fun testSimpleMergeSequences() {
+    myFixture.configureByText("test.yaml", """
+      prop:
+        - bar
+        - baz
+      prop:
+        - foo
+        - moo
+    """.trimIndent())
+    myFixture.checkPreviewAndLaunchAction(
+      myFixture.findSingleIntention(YAMLBundle.message("YAMLDuplicatedKeysInspection.merge.quickfix.name")))
+    myFixture.checkResult("""
+      prop:
+        - bar
+        - baz
+        - foo
+        - moo
+    """.trimIndent())
+  }
+
   fun testMultilevelMerge() {
     myFixture.configureByText("test.yaml", """
       settings:

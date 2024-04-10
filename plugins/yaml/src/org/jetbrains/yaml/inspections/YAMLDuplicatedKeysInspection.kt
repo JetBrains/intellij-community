@@ -3,6 +3,7 @@ package org.jetbrains.yaml.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.elementType
 import com.intellij.util.containers.MultiMap
@@ -12,6 +13,7 @@ import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.YAMLTokenTypes
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLMapping
+import org.jetbrains.yaml.psi.YAMLSequence
 import org.jetbrains.yaml.psi.YamlPsiElementVisitor
 import java.util.function.Consumer
 
@@ -35,7 +37,8 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
         for ((key, value) in occurrences.entrySet()) {
           if (value.size > 1) {
             val allObjects = value.all { it.value is YAMLMapping }
-            val fixes = if (allObjects) arrayOf(MergeDuplicatedSectionsQuickFix(), RemoveDuplicatedKeyQuickFix()) else arrayOf(RemoveDuplicatedKeyQuickFix())
+            val allLists = value.all { it.value is YAMLSequence }
+            val fixes = if (allObjects || allLists) arrayOf(MergeDuplicatedSectionsQuickFix(), RemoveDuplicatedKeyQuickFix()) else arrayOf(RemoveDuplicatedKeyQuickFix())
             value.forEach(Consumer { duplicatedKey: YAMLKeyValue ->
               checkNotNull(duplicatedKey.key)
               checkNotNull(duplicatedKey.parentMapping) { "This key is gotten from mapping" }
@@ -66,27 +69,53 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
       if (allProps.size <= 1) return
       val firstProperty = allProps[0]
       allProps.drop(1).forEach {
-        val mapping = firstProperty.value as? YAMLMapping ?: return@forEach
-        val lastProp = mapping.keyValues.last()
-        val currentMapping = it.value as? YAMLMapping ?: return@forEach
-        currentMapping.keyValues.forEach { pp ->
-          if (pp.value != null) {
-            val newProp = generator.createYamlKeyValue(pp.name!!, "foo").also { p ->
-              p.value!!.replace(pp.value!!)
-            }
-            val eol = mapping.addAfter(generator.createEol(), lastProp)
-            val addedProp = mapping.addAfter(newProp, eol) as? YAMLKeyValue
-            addedProp?.let {
-              mergeDuplicates(generator, addedProp)
-            }
-          }
-          deleteWithPrecedingEol(pp)
+        val mapping = firstProperty.value as? YAMLMapping
+        val sequence = firstProperty.value as? YAMLSequence
+        if (mapping != null && mergeMappings(mapping, it, generator)
+            || sequence != null && mergeSequences(sequence, it, generator)) {
+          deleteWithPrecedingEol(it)
         }
-        deleteWithPrecedingEol(it)
       }
     }
 
-    private fun deleteWithPrecedingEol(it: YAMLKeyValue) {
+    private fun mergeMappings(mapping: YAMLMapping,
+                  it: YAMLKeyValue,
+                  generator: YAMLElementGenerator): Boolean {
+      val currentMapping = it.value as? YAMLMapping ?: return false
+      currentMapping.keyValues.forEach { pp ->
+        if (pp.value != null) {
+          val newProp = generator.createYamlKeyValue(pp.name!!, "foo").also { p ->
+            p.value!!.replace(pp.value!!)
+          }
+          val eol = mapping.addAfter(generator.createEol(), mapping.keyValues.last())
+          val addedProp = mapping.addAfter(newProp, eol) as? YAMLKeyValue
+          addedProp?.let {
+            mergeDuplicates(generator, addedProp)
+          }
+        }
+        deleteWithPrecedingEol(pp)
+      }
+      return true
+    }
+
+    private fun mergeSequences(sequence: YAMLSequence,
+                              it: YAMLKeyValue,
+                              generator: YAMLElementGenerator): Boolean {
+      val currentSequence = it.value as? YAMLSequence ?: return false
+      currentSequence.items.forEach { pp ->
+        if (pp.value != null) {
+          val newItem = generator.createSequenceItem("foo").also { p ->
+            p.value!!.replace(pp.value!!)
+          }
+          val eol = sequence.addAfter(generator.createEol(), sequence.items.last())
+          sequence.addAfter(newItem, eol)
+        }
+        deleteWithPrecedingEol(pp)
+      }
+      return true
+    }
+
+    private fun deleteWithPrecedingEol(it: PsiElement) {
       val prevSibling = it.prevSibling
       it.delete()
       if (prevSibling.elementType == YAMLTokenTypes.EOL) {

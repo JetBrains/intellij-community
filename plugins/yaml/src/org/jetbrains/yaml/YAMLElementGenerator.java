@@ -124,4 +124,12 @@ public class YAMLElementGenerator {
     value.deleteChildRange(value.getFirstChild(), value.getLastChild());
     return sequenceItem;
   }
+
+  public @NotNull YAMLSequenceItem createSequenceItem(String text) {
+    YAMLSequenceItem sequenceItem = PsiTreeUtil.findChildOfType(createDummyYamlWithText("- " + text), YAMLSequenceItem.class);
+    assert sequenceItem != null;
+    YAMLValue value = sequenceItem.getValue();
+    assert value != null;
+    return sequenceItem;
+  }
 }
