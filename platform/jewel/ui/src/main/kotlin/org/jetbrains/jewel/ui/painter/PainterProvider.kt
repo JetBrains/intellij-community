@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.ui.painter
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.ui.graphics.painter.Painter
 
@@ -15,7 +14,6 @@ import androidx.compose.ui.graphics.painter.Painter
  * [PainterProvider] should also hold the resource path and [ClassLoader]
  * references.
  */
-@Immutable
 public interface PainterProvider {
 
     /**

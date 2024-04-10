@@ -258,32 +258,29 @@ private fun CheckboxImpl(
     verticalAlignment: Alignment.Vertical,
     content: (@Composable RowScope.() -> Unit)?,
 ) {
-    var checkboxState by remember(interactionSource) {
-        mutableStateOf(CheckboxState.of(state, enabled = enabled))
+    var checkboxState by remember {
+        mutableStateOf(CheckboxState.of(toggleableState = state, enabled = enabled))
     }
 
     remember(state, enabled) {
         checkboxState = checkboxState.copy(toggleableState = state, enabled = enabled)
     }
 
-    LaunchedEffect(interactionSource) {
+    val swingCompatMode = JewelTheme.isSwingCompatMode
+    LaunchedEffect(interactionSource, swingCompatMode) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
-                is PressInteraction.Press -> checkboxState = checkboxState.copy(pressed = true)
+                is PressInteraction.Press -> checkboxState = checkboxState.copy(pressed = !swingCompatMode)
                 is PressInteraction.Cancel,
                 is PressInteraction.Release,
                 -> checkboxState = checkboxState.copy(pressed = false)
 
-                is HoverInteraction.Enter -> checkboxState = checkboxState.copy(hovered = true)
+                is HoverInteraction.Enter -> checkboxState = checkboxState.copy(hovered = !swingCompatMode)
                 is HoverInteraction.Exit -> checkboxState = checkboxState.copy(hovered = false)
                 is FocusInteraction.Focus -> checkboxState = checkboxState.copy(focused = true)
                 is FocusInteraction.Unfocus -> checkboxState = checkboxState.copy(focused = false)
             }
         }
-    }
-
-    if (JewelTheme.isSwingCompatMode) {
-        checkboxState = checkboxState.copy(hovered = false, pressed = false)
     }
 
     val wrapperModifier =

@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.ui.painter
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -45,7 +44,6 @@ private val errorPainter = ColorPainter(Color.Magenta)
  * magenta color painter, and the exception logged. If Jewel is in
  * [debug mode][inDebugMode], however, exceptions will not be suppressed.
  */
-@Immutable
 public class ResourcePainterProvider(
     private val basePath: String,
     vararg classLoaders: ClassLoader,

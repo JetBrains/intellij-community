@@ -139,7 +139,7 @@ private fun RadioButtonImpl(
     verticalAlignment: Alignment.Vertical,
     content: (@Composable RowScope.() -> Unit)?,
 ) {
-    var radioButtonState by remember(interactionSource) {
+    var radioButtonState by remember {
         mutableStateOf(RadioButtonState.of(selected = selected, enabled = enabled))
     }
 
@@ -147,24 +147,25 @@ private fun RadioButtonImpl(
         radioButtonState = radioButtonState.copy(selected = selected, enabled = enabled)
     }
 
-    LaunchedEffect(interactionSource) {
+    val swingCompatMode = JewelTheme.isSwingCompatMode
+    LaunchedEffect(interactionSource, swingCompatMode) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
-                is PressInteraction.Press -> radioButtonState = radioButtonState.copy(pressed = true)
-                is PressInteraction.Cancel, is PressInteraction.Release -> {
-                    radioButtonState = radioButtonState.copy(pressed = false)
-                }
+                is PressInteraction.Press ->
+                    radioButtonState =
+                        radioButtonState.copy(pressed = !swingCompatMode)
 
-                is HoverInteraction.Enter -> radioButtonState = radioButtonState.copy(hovered = true)
+                is PressInteraction.Cancel, is PressInteraction.Release ->
+                    radioButtonState = radioButtonState.copy(pressed = false)
+
+                is HoverInteraction.Enter ->
+                    radioButtonState =
+                        radioButtonState.copy(hovered = !swingCompatMode)
                 is HoverInteraction.Exit -> radioButtonState = radioButtonState.copy(hovered = false)
                 is FocusInteraction.Focus -> radioButtonState = radioButtonState.copy(focused = true)
                 is FocusInteraction.Unfocus -> radioButtonState = radioButtonState.copy(focused = false)
             }
         }
-    }
-
-    if (JewelTheme.isSwingCompatMode) {
-        radioButtonState = radioButtonState.copy(hovered = false, pressed = false)
     }
 
     val wrapperModifier =
