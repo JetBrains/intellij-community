@@ -69,6 +69,14 @@ public abstract class Executor {
 
   public abstract @NonNls String getHelpId();
 
+  /** @deprecated Use {@link #isApplicable(Project)} and other methods to customize actions instead */
+  @Deprecated(forRemoval = true)
+  public @Nullable ActionWrapper runnerActionsGroupExecutorActionCustomizer() {
+    return null;
+  }
+
+  /** @deprecated Use {@link #isApplicable(Project)} and other methods to customize actions instead */
+  @Deprecated(forRemoval = true)
   @FunctionalInterface
   public interface ActionWrapper {
     @NotNull
