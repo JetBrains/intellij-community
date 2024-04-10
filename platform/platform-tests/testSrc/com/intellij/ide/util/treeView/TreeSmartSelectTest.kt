@@ -116,10 +116,14 @@ class TreeSmartSelectTest : FlyIdeaTestCase() {
   }
 
   private fun increaseSelection() {
-    myProvider.increaseSelection(myTree)
+    runInEdtAndWait {
+      myProvider.increaseSelection(myTree)
+    }
   }
   private fun decreaseSelection() {
-    myProvider.decreaseSelection(myTree)
+    runInEdtAndWait {
+      myProvider.decreaseSelection(myTree)
+    }
   }
 
   private fun assertTree(expected: String) {
