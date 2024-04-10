@@ -27094,6 +27094,7 @@ c:com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 - p:collectRefs(com.intellij.psi.search.SearchScope):java.util.Collection
 - p:createInplaceRenamerToRestart(com.intellij.psi.PsiNamedElement,com.intellij.openapi.editor.Editor,java.lang.String):com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:createRenameProcessor(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.RenameProcessor
+- p:findCollision():com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 - p:getNameIdentifier():com.intellij.psi.PsiElement
 - p:getRefactoringId():java.lang.String
 - p:getReferencesSearchScope(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.SearchScope
@@ -27199,6 +27200,7 @@ c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:collectAdditionalElementsToRename(java.util.List):V
 - p:createInplaceRenamerToRestart(com.intellij.psi.PsiNamedElement,com.intellij.openapi.editor.Editor,java.lang.String):com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:createLookupExpression(com.intellij.psi.PsiElement):com.intellij.refactoring.rename.inplace.MyLookupExpression
+- p:findCollision():com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 - finish(Z):V
 - p:getCommandName():java.lang.String
 - p:getRefactoringId():java.lang.String

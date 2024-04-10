@@ -2,6 +2,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
@@ -11,15 +12,23 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -30,7 +39,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -44,14 +55,13 @@ import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class VariableInplaceRenamer extends InplaceRefactoring {
   public static final LanguageExtension<ResolveSnapshotProvider> INSTANCE = new LanguageExtension<>(
@@ -61,6 +71,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private TextRange mySelectedRange;
   protected Language myLanguage;
   protected @Nullable SuggestedNameInfo mySuggestedNameInfo;
+  private int myOrigOffset;
+  private ModUpdateFileText myRevertCommand;
+  private PsiNamedElement myElementInCopy;
 
   public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
                                 @NotNull Editor editor) {
@@ -135,6 +148,15 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                                           @NotNull Collection<Pair<PsiElement, TextRange>> stringUsages,
                                           final @NotNull PsiElement scope,
                                           final @NotNull PsiFile containingFile) {
+    PsiFile fileCopy = (PsiFile)containingFile.copy();
+    myOrigOffset = myEditor.getCaretModel().getOffset();
+    try {
+      myElementInCopy = PsiTreeUtil.findSameElementInCopy(myElementToRename, fileCopy);
+    }
+    catch (IllegalStateException | UnsupportedOperationException e) {
+      // Unsupported synthetic element?
+      myElementInCopy = null;
+    }
     if (appendAdditionalElement(refs, stringUsages)) {
       return super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
     }
@@ -268,8 +290,115 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       JBPopupFactory.getInstance()
         .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
                             CommonBundle.getCancelButtonText(),
-                            () -> createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions), 0).showInBestPositionFor(myEditor);
+                            () -> {
+                              startDumbIfPossible();
+                              rollBack();
+                              createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
+                              stopDumbLaterIfPossible();
+                            },
+                            () -> rollBack(), 0).showInBestPositionFor(myEditor);
     }
+  }
+
+  /**
+   * @return unresolvable collision if it's desired to display it to the user; null if refactoring can proceed without additional question
+   */
+  protected @Nullable UnresolvableCollisionUsageInfo findCollision() {
+    if (myInsertedName.equals(myOldName)) return null;
+    PsiNamedElement variable = myElementInCopy;
+    if (variable == null) return null;
+    String newName = myInsertedName;
+    List<UsageInfo> result = new ArrayList<>();
+    RenamePsiElementProcessor.forElement(variable).findCollisions(variable, newName, Map.of(variable, newName), result);
+    return ContainerUtil.findInstance(result, UnresolvableCollisionUsageInfo.class);
+  }
+  
+  private @Nullable UnresolvableRenameProblem findProblem() {
+    if (!isIdentifier(myInsertedName, myLanguage)) {
+      return new IllegalIdentifierProblem();
+    }
+    UnresolvableCollisionUsageInfo collision = findCollision();
+    if (collision != null) {
+      return new Collision(collision);
+    }
+    return null;
+  }
+
+  private sealed interface UnresolvableRenameProblem {
+    void showUI();
+  }
+  
+  private final class IllegalIdentifierProblem implements UnresolvableRenameProblem {
+    @Override
+    public void showUI() {
+      performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
+    }
+  }
+
+  private final class Collision implements UnresolvableRenameProblem {
+    private final @NotNull UnresolvableCollisionUsageInfo collision;
+
+    private Collision(@NotNull UnresolvableCollisionUsageInfo collision) { this.collision = collision; }
+
+    @Override
+    public void showUI() {
+      RangeHighlighter highlighter = highlightConflictingElement(collision.getElement());
+      String description = StringUtil.stripHtml(collision.getDescription(), false);
+      final int offset = myElementInCopy.getTextOffset();
+      restoreCaretOffset(offset);
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        throw new BaseRefactoringProcessor.ConflictsInTestsException(List.of(description));
+      }
+      JBPopupFactory.getInstance().createConfirmation(
+          description, IdeBundle.message("label.refactor.anyway"),
+          IdeBundle.message("label.continue.editing"),
+          () -> {
+            if (highlighter != null) {
+              highlighter.dispose();
+            }
+            performRefactoringRename(myInsertedName, myMarkAction);
+          },
+          () -> {
+            if (highlighter != null) {
+              highlighter.dispose();
+            }
+            startDumbIfPossible();
+            rollBack();
+            PsiNamedElement var = getVariable();
+            if (var != null) {
+              createInplaceRenamerToRestart(var, myEditor, myInsertedName).performInplaceRefactoring(myNameSuggestions);
+            }
+            stopDumbLaterIfPossible();
+          },
+          0)
+        .showInBestPositionFor(myEditor);
+    }
+  }
+
+  private void rollBack() {
+    Document document = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getDocument();
+    PsiFile psiFile = Objects.requireNonNull(PsiDocumentManager.getInstance(myProject).getPsiFile(document));
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(null, psiFile), myRevertCommand);
+    }, getCommandName(), null);
+    myEditor.getCaretModel().moveToOffset(myOrigOffset);
+  }
+
+  private @Nullable RangeHighlighter highlightConflictingElement(PsiElement conflictingElement) {
+    if (conflictingElement != null) {
+      TextRange range = conflictingElement.getTextRange();
+      if (conflictingElement instanceof PsiNameIdentifierOwner owner) {
+        PsiElement identifier = owner.getNameIdentifier();
+        if (identifier != null) {
+          range = identifier.getTextRange();
+        }
+      }
+      List<RangeHighlighter> highlighters = new ArrayList<>();
+      HighlightManager.getInstance(myProject).addRangeHighlight(
+        myEditor, range.getStartOffset(), range.getEndOffset(), EditorColors.SEARCH_RESULT_ATTRIBUTES, false, true, highlighters);
+      return ContainerUtil.getOnlyItem(highlighters);
+    }
+    return null;
   }
 
   protected void renameSynthetic(String newName) {
@@ -354,6 +483,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
+  private void startDumbIfPossible() {
+    if (InjectedLanguageEditorUtil.getTopLevelEditor(myEditor) instanceof EditorImpl editor) {
+      editor.startDumb();
+    }
+  }
+
   protected void stopDumbLaterIfPossible() {
     if (InjectedLanguageEditorUtil.getTopLevelEditor(myEditor) instanceof EditorImpl editor) {
       editor.stopDumbLater();
@@ -380,15 +515,32 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       }
 
       bind = true;
-      if (!isIdentifier(myInsertedName, myLanguage)) {
-        performOnInvalidIdentifier(myInsertedName, myNameSuggestions);
-      }
-      else if (mySnapshot != null) {
-        ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
-      }
-      performRefactoringRename(myInsertedName, myMarkAction);
+      ReadAction.nonBlocking(() -> findProblem())
+        .expireWhen(() -> myEditor.isDisposed() || myProject.isDisposed())
+        .finishOnUiThread(ModalityState.nonModal(), problem -> {
+          if (problem == null) {
+            if (mySnapshot != null) {
+              ApplicationManager.getApplication().runWriteAction(() -> mySnapshot.apply(myInsertedName));
+            }
+            performRefactoringRename(myInsertedName, myMarkAction);
+          }
+          else {
+            problem.showUI();
+            cancel();
+          }
+        })
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
     return bind;
+  }
+
+  private void cancel() {
+    try {
+      stopDumbLaterIfPossible();
+    }
+    finally {
+      FinishMarkAction.finish(myProject, myEditor, myMarkAction);
+    }
   }
 
   @Override
@@ -402,9 +554,26 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     }
   }
 
-  protected void revertStateOnFinish() {
-    if (myInsertedName == null || !isIdentifier(myInsertedName, myLanguage)) {
-      revertState();
+  private static @NotNull ModUpdateFileText getRevertModCommand(@NotNull Editor editor, String oldName) {
+    TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+    int segmentsCount = state == null ? 0 : state.getSegmentsCount();
+    Document document = editor.getDocument();
+    String oldText = document.getText();
+    StringBuilder newText = new StringBuilder();
+    int lastPos = 0;
+    List<ModUpdateFileText.Fragment> fragments = new ArrayList<>();
+    for (int i = 0; i < segmentsCount; i++) {
+      TextRange segmentRange = state.getSegmentRange(i);
+      newText.append(oldText, lastPos, segmentRange.getStartOffset());
+      fragments.add(new ModUpdateFileText.Fragment(newText.length(), segmentRange.getLength(), oldName.length()));
+      newText.append(oldName);
+      lastPos = segmentRange.getEndOffset();
     }
+    newText.append(oldText, lastPos, oldText.length());
+    return new ModUpdateFileText(editor.getVirtualFile(), oldText, newText.toString(), fragments);
+  }
+
+  protected void revertStateOnFinish() {
+    myRevertCommand = getRevertModCommand(InjectedLanguageEditorUtil.getTopLevelEditor(myEditor), myOldName);
   }
 }

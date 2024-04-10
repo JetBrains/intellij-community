@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
@@ -105,6 +106,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
     state = TemplateManagerImpl.getTemplateState(getEditor());
     assertNotNull(state);
     state.gotoEnd(false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
@@ -134,6 +136,7 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
     state = TemplateManagerImpl.getTemplateState(editor);
     assert state != null;
     state.gotoEnd(false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
