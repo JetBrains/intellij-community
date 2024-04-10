@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -33,7 +33,7 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    service<IdeHeartbeatEventReporterService>()
+    serviceAsync<IdeHeartbeatEventReporterService>()
   }
 }
 
