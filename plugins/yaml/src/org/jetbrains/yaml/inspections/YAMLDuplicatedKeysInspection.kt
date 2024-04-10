@@ -1,76 +1,113 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.yaml.inspections;
+package org.jetbrains.yaml.inspections
 
-import com.intellij.codeInspection.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.yaml.YAMLBundle;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLMapping;
-import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
+import com.intellij.codeInspection.*
+import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.elementType
+import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.Nls
+import org.jetbrains.yaml.YAMLBundle
+import org.jetbrains.yaml.YAMLElementGenerator
+import org.jetbrains.yaml.YAMLTokenTypes
+import org.jetbrains.yaml.psi.YAMLKeyValue
+import org.jetbrains.yaml.psi.YAMLMapping
+import org.jetbrains.yaml.psi.YamlPsiElementVisitor
+import java.util.function.Consumer
 
-import java.util.Collection;
-import java.util.Map;
+class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    return object : YamlPsiElementVisitor() {
+      override fun visitMapping(mapping: YAMLMapping) {
+        val occurrences = MultiMap<String, YAMLKeyValue>()
 
-public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
-  @Override
-  public final @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new YamlPsiElementVisitor() {
-      @Override
-      public void visitMapping(@NotNull YAMLMapping mapping) {
-
-        MultiMap<String, YAMLKeyValue> occurrences = new MultiMap<>();
-
-        for (YAMLKeyValue keyValue : mapping.getKeyValues()) {
-          final String keyName = keyValue.getKeyText().trim();
+        for (keyValue in mapping.keyValues) {
+          val keyName = keyValue.keyText.trim { it <= ' ' }
           // http://yaml.org/type/merge.html
-          if (keyName.equals("<<")) {
-            continue;
+          if (keyName == "<<") {
+            continue
           }
           if (!keyName.isEmpty()) {
-            occurrences.putValue(keyName, keyValue);
+            occurrences.putValue(keyName, keyValue)
           }
         }
 
-        for (Map.Entry<String, Collection<YAMLKeyValue>> entry : occurrences.entrySet()) {
-          if (entry.getValue().size() > 1) {
-            entry.getValue().forEach((duplicatedKey) -> {
-              assert duplicatedKey.getKey() != null;
-              assert duplicatedKey.getParentMapping() != null : "This key is gotten from mapping";
-
-              holder.registerProblem(duplicatedKey.getKey(),
-                                     YAMLBundle.message("YAMLDuplicatedKeysInspection.duplicated.key", entry.getKey()),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveDuplicatedKeyQuickFix());
-            });
+        for ((key, value) in occurrences.entrySet()) {
+          if (value.size > 1) {
+            val allObjects = value.all { it.value is YAMLMapping }
+            val fixes = if (allObjects) arrayOf(MergeDuplicatedSectionsQuickFix(), RemoveDuplicatedKeyQuickFix()) else arrayOf(RemoveDuplicatedKeyQuickFix())
+            value.forEach(Consumer { duplicatedKey: YAMLKeyValue ->
+              checkNotNull(duplicatedKey.key)
+              checkNotNull(duplicatedKey.parentMapping) { "This key is gotten from mapping" }
+              holder.registerProblem(duplicatedKey.key!!,
+                                     YAMLBundle.message("YAMLDuplicatedKeysInspection.duplicated.key", key),
+                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                     *fixes)
+            })
           }
         }
       }
-    };
+    }
   }
 
-  private static class RemoveDuplicatedKeyQuickFix implements LocalQuickFix {
-    @Override
-    public @Nls @NotNull String getFamilyName() {
-      return YAMLBundle.message("YAMLDuplicatedKeysInspection.remove.key.quickfix.name");
+  private class MergeDuplicatedSectionsQuickFix : LocalQuickFix {
+    override fun getFamilyName(): String {
+      return YAMLBundle.message("YAMLDuplicatedKeysInspection.merge.quickfix.name")
     }
 
-    @Override
-    public boolean availableInBatchMode() {
-      //IDEA-185914: quick fix is disabled in batch mode cause of ambiguity which item should stay
-      return false;
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val keyVal = descriptor.psiElement.parent as? YAMLKeyValue ?: return
+      mergeDuplicates(YAMLElementGenerator(project), keyVal)
     }
 
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      YAMLKeyValue keyVal = (YAMLKeyValue)descriptor.getPsiElement().getParent();
-      if (keyVal == null || keyVal.getParentMapping() == null) {
-        return;
+    private fun mergeDuplicates(generator: YAMLElementGenerator, keyVal: YAMLKeyValue) {
+      val parentMapping = keyVal.parentMapping ?: return
+      val allProps = parentMapping.keyValues.filter { it.keyText == keyVal.keyText }
+      if (allProps.size <= 1) return
+      val firstProperty = allProps[0]
+      allProps.drop(1).forEach {
+        val mapping = firstProperty.value as? YAMLMapping ?: return@forEach
+        val lastProp = mapping.keyValues.last()
+        val currentMapping = it.value as? YAMLMapping ?: return@forEach
+        currentMapping.keyValues.forEach { pp ->
+          if (pp.value != null) {
+            val newProp = generator.createYamlKeyValue(pp.name!!, "foo").also { p ->
+              p.value!!.replace(pp.value!!)
+            }
+            val eol = mapping.addAfter(generator.createEol(), lastProp)
+            val addedProp = mapping.addAfter(newProp, eol) as? YAMLKeyValue
+            addedProp?.let {
+              mergeDuplicates(generator, addedProp)
+            }
+          }
+          deleteWithPrecedingEol(pp)
+        }
+        deleteWithPrecedingEol(it)
       }
+    }
 
-      keyVal.getParentMapping().deleteKeyValue(keyVal);
+    private fun deleteWithPrecedingEol(it: YAMLKeyValue) {
+      val prevSibling = it.prevSibling
+      it.delete()
+      if (prevSibling.elementType == YAMLTokenTypes.EOL) {
+        prevSibling.delete()
+      }
+    }
+  }
+
+  private class RemoveDuplicatedKeyQuickFix : LocalQuickFix {
+    override fun getFamilyName(): @Nls String {
+      return YAMLBundle.message("YAMLDuplicatedKeysInspection.remove.key.quickfix.name")
+    }
+
+    override fun availableInBatchMode(): Boolean {
+      //IDEA-185914: quick fix is disabled in batch mode cause of ambiguity which item should stay
+      return false
+    }
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val keyVal = descriptor.psiElement.parent as? YAMLKeyValue ?: return
+      keyVal.parentMapping?.deleteKeyValue(keyVal)
     }
   }
 }
