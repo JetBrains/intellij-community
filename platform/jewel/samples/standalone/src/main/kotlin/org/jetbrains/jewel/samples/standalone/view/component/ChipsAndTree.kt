@@ -38,10 +38,12 @@ import org.jetbrains.jewel.ui.component.Chip
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.LazyTree
+import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.ToggleableChip
 import org.jetbrains.jewel.ui.theme.colorPalette
+import kotlin.random.Random
 
 @Composable
 @View(title = "Chips and trees", position = 11, icon = "icons/showAsTree.svg")
@@ -183,24 +185,37 @@ fun ChipsSample(modifier: Modifier = Modifier) {
 
 @Composable
 fun TreeSample(modifier: Modifier = Modifier) {
-    val tree = remember {
-        buildTree {
-            addNode("root 1") {
+    var tree by remember {
+        mutableStateOf(
+            buildTree {
+                addNode("root 1") {
+                    addLeaf("leaf 1")
+                    addLeaf("leaf 2")
+                }
+                addNode("root 2") {
+                    addLeaf("leaf 2.1")
+                    addNode("node 1") {
+                        addLeaf("subleaf 1")
+                        addLeaf("subleaf 2")
+                    }
+                }
+                addNode("root 3") {
+                    addLeaf("leaf 3.1")
+                    addLeaf("leaf 3.2")
+                }
+            }
+        )
+    }
+
+    OutlinedButton({
+        tree = buildTree {
+            addNode("root ${Random.nextInt()}") {
                 addLeaf("leaf 1")
                 addLeaf("leaf 2")
             }
-            addNode("root 2") {
-                addLeaf("leaf 2.1")
-                addNode("node 1") {
-                    addLeaf("subleaf 1")
-                    addLeaf("subleaf 2")
-                }
-            }
-            addNode("root 3") {
-                addLeaf("leaf 3.1")
-                addLeaf("leaf 3.2")
-            }
         }
+    }) {
+        Text("Update tree")
     }
 
     val borderColor =
