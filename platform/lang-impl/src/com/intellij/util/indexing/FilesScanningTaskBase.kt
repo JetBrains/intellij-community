@@ -35,7 +35,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
     val taskScope = CoroutineScope(Dispatchers.Default + Job())
     try {
       val pauseReason = UnindexedFilesScannerExecutor.getInstance(project).getPauseReason()
-      val taskIndicator = IndexingProgressReporter.CheckCancelOnlyProgressIndicator(indicator, taskScope, pauseReason)
+      val taskIndicator = IndexingProgressReporter.CheckPauseOnlyProgressIndicator(taskScope, pauseReason)
       launchIndexingProgressUIReporter(taskScope, project, shouldShowProgress, progressReporter,
                                        IndexingBundle.message("progress.indexing.scanning"),
                                        taskIndicator.getPauseReason())
@@ -48,7 +48,7 @@ abstract class FilesScanningTaskBase(private val project: Project) : MergeableQu
 
   protected open fun shouldHideProgressInSmartMode() = Registry.`is`("scanning.hide.progress.in.smart.mode", true)
 
-  abstract fun perform(indicator: IndexingProgressReporter.CheckCancelOnlyProgressIndicator, progressReporter: IndexingProgressReporter)
+  abstract fun perform(indicator: IndexingProgressReporter.CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter)
 
   private fun launchIndexingProgressUIReporter(
     progressReportingScope: CoroutineScope,

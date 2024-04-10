@@ -3,6 +3,8 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.util.coroutines.flow.mapStateIn
@@ -69,9 +71,8 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
   }
 
   @Internal
-  class CheckCancelOnlyProgressIndicator(private val original: ProgressIndicator,
-                                         private val taskScope: CoroutineScope,
-                                         private val pauseReason: StateFlow<PersistentList<@NlsContexts.ProgressText String>>) {
+  class CheckPauseOnlyProgressIndicator(private val taskScope: CoroutineScope,
+                                        private val pauseReason: StateFlow<PersistentList<@NlsContexts.ProgressText String>>) {
     private var paused = getPauseReason().mapStateIn(taskScope) { it != null }
     fun getPauseReason(): StateFlow<@NlsContexts.ProgressText String?> = pauseReason.mapStateIn(taskScope) { it.firstOrNull() }
     fun onPausedStateChanged(action: Consumer<Boolean>) {
@@ -81,14 +82,9 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
         }
       }
     }
-    fun originalIndicatorOnlyToFlushIndexingQueueSynchronously(): ProgressIndicator = original
-    fun isCanceled(): Boolean = original.isCanceled
 
     fun freezeIfPaused() {
-      if (isCanceled()) {
-        original.checkCanceled() // throw if canceled,
-        return // or just return if inside non-cancellable section
-      }
+      ProgressManager.checkCanceled()
       if (!paused.value) return
       if (application.isUnitTestMode) return // do not pause in unit tests, because some tests do not expect pausing
       if (application.isDispatchThread) {
@@ -96,17 +92,23 @@ class IndexingProgressReporter(private val indicator: ProgressIndicator) {
       }
       else {
         runBlockingCancellable {
-          withContext(taskScope.coroutineContext) {
-            coroutineScope {
-              async {
-                while (true) {
-                  original.checkCanceled()
-                  delay(100)
-                }
+          coroutineScope {
+            async(taskScope.coroutineContext) {
+              // we don't expect that taskScope may cancel, because it will be canceled after the task has finished, but
+              // the task will not be finished, because it is paused. This line here is just in case, if the logic changes in the future.
+              while (true) {
+                checkCanceled()
+                delay(100) // will throw if taskScope has canceled
               }
-              paused.first { !it } // wait until paused==false, or taskScope is canceled, or progress indicator is canceled
-              coroutineContext.cancelChildren()
             }
+            async {
+              while (true) {
+                checkCanceled()
+                delay(100) // will throw if progress indicator has canceled
+              }
+            }
+            paused.first { !it } // wait until paused==false, or taskScope is canceled, or progress indicator is canceled
+            coroutineContext.cancelChildren()
           }
         }
       }

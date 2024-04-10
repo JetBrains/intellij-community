@@ -287,7 +287,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
 
   private void scan(PerformanceWatcher.Snapshot snapshot,
                     ProjectScanningHistoryImpl scanningHistory,
-                    IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator,
+                    IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator,
                     IndexingProgressReporter progressReporter,
                     Ref<StatusMark> markRef) {
     markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true);
@@ -350,7 +350,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
   }
 
   private void scanAndUpdateUnindexedFiles(@NotNull ProjectScanningHistoryImpl scanningHistory,
-                                           @NotNull IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator,
+                                           @NotNull IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator,
                                            @NotNull IndexingProgressReporter progressReporter,
                                            @NotNull Ref<StatusMark> markRef) {
     try {
@@ -371,7 +371,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
   }
 
   private void scanUnindexedFiles(@NotNull ProjectScanningHistoryImpl scanningHistory,
-                                  @NotNull IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator,
+                                  @NotNull IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator,
                                   @NotNull IndexingProgressReporter progressReporter,
                                   @NotNull Ref<StatusMark> markRef) {
     LOG.info("Started scanning for indexing of " + myProject.getName() + ". Reason: " + myIndexingReason);
@@ -439,16 +439,8 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
     awaitWithCheckCanceled(latch);
   }
 
-  private void flushPerProjectIndexingQueue(@Nullable String indexingReason, IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator) {
-    var service = myProject.getService(PerProjectIndexingQueue.class);
-    if (shouldScanInSmartMode()) {
-      // Switch to dumb mode and index
-      service.flushNow(myIndexingReason);
-    }
-    else {
-      // Already in dumb mode. Just invoke indexer
-      service.flushNowSync(indexingReason, indicator.originalIndicatorOnlyToFlushIndexingQueueSynchronously());
-    }
+  private void flushPerProjectIndexingQueue(@Nullable String indexingReason, IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator) {
+    myProject.getService(PerProjectIndexingQueue.class).flushNow(myIndexingReason);
   }
 
   private static String getLogScanningCompletedStageMessage(ProjectScanningHistory scanningHistory) {
@@ -504,7 +496,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
   }
 
   private void collectIndexableFilesConcurrently(@NotNull Project project,
-                                                 @NotNull IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator,
+                                                 @NotNull IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator,
                                                  @NotNull IndexingProgressReporter progressReporter,
                                                  @NotNull List<IndexableFilesIterator> providers,
                                                  @NotNull ProjectScanningHistoryImpl projectScanningHistory) {
@@ -622,7 +614,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
   }
 
   @Override
-  public void perform(@NotNull IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator, @NotNull IndexingProgressReporter progressReporter) {
+  public void perform(@NotNull IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator, @NotNull IndexingProgressReporter progressReporter) {
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != Boolean.TRUE, "Scanning is already in progress");
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true);
     myFilterHandler.scanningStarted(myProject, isFullIndexUpdate());
@@ -641,7 +633,7 @@ public final class UnindexedFilesScanner extends FilesScanningTaskBase {
     }
   }
 
-  protected @NotNull ProjectScanningHistory performScanningAndIndexing(@NotNull IndexingProgressReporter.CheckCancelOnlyProgressIndicator indicator,
+  protected @NotNull ProjectScanningHistory performScanningAndIndexing(@NotNull IndexingProgressReporter.CheckPauseOnlyProgressIndicator indicator,
                                                                        @NotNull IndexingProgressReporter progressReporter) {
     if (ApplicationManager.getApplication().isUnitTestMode() && DELAY_IN_TESTS_MS > 0) {
       // This is to ease discovering races, when a test needs indexes, but forgot to wait for smart mode (see IndexingTestUtil)
