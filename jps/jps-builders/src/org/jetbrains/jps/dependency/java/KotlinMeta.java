@@ -254,7 +254,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged();
+      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged() && !defaultValueDeclarationChanged();
     }
 
     public boolean becameNullable() {
@@ -294,6 +294,22 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
         return nowType != null;
       }
       return nowType == null || !Objects.equals(pastType.getClassifier(), nowType.getClassifier());
+    }
+
+    public boolean defaultValueDeclarationChanged() {
+      Iterator<KmValueParameter> nowParams = Iterators.reverse(now.getValueParameters()).iterator();
+      for (KmValueParameter pastParam : Iterators.reverse(past.getValueParameters())) {
+        KmValueParameter nowParam = nowParams.hasNext()? nowParams.next() : null;
+        if (nowParam != null? Attributes.getDeclaresDefaultValue(nowParam) != Attributes.getDeclaresDefaultValue(pastParam) : Attributes.getDeclaresDefaultValue(pastParam)) {
+          return true;
+        }
+      }
+      while (nowParams.hasNext()) {
+        if (Attributes.getDeclaresDefaultValue(nowParams.next())) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private static Iterable<KmType> getParameterTypes(KmFunction f) {

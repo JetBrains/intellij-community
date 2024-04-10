@@ -197,6 +197,27 @@ public final class Iterators {
     return elem == null? Collections.<T>emptyList() : Arrays.asList(elem);
   }
 
+  public static <T> Iterable<T> reverse(final List<T> list) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        final ListIterator<T> li = list.listIterator(list.size());
+        return new BaseIterator<T>() {
+          @Override
+          public boolean hasNext() {
+            return li.hasPrevious();
+          }
+
+          @Override
+          public T next() {
+            return li.previous();
+          }
+        };
+      }
+    };
+  }
+
   public static <T> Iterator<T> asIterator(final T elem) {
     return new BaseIterator<T>() {
       private boolean available = true;

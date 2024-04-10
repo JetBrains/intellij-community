@@ -221,8 +221,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
             affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
           }
         }
-        if (funDiff.receiverParameterChanged()) {
-          debug("Function's receiver parameter changed: ", changedKmFunction.getName());
+        if (funDiff.receiverParameterChanged() || funDiff.defaultValueDeclarationChanged()) {
+          debug("Function's receiver parameter changed or parameter default value declaration changed: ", changedKmFunction.getName());
           affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
         }
       }
