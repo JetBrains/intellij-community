@@ -6398,7 +6398,6 @@ f:com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator
 - sf:COMMAND_NAME:java.lang.String
 - sf:Companion:com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator$Companion
 - <init>():V
-- getCommandName():java.lang.String
 - f:performGeneration(java.util.List,com.intellij.ide.environment.impl.EnvironmentConfiguration,kotlin.coroutines.Continuation):java.lang.Object
 - bs:performGeneration$default(com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator,java.util.List,com.intellij.ide.environment.impl.EnvironmentConfiguration,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
@@ -7518,7 +7517,6 @@ f:com.intellij.ide.plugins.DynamicPluginsKt
 f:com.intellij.ide.plugins.HeadlessPluginsInstaller
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
-- getCommandName():java.lang.String
 - getRequiredModality():I
 - s:installPlugins(java.util.Set):java.util.Collection
 - main(java.util.List):V
@@ -10957,7 +10955,6 @@ c:com.intellij.idea.IdeStarter
 - com.intellij.openapi.application.ApplicationStarter
 - sf:Companion:com.intellij.idea.IdeStarter$Companion
 - <init>():V
-- getCommandName():java.lang.String
 - isHeadless():Z
 - p:openProjectIfNeeded(java.util.List,com.intellij.openapi.application.Application,kotlinx.coroutines.CoroutineScope,com.intellij.ide.AppLifecycleListener,kotlin.coroutines.Continuation):java.lang.Object
 - start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object

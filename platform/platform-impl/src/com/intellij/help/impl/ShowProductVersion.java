@@ -11,11 +11,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 final class ShowProductVersion implements ApplicationStarter {
-  @Override
-  public String getCommandName() {
-    return "-version";
-  }
-
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   @Override
   public void main(@NotNull List<String> args) {

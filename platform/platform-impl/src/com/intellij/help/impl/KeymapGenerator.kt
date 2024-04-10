@@ -26,10 +26,6 @@ private val LEVELS = (1..3).map { i ->
 }.toList()
 
 private class KeymapGenerator : ModernApplicationStarter() {
-  @Suppress("OVERRIDE_DEPRECATION")
-  override val commandName: String
-    get() = "keymap"
-
   override suspend fun start(args: List<String>) {
     val xml = StringBuilder()
     xml.append("""<?xml version="1.0" encoding="UTF-8"?>""").append("\n<Keymaps>\n")

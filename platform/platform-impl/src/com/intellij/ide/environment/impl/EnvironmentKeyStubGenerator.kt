@@ -26,8 +26,6 @@ import kotlin.system.exitProcess
 
 class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
 
-  override val commandName: String = COMMAND_NAME
-
   override suspend fun start(args: List<String>) {
     performGeneration(args)
 

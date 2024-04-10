@@ -24,9 +24,6 @@ import kotlin.io.path.relativeTo
 import kotlin.system.exitProcess
 
 private class BundledPluginsLister : ModernApplicationStarter() {
-  override val commandName: String
-    get() = "listBundledPlugins"
-
   // not premain because FileTypeManager is used to report extensions
   override suspend fun start(args: List<String>) {
     try {

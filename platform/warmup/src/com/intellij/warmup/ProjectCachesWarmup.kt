@@ -22,15 +22,11 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.timerTask
 import kotlin.math.max
 import kotlin.system.exitProcess
 import kotlin.time.measureTime
 
 internal class ProjectCachesWarmup : ModernApplicationStarter() {
-  override val commandName: String
-    get() = "warmup"
-
   override fun premain(args: List<String>) {
     if (System.getProperty("caches.indexerThreadsCount") == null) {
       System.setProperty("caches.indexerThreadsCount", max(1, Runtime.getRuntime().availableProcessors() - 1).toString())

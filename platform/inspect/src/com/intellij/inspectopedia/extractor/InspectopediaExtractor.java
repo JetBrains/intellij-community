@@ -25,7 +25,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,15 +47,10 @@ final class InspectopediaExtractor implements ApplicationStarter {
   }
 
   @Override
-  public @NonNls String getCommandName() {
-    return "inspectopedia-generator";
-  }
-
-  @Override
   public void main(@NotNull List<String> args) {
     final int size = args.size();
     if (size != 2) {
-      LOG.error("Usage: %s <output directory>".formatted(getCommandName()));
+      LOG.error("Usage: inspectopedia-generator <output directory>");
       System.exit(-1);
     }
 

@@ -18273,7 +18273,6 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 f:com.intellij.ide.ui.search.TraverseUIStarter
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
-- getCommandName():java.lang.String
 - getRequiredModality():I
 - main(java.util.List):V
 - premain(java.util.List):V
