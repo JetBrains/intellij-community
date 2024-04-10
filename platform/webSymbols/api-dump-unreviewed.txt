@@ -1745,6 +1745,7 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - p:queryExecutor:com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 - <init>():V
 - createPointer():com.intellij.model.Pointer
+- equals(java.lang.Object):Z
 - f:getAbstract():Z
 - f:getApiStatus():com.intellij.webSymbols.WebSymbolApiStatus
 - f:getAttributeValue():com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
@@ -1772,6 +1773,7 @@ f:com.intellij.webSymbols.utils.WebSymbolUtils
 - f:getSymbols(com.intellij.webSymbols.WebSymbolQualifiedKind,com.intellij.webSymbols.query.WebSymbolsListSymbolsQueryParams,com.intellij.util.containers.Stack):java.util.List
 - f:getType():java.lang.Object
 - f:getVirtual():Z
+- hashCode():I
 - isEquivalentTo(com.intellij.model.Symbol):Z
 - f:isExclusiveFor(com.intellij.webSymbols.WebSymbolQualifiedKind):Z
 - pf:setQueryExecutor(com.intellij.webSymbols.query.WebSymbolsQueryExecutor):V

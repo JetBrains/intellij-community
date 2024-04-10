@@ -7,8 +7,11 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.SymbolKind
+import com.intellij.webSymbols.SymbolNamespace
+import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
+import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
@@ -16,6 +19,7 @@ import com.intellij.webSymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.webSymbols.webTypes.WebTypesScopeBase
 import com.intellij.webSymbols.webTypes.WebTypesSymbolBase
 import com.intellij.webSymbols.webTypes.json.*
+import java.util.*
 
 abstract class WebTypesJsonContributionAdapter private constructor(internal val contribution: BaseContribution,
                                                                    internal val jsonOrigin: WebTypesJsonOrigin,
@@ -83,9 +87,22 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
 
   override fun withQueryExecutorContext(queryExecutor: WebSymbolsQueryExecutor): WebSymbol =
     (WebTypesSymbolFactoryEP.get(WebSymbolQualifiedKind(namespace, kind))?.create() ?: WebTypesSymbolBase())
-      .also { it.init(this, queryExecutor)}
+      .also { it.init(this, queryExecutor) }
 
   abstract fun createPointer(): Pointer<out WebTypesJsonContributionAdapter>
+
+  override fun equals(other: Any?): Boolean =
+    other === this
+    || other is WebTypesJsonContributionAdapter
+    && other.javaClass == javaClass
+    && other.contribution === contribution
+    && other.jsonOrigin === jsonOrigin
+    && other.rootScope === rootScope
+    && other.namespace === namespace
+    && other.kind === kind
+
+  override fun hashCode(): Int =
+    Objects.hash(contribution, jsonOrigin, rootScope, namespace, kind)
 
   private class Static(contribution: BaseContribution,
                        context: WebTypesJsonOrigin,
@@ -114,11 +131,11 @@ abstract class WebTypesJsonContributionAdapter private constructor(internal val 
   }
 
   internal class Pattern(contribution: BaseContribution,
-                        context: WebTypesJsonOrigin,
-                        cacheHolder: UserDataHolderEx,
-                        rootScope: WebTypesScopeBase,
-                        namespace: SymbolNamespace,
-                        kind: String)
+                         context: WebTypesJsonOrigin,
+                         cacheHolder: UserDataHolderEx,
+                         rootScope: WebTypesScopeBase,
+                         namespace: SymbolNamespace,
+                         kind: String)
     : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, namespace, kind) {
 
     override val jsonPattern: NamePatternRoot?
