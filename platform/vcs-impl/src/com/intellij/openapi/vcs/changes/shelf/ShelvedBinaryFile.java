@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.project.Project;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Objects;
 
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
@@ -117,9 +118,9 @@ public final class ShelvedBinaryFile implements JDOMExternalizable {
 
     ShelvedBinaryFile that = (ShelvedBinaryFile)o;
 
-    if (AFTER_PATH != null ? !AFTER_PATH.equals(that.AFTER_PATH) : that.AFTER_PATH != null) return false;
-    if (BEFORE_PATH != null ? !BEFORE_PATH.equals(that.BEFORE_PATH) : that.BEFORE_PATH != null) return false;
-    if (SHELVED_PATH != null ? !SHELVED_PATH.equals(that.SHELVED_PATH) : that.SHELVED_PATH != null) return false;
+    if (!Objects.equals(AFTER_PATH, that.AFTER_PATH)) return false;
+    if (!Objects.equals(BEFORE_PATH, that.BEFORE_PATH)) return false;
+    if (!Objects.equals(SHELVED_PATH, that.SHELVED_PATH)) return false;
 
     return true;
   }
