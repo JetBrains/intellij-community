@@ -17,28 +17,32 @@ import org.jetbrains.uast.toUElementOfType
 class LoggingPlaceholderAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     val literalExpression = element.toUElementOfType<UInjectionHost>() ?: return
-    val ranges = getRanges(literalExpression) ?: return
-    val offset = element.textRange.startOffset
-    ranges.forEach { range ->
-      val shiftedRange = range.shiftRight(offset)
-      holder.newSilentAnnotation(HighlightSeverity.TEXT_ATTRIBUTES).range(shiftedRange).textAttributes(ClassFinderConsoleColorsPage.LOG_STRING_PLACEHOLDER).create()
+    val textRangeList = getRanges(literalExpression) ?: return
+    val startOffset = element.textRange.startOffset
+    val endOffset = element.textRange.endOffset
+
+    textRangeList.forEach { range ->
+      val shiftedRange = range.shiftRight(startOffset)
+      assert(startOffset <= shiftedRange.startOffset && shiftedRange.endOffset <= endOffset)
+      holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(shiftedRange).textAttributes(ClassFinderConsoleColorsPage.LOG_STRING_PLACEHOLDER).create()
     }
   }
 
   private fun getRanges(uExpression: UExpression): List<TextRange>? {
     val context = getContext(uExpression) ?: return null
-    var rangeList = getPlaceholderRanges(context)?.flatMap {
+
+    var placeholderRangesList = getPlaceholderRanges(context) ?: return null
+
+    val placeholderParametersSize = context.placeholderParameters.size
+    if (placeholderParametersSize < placeholderRangesList.size) {
+      placeholderRangesList = placeholderRangesList.dropLast(placeholderRangesList.size - placeholderParametersSize)
+    }
+    val textRangeList = placeholderRangesList.flatMap {
       val ranges = it.ranges
       if (ranges.any { range -> range == null }) return null
       ranges.filterNotNull()
-    } ?: return null
-
-    val placeholderParametersSize = context.placeholderParameters.size
-
-    if (placeholderParametersSize < rangeList.size) {
-      rangeList = rangeList.dropLast(rangeList.size - placeholderParametersSize)
     }
 
-    return getAlignedPlaceholderCount(rangeList, context)
+    return getAlignedPlaceholderCount(textRangeList, context)
   }
 }
