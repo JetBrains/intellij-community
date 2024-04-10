@@ -1,0 +1,8 @@
+<idea>
+  <content>
+    <module name="intellij.platform.images.copyright"/>
+
+    <module name="intellij.platform.vcs.log.impl"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+  </content>
+</idea>
