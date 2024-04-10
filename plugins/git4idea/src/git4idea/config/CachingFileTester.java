@@ -47,6 +47,8 @@ abstract class CachingFileTester {
         throw pce;
       }
       catch (Exception e) {
+        LOG.warn(e);
+
         result = new TestResult(e, currentLastModificationDate);
         myTestMap.put(executable, result);
       }
