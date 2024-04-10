@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
@@ -56,14 +56,12 @@ public final class ActionMacro {
 
   public void readExternal(Element macro) {
     setName(macro.getAttributeValue(ATTRIBUTE_NAME));
-    List actions = macro.getChildren();
-    for (final Object o : actions) {
-      Element action = (Element)o;
+    for (Element action : macro.getChildren()) {
       if (ELEMENT_TYPING.equals(action.getName())) {
         Couple<List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
 
         String text = action.getText();
-        if (text == null || text.length() == 0) {
+        if (text == null || text.isEmpty()) {
           text = action.getAttributeValue(ATTRIBUTE_TEXT);
         }
         text = text.replaceAll("&#x20;", " ");
