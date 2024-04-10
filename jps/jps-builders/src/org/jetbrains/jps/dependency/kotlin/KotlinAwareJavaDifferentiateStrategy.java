@@ -67,6 +67,13 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         affectMemberLookupUsages(context, removedClass, kmFunction.getName(), present);
       }
     }
+
+    for (KmProperty prop : allKmProperties(removedClass)) {
+      if (Attributes.isConst(prop) || Attributes.isInline(prop.getGetter()) || (prop.getSetter() != null && Attributes.isInline(prop.getSetter()))) {
+        debug("Property in a removed class was a constant or had inlineable accessors, affecting property usages ", prop.getName());
+        affectMemberLookupUsages(context, removedClass, prop.getName(), present);
+      }
+    }
     return true;
   }
 
@@ -173,6 +180,11 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (KmFunction removedFunction : metaDiff.functions().removed()) {
+        if (Attributes.isInline(removedFunction)) {
+          debug("Removed function was inlineable, affecting function usages ", removedFunction.getName());
+          affectMemberLookupUsages(context, changedClass, removedFunction.getName(), present);
+        }
+
         JvmMethod method = getJvmMethod(change.getNow(), JvmExtensionsKt.getSignature(removedFunction));
         if (method != null && !method.isPrivate()) {
           // a function in kotlin code was replaced with a property, but at the bytecode level corresponding methods are preserved
@@ -216,6 +228,12 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (KmProperty removedProp : metaDiff.properties().removed()) {
+
+        if (Attributes.isInline(removedProp.getGetter()) || (removedProp.getSetter() != null && Attributes.isInline(removedProp.getSetter()))) {
+          debug("Removed property was inlineable, affecting property usages ", removedProp.getName());
+          affectMemberLookupUsages(context, changedClass, removedProp.getName(), present);
+        }
+
         List<JvmMethodSignature> propertyAccessors = Arrays.asList(JvmExtensionsKt.getGetterSignature(removedProp), JvmExtensionsKt.getSetterSignature(removedProp));
         List<JvmMethod> accessorMethods = collect(filter(map(propertyAccessors, acc -> acc != null? getJvmMethod(change.getNow(), acc) : null), m -> m != null && !m.isPrivate()), new SmartList<>());
 
@@ -292,17 +310,6 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       String name = getMethodKotlinName(changedClass, changedMethod);
       debug("Function was inlineable, or has become inlineable or a body of inline method has changed; affecting method usages ", name);
       affectMemberLookupUsages(context, changedClass, name, future);
-    }
-    return true;
-  }
-
-  @Override
-  public boolean processRemovedMethod(DifferentiateContext context, Difference.Change<JvmClass, JvmClass.Diff> change, JvmMethod removedMethod, Utils future, Utils present) {
-    JvmClass changedClass = change.getPast();
-    KmFunction kmFunction = getKmFunction(changedClass, removedMethod);
-    if (kmFunction != null && Attributes.isInline(kmFunction)) {
-      debug("Function was inlineable, affecting method usages ", kmFunction.getName());
-      affectMemberLookupUsages(context, changedClass, kmFunction.getName(), present);
     }
     return true;
   }
