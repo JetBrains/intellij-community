@@ -69,10 +69,7 @@ public class PropertyCollector {
     do {
       accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
     }
-    while ((currentClass = currentClass.getSuperclass()) != null &&
-           currentClass != Object.class &&
-           currentClass != AtomicReference.class &&
-           !configuration.isAnnotatedAsTransient(currentClass));
+    while ((currentClass = currentClass.getSuperclass()) != null && isSerializableClass(configuration, currentClass));
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter,
     // but annotation moved to var, not to getter/setter, so, we must remove duplicated accessor
@@ -94,32 +91,36 @@ public class PropertyCollector {
     return accessors;
   }
 
+  // not safe for now to change behavior and collect properties in the same loop as fields
   private static @NotNull Map<String, Pair<Method, Method>> collectPropertyAccessors(@NotNull Class<?> aClass,
                                                                                      @NotNull List<? super MutableAccessor> accessors,
                                                                                      @NotNull Configuration configuration) {
     // (name,(getter,setter))
-    final Map<String, Pair<Method, Method>> candidates = new TreeMap<>();
-    for (Method method : aClass.getMethods()) {
-      if (!Modifier.isPublic(method.getModifiers())) {
-        continue;
-      }
+    Map<String, Pair<Method, Method>> candidates = new TreeMap<>();
+    Class<?> currentClass = aClass;
+    do {
+      for (Method method : currentClass.getDeclaredMethods()) {
+        if (!Modifier.isPublic(method.getModifiers())) {
+          continue;
+        }
 
-      NameAndIsSetter propertyData = getPropertyData(method.getName());
-      if (propertyData == null || method.getParameterCount() != (propertyData.isSetter ? 1 : 0) ||
-          propertyData.name.equals("class")) {
-        continue;
-      }
+        NameAndIsSetter propertyData = getPropertyData(method.getName());
+        if (propertyData == null || method.getParameterCount() != (propertyData.isSetter ? 1 : 0) || propertyData.name.equals("class")) {
+          continue;
+        }
 
-      Pair<Method, Method> candidate = candidates.get(propertyData.name);
-      if (candidate == null) {
-        candidate = Pair.empty();
+        Pair<Method, Method> candidate = candidates.get(propertyData.name);
+        if (candidate == null) {
+          candidate = Pair.empty();
+        }
+        if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
+          continue;
+        }
+        candidate = new Pair<>(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
+        candidates.put(propertyData.name, candidate);
       }
-      if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
-        continue;
-      }
-      candidate = new Pair<>(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
-      candidates.put(propertyData.name, candidate);
     }
+    while ((currentClass = currentClass.getSuperclass()) != null && isSerializableClass(configuration, currentClass));
 
     for (Iterator<Map.Entry<String, Pair<Method, Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Pair<Method, Method>> candidate = iterator.next();
@@ -134,6 +135,12 @@ public class PropertyCollector {
       }
     }
     return candidates;
+  }
+
+  private static boolean isSerializableClass(@NotNull Configuration configuration, Class<?> currentClass) {
+    return currentClass != Object.class &&
+           currentClass != AtomicReference.class &&
+           !configuration.isAnnotatedAsTransient(currentClass);
   }
 
   private static @Nullable NameAndIsSetter getPropertyData(@NotNull String methodName) {
@@ -178,9 +185,6 @@ public class PropertyCollector {
 
   private static boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter, @NotNull Configuration configuration) {
     if (getter == null || configuration.isAnnotatedAsTransient(getter)) {
-      return false;
-    }
-    if (getter.getDeclaringClass() == AtomicReference.class) {
       return false;
     }
 
