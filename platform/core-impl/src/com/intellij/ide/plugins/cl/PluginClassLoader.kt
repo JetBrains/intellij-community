@@ -83,6 +83,7 @@ class PluginClassLoader(
   private val edtTime = AtomicLong()
   private val backgroundTime = AtomicLong()
   private val loadedClassCounter = AtomicInteger()
+  @Suppress("SSBasedInspection")
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName(pluginId.idString))
   private val _resolveScopeManager = resolveScopeManager ?: defaultResolveScopeManager
 
@@ -479,7 +480,8 @@ ${if (exception == null) "" else exception.message}""")
     return "${javaClass.simpleName}(" +
            "plugin=$pluginDescriptor, " +
            "packagePrefix=$packagePrefix, " +
-           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}" +
+           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}, " +
+           "parents=${parents.joinToString()}, " +
            ")"
   }
 
