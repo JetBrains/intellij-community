@@ -27,6 +27,10 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.*
+import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.paint.PaintUtil.alignIntToInt
+import com.intellij.ui.paint.PaintUtil.alignTxToInt
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -372,12 +376,19 @@ class ProjectWindowCustomizerService : Disposable {
     val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85)
                        .coerceIn(0.0, 1.0) * (color.alpha.toDouble() / 255)
     val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation)
-    val leftBound = (offset - length).coerceAtLeast(0f).toInt()
-    g.paint = leftGradientCache.getTexture(g, (offset - leftBound).toInt(), parent.background, blendedColor, leftBound)
-    g.fillRect(leftBound, 0, (offset - leftBound).toInt(), height)
 
-    g.paint = rightGradientCache.getTexture(g, length, blendedColor, parent.background, offset.toInt())
-    g.fillRect(offset.toInt(), 0, length, height)
+    alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
+    val ctx = ScaleContext.create(g)
+    val leftX = alignIntToInt((offset - length).coerceAtLeast(0f).toInt(), ctx, PaintUtil.RoundingMode.FLOOR, null)
+    val leftWidth = alignIntToInt((offset - leftX).toInt(), ctx, PaintUtil.RoundingMode.CEIL, null)
+    val rightX = leftX + leftWidth
+    val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
+
+    g.paint = leftGradientCache.getTexture(g, leftWidth, parent.background, blendedColor, leftX)
+    g.fillRect(leftX, 0, leftWidth, height)
+
+    g.paint = rightGradientCache.getTexture(g, rightWidth, blendedColor, parent.background, rightX)
+    g.fillRect(rightX, 0, rightWidth, height)
 
     return true
   }
