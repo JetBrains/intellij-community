@@ -203,7 +203,7 @@ fun TreeSample(modifier: Modifier = Modifier) {
                     addLeaf("leaf 3.1")
                     addLeaf("leaf 3.2")
                 }
-            }
+            },
         )
     }
 
