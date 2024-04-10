@@ -125,7 +125,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                     repositoryInfo)
       val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), project, securityService,
                                                   requestExecutor, apiRepositoryCoordinates)
-      val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
+      val commentService = GHPRCommentServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val changesService = GHPRChangesServiceImpl(cs, project, requestExecutor,
                                                   remoteCoordinates, apiRepositoryCoordinates)
       val reviewService = GHPRReviewServiceImpl(securityService, requestExecutor, apiRepositoryCoordinates)

@@ -6,11 +6,9 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTex
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.SingleCoroutineLauncher
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -100,7 +98,7 @@ internal class UpdateableGHPRTimelineCommentViewModel(
 
   override fun delete() {
     taskLauncher.launch {
-      commentsData.deleteComment(EmptyProgressIndicator(), dataState.value.id)
+      commentsData.deleteComment(dataState.value.id)
     }
   }
 
@@ -112,7 +110,7 @@ internal class UpdateableGHPRTimelineCommentViewModel(
     : CodeReviewSubmittableTextViewModelBase(project, cs, initialText), CodeReviewTextEditingViewModel {
     override fun save() {
       submit { text ->
-        val updated = commentsData.updateComment(EmptyProgressIndicator(), id, text).await()
+        val updated = commentsData.updateComment(id, text)
         dataState.update {
           it.copy(body = updated)
         }
