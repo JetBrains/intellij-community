@@ -26,6 +26,7 @@ import com.intellij.platform.util.progress.ProgressReporter
 import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -95,20 +96,24 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun iterateActions(actions: List<IndexQueueEntry>, reporter: ProgressReporter? = null) {
+  private suspend fun iterateActions(actions: List<IndexQueueEntry>, reporter: ProgressReporter? = null) = coroutineScope {
+    val embeddingService = serviceAsync<LocalEmbeddingServiceProvider>().getService() ?: return@coroutineScope
+    val actionsChannel = Channel<IndexQueueEntry>(capacity = 64)
+
     val index = ActionEmbeddingsStorage.getInstance().index
-    val embeddingService = serviceAsync<LocalEmbeddingServiceProvider>().getService() ?: return
-
-    suspend fun processAction(entry: IndexQueueEntry) {
-      if (index.contains(entry.actionId)) return
-      val embedding = embeddingService.embed(entry.templateText).normalized()
-      shouldSaveToDisk = true
-      index.addEntries(listOf(entry.actionId to embedding))
+    repeat(8) {
+      launch {
+        for (entry in actionsChannel) {
+          if (index.contains(entry.actionId)) continue
+          val embedding = embeddingService.embed(entry.templateText).normalized()
+          shouldSaveToDisk = true
+          index.addEntries(listOf(entry.actionId to embedding))
+        }
+      }
     }
 
-    for (entry in actions) {
-      reporter?.itemStep { processAction(entry) } ?: processAction(entry)
-    }
+    actions.forEach { reporter?.itemStep { actionsChannel.send(it) } ?: actionsChannel.send(it) }
+    actionsChannel.close()
   }
 
   private suspend fun loadRequirements(project: Project?) {
