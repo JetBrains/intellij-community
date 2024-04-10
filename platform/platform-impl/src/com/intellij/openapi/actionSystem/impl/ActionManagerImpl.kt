@@ -1821,7 +1821,7 @@ private class PostInitActionRegistrar(
   override fun actionRegistered(actionId: String, action: AnAction) {
     val schema = ApplicationManager.getApplication().serviceIfCreated<CustomActionsSchema>() ?: return
     for (url in schema.getActions()) {
-      if (url.component == actionId) {
+      if (url.componentId == actionId) {
         schema.incrementModificationStamp()
         break
       }

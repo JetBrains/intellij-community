@@ -411,7 +411,7 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
     // fix references to and icons of renamed macros in the custom actions schema
     val customActionsSchema = CustomActionsSchema.getInstance()
     for (actionUrl in customActionsSchema.getActions()) {
-      val newId = renamingMap.get(actionUrl.component)
+      val newId = renamingMap.get(actionUrl.componentId)
       if (newId != null) {
         actionUrl.component = newId
       }
