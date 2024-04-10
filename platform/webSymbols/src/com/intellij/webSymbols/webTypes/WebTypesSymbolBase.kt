@@ -18,6 +18,7 @@ import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.webSymbols.webTypes.impl.wrap
 import com.intellij.webSymbols.webTypes.json.*
 import com.intellij.webSymbols.webTypes.json.resolve
+import java.util.Objects
 import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
@@ -46,6 +47,16 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   override fun toString(): String =
     base.toString()
+
+  override fun equals(other: Any?): Boolean =
+    other === this
+    || other is WebTypesSymbolBase
+    && other.javaClass == javaClass
+    && other.base == base
+    && other.queryExecutor === queryExecutor
+
+  override fun hashCode(): Int =
+    Objects.hash(base.hashCode(), queryExecutor.hashCode())
 
   override fun createPointer(): Pointer<WebTypesSymbolBase> {
     val queryExecutorPtr = this.queryExecutor.createPointer()
