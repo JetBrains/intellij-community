@@ -426,12 +426,9 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
-    blockingContext {
-      AsyncEditorLoader.performWhenLoaded(editor) {
-        FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
-        composite.preferredFocusedComponent?.requestFocusInWindow()
-      }
-    }
+    AsyncEditorLoader.waitForLoaded(editor)
+    FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
+    composite.preferredFocusedComponent?.requestFocusInWindow()
   }
 }
 
