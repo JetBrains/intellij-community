@@ -17641,7 +17641,6 @@ f:com.intellij.openapi.options.advanced.AdvancedSettingBean
 - f:description():java.lang.String
 - f:getAccessor():com.intellij.serialization.MutableAccessor
 - f:getDefaultValueObject():java.lang.Object
-- f:getEnumKlass():java.lang.Class
 - getInstance():com.intellij.openapi.options.advanced.AdvancedSettingBean
 - getKey():java.lang.String
 - f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
@@ -18216,9 +18215,11 @@ com.intellij.openapi.project.FilesScanningTask
 *c:com.intellij.openapi.project.MergingQueueGuiExecutor
 - *sf:Companion:com.intellij.openapi.project.MergingQueueGuiExecutor$Companion
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.project.MergingTaskQueue,com.intellij.openapi.project.MergingQueueGuiExecutor$ExecutorStateListener,java.lang.String,java.lang.String):V
+- f:cancelAllTasks():V
 - f:getBackgroundTasksSubmittedCount():I
 - pf:getGuiSuspender():com.intellij.openapi.project.MergingQueueGuiSuspender
 - f:getProject():com.intellij.openapi.project.Project
+- f:getStartedOrStoppedEvent():kotlinx.coroutines.flow.Flow
 - p:getTaskId():java.lang.Object
 - f:getTaskQueue():com.intellij.openapi.project.MergingTaskQueue
 - f:isRunning():kotlinx.coroutines.flow.StateFlow
@@ -18227,6 +18228,7 @@ com.intellij.openapi.project.FilesScanningTask
 - runSingleTask(com.intellij.openapi.project.MergingTaskQueue$QueuedTask,com.intellij.internal.statistic.StructuredIdeActivity):V
 - shouldShowProgressIndicator():Z
 - f:startBackgroundProcess(kotlin.jvm.functions.Function0):V
+- f:suspendAndRun(java.lang.String,java.lang.Runnable):V
 - f:suspendQueue():V
 *f:com.intellij.openapi.project.MergingQueueGuiExecutor$Companion
 *:com.intellij.openapi.project.MergingQueueGuiExecutor$ExecutorStateListener
