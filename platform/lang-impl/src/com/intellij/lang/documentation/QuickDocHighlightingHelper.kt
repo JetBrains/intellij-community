@@ -258,17 +258,10 @@ object QuickDocHighlightingHelper {
     if (language == null)
       null
     else
-      Language
-        .findInstancesByMimeType(language)
-        .asSequence()
-        .plus(Language.findInstancesByMimeType("text/$language"))
-        .plus(
-          Language.getRegisteredLanguages()
-            .asSequence()
-            .filter { languageMatches(language, it) }
-        )
-        .firstOrNull()
-
+      Language.findInstancesByMimeType(language).firstOrNull()
+      ?: Language.findInstancesByMimeType("text/$language").firstOrNull()
+      ?: Language.getRegisteredLanguages().firstOrNull { languageIdOrNameMatches(language, it) }
+      ?: findLanguageByFileExtension(language)
 
   @Internal
   @JvmStatic
@@ -327,8 +320,20 @@ object QuickDocHighlightingHelper {
     return this
   }
 
-  private fun languageMatches(langType: String, language: Language): Boolean =
+  private fun languageIdOrNameMatches(langType: String, language: Language): Boolean =
     langType.equals(language.id, ignoreCase = true)
-    || FileTypeManager.getInstance().getFileTypeByExtension(langType) === language.associatedFileType
+    || langType.equals(language.displayName, ignoreCase = true)
+
+  private fun findLanguageByFileExtension(language: String): Language? {
+    val fileType = FileTypeManager.getInstance().getFileTypeByExtension(language)
+    val candidates = Language.getRegisteredLanguages()
+      .asSequence()
+      .filter { it.associatedFileType == fileType }
+      .toSet()
+    // Let's choose the most basic version of language supporting the particular file extension
+    return candidates.firstOrNull { candidate ->
+      generateSequence(candidate.baseLanguage) { it.baseLanguage }.none { candidates.contains(it) }
+    }
+  }
 
 }
