@@ -80,7 +80,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.containers.WeakList
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.ref.GCWatcher
-import net.sf.cglib.core.ClassNameReader
 import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.nio.channels.FileChannel
@@ -556,7 +555,6 @@ object DynamicPlugins {
       ThrowableInterner.clearInternedBacktraces()
       IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
       clearTemporaryLostComponent()
-      clearCglibStopBacktrace()
 
       if (app.isUnitTestMode && pluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         classLoaderUnloaded = true
@@ -945,18 +943,6 @@ private fun hideTooltip() {
   }
   catch (e: Throwable) {
     LOG.info("Failed to hide tooltip", e)
-  }
-}
-
-private fun clearCglibStopBacktrace() {
-  val field = ReflectionUtil.getDeclaredField(ClassNameReader::class.java, "EARLY_EXIT")
-  if (field != null) {
-    try {
-      ThrowableInterner.clearBacktrace((field[null] as Throwable))
-    }
-    catch (e: Throwable) {
-      LOG.info(e)
-    }
   }
 }
 

@@ -261,7 +261,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/ben-manes/caffeine")
       .apache("https://github.com/ben-manes/caffeine/blob/master/LICENSE")
       .suppliedByPersons("Ben Manes"),
-    LibraryLicense(name = "CGLib", libraryName = "CGLIB", url = "https://github.com/cglib/cglib/")
+    LibraryLicense(name = "CGLib", libraryName = "cglib", url = "https://github.com/cglib/cglib/")
       .apache("https://github.com/cglib/cglib/blob/master/LICENSE")
       .suppliedByPersons("cglib project contributors"),
     LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",

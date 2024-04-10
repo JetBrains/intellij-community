@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
@@ -226,19 +226,25 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     if (proxy instanceof DomFileElement) {
       return null;
     }
-    if (proxy instanceof DomInvocationHandler) {
-      return (DomInvocationHandler)proxy;
+    if (proxy instanceof DomInvocationHandler h) {
+      return h;
     }
-    final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
+
+    InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
       //noinspection unchecked
-      final DomElement element = ((StableInvocationHandler<DomElement>)handler).getWrappedElement();
+      DomElement element = ((StableInvocationHandler<DomElement>)handler).getWrappedElement();
       return element == null ? null : getDomInvocationHandler(element);
     }
-    if (handler instanceof DomInvocationHandler) {
+    else if (handler instanceof DomInvocationHandler) {
       return (DomInvocationHandler)handler;
     }
-    return null;
+    else if (handler instanceof DomInvocationHandler.MyInvocationHandler h) {
+      return h.getDomInvocationHandler();
+    }
+    else {
+      return null;
+    }
   }
 
   public static @NotNull DomInvocationHandler getNotNullHandler(DomElement proxy) {
@@ -271,10 +277,6 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     final DomFileElementImpl<T> fileElement = getFileElement(file);
     assert fileElement != null;
     return fileElement;
-  }
-
-  public Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
-    return myApplicationComponent.getFileDescriptions(rootTagName);
   }
 
   public Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {

@@ -15,7 +15,6 @@
  */
 package net.sf.cglib.core;
 
-import com.intellij.reference.SoftReference;
 import net.sf.cglib.asm.$ClassReader;
 
 import java.lang.ref.Reference;
@@ -201,7 +200,7 @@ implements ClassGenerator
                     source.cache.put(loader, cache2);
                 } else if (useCache) {
                     Reference ref = (Reference)cache2.get(key);
-                    gen = (Class) SoftReference.dereference(ref);
+                    gen = ref == null ? null : (Class) ref.get();
                 }
                 if (gen == null) {
                     AbstractClassGenerator save = CURRENT.get();
