@@ -37,6 +37,7 @@ public abstract class ResponseHandler implements Cloneable {
     this.repository = repository;
   }
 
+  @Transient
   public @NotNull GenericRepository getRepository() {
     return repository;
   }
