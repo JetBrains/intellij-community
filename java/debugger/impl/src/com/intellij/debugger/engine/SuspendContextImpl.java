@@ -51,7 +51,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
   protected boolean myIsCustomSuspendLogic = false;
   protected boolean mySuspendAllSwitchedContext = false;
 
-  private final EventSet myEventSet;
+  private EventSet myEventSet;
   private volatile boolean myIsResumed;
 
   private final ConcurrentLinkedQueue<SuspendContextCommandImpl> myPostponedCommands = new ConcurrentLinkedQueue<>();
@@ -84,6 +84,11 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     mySuspendPolicy = suspendPolicy;
     myVotesToVote = eventVotes;
     myEventSet = set;
+  }
+
+  protected void setEventSet(EventSet eventSet) {
+    LOG.assertTrue(myEventSet == null);
+    myEventSet = eventSet;
   }
 
   public void setThread(@Nullable ThreadReference thread) {
@@ -191,6 +196,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
   @Nullable
   public EventSet getEventSet() {
+    if (myEventSet != null && myEventSet.suspendPolicy() != mySuspendPolicy) {
+      return null;
+    }
     return myEventSet;
   }
 
