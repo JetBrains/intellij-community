@@ -14,17 +14,21 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class LocalFileChooserFactory implements ClientFileChooserFactory {
   @Override
-  public @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                                      @Nullable Project project,
-                                                      @Nullable Component parent) {
+  public @NotNull FileChooserDialog createFileChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  ) {
     var chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
     return chooser != null ? (FileChooserDialog)chooser :
            useNewChooser(descriptor) ? new NewFileChooserDialogImpl(descriptor, parent, project) :
@@ -33,9 +37,11 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
   }
 
   @Override
-  public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                                      @Nullable Project project,
-                                                      @Nullable Component parent) {
+  public @NotNull PathChooserDialog createPathChooser(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  ) {
     var chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
     return chooser != null ? chooser :
            useNewChooser(descriptor) ? new NewFileChooserDialogImpl(descriptor, parent, project) :
@@ -51,10 +57,12 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
 
   @Override
   @SuppressWarnings("ResultOfObjectAllocationIgnored")
-  public void installFileCompletion(@NotNull JTextField field,
-                                    @NotNull FileChooserDescriptor descriptor,
-                                    boolean showHidden,
-                                    @Nullable Disposable parent) {
+  public void installFileCompletion(
+    @NotNull JTextField field,
+    @NotNull FileChooserDescriptor descriptor,
+    boolean showHidden,
+    @Nullable Disposable parent
+  ) {
     if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       new FileTextFieldImpl(field, new LocalFsFinder(), new LocalFsFinder.FileChooserFilter(descriptor, showHidden),
                             FileChooserFactoryImpl.getMacroMap(), parent);

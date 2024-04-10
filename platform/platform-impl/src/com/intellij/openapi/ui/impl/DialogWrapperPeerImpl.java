@@ -52,7 +52,6 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +151,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   /**
-   * @param parent parent component (must be showing) which is used to calculate heavy weight window ancestor.
+   * @param parent parent component (must be showing) which is used to calculate heavyweight window ancestor.
    */
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     boolean headless = isHeadlessEnv();
@@ -161,11 +160,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myCanBeParent = headless || canBeParent;
   }
 
-  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper,
-                                  Window owner,
-                                  boolean canBeParent,
-                                  DialogWrapper.IdeModalityType ideModalityType) {
-    boolean headless = isHeadlessEnv();
+  protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, Window owner, boolean canBeParent, DialogWrapper.IdeModalityType ideModalityType) {
+    var headless = isHeadlessEnv();
     myWrapper = wrapper;
     myDialog = createDialog(headless, owner, wrapper, null, DialogWrapper.IdeModalityType.IDE);
     myCanBeParent = headless || canBeParent;
@@ -184,11 +180,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     return app == null ? null : WindowManagerEx.getInstanceEx();
   }
 
-  private static AbstractDialog createDialog(boolean headless,
-                                             Window owner,
-                                             DialogWrapper wrapper,
-                                             Project project,
-                                             DialogWrapper.IdeModalityType ideModalityType) {
+  private static AbstractDialog createDialog(boolean headless, Window owner, DialogWrapper wrapper, Project project, DialogWrapper.IdeModalityType ideModalityType) {
     if (headless) {
       return new HeadlessDialog(wrapper);
     }
@@ -334,11 +326,13 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void setModal(boolean modal) {
     myDialog.setModal(modal);
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public boolean isModal() {
     return myDialog.isModal();
   }
@@ -417,7 +411,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     }
 
-    myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
+    if (rootPane != null) {
+      myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
+    }
 
     if (app != null && !myCanBeParent) {
       WindowManagerEx windowManager = getWindowManager();
@@ -430,7 +426,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     boolean appStarted = commandProcessor != null;
 
     // ProgressWindow starts a modality state itself
-    boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
+    @SuppressWarnings("deprecation") boolean changeModalityState = appStarted && myDialog.isModal() && !isProgressDialog();
     Project project = myProject;
 
     boolean perProjectModality = changeModalityState &&
@@ -586,7 +582,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       });
 
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
       addWindowFocusListener(myWindowListener);
@@ -1209,8 +1205,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
 
       @Override
-      public Object getData(@NotNull @NonNls String dataId) {
-        final DialogWrapper wrapper = myDialogWrapper.get();
+      public Object getData(@NotNull String dataId) {
+        DialogWrapper wrapper = myDialogWrapper.get();
         return wrapper != null && PlatformDataKeys.UI_DISPOSABLE.is(dataId) ? wrapper.getDisposable() : null;
       }
     }
@@ -1236,8 +1232,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   @Override
   public void setContentPane(JComponent content) {
     myDialog.setContentPane(IdeFrameDecorator.Companion.isCustomDecorationActive() && !isHeadlessEnv()
-                                ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
-                                : content);
+                            ? CustomFrameDialogContent.Companion.getCustomContentHolder(getWindow(), content, false)
+                            : content);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.openapi.Disposable;
@@ -15,22 +15,19 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class FileChooserFactoryImpl extends FileChooserFactory {
   private static ClientFileChooserFactory getService() {
     return ApplicationManager.getApplication().getService(ClientFileChooserFactory.class);
   }
 
   @Override
-  public @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                                      @Nullable Project project,
-                                                      @Nullable Component parent) {
+  public @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable Component parent) {
     return getService().createFileChooser(descriptor, project, parent);
   }
 
   @Override
-  public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                                      @Nullable Project project,
-                                                      @Nullable Component parent) {
+  public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable Component parent) {
     return getService().createPathChooser(descriptor, project, parent);
   }
 
@@ -40,10 +37,12 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
   }
 
   @Override
-  public void installFileCompletion(@NotNull JTextField field,
-                                    @NotNull FileChooserDescriptor descriptor,
-                                    boolean showHidden,
-                                    @Nullable Disposable parent) {
+  public void installFileCompletion(
+    @NotNull JTextField field,
+    @NotNull FileChooserDescriptor descriptor,
+    boolean showHidden,
+    @Nullable Disposable parent
+  ) {
     getService().installFileCompletion(field, descriptor, showHidden, parent);
   }
 
@@ -57,10 +56,11 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     return getService().createSaveFileDialog(descriptor, parent);
   }
 
-  @ApiStatus.Internal
-  public static PathChooserDialog createNativePathChooserIfEnabled(@NotNull FileChooserDescriptor descriptor,
-                                                                   @Nullable Project project,
-                                                                   @Nullable Component parent) {
+  public static PathChooserDialog createNativePathChooserIfEnabled(
+    @NotNull FileChooserDescriptor descriptor,
+    @Nullable Project project,
+    @Nullable Component parent
+  ) {
     return LocalFileChooserFactory.createNativePathChooserIfEnabled(descriptor, project, parent);
   }
 

@@ -15805,16 +15805,6 @@ a:com.intellij.openapi.fileChooser.ex.TextFieldAction
 - p:getStatusBarText():java.lang.String
 - p:onSetActive(Z):V
 - update():V
-c:com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl
-- com.intellij.openapi.fileChooser.FileChooserFactory
-- <init>():V
-- createFileChooser(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component):com.intellij.openapi.fileChooser.FileChooserDialog
-- createFileTextField(com.intellij.openapi.fileChooser.FileChooserDescriptor,Z,com.intellij.openapi.Disposable):com.intellij.openapi.fileChooser.FileTextField
-- createPathChooser(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component):com.intellij.openapi.fileChooser.PathChooserDialog
-- createSaveFileDialog(com.intellij.openapi.fileChooser.FileSaverDescriptor,com.intellij.openapi.project.Project):com.intellij.openapi.fileChooser.FileSaverDialog
-- createSaveFileDialog(com.intellij.openapi.fileChooser.FileSaverDescriptor,java.awt.Component):com.intellij.openapi.fileChooser.FileSaverDialog
-- s:getMacroMap():java.util.Map
-- installFileCompletion(javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,Z,com.intellij.openapi.Disposable):V
 f:com.intellij.openapi.fileChooser.impl.FileChooserUtil
 - <init>():V
 - s:getChosenFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor,java.util.List):java.util.List
@@ -15837,14 +15827,6 @@ f:com.intellij.openapi.fileChooser.impl.FileTreeStructure
 - hasSomethingToCommit():Z
 - isToBuildChildrenInBackground(java.lang.Object):Z
 - showHidden(Z):V
-c:com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory
-- <init>():V
-- createFileChooser(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component):com.intellij.openapi.fileChooser.FileChooserDialog
-- createFileTextField(com.intellij.openapi.fileChooser.FileChooserDescriptor,Z,com.intellij.openapi.Disposable):com.intellij.openapi.fileChooser.FileTextField
-- createPathChooser(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component):com.intellij.openapi.fileChooser.PathChooserDialog
-- createSaveFileDialog(com.intellij.openapi.fileChooser.FileSaverDescriptor,com.intellij.openapi.project.Project):com.intellij.openapi.fileChooser.FileSaverDialog
-- createSaveFileDialog(com.intellij.openapi.fileChooser.FileSaverDescriptor,java.awt.Component):com.intellij.openapi.fileChooser.FileSaverDialog
-- installFileCompletion(javax.swing.JTextField,com.intellij.openapi.fileChooser.FileChooserDescriptor,Z,com.intellij.openapi.Disposable):V
 c:com.intellij.openapi.fileChooser.tree.FileNode
 - getComment():java.lang.String
 - getFile():com.intellij.openapi.vfs.VirtualFile

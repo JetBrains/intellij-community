@@ -2376,7 +2376,6 @@ f:com.intellij.openapi.fileChooser.FileChooser
 - s:chooseFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):V
 - s:chooseFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,java.awt.Component,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):V
 - s:chooseFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor,java.awt.Component,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile[]
-- s:safeInvokeFilter(java.io.FilenameFilter,Z):java.io.FilenameFilter
 com.intellij.openapi.fileChooser.FileChooser$FileChooserConsumer
 - com.intellij.util.Consumer
 - a:cancelled():V
