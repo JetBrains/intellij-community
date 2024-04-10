@@ -1,4 +1,4 @@
-// "Replace with 'stream.findAny().isPresent()'" "true"
+// "Replace with 'stream.findAny().isPresent()'" "true-preview"
 
 import java.util.stream.Stream;
 

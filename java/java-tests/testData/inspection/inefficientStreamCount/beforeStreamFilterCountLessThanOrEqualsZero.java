@@ -1,4 +1,4 @@
-// "Replace with 'stream.noneMatch()'" "true"
+// "Replace with 'stream.noneMatch()'" "true-preview"
 
 import java.util.Arrays;
 
