@@ -259,7 +259,6 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (KmProperty removedProp : metaDiff.properties().removed()) {
-
         if (Attributes.isInline(removedProp.getGetter()) || (removedProp.getSetter() != null && Attributes.isInline(removedProp.getSetter()))) {
           debug("Removed property was inlineable, affecting property usages ", removedProp.getName());
           affectMemberLookupUsages(context, changedClass, removedProp.getName(), present);
@@ -302,6 +301,23 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           }
         }
       }
+
+      for (KmTypeAlias alias : flat(metaDiff.typeAliases().removed(), metaDiff.typeAliases().added())) {
+        Visibility visibility = Attributes.getVisibility(alias);
+        if (visibility != Visibility.PRIVATE && visibility != Visibility.PRIVATE_TO_THIS) {
+          debug("A type alias declaration was added/removed; affecting lookup usages ", alias.getName());
+          affectMemberLookupUsages(context, changedClass, alias.getName(), future);
+        }
+      }
+      for (Difference.Change<KmTypeAlias, KotlinMeta.KmTypeAliasDiff> aChange : metaDiff.typeAliases().changed()) {
+        KotlinMeta.KmTypeAliasDiff aDiff = aChange.getDiff();
+        if (aDiff.accessRestricted() || aDiff.underlyingTypeChanged()) {
+          KmTypeAlias changedAlias = aChange.getPast();
+          debug("A type alias declaration has access restricted or underlying type has changed; affecting lookup usages ", changedAlias.getName());
+          affectMemberLookupUsages(context, changedClass, changedAlias.getName(), future);
+        }
+      }
+
     }
 
     return true;

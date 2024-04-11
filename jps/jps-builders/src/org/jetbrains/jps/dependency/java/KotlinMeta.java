@@ -148,6 +148,11 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container != null? container.getFunctions() : Collections.emptyList();
   }
 
+  public Iterable<KmTypeAlias> getKmTypeAliases() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container != null? container.getTypeAliases() : Collections.emptyList();
+  }
+
   public Iterable<KmConstructor> getKmConstructors() {
     KmDeclarationContainer container = getDeclarationContainer();
     return container instanceof KmClass? ((KmClass)container).getConstructors() : Collections.emptyList();
@@ -184,6 +189,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     private final Supplier<Specifier<KmFunction, KmFunctionsDiff>> myFunctionsDiff;
     private final Supplier<Specifier<KmConstructor, KmConstructorsDiff>> myConstructorsDiff;
     private final Supplier<Specifier<KmProperty, KmPropertiesDiff>> myPropertiesDiff;
+    private final Supplier<Specifier<KmTypeAlias, KmTypeAliasDiff>> myAliasesDiff;
 
     Diff(KotlinMeta past) {
       myPast = past;
@@ -208,11 +214,20 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
         p -> Objects.hashCode(p.getName()),
         KmPropertiesDiff::new
       ));
+
+      myAliasesDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmTypeAliases(), getKmTypeAliases(),
+        (a1, a2) -> Objects.equals(a1.getName(), a2.getName()),
+        a -> Objects.hashCode(a.getName()),
+        KmTypeAliasDiff::new
+      ));
     }
 
     @Override
     public boolean unchanged() {
-      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() && functions().unchanged() && properties().unchanged() && constructors().unchanged()/*&& !dataChanged()*/;
+      return
+        !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() &&
+        functions().unchanged() && properties().unchanged() && constructors().unchanged() && typeAliases().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -257,6 +272,10 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     public Specifier<KmProperty, KmPropertiesDiff> properties() {
       return myPropertiesDiff.get();
+    }
+
+    public Specifier<KmTypeAlias, KmTypeAliasDiff> typeAliases() {
+      return myAliasesDiff.get();
     }
   }
 
@@ -325,6 +344,34 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     private static Iterable<KmType> getParameterTypes(KmFunction f) {
       // return all types that can make up a jvm signature
       return Iterators.filter(Iterators.flat(List.of(f.getContextReceiverTypes(), Iterators.asIterable(f.getReceiverParameterType()), Iterators.map(f.getValueParameters(), KmValueParameter::getType))), Objects::nonNull);
+    }
+  }
+  
+  public static final class KmTypeAliasDiff implements Difference {
+    private final KmTypeAlias past;
+    private final KmTypeAlias now;
+
+    public KmTypeAliasDiff(KmTypeAlias past, KmTypeAlias now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !visibilityChanged() && !underlyingTypeChanged();
+    }
+
+
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean underlyingTypeChanged() {
+      return !Objects.equals(past.getUnderlyingType(), now.getUnderlyingType());
     }
   }
 
