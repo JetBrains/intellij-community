@@ -144,6 +144,7 @@ internal object CompiledClasses {
           withScope = { name, operation -> context.messages.block(name, operation) },
           classOutput = context.classesOutputDirectory,
           metadataFile = Path.of(context.options.pathToCompiledClassesArchivesMetadata!!),
+          skipUnpack = !context.options.unpackCompiledClassesArchives,
           /**
            * [FetchAndUnpackItem.output].hash file shouldn't leak to installer distribution
            */

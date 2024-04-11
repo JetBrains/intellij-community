@@ -239,6 +239,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
                                   withScope: (name: String, operation: () -> Unit) -> Unit,
                                   classOutput: Path,
                                   metadataFile: Path,
+                                  skipUnpack: Boolean,
                                   saveHash: Boolean) {
   withScope("fetch and unpack compiled classes") {
     val metadata = Json.decodeFromString<CompilationPartsMetadata>(Files.readString(metadataFile))
@@ -273,7 +274,9 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
         }
 
         val file = item.file
-        toUnpack.add(item)
+        if (!skipUnpack) {
+          toUnpack.add(item)
+        }
         ForkJoinTask.adapt(Callable {
           when {
             !Files.exists(file) -> item
@@ -351,6 +354,7 @@ fun fetchAndUnpackCompiledClasses(reportStatisticValue: (key: String, value: Str
                                    client = httpClientWithoutFollowingRedirects,
                                    bufferPool = bufferPool,
                                    downloadedBytes = downloadedBytes,
+                                   skipUnpack = skipUnpack,
                                    saveHash = saveHash)
         }
       }

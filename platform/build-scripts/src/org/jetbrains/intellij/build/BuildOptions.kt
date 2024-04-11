@@ -82,6 +82,12 @@ data class BuildOptions(
    * Metadata is a [org.jetbrains.intellij.build.impl.compilation.CompilationPartsMetadata] serialized into JSON format.
    */
   @JvmField val pathToCompiledClassesArchivesMetadata: String? = System.getProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA),
+
+  /**
+   * If `true` won't unpack downloaded jars with compiled classes from [pathToCompiledClassesArchivesMetadata].
+   */
+  @JvmField val unpackCompiledClassesArchives: Boolean = SystemProperties.getBooleanProperty(INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK, true),
+
   @JvmField internal val validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false")),
 ) {
   companion object {
@@ -289,6 +295,11 @@ data class BuildOptions(
      * @see [pathToCompiledClassesArchivesMetadata]
      */
     const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA: String = "intellij.build.compiled.classes.archives.metadata"
+
+    /**
+     * If `false` won't unpack downloaded jars with compiled classes from [INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_METADATA].
+     */
+    const val INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK: String = "intellij.build.compiled.classes.archives.unpack"
 
     /**
      * By default, calculated based on build number.
