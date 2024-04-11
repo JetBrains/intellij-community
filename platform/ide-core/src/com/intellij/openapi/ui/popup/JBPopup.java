@@ -159,6 +159,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   void setLocation(@NotNull Point screenPoint);
 
+  default void setSize(@Nullable Point location, @NotNull Dimension size) { }
+
   void setSize(@NotNull Dimension size);
 
   Dimension getSize();

@@ -533,7 +533,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Nullable
-  protected static Window getCurrentWindow(@NotNull Project project) {
+  public static Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -2027,10 +2027,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Override
-  public void setSize(final @NotNull Dimension size) {
+  public void setSize(@NotNull Dimension size) {
+    setSize(null, size);
+  }
+
+  @Override
+  public void setSize(@Nullable Point location, @NotNull Dimension size) {
     // do not update the bounds programmatically if the user moves or resizes the popup
     if (!isBusy()) {
-      setBounds(null, new Dimension(size));
+      setBounds(location, new Dimension(size));
       if (myPopup != null) Optional.ofNullable(getContentWindow(myContent)).ifPresent(Container::validate); // to adjust content size
     }
   }
