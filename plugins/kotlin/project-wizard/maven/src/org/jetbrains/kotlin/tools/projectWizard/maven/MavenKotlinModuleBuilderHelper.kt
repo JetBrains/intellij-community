@@ -112,7 +112,7 @@ class MavenKotlinModuleBuilderHelper(
         conditions.setProperty("MAVEN_SUREFIRE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.SUREFIRE.text)
         conditions.setProperty("MAVEN_FAILSAFE_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.FAILSAFE.text)
         conditions.setProperty("MAVEN_CODEHAUS_MOJO_EXEC_PLUGIN_VERSION", Versions.MAVEN_PLUGINS.CODEHAUS_MOJO_EXEC.text)
-        conditions.setProperty("JUNIT_JUPITER_ENGINE_VERSION", Versions.JUNIT5.text)
+        conditions.setProperty("JUNIT_JUPITER_VERSION", Versions.JUNIT5.text)
         conditions.setProperty("MAVEN_CENTRAL_REPOSITORY_ID", DefaultRepository.MAVEN_CENTRAL.idForMaven)
         conditions.setProperty("MAVEN_CENTRAL_REPOSITORY_URL", DefaultRepository.MAVEN_CENTRAL.url)
 
