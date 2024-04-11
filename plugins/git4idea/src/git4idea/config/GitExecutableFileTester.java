@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
@@ -75,7 +76,20 @@ class GitExecutableFileTester {
         File exeFile = PathEnvironmentVariableUtil.findInPath(filePath);
         if (exeFile != null) filePath = exeFile.getPath();
       }
-      return getModificationTime(Paths.get(filePath));
+
+      Path executablePath = Paths.get(filePath);
+      long modificationTime = getModificationTime(executablePath);
+
+      for (Path dependencyPath : GitExecutableDetector.getDependencyPaths(executablePath)) {
+        try {
+          long depTime = getModificationTime(dependencyPath);
+          modificationTime = Math.max(modificationTime, depTime);
+        }
+        catch (IOException ignore) {
+        }
+      }
+
+      return modificationTime;
     }
 
     if (executable instanceof GitExecutable.Wsl) {
