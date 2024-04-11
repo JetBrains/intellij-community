@@ -609,9 +609,7 @@ private fun CoroutineScope.loadCoreModules(
   val useCoreClassLoader = pathResolver.isRunningFromSources ||
                            platformPrefix.startsWith("CodeServer") ||
                            java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
-  // should be the only plugin in lib (only for Ultimate and WebStorm for now)
-  if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
-      (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
+  if ((isProductWithTheOnlyDescriptor(platformPrefix)) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
     return Java11Shim.INSTANCE.listOf(async(Dispatchers.IO) {
       loadCoreProductPlugin(
         path = PluginManagerCore.PLUGIN_XML_PATH,
@@ -658,6 +656,13 @@ private fun CoroutineScope.loadCoreModules(
     }
   }
   return result
+}
+
+// should be the only plugin in lib
+private fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
+  return platformPrefix == PlatformUtils.IDEA_PREFIX ||
+         platformPrefix == PlatformUtils.WEB_PREFIX ||
+         platformPrefix == PlatformUtils.GATEWAY_PREFIX
 }
 
 private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {

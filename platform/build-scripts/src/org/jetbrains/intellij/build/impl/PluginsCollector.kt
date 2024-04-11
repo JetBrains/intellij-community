@@ -5,6 +5,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jdom.Namespace
@@ -120,10 +122,7 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     // not a plugin
-    if (moduleName == "intellij.idea.ultimate.customization" ||
-        moduleName == "intellij.lightEdit" ||
-        (context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) ||
-        moduleName == "intellij.webstorm") {
+    if ((context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins."))) {
       continue
     }
 
@@ -135,7 +134,26 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
     }
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
-      Span.current().addEvent("skip module '$moduleName' since 'implementation-detail' == 'true' in '$pluginXml'")
+      Span.current().addEvent("skip module", Attributes.of(
+        AttributeKey.stringKey("name"), moduleName,
+        AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
+        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+      ))
+      continue
+    }
+
+    // non-product plugin cannot include VCS and other such platform modules into content
+    if (xml.getChildren("content").any { contentElement ->
+        contentElement.getChildren("module").any {
+          val name = it.getAttributeValue("name", "")
+          name.startsWith("intellij.platform.vcs.") || name == "intellij.ide.startup.importSettings"
+        }
+      }) {
+      Span.current().addEvent("skip module", Attributes.of(
+        AttributeKey.stringKey("name"), moduleName,
+        AttributeKey.stringKey("reason"), "product descriptor",
+        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+      ))
       continue
     }
 
@@ -145,8 +163,13 @@ fun collectPluginDescriptors(skipImplementationDetailPlugins: Boolean,
                                             pathResolver = SourcesBasedXIncludeResolver(pluginLayout = pluginLayout, context = context))
 
     val id = xml.getChildTextTrim("id") ?: xml.getChildTextTrim("name")
-    check(!id.isNullOrEmpty()) {
-      "Module '$moduleName': '$pluginXml' does not contain <id/> element"
+    if (id.isNullOrEmpty()) {
+      Span.current().addEvent("skip module", Attributes.of(
+        AttributeKey.stringKey("name"), moduleName,
+        AttributeKey.stringKey("reason"), "does not contain <id/> element",
+        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+      ))
+      continue
     }
 
     val declaredModules = HashSet<String>()

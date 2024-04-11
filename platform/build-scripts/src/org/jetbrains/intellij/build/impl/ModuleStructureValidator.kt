@@ -154,8 +154,12 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
     }
 
     // start validating from product xml descriptor
-    val productDescriptorName = "META-INF/${context.productProperties.platformPrefix}Plugin.xml"
-    val productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
+    var productDescriptorName = ""
+    var productDescriptorFile: Path? = null
+    for (c in listOf("META-INF/plugin.xml", "META-INF/${context.productProperties.platformPrefix}Plugin.xml")) {
+      productDescriptorName = c
+      productDescriptorFile = findDescriptorFile(productDescriptorName, roots) ?: continue
+    }
     if (productDescriptorFile == null) {
       errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
       return

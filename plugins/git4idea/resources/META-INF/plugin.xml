@@ -20,10 +20,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
-    <!-- DO NOT USE IT!!! DO NOT USE EVERYWHERE ElSE without the Core team approve. -->
-    <!-- Workaround for bad Gateway tests (dev mode not used) -->
-    <module name="intellij.platform.vcs.log.impl"/>
-    <module name="intellij.platform.vcs.dvcs.impl"/>
   </dependencies>
   <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 

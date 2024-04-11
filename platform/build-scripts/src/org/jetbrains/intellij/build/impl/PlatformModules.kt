@@ -87,6 +87,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.xml.dom.impl",
 
   "intellij.platform.vcs.log",
+  "intellij.platform.vcs.impl",
   "intellij.smart.update",
 
   "intellij.platform.markdown.utils",
