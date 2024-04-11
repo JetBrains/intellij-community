@@ -120,10 +120,6 @@ public final class ConfigurableExtensionPointUtil {
       targetProject,
       () -> {
         List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
-        List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
-        for (ConfigurablesPatcher modificator : modificators) {
-          modificator.modifyOriginalConfigurablesList(configurables, targetProject);
-        }
         return getConfigurableGroup(configurables, targetProject);
       }
     );
@@ -386,6 +382,11 @@ public final class ConfigurableExtensionPointUtil {
       for (ConfigurableEP<Configurable> extension : Configurable.PROJECT_CONFIGURABLE.getExtensions(project)) {
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project, checkNonDefaultProject);
       }
+    }
+
+    List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
+    for (ConfigurablesPatcher modificator : modificators) {
+      modificator.modifyOriginalConfigurablesList(list, project);
     }
     return list;
   }
