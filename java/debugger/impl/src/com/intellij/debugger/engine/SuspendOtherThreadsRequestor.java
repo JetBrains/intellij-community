@@ -46,6 +46,7 @@ public class SuspendOtherThreadsRequestor implements FilteredRequestor {
       process.mySuspendAllListeners.add(() -> {
         // Now all threads are stopped. But it would be nice to report about it.
         process.getSuspendManager().voteResume(suspendContext);
+        suspendContext.getDebugProcess().notifyStoppedOtherThreads();
       });
       return true;
     }

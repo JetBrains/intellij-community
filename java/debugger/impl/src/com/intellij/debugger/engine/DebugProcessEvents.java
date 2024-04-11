@@ -817,6 +817,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         LOG.error("This means resuming this thead to the running state");
       }
       suspendManager.voteResume(suspendContext);
+      suspendContext.getDebugProcess().notifyStoppedOtherThreads();
     }
     else {
       noStandardSuspendNeeded = SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext, afterSwitch);
