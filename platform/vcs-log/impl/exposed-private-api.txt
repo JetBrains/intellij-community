@@ -5,12 +5,9 @@ com/intellij/internal/statistic/eventLog/events/EventId3
 com/intellij/internal/statistic/eventLog/events/StringEventField
 com/intellij/internal/statistic/eventLog/events/StringListEventField
 com/intellij/internal/statistic/eventLog/events/VarargEventId
-com/intellij/util/io/StorageLockContext
 com/intellij/vcs/log/data/VcsUserRegistryImpl
 com/intellij/vcs/log/data/index/VcsLogModifiableIndex
 com/intellij/vcs/log/data/index/VcsLogStorageBackend
 com/intellij/vcs/log/history/CommitFileState
 com/intellij/vcs/log/history/FileHistory
 com/intellij/vcs/log/ui/filter/MultilinePopupBuilder$CompletionPrefixProvider
-com/intellij/vcs/log/util/StorageId
-com/intellij/vcs/log/util/StorageId$Directory

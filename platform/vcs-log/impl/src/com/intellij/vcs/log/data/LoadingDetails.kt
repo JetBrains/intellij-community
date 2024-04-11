@@ -39,7 +39,7 @@ open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: Int, val load
   }
 }
 
-class LoadingDetailsWithRoot(storage: VcsLogStorage, commitIndex: Int, private val cachedRoot: VirtualFile, loadingTaskIndex: Long) :
+internal class LoadingDetailsWithRoot(storage: VcsLogStorage, commitIndex: Int, private val cachedRoot: VirtualFile, loadingTaskIndex: Long) :
   LoadingDetailsImpl(storage, commitIndex, loadingTaskIndex) {
   override fun getRoot(): VirtualFile = cachedRoot
 }

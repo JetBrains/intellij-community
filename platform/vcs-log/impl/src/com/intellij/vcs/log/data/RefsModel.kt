@@ -11,6 +11,7 @@ import com.intellij.vcs.log.VcsRef
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntConsumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
@@ -57,11 +58,13 @@ class RefsModel(val allRefsByRoot: Map<VirtualFile, CompressedRefs>, private val
   companion object {
     private val LOG = Logger.getInstance(RefsModel::class.java)
 
+    @ApiStatus.Internal
     @JvmStatic
     fun createEmptyInstance(storage: VcsLogStorage): RefsModel {
       return create(emptyMap(), emptySet(), storage, emptyMap())
     }
 
+    @ApiStatus.Internal
     @JvmStatic
     fun create(refs: Map<VirtualFile, CompressedRefs>, heads: Set<Int>, storage: VcsLogStorage,
                providers: Map<VirtualFile, VcsLogProvider>): RefsModel {

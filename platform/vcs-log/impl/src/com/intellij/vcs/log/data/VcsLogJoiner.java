@@ -16,7 +16,7 @@ import java.util.*;
  * @author Stanislav Erokhin
  * @author Kirill Likhodedov
  */
-public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
+final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
   public static final @NonNls String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**

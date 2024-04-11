@@ -20,6 +20,7 @@ import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.util.function.Predicate;
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
+@ApiStatus.Internal
 public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   private static final @NotNull Logger LOG = Logger.getInstance(VcsLogStorage.class);
   private static final @NotNull @NonNls String HASHES_STORAGE = "hashes";

@@ -3,7 +3,7 @@ package com.intellij.vcs.log.graph
 
 import com.intellij.vcs.log.data.RefsModel
 
-class GraphColorManagerImpl(private val refsModel: RefsModel) : GraphColorManager<Int> {
+internal class GraphColorManagerImpl(private val refsModel: RefsModel) : GraphColorManager<Int> {
   override fun getColor(headCommit: Int, headFragmentIndex: Int, fragmentIndex: Int): Int {
     if (headFragmentIndex == fragmentIndex) {
       val firstRef = refsModel.bestRefToHead(headCommit) ?: return DEFAULT_COLOR

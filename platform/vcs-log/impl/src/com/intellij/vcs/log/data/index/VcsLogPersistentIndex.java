@@ -35,6 +35,7 @@ import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.sqlite.AlreadyClosedException;
@@ -52,6 +53,7 @@ import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 
+@ApiStatus.Internal
 public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
   static final int VERSION = 18;

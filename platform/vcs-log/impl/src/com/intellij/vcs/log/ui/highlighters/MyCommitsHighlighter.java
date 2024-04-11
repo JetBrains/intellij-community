@@ -25,7 +25,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
   private final @NotNull VcsLogUserResolver myResolver;
   private boolean myShouldHighlightUser = false;
 
-  public MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
+  MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
     myLogData = logData;
     myUi = logUi;
     myResolver = userResolver;

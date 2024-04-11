@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
+
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.Disposable
@@ -38,6 +40,7 @@ import com.intellij.vcs.log.visible.filters.*
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus.Internal
 
 internal class FileHistoryFilterer(private val logData: VcsLogData, private val logId: String) : VcsLogFilterer, Disposable {
   private val project = logData.project

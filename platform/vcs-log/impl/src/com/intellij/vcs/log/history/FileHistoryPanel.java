@@ -63,7 +63,7 @@ import java.util.Objects;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-public class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
+class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
   private static final @NotNull @NonNls String HELP_ID = "reference.versionControl.toolwindow.history";
 
   private final @NotNull Project myProject;

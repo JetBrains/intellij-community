@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
+
 package com.intellij.vcs.log.history
 
 import com.intellij.util.containers.Stack
@@ -10,6 +12,7 @@ import com.intellij.vcs.log.graph.utils.Dfs
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,

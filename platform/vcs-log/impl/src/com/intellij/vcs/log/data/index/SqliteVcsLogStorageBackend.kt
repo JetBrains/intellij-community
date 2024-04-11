@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Internal
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SqlResolve")
 
 package com.intellij.vcs.log.data.index
@@ -26,6 +27,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.sqlite.*
 import java.io.IOException
 import java.nio.file.Files

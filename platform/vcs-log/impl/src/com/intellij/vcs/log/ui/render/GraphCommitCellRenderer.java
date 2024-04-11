@@ -20,11 +20,13 @@ import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
 import com.intellij.vcs.log.ui.table.GraphCommitCellController;
+import com.intellij.vcs.log.ui.table.VcsLogCellController;
 import com.intellij.vcs.log.ui.table.VcsLogCellRenderer;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.visible.filters.VcsLogTextFilterWithMatches;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphCommitCell>
   implements VcsLogCellRenderer {
   private static final int MAX_GRAPH_WIDTH = 6;
@@ -129,7 +132,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
   }
 
   @Override
-  public @NotNull GraphCommitCellController getCellController() {
+  public @NotNull VcsLogCellController getCellController() {
     return new GraphCommitCellController(myLogData, myGraphTable, myComponent.myPainter) {
 
       @Override
