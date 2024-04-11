@@ -79,9 +79,15 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
 
     // Check modules as well, for example, intellij.diagram.impl.vcs.
     // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
-    if ((module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) && doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
-      moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
-      moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
+    if (module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) {
+      val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
+      if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
+        moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
+      }
+      if (!strictCheck) {
+        moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
+      }
     }
 
     if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {

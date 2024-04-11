@@ -1,4 +1,8 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <iconMapper mappingFile="CollaborationToolsIconMappings.json"/>
     <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>

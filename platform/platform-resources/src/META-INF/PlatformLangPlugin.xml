@@ -161,9 +161,6 @@
   <xi:include href="/META-INF/lvcs.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/collaboration-tools.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>

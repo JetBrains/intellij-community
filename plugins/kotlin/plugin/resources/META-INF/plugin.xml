@@ -250,6 +250,7 @@
   <dependencies>
     <!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->
     <plugin id="com.intellij.java"/>
+    <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
   <depends optional="true" config-file="performance-plugin.xml">com.jetbrains.performancePlugin</depends>

@@ -89,10 +89,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.vcs.log",
   "intellij.smart.update",
 
-  "intellij.platform.collaborationTools",
-  "intellij.platform.collaborationTools.auth.base",
-  "intellij.platform.collaborationTools.auth",
-
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
 
@@ -603,7 +599,11 @@ private fun collectProductModules(root: XmlElement, result: LinkedHashSet<Module
 // we can consider ways to improve `pluginAuto` and eliminate the need for an explicit declaration here.
 private val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.platform.vcs.log.impl", listOf(
-    "intellij.platform.vcs.log.graph.impl"
+    "intellij.platform.vcs.log.graph.impl",
+  ),
+  "intellij.platform.collaborationTools", listOf(
+    "intellij.platform.collaborationTools.auth.base",
+    "intellij.platform.collaborationTools.auth",
   ),
   "intellij.platform.vcs.dvcs.impl", listOf(
     "intellij.platform.vcs.dvcs"
