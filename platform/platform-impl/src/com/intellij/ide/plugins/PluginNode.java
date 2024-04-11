@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -74,6 +75,8 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private Collection<String> mySuggestedFeatures;
   private boolean myConverted;
   private Collection<String> dependencyNames;
+
+  private FUSEventSource installSource;
 
   /**
    * @deprecated Use {@link #PluginNode(PluginId)}
@@ -664,6 +667,16 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setConverted(boolean converted) {
     myConverted = converted;
+  }
+
+  @ApiStatus.Internal
+  public FUSEventSource getInstallSource() {
+    return installSource;
+  }
+
+  @ApiStatus.Internal
+  public void setInstallSource(FUSEventSource installSource) {
+    this.installSource = installSource;
   }
 
   @Override

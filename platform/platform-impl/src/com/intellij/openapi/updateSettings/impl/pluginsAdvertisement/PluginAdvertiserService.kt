@@ -605,6 +605,7 @@ open class PluginAdvertiserServiceImpl(
   }
 }
 
+@ApiStatus.Internal
 open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
 
   final override suspend fun run(
@@ -625,6 +626,7 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
   final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
 }
 
+@ApiStatus.Internal
 data class SuggestedIde(
   @NlsContexts.DialogMessage
   val name: String,
@@ -646,11 +648,16 @@ private fun setTryUltimateKey(project: Project, value: Boolean) {
   EditorNotifications.getInstance(project).updateAllNotifications()
 }
 
+@ApiStatus.Internal
 fun disableTryUltimate(project: Project) = setTryUltimateKey(project, true)
+
+@ApiStatus.Internal
 fun enableTryUltimate(project: Project) = setTryUltimateKey(project, false)
 
+@ApiStatus.Internal
 fun tryUltimateIsDisabled() : Boolean = PropertiesComponent.getInstance().getBoolean(TRY_ULTIMATE_DISABLED_KEY)
 
+@ApiStatus.Internal
 fun tryUltimate(
   pluginId: PluginId?,
   suggestedIde: SuggestedIde,
@@ -667,6 +674,7 @@ fun tryUltimate(
   }
 }
 
+@ApiStatus.Internal
 fun EditorNotificationPanel.createTryUltimateActionLabel(
   suggestedIde: SuggestedIde,
   project: Project,
@@ -679,7 +687,6 @@ fun EditorNotificationPanel.createTryUltimateActionLabel(
     tryUltimate(pluginId, suggestedIde, project)
   }
 }
-
 
 private object OsArchMapper {
   const val OS_ARCH_PARAMETER: String = "{type}"
