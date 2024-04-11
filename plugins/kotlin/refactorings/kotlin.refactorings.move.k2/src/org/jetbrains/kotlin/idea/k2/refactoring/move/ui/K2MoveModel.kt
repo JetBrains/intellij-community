@@ -159,6 +159,18 @@ sealed class K2MoveModel {
                 return fileIndex.isInSourceContent(targetFile)
             }
 
+            fun isSingleFileMove(movedElements: List<KtElement>) = movedElements.all { it is KtNamedDeclaration }
+                    || movedElements.singleOrNull() is KtFile
+
+            fun isMultiFileMove(movedElements: List<KtElement>) = movedElements.map { it.containingFile }.toSet().size > 1
+
+            fun PsiElement?.isSingleClassContainer(): Boolean {
+                if (this !is KtClass) return false
+                val file = parent as? KtFile ?: return false
+                return this == file.declarations.singleOrNull()
+            }
+
+
             if (elementsToMove.any { it.parentOfType<KtNamedDeclaration>(withSelf = false) != null }) {
                 val message = RefactoringBundle.getCannotRefactorMessage(
                     KotlinBundle.message("text.move.declaration.no.support.for.nested.declarations")
@@ -173,22 +185,19 @@ sealed class K2MoveModel {
                 return null
             }
 
-            if (elementsToMove.map { it.containingKtFile }.size > 1 && targetContainer != null && targetContainer !is PsiDirectory) {
+            if (isMultiFileMove(elementsToMove) && targetContainer != null && targetContainer !is PsiDirectory) {
                 val message = RefactoringBundle.getCannotRefactorMessage(KotlinBundle.message("text.move.file.no.support.for.file.target"))
                 CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                 return null
             }
 
-            fun PsiElement?.isSingleClassContainer(): Boolean {
-                if (this !is KtClass) return false
-                val file = parent as? KtFile ?: return false
-                return this == file.declarations.singleOrNull()
+            if (isMultiFileMove(elementsToMove) && elementsToMove.any { it is KtNamedDeclaration && !it.isSingleClassContainer()}) {
+                val message = RefactoringBundle.getCannotRefactorMessage(
+                    KotlinBundle.message("text.move.declaration.no.support.for.multi.file")
+                )
+                CommonRefactoringUtil.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
+                return null
             }
-
-            fun isSingleFileMove(movedElement: List<KtElement>) = movedElement.all { it is KtNamedDeclaration }
-                    || movedElement.singleOrNull() is KtFile
-
-            fun isMultiFileMove(movedElement: List<KtElement>) = movedElement.map { it.containingFile }.toSet().size > 1
 
             val inSourceRoot = inSourceRoot(elementsToMove)
             return when {
