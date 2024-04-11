@@ -17,13 +17,14 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.git.RenameTrackingKt;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -138,17 +139,9 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
 
     final PsiFile[] files = dir.getFiles();
-    Set<String> fileNames = new HashSet<>();
-    for (PsiFile psiFile : files) {
-      fileNames.add(psiFile.getName());
-    }
+    Set<String> fileNames = ContainerUtil.map2Set(files, PsiFileSystemItem::getName);
     String prefix = FileUtilRt.getNameWithoutExtension(file.getName());
-    String fileName = prefix + ".java";
-    int index = 1;
-    while (fileNames.contains(fileName)) {
-      fileName = prefix + (index++) + ".java";
-    }
-    return fileName;
+    return UniqueNameGenerator.generateUniqueName(prefix, "", ".java", fileNames);
   }
 
   @NotNull
