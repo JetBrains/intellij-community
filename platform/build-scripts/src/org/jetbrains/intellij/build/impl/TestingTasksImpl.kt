@@ -39,7 +39,8 @@ import java.util.stream.Stream
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readLines
 
-internal class TestingTasksImpl(private val context: CompilationContext, private val options: TestingOptions) : TestingTasks {
+internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
+  private val context: CompilationContext = if (options.useArchivedCompiledClasses) ArchivedCompilationContext(context) else context
   private val NO_TESTS_ERROR = 42
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
@@ -202,17 +203,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                                             rootExcludeCondition: ((Path) -> Boolean)?,
                                             systemProperties: MutableMap<String, String>) {
     if (rootExcludeCondition != null) {
-      val excludedRoots = ArrayList<String>()
+      val excludedRootPaths = ArrayList<Path>(context.project.modules.size * 2)
       for (module in context.project.modules) {
         val contentRoots = module.contentRootsList.urls
         if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
-          sequenceOf(context.getModuleOutputDir(module), context.getModuleTestsOutputDir(module)).forEach {
-            if (Files.exists(it)) {
-              excludedRoots += it.toString()
-            }
-          }
+          excludedRootPaths.add(context.getModuleOutputDir(module))
+          excludedRootPaths.add(context.getModuleTestsOutputDir(module))
         }
       }
+      val excludedRoots = excludedRootPaths.filter(Files::exists).replaceWithArchivedIfNeededLP().map(Path::toString)
 
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
@@ -349,19 +348,19 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     if (moduleInfoFile != null) {
       val outputDir = ModuleBuildTarget(mainJpsModule, JavaModuleBuildTargetType.TEST).outputDir
       val pair = ModulePathSplitter().splitPath(moduleInfoFile, mutableSetOf(outputDir), HashSet(testRoots))
-      modulePath = pair.first.path.mapNotNull(toStringConverter)
-      testClasspath = pair.second.mapNotNull(toStringConverter)
+      modulePath = pair.first.path.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS()
+      testClasspath = pair.second.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS()
     }
     else {
       modulePath = null
-      testClasspath = testRoots.mapNotNull(toStringConverter)
+      testClasspath = testRoots.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS()
     }
     val bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
       .toMutableList()
     val classpathFile = context.paths.tempDir.resolve("junit.classpath")
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
-    Files.writeString(classpathFile, testRoots.mapNotNull(toStringConverter).joinToString(separator = "\n"))
+    Files.writeString(classpathFile, testRoots.mapNotNull(toStringConverter).replaceWithArchivedIfNeededLS().joinToString(separator = "\n"))
     @Suppress("NAME_SHADOWING")
     val systemProperties = systemProperties.toMutableMap()
     systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
@@ -408,6 +407,20 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                     modulePath = modulePath,
                     testClasspath = testClasspath)
     notifySnapshotBuilt(allJvmArgs)
+  }
+
+  private fun List<String>.replaceWithArchivedIfNeededLS(): List<String> {
+    if (context is ArchivedCompilationContext) {
+      return context.replaceWithCompressedIfNeededLS(this)
+    }
+    return this
+  }
+
+  private fun List<Path>.replaceWithArchivedIfNeededLP(): List<Path> {
+    if (context is ArchivedCompilationContext) {
+      return context.replaceWithCompressedIfNeededLP(this)
+    }
+    return this
   }
 
   private suspend fun getRuntimeExecutablePath(): Path {
@@ -560,6 +573,13 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       val utilClasspath = enumerator.classes().roots.mapTo(LinkedHashSet()) { it.absolutePath }
       utilClasspath.removeAll(HashSet(classPath))
       classPath.addAll(utilClasspath)
+    }
+
+    if (context is ArchivedCompilationContext) {
+      context.archivesLocation.absolutePathString().let {
+        systemProperties.compute("vfs.additional-allowed-roots") { _, old -> if (old == null) it else "$it:$old" }
+        systemProperties.put("intellij.test.jars.location", it)
+      }
     }
   }
 
