@@ -10,6 +10,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -57,7 +58,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
                               project: Project,
                               stamp: Long?,
                               cacheService: CodeVisionCacheService): CodeVisionState {
-    val file = editor.virtualFile?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
+    val file = FileDocumentManager.getInstance().getFile(editor.document)?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
 
     if (file.project.isDefault) return CodeVisionState.READY_EMPTY
     if (!acceptsFile(file)) return CodeVisionState.READY_EMPTY
