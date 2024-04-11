@@ -637,7 +637,7 @@ a:com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 - getElementPresentation(com.intellij.psi.PsiElement):java.lang.String
 - s:getMergedLineMarkerInfos(com.intellij.codeInsight.daemon.GutterIconNavigationHandler):java.util.List
 - s:getMergedMarkers(com.intellij.codeInsight.daemon.LineMarkerInfo):java.util.List
-- p:getNavigateAction(java.awt.event.MouseEvent):com.intellij.openapi.actionSystem.AnAction
+- p:getNavigateAction():com.intellij.openapi.actionSystem.AnAction
 - s:merge(java.util.List,I):java.util.List
 c:com.intellij.codeInsight.daemon.NavigateAction
 - com.intellij.openapi.actionSystem.AnAction

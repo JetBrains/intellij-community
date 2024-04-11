@@ -187,7 +187,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       return myMarkers;
     }
 
-    private DefaultActionGroup getCommonActionGroup(@NotNull MouseEvent mouseEvent) {
+    private @NotNull DefaultActionGroup getCommonActionGroup() {
       DefaultActionGroup commonActionGroup = new DefaultActionGroup();
       for (int i = 0; i < myGroups.size(); i++) {
         ActionGroup popupActions = myGroups.get(i);
@@ -196,10 +196,10 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           commonActionGroup.addAll(popupActions);
         }
         else {
-          commonActionGroup.add(myMarkers.get(i).getNavigateAction(mouseEvent));
+          commonActionGroup.add(myMarkers.get(i).getNavigateAction());
         }
       }
-      return commonActionGroup.getChildrenCount() == 0 ? null : commonActionGroup;
+      return commonActionGroup;
     }
 
     private static @NotNull TextRange getCommonTextRange(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
@@ -231,12 +231,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
         @Override
         public @NotNull ActionGroup getPopupMenuActions() {
-          return ActionGroup.EMPTY_GROUP; // stub for remote client
-        }
-
-        @Override
-        public ActionGroup getPopupMenuActions(@NotNull MouseEvent mouseEvent) {
-          return getCommonActionGroup(mouseEvent);
+          return getCommonActionGroup();
         }
       };
     }
@@ -302,13 +297,22 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
-  protected AnAction getNavigateAction(@NotNull MouseEvent originalEvent) {
+  protected AnAction getNavigateAction() {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        InputEvent event = e.getInputEvent();
-        MouseEvent mouseEvent = event instanceof MouseEvent ? (MouseEvent)event : originalEvent;
+        MouseEvent mouseEvent = getMouseEvent(e);
         getNavigationHandler().navigate(mouseEvent, getElement());
+      }
+
+      private static @NotNull MouseEvent getMouseEvent(@NotNull AnActionEvent e) {
+        InputEvent inputEvent = e.getInputEvent();
+        if (inputEvent instanceof MouseEvent) {
+          return (MouseEvent)inputEvent;
+        }
+        else {
+          return JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()).toMouseEvent();
+        }
       }
 
       @Override
