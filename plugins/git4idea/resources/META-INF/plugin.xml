@@ -489,7 +489,7 @@
       </group>
       <reference id="Git.Init"/>
       <separator/>
-      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.ShowProjectHistory"/>
     </group>
 
     <group id="MainToolbarVCSGroup">
