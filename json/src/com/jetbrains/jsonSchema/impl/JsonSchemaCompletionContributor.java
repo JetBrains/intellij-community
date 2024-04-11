@@ -563,10 +563,11 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
       // enum is not a separate type, so we should treat whether it can be an enum distinctly from the types
-      return variants.stream().map(it -> new Pair<>(guessType(it), isEnum(it))).distinct().count() <= 1;
+      return variants.stream().map(it -> new Pair<>(guessType(it), isUntypedEnum(it))).distinct().count() <= 1;
     }
 
-    private static boolean isEnum(JsonSchemaObject it) {
+    private static boolean isUntypedEnum(JsonSchemaObject it) {
+      if (guessType(it) != null) return false;
       List<Object> anEnum = it.getEnum();
       return anEnum != null && !anEnum.isEmpty();
     }
