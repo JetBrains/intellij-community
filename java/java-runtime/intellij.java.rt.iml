@@ -34,6 +34,5 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
   </component>
 </module>
