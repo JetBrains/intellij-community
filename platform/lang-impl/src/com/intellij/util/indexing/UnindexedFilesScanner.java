@@ -404,15 +404,13 @@ public final class UnindexedFilesScanner implements FilesScanningTask {
       Disposer.dispose(scanningLifetime);
     }
 
-    if (isFullIndexUpdate()) {
-      // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
-      var service = myProject.getService(InitialVfsRefreshService.class);
-      if (ApplicationManager.getApplication().isCommandLine() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-        service.runInitialVfsRefresh();
-      }
-      else {
-        service.scheduleInitialVfsRefresh();
-      }
+    // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
+    var service = myProject.getService(InitialVfsRefreshService.class);
+    if (ApplicationManager.getApplication().isCommandLine() && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
+      service.runInitialVfsRefresh();
+    }
+    else {
+      service.scheduleInitialVfsRefresh();
     }
   }
 
