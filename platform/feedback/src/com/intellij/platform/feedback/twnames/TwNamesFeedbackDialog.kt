@@ -12,6 +12,7 @@ import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
+import com.intellij.ui.NewUI
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -55,7 +56,7 @@ internal class TwNamesFeedbackDialog(
       }
     }
 
-    createFeedbackSystemInfoData(UISettings.getInstance().showToolWindowsNames, layout)
+    createFeedbackSystemInfoData(UISettings.getInstance().showToolWindowsNames, NewUI.isEnabled(), layout)
   }
 
   override val myShowFeedbackSystemInfoDialog: () -> Unit = {
@@ -75,7 +76,8 @@ internal class TwNamesFeedbackDialog(
 }
 
 @Serializable
-data class TwNamesFeedbackSystemData(
+internal data class TwNamesFeedbackSystemData(
+  val isNewUiEnabled: Boolean,
   val isToolWindowNamesEnabled: Boolean,
   val top: Int,
   val left: Int,
@@ -85,6 +87,10 @@ data class TwNamesFeedbackSystemData(
 ) : SystemDataJsonSerializable {
   override fun toString(): String {
     return buildString {
+      appendLine(TwNamesFeedbackMessagesBundle.message("dialog.system.info.isNewUiEnabled"))
+      appendLine()
+      appendLine(if (isNewUiEnabled) "True" else "False")
+      appendLine()
       appendLine(TwNamesFeedbackMessagesBundle.message("dialog.system.info.isToolWindowNamesEnabled"))
       appendLine()
       appendLine(if (isToolWindowNamesEnabled) "True" else "False")
@@ -116,6 +122,9 @@ data class TwNamesFeedbackSystemData(
 
 private fun showFeedbackSystemInfoDialog(project: Project?, systemInfoData: TwNamesFeedbackSystemData) {
   showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
+    row(TwNamesFeedbackMessagesBundle.message("dialog.system.info.isNewUiEnabled")) {
+      label(if (systemInfoData.isNewUiEnabled) "True" else "False") //NON-NLS
+    }
     row(TwNamesFeedbackMessagesBundle.message("dialog.system.info.isToolWindowNamesEnabled")) {
       label(if (systemInfoData.isToolWindowNamesEnabled) "True" else "False") //NON-NLS
     }
@@ -134,8 +143,11 @@ private fun showFeedbackSystemInfoDialog(project: Project?, systemInfoData: TwNa
   }
 }
 
-private fun createFeedbackSystemInfoData(isNewUINowEnabled: Boolean, layout: Map<ToolWindowAnchor, Int>): TwNamesFeedbackSystemData {
+private fun createFeedbackSystemInfoData(isToolWindowNamesEnabled: Boolean,
+                                         isNewUINowEnabled: Boolean,
+                                         layout: Map<ToolWindowAnchor, Int>): TwNamesFeedbackSystemData {
   return TwNamesFeedbackSystemData(isNewUINowEnabled,
+                                   isToolWindowNamesEnabled,
                                    layout[ToolWindowAnchor.TOP]!!,
                                    layout[ToolWindowAnchor.LEFT]!!,
                                    layout[ToolWindowAnchor.BOTTOM]!!,
