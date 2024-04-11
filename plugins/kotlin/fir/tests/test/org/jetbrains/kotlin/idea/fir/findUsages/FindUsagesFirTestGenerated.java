@@ -642,6 +642,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/enumValueOf.0.kt");
             }
 
+            @TestMetadata("functionCallWithinLambda.0.kt")
+            public void testFunctionCallWithinLambda() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/functionCallWithinLambda.0.kt");
+            }
+
             @TestMetadata("functionUsedInPlainText.0.kt")
             public void testFunctionUsedInPlainText() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/functionUsedInPlainText.0.kt");

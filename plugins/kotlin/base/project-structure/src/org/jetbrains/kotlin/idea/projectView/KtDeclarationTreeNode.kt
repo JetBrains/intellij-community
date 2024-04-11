@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.SpecialNames
@@ -63,8 +64,13 @@ class KtDeclarationTreeNode private constructor(
                         }
                     }
                     if (func is KtFunctionLiteral) {
-                        val calleeExpression =
-                            func.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java)?.calleeExpression
+                        val callExpression = func.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java)
+                        val ktDeclaration: KtDeclaration? =
+                            PsiTreeUtil.skipMatching(callExpression,
+                                                     { it.parent }, {
+                                                         !(it is KtDeclaration && it !is KtFunctionLiteral)
+                                                     }) as? KtDeclaration
+                        val calleeExpression = callExpression?.takeIf { ktDeclaration is KtScriptInitializer }?.calleeExpression
                         val name =
                             ((calleeExpression as? KtNameReferenceExpression)?.getReferencedNameAsName()?.asString())
                                 ?: func.name ?: SpecialNames.ANONYMOUS_STRING
