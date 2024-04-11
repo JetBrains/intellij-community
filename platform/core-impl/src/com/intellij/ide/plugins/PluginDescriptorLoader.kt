@@ -1044,12 +1044,26 @@ private fun loadDescriptorFromResource(
         input = Files.newInputStream(file)
       }
       URLUtil.JAR_PROTOCOL == resource.protocol -> {
-        // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
-        basePath = file.parent?.takeIf { !it.endsWith("lib") }?.parent ?: file
-
         val resolver = pool.load(file)
         closeable = resolver as? Closeable
-        dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
+        val loader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = file)
+
+        val relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation()
+        if (relevantJarsRoot != null && file.startsWith(relevantJarsRoot)) {
+          // support for archived compile outputs (each module in separate jar)
+          basePath = file.parent
+          dataLoader = object : DataLoader by loader {
+            // should be similar as in LocalFsDataLoader
+            override val emptyDescriptorIfCannotResolve: Boolean
+              get() = true
+          }
+        }
+        else {
+          // support for unpacked plugins in classpath, e.g. .../community/build/dependencies/build/kotlin/Kotlin/lib/kotlin-plugin.jar
+          basePath = file.parent?.takeIf { !it.endsWith("lib") }?.parent ?: file
+          dataLoader = loader
+        }
+
         input = dataLoader.load("META-INF/$filename", pluginDescriptorSourceOnly = true) ?: return null
       }
       else -> return null

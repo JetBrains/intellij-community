@@ -168,6 +168,16 @@ public final class PathManager {
     Path result = null;
     String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
     if (rootPath != null) {
+      String relevantJarsRoot = getArchivedCompliedClassesLocation();
+      if (relevantJarsRoot != null && rootPath.startsWith(relevantJarsRoot)) {
+        String home = System.getProperty(PROPERTY_HOME_PATH);
+        if (home != null) {
+          Path path = Paths.get(home).toAbsolutePath();
+          if (isIdeaHome(path)) {
+            return path;
+          }
+        }
+      }
       Path root = Paths.get(rootPath).toAbsolutePath();
       do root = root.getParent();
       while (root != null && !isIdeaHome(root));
