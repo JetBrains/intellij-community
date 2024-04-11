@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -6,7 +6,6 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,15 +62,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Vladislav.Soroka
  */
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
-
   public static final Key<ModuleData> MODULE_DATA_KEY = Key.create("MODULE_DATA_KEY");
   public static final Key<Module> MODULE_KEY = Key.create("LINKED_MODULE");
   public static final Key<Map<OrderEntry, OrderAware>> ORDERED_DATA_MAP_KEY = Key.create("ORDER_ENTRY_DATA_MAP");
   private static final Key<Set<Path>> ORPHAN_MODULE_FILES = Key.create("ORPHAN_FILES");
   private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
-
-  private static final NotificationGroup ORPHAN_MODULE_NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Build sync orphan modules");
 
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
 
@@ -328,7 +323,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       String buildSystem = projectData != null ? projectData.getOwner().getReadableName() : "build system";
       String content = ExternalSystemBundle.message("orphan.modules.text", buildSystem,
                                                     StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 50, 0));
-      Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
+      Notification cleanUpNotification = NotificationGroupManager.getInstance().getNotificationGroup("Build sync orphan modules")
+        .createNotification(content, NotificationType.INFORMATION)
         .setListener((notification, event) -> {
           if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
           if (showRemovedOrphanModules(modulesToRestore, project)) {
