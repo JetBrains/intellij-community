@@ -14,10 +14,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -492,7 +489,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   }
 
   @Override
-  public @Nls String toString() {
-    return getTemplatePresentation().toString();
+  public @NonNls String toString() {
+    Presentation p = getTemplatePresentation();
+    return p.getText() + " (" + p.getDescription() + ")";
   }
 }

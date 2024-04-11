@@ -444,7 +444,7 @@ public final class Presentation implements Cloneable {
     myFlags = BitUtil.set(myFlags, IS_DISABLE_GROUP_IF_EMPTY, disable);
   }
 
-  /** @see Presentation#setApplicationScope(boolean)  */
+  /** @see Presentation#setApplicationScope(boolean) */
   public boolean isApplicationScope() {
     return BitUtil.isSet(myFlags, IS_APPLICATION_SCOPE);
   }
@@ -654,7 +654,32 @@ public final class Presentation implements Cloneable {
   }
 
   @Override
-  public @Nls String toString() {
-    return getText() + " (" + descriptionSupplier.get() + ")";
+  public @NonNls String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(getText()).append(" (").append(descriptionSupplier.get()).append(")");
+    sb.append(", flags=[");
+    int flagsPos = sb.length();
+    long mask;
+    if (BitUtil.isSet(myFlags, IS_TEMPLATE)) {
+      sb.append("template");
+      mask = Math.max(IS_VISIBLE, IS_ENABLED) << 1;
+    }
+    else mask = 1;
+    for (; mask < IS_TEMPLATE; mask <<= 1) {
+      if (!BitUtil.isSet(myFlags, mask)) continue;
+      if (sb.length() > flagsPos) sb.append(", ");
+      if (mask == IS_ENABLED) sb.append("enabled");
+      else if (mask == IS_VISIBLE) sb.append("visible");
+      else if (mask == IS_MULTI_CHOICE) sb.append("multi_choice");
+      else if (mask == IS_POPUP_GROUP) sb.append("popup_group");
+      else if (mask == IS_PERFORM_GROUP) sb.append("perform_group");
+      else if (mask == IS_HIDE_GROUP_IF_EMPTY) sb.append("hide_group_if_empty");
+      else if (mask == IS_DISABLE_GROUP_IF_EMPTY) sb.append("disable_group_if_empty");
+      else if (mask == IS_APPLICATION_SCOPE) sb.append("application_scope");
+      else if (mask == IS_PREFER_INJECTED_PSI) sb.append("prefer_injected_psi");
+      else sb.append(Long.toHexString(mask));
+    }
+    sb.append("]");
+    return sb.toString();
   }
 }
