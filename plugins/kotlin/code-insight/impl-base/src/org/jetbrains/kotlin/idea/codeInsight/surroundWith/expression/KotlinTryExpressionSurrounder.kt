@@ -23,6 +23,23 @@ sealed class KotlinTryExpressionSurrounder : KotlinControlFlowExpressionSurround
 
     }
 
+    class TryFinally : KotlinTryExpressionSurrounder() {
+        @NlsSafe
+        override fun getTemplateDescription() = "try { expr } finally {}"
+        override fun getPattern() = "try { $0 } finally {\nb\n}"
+        override fun getRange(
+            editor: Editor,
+            replaced: KtExpression
+        ): TextRange? {
+            val blockExpression = (replaced as KtTryExpression).finallyBlock?.finalExpression ?: return null
+            val stmt = blockExpression.statements[0]
+            val range = stmt.textRange
+            stmt.delete()
+            val offset = range?.startOffset ?: return null
+            return TextRange(offset, offset)
+        }
+    }
+
     override fun getRange(editor: Editor, replaced: KtExpression): TextRange? {
         val tryExpression = replaced as KtTryExpression
         return KotlinTrySurrounderBase.getCatchTypeParameterTextRange(tryExpression)

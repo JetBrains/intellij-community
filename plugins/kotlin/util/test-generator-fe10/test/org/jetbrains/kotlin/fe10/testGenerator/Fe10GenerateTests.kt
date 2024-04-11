@@ -540,6 +540,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/surroundWith/tryCatchFinally", testMethodName = "doTestWithTryCatchFinallySurrounder")
             model("codeInsight/surroundWith/tryCatchFinallyExpression", testMethodName = "doTestWithTryCatchFinallyExpressionSurrounder")
             model("codeInsight/surroundWith/tryFinally", testMethodName = "doTestWithTryFinallySurrounder")
+            model("codeInsight/surroundWith/tryFinallyExpression", testMethodName = "doTestWithTryFinallyExpressionSurrounder")
             model("codeInsight/surroundWith/functionLiteral", testMethodName = "doTestWithFunctionLiteralSurrounder")
             model("codeInsight/surroundWith/withIfExpression", testMethodName = "doTestWithSurroundWithIfExpression")
             model("codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
