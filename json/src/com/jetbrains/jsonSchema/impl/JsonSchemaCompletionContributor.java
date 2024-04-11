@@ -37,10 +37,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
-import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
-import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider;
-import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -284,7 +281,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         });
     }
 
-    // some schemas provide empty array / empty object in enum values...
+    // some schemas provide an empty array or an empty object in enum values...
     private static final Set<String> filtered = Set.of("[]", "{}", "[ ]", "{ }");
 
     private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue, SchemaPath completionPath) {
@@ -292,7 +289,9 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       suggestValuesForSchemaVariants(schema.getOneOf(), isSurelyValue, completionPath);
       suggestValuesForSchemaVariants(schema.getAllOf(), isSurelyValue, completionPath);
 
-       if (schema.getEnum() != null && completionPath == null) {
+      if (schema.getEnum() != null && completionPath == null) {
+        // custom insert handlers are currently applicable only to enum values but can be extended later to cover more cases
+        List<JsonSchemaCompletionHandlerProvider> customHandlers = JsonSchemaCompletionHandlerProvider.EXTENSION_POINT_NAME.getExtensionList();
          Map<String, Map<String, String>> metadata = schema.getEnumMetadata();
          boolean isEnumOrderSensitive = Boolean.parseBoolean(schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE));
          List<Object> anEnum = schema.getEnum();
@@ -305,7 +304,11 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
              String description = valueMetadata == null ? null : valueMetadata.get("description");
              String deprecated = valueMetadata == null ? null : valueMetadata.get("deprecationMessage");
              Integer order = isEnumOrderSensitive ? i : null;
-             addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null, null, order);
+             List<InsertHandler<LookupElement>> handlers = customHandlers.stream()
+               .map(p -> p.createHandlerForEnumValue(schema, variant))
+               .filter(h -> h != null).toList();
+             addValueVariant(variant, description, deprecated != null ? (variant + " (" + deprecated + ")") : null,
+                             handlers.size() == 1 ? handlers.get(0) : null, order);
            }
         }
       }
