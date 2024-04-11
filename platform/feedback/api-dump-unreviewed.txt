@@ -851,35 +851,3 @@ f:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog
 f:com.intellij.platform.feedback.startup.dialog.IdeStartupFeedbackDialog$Companion
 f:com.intellij.platform.feedback.twnames.TwNamesFeedbackDialogKt
 f:com.intellij.platform.feedback.twnames.TwNamesFeedbackMessagesBundleKt
-f:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
-- com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
-- sf:Companion:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$Companion
-- <init>(Z,I,I,I,I,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):V
-- f:component1():Z
-- f:component2():I
-- f:component3():I
-- f:component4():I
-- f:component5():I
-- f:component6():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-- f:copy(Z,I,I,I,I,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData):com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
-- bs:copy$default(com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData,Z,I,I,I,I,com.intellij.platform.feedback.dialog.CommonFeedbackSystemData,I,java.lang.Object):com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
-- equals(java.lang.Object):Z
-- f:getBottom():I
-- f:getCommonSystemInfo():com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
-- f:getLeft():I
-- f:getRight():I
-- f:getTop():I
-- hashCode():I
-- f:isToolWindowNamesEnabled():Z
-- serializeToJson(kotlinx.serialization.json.Json):kotlinx.serialization.json.JsonElement
-- toString():java.lang.String
-f:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$$serializer
-- kotlinx.serialization.internal.GeneratedSerializer
-- sf:INSTANCE:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
-f:com.intellij.platform.feedback.twnames.TwNamesFeedbackSystemData$Companion
-- f:serializer():kotlinx.serialization.KSerializer
