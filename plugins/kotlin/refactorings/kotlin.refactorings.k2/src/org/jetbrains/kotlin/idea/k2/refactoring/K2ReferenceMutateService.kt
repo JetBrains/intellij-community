@@ -29,7 +29,10 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementOrCallableRef
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 
 /**
  * At the moment, this implementation of [org.jetbrains.kotlin.idea.references.KtReferenceMutateService] is not able to do some of the
@@ -82,8 +85,9 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             if (targetElement != null) { // if we are already referencing the target, there is no need to call bindToElement
                 if (simpleNameReference.isReferenceTo(targetElement)) return expression
             } else {
+                // Here we assume that the passed fqName uniquely identifiers the new target element
                 val oldTarget = simpleNameReference.resolve()
-                if (oldTarget?.isCallableAsExtensionFunction() == null && oldTarget?.kotlinFqName == fqName) return expression
+                if (oldTarget?.kotlinFqName == fqName) return expression
             }
             if (fqName.isRoot) return expression
             val writableFqn = if (fqName.pathSegments().last().asString() == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT.asString()) {
