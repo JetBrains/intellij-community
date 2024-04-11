@@ -325,7 +325,7 @@ public final class UnindexedFilesScanner implements FilesScanningTask {
     markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true);
     try {
       collectIndexableFilesConcurrently(myProject, indicator, progressReporter, orderedProviders, scanningHistory);
-      if (isFullIndexUpdate()) {
+      if (isFullIndexUpdate() || myOnProjectOpen) {
         myProject.putUserData(CONTENT_SCANNED, true);
       }
     }
