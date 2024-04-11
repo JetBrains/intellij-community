@@ -64,7 +64,6 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   private boolean myEnabledInModalContext;
 
   private boolean myIsDefaultIcon = true;
-  private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
@@ -414,11 +413,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * will refer to an injected fragment if the caret is currently positioned on it.
    */
   public void setInjectedContext(boolean worksInInjected) {
-    myWorksInInjected = worksInInjected;
+    getTemplatePresentation().setPreferInjectedPsi(worksInInjected);
   }
 
   public boolean isInInjectedContext() {
-    return myWorksInInjected;
+    return getTemplatePresentation().isPreferInjectedPsi();
   }
 
   public void addTextOverride(@NotNull String place, @NotNull String text) {
