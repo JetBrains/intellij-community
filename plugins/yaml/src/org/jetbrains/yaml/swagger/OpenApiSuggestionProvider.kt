@@ -22,11 +22,10 @@ import org.jetbrains.yaml.psi.YAMLDocument
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLMapping
-import java.util.function.Function
 
 internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
 
-  override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
+  override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
     if (!FileTypeManager.getInstance().isFileOfType(file, YAMLFileType.YML)) return null
 
     if (isPluginSuggestionDismissed() || tryUltimateIsDisabled()) return null
@@ -44,7 +43,9 @@ internal class OpenApiSuggestionProvider : PluginSuggestionProvider {
 }
 
 private class OpenApiPluginSuggestion(val project: Project,
-                                      val thisProductCode: String) : Function<FileEditor, EditorNotificationPanel?> {
+                                      val thisProductCode: String) : PluginSuggestion {
+  override val pluginIds: List<String> = listOf(OPENAPI_PLUGIN_ID)
+
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val status = if (PluginAdvertiserService.isCommunityIde()) EditorNotificationPanel.Status.Promo else EditorNotificationPanel.Status.Info
     val panel = EditorNotificationPanel(fileEditor, status)

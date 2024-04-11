@@ -11,10 +11,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.SwingConstants
 
+@ApiStatus.Internal
 class PromoFeaturePage(
   val productIcon: Icon,
   val suggestedIde: SuggestedIde,
@@ -24,11 +26,13 @@ class PromoFeaturePage(
   val pluginId: String?
 )
 
+@ApiStatus.Internal
 class PromoFeatureListItem(
   val icon: Icon,
   @NlsContexts.Label val title: String
 )
 
+@ApiStatus.Internal
 object PromoPages {
   fun build(
     page: PromoFeaturePage,
@@ -84,7 +88,6 @@ object PromoPages {
         comment(page.trialLabel)
       }.layout(RowLayout.PARENT_GRID)
     }
-
     return panel
   }
 
@@ -108,6 +111,8 @@ object PromoPages {
     openDownloadLink: (() -> Unit)? = null,
     source: FUSEventSource = FUSEventSource.SETTINGS,
   ): DialogPanel {
+    source.logIdeSuggested(null, page.suggestedIde.productCode, page.pluginId?.let { PluginId.getId(it) })
+
     val pluginId = page.pluginId?.let(PluginId::getId)
     val project = ProjectManager.getInstance().openProjects.firstOrNull()
     

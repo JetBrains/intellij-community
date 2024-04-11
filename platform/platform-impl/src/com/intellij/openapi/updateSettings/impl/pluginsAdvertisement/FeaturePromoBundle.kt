@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.DynamicBundle
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.PropertyKey
 @NonNls
 private const val BUNDLE = "messages.FeaturePromoBundle"
 
+@ApiStatus.Internal
 object FeaturePromoBundle : DynamicBundle(BUNDLE) {
   @Nls
   @JvmStatic
