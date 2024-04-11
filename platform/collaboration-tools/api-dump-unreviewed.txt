@@ -1053,6 +1053,7 @@ f:com.intellij.collaboration.messages.CollaborationToolsBundle
 - f:ReviewDetailsStatusLabel(java.lang.String):javax.swing.JLabel
 - f:createCiComponent(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel):javax.swing.JComponent
 - f:createConflictsComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
+- f:createMergeClarificationComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
 - f:createNeedReviewerComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
 - f:createRequiredResolveConversationsComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
 - f:createRequiredReviewsComponent(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlinx.coroutines.flow.Flow):javax.swing.JComponent
