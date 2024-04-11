@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.project.IntelliJProjectConfiguration
@@ -13,10 +13,10 @@ import java.nio.file.Path
 class PluginModelTest {
   @Test
   fun check() {
-    val validator = validatePluginModel()
+    val communityPath = PlatformTestUtil.getCommunityPath()
+    val validator = validatePluginModel(Path.of(communityPath))
     if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
-      val out = Path.of(PlatformTestUtil.getCommunityPath(),
-                        System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
+      val out = Path.of(communityPath, System.getProperty("plugin.graph.out", "docs/plugin-graph/plugin-graph.local.json"))
       validator.writeGraph(out)
       println()
       println("Graph is written to $out")
@@ -25,7 +25,7 @@ class PluginModelTest {
   }
 }
 
-fun validatePluginModel(): PluginModelValidator {
+fun validatePluginModel(homePath: Path): PluginModelValidator {
   val modules = IntelliJProjectConfiguration.loadIntelliJProject(homePath.toString())
     .modules
     .map { wrap(it) }
