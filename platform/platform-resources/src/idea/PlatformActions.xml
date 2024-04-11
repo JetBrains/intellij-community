@@ -977,7 +977,7 @@
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
       <group id="EditorPopupMenu1" searchable="false">
-        <action id="FindSelectionInPath" class="com.intellij.find.actions.FindSelectionInPathAction"/>
+        <action id="FindSelectionInPath" class="com.intellij.find.actions.FindSelectionInPathAction" use-shortcut-of="FindInPath"/>
       </group>
       <separator/>
       <group id="EditorPopupMenu2" searchable="false"/>
