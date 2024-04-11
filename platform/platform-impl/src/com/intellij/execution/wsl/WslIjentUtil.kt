@@ -8,6 +8,7 @@ import com.intellij.execution.ijent.IjentChildProcessAdapter
 import com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -79,7 +80,12 @@ fun runProcessBlocking(
   if (options.isExecuteCommandInShell && !options.isPassEnvVarsUsingInterop) {
     explicitEnvironmentVariables = mapOf()
     for ((name, value) in processBuilder.environment().entries.sortedBy { (key, _) -> key }) {
-      shellInitCommands += "export ${posixQuote(name)}=${posixQuote(value)}"
+      if (WSLDistribution.ENV_VARIABLE_NAME_PATTERN.matcher(name).matches()) {
+        shellInitCommands += "export ${posixQuote(name)}=${posixQuote(value)}"
+      }
+      else {
+        LOG.debug { "Can not pass environment variable (bad name): '$name'" }
+      }
     }
   }
   else {

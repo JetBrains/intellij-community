@@ -136,6 +136,39 @@ class WSLDistributionTest {
       }
     }
 
+    /** IDEA-351354 */
+    @TestTemplate
+    fun `environment variables with brackets`(strategy: WslTestStrategy) {
+      val options = WSLCommandLineOptions()
+      withClue("Checking the default value for an option. If it fails, the test should be revised") {
+        options.isPassEnvVarsUsingInterop should be(false)
+      }
+      val cmd = strategy.patch(
+        GeneralCommandLine("true")
+          .withEnvironment("CommonProgramFiles", "/mnt/c/Program Files/Common Files")
+          .withEnvironment("CommonProgramFiles(x86)", "/mnt/c/Program Files (x86)/Common Files")
+          .withEnvironment("ProgramFiles", "/mnt/c/Program Files")
+          .withEnvironment("Path", "/mnt/c/ProgramData/chocolatey/bin;C:/WINDOWS/system32;C:/WINDOWS;C:/Program Files (x86)/Gpg4win/../GnuPG/bin")
+          .withEnvironment("ProgramFiles(x86)", "/mnt/c/Program Files (x86)"),
+        options,
+      )
+      assertSoftly(cmd) {
+        argv should be(strategy.argv(
+          wslExeParams = listOf(wslExe, "--distribution", WSL_ID, "--exec", "$toolsRoot/ttyfix"),
+          cmd = listOf(
+            TEST_SHELL, "-l", "-c",
+            // It doesn't matter if Windows paths should be passed into environment variables for running something on Linux.
+            // The goal of this test is to ensure that both filters return the same output.
+            "export CommonProgramFiles='/mnt/c/Program Files/Common Files'" +
+            " && export Path='/mnt/c/ProgramData/chocolatey/bin;C:/WINDOWS/system32;C:/WINDOWS;C:/Program Files (x86)/Gpg4win/../GnuPG/bin'" +
+            " && export ProgramFiles='/mnt/c/Program Files'" +
+            " && true",
+          ),
+        ))
+        environment.entries should beEmpty()
+      }
+    }
+
     @Nested
     inner class `different WSLCommandLineOptions` {
       @TestTemplate
