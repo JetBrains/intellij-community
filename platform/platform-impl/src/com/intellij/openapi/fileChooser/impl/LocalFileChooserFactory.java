@@ -90,7 +90,8 @@ public class LocalFileChooserFactory implements ClientFileChooserFactory {
   private static boolean canUseNativeDialog(FileChooserDescriptor descriptor) {
     return !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemInfo.isJetBrainsJvm &&
-           AdvancedSettings.getBoolean("ide.ui.native.file.chooser");
+           (SystemInfo.isWindows || SystemInfo.isMac) &&
+           (ApplicationManager.getApplication() == null || AdvancedSettings.getBoolean("ide.ui.native.file.chooser"));
   }
 
   private static boolean useNewChooser(FileChooserDescriptor descriptor) {
