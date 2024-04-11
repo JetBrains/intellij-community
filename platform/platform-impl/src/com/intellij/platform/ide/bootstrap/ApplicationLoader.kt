@@ -147,7 +147,7 @@ internal suspend fun loadApp(app: ApplicationImpl,
     }
 
     val initConfigurationStoreJob = launch {
-      initConfigurationStore(app)
+      initConfigurationStore(app, args)
     }
 
     val applicationStarter = createAppStarter(args = args, asyncScope = this@span)
@@ -363,7 +363,7 @@ private suspend fun initLafManagerAndCss(
   }
 }
 
-suspend fun initConfigurationStore(app: ApplicationImpl) {
+suspend fun initConfigurationStore(app: ApplicationImpl, args: List<String>) {
   val configDir = PathManager.getConfigDir()
 
   coroutineScope {
@@ -375,7 +375,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
     span("beforeApplicationLoaded") {
       for (extension in ApplicationLoadListener.EP_NAME.filterableLazySequence()) {
         extension.useOrLogError {
-          it.beforeApplicationLoaded(app, configDir)
+          it.beforeApplicationLoaded(app, configDir, args)
         }
       }
     }
