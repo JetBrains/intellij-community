@@ -77,13 +77,12 @@ class ABExperiment {
   }
 
   internal fun getUserExperimentOption(): ABExperimentOption? {
-    ABExperimentCountCollector.logABExperimentOptionUsed()
-
     val userOptionId = getUserExperimentOptionId()
-    return getJbABExperimentOptionList().find { it.id.value == userOptionId.value }
+    ABExperimentCountCollector.logABExperimentOptionUsed(userOptionId, getUserGroupNumber(), getUserBucketNumber())
+    return getJbABExperimentOptionList().find { it.id.value == userOptionId?.value }
   }
 
-  internal fun getUserExperimentOptionId(): ABExperimentOptionId {
+  internal fun getUserExperimentOptionId(): ABExperimentOptionId? {
     val manualOptionIdText = System.getProperty("platform.experiment.ab.manual.option", "")
     if (manualOptionIdText.isNotBlank()) {
       LOG.debug { "Use manual option id from Registry. Registry key value is: $manualOptionIdText" }
@@ -99,11 +98,11 @@ class ABExperiment {
       }
       else {
         LOG.debug { "Manual option with id $manualOptionIdText not found." }
-        return OPTION_ID_FREE_GROUP
+        return null
       }
     }
 
-    val userGroupNumber = getUserGroupNumber() ?: return OPTION_ID_FREE_GROUP
+    val userGroupNumber = getUserGroupNumber()
     val userOptionId = ABExperimentGroupStorageService.getUserExperimentOptionId(userGroupNumber)
 
     LOG.debug { "User option id is: ${userOptionId.value}." }
@@ -111,12 +110,11 @@ class ABExperiment {
     return userOptionId
   }
 
-  internal fun getUserGroupNumber(): Int? {
-    val bucket = getUserBucket()
+  private fun getUserGroupNumber(): Int {
+    val bucket = getUserBucketNumber()
     if (TOTAL_NUMBER_OF_BUCKETS < TOTAL_NUMBER_OF_GROUPS) {
       LOG.error("Number of buckets is less than number of groups. " +
                 "Please revise related experiment constants and adjust them accordingly.")
-      return null
     }
 
     val experimentGroup = bucket % TOTAL_NUMBER_OF_GROUPS
@@ -124,7 +122,7 @@ class ABExperiment {
     return experimentGroup
   }
 
-  internal fun getUserBucket(): Int {
+  private fun getUserBucketNumber(): Int {
     val deviceId = LOG.runAndLogException {
       MachineIdManager.getAnonymizedMachineId(DEVICE_ID_PURPOSE, DEVICE_ID_SALT)
     }

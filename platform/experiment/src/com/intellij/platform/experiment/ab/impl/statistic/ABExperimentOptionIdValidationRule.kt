@@ -6,12 +6,15 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 import com.intellij.platform.experiment.ab.impl.experiment.ABExperiment.Companion.OPTION_ID_FREE_GROUP
+import com.intellij.platform.experiment.ab.impl.statistic.ABExperimentCountCollector.OPTION_ID_MISSING
 
 class ABExperimentOptionIdValidationRule : CustomValidationRule() {
   override fun getRuleId(): String = "ab_experiment_option_id"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (ABExperiment.getJbABExperimentOptionList().any { it.id.value == data } || data == OPTION_ID_FREE_GROUP.value)
+    return if (ABExperiment.getJbABExperimentOptionList().any { it.id.value == data } ||
+               data == OPTION_ID_FREE_GROUP.value ||
+               data == OPTION_ID_MISSING.value)
       ValidationResultType.ACCEPTED
     else ValidationResultType.REJECTED
   }
