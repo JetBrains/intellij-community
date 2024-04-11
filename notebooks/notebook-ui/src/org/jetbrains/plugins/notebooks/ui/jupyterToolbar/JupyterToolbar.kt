@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.notebooks.ui.jupyterToolbar
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
