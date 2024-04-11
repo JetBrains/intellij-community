@@ -100,7 +100,9 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },
-    inspectionBasedProcessing(ReplaceGetOrSetInspection()),
+    // ReplaceGetOrSetInspection should always be applied, because as a side effect
+    // it fixes red code of the form `array.get(0) = 42`
+    inspectionBasedProcessing(ReplaceGetOrSetInspection(), checkInspectionIsEnabled = false),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
     intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
         // skip parentheses that were originally present in Java code
