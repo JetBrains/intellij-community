@@ -1394,7 +1394,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         return true;
       }
     }
-    return false;
+    // Project should be active in a headless case (see FL-25764)
+    return editorWindow == null;
   }
 
   private static @Nullable Project getProject(@Nullable Window window) {
