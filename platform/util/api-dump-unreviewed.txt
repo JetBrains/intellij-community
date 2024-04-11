@@ -6898,6 +6898,7 @@ c:com.intellij.util.text.UniqueNameGenerator
 - s:generateUniqueName(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.util.Condition):java.lang.String
 - s:generateUniqueName(java.lang.String,java.lang.String,java.lang.String,java.util.Collection):java.lang.String
 - s:generateUniqueName(java.lang.String,java.util.Collection):java.lang.String
+- s:generateUniqueNameOneBased(java.lang.String,com.intellij.openapi.util.Condition):java.lang.String
 - f:isUnique(java.lang.String):Z
 - f:isUnique(java.lang.String,java.lang.String,java.lang.String):Z
 - f:value(java.lang.String):Z

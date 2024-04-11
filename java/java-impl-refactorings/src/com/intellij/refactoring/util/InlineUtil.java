@@ -30,7 +30,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -349,12 +349,12 @@ public final class InlineUtil implements CommonJavaInlineUtil {
 
   private static @NotNull String suggestClassName(@NotNull PsiElement place, @NotNull String name) {
     PsiResolveHelper helper = PsiResolveHelper.getInstance(place.getProject());
-    return NameUtilCore.uniqName(
+    return UniqueNameGenerator.generateUniqueNameOneBased(
       name,
-      n -> helper.resolveReferencedClass(n, place) != null ||
-           place instanceof PsiClass && place.getParent() instanceof PsiDeclarationStatement decl &&
-           decl.getParent() instanceof PsiCodeBlock block &&
-           SyntaxTraverser.psiTraverser(block).filter(PsiClass.class).find(cls -> n.equals(cls.getName())) != null);
+      n -> helper.resolveReferencedClass(n, place) == null &&
+           !(place instanceof PsiClass && place.getParent() instanceof PsiDeclarationStatement decl &&
+             decl.getParent() instanceof PsiCodeBlock block &&
+             SyntaxTraverser.psiTraverser(block).filter(PsiClass.class).find(cls -> n.equals(cls.getName())) != null));
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {

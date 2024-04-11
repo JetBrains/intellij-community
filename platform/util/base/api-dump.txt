@@ -673,7 +673,6 @@ f:com.intellij.util.text.NameUtilCore
 - s:nameToWords(java.lang.String):java.lang.String[]
 - s:nextWord(java.lang.String,I):I
 - s:splitNameIntoWords(java.lang.String):java.lang.String[]
-- s:uniqName(java.lang.String,java.util.function.Predicate):java.lang.String
 f:com.intellij.util.text.SemVer
 - java.lang.Comparable
 - <init>(java.lang.String,I,I,I):V

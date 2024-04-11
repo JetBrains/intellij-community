@@ -28,6 +28,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -1089,8 +1090,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                            boolean allowShadowing,
                                                            Predicate<? super PsiVariable> canBeReused) {
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
-    return NameUtilCore.uniqName(baseName, name -> hasConflictingVariable(place, name, allowShadowing) ||
-                                                   lookForward && hasConflictingVariableAfterwards(scope, name, canBeReused));
+    return UniqueNameGenerator.generateUniqueNameOneBased(
+      baseName, name -> !hasConflictingVariable(place, name, allowShadowing) &&
+                        (!lookForward || !hasConflictingVariableAfterwards(scope, name, canBeReused)));
   }
 
   private static boolean hasConflictingVariable(@Nullable PsiElement place, @NotNull String name, boolean allowShadowing) {
