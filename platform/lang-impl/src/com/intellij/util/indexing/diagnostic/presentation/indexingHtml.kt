@@ -231,6 +231,8 @@ private fun JsonProjectScanningHistory.generateScanningHtml(target: Appendable,
         div(id = SECTION_SCANNING_ID) {
           h1 { text(SECTION_SCANNING_PER_PROVIDER_TITLE) }
           text("Providers are handled during concurrent part of scanning, however each provider is handled in a single thread.")
+          br()
+          text("Some data can be hidden if 'Hide minor data' checkbox on the left panel is checked.")
           table(classes = "table-with-margin activity-table") {
             thead {
               var rowHeaderNumber = 3
