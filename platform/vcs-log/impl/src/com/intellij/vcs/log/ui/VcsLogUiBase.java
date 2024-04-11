@@ -9,7 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogListener;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;

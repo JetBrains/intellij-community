@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.impl;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.log.ui;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.ui.table.VcsLogCommitList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,12 +15,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-
-public class VcsLogImpl implements VcsLog {
+class VcsLogImpl implements VcsLog {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogUiEx myUi;
 
-  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiEx ui) {
+  VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiEx ui) {
     myLogData = manager;
     myUi = ui;
   }

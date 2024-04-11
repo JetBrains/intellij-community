@@ -1054,17 +1054,6 @@ e:com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 - sf:Storage:com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 - s:valueOf(java.lang.String):com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 - s:values():com.intellij.vcs.log.impl.VcsLogErrorHandler$Source[]
-c:com.intellij.vcs.log.impl.VcsLogImpl
-- com.intellij.vcs.log.VcsLog
-- <init>(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.ui.VcsLogUiEx):V
-- getContainingBranches(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
-- getLogProviders():java.util.Map
-- getSelectedCommits():java.util.List
-- getSelectedDetails():java.util.List
-- getSelectedShortDetails():java.util.List
-- jumpToCommit(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,Z):com.google.common.util.concurrent.ListenableFuture
-- jumpToReference(java.lang.String,Z):com.google.common.util.concurrent.ListenableFuture
-- requestSelectedDetails(com.intellij.util.Consumer):V
 com.intellij.vcs.log.impl.VcsLogIndexer
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 - a:readAllFullDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.impl.VcsLogIndexer$PathsEncoder,com.intellij.util.Consumer):V
