@@ -1,94 +1,95 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.groovy.lang;
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
-import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.testFramework.DumbModeTestUtils
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.ThrowableRunnable
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.testFramework.DumbModeTestUtils;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import junit.framework.TestCase;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import static org.jetbrains.plugins.groovy.util.TestUtils.disableAstLoading
+import java.io.IOException;
+import java.util.Arrays;
 
-class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
+public class GroovyStubsTest extends LightJavaCodeInsightFixtureTestCase {
+  public void testEnumConstant() throws IOException {
+    myFixture.getTempDirFixture().createFile("A.groovy", "enum A { MyEnumConstant }");
+    GrEnumConstant ec = (GrEnumConstant)
+      PsiShortNamesCache.getInstance(getProject()).getFieldsByName("MyEnumConstant", GlobalSearchScope.allScope(getProject()))[0];
+    PsiFileImpl file = (PsiFileImpl)ec.getContainingFile();
+    assertNotNull(file.getStub());
+    assertEquals("A", ec.getContainingClass().getQualifiedName());
+    assertNotNull(file.getStub());
 
-  void testEnumConstant() {
-    myFixture.tempDirFixture.createFile('A.groovy', 'enum A { MyEnumConstant }')
-    GrEnumConstant ec = (GrEnumConstant)PsiShortNamesCache.getInstance(project).getFieldsByName("MyEnumConstant", GlobalSearchScope.allScope(project))[0]
-    def file = (PsiFileImpl)ec.containingFile
-    assert file.stub
-    assert ec.containingClass.qualifiedName == 'A'
-    assert file.stub
-
-    assert ec in ec.containingClass.fields
-    assert ec in ((GrEnumDefinitionBody)((GrTypeDefinition)ec.containingClass).body).enumConstantList.enumConstants
-    assert file.stub
+    assertTrue(Arrays.equals(ec.getContainingClass().getFields(), new PsiField[] {ec}));
+    GrTypeDefinitionBody typeDefinitionBody = ((GrTypeDefinition)ec.getContainingClass()).getBody();
+    assertTrue(Arrays.equals(((GrEnumDefinitionBody)typeDefinitionBody).getEnumConstantList().getEnumConstants(), new GrEnumConstant[] {ec}));
+    assertNotNull(file.getStub());
   }
 
-  void testStubIndexMismatch() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
+  public void testStubIndexMismatch() {
+    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(myFixture.getTestRootDisposable());
 
-    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy")
-    final Project project = myFixture.getProject()
-    PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile)
-    final Document fooDocument = fooFile.getViewProvider().getDocument()
-    assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
-    WriteCommandAction.writeCommandAction(project, fooFile).run ({
-        fooDocument.setText("class Fooxx {}")
-    } as ThrowableRunnable)
-    PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
-    fooFile.setTreeElementPointer(null)
-    DumbModeTestUtils.runInDumbModeSynchronously(project) {
-      assertOneElement(((GroovyFile) fooFile).classes)
-      assertFalse(fooFile.isContentsLoaded())
-    }
-    assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy");
+    final Project project = myFixture.getProject();
+    PsiFileImpl fooFile = (PsiFileImpl)PsiManager.getInstance(project).findFile(vFile);
+    final Document fooDocument = fooFile.getViewProvider().getDocument();
+    assertNull(JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project)));
+    WriteCommandAction.writeCommandAction(project, fooFile).run(() -> fooDocument.setText("class Fooxx {}"));
+    PsiDocumentManager.getInstance(project).commitDocument(fooDocument);
+    fooFile.setTreeElementPointer(null);
+    DumbModeTestUtils.runInDumbModeSynchronously(project, () -> {
+      UsefulTestCase.assertOneElement(((GroovyFile)fooFile).getClasses());
+      TestCase.assertFalse(fooFile.isContentsLoaded());
+    });
+    assertNotNull(JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project)));
   }
 
-  void 'test error in code reference'() {
-    myFixture.tempDirFixture.createFile('A.groovy', 'class A extends foo.B< {}')
-    disableAstLoading project, testRootDisposable
-    def clazz = myFixture.findClass("A")
-    assert clazz != null
-    def extendsTypes = clazz.extendsListTypes
-    assert extendsTypes.size() == 1
-    def type = extendsTypes.first()
-    assert type instanceof GrClassReferenceType
-    def reference = type.reference
-    assert reference instanceof GrCodeReferenceElement
-    assert reference.referenceName == 'B'
-    assert reference.qualifiedReferenceName == 'foo.B'
+  public void testErrorInCodeReference() throws IOException {
+    myFixture.getTempDirFixture().createFile("A.groovy", "class A extends foo.B< {}");
+    TestUtils.disableAstLoading(getProject(), getTestRootDisposable());
+    PsiClass clazz = myFixture.findClass("A");
+    PsiClassType[] extendsTypes = clazz.getExtendsListTypes();
+    assertEquals(1, extendsTypes.length);
+    PsiClassType type = extendsTypes[0];
+    assertTrue(type instanceof GrClassReferenceType);
+    GrCodeReferenceElement reference = ((GrClassReferenceType)type).getReference();
+    assertEquals("B", reference.getReferenceName());
+    assertEquals("foo.B", reference.getQualifiedReferenceName());
   }
 
-  void 'test unfinished type argument list'() {
-    myFixture.tempDirFixture.createFile('A.groovy', 'def foo(C<T p)')
-    disableAstLoading project, testRootDisposable
+  public void testUnfinishedTypeArgumentList() throws IOException {
+    myFixture.getTempDirFixture().createFile("A.groovy", "def foo(C<T p)");
+    TestUtils.disableAstLoading(getProject(), getTestRootDisposable());
 
-    def clazz = (GroovyScriptClass)myFixture.findClass("A")
-    def method = clazz.codeMethods.first()
-    def parameter = method.parameterList.parameters.first()
+    GroovyScriptClass clazz = (GroovyScriptClass)myFixture.findClass("A");
+    GrMethod method = clazz.getCodeMethods()[0];
+    GrParameter parameter = method.getParameterList().getParameters()[0];
 
-    def type = parameter.type
-    assert type instanceof GrClassReferenceType
-    assert type.reference.referenceName == 'C'
+    PsiType type = parameter.getType();
+    assertTrue(type instanceof GrClassReferenceType);
+    assertEquals("C", ((GrClassReferenceType)type).getReference().getReferenceName());
 
-    def typeArgument = type.parameters.first()
-    assert typeArgument instanceof GrClassReferenceType
-    assert typeArgument.reference.referenceName == 'T'
+    PsiType typeArgument = ((GrClassReferenceType)type).getParameters()[0];
+    assertTrue(typeArgument instanceof GrClassReferenceType);
+    assertEquals("T", ((GrClassReferenceType)typeArgument).getReference().getReferenceName());
   }
 }
