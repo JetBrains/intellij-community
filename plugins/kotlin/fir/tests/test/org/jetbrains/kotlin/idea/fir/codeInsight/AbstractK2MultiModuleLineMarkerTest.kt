@@ -3,34 +3,19 @@ package org.jetbrains.kotlin.idea.fir.codeInsight
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
-import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractLineMarkerCodeMetaInfoTest
-import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractMultiModuleLineMarkerCodeMetaInfoTest
 import org.jetbrains.kotlin.idea.test.runAll
 
-abstract class AbstractK2MultiModuleLineMarkerTest: AbstractLineMarkerCodeMetaInfoTest() {
+abstract class AbstractK2MultiModuleLineMarkerTest: AbstractMultiModuleLineMarkerCodeMetaInfoTest() {
     override fun isFirPlugin(): Boolean = true
-
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiplatform")
-
-    override fun getConfigurations() = listOf(
-        LineMarkerConfiguration(
-            renderTargetIcons = true,
-        )
-    )
 
     override fun setUp() {
         super.setUp()
         Registry.get("kotlin.k2.kmp.enabled").setValue(true)
-        KotlinMultiplatformAnalysisModeComponent.setMode(project, KotlinMultiplatformAnalysisModeComponent.Mode.COMPOSITE)
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable {
-                KotlinMultiplatformAnalysisModeComponent.setMode(project, KotlinMultiplatformAnalysisModeComponent.Mode.SEPARATE)
-            },
             ThrowableRunnable {
                 Registry.get("kotlin.k2.kmp.enabled").setValue(false)
             },

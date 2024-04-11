@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractLineMarkerCodeMetaInfoTest
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import java.io.File
 
 abstract class AbstractMultiModuleLineMarkerTest : AbstractLineMarkerCodeMetaInfoTest() {
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleLineMarker")
+    override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("multiModuleLineMarker")
 }
