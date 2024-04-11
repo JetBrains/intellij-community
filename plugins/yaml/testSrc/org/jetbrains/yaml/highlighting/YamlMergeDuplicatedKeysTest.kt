@@ -27,6 +27,25 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
+  fun testSimpleMergeWithRepeatingProps() {
+    myFixture.configureByText("test.yaml", """
+      prop:
+        bar: 5
+        foo: 5
+      prop:
+        baz: 6
+        foo: 5
+    """.trimIndent())
+    myFixture.checkPreviewAndLaunchAction(
+      myFixture.findSingleIntention(YAMLBundle.message("YAMLDuplicatedKeysInspection.merge.quickfix.name")))
+    myFixture.checkResult("""
+      prop:
+        bar: 5
+        foo: 5
+        baz: 6
+    """.trimIndent())
+  }
+
   fun testSimpleMergeSequences() {
     myFixture.configureByText("test.yaml", """
       prop:
@@ -44,6 +63,25 @@ class YamlMergeDuplicatedKeysTest : BasePlatformTestCase() {
         - baz
         - foo
         - moo
+    """.trimIndent())
+  }
+
+  fun testSimpleMergeSequencesWithRepeatingElements() {
+    myFixture.configureByText("test.yaml", """
+      prop:
+        - bar
+        - moo
+      prop:
+        - foo
+        - moo
+    """.trimIndent())
+    myFixture.checkPreviewAndLaunchAction(
+      myFixture.findSingleIntention(YAMLBundle.message("YAMLDuplicatedKeysInspection.merge.quickfix.name")))
+    myFixture.checkResult("""
+      prop:
+        - bar
+        - moo
+        - foo
     """.trimIndent())
   }
 

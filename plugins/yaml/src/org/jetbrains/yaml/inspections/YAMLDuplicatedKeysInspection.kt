@@ -83,6 +83,9 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
                   generator: YAMLElementGenerator): Boolean {
       val currentMapping = it.value as? YAMLMapping ?: return false
       currentMapping.keyValues.forEach { pp ->
+        mapping.getKeyValueByKey(pp.keyText)?.let {
+          if (it.value?.text == pp.value?.text) return@forEach
+        }
         if (pp.value != null) {
           val newProp = generator.createYamlKeyValue(pp.name!!, "foo").also { p ->
             p.value!!.replace(pp.value!!)
@@ -104,6 +107,7 @@ class YAMLDuplicatedKeysInspection : LocalInspectionTool() {
       val currentSequence = it.value as? YAMLSequence ?: return false
       currentSequence.items.forEach { pp ->
         if (pp.value != null) {
+          if (sequence.items.any { it.value?.text == pp.value?.text }) return@forEach
           val newItem = generator.createSequenceItem("foo").also { p ->
             p.value!!.replace(pp.value!!)
           }
