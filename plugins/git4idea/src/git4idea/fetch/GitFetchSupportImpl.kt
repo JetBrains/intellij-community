@@ -3,6 +3,7 @@ package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.externalProcessAuthHelper.AuthenticationGate
 import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import com.intellij.notification.NotificationType
@@ -29,6 +30,7 @@ import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
+import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
@@ -224,15 +226,24 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
     finally {
       indicator?.text = prevText
+      indicator?.text2 = null
     }
   }
 
   private fun doFetch(repository: GitRepository, remote: GitRemote, refspec: String?, authenticationGate: AuthenticationGate? = null)
     : SingleRemoteResult {
 
+    val indicator = progressManager.progressIndicator
+    val progressListener = GitLineHandlerListener { line, outputType ->
+      if (indicator != null && outputType == ProcessOutputTypes.STDERR) {
+        // TODO: support 'GitStandardProgressAnalyzer' for multiple remotes
+        indicator.text2 = line
+      }
+    }
+
     val recurseSubmodules = "--recurse-submodules=no"
     val params = if (refspec == null) arrayOf(recurseSubmodules) else arrayOf(refspec, recurseSubmodules)
-    val result = git.fetch(repository, remote, emptyList(), authenticationGate, *params)
+    val result = git.fetch(repository, remote, listOf(progressListener), authenticationGate, *params)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     if (result.success()) {
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote)
