@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -13,7 +14,6 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntSupplier;
 import java.util.stream.Stream;
@@ -275,24 +275,13 @@ public abstract class BlobStorageTestBase<S> {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return Stream.generate(() -> {
         final int payloadSize = payloadSizeGenerator.getAsInt();
-        return BlobStorageTestBase.randomString(rnd, payloadSize);
+        return StorageTestingUtils.randomString(rnd, payloadSize);
       })
       .limit(count)
       .map(StorageRecord::new)
       .toArray(StorageRecord[]::new);
   }
-  
-  
 
-  @NotNull
-  public static String randomString(final Random rnd,
-                                    final int size) {
-    final char[] chars = new char[size];
-    for (int i = 0; i < chars.length; i++) {
-      chars[i] = Character.forDigit(rnd.nextInt(0, 36), 36);
-    }
-    return new String(chars);
-  }
 
   //@Immutable
   protected static class StorageRecord {
@@ -315,7 +304,7 @@ public abstract class BlobStorageTestBase<S> {
     }
 
     public StorageRecord withRandomPayloadOfSize(final int size) {
-      return withPayload(BlobStorageTestBase.randomString(ThreadLocalRandom.current(), size));
+      return withPayload(StorageTestingUtils.randomString(ThreadLocalRandom.current(), size));
     }
 
     public <S> StorageRecord writeIntoStorage(final BlobStorageTestBase<S> test,
@@ -329,7 +318,7 @@ public abstract class BlobStorageTestBase<S> {
     }
 
     public static @NotNull StorageRecord recordWithRandomPayload(final int payloadSize) {
-      return new StorageRecord(randomString(ThreadLocalRandom.current(), payloadSize));
+      return new StorageRecord(StorageTestingUtils.randomString(ThreadLocalRandom.current(), payloadSize));
     }
 
 

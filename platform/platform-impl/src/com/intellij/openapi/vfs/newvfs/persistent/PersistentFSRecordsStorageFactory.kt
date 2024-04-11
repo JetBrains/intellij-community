@@ -3,8 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
-import com.intellij.util.io.dev.StorageFactory
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory
+import com.intellij.platform.util.io.storages.StorageFactory
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting

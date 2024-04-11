@@ -1,11 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps.DurableMapFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.platform.util.io.storages.durablemap.DurableMap;
+import com.intellij.platform.util.io.storages.durablemap.DurableMapFactory;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.*;
-import com.intellij.util.io.dev.enumerator.StringAsUTF8;
+import com.intellij.platform.util.io.storages.enumerator.StringAsUTF8;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -23,7 +24,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Compares performance of different {@link KeyValueStore} implementations:
- * mainly {@link PersistentMap} vs {@link com.intellij.util.io.dev.durablemaps.DurableMap}
+ * mainly {@link PersistentMap} vs {@link DurableMap}
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(NANOSECONDS)

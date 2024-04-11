@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory
-import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumeratorFactory
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
+import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx
+import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
+import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
-import com.intellij.util.io.dev.enumerator.DataExternalizerEx
-import com.intellij.util.io.dev.enumerator.KeyDescriptorEx
 import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.DataInput

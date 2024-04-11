@@ -5,15 +5,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleHashMap;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
+import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
-import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
+import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.VFSContentStorage;
 import io.opentelemetry.api.metrics.BatchCallback;
@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
+import static com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 
 /**

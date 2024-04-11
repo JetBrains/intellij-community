@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
-import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;

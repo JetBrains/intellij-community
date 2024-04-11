@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResu
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
+import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 

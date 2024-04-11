@@ -1094,6 +1094,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" filepath="$PROJECT_DIR$/platform/util-ex/intellij.platform.util.ex.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/http/intellij.platform.util.http.iml" filepath="$PROJECT_DIR$/platform/util/http/intellij.platform.util.http.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/immutable-key-value-store/benchmark/intellij.platform.util.immutableKeyValueStore.benchmark.iml" filepath="$PROJECT_DIR$/platform/util/immutable-key-value-store/benchmark/intellij.platform.util.immutableKeyValueStore.benchmark.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/util/storages/intellij.platform.util.io.storages.iml" filepath="$PROJECT_DIR$/platform/util/storages/intellij.platform.util.io.storages.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/jdom/intellij.platform.util.jdom.iml" filepath="$PROJECT_DIR$/platform/util/jdom/intellij.platform.util.jdom.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/nanoxml/intellij.platform.util.nanoxml.iml" filepath="$PROJECT_DIR$/platform/util/nanoxml/intellij.platform.util.nanoxml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/util/progress/intellij.platform.util.progress.iml" filepath="$PROJECT_DIR$/platform/util/progress/intellij.platform.util.progress.iml" />
