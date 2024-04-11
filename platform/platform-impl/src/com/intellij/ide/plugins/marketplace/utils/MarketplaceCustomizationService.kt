@@ -46,26 +46,4 @@ interface MarketplaceCustomizationService {
   @Nullable
   fun getPluginHomepageUrl(pluginId: PluginId): String?
 
-  /**
-   * Returns the URL of the page with reviews for a specific plugin and page number.
-   *
-   * @param pluginId the identifier of the plugin
-   * @param page the page number of the reviews to be shown
-   *
-   * @return the URL of the page with reviews if current customization supports them, `null` otherwise
-   */
-  @Nullable
-  fun getPluginReviewsUrl(pluginId: PluginId, page: Int): String?
-
-  /**
-   * Returns the URL for writing a review for a specific plugin.
-   *
-   * @param pluginId the identifier of the plugin
-   * @param version the version of the plugin (optional)
-   *
-   * @return the URL for writing a review if current customization supports it, null otherwise
-   */
-  @Nullable
-  fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null): String?
-
 }

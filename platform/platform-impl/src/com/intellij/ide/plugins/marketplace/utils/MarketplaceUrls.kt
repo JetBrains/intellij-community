@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable
 import java.net.URL
 
 object MarketplaceUrls {
-  val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
+  private val IDE_BUILD_FOR_REQUEST = URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstanceImpl().pluginCompatibleBuild)
 
   const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
   const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
@@ -64,9 +64,9 @@ object MarketplaceUrls {
     ).addParameters(params)
   }
 
-  @Nullable
-  fun getPluginReviewsUrl(pluginId: PluginId, page: Int): String? {
-    return MarketplaceCustomizationService.getInstance().getPluginReviewsUrl(pluginId, page)
+  fun getPluginReviewsUrl(pluginId: PluginId, page: Int): Url {
+    val pageValue = if (page == 1) "" else "?page=$page"
+    return Urls.newFromEncoded("${getPluginManagerUrl()}/api/products/intellij/plugins/${pluginId.urlEncode()}/comments$pageValue")
   }
 
   @JvmStatic
@@ -77,7 +77,13 @@ object MarketplaceUrls {
   fun getPluginReviewNoteUrl() = "${getPluginManagerUrl()}/docs/marketplace/reviews-policy.html" // plugin manager url?
 
   @JvmStatic
-  fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = MarketplaceCustomizationService.getInstance().getPluginWriteReviewUrl(pluginId, version)
+  fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = buildString {
+    append("${getPluginManagerUrl()}/intellij/${pluginId.urlEncode()}/review/new")
+    append("?build=$IDE_BUILD_FOR_REQUEST")
+    version?.let {
+      append("&version=$it")
+    }
+  }
 
   @JvmStatic
   fun getPluginDownloadUrl(
@@ -101,4 +107,6 @@ object MarketplaceUrls {
       .addParameters(parameters)
       .toExternalForm()
   }
+
+  private fun PluginId.urlEncode() = URLUtil.encodeURIComponent(idString)
 }

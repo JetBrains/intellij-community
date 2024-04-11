@@ -24,7 +24,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.PlatformUtils
-import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.*
@@ -713,23 +712,20 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   fun loadPluginReviews(pluginNode: PluginNode, page: Int): List<PluginReviewComment>? {
-    val urlString = MarketplaceUrls.getPluginReviewsUrl(pluginNode.pluginId, page)
-    return if (urlString != null) {
-      try {
-        return HttpRequests
-          .request(Urls.newFromEncoded(urlString))
-          .setHeadersViaTuner()
-          .productNameAsUserAgent()
-          .throwStatusCodeException(false)
-          .connect {
-            objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
-          }
-      }
-      catch (e: IOException) {
-        LOG.warn(e)
-        return null
-      }
-    } else null
+    try {
+      return HttpRequests
+        .request(MarketplaceUrls.getPluginReviewsUrl(pluginNode.pluginId, page))
+        .setHeadersViaTuner()
+        .productNameAsUserAgent()
+        .throwStatusCodeException(false)
+        .connect {
+          objectMapper.readValue(it.inputStream, object : TypeReference<List<PluginReviewComment>>() {})
+        }
+    }
+    catch (e: IOException) {
+      LOG.warn(e)
+      return null
+    }
   }
 }
 
