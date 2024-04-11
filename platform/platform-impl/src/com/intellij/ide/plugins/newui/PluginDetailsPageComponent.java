@@ -706,13 +706,18 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     JPanel topPanel = new Wrapper(new BorderLayout(0, JBUI.scale(5)));
     topPanel.setBorder(JBUI.Borders.empty(16, 16, 12, 16));
 
-    PluginId pluginId = requireNonNull(myPlugin).getPluginId();
-    IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginId);
-    String writeReviewUrl = MarketplaceUrls.getPluginWriteReviewUrl(pluginId, installedPlugin != null ? installedPlugin.getVersion() : null);
+    try {
+      PluginId pluginId = requireNonNull(myPlugin).getPluginId();
+      IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginId);
+      String writeReviewUrl =
+        MarketplaceUrls.getPluginWriteReviewUrl(pluginId, installedPlugin != null ? installedPlugin.getVersion() : null);
 
-    if (writeReviewUrl != null) {
-      LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.WEST);
-      newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false, () -> writeReviewUrl);
+      if (writeReviewUrl != null) {
+        LinkPanel newReviewLink = new LinkPanel(topPanel, true, false, null, BorderLayout.WEST);
+        newReviewLink.showWithBrowseUrl(IdeBundle.message("plugins.new.review.action"), false, () -> writeReviewUrl);
+      }
+    }
+    catch (Exception ignored) {
     }
 
     JPanel notePanel = new Wrapper(ListLayout.horizontal(JBUI.scale(5), ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.NO_GROW));
