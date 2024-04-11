@@ -168,6 +168,9 @@ class UnindexedFilesScannerExecutorImpl(project: Project)
     }
   }
 
+  override val hasQueuedTasks: Boolean
+    get() = taskQueue.isEmpty
+
   companion object {
     private val LOG = Logger.getInstance(UnindexedFilesScannerExecutor::class.java)
   }

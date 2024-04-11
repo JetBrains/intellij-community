@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface UnindexedFilesScannerExecutor {
   val isRunning: StateFlow<Boolean>
-  val taskQueue: MergingTaskQueue<FilesScanningTask>
+  val hasQueuedTasks: Boolean
   val startedOrStoppedEvent: Flow<*>
 
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
