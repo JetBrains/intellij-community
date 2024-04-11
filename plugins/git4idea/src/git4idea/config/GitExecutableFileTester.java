@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,7 +75,7 @@ class GitExecutableFileTester {
         File exeFile = PathEnvironmentVariableUtil.findInPath(filePath);
         if (exeFile != null) filePath = exeFile.getPath();
       }
-      return Files.getLastModifiedTime(Paths.get(filePath)).toMillis();
+      return getModificationTime(Paths.get(filePath));
     }
 
     if (executable instanceof GitExecutable.Wsl) {
@@ -83,6 +84,10 @@ class GitExecutableFileTester {
 
     LOG.error("Can't get modification time for " + executable);
     return 0;
+  }
+
+  private static long getModificationTime(@NotNull Path filePath) throws IOException {
+    return Files.getLastModifiedTime(filePath).toMillis();
   }
 
   private static @NotNull GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
