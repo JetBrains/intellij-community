@@ -7,6 +7,7 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -29,6 +30,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -37,6 +41,7 @@ import java.util.concurrent.Callable;
  * @author Konstantin Bulenkov
  */
 public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
+  private final static Logger LOGGER = Logger.getInstance(VirtualFileDiffElement.class);
   private final VirtualFile myFile;
   protected final VirtualFile myDiffRoot;
 
@@ -200,13 +205,17 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   public VirtualFileDiffElement copyTo(DiffElement<VirtualFile> container, String relativePath) {
     try {
       final File src = new File(myFile.getPath());
-      final File trg = new File(container.getValue().getPath() + relativePath + src.getName());
+      final Path targetPath = Paths.get(container.getValue().getPath(), relativePath, src.getName());
+      final File trg = targetPath.toFile();
       FileUtil.copy(src, trg);
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(trg);
       if (virtualFile != null) {
         VirtualFile diffRoot = container instanceof VirtualFileDiffElement ? ((VirtualFileDiffElement)container).getDiffRoot() : null;
         return new VirtualFileDiffElement(virtualFile, diffRoot);
       }
+    }
+    catch (InvalidPathException e) {
+      LOGGER.error(e);
     }
     catch (IOException e) {//
     }
