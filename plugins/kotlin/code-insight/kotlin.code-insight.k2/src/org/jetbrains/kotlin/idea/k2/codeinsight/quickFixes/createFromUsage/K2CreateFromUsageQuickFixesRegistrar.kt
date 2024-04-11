@@ -19,7 +19,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
             if (callExpression == null) {
                 listOf()
             } else {
-                buildRequestsAndActions(callExpression)
+                K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
     private val createFunctionFromTooManyArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.TooManyArguments> =
@@ -29,7 +29,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
             if (callExpression == null) {
                 listOf()
             } else {
-                buildRequestsAndActions(callExpression)
+                K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
     private val createFunctionFromMissingArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NoValueForParameter> =
@@ -40,7 +40,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
             if (callExpression == null) {
                 listOf()
             } else {
-                buildRequestsAndActions(callExpression)
+                K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
 

@@ -112,10 +112,10 @@
     <platform.backend.documentation.inlineDocumentationProvider
             implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc.KotlinInlineDocumentationProvider"/>
     <lang.jvm.actions.jvmElementActionsFactory
-            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinElementActionsFactory"/>
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2ElementActionsFactory"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider
-            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.KotlinCreateFromUsageQuickFixProvider"/>
+            implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUnresolvedReferenceQuickFixProvider"/>
 
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporterFacility"
                         serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2ReferenceImporterFacility"/>

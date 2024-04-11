@@ -6,12 +6,13 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.psi.KtElement
 
-class KotlinCreateFromUsageQuickFixProvider: UnresolvedReferenceQuickFixProvider<PsiReference>() {
+class K2CreateFromUsageUnresolvedReferenceQuickFixProvider: UnresolvedReferenceQuickFixProvider<PsiReference>() {
     override fun registerFixes(ref: PsiReference, registrar: QuickFixActionRegistrar) {
         when (val element = ref.element) {
-            // Currently, we only support creating Kotlin functions from usage in Kotlin. We can add more cases here like
-            // creating Kotlin functions from usage in Java, creating Kotlin classes, and so on.
-            is KtElement -> generateCreateMethodActions(element).forEach(registrar::register)
+            is KtElement -> {
+                K2CreateFunctionFromUsageBuilder.generateCreateMethodActions(element).forEach(registrar::register)
+                //generateCreateLocalVariableActions(element).forEach(registrar::register)
+            }
         }
     }
 
