@@ -2,6 +2,7 @@
 package git4idea.config;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -10,6 +11,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +23,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-abstract class CachingFileTester {
-  private static final Logger LOG = Logger.getInstance(CachingFileTester.class);
+class GitExecutableFileTester {
+  private static final Logger LOG = Logger.getInstance(GitExecutableFileTester.class);
   private static final int FILE_TEST_TIMEOUT_MS = 30000;
 
   private final ReentrantLock LOCK = new ReentrantLock();
@@ -79,7 +85,7 @@ abstract class CachingFileTester {
     return 0;
   }
 
-  private @NotNull GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
+  private static @NotNull GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
     int maxAttempts = 1;
 
     // IDEA-248193 Apple Git might hang with timeout after hibernation. Do several attempts.
@@ -98,7 +104,7 @@ abstract class CachingFileTester {
       GitBundle.message("git.executable.validation.error.no.response.in.n.attempts.message", maxAttempts), null);
   }
 
-  private @Nullable GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
+  private static @Nullable GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Ref<Exception> exceptionRef = new Ref<>();
     Ref<GitVersion> resultRef = new Ref<>();
@@ -143,7 +149,32 @@ abstract class CachingFileTester {
     myTestMap.remove(executable);
   }
 
-  protected abstract @NotNull GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception;
+  private static @NotNull GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception {
+    GitVersion.Type type = null;
+    if (executable instanceof GitExecutable.Unknown) {
+      type = GitVersion.Type.UNDEFINED;
+    }
+    else if (executable instanceof GitExecutable.Wsl) {
+      WSLDistribution distribution = ((GitExecutable.Wsl)executable).getDistribution();
+      type = distribution.getVersion() == 1 ? GitVersion.Type.WSL1 : GitVersion.Type.WSL2;
+    }
+
+    LOG.debug("Acquiring git version for " + executable);
+    GitLineHandler handler = new GitLineHandler(null,
+                                                new File("."),
+                                                executable,
+                                                GitCommand.VERSION,
+                                                Collections.emptyList());
+    handler.setPreValidateExecutable(false);
+    handler.setSilent(false);
+    handler.setTerminationTimeout(1000);
+    handler.setStdoutSuppressed(false);
+    GitCommandResult result = Git.getInstance().runCommand(handler);
+    String rawResult = result.getOutputOrThrow();
+    GitVersion version = GitVersion.parse(rawResult, type);
+    LOG.info("Git version for " + executable + ": " + version);
+    return version;
+  }
 
   public static class TestResult {
     private final @Nullable GitVersion myResult;
