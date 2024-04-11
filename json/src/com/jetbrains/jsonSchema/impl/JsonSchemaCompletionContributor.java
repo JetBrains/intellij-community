@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
@@ -561,7 +562,13 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     }
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
-      return variants.stream().map(it -> guessType(it)).filter(Objects::nonNull).distinct().count() <= 1;
+      // enum is not a separate type, so we should treat whether it can be an enum distinctly from the types
+      return variants.stream().map(it -> new Pair<>(guessType(it), isEnum(it))).distinct().count() <= 1;
+    }
+
+    private static boolean isEnum(JsonSchemaObject it) {
+      List<Object> anEnum = it.getEnum();
+      return anEnum != null && !anEnum.isEmpty();
     }
 
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline, int insertedTextSize) {
