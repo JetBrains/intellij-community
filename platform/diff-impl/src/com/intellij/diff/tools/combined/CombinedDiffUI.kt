@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -39,4 +39,15 @@ internal object CombinedDiffUI {
 
   val BLOCK_ARC: Int
     get() = 12
+
+  private val BLOCK_BORDER_SELECTED_ACTIVE_COLOR: Color = JBColor.lazy { JBColor.namedColor("CombinedDiff.BlockBorder.selectedActiveColor") }
+  private val BLOCK_BORDER_SELECTED_INACTIVE_COLOR: Color = JBColor.lazy { JBColor.namedColor("CombinedDiff.BlockBorder.selectedInactiveColor") }
+
+  fun getBlockBorderColor(selected: Boolean, focused: Boolean): Color {
+    return when {
+      selected && focused -> BLOCK_BORDER_SELECTED_ACTIVE_COLOR
+      selected && !focused -> BLOCK_BORDER_SELECTED_INACTIVE_COLOR
+      else -> EDITOR_BORDER_COLOR
+    }
+  }
 }

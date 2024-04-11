@@ -40,6 +40,18 @@ open class CombinedDiffSelectablePanel(private val regularBackground: Color,
     setupListeners()
   }
 
+  protected open fun getSelectionBackground(state: State): Color {
+    return UIUtil.getListBackground(state.selected, state.focused)
+  }
+
+  protected open fun getHoverBackground(state: State): Color {
+    return UIUtil.getListBackground(false, state.focused)
+  }
+
+  protected open fun changeBackgroundOnHover(state: State): Boolean {
+    return !state.selected
+  }
+
   final override fun add(comp: Component, constraints: Any?) {
     if (comp is ActionToolbarImpl) {
       comp.component.addMouseListener(mouseListener)
@@ -56,11 +68,14 @@ open class CombinedDiffSelectablePanel(private val regularBackground: Color,
   }
 
   private fun updateBackground(selected: Boolean, focused: Boolean, hovered: Boolean = false) {
+    val state = State(selected, focused, hovered)
     UIUtil.changeBackGround(this,
                             when {
-                              hovered && !selected -> UIUtil.getListBackground(false, focused)
-                              selected -> UIUtil.getListBackground(true, focused)
+                              hovered && changeBackgroundOnHover(state) -> getHoverBackground(state)
+                              selected -> getSelectionBackground(state)
                               else -> regularBackground
                             })
   }
+
+  protected data class State(val selected: Boolean, val focused: Boolean, val hovered: Boolean)
 }

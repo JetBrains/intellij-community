@@ -1079,6 +1079,13 @@
       "separatorColor": "border"
     },
 
+    "CombinedDiff": {
+      "BlockBorder": {
+        "selectedActiveColor": "#A0BDF8",
+        "selectedInactiveColor": "#C9CCD6"
+      }
+    },
+
     "ToolbarComboWidget": {
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },

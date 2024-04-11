@@ -26,13 +26,13 @@ import com.intellij.util.IconUtil.getIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.Color
 import java.awt.FlowLayout
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 class CombinedBlockProducer(
@@ -109,6 +109,9 @@ private class CombinedSimpleDiffHeader(project: Project,
 
     return toolbar
   }
+
+  override fun getSelectionBackground(state: State): Color = CombinedDiffUI.BLOCK_HEADER_BACKGROUND
+  override fun changeBackgroundOnHover(state: State): Boolean = true
 
   private class SelectableFilePathLabel(private val project: Project,
                                         private val path: FilePath) : DumbAwareAction(), CustomComponentAction {
@@ -191,7 +194,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
   override val header: Wrapper = Wrapper(if (isPathOnlyHeader) pathOnlyHeader else headerWithToolbar)
   override val preferredFocusComponent: JComponent get() = header.targetComponent
 
-  override val stickyHeaderComponent: JComponent = CombinedDiffContainerPanel(BorderLayout(0, 0), false)
+  override val stickyHeaderComponent: CombinedDiffContainerPanel = CombinedDiffContainerPanel(BorderLayout(0, 0), false)
     .apply {
       background = UIUtil.getPanelBackground()
       add(stickyHeader, BorderLayout.CENTER)
@@ -199,7 +202,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   override val body: Wrapper = if (isCollapsed) Wrapper() else Wrapper(content)
 
-  override val component: JPanel = CombinedDiffContainerPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), true).apply {
+  override val component: CombinedDiffContainerPanel = CombinedDiffContainerPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), true).apply {
     background = UIUtil.getPanelBackground()
   }
 
@@ -215,6 +218,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
       pathOnlyHeader.selected = newValue
       headerWithToolbar.selected = newValue
       stickyHeader.selected = newValue
+      updateBorder()
     }
   }
 
@@ -222,6 +226,14 @@ internal class CombinedSimpleDiffBlock(project: Project,
     pathOnlyHeader.focused = state
     headerWithToolbar.focused = state
     stickyHeader.focused = state
+    updateBorder()
+  }
+
+  private fun updateBorder() {
+    val isFocused = pathOnlyHeader.focused || headerWithToolbar.focused || stickyHeader.focused
+    val borderColor = CombinedDiffUI.getBlockBorderColor(blockSelected, isFocused)
+    stickyHeaderComponent.borderColor = borderColor
+    component.borderColor = borderColor
   }
 
   override fun setSelected(selected: Boolean) {
