@@ -31,6 +31,7 @@ class HuggingFaceCacheUpdateHandler(private val project: Project) : Disposable {
 
   private fun refreshReferencesInProject() {
     ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed) { return@invokeLater }
       val fileEditorManager = FileEditorManager.getInstance(project)
       val psiDocumentManager = PsiDocumentManager.getInstance(project)
       val openFiles = fileEditorManager.openFiles.toList()

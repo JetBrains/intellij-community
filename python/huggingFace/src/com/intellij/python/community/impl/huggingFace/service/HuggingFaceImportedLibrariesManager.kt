@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -135,6 +136,7 @@ private class HuggingFaceImportDetectionListener(
   override fun documentChanged(event: DocumentEvent) {
     if (!event.newFragment.toString().contains("import")) return
     val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
+    if (!ProjectRootManager.getInstance(project).fileIndex.isInContent(file)) return
     PsiManager.getInstance(project).findFile(file)?.let { psiFile ->
       if (psiFile is PyFile) onImportDetected(psiFile)
     }
