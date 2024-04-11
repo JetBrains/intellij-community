@@ -319,6 +319,15 @@ class CompilationContextImpl private constructor(
     return Path.of(JpsPathUtil.urlToPath(url))
   }
 
+  override fun getModuleTestsOutputDir(module: JpsModule): Path {
+    val url = JpsJavaExtensionService.getInstance().getOutputUrl(module, true)
+    check(url != null) {
+      "Output directory for ${module.name} isn\'t set"
+    }
+    return Path.of(JpsPathUtil.urlToPath(url))
+  }
+
+  @Deprecated("Use getModuleTestsOutputDir instead", replaceWith = ReplaceWith("getModuleTestsOutputDir(module)"))
   override fun getModuleTestsOutputPath(module: JpsModule): String {
     val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(module, true)
     check(outputDirectory != null) {

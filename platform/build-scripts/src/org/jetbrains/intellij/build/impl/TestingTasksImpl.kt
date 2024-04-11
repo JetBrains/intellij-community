@@ -206,7 +206,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       for (module in context.project.modules) {
         val contentRoots = module.contentRootsList.urls
         if (!contentRoots.isEmpty() && rootExcludeCondition(Path.of(JpsPathUtil.urlToPath(contentRoots.first())))) {
-          sequenceOf(context.getModuleOutputDir(module), Path.of(context.getModuleTestsOutputPath(module))).forEach {
+          sequenceOf(context.getModuleOutputDir(module), context.getModuleTestsOutputDir(module)).forEach {
             if (Files.exists(it)) {
               excludedRoots += it.toString()
             }
@@ -583,7 +583,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val testAnnotation = classloader.loadClass("com.intellij.testFramework.SkipInHeadlessEnvironment")
     return context.project.modules.parallelStream()
       .flatMap { module ->
-        val root = Path.of(context.getModuleTestsOutputPath(module))
+        val root = context.getModuleTestsOutputDir(module)
         if (Files.exists(root)) {
           @Suppress("SSBasedInspection")
           Files.walk(root).use { stream ->
@@ -607,9 +607,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   }
 
   private fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
-    val mainModuleTestsOutput = context.getModuleTestsOutputPath(context.findRequiredModule(mainModule))
-
-    val root = Path.of(mainModuleTestsOutput)
+    val root = context.getModuleTestsOutputDir(context.findRequiredModule(mainModule))
     val testClasses = Files.walk(root).use { stream ->
       stream.map { FileUtilRt.toSystemIndependentName(root.relativize(it).toString()) }.filter {
         filteringPattern.matcher(it).matches()
