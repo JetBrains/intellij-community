@@ -1546,7 +1546,7 @@ f:com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable
 a:com.intellij.vcs.log.ui.VcsLogUiBase
 - com.intellij.vcs.log.ui.VcsLogUiEx
 - pf:myDisposableFlag:com.intellij.openapi.util.CheckedDisposable
-- pf:myLog:com.intellij.vcs.log.impl.VcsLogImpl
+- pf:myLog:com.intellij.vcs.log.VcsLog
 - pf:myLogData:com.intellij.vcs.log.data.VcsLogData
 - pf:myLogListeners:java.util.Collection
 - pf:myRefresher:com.intellij.vcs.log.visible.VisiblePackRefresher
