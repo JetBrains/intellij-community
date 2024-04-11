@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -127,6 +128,10 @@ public final class VfsRootAccess {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
       allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
+      Arrays.stream(System.getProperty("vfs.additional-allowed-roots", "").split(":"))
+        .filter(Predicate.not(String::isBlank))
+        .map(FileUtil::toSystemIndependentName)
+        .forEach(allowed::add);
 
       String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
       allowed.add(userHome);
