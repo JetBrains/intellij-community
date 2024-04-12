@@ -875,7 +875,7 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd()
       .suppliedByPersons("Michael Baranov"),
     LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
-                   url = "https://www.miglayout.com/", licenseUrl = "https://www.miglayout.com/mavensite/license.html").newBsd()
+                   url = "https://www.miglayout.com/", licenseUrl = "https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt").newBsd()
       .suppliedByOrganizations("MiG InfoCom AB"),
     LibraryLicense(name = "morfologik-fsa", libraryName = "org.carrot2:morfologik-fsa",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd()
