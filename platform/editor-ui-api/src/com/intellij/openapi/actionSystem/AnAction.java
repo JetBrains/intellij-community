@@ -66,7 +66,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   private boolean myIsDefaultIcon = true;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
-  private String myCopySourceActionId;
+  private @Nullable String myCopySourceActionId;
 
   @ApiStatus.Internal
   int myMetaFlags;
@@ -482,9 +482,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return myCopySourceActionId;
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public void setCopySourceActionId(String copySourceActionId) {
+  public void setCopySourceActionId(@Nullable String copySourceActionId) {
     myCopySourceActionId = copySourceActionId;
   }
 
