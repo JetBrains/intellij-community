@@ -90,10 +90,12 @@ class PythonAddNewEnvironmentPanel(val projectPath: ObservableProperty<String>, 
 
 
     with(outerPanel) {
-      row(message("sdk.create.interpreter.type")) {
-        segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
-          .bind(selectedMode)
-      }.topGap(TopGap.MEDIUM)
+      if (allowedInterpreterTypes.size > 1) { // No need to show control with only one selection
+        row(message("sdk.create.interpreter.type")) {
+          segmentedButton(allowedInterpreterTypes) { text = message(it.nameKey) }
+            .bind(selectedMode)
+        }.topGap(TopGap.MEDIUM)
+      }
 
       row(message("sdk.create.python.version")) {
         pythonBaseVersionComboBox = pythonInterpreterComboBox(pythonBaseVersion,
