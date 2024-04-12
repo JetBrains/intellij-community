@@ -94,10 +94,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val iconsScope = cs.childScope(Dispatchers.Main)
       val imageLoader = AsyncHtmlImageLoader { _, src ->
         withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
-          coroutineToIndicator {
-            val bytes = requestExecutor.execute(ProgressManager.getInstance().progressIndicator, GithubApiRequests.getBytes(src))
-            Toolkit.getDefaultToolkit().createImage(bytes)
-          }
+          val bytes = requestExecutor.executeSuspend(GithubApiRequests.getBytes(src))
+          Toolkit.getDefaultToolkit().createImage(bytes)
         }
       }
       val avatarIconsProvider = CachingIconsProvider(AsyncImageIconsProvider(iconsScope, AvatarLoader(requestExecutor)))
