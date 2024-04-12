@@ -3126,6 +3126,22 @@ public class PyTypeTest extends PyTestCase {
              expr, y2 = p2""");
   }
 
+  // PY-29489
+  public void testListLiteralUnpacking() {
+    doTest("int",
+           """
+             _, expr, _ = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpacking() {
+    doTest("int",
+           """
+             _, expr = map(int, ["1", "2"])
+             """);
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorUnpacking() {
     // Seems that this case won't be supported because

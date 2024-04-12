@@ -1453,15 +1453,15 @@ public final class PyTypeChecker {
     if (assignedType instanceof PyTupleType) {
       return getTargetTypeFromTupleAssignment(target, parentTuple, (PyTupleType)assignedType);
     }
-    else if (assignedType instanceof PyClassLikeType) {
-      return StreamEx
-        .of(((PyClassLikeType)assignedType).getAncestorTypes(context))
-        .select(PyNamedTupleType.class)
-        .findFirst()
-        .map(t -> getTargetTypeFromTupleAssignment(target, parentTuple, t))
-        .orElse(null);
+    else if (assignedType instanceof PyClassLikeType classLikeType) {
+      PyNamedTupleType namedTupleType = ContainerUtil.findInstance(classLikeType.getAncestorTypes(context), PyNamedTupleType.class);
+      if (namedTupleType != null) {
+        return getTargetTypeFromTupleAssignment(target, parentTuple, namedTupleType);
+      }
+      else if (assignedType instanceof PyCollectionType generic) {
+        return generic.getIteratedItemType();
+      }
     }
-
     return null;
   }
 
