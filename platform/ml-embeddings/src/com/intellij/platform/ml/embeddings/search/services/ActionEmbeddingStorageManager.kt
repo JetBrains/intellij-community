@@ -15,19 +15,16 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.waitForSmartMode
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.ml.embeddings.EmbeddingsBundle
 import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
+import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.normalized
 import com.intellij.platform.util.coroutines.namedChildScope
-import com.intellij.platform.util.progress.ProgressReporter
-import com.intellij.platform.util.progress.reportProgress
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
 @Service(Service.Level.APP)
@@ -36,6 +33,9 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
   private var isFirstIndexing = true
   private var shouldSaveToDisk = false
   private val isIndexingTriggered = AtomicBoolean(false)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val indexDispatcher: CoroutineContext = Dispatchers.Default.limitedParallelism(8)
 
   fun prepareForSearch(project: Project? = null) = cs.launch {
     val reportProject = project ?: blockingContext { ProjectManager.getInstance().openProjects.firstOrNull() }
@@ -58,16 +58,22 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     try {
       if (isFirstIndexing) onFirstIndexingStart()
 
+      val embeddingService: LocalEmbeddingService = serviceAsync<LocalEmbeddingServiceProvider>().getService() ?: return
+
       val actionsIndexingStartTime = System.nanoTime()
       val indexableActions = getIndexableActions()
-      project?.let {
+
+      // todo we are going to get rid of progresses here
+      /*project?.let {
         withBackgroundProgress(it, EmbeddingsBundle.getMessage("ml.embeddings.indices.actions.generation.label")) {
-          reportProgress(indexableActions.size) { reporter ->
-            iterateActions(indexableActions, reporter)
+          reportProgress(indexableActions.size) {
+            indexAllActions(embeddingService, indexableActions)
           }
         }
-      } ?: iterateActions(indexableActions)
-      EmbeddingSearchLogger.indexingFinished(project, forActions = true, TimeoutUtil.getDurationMillis(actionsIndexingStartTime))
+      } ?:*/ indexAllActions(embeddingService, indexableActions)
+
+      val durationMs = TimeoutUtil.getDurationMillis(actionsIndexingStartTime)
+      EmbeddingSearchLogger.indexingFinished(project, forActions = true, durationMs)
     }
     catch (e: CancellationException) {
       LOG.debug("Actions embedding indexing was cancelled")
@@ -85,7 +91,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     ActionEmbeddingsStorage.getInstance().index.onIndexingStart()
   }
 
-  private suspend fun onFirstIndexingFinish() = cs.launch {
+  private suspend fun onFirstIndexingFinish(): Job = cs.launch {
     ActionEmbeddingsStorage.getInstance().index.onIndexingFinish()
     if (shouldSaveToDisk) {
       val indexSavingStartTime = System.nanoTime()
@@ -96,24 +102,27 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun iterateActions(actions: List<IndexQueueEntry>, reporter: ProgressReporter? = null) = coroutineScope {
-    val embeddingService = serviceAsync<LocalEmbeddingServiceProvider>().getService() ?: return@coroutineScope
-    val actionsChannel = Channel<IndexQueueEntry>(capacity = 64)
-
+  private suspend fun indexAllActions(embeddingService: LocalEmbeddingService, actions: List<IndexQueueEntry>) = coroutineScope {
     val index = ActionEmbeddingsStorage.getInstance().index
-    repeat(8) {
-      launch {
-        for (entry in actionsChannel) {
-          if (index.contains(entry.actionId)) continue
-          val embedding = embeddingService.embed(entry.templateText).normalized()
-          shouldSaveToDisk = true
-          index.addEntries(listOf(entry.actionId to embedding))
+    // squash texts first to avoid multiple indexing requests
+    val results = actions
+      .groupBy { it.templateText }
+      .map { item ->
+        async(indexDispatcher) {
+          val embedding = embeddingService.embed(item.key).normalized()
+          item to embedding
         }
       }
-    }
 
-    actions.forEach { reporter?.itemStep { actionsChannel.send(it) } ?: actionsChannel.send(it) }
-    actionsChannel.close()
+    val data = results.awaitAll()
+    val indexed = data.asSequence()
+      .flatMap { (actionText, items) ->
+        actionText.value.asSequence()
+          .map { it.actionId to items }
+      }
+      .toList()
+
+    index.addEntries(indexed)
   }
 
   private suspend fun loadRequirements(project: Project?) {
@@ -152,7 +161,7 @@ class ActionEmbeddingStorageManager(private val cs: CoroutineScope) {
           .toList()
       }
     }
-
-    private data class IndexQueueEntry(val actionId: String, val templateText: String)
   }
 }
+
+private data class IndexQueueEntry(val actionId: String, val templateText: String)
