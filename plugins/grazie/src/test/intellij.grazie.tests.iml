@@ -13,52 +13,52 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" exported="" />
     <orderEntry type="module-library">
       <library name="org.languagetool:languagetool-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.1">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar">
-              <sha256sum>0214cac9c32594e6754023069dbc9715ef1cf1662e0142cada300d1e8ff3eded</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar">
+              <sha256sum>d294773b397ab740f39add9cf4028f15399599cb762af359448586e777a5e3d3</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.1">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-ru:6.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1.jar">
-              <sha256sum>79070a899b8d63acfde91f1f4f0772cc4f20a4c3f3d6d3dd5067821cb9215e70</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.4/language-ru-6.4.jar">
+              <sha256sum>1aca970f0f9a297bb12dde5ee70e2ba413a0f312c464fb3e155db696f867e4fe</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.4/language-ru-6.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.1/language-ru-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-ru/6.4/language-ru-6.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-de" type="repository">
-        <properties maven-id="org.languagetool:language-de:6.1">
+        <properties maven-id="org.languagetool:language-de:6.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1.jar">
-              <sha256sum>6ab71360ab27c94a0098cdd746e00a81605883c30c0d651b10fc17fe513f7215</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.4/language-de-6.4.jar">
+              <sha256sum>f9f6d61c460c86e30e28397c3326a998f93953b2a2a02c2af91003c7838470ee</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar">
               <sha256sum>56f0b00adb704cbc1e86776b45f6890efe90685ab370a34b5b299593cdcaae22</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar">
-              <sha256sum>5904e500073c3ed1dadcf56c9bf2712f7b222762d3072421b1c2d83e04795f43</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar">
+              <sha256sum>0435e604abe8b4a0b27f568db9349fbe0546df286bbe62f667c9fd9663df71b2</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar">
               <sha256sum>33021c9cca70c6292d53ff7dac5d1832d422e986aba52ec998532a5f47f921f8</sha256sum>
@@ -70,34 +70,34 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.4/language-de-6.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.4/german-pos-dict-1.2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.1/language-de-6.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.5/jwordsplitter-4.5-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/6.4/language-de-6.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.7/jwordsplitter-4.7-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="org.languagetool:language-it" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.1">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-it:6.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1.jar">
-              <sha256sum>f2489582ada5e325870aa0904a8ba53701854b05e85d9896d7ae3d09d00a5a2b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.4/language-it-6.4.jar">
+              <sha256sum>7b90dfc47041ff31a7fd06c1803f30de88072278ad768d65c588205b68fceb25</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.4/language-it-6.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.1/language-it-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-it/6.4/language-it-6.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

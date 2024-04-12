@@ -28,41 +28,52 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library" exported="">
       <library name="org.languagetool:languagetool-core" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.1">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:6.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar">
-              <sha256sum>0214cac9c32594e6754023069dbc9715ef1cf1662e0142cada300d1e8ff3eded</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar">
+              <sha256sum>d294773b397ab740f39add9cf4028f15399599cb762af359448586e777a5e3d3</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.1/languagetool-core-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/6.4/languagetool-core-6.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.languagetool:language-en" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:6.1">
+        <properties maven-id="org.languagetool:language-en:6.4">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.1/language-en-6.1.jar">
-              <sha256sum>59a7c525cd3c4227c1e61bcf15912c792835c1616ff26c7aa7f583c47cbdd95e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.4/language-en-6.4.jar">
+              <sha256sum>68a46d9f5d85f207ea470863ead0d5b498d7b112f6f1fb98e9d2e58c7aabfe38</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.3/english-pos-dict-0.3.jar">
+              <sha256sum>8e33908068ae04cc9baceaa86aae5dc93d0533c4708469937147f02b6caa1b18</sha256sum>
             </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="edu.washington.cs.knowitall:opennlp-chunk-models" />
+            <dependency maven-id="edu.washington.cs.knowitall:opennlp-postag-models" />
+            <dependency maven-id="edu.washington.cs.knowitall:opennlp-tokenize-models" />
+            <dependency maven-id="org.apache.opennlp:opennlp-tools" />
+            <dependency maven-id="org.languagetool:languagetool-core" />
+          </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.1/language-en-6.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.4/language-en-6.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/english-pos-dict/0.3/english-pos-dict-0.3.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.1/language-en-6.1-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.4/language-en-6.4-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.1/language-en-6.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/6.4/language-en-6.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -497,7 +508,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.trove" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="commons-lang3" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="library" scope="RUNTIME" name="grpc-core" level="project" />

@@ -21,7 +21,13 @@ class LuceneHunspellDictionary(dictionary: Path, affix: Path) : HunspellDictiona
   override fun add(word: String) = throw UnsupportedOperationException()
   override fun suggest(word: String) = dict.suggest(word).toList()
 
+  private var closed = false
+
+  override fun isClosed(): Boolean {
+    return closed
+  }
+
   override fun close() {
-    // do nothing
+    closed = true
   }
 }
