@@ -588,6 +588,10 @@ fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
 }
 
+fun <T : CommandChain> T.analyzeDependencies(moduleName: String, providerId: BuildType): T = apply {
+  addCommand("${CMD_PREFIX}analyzeDependencies $moduleName $providerId")
+}
+
 fun <T : CommandChain> T.refreshMavenProject(failureExpectedPattern: String = ""): T = apply {
   addCommand("${CMD_PREFIX}refreshMavenProject $failureExpectedPattern")
 }

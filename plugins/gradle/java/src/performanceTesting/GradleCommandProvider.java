@@ -24,6 +24,7 @@ final class GradleCommandProvider implements CommandProvider {
       put(RefreshGradleProjectCommand.PREFIX, RefreshGradleProjectCommand::new);
       put(CreateGradleProjectCommand.PREFIX, CreateGradleProjectCommand::new);
       put(ValidateGradleMatrixCompatibilityCommand.PREFIX, ValidateGradleMatrixCompatibilityCommand::new);
+      put(AnalyzeDependenciesCommand.PREFIX, AnalyzeDependenciesCommand::new);
     }};
   }
 }
