@@ -15,13 +15,11 @@ import java.util.regex.Pattern
 class BranchFilterModel internal constructor(private val dataPackProvider: () -> VcsLogDataPack,
                                              private val storage: VcsLogStorage,
                                              private val roots: Collection<VirtualFile>,
+                                             private val visibleRootsProvider: () -> Collection<VirtualFile>?,
                                              properties: MainVcsLogUiProperties,
                                              filters: VcsLogFilterCollection?) :
   FilterModel.MultipleFilterModel(listOf(VcsLogFilterCollection.BRANCH_FILTER, VcsLogFilterCollection.REVISION_FILTER,
                                          VcsLogFilterCollection.RANGE_FILTER), properties, filters) {
-
-  var visibleRoots: Collection<VirtualFile>? = null
-    internal set
 
   override fun createFilter(key: VcsLogFilterCollection.FilterKey<*>, values: List<String>): VcsLogFilter? {
     return when (key) {
@@ -41,16 +39,8 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
     }
   }
 
-  fun onStructureFilterChanged(rootFilter: VcsLogRootFilter?, structureFilter: VcsLogStructureFilter?) {
-    if (rootFilter == null && structureFilter == null) {
-      visibleRoots = null
-    }
-    else {
-      visibleRoots = VcsLogUtil.getAllVisibleRoots(roots, rootFilter, structureFilter)
-    }
-  }
-
   val dataPack: VcsLogDataPack get() = dataPackProvider()
+  val visibleRoots: Collection<VirtualFile>? get() = visibleRootsProvider()
 
   private fun createBranchFilter(values: List<String>): VcsLogBranchFilter {
     return VcsLogFilterObject.fromBranchPatterns(values, dataPack.refs.branches.mapTo(mutableSetOf()) { it.name })

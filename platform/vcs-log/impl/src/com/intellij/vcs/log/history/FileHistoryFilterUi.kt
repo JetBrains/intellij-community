@@ -34,8 +34,7 @@ class FileHistoryFilterUi(private val path: FilePath,
   var visiblePack: VisiblePack = VisiblePack.EMPTY
 
   init {
-    branchFilterModel = BranchFilterModel(::visiblePack, data.storage, listOf(root), propertiesWrapper, initialFilters)
-    branchFilterModel.visibleRoots = listOf(root)
+    branchFilterModel = BranchFilterModel(::visiblePack, data.storage, listOf(root), { listOf(root) }, propertiesWrapper, initialFilters)
     branchFilterModel.addSetFilterListener { filterConsumer.accept(filters) }
   }
 
