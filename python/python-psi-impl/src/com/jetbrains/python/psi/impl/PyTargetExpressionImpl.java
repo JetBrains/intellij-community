@@ -143,7 +143,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         if (value != null && (targetTupleOrList instanceof PyTupleExpression || targetTupleOrList instanceof PyListLiteralExpression)) {
           final PyType assignedType = PyUnionType.toNonWeakType(context.getType(value));
           if (assignedType != null) {
-            final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTupleOrList, assignedType, context);
+            final PyType t = getTargetTypeFromTupleAssignment(this, targetTupleOrList, assignedType, value, context);
             if (t != null) {
               return t;
             }
@@ -179,6 +179,26 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     PyType excType = getTypeFromExcept();
     if (excType != null) {
       return excType;
+    }
+    return null;
+  }
+
+  private static @Nullable PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
+                                                                   @NotNull PySequenceExpression parentTupleOrList,
+                                                                   @NotNull PyType assignedType,
+                                                                   @NotNull PyExpression assignedIterable,
+                                                                   @NotNull TypeEvalContext context) {
+    if (assignedType instanceof PyTupleType) {
+      return PyTypeChecker.getTargetTypeFromTupleAssignment(target, parentTupleOrList, (PyTupleType)assignedType);
+    }
+    else if (assignedType instanceof PyClassLikeType classLikeType) {
+      PyNamedTupleType namedTupleType = ContainerUtil.findInstance(classLikeType.getAncestorTypes(context), PyNamedTupleType.class);
+      if (namedTupleType != null) {
+        return PyTypeChecker.getTargetTypeFromTupleAssignment(target, parentTupleOrList, namedTupleType);
+      }
+      else {
+        return getIterationType(assignedType, assignedIterable, assignedIterable, context);
+      }
     }
     return null;
   }

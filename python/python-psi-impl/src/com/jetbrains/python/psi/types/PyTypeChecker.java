@@ -1449,26 +1449,6 @@ public final class PyTypeChecker {
   @Nullable
   public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
                                                         @NotNull PySequenceExpression parentTupleOrList,
-                                                        @NotNull PyType assignedType,
-                                                        @NotNull TypeEvalContext context) {
-    if (assignedType instanceof PyTupleType) {
-      return getTargetTypeFromTupleAssignment(target, parentTupleOrList, (PyTupleType)assignedType);
-    }
-    else if (assignedType instanceof PyClassLikeType classLikeType) {
-      PyNamedTupleType namedTupleType = ContainerUtil.findInstance(classLikeType.getAncestorTypes(context), PyNamedTupleType.class);
-      if (namedTupleType != null) {
-        return getTargetTypeFromTupleAssignment(target, parentTupleOrList, namedTupleType);
-      }
-      else if (assignedType instanceof PyCollectionType generic) {
-        return generic.getIteratedItemType();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
-                                                        @NotNull PySequenceExpression parentTupleOrList,
                                                         @NotNull PyTupleType assignedTupleType) {
     final int count = assignedTupleType.getElementCount();
     final PyExpression[] elements = parentTupleOrList.getElements();

@@ -3150,6 +3150,14 @@ public class PyTypeTest extends PyTestCase {
              """);
   }
 
+  // PY-29489
+  public void testNonGenericIterableUnpacking() {
+    doTest("str",
+           """
+             _, expr = "ab"
+             """);
+  }
+
   public void testUnpackingToNestedTargetsInSquareBracketsInAssignments() {
     doTest("int",
            """
