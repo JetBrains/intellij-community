@@ -3127,7 +3127,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-29489
-  public void testListLiteralUnpacking() {
+  public void testGenericIterableUnpackingNoBrackets() {
     doTest("int",
            """
              _, expr, _ = [1, 2, 3]
@@ -3135,10 +3135,42 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-29489
-  public void testGenericIterableUnpacking() {
+  public void testGenericIterableUnpackingParentheses() {
     doTest("int",
            """
-             _, expr = map(int, ["1", "2"])
+             (_, expr, _) = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingSquareBrackets() {
+    doTest("int",
+           """
+             [_, expr] = [1, 2, 3]
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInAssignments() {
+    doTest("int",
+           """
+             [_, [[expr], _]] = "foo", ((42,), "bar")
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInForLoops() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             for [_, [expr]] in xs:
+                 pass
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInComprehensions() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             ys = [expr for [_, [expr]] in xs]
              """);
   }
 

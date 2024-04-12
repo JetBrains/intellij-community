@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -1447,16 +1448,16 @@ public final class PyTypeChecker {
 
   @Nullable
   public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
-                                                        @NotNull PyTupleExpression parentTuple,
+                                                        @NotNull PySequenceExpression parentTupleOrList,
                                                         @NotNull PyType assignedType,
                                                         @NotNull TypeEvalContext context) {
     if (assignedType instanceof PyTupleType) {
-      return getTargetTypeFromTupleAssignment(target, parentTuple, (PyTupleType)assignedType);
+      return getTargetTypeFromTupleAssignment(target, parentTupleOrList, (PyTupleType)assignedType);
     }
     else if (assignedType instanceof PyClassLikeType classLikeType) {
       PyNamedTupleType namedTupleType = ContainerUtil.findInstance(classLikeType.getAncestorTypes(context), PyNamedTupleType.class);
       if (namedTupleType != null) {
-        return getTargetTypeFromTupleAssignment(target, parentTuple, namedTupleType);
+        return getTargetTypeFromTupleAssignment(target, parentTupleOrList, namedTupleType);
       }
       else if (assignedType instanceof PyCollectionType generic) {
         return generic.getIteratedItemType();
@@ -1466,24 +1467,22 @@ public final class PyTypeChecker {
   }
 
   @Nullable
-  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target, @NotNull PyTupleExpression parentTuple,
+  public static PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
+                                                        @NotNull PySequenceExpression parentTupleOrList,
                                                         @NotNull PyTupleType assignedTupleType) {
     final int count = assignedTupleType.getElementCount();
-    final PyExpression[] elements = parentTuple.getElements();
+    final PyExpression[] elements = parentTupleOrList.getElements();
     if (elements.length == count || assignedTupleType.isHomogeneous()) {
       final int index = ArrayUtil.indexOf(elements, target);
       if (index >= 0) {
         return assignedTupleType.getElementType(index);
       }
       for (int i = 0; i < count; i++) {
-        PyExpression element = elements[i];
-        while (element instanceof PyParenthesizedExpression) {
-          element = ((PyParenthesizedExpression)element).getContainedExpression();
-        }
-        if (element instanceof PyTupleExpression) {
+        PyExpression element = PyPsiUtils.flattenParens(elements[i]);
+        if (element instanceof PyTupleExpression || element instanceof PyListLiteralExpression) {
           final PyType elementType = assignedTupleType.getElementType(i);
-          if (elementType instanceof PyTupleType) {
-            final PyType result = getTargetTypeFromTupleAssignment(target, (PyTupleExpression)element, (PyTupleType)elementType);
+          if (elementType instanceof PyTupleType nestedAssignedTupleType) {
+            final PyType result = getTargetTypeFromTupleAssignment(target, (PySequenceExpression)element, nestedAssignedTupleType);
             if (result != null) {
               return result;
             }
