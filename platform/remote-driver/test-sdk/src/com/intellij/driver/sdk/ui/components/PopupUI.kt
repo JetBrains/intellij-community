@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.should
@@ -38,9 +39,14 @@ open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun isFocused() = popupComponent.isFocused()
 
+  fun close() = driver.withContext(OnDispatcher.EDT) {
+    popupComponent.dispose()
+  }
+
   @Remote("java.awt.Window")
   interface Window: Component {
     fun isFocused(): Boolean
+    fun dispose()
   }
 }
 

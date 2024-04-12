@@ -6,17 +6,15 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.Locators
 
 class ToolWindowLeftToolbarUi(data: ComponentData) : UiComponent(data) {
-  val buildButton: StripeButtonUi
-    get() = stripeButton(Locators.byAccessibleName("Build"))
+  val projectButton = stripeButton(Locators.byAccessibleName("Project"))
+  val buildButton = stripeButton(Locators.byAccessibleName("Build"))
+  val gitButton = stripeButton(Locators.byAccessibleName("Git"))
 }
 
 class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
-  val notificationsButton: StripeButtonUi
-    get() = stripeButton(Locators.byAccessibleName("Notifications"))
-  val gradleButton: StripeButtonUi
-    get() = stripeButton(Locators.byAccessibleName("Gradle"))
-  val mavenButton: StripeButtonUi
-    get() = stripeButton(Locators.byAccessibleName("Maven"))
+  val notificationsButton = stripeButton(Locators.byAccessibleName("Notifications"))
+  val gradleButton = stripeButton(Locators.byAccessibleName("Gradle"))
+  val mavenButton = stripeButton(Locators.byAccessibleName("Maven"))
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
@@ -29,8 +27,10 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
   }
 
   fun open() {
-    if (!isSelected()) {
-      click()
+    repeat(2) {
+      if (!isSelected()) {
+        click()
+      }
     }
   }
 

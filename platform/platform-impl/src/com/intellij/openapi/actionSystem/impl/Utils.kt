@@ -875,6 +875,11 @@ object Utils {
     UiNotifyConnector.doWhenFirstShown(comp) {
       UIUtil.getWindow(comp)?.addWindowListener(object : WindowAdapter() {
         override fun windowOpened(e: WindowEvent) {
+          getTracer(false).spanBuilder("popupShown#${System.getProperty("perf.test.popup.name")}")
+            .setStartTimestamp(startNanos, TimeUnit.NANOSECONDS)
+            .startSpan()
+            .end(System.nanoTime(), TimeUnit.NANOSECONDS)
+
           e.window.removeWindowListener(this)
           val time = TimeoutUtil.getDurationMillis(startNanos)
           @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
