@@ -52,7 +52,13 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 while (iterator.hasNext()) {
                     when(val projection = iterator.next()) {
                         is KtStarTypeProjection -> text("*")
-                        is KtTypeArgumentWithVariance -> printKtType(projection.type)
+                        is KtTypeArgumentWithVariance -> {
+                            val label = projection.variance.label
+                            if (label.isNotEmpty()) {
+                                text("$label ")
+                            }
+                            printKtType(projection.type)
+                        }
                     }
                     if (iterator.hasNext()) text(", ")
                 }
@@ -71,6 +77,10 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             } else if (isNullabilityFlexibleType(lower, upper)) {
                 printKtType(lower)
                 text("!")
+            } else {
+                printKtType(lower)
+                text("..")
+                printKtType(upper)
             }
         }
         is KtTypeParameterType -> {

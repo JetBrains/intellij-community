@@ -113,6 +113,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
+    @TestMetadata("FlexibleType2.kt")
+    public void testFlexibleType2() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleType2.kt");
+    }
+
     @TestMetadata("FunctionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/FunctionalType.kt");
