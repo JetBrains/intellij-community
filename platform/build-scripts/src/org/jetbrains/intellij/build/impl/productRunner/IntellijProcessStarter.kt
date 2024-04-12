@@ -60,7 +60,7 @@ suspend fun runApplicationStarter(
     }
   }
   disableCompatibleIgnoredPlugins(context = context, configDir = tempDir.resolve("config"), explicitlyEnabledPlugins = additionalPluginIds)
-  runIdea(
+  runJavaForIntellijModule(
     context = context,
     mainClass = context.productProperties.mainClassName,
     args = arguments,
@@ -111,16 +111,18 @@ private fun disableCompatibleIgnoredPlugins(context: BuildContext, configDir: Pa
 }
 
 /**
- * Internal function which runs a java process for IntelliJ product. Use [IntellijProductRunner.runProduct] instead.
+ * Runs a java process which main class depends on IntelliJ platform modules.
+ * 
+ * Use [IntellijProductRunner.runProduct] to run an actual IntelliJ product with special command line arguments.
  */
-suspend fun runIdea(context: CompilationContext,
-                    mainClass: String,
-                    args: List<String>,
-                    jvmArgs: List<String>,
-                    classPath: List<String>,
-                    timeout: Duration = DEFAULT_TIMEOUT,
-                    workingDir: Path? = null,
-                    onError: (() -> Unit)? = null) {
+suspend fun runJavaForIntellijModule(context: CompilationContext,
+                                     mainClass: String,
+                                     args: List<String>,
+                                     jvmArgs: List<String>,
+                                     classPath: List<String>,
+                                     timeout: Duration = DEFAULT_TIMEOUT,
+                                     workingDir: Path? = null,
+                                     onError: (() -> Unit)? = null) {
   runJava(
     mainClass = mainClass,
     args = args,
