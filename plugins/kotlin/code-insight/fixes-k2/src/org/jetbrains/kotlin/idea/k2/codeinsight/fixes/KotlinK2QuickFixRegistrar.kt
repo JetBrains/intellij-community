@@ -111,6 +111,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddInlineModifierFixFactories.inlineSuspendFunctionTypeUnsupported)
         registerFactory(MakeTypeParameterReifiedAndFunctionInlineFixFactory.cannotCheckForErasedFactory)
         registerFactory(AddInlineToFunctionFixFactories.illegalInlineParameterModifierFactory)
+        registerPsiQuickFixes(KtFirDiagnostic.ReifiedTypeParameterNoInline::class, AddModifierFix.addInlineToFunctionWithReified)
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
