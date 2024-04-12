@@ -73,4 +73,8 @@ class EditorCell(
     view?.setGutterAction(action)
   }
 
+  fun updateCellHighlight() {
+    view?.updateCellHighlight()
+  }
+
 }

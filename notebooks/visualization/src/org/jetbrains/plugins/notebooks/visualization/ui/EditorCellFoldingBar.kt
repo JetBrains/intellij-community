@@ -71,6 +71,12 @@ internal class EditorCellFoldingBar(
     }
   }
 
+  var visible: Boolean
+    get() = panel.isVisible
+    set(value) {
+      panel.isVisible = value
+    }
+
   init {
     editor.gutterComponentEx.add(panel)
   }
