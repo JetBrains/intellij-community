@@ -15,7 +15,6 @@ import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -71,7 +70,7 @@ internal class GHAccountsDetailsProvider(
 
   override suspend fun loadAvatar(account: GithubAccount, url: String): Image? {
     val apiExecutor = executorSupplier(account) ?: return null
-    return CachingGHUserAvatarLoader.getInstance().requestAvatar(apiExecutor, url).asDeferred().await()
+    return CachingGHUserAvatarLoader.getInstance().loadAvatar(apiExecutor, url)
   }
 
   companion object {

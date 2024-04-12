@@ -163,7 +163,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     private val avatarsLoader = CachingGHUserAvatarLoader.getInstance()
 
     override suspend fun load(key: String): Image? =
-      avatarsLoader.requestAvatar(requestExecutor, key).asDeferred().await()
+      avatarsLoader.loadAvatar(requestExecutor, key)
 
     override fun createBaseIcon(key: String?, iconSize: Int): Icon =
       IconUtil.resizeSquared(CollaborationToolsIcons.Review.DefaultAvatar, iconSize)
