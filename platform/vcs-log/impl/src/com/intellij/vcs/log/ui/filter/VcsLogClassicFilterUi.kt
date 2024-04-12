@@ -62,8 +62,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   init {
     dataPack = VisiblePack.EMPTY
 
-    val dataPackGetter = Supplier { dataPack }
-    branchFilterModel = BranchFilterModel(dataPackGetter, logData.storage, logData.roots, uiProperties, filters)
+    branchFilterModel = BranchFilterModel(::dataPack, logData.storage, logData.roots, uiProperties, filters)
     userFilterModel = UserFilterModel(uiProperties, filters)
     dateFilterModel = DateFilterModel(uiProperties, filters)
     structureFilterModel = FileFilterModel(logData.logProviders.keys, uiProperties, filters)

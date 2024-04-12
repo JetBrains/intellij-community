@@ -10,10 +10,9 @@ import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import java.util.function.Supplier
 import java.util.regex.Pattern
 
-class BranchFilterModel internal constructor(private val dataPackProvider: Supplier<out VcsLogDataPack>,
+class BranchFilterModel internal constructor(private val dataPackProvider: () -> VcsLogDataPack,
                                              private val storage: VcsLogStorage,
                                              private val roots: Collection<VirtualFile>,
                                              properties: MainVcsLogUiProperties,
@@ -51,8 +50,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
     }
   }
 
-  val dataPack: VcsLogDataPack
-    get() = dataPackProvider.get()
+  val dataPack: VcsLogDataPack get() = dataPackProvider()
 
   private fun createBranchFilter(values: List<String>): VcsLogBranchFilter {
     return VcsLogFilterObject.fromBranchPatterns(values, dataPack.refs.branches.mapTo(mutableSetOf()) { it.name })
