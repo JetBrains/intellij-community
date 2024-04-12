@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
-import org.jetbrains.intellij.build.impl.productRunner.runIdea
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
@@ -390,19 +389,19 @@ internal class WindowsDistributionBuilder(
       classpath.add(icoFilesDirectory.toString())
 
       try {
-        runIdea(
-          context = context,
+        runJava(
           mainClass = "com.pme.launcher.LauncherGeneratorMain",
           args = listOf(
-            inputPath.absolutePathString(),
-            appInfoForLauncher.absolutePathString(),
-            "$communityHome/native/WinLauncher/resource.h",
-            launcherPropertiesPath.absolutePathString(),
-            icoFile?.fileName?.toString() ?: " ",
-            outputPath.absolutePathString(),
-          ),
+                  inputPath.absolutePathString(),
+                  appInfoForLauncher.absolutePathString(),
+                  "$communityHome/native/WinLauncher/resource.h",
+                  launcherPropertiesPath.absolutePathString(),
+                  icoFile?.fileName?.toString() ?: " ",
+                  outputPath.absolutePathString(),
+                ),
           jvmArgs = listOf("-Djava.awt.headless=true"),
-          classPath = classpath
+          classPath = classpath,
+          javaExe = context.stableJavaExecutable
         )
       } catch (e: Throwable) {
         if (!customizer.useXPlatLauncher) throw e
