@@ -1238,6 +1238,9 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking(ctx + context + Context.current().asContextElement(), block)
   }
+  catch (pce : ProcessCanceledException) {
+    throw pce
+  }
   catch (ce: CancellationException) {
     throw CeProcessCanceledException(ce)
   }

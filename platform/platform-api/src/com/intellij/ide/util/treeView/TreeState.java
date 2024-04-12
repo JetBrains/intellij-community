@@ -323,7 +323,7 @@ public final class TreeState implements JDOMExternalizable {
     try {
       myPresentationData = readExternalPresentation(element);
     }
-    catch (ProcessCanceledException | CancellationException ignored) {
+    catch (CancellationException ignored) {
     }
     catch (Exception e) {
       LOG.warn("An error occurred while trying to read a cached tree presentation", e);

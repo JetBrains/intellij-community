@@ -12,10 +12,7 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.CeProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.TaskInfo
-import com.intellij.openapi.progress.prepareThreadContext
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
@@ -117,6 +114,9 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val scope = CoroutineScope(ctx + ClientId.coroutineContext())
     try {
       scope.runWithModalProgressBlockingInternal(dispatcher = null, descriptor, action)
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)

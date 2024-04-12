@@ -417,7 +417,7 @@ final class PassExecutorService implements Disposable {
                     myPass.collectInformation(myUpdateProgress);
                   }
                 }
-                catch (ProcessCanceledException | CancellationException e) {
+                catch (CancellationException e) {
                   cancelled = true;
                   throw e;
                 }

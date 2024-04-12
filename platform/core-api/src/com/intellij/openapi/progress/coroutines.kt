@@ -131,6 +131,9 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(ctx + readActionContext(), action)
     }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
@@ -168,6 +171,9 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
     try {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context + readActionContext(), action)
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
@@ -375,10 +381,14 @@ suspend fun <T> coroutineToIndicator(action: () -> T): T {
  */
 @Internal
 @RequiresBlockingContext
+@Throws(ProcessCanceledException::class)
 fun <T> blockingContextToIndicator(action: () -> T): T {
   val ctx = currentThreadContext()
   return try {
     contextToIndicator(ctx, action)
+  }
+  catch (pce : ProcessCanceledException) {
+    throw pce
   }
   catch (ce: CancellationException) {
     throw CeProcessCanceledException(ce)

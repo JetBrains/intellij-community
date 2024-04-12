@@ -12,7 +12,7 @@ f:com.intellij.filename.UniqueNameBuilder
 - size():I
 com.intellij.openapi.diagnostic.ControlFlowException
 c:com.intellij.openapi.progress.ProcessCanceledException
-- java.lang.RuntimeException
+- java.util.concurrent.CancellationException
 - com.intellij.openapi.diagnostic.ControlFlowException
 - <init>():V
 - p:<init>(java.lang.String):V

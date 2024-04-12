@@ -124,7 +124,7 @@ final class RefreshWorker {
           processQueue(threadEvents);
         }
         catch (RefreshCancelledException ignored) { }
-        catch (ProcessCanceledException | CancellationException e) {
+        catch (CancellationException e) {
           myCancelled = true;
         }
         catch (Throwable t) {

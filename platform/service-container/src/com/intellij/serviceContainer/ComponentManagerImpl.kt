@@ -1614,6 +1614,9 @@ private inline fun <X> rethrowCEasPCE(action: () -> X): X {
   try {
     return action()
   }
+  catch (pce : ProcessCanceledException) {
+    throw pce
+  }
   catch (ce: CancellationException) {
     throwAlreadyDisposedIfNotUnderIndicatorOrJob(cause = ce)
     throw CeProcessCanceledException(ce)
@@ -1638,6 +1641,9 @@ private fun <X> runBlockingInitialization(action: suspend CoroutineScope.() -> X
         NestedBlockingEventLoop(Thread.currentThread()) // avoid processing events from outer runBlocking (if any)
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(contextForInitializer, action)
+    }
+    catch (pce : ProcessCanceledException) {
+      throw pce
     }
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)

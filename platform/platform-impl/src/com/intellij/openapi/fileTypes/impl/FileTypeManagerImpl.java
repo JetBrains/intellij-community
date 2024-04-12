@@ -548,7 +548,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
           fileType = ApplicationManager.getApplication().instantiateClass(bean.implementationClass, bean.getPluginDescriptor());
         }
       }
-      catch (ProcessCanceledException | CancellationException e) {
+      catch (CancellationException e) {
         throw e;
       }
       catch (Exception e) {

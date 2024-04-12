@@ -2,7 +2,6 @@
 package com.intellij.spellchecker;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.dictionary.Loader;
@@ -47,7 +46,7 @@ public final class FileLoader implements Loader {
         br.lines().forEach(consumer);
       }
     }
-    catch (ProcessCanceledException | CancellationException exception) {
+    catch (CancellationException exception) {
       throw exception;
     }
     catch (Exception e) {

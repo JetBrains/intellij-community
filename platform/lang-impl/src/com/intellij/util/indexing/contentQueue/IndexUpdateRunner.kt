@@ -104,6 +104,9 @@ class IndexUpdateRunner(private val myFileBasedIndex: FileBasedIndexImpl,
         @Suppress("RAW_RUN_BLOCKING")
         runBlocking(ctx + readActionContext(), action)
       }
+      catch (pce : ProcessCanceledException) {
+        throw pce
+      }
       catch (ce: CancellationException) {
         throw CeProcessCanceledException(ce)
       }
