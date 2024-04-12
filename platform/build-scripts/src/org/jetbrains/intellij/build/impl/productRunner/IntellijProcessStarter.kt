@@ -63,7 +63,7 @@ suspend fun runApplicationStarter(
   disableCompatibleIgnoredPlugins(context = context, configDir = tempDir.resolve("config"), explicitlyEnabledPlugins = additionalPluginIds)
   runJavaForIntellijModule(
     context = context,
-    mainClass = context.productProperties.mainClassName,
+    mainClass = context.ideMainClassName,
     args = arguments,
     jvmArgs = jvmArgs,
     classPath = effectiveIdeClasspath.toList(),

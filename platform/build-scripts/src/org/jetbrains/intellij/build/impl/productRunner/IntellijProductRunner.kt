@@ -13,6 +13,9 @@ internal interface IntellijProductRunner {
   
   companion object {
     suspend fun createRunner(context: BuildContext): IntellijProductRunner {
+      if (context.useModularLoader) {
+        return ModuleBasedProductRunner(context.productProperties.rootModuleForModularLoader!!, context)
+      }
       return createDevIdeBuild(context) 
     }
   }
