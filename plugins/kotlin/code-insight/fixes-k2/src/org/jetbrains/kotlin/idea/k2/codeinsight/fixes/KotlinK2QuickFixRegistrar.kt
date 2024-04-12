@@ -110,6 +110,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddInlineModifierFixFactories.nonLocalReturnNotAllowed)
         registerFactory(AddInlineModifierFixFactories.inlineSuspendFunctionTypeUnsupported)
         registerFactory(MakeTypeParameterReifiedAndFunctionInlineFixFactory.cannotCheckForErasedFactory)
+        registerFactory(AddInlineToFunctionFixFactories.illegalInlineParameterModifierFactory)
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
