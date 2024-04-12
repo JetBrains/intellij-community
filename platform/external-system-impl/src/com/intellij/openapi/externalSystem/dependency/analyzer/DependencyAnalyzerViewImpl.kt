@@ -141,6 +141,7 @@ class DependencyAnalyzerViewImpl(
       CommonDataKeys.PROJECT.name -> project
       ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.name -> systemId
       PlatformCoreDataKeys.MODULE.name -> externalProject?.module
+      DependencyAnalyzerView.DEPENDENCIES.name -> dependencyModel.flatMap { it.variances }
       else -> null
     }
   }
