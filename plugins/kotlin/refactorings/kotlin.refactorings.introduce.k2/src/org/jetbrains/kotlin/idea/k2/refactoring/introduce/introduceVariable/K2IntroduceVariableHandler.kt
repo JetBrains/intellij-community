@@ -280,6 +280,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     val property = introduceVariableContext.introducedVariablePointer?.element ?: return@executeCommand
 
                     if (editor == null) {
+                        onNonInteractiveFinish?.invoke(property)
                         return@executeCommand
                     }
 
