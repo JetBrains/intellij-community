@@ -7,13 +7,13 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
-import org.jetbrains.intellij.build.impl.runApplicationStarter
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * Only for use in build scripts, not for dev mode / integrations tests.
+ * Use [IntellijProductRunner.createRunner] instead of calling this function directly. 
  */
 internal suspend fun createDevIdeBuild(context: BuildContext): IntellijProductRunner {
   var newClassPath: Collection<Path>? = null

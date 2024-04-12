@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.productRunner.runIdea
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
