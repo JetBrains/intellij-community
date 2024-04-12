@@ -30,7 +30,6 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.take
-import java.io.IOException
 import java.nio.file.Paths
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
@@ -481,15 +480,15 @@ class VFSHealthChecker(private val impl: FSRecordsImpl,
     val contentsStorage = connection.contents
     val contentRecordsIterator = contentsStorage.createRecordIdIterator()
     while (contentRecordsIterator.hasNextId()) {
+      report.contentRecordsChecked ++
       val contentId = contentRecordsIterator.nextId()
       try {
         contentsStorage.checkRecord(contentId, false)
       }
-      catch (e: IOException) {
+      catch (e: Throwable) {
         report.generalErrors++.alsoLogThrottled(
           "contentId[#$contentId]: content record fails to read or inconsistent: ${e.message}")
       }
-      report.contentRecordsChecked = contentId
     }
     return report
   }
