@@ -62,13 +62,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       else {
         selectors = Collections.singletonList(DiscoverySelectors.selectMethod(args[0], args[1]));
       }
-      // isIncludingPerformanceTestsRun() || isPerformanceTestsRun() && isPerformanceTest(test) -> add test
-      // otherwise -> skip test
-      if (Boolean.getBoolean("idea.include.performance.tests")) {
-        // no filter
-      }
-      else if (Boolean.getBoolean("idea.performance.tests")) {
-        // Add filter for 'isPerformanceTest'
+      if (Boolean.getBoolean("idea.performance.tests.discovery.filter")) {
+        // Add filter
         filters.add(createPerformancePostDiscoveryFilter(classLoader));
       }
       LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
@@ -98,11 +93,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       .findStatic(Class.forName("com.intellij.testFramework.TestFrameworkUtil", true, classLoader),
                   "isPerformanceTest", MethodType.methodType(boolean.class, String.class, String.class));
     return new PostDiscoveryFilter() {
-      @Override
-      public String toString() {
-        return "PerformanceOnlyTestsPostDiscoveryFilter";
-      }
-
       private FilterResult isIncluded(String className, String methodName) {
         try {
           if ((boolean)method.invokeExact(methodName, className)) {

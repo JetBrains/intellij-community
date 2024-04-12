@@ -771,7 +771,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         fun runOneClass(testClassName: String) {
           val exitCode = blockAndSpan("running test class '$testClassName'") {
             runJUnit5Engine(
-              systemProperties = systemProperties,
+              systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
               envVariables = envVariables,
               bootstrapClasspath = bootstrapClasspath,
@@ -806,7 +806,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
           val exitCode = blockAndSpan("running tests in package '$packageName'") {
             runJUnit5Engine(
-              systemProperties = systemProperties,
+              systemProperties = systemProperties + ("idea.performance.tests.discovery.filter" to "true"),
               jvmArgs = jvmArgs,
               envVariables = envVariables,
               bootstrapClasspath = bootstrapClasspath,
