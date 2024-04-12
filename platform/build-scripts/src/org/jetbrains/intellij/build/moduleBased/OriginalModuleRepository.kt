@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.moduleBased
 
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
+import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData
 
@@ -20,4 +21,10 @@ interface OriginalModuleRepository {
    * [productMode].
    */
   fun loadProductModules(rootModuleName: String, productMode: ProductMode): ProductModules
+
+  /**
+   * Loads raw data from product-modules.xml file located in module [rootModuleName], for a product running in [productMode].
+   * Unlike [loadProductModules], it doesn't use file from module output directories, so it works even the modules aren't compiled yet.
+   */
+  fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules
 }

@@ -184,8 +184,8 @@ class BuildContextImpl(
   
   private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
-      originalModuleRepository.loadProductModules(rootModule, productProperties.productMode).bundledPluginModuleGroups.map { 
-        it.mainModule.moduleId.stringId 
+      originalModuleRepository.loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map { 
+        it.stringId 
       }
     }
   }
