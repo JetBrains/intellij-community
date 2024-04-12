@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixture
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.nio.file.Paths
 
 abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightMultiplatformCodeInsightFixtureTestCase() {
@@ -26,7 +27,7 @@ abstract class AbstractKotlinDefinitionsSearcherMultiplatformTest : KotlinLightM
         val element = myFixture.getFile().findElementAt(myFixture.editor.caretModel.offset)
         assertNotNull("Can't find element at caret in file: $path", element)
 
-        val ktClass = myFixture.elementAtCaret.parentOfType<KtClass>(withSelf = true)
+        val ktClass = myFixture.elementAtCaret.parentOfType<KtClassOrObject>(withSelf = true)
             ?: error("No declaration found at caret")
 
         val result = ProgressManager.getInstance().run(object : Task.WithResult<List<PsiElement>, RuntimeException>(myFixture.project, "", false) {

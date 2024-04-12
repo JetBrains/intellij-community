@@ -41,10 +41,6 @@ class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScoped
                 }
             }
 
-            is KtObjectDeclaration -> {
-                processActualDeclarations(element, processor)
-            }
-
             is KtNamedFunction, is KtSecondaryConstructor -> {
                 processFunctionImplementations(element as KtFunction, scope, processor) && processActualDeclarations(element, object : Processor<PsiElement> {
                     override fun process(actual: PsiElement?): Boolean {
