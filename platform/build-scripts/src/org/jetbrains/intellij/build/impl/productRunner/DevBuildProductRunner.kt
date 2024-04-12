@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
-package org.jetbrains.intellij.build.impl
+package org.jetbrains.intellij.build.impl.productRunner
 
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
+import org.jetbrains.intellij.build.impl.runApplicationStarter
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
@@ -14,7 +15,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Only for use in build scripts, not for dev mode / integrations tests.
  */
-internal suspend fun createDevIdeBuild(context: BuildContext): DevIdeBuild {
+internal suspend fun createDevIdeBuild(context: BuildContext): IntellijProductRunner {
   var newClassPath: Collection<Path>? = null
   val homeDir = context.paths.projectHome
   val runDir = buildProduct(
@@ -33,19 +34,19 @@ internal suspend fun createDevIdeBuild(context: BuildContext): DevIdeBuild {
     ),
     createProductProperties = { context.productProperties }
   )
-  return DevIdeBuild(context = context, homePath = runDir, classPath = newClassPath!!)
+  return DevBuildProductRunner(context = context, homePath = runDir, classPath = newClassPath!!)
 }
 
-internal class DevIdeBuild(
+private class DevBuildProductRunner(
   private val context: BuildContext,
   private val homePath: Path,
   private val classPath: Collection<Path>,
-) {
-  suspend fun runProduct(
+) : IntellijProductRunner {
+  override suspend fun runProduct(
     tempDir: Path,
     arguments: List<String>,
-    systemProperties: Map<String, Any> = emptyMap(),
-    isLongRunning: Boolean = false,
+    additionalSystemProperties: Map<String, Any>,
+    isLongRunning: Boolean,
   ) {
     runApplicationStarter(
       context = context,
@@ -54,7 +55,7 @@ internal class DevIdeBuild(
       arguments = arguments,
       timeout = if (isLongRunning) DEFAULT_TIMEOUT else 30.seconds,
       homePath = homePath,
-      systemProperties = systemProperties + getIdeSystemProperties(homePath),
+      systemProperties = additionalSystemProperties + getIdeSystemProperties(homePath),
     )
   }
 }

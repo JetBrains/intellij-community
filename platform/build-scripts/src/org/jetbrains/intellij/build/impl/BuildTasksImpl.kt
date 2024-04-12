@@ -32,6 +32,8 @@ import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
+import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.impl.productRunner.createDevIdeBuild
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
@@ -661,7 +663,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
         Files.deleteIfExists(providedModuleFile)
         val tempDir = context.paths.tempDir.resolve("builtinModules")
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        createDevIdeBuild(context = context).runProduct(
+        IntellijProductRunner.createRunner(context = context).runProduct(
           tempDir = tempDir,
           listOf("listBundledPlugins", providedModuleFile.toString()),
         )
@@ -1398,7 +1400,7 @@ fun collectModulesToCompile(context: BuildContext, result: MutableSet<String>) {
 // Captures information about all available inspections in a JSON format as part of an Inspectopedia project.
 // This is later used by Qodana and other tools.
 // Keymaps are extracted as an XML file and also used in authoring help.
-internal suspend fun buildAdditionalAuthoringArtifacts(ide: DevIdeBuild, context: BuildContext) {
+internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijProductRunner, context: BuildContext) {
   context.executeStep(spanBuilder("build authoring asserts"), BuildOptions.DOC_AUTHORING_ASSETS_STEP) {
     val commands = listOf(
       Pair("inspectopedia-generator", "inspections-${context.applicationInfo.productCode.lowercase()}"),
@@ -1409,7 +1411,7 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ide: DevIdeBuild, context
       launch {
         val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
         val targetPath = temporaryStepDirectory.resolve(command.second)
-        ide.runProduct(temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
+        productRunner.runProduct(temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(
