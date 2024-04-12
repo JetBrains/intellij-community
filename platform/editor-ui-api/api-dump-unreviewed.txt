@@ -1384,7 +1384,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - isMultiChoice():Z
 - isPerformGroup():Z
 - isPopupGroup():Z
-- isPreferInjectedPsi():Z
 - isTemplate():Z
 - isVisible():Z
 - s:newTemplatePresentation():com.intellij.openapi.actionSystem.Presentation
@@ -1406,7 +1405,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - setMultiChoice(Z):V
 - setPerformGroup(Z):V
 - setPopupGroup(Z):V
-- setPreferInjectedPsi(Z):V
 - setSelectedIcon(javax.swing.Icon):V
 - setText(java.lang.String):V
 - setText(java.lang.String,Z):V
