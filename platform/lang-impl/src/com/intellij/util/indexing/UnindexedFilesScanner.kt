@@ -7,10 +7,7 @@ import com.intellij.diagnostic.PerformanceWatcher.Companion.takeSnapshot
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.*
@@ -32,8 +29,6 @@ import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
 import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilterScanningHandler
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
-import com.intellij.util.indexing.PerProjectIndexingQueue
-import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.dependencies.FutureScanningRequestToken
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
@@ -53,10 +48,15 @@ import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.time.Instant
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.locks.LockSupport
@@ -482,12 +482,44 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
     LOG.info("Scanning of " + myProject.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
     try {
-      PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks)
+      runTasksConcurrently(tasks)
     }
     finally {
       synchronized(allTasksFinished) {
         allTasksFinished.set(true)
         projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate())
+      }
+    }
+  }
+
+  private fun runTasksConcurrently(tasks: List<Runnable>) {
+    val tasksQueue = ConcurrentLinkedQueue(tasks)
+    runBlockingCancellable {
+      withContext(SCANNING_DISPATCHER) {
+        repeat(SCANNING_THREADS_COUNT) {
+          async {
+            var task: Runnable? = tasksQueue.poll()
+            while (task != null) {
+              checkCanceled()
+              blockingContext {
+                try {
+                  task?.run()
+                }
+                catch (t: Throwable) {
+                  // Exception from the task should not finish coroutine execution. Coroutine should proceed with the following task.
+                  // We ignore all the exceptions. If the task is indeed canceled, checkCanceled will throw.
+                  if (t is ControlFlowException) {
+                    LOG.warn("Unexpected exception during scanning: ${t.message}")
+                  }
+                  else {
+                    LOG.error("Unexpected exception during scanning (ignored)", t)
+                  }
+                }
+              }
+              task = tasksQueue.poll()
+            }
+          }
+        }
       }
     }
   }
@@ -603,6 +635,13 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   companion object {
     private val DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0)
+
+    private val SCANNING_THREADS_COUNT = UnindexedFilesUpdater.getNumberOfScanningThreads().coerceAtLeast(1)
+
+    // We still have a lot of IO during scanning, so Default dispatcher might be not the best choice at the moment.
+    // (this is my best guess, not confirmed by any experiment - you are welcome to experiment with dispatchers if you wish)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val SCANNING_DISPATCHER = Dispatchers.IO.limitedParallelism(SCANNING_THREADS_COUNT)
 
     @JvmField
     val LOG: Logger = Logger.getInstance(UnindexedFilesScanner::class.java)
