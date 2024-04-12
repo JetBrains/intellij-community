@@ -146,7 +146,7 @@ internal class ComplexRedundantLetInspection : RedundantLetInspection() {
         if (destructuringDeclaration != null) return false
 
         val singleReferenceNotInsideInnerLambda = parameterReferences.singleOrNull()?.takeIf { reference ->
-            reference.parents.takeWhile { it != functionLiteral }.find { it is KtFunction } == null
+            reference.parents.takeWhile { it != functionLiteral }.none { it is KtFunction }
         }
         return singleReferenceNotInsideInnerLambda != null
     }
