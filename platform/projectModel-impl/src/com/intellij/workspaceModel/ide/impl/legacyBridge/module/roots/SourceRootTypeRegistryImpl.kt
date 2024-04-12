@@ -1,24 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
 
-@Service(Service.Level.APP)
-class SourceRootTypeRegistry {
+@ApiStatus.Internal
+class SourceRootTypeRegistryImpl : SourceRootTypeRegistry {
   @Volatile
   private var typeById: Map<String, JpsModuleSourceRootType<*>>? = null
   
   companion object {
     @JvmStatic
-    fun getInstance(): SourceRootTypeRegistry = service()
+    fun getInstance(): SourceRootTypeRegistryImpl = SourceRootTypeRegistry.getInstance() as SourceRootTypeRegistryImpl
   }
 
-  fun findTypeById(rootTypeId: SourceRootTypeId): JpsModuleSourceRootType<*>? {
+  override fun findTypeById(rootTypeId: SourceRootTypeId): JpsModuleSourceRootType<*>? {
     return getMap()[rootTypeId.name]
   }
 

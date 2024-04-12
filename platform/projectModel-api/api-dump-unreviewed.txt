@@ -1210,3 +1210,9 @@ com.intellij.workspaceModel.ide.JpsProjectLoadingManager
 - a:jpsProjectLoaded(java.lang.Runnable):V
 f:com.intellij.workspaceModel.ide.JpsProjectLoadingManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.workspaceModel.ide.JpsProjectLoadingManager
+com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+- sf:Companion:com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry$Companion
+- a:findTypeById(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):org.jetbrains.jps.model.module.JpsModuleSourceRootType
+- s:getInstance():com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry
+f:com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry$Companion
+- f:getInstance():com.intellij.workspaceModel.ide.legacyBridge.sdk.SourceRootTypeRegistry

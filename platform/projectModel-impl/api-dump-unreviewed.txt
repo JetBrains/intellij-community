@@ -1296,13 +1296,6 @@ f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCache
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
 - sf:INSTANCE:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootPropertiesHelper
 - f:findSerializer(org.jetbrains.jps.model.module.JpsModuleSourceRootType):org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
-- sf:Companion:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry$Companion
-- <init>():V
-- f:findTypeById(com.intellij.platform.workspace.jps.entities.SourceRootTypeId):org.jetbrains.jps.model.module.JpsModuleSourceRootType
-- sf:getInstance():com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
-f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry$Companion
-- f:getInstance():com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
 f:com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 - com.intellij.openapi.roots.TestModuleProperties
 - <init>(com.intellij.openapi.module.Module):V
