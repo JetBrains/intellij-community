@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -169,7 +170,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       assertFalse(attempt)
       attempt = true
       waitForPendingWrite().up()
-      assertThrows<CeProcessCanceledException> { // assert but not throw
+      assertThrows<CannotReadException> { // assert but not throw
         ProgressManager.checkCanceled()
       }
     }
@@ -182,7 +183,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       when (attempts++) {
         0 -> {
           waitForPendingWrite().up()
-          throw assertThrows<CeProcessCanceledException> {
+          throw assertThrows<CannotReadException> {
             ProgressManager.checkCanceled()
           }
         }
@@ -204,15 +205,15 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     val result = readAction {
       when (attempts++) {
         0 -> {
-          throw assertThrows<CeProcessCanceledException> {
+          throw assertThrows<CannotReadException> {
             runBlockingCancellable {
-              throw assertThrows<PceCancellationException> {
+              throw assertThrows<CannotReadException> {
                 blockingContext {
-                  throw assertThrows<CeProcessCanceledException> {
+                  throw assertThrows<CannotReadException> {
                     runBlockingCancellable {
-                      throw assertThrows<PceCancellationException> {
+                      throw assertThrows<CannotReadException> {
                         blockingContext {
-                          throw assertThrows<CeProcessCanceledException> {
+                          throw assertThrows<CannotReadException> {
                             runBlockingCancellable {
                               waitForPendingWrite().up()
                               awaitCancellation()
@@ -247,10 +248,10 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     val result = readAction {
       when (attempts++) {
         0 -> {
-          throw assertThrows<CeProcessCanceledException> {
+          throw assertThrows<CannotReadException> {
             blockingContextToIndicator {
               waitForPendingWrite().up()
-              throw assertThrows<ProcessCanceledException> {
+              throw assertThrows<CannotReadException> {
                 ProgressManager.checkCanceled()
               }
             }
@@ -298,7 +299,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
               }
             }
             pendingWrite.timeoutWaitUp()
-            throw assertThrows<CeProcessCanceledException> {
+            throw assertThrows<CannotReadException> {
               ProgressManager.checkCanceled()
             }
           }

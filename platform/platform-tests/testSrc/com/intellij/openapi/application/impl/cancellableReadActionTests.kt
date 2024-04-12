@@ -35,7 +35,6 @@ fun testComputeCancellableRethrow() {
   testComputeCancellableRethrow(object : Throwable() {})
   testComputeCancellableRethrow(CancellationException())
   testComputeCancellableRethrow(ProcessCanceledException())
-  testComputeCancellableRethrow(CannotReadException())
 }
 
 private inline fun <reified T : Throwable> testComputeCancellableRethrow(t: T) {
@@ -84,8 +83,8 @@ fun testDoesntThrowWhenAlmostFinished() {
   val result = computeCancellable {
     testNoExceptions()
     waitForPendingWrite().up()
-    assertThrows<CeProcessCanceledException> { // cancelled
-      testExceptions()
+    assertThrows<CannotReadException> { // cancelled
+      testReadExceptions()
     }
     42 // but returning the result doesn't throw CannotReadException
   }
@@ -97,9 +96,20 @@ fun testThrowsOnWrite() {
     computeCancellable {
       testNoExceptions()
       waitForPendingWrite().up()
-      testExceptions()
+      testReadExceptions()
     }
   }
+}
+
+private fun testReadExceptions(): Nothing {
+  val ce = assertThrows<CannotReadException> {
+    Cancellation.checkCancelled()
+  }
+  val jce = assertThrows<CannotReadException> {
+    ProgressManager.checkCanceled()
+  }
+  assertSame(ce, jce)
+  throw jce
 }
 
 fun waitForPendingWrite(): Semaphore {

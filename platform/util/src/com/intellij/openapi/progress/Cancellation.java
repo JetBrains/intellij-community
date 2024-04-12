@@ -30,6 +30,9 @@ public final class Cancellation {
       try {
         ensureActive(currentJob);
       }
+      catch (ProcessCanceledException pce) {
+        throw pce;
+      }
       catch (CancellationException e) {
         throw new CeProcessCanceledException(e);
       }

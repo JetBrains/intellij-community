@@ -4,6 +4,7 @@ package com.intellij.openapi.application.rw
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.progress.blockingContext
@@ -93,7 +94,7 @@ internal class InternalReadAction<T>(
       insideReadAction()
     }
   }
-  catch (readCe: ReadCancellationException) {
+  catch (readCe: CannotReadException) {
     ReadResult.WritePending
   }
 
