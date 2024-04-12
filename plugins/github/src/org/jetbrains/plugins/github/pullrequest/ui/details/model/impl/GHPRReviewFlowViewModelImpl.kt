@@ -7,7 +7,6 @@ import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageD
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -19,7 +18,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -143,14 +145,14 @@ class GHPRReviewFlowViewModelImpl internal constructor(
 
   override fun mergeReview() = runAction {
     val details = detailsState.value
-    val dialog = ReviewMergeCommitMessageDialog(project,
-                                                CollaborationToolsBundle.message("dialog.review.merge.commit.title"),
-                                                GithubBundle.message("pull.request.merge.pull.request", details.number),
-                                                details.title)
-    if (!dialog.showAndGet()) {
-      return@runAction
-    }
-    detailsData.merge(splitCommitMessage(dialog.message), details.headRefOid)
+    val message = withContext(Dispatchers.Main) {
+      val dialog = ReviewMergeCommitMessageDialog(project,
+                                                  CollaborationToolsBundle.message("dialog.review.merge.commit.title"),
+                                                  GithubBundle.message("pull.request.merge.pull.request", details.number),
+                                                  details.title)
+      if (dialog.showAndGet()) dialog.message else null
+    } ?: return@runAction
+    detailsData.merge(splitCommitMessage(message), details.headRefOid)
   }
 
   override fun rebaseReview() = runAction {
@@ -162,14 +164,13 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val details = detailsState.value
     val commits = changesData.loadCommits()
     val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
-    val dialog = ReviewMergeCommitMessageDialog(project,
-                                                CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
-                                                GithubBundle.message("pull.request.merge.pull.request", details.number),
-                                                body)
-    if (!dialog.showAndGet()) {
-      return@runAction
-    }
-    val message = dialog.message
+    val message = withContext(Dispatchers.Main) {
+      val dialog = ReviewMergeCommitMessageDialog(project,
+                                                  CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
+                                                  GithubBundle.message("pull.request.merge.pull.request", details.number),
+                                                  body)
+      if (dialog.showAndGet()) dialog.message else null
+    } ?: return@runAction
     detailsData.squashMerge(splitCommitMessage(message), details.headRefOid)
   }
 
@@ -189,12 +190,14 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val reviewers = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
       reviewers + reviews.keys
     }.first()
-    val selectedReviewers = GHUIUtil.showChooserPopup(
-      parentComponent,
-      GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
-      reviewers,
-      loadPotentialReviewers()
-    ).await()
+    val selectedReviewers = withContext(Dispatchers.Main) {
+      GHUIUtil.showChooserPopup(
+        parentComponent,
+        GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
+        reviewers,
+        loadPotentialReviewers()
+      ).await()
+    }
     detailsData.adjustReviewers(selectedReviewers)
   }
 
