@@ -141,12 +141,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         final PyExpression lhs = assignment.getLeftHandSideExpression();
         final PySequenceExpression targetTupleOrList = PsiTreeUtil.findChildOfType(lhs, PySequenceExpression.class, false);
         if (value != null && (targetTupleOrList instanceof PyTupleExpression || targetTupleOrList instanceof PyListLiteralExpression)) {
-          final PyType assignedType = PyUnionType.toNonWeakType(context.getType(value));
-          if (assignedType != null) {
-            final PyType t = getTargetTypeFromTupleAssignment(this, targetTupleOrList, assignedType, value, context);
-            if (t != null) {
-              return t;
-            }
+          final PyType positionalItemType = getTargetTypeFromIterableUnpacking(targetTupleOrList, value, context);
+          if (positionalItemType != null) {
+            return positionalItemType;
           }
         }
       }
@@ -183,18 +180,17 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return null;
   }
 
-  private static @Nullable PyType getTargetTypeFromTupleAssignment(@NotNull PyTargetExpression target,
-                                                                   @NotNull PySequenceExpression parentTupleOrList,
-                                                                   @NotNull PyType assignedType,
-                                                                   @NotNull PyExpression assignedIterable,
-                                                                   @NotNull TypeEvalContext context) {
-    if (assignedType instanceof PyTupleType) {
-      return PyTypeChecker.getTargetTypeFromTupleAssignment(target, parentTupleOrList, (PyTupleType)assignedType);
+  private @Nullable PyType getTargetTypeFromIterableUnpacking(@NotNull PySequenceExpression topmostContainingTupleOrList,
+                                                              @NotNull PyExpression assignedIterable,
+                                                              @NotNull TypeEvalContext context) {
+    PyType assignedType = PyUnionType.toNonWeakType(context.getType(assignedIterable));
+    if (assignedType instanceof PyTupleType tupleType) {
+      return PyTypeChecker.getTargetTypeFromTupleAssignment(this, topmostContainingTupleOrList, tupleType);
     }
     else if (assignedType instanceof PyClassLikeType classLikeType) {
       PyNamedTupleType namedTupleType = ContainerUtil.findInstance(classLikeType.getAncestorTypes(context), PyNamedTupleType.class);
       if (namedTupleType != null) {
-        return PyTypeChecker.getTargetTypeFromTupleAssignment(target, parentTupleOrList, namedTupleType);
+        return PyTypeChecker.getTargetTypeFromTupleAssignment(this, topmostContainingTupleOrList, namedTupleType);
       }
       else {
         return getIterationType(assignedType, assignedIterable, assignedIterable, context);
