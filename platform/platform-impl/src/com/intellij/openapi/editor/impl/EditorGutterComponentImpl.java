@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -568,7 +568,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
       g.setColor(color != null ? color : JBColor.blue);
-      g.setFont(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
 
       for (int i = 0; i < myTextAnnotationGutters.size(); i++) {
         TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(i);
@@ -624,11 +623,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y) {
-    String s = gutterProvider.getLineText(line, myEditor);
-    if (!StringUtil.isEmpty(s)) {
+    var text = gutterProvider.getLineText(line, myEditor);
+    if (!StringUtil.isEmpty(text)) {
       g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(line, myEditor)));
-      EditorFontType style = gutterProvider.getStyle(line, myEditor);
-      Font font = getFontForText(s, style);
+      var style = gutterProvider.getStyle(line, myEditor);
+      var font = getFontForText(text, style);
       g.setFont(font);
       int offset = 0;
       if (gutterProvider.useMargin()) {
@@ -639,13 +638,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           offset = getGapBetweenAnnotations() / 2;
         }
       }
-      g.drawString(s, offset + x, y + myEditor.getAscent());
+      g.drawString(text, offset + x, y + myEditor.getAscent());
     }
   }
 
   private Font getFontForText(String text, EditorFontType style) {
-    Font font = ExperimentalUI.isNewUI() ? JBFont.regular().deriveFont((float)myEditor.getFontSize())
-                                         : myEditor.getColorsScheme().getFont(style);
+    var font = ExperimentalUI.isNewUI() ? JBFont.regular() : myEditor.getColorsScheme().getFont(style);
     return UIUtil.getFontWithFallbackIfNeeded(font, text);
   }
 
