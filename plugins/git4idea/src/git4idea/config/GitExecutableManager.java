@@ -244,6 +244,10 @@ public class GitExecutableManager {
     myVersionCache.dropCache(executable);
   }
 
+  public void dropVersionCache() {
+    myVersionCache.dropCache();
+  }
+
   /**
    * Check is executable used for project is valid, notify if it is not
    *

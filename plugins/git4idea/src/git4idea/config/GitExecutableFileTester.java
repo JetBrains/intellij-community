@@ -168,6 +168,10 @@ class GitExecutableFileTester {
     myTestMap.remove(executable);
   }
 
+  public void dropCache() {
+    myTestMap.clear();
+  }
+
   private static @NotNull GitVersion testExecutable(@NotNull GitExecutable executable) throws Exception {
     GitVersion.Type type = null;
     if (executable instanceof GitExecutable.Unknown) {
