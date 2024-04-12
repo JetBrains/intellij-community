@@ -459,15 +459,17 @@ public final class Presentation implements Cloneable {
   }
 
   /** @see Presentation#setPreferInjectedPsi(boolean) */
+  @ApiStatus.Internal
   public boolean isPreferInjectedPsi() {
     return BitUtil.isSet(myFlags, IS_PREFER_INJECTED_PSI);
   }
 
   /**
-   * For an action presentation sets whether the action is to be performed in the application scope.
-   * In the application scope, action activities can outlast a project where the action is performed.
+   * For an action presentation sets whether the action prefers to be updated and performed with the injected {@code DataContext}.
+   * Injected data context returns {@link InjectedDataKeys} data for regular data keys, if present.
    * The default is {@code false}.
    */
+  @ApiStatus.Internal
   public void setPreferInjectedPsi(boolean preferInjectedPsi) {
     myFlags = BitUtil.set(myFlags, IS_PREFER_INJECTED_PSI, preferInjectedPsi);
   }
