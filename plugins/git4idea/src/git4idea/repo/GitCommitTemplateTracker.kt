@@ -174,6 +174,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   private fun resolveCommitTemplatePath(repository: GitRepository): String? {
     val gitCommitTemplatePath = Git.getInstance().config(repository, COMMIT_TEMPLATE).outputAsJoinedString
     if (gitCommitTemplatePath.isBlank()) return null
+    if (gitCommitTemplatePath.endsWith('/')) return null
 
     return resolvePathAsAbsolute(repository, gitCommitTemplatePath)
            ?: resolvePathRelativeToUserHome(gitCommitTemplatePath)
@@ -202,7 +203,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   }
 
   private fun resolvePathRelativeToRootDirs(repository: GitRepository, relativeFilePath: String): String? {
-    if (relativeFilePath.startsWith('/') || relativeFilePath.endsWith('/')) return null
+    if (relativeFilePath.startsWith('/')) return null
 
     for (rootDir in repository.repositoryFiles.rootDirs) {
       val rootDirParent = rootDir.parent?.path ?: continue
