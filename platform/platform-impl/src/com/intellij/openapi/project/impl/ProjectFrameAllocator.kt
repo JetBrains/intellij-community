@@ -4,6 +4,7 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -199,25 +200,28 @@ internal class ProjectUiFrameAllocator(@JvmField val options: OpenProjectTask,
                                                 deferredProjectFrameHelper = deferredProjectFrameHelper)
       val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
 
-      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(startUpContextElementToPass) {
-        try {
-          val project = rawProjectDeferred.await()
-          coroutineScope {
-            launch(rootTask()) {
-              val frameHelper = deferredProjectFrameHelper.await()
-              frameHelper.installDefaultProjectStatusBarWidgets(project)
-              frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
-            }
+      val onNoEditorsLeft = blockingContext {
+        captureThreadContext(Runnable { FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime()) })
+      }
 
-            reopeningEditorJob.join()
-            postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
-                            fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
-                            toolWindowInitJob = toolWindowInitJob,
-                            project = project)
+      serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(startUpContextElementToPass) {
+        val project = rawProjectDeferred.await()
+        coroutineScope {
+          launch(rootTask()) {
+            val frameHelper = deferredProjectFrameHelper.await()
+            frameHelper.installDefaultProjectStatusBarWidgets(project)
+            frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
           }
+
+          reopeningEditorJob.join()
+          postOpenEditors(deferredProjectFrameHelper = deferredProjectFrameHelper,
+                          fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
+                          toolWindowInitJob = toolWindowInitJob,
+                          project = project)
         }
-        finally {
-          FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+      }.invokeOnCompletion { throwable ->
+        if (throwable != null) {
+          onNoEditorsLeft.run()
         }
       }
 
@@ -415,6 +419,9 @@ private suspend fun postOpenEditors(deferredProjectFrameHelper: Deferred<Project
       openProjectViewIfNeeded(project, toolWindowInitJob)
       findAndOpenReadmeIfNeeded(project)
     }
+    blockingContext {
+      FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+    }
   }
 }
 
@@ -426,9 +433,12 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
     composite.preferredFocusedComponent?.requestFocusInWindow()
   }
   else {
-    AsyncEditorLoader.waitForLoaded(editor)
-    FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
-    composite.preferredFocusedComponent?.requestFocusInWindow()
+    blockingContext {
+      AsyncEditorLoader.performWhenLoaded(editor) {
+        FUSProjectHotStartUpMeasurer.firstOpenedEditor(composite.file)
+        composite.preferredFocusedComponent?.requestFocusInWindow()
+      }
+    }
   }
 }
 
