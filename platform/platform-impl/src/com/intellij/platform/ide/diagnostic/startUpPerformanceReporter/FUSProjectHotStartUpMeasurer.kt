@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.idea.IdeStarter
@@ -197,8 +198,10 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.MarkupRestoredEvent(file.id))
   }
 
-  suspend fun firstOpenedEditor(file: VirtualFile) {
-    if (!isProperContext()) return
+  fun firstOpenedEditor(file: VirtualFile) {
+    if (!currentThreadContext().isProperContext()) {
+      return
+    }
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
   }
 
@@ -212,8 +215,10 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.FoundReadmeFile, readmeFile, nanoTime))
   }
 
-  suspend fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
-    if (!isProperContext()) return
+  fun reportNoMoreEditorsOnStartup(nanoTime: Long) {
+    if (!currentThreadContext().isProperContext()) {
+      return
+    }
     channel.trySend(Event.NoMoreEditorsEvent(nanoTime))
   }
 
