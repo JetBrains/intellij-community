@@ -25,7 +25,7 @@ suspend fun runApplicationStarter(
   context: BuildContext,
   ideClasspath: Collection<String>,
   arguments: List<String>,
-  systemProperties: Map<String, Any> = emptyMap(),
+  systemProperties: Map<String, String> = emptyMap(),
   vmOptions: List<String> = emptyList(),
   homePath: Path = context.paths.projectHome,
   timeout: Duration = DEFAULT_TIMEOUT,
@@ -40,7 +40,7 @@ suspend fun runApplicationStarter(
   BuildUtils.addVmProperty(jvmArgs, "idea.builtin.server.disabled", "true")
   BuildUtils.addVmProperty(jvmArgs, "java.system.class.loader", "com.intellij.util.lang.PathClassLoader")
   BuildUtils.addVmProperty(jvmArgs, "idea.platform.prefix", context.productProperties.platformPrefix)
-  jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties.entries.map { it.key to it.value.toString() }))
+  jvmArgs.addAll(BuildUtils.propertiesToJvmArgs(systemProperties.toList()))
   jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
   System.getProperty("intellij.build.${arguments.first()}.debug.port")?.let {
     jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")

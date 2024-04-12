@@ -1349,7 +1349,7 @@ suspend fun createIdeClassPath(platform: PlatformLayout, context: BuildContext):
 
 suspend fun buildSearchableOptions(
   context: BuildContext,
-  systemProperties: Map<String, Any> = emptyMap(),
+  systemProperties: Map<String, String> = emptyMap(),
 ): Path? {
   return buildSearchableOptions(
     productRunner = IntellijProductRunner.createRunner(context),
@@ -1364,7 +1364,7 @@ suspend fun buildSearchableOptions(
 private suspend fun buildSearchableOptions(
   productRunner: IntellijProductRunner,
   context: BuildContext,
-  systemProperties: Map<String, Any> = emptyMap(),
+  systemProperties: Map<String, String> = emptyMap(),
 ): Path? {
   val span = Span.current()
   if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {

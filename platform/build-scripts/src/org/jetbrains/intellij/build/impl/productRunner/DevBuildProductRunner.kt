@@ -44,7 +44,7 @@ private class DevBuildProductRunner(
 ) : IntellijProductRunner {
   override suspend fun runProduct(
     arguments: List<String>,
-    additionalSystemProperties: Map<String, Any>,
+    additionalSystemProperties: Map<String, String>,
     isLongRunning: Boolean,
   ) {
     runApplicationStarter(
