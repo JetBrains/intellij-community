@@ -2,14 +2,13 @@
 package org.jetbrains.intellij.build.impl.productRunner
 
 import org.jetbrains.intellij.build.BuildContext
-import java.nio.file.Path
 
 /**
  * Provides a way to run an IDE which distribution is currently being built by the build scripts.
  * This can be used to obtain some resources and include them in the distribution.
  */
 internal interface IntellijProductRunner {
-  suspend fun runProduct(tempDir: Path, arguments: List<String>, additionalSystemProperties: Map<String, Any> = emptyMap(),
+  suspend fun runProduct(arguments: List<String>, additionalSystemProperties: Map<String, Any> = emptyMap(),
                          isLongRunning: Boolean = false)
   
   companion object {

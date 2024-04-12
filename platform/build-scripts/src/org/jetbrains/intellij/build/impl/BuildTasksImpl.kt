@@ -33,7 +33,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoLaunchData
 import org.jetbrains.intellij.build.impl.productInfo.checkInArchive
 import org.jetbrains.intellij.build.impl.productInfo.generateProductInfoJson
 import org.jetbrains.intellij.build.impl.productRunner.IntellijProductRunner
-import org.jetbrains.intellij.build.impl.productRunner.createDevIdeBuild
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.includedModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.writeProjectStructureReport
@@ -661,10 +660,8 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
 
       val builtinModuleData = spanBuilder("build provided module list").useWithScope {
         Files.deleteIfExists(providedModuleFile)
-        val tempDir = context.paths.tempDir.resolve("builtinModules")
         // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
         IntellijProductRunner.createRunner(context = context).runProduct(
-          tempDir = tempDir,
           listOf("listBundledPlugins", providedModuleFile.toString()),
         )
 
@@ -1409,9 +1406,8 @@ internal suspend fun buildAdditionalAuthoringArtifacts(productRunner: IntellijPr
     val temporaryBuildDirectory = context.paths.tempDir
     for (command in commands) {
       launch {
-        val temporaryStepDirectory = temporaryBuildDirectory.resolve(command.first)
-        val targetPath = temporaryStepDirectory.resolve(command.second)
-        productRunner.runProduct(temporaryStepDirectory, arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
+        val targetPath = temporaryBuildDirectory.resolve(command.first).resolve(command.second)
+        productRunner.runProduct(arguments = listOf(command.first, targetPath.toString()), isLongRunning = true)
 
         val targetFile = context.paths.artifactDir.resolve("${command.second}.zip")
         zipWithCompression(

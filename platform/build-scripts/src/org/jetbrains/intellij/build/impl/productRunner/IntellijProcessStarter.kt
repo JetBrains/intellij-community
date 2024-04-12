@@ -15,6 +15,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.createTempDirectory
 import kotlin.time.Duration
 
 /**
@@ -22,7 +23,6 @@ import kotlin.time.Duration
  */
 suspend fun runApplicationStarter(
   context: BuildContext,
-  tempDir: Path,
   ideClasspath: Collection<String>,
   arguments: List<String>,
   systemProperties: Map<String, Any> = emptyMap(),
@@ -30,6 +30,7 @@ suspend fun runApplicationStarter(
   homePath: Path = context.paths.projectHome,
   timeout: Duration = DEFAULT_TIMEOUT,
 ) {
+  val tempDir = createTempDirectory(context.paths.tempDir, arguments.firstOrNull() ?: "appStarter")
   Files.createDirectories(tempDir)
   val jvmArgs = mutableListOf<String>()
   val systemDir = tempDir.resolve("system")

@@ -1395,7 +1395,6 @@ private suspend fun buildSearchableOptions(
     // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
     // It'll process all UI elements in the `Settings` dialog and build an index for them.
     productRunner.runProduct(
-      tempDir = context.paths.tempDir.resolve("searchableOptions"),
       arguments = listOf("traverseUI", targetDirectory.toString(), "true"),
       additionalSystemProperties = systemProperties,
       isLongRunning = true,

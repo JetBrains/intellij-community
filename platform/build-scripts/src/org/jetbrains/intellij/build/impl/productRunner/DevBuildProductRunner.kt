@@ -43,14 +43,12 @@ private class DevBuildProductRunner(
   private val classPath: Collection<Path>,
 ) : IntellijProductRunner {
   override suspend fun runProduct(
-    tempDir: Path,
     arguments: List<String>,
     additionalSystemProperties: Map<String, Any>,
     isLongRunning: Boolean,
   ) {
     runApplicationStarter(
       context = context,
-      tempDir = tempDir,
       ideClasspath = classPath.map { it.toString() },
       arguments = arguments,
       timeout = if (isLongRunning) DEFAULT_TIMEOUT else 30.seconds,
