@@ -21,6 +21,7 @@ object HuggingFaceDocumentationPlaceholdersUtil {
 
   @Nls
   fun noReadmePlaceholder(entityId: String, entityKind: HuggingFaceEntityKind): String {
+    // todo: FUS it
     val cardUrl = HuggingFaceURLProvider.getEntityCardLink(entityId, entityKind)
     val msg = PyHuggingFaceBundle.message("python.hugging.face.placeholder.no.readme", cardUrl)
     return msg
@@ -28,10 +29,12 @@ object HuggingFaceDocumentationPlaceholdersUtil {
 
   @Nls
   fun noInternetConnectionPlaceholder(entityId: String): String =
+    // todo: FUS it
     PyHuggingFaceBundle.message("python.hugging.face.placeholder.no.internet", entityId)
 
   @Nls
   fun notFoundErrorPlaceholder(entityId: String): String =
+    // todo: FUS it
     PyHuggingFaceBundle.message("python.hugging.face.placeholder.not.found", entityId)
 
 }
