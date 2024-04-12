@@ -67,7 +67,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   public void recordOffsetCalculatedByStorageIsConsistentWithPlainCalculation() {
     int enoughRecords = (PAGE_SIZE / RECORD_SIZE_IN_BYTES) * 16;
 
-    long expectedRecordOffsetInFile = PersistentFSRecordsLockFreeOverMMappedFile.HEADER_SIZE;
+    long expectedRecordOffsetInFile = PersistentFSRecordsLockFreeOverMMappedFile.FileHeader.HEADER_SIZE;
     for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
 
       long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
