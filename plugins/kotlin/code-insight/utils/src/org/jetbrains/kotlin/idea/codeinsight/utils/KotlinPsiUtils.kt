@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.parsing.*
 import org.jetbrains.kotlin.psi.*
@@ -370,10 +372,14 @@ fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
     return targetFqNames.any { it == fqName }
 }
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = sequenceOf(
-    "kotlin.enumValues",
-    "kotlin.enumValueOf",
-).map { FqName(it) }
+operator fun FqName.plus(name: Name): FqName = child(name)
+
+operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
+
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
+    "enumValues",
+    "enumValueOf",
+).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
 
 context(KtAnalysisSession)
 fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
