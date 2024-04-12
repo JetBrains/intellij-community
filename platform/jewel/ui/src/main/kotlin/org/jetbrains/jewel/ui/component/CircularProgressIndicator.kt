@@ -79,7 +79,7 @@ private fun CircularProgressIndicatorImpl(
     var framesCount by remember { mutableStateOf(0) }
 
     val density = LocalDensity.current
-    LaunchedEffect(density, style.color) {
+    LaunchedEffect(density, style.color, defaultColor) {
         launch(dispatcher) {
             frames.clear()
             frames.addAll(
