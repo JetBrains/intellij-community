@@ -4,7 +4,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbar
 import java.awt.GridBagLayout
@@ -22,7 +21,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   init {
     if (editor.editorKind != EditorKind.DIFF) {
       isOpaque = false
-      border = JBUI.Borders.empty(editor.notebookAppearance.CELL_BORDER_HEIGHT * 4)
+      border = JBUI.Borders.empty(editor.notebookAppearance.CELL_BORDER_HEIGHT)
     }
   }
 
@@ -70,7 +69,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
       val panelLocationInEditor = SwingUtilities.convertPoint(this, Point(0, 0), editorComponent)
 
       val xCoordinate = panelLocationInEditor.x + xOffset
-      val yCoordinate = panelLocationInEditor.y + Y_OFFSET
+      val yCoordinate = panelLocationInEditor.y
 
       tb.bounds = Rectangle(xCoordinate, yCoordinate, toolbarPreferredSize.width, toolbarPreferredSize.height)
       revalidate()
@@ -79,7 +78,6 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   }
 
   companion object {
-    private val Y_OFFSET = JBUIScale.scale(30)
     const val ACTION_GROUP_ID = "Jupyter.BelowCellNewPanel"
   }
 }
