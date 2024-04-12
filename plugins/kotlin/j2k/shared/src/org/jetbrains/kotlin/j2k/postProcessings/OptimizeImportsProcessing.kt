@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.j2k.postProcessings
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
-import com.intellij.refactoring.suggested.range
+import com.intellij.openapi.editor.asTextRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -35,7 +35,7 @@ class OptimizeImportsProcessing : FileBasedPostProcessing() {
     private fun shouldTryToOptimizeImports(file: KtFile, rangeMarker: RangeMarker?): Boolean {
         val elements = runReadAction {
             when {
-                rangeMarker != null && rangeMarker.isValid -> file.elementsInRange(rangeMarker.range!!)
+                rangeMarker != null && rangeMarker.isValid -> file.elementsInRange(rangeMarker.asTextRange!!)
                 rangeMarker != null && !rangeMarker.isValid -> emptyList()
                 else -> file.children.asList()
             }

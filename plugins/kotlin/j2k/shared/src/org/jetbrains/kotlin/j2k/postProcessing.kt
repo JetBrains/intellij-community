@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -70,7 +70,7 @@ sealed class PostProcessingTarget {
 
 fun PostProcessingTarget.elements(): List<PsiElement> = when (this) {
     is PieceOfCodePostProcessingTarget -> runReadAction {
-        val range = rangeMarker.range ?: return@runReadAction emptyList()
+        val range = rangeMarker.asTextRange ?: return@runReadAction emptyList()
         file.elementsInRange(range)
     }
 

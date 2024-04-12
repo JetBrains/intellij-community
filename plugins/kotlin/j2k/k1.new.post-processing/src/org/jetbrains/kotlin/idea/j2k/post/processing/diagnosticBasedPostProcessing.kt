@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -45,7 +45,7 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
     private fun analyzeFileRange(file: KtFile, rangeMarker: RangeMarker?, resolutionFacade: ResolutionFacade): Diagnostics {
         val elements = when {
             rangeMarker == null -> listOf(file)
-            rangeMarker.isValid -> file.elementsInRange(rangeMarker.range!!).filterIsInstance<KtElement>()
+            rangeMarker.isValid -> file.elementsInRange(rangeMarker.asTextRange!!).filterIsInstance<KtElement>()
             else -> emptyList()
         }
 
@@ -57,7 +57,7 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
     private fun processDiagnostic(diagnostic: Diagnostic, file: KtFile, rangeMarker: RangeMarker?) {
         val fixes = diagnosticToFixes[diagnostic.factory] ?: return
         val elementIsInRange = runReadAction {
-            val range = rangeMarker?.range ?: file.textRange
+            val range = rangeMarker?.asTextRange ?: file.textRange
             range.contains(diagnostic.psiElement.textRange)
         }
         if (!elementIsInRange) return
