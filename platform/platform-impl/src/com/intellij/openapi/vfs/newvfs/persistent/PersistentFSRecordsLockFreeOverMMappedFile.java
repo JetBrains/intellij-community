@@ -47,11 +47,14 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    * Instead, we store allocated records count in header, in a reserved field (HEADER_RESERVED_OFFSET_1)
    */
   private static final int HEADER_RECORDS_ALLOCATED = HEADER_RESERVED_OFFSET_1;
+
   /**
    * ConnectionStatus header field re-purposed to keep owner process pid instead of magic numbers in {@link PersistentFSHeaders},
    * renamed to emphasise that new purpose.
    */
-  private static final int OWNER_PROCESS_ID_OFFSET = HEADER_CONNECTION_STATUS_OFFSET;
+  private static final int OWNER_PROCESS_ID_OFFSET = HEADER_CONNECTION_STATUS_OFFSET;                   //int32
+  /** Timestamp of ownership started (ms, unix origin) */
+  private static final int OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET = HEADER_ERRORS_ACCUMULATED_OFFSET + Integer.BYTES * 2;//int64
 
   public static final int NULL_OWNER_PID = 0;
 
@@ -602,12 +605,13 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    * another process.
    *
    * @param acquiringProcessId must be != 0
-   * @return pid of the exclusive owner after the call.
-   * If [returned pid == acquiringProcessId] => acquiring has succeeded, and acquiringProcessId is the new exclusive owner.
-   * Otherwise: returned pid provides an information about who is the storage exclusive owner now.
+   * @return OwnershipInfo(pid, timestamp) of the exclusive owner after the call.
+   * If [returned info.pid == acquiringProcessId] => acquiring has succeeded, and acquiringProcessId is the new exclusive owner.
+   * Otherwise: returned OwnershipInfo provides an information about who is the storage exclusive owner now.
    */
-  public int tryAcquireExclusiveAccess(int acquiringProcessId,
-                                       boolean forcibly) {
+  public @NotNull OwnershipInfo tryAcquireExclusiveAccess(int acquiringProcessId,
+                                                          long acquiringTimestampMs,
+                                                          boolean forcibly) {
     if (acquiringProcessId == NULL_OWNER_PID) {
       throw new IllegalArgumentException("acquiringPid(=" + acquiringProcessId + ") must be !=0");
     }
@@ -615,30 +619,35 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     while (true) {//CAS loop
       int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, OWNER_PROCESS_ID_OFFSET);
       if (currentOwnerProcessId == acquiringProcessId) {
+        //already acquired => nothing to do
         owningProcessId = acquiringProcessId;
-        return acquiringProcessId; //already acquired => nothing to do
+        long ownershipAcquiredMs = (long)LONG_HANDLE.getVolatile(headerPageBuffer, OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET);
+        return new OwnershipInfo(acquiringProcessId, ownershipAcquiredMs);
       }
       if (currentOwnerProcessId != NULL_OWNER_PID && !forcibly) {
         //already acquired by other process => return owner's pid as an indication of failure
-        return currentOwnerProcessId;
+        long ownershipAcquiredMs = (long)LONG_HANDLE.getVolatile(headerPageBuffer, OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET);
+        return new OwnershipInfo(currentOwnerProcessId, ownershipAcquiredMs);
       }
       if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
         owningProcessId = acquiringProcessId;
-        return acquiringProcessId;
+        LONG_HANDLE.setVolatile(headerPageBuffer, OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET, acquiringTimestampMs);
+        return new OwnershipInfo(acquiringProcessId, acquiringTimestampMs);
       }
     }
   }
 
   /**
-   * Releases the ownership acquired by {@link #tryAcquireExclusiveAccess(int, boolean)}.
+   * Releases the ownership acquired by {@link #tryAcquireExclusiveAccess(int, long, boolean)}.
    * If {@code tryAcquireExclusiveAccess(pid)} has succeeded, than following {@code tryReleaseExclusiveAccess(pid)} must
-   * also succeed (given nobody forcibly overwrites the ownership by calling {@link #tryAcquireExclusiveAccess(int, boolean)}
+   * also succeed (given nobody forcibly overwrites the ownership by calling {@link #tryAcquireExclusiveAccess(int, long, boolean)}
    * with forcible=true).
    *
    * @param ownerProcessId pid of current storage owner. Could be 0 if there is no current owner
    * @return pid of exclusive owner after the call.
    * If returned pid=0 => there is no owner, i.e. ownership was released successfully.
    * Otherwise: returned pid provides an information about who is currently owning the storage.
+   * MAYBE RC: return OwnershipInfo, as in {@link #tryAcquireExclusiveAccess(int, long, boolean)}?
    */
   private int tryReleaseExclusiveAccess(int ownerProcessId) {
     ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
@@ -652,7 +661,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
         return currentOwnerProcessId;
       }
       if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, NULL_OWNER_PID)) {
-        return 0;
+        LONG_HANDLE.setVolatile(headerPageBuffer, OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET, 0L);
+        return NULL_OWNER_PID;
       }
     }
   }
@@ -1125,5 +1135,40 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   @MagicConstant(flagsFromClass = RecordLayout.class)
   @Target(ElementType.TYPE_USE)
   public @interface FieldOffset {
+  }
+
+  public static final class OwnershipInfo {
+    public final int ownerProcessPid;
+    public final long ownershipAcquiredAtMs;
+
+    public OwnershipInfo(int ownerProcessPid,
+                         long ownershipAcquiredAtMs) {
+      if (ownerProcessPid < 0) {
+        throw new IllegalArgumentException("pid(=" + ownerProcessPid + ") must be positive");
+      }
+      this.ownerProcessPid = ownerProcessPid;
+      this.ownershipAcquiredAtMs = ownershipAcquiredAtMs;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      OwnershipInfo info = (OwnershipInfo)o;
+      return ownerProcessPid == info.ownerProcessPid && ownershipAcquiredAtMs == info.ownershipAcquiredAtMs;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = ownerProcessPid;
+      result = 31 * result + Long.hashCode(ownershipAcquiredAtMs);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "OwnershipInfo{owner pid: " + ownerProcessPid + ", acquired at: " + ownershipAcquiredAtMs + '}';
+    }
   }
 }
