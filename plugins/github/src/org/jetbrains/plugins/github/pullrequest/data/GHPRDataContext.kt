@@ -56,7 +56,6 @@ internal class GHPRDataContext(val scope: CoroutineScope,
         Disposer.dispose(dataProviderRepository)
         Disposer.dispose(listLoader)
         Disposer.dispose(listUpdatesChecker)
-        Disposer.dispose(repositoryDataService)
       }
     }
   }

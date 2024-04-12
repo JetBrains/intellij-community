@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageD
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -199,7 +200,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
 
   private fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>> {
     val author = detailsState.value.author
-    return repositoryDataService.potentialReviewers.thenApply { reviewers ->
+    return repositoryDataService.loadPotentialReviewersAsync().asCompletableFuture().thenApply { reviewers ->
       reviewers.mapNotNull { if (it == author) null else it }
     }
   }

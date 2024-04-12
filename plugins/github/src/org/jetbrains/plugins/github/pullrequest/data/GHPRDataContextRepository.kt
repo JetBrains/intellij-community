@@ -115,7 +115,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val apiRepositoryPath = repositoryInfo.path
       val apiRepositoryCoordinates = GHRepositoryCoordinates(account.server, apiRepositoryPath)
 
-      val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor,
+      val repoDataService = GHPRRepositoryDataServiceImpl(cs,
+                                                          requestExecutor,
                                                           remoteCoordinates, apiRepositoryCoordinates,
                                                           repositoryInfo.owner,
                                                           repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
