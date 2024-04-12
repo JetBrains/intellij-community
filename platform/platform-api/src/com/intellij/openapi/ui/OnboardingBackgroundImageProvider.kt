@@ -19,4 +19,5 @@ interface OnboardingBackgroundImageProvider {
 
   fun getImage(): Image?
   fun setBackgroundImageToDialog(dialog: DialogWrapper, image: Image?)
+  fun hasBackgroundImage(dialog: DialogWrapper): Boolean
 }

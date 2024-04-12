@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.LazyInitializer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,4 +68,12 @@ public final class JBSwingUtilities {
     var image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
     return image.createGraphics();
   });
+
+  @ApiStatus.Internal
+  public static final RenderingHints.Key ADJUSTED_BACKGROUND_ALPHA = new RenderingHints.Key(1) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val instanceof Float;
+    }
+  };
 }

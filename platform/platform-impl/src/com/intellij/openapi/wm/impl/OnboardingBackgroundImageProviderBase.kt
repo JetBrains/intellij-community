@@ -72,6 +72,9 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
     dialog.rootPane.repaint()
   }
 
+  override fun hasBackgroundImage(dialog: DialogWrapper): Boolean =
+    ClientProperty.get(dialog.rootPane, BACKGROUND_IMAGE_DISPOSABLE_KEY) != null
+
   companion object {
     private val BACKGROUND_IMAGE_DISPOSABLE_KEY: Key<Disposable> = Key.create("ide.background.image.provider.background.image")
     private const val LOADING_TIMEOUT_MILLIS: Long = 300
