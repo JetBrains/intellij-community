@@ -90,6 +90,7 @@ a:com.intellij.diagnostic.logging.LogConsoleManagerBase
 - pa:getUi():com.intellij.execution.ui.RunnerLayoutUi
 - removeAdditionalTabComponent(com.intellij.diagnostic.logging.AdditionalTabComponent):V
 - removeLogConsole(java.lang.String):V
+f:com.intellij.diagnostic.logging.LogFilesCollectorKt
 f:com.intellij.diagnostic.logging.LogFilesManager
 - <init>(com.intellij.openapi.project.Project,com.intellij.diagnostic.logging.LogConsoleManager,com.intellij.openapi.Disposable):V
 - addLogConsoles(com.intellij.execution.configurations.RunConfigurationBase,com.intellij.execution.process.ProcessHandler):V

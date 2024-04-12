@@ -552,11 +552,9 @@ f:com.intellij.execution.configurations.LogFileOptions
 - <init>(java.lang.String,java.lang.String,Z,Z,Z):V
 - b:<init>(java.lang.String,java.lang.String,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - sf:areEqual(com.intellij.execution.configurations.LogFileOptions,com.intellij.execution.configurations.LogFileOptions):Z
-- sf:collectMatchedFiles(java.io.File,java.util.regex.Pattern,java.util.List):V
 - f:getCharset():java.nio.charset.Charset
 - f:getName():java.lang.String
 - f:getPathPattern():java.lang.String
-- f:getPaths():java.util.Set
 - f:isEnabled():Z
 - f:isShowAll():Z
 - f:isSkipContent():Z
@@ -569,7 +567,6 @@ f:com.intellij.execution.configurations.LogFileOptions
 - f:setSkipContent(Z):V
 f:com.intellij.execution.configurations.LogFileOptions$Companion
 - f:areEqual(com.intellij.execution.configurations.LogFileOptions,com.intellij.execution.configurations.LogFileOptions):Z
-- f:collectMatchedFiles(java.io.File,java.util.regex.Pattern,java.util.List):V
 a:com.intellij.execution.configurations.ModuleBasedConfiguration
 - com.intellij.execution.configurations.LocatableConfigurationBase
 - com.intellij.execution.configurations.ModuleRunConfiguration
