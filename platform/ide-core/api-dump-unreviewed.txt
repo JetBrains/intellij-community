@@ -2198,6 +2198,7 @@ com.intellij.openapi.ui.popup.JBPopup
 - a:setMinimumSize(java.awt.Dimension):V
 - a:setRequestFocus(Z):V
 - a:setSize(java.awt.Dimension):V
+- setSize(java.awt.Point,java.awt.Dimension):V
 - a:setUiVisible(Z):V
 - setUserData(java.util.List):V
 - a:show(com.intellij.ui.awt.RelativePoint):V

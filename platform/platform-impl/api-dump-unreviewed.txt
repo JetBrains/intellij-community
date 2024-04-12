@@ -29405,7 +29405,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - getConsumedScreenBounds():java.awt.Rectangle
 - getContent():javax.swing.JComponent
 - f:getContentSize():java.awt.Dimension
-- ps:getCurrentWindow(com.intellij.openapi.project.Project):java.awt.Window
+- s:getCurrentWindow(com.intellij.openapi.project.Project):java.awt.Window
 - getDimensionServiceKey():java.lang.String
 - getFooterPreferredSize():java.awt.Dimension
 - getHeaderPreferredSize():java.awt.Dimension
@@ -29457,6 +29457,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - setRequestFocus(Z):V
 - setShowHints(Z):V
 - setSize(java.awt.Dimension):V
+- setSize(java.awt.Point,java.awt.Dimension):V
 - p:setSpeedSearchAlwaysShown():V
 - setStretchToOwnerHeight(Z):V
 - setStretchToOwnerWidth(Z):V
