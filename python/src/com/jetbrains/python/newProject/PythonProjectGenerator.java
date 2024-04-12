@@ -38,6 +38,7 @@ import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode;
 import com.jetbrains.python.statistics.PyStatisticToolsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +119,15 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   }
 
   public @Nullable JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
+    return null;
+  }
+
+  /**
+   * Upper part of project generation wizard panel could be customized
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public MainPartUiCustomizer getMainPartUiCustomizer() {
     return null;
   }
 
