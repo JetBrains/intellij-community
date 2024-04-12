@@ -338,7 +338,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
     val name = lib.name
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
-    if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni" || name == "zstd-jni-windows-aarch64")) {
+    if (module.name == "intellij.platform.buildScripts.downloader" && (name == "zstd-jni")) {
       return@collectProjectLibrariesFromIncludedModules
     }
 

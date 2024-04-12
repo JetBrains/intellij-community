@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION
@@ -308,7 +308,7 @@ const val MODULE_DESCRIPTORS_JAR_PATH: String = "$MODULES_DIR_NAME/$JAR_REPOSITO
 
 private val dependenciesToSkip = mapOf(
   //may be removed when IJPL-125 is fixed
-  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni", "lib.zstd-jni-windows-aarch64"),
+  "intellij.platform.buildScripts.downloader" to setOf("lib.zstd-jni"),
   //RDCT-488
   "intellij.performanceTesting" to setOf(
     "intellij.platform.vcs.impl", 
