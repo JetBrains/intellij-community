@@ -76,7 +76,7 @@ object K2CreateFromUsageUtil {
     internal fun KtType.convertToClass(): KtClass? = expandedClassSymbol?.psi as? KtClass
 
     context (KtAnalysisSession)
-    internal fun KtElement.getExpectedKotlinType(): ExpectedType? {
+    internal fun KtElement.getExpectedKotlinType(): ExpectedKotlinType? {
         var expectedType = getExpectedType()
         if (expectedType == null) {
             val parent = this.parent

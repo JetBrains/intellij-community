@@ -43,10 +43,16 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
                 K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
+    private val createVariableInsteadOfPackageReference: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ExpressionExpectedPackageFound> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ExpressionExpectedPackageFound ->
+            val psi = diagnostic.psi
+            listOfNotNull(K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(psi))
+        }
 
     override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(createFunctionFromArgumentTypeMismatch)
         registerFactory(createFunctionFromTooManyArguments)
         registerFactory(createFunctionFromMissingArguments)
+        registerFactory(createVariableInsteadOfPackageReference)
     }
 }

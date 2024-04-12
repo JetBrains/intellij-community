@@ -11,7 +11,7 @@ class K2CreateFromUsageUnresolvedReferenceQuickFixProvider: UnresolvedReferenceQ
         when (val element = ref.element) {
             is KtElement -> {
                 K2CreateFunctionFromUsageBuilder.generateCreateMethodActions(element).forEach(registrar::register)
-                //generateCreateLocalVariableActions(element).forEach(registrar::register)
+                K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(element)?.let(registrar::register)
             }
         }
     }
