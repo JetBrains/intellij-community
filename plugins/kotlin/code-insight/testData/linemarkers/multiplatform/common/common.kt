@@ -16,3 +16,5 @@ expect fun <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(te
 expect annotation class <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>Preview<!>()
 
 expect object <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>SomeObject<!>()
+
+interface GoToCommonMainInterface
