@@ -9,6 +9,8 @@ import com.intellij.platform.ml.PerTier
 import com.intellij.platform.ml.TierInstance
 import com.intellij.platform.ml.impl.session.*
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * The logging scheme that is logging entire session into one event.
@@ -41,11 +43,12 @@ class EntireSessionLoggingScheme<P : Any, F>(
                                                     fieldSession)
 
     return MLSessionLoggerBuilder {
+      val loggingBufferLock = ReentrantLock()
       var bufferAnalysisSessionStructure: ObjectEventData? = null
       val bufferAnalysisSession: MutableList<EventPair<*>> = mutableListOf()
       var logged = false
 
-      fun logEvent() {
+      fun logEvent() = loggingBufferLock.withLock {
         assert(!logged) { "Attempted to log session twice" }
         eventId.log(listOfNotNull(
           bufferAnalysisSessionStructure?.let { fieldSessionStructure with it },
@@ -55,25 +58,25 @@ class EntireSessionLoggingScheme<P : Any, F>(
       }
 
       object : MLSessionLogger<P> {
-        override fun logBeforeSessionStarted(startedSessionAnalysis: List<EventPair<*>>) {
+        override fun logBeforeSessionStarted(startedSessionAnalysis: List<EventPair<*>>): Unit = loggingBufferLock.withLock {
           bufferAnalysisSession.addAll(startedSessionAnalysis)
         }
 
-        override fun logStartFailure(failureAnalysis: List<EventPair<*>>) {
+        override fun logStartFailure(failureAnalysis: List<EventPair<*>>) = loggingBufferLock.withLock {
           bufferAnalysisSession.addAll(failureAnalysis)
           logEvent()
         }
 
-        override fun logSessionException(exceptionAnalysis: List<EventPair<*>>) {
+        override fun logSessionException(exceptionAnalysis: List<EventPair<*>>) = loggingBufferLock.withLock {
           bufferAnalysisSession.addAll(exceptionAnalysis)
           logEvent()
         }
 
-        override fun logStarted(startAnalysis: List<EventPair<*>>) {
+        override fun logStarted(startAnalysis: List<EventPair<*>>): Unit = loggingBufferLock.withLock {
           bufferAnalysisSession.addAll(startAnalysis)
         }
 
-        override fun logFinished(sessionStructure: AnalysedRootContainer<P>, finishedSessionAnalysis: List<EventPair<*>>) {
+        override fun logFinished(sessionStructure: AnalysedRootContainer<P>, finishedSessionAnalysis: List<EventPair<*>>) = loggingBufferLock.withLock {
           bufferAnalysisSessionStructure = sessionStructureFields.buildObjectEventData(sessionStructure)
           bufferAnalysisSession.addAll(finishedSessionAnalysis)
           logEvent()

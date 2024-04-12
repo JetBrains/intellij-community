@@ -3,6 +3,7 @@ package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.IntEventField
@@ -69,7 +70,10 @@ private class MockTaskFusLogger : CounterUsagesCollector() {
     val GROUP = EventLogGroup("mock-task", 1).also {
       it.registerEventSessionFinished("finished", MockTask, EntireSessionLoggingScheme.DOUBLE,
                                       AnalysisMethods(
-                                        sessionAnalysers = listOf(FailureLogger(), ExceptionLogger(), RandomModelSeedAnalyser),
+                                        sessionAnalysers = listOf(FailureLogger(),
+                                                                  ExceptionLogger(),
+                                                                  RandomModelSeedAnalyser,
+                                                                  VeryUselessSessionAnalyser()),
                                         structureAnalysers = listOf(SomeStructureAnalyser())
                                       ))
     }
@@ -227,6 +231,30 @@ class MockTaskApproachDetails : LogDrivenModelInference.SessionDetails<RandomMod
 
 private class MockTaskApproachBuilder : LogDrivenModelInference.Builder<RandomModel, Double>(MockTask, MockTaskApproachDetails.Builder())
 
+
+private class VeryUselessSessionAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
+  companion object {
+    val ON_BEFORE_STARTED = BooleanEventField("on_before_started")
+    val ON_SESSION_STARTED = BooleanEventField("on_session_started")
+    val ON_SESSION_FINISHED = BooleanEventField("on_session_finished")
+  }
+
+  override val declaration: List<EventField<*>> = listOf(
+    ON_BEFORE_STARTED, ON_SESSION_STARTED, ON_SESSION_FINISHED
+  )
+
+  override suspend fun onBeforeSessionStarted(callParameters: Environment, sessionEnvironment: Environment): List<EventPair<*>> {
+    return listOf(ON_BEFORE_STARTED with true)
+  }
+
+  override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<Double>, mlModel: RandomModel): List<EventPair<*>> {
+    return listOf(ON_SESSION_STARTED with true)
+  }
+
+  override suspend fun onSessionFinished(callParameters: Environment, sessionEnvironment: Environment, sessionTreeRoot: DescribedRootContainer<RandomModel, Double>): List<EventPair<*>> {
+    return listOf(ON_SESSION_FINISHED with true)
+  }
+}
 
 class MockTaskTaskTest : MLApiLogsTestCase() {
   fun `test demo ml task`() {
