@@ -36,8 +36,8 @@ import org.jetbrains.plugins.github.api.data.request.Type
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.GithubShareDialog
@@ -76,7 +76,7 @@ object GHShareProjectUtil {
     }
 
     val progressManager = service<ProgressManager>()
-    val accountInformationProvider = GithubAccountInformationProvider.getInstance()
+    val accountInformationProvider = GHCachingAccountInformationProvider.getInstance()
     val gitHelper = GithubGitHelper.getInstance()
     val git = Git.getInstance()
 
@@ -163,7 +163,9 @@ object GHShareProjectUtil {
         }
 
         indicator.text = GithubBundle.message("share.process.retrieving.username")
-        val username = accountInformationProvider.getInformation(requestExecutor, indicator, account).login
+        val username = runBlockingCancellable {
+          accountInformationProvider.loadInformation(requestExecutor, account)
+        }.login
         val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
 
         //git remote add origin git@github.com:login/name.git

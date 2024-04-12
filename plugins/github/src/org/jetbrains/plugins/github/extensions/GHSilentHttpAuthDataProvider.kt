@@ -6,18 +6,15 @@ import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.http.HostedGitAuthenticationFailureManager
 import git4idea.remote.hosting.http.SilentHostedGitHttpAuthDataProvider
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 
 private val LOG = logger<GHSilentHttpAuthDataProvider>()
@@ -51,9 +48,7 @@ internal class GHSilentHttpAuthDataProvider : SilentHostedGitHttpAuthDataProvide
     suspend fun getAccountDetails(account: GithubAccount, token: String): GithubAuthenticatedUser? =
       try {
         val executor = GithubApiRequestExecutor.Factory.getInstance().create(token)
-        withContext(Dispatchers.IO) {
-          service<GithubAccountInformationProvider>().getInformation(executor, DumbProgressIndicator(), account)
-        }
+        service<GHCachingAccountInformationProvider>().loadInformation(executor, account)
       }
       catch (e: Exception) {
         if (e !is ProcessCanceledException) LOG.info("Cannot load details for $account", e)

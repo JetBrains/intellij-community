@@ -16,14 +16,13 @@ import com.intellij.util.ui.ImageUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.authentication.accounts.GHCachingAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
@@ -77,13 +76,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     : Deferred<GHPRDataContext> {
     val cs = this
     return async {
-      val accountDetails = withContext(Dispatchers.IO) {
-        coroutineToIndicator {
-          val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
-          GithubAccountInformationProvider.getInstance().getInformation(requestExecutor, indicator, account)
-        }
-      }
-
+      val accountDetails = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account)
       val ghostUserDetails = requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))
                              ?: error("Couldn't load ghost user details")
 
