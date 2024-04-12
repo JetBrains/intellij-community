@@ -20,7 +20,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
                                              properties: MainVcsLogUiProperties,
                                              filters: VcsLogFilterCollection?) : FilterModel<BranchFilters>(properties) {
   var visibleRoots: Collection<VirtualFile>? = null
-    private set
+    internal set
 
   init {
     if (filters != null) {
