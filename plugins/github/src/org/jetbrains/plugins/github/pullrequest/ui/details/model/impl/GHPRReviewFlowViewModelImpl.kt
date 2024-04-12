@@ -7,6 +7,9 @@ import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageD
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
+import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
+import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
+import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
@@ -16,11 +19,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.io.await
+import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -43,7 +46,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModelHel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRSubmitReviewViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -189,23 +191,29 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   override fun requestReview(parentComponent: JComponent) = runAction {
     val reviewers = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
       reviewers + reviews.keys
-    }.first()
+    }.first().toHashSet()
     val selectedReviewers = withContext(Dispatchers.Main) {
-      GHUIUtil.showChooserPopup(
-        parentComponent,
-        GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
-        reviewers,
-        loadPotentialReviewers()
-      ).await()
-    }
-    detailsData.adjustReviewers(selectedReviewers)
-  }
+      val point = RelativePoint.getNorthWestOf(parentComponent)
 
-  private fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>> {
-    val author = detailsState.value.author
-    return repositoryDataService.loadPotentialReviewersAsync().asCompletableFuture().thenApply { reviewers ->
-      reviewers.mapNotNull { if (it == author) null else it }
+      val author = detailsState.value.author
+      val potentialReviewersLoadingFlow = flow {
+        runCatching {
+          repositoryDataService.loadPotentialReviewersAsync().await()
+            .filter { it.id != author?.id }
+        }.also {
+          emit(it)
+        }
+      }
+
+      ChooserPopupUtil.showAsyncMultipleChooserPopup(point,
+                                                     potentialReviewersLoadingFlow,
+                                                     GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
+                                                     { reviewers.contains(it) },
+                                                     PopupConfig(showDirection = ShowDirection.ABOVE))
     }
+    val delta = CollectionDelta(reviewers, selectedReviewers)
+    if (delta.isEmpty) return@runAction
+    detailsData.adjustReviewers(delta)
   }
 
   override fun reRequestReview() = runAction {
