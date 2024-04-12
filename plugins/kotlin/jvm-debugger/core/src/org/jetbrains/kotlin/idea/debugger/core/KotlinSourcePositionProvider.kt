@@ -19,8 +19,12 @@ import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
+import org.jetbrains.kotlin.idea.codeinsight.utils.isReferenceToImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -58,18 +62,25 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(place) ?: return null
         val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptor.name, contextElement)
         val localReferenceExpression = codeFragment.getContentElement()
-        if (localReferenceExpression is KtSimpleNameExpression) {
-            analyze(localReferenceExpression) {
-                for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
-                    if (symbol !is KtVariableLikeSymbol) {
-                        continue
-                    }
 
-                    val element = symbol.psi ?: continue
+        if (localReferenceExpression !is KtSimpleNameExpression) return null
 
+        analyze(localReferenceExpression) {
+            for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
+                if (symbol !is KtVariableLikeSymbol) continue
+
+                symbol.psi?.let { element ->
                     return when {
                         nearest -> DebuggerContextUtil.findNearest(context, element, element.containingFile)
                         else -> SourcePosition.createFromOffset(element.containingFile, element.textOffset)
+                    }
+                }
+
+                if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                    val lambda = symbol.getFunctionLiteralByImplicitLambdaParameterSymbol() ?: continue
+                    return when {
+                        nearest -> null // It's not so easy to find the nearest reference to the implicitly declared `it`.
+                        else -> SourcePosition.createFromOffset(lambda.containingFile, lambda.lBrace.textOffset)
                     }
                 }
             }

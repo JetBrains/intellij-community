@@ -35,10 +35,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
-import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
-import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableContext
@@ -398,7 +395,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                     if (symbol.origin == KtSymbolOrigin.SOURCE) {
                         addIfNotNull(symbol.psi)
                     } else if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
-                        addIfNotNull((symbol.getContainingSymbol() as? KtAnonymousFunctionSymbol)?.psi as? KtFunctionLiteral)
+                        addIfNotNull(symbol.getFunctionLiteralByImplicitLambdaParameterSymbol())
                     }
                 }
             }
