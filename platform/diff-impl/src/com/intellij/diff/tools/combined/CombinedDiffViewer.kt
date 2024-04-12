@@ -588,7 +588,7 @@ class CombinedDiffViewer(
     block.setCollapsed(newCollapseState)
   }
 
-  internal fun toggleAllBlockCollapse() {
+  internal fun collapseAllBlocks() {
     for (block in diffBlocks.values) {
       if (block !is CombinedCollapsibleDiffBlock) continue
 

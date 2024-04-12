@@ -187,8 +187,6 @@
     <action id="Vcs.CombinedDiff.ToggleCollapseBlock" class="com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAction">
       <keyboard-shortcut first-keystroke="control ESCAPE" keymap="$default"/>
     </action>
-    <action internal="true" id="Vcs.CombinedDiff.ToggleCollapseAllBlock"
-            class="com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAllAction"/>
 
     <group id="ChangesViewPopupMenu">
       <reference ref="CheckinFiles"/>
@@ -471,6 +469,8 @@
                 class="com.intellij.diff.actions.impl.CombinedDiffToggleAction">
         </action>
         <separator/>
+        <action id="Vcs.CombinedDiff.ToggleCollapseAllBlock"
+                class="com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAllAction"/>
         <add-to-group group-id="EditorTabPopupMenu" anchor="before" relative-to-action="SplitVertically"/>
         <add-to-group group-id="Diff.EditorGutterPopupMenu.EditorSettings" anchor="last"/>
       </group>

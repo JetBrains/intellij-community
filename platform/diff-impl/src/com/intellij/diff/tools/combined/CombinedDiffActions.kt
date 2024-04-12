@@ -3,6 +3,7 @@ package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
 import com.intellij.diff.actions.impl.*
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.FoldingModelSupport
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
@@ -249,9 +250,20 @@ class CombinedToggleBlockCollapseAction : CombinedGlobalBlockNavigationAction() 
   }
 }
 
-class CombinedToggleBlockCollapseAllAction : CombinedGlobalBlockNavigationAction() {
+class CombinedToggleBlockCollapseAllAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    val combinedDiffViewer = e.getData(DiffDataKeys.DIFF_CONTEXT)?.getUserData(COMBINED_DIFF_VIEWER_KEY)
+    val enabledAndVisible = combinedDiffViewer != null
+    e.presentation.isEnabledAndVisible = enabledAndVisible
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
-    val viewer = e.getRequiredData(COMBINED_DIFF_VIEWER)
-    viewer.toggleAllBlockCollapse()
+    val context = e.getRequiredData(DiffDataKeys.DIFF_CONTEXT)
+    val viewer = context.getUserData(COMBINED_DIFF_VIEWER_KEY) ?: return
+
+    viewer.collapseAllBlocks()
   }
 }
