@@ -19,7 +19,7 @@ import kotlin.coroutines.EmptyCoroutineContext
   "Instead, use blockingContext with full context.",
   ReplaceWith("blockingContext(job, action)")
 )
-fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, action)
+fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContextInner(job, action)
 
 /**
  * ```

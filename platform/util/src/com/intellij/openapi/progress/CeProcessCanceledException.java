@@ -8,8 +8,7 @@ import java.util.concurrent.CancellationException;
 
 /**
  * {@link CancellationException} to {@link ProcessCanceledException} adapter.
- *
- * @see PceCancellationException
+ * This has to be an inheritor of PCE, so that the code expecting PCE from ProgressManager#checkCanceled will continue to work.
  */
 @Internal
 public final class CeProcessCanceledException extends ProcessCanceledException {

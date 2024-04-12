@@ -192,19 +192,13 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  *
  * Current thread context usually includes [current job][Cancellation.currentJob],
  * which makes [ProgressManager.checkCanceled] work inside [action].
- * [ProcessCanceledException] thrown from `ProgressManager.checkCanceled()` inside the [action] is rethrown as [CancellationException],
- * so the calling code could continue working in the coroutine framework terms.
+ * [ProcessCanceledException] thrown from `ProgressManager.checkCanceled()` is rethrown back to the suspending context.
  *
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  return try {
-    coroutineScope {
-      blockingContextInner(coroutineContext, action)
-    }
-  }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
+  return coroutineScope {
+    blockingContextInner(coroutineContext, action)
   }
 }
 
@@ -246,14 +240,9 @@ suspend fun <T> blockingContext(action: () -> T): T {
  * @see [coroutineScope]
  */
 suspend fun <T> blockingContextScope(action: () -> T): T {
-  return try {
-    coroutineScope {
-      val coroutineContext = coroutineContext
-      blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
-    }
-  }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
+  return coroutineScope {
+    val coroutineContext = coroutineContext
+    blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
   }
 }
 
@@ -308,20 +297,13 @@ fun currentThreadCoroutineScope() : CoroutineScope {
   return CoroutineScope(threadContext)
 }
 
+@Internal
+fun CoroutineContext.prepareForInstallation(): CoroutineContext = this.minusKey(ContinuationInterceptor.Key)
 
 @Internal
-fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
-  try {
-    return blockingContextInner(currentContext, action)
-  }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
-  }
-}
-
 @Throws(ProcessCanceledException::class)
-private fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
-  val context = currentContext.minusKey(ContinuationInterceptor)
+internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
+  val context = currentContext.prepareForInstallation()
   return installThreadContext(context).use {
     action()
   }
@@ -441,7 +423,7 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
       @OptIn(InternalCoroutinesApi::class)
       throw job.getCancellationException()
     }
-    throw PceCancellationException(e)
+    throw e
   }
 }
 

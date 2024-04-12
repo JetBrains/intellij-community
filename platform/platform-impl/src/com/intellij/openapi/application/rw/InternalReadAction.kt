@@ -96,9 +96,6 @@ internal class InternalReadAction<T>(
   catch (readCe: ReadCancellationException) {
     ReadResult.WritePending
   }
-  catch (pce: ProcessCanceledException) {
-    throw PceCancellationException(pce)
-  }
 
   private fun insideReadAction(): ReadResult<T> {
     val unsatisfiedConstraint = findUnsatisfiedConstraint()
