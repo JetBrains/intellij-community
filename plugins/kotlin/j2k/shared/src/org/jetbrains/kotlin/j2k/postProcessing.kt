@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.PieceOfCodePostProcessingTarget
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -17,7 +18,13 @@ interface PostProcessing {
     val options: PostProcessingOptions
         get() = PostProcessingOptions.DEFAULT
 
+    // For K1: analysis and application are mixed between post-processings
     fun runProcessing(target: PostProcessingTarget, converterContext: NewJ2kConverterContext)
+
+    // For K2: separate analysis stage and application stage
+    // to avoid reanalyzing the changed files
+    context(KtAnalysisSession)
+    fun computeAppliers(target: PostProcessingTarget, converterContext: NewJ2kConverterContext): List<PostProcessingApplier>
 }
 
 fun PostProcessing.runProcessingConsideringOptions(target: PostProcessingTarget, converterContext: NewJ2kConverterContext) {
@@ -45,6 +52,29 @@ abstract class FileBasedPostProcessing : PostProcessing {
     }
 
     abstract fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext)
+
+    context(KtAnalysisSession)
+    final override fun computeAppliers(
+        target: PostProcessingTarget,
+        converterContext: NewJ2kConverterContext
+    ): List<PostProcessingApplier> = when (target) {
+        is PieceOfCodePostProcessingTarget ->
+            listOf(computeApplier(target.file, listOf(target.file), target.rangeMarker, converterContext))
+
+        is MultipleFilesPostProcessingTarget -> {
+            target.files.map { file ->
+                computeApplier(file, target.files, rangeMarker = null, converterContext)
+            }
+        }
+    }
+
+    context(KtAnalysisSession)
+    abstract fun computeApplier(
+        file: KtFile,
+        allFiles: List<KtFile>,
+        rangeMarker: RangeMarker?,
+        converterContext: NewJ2kConverterContext
+    ): PostProcessingApplier
 }
 
 abstract class ElementsBasedPostProcessing : PostProcessing {
@@ -53,6 +83,15 @@ abstract class ElementsBasedPostProcessing : PostProcessing {
     }
 
     abstract fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext)
+
+    context(KtAnalysisSession)
+    final override fun computeAppliers(
+        target: PostProcessingTarget,
+        converterContext: NewJ2kConverterContext
+    ): List<PostProcessingApplier> = listOf(computeApplier(target.elements(), converterContext))
+
+    context(KtAnalysisSession)
+    abstract fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier
 }
 
 data class NamedPostProcessingGroup(val description: String, val processings: List<PostProcessing>)
@@ -80,4 +119,8 @@ fun PostProcessingTarget.elements(): List<PsiElement> = when (this) {
 fun PostProcessingTarget.files(): List<KtFile> = when (this) {
     is PieceOfCodePostProcessingTarget -> listOf(file)
     is MultipleFilesPostProcessingTarget -> files
+}
+
+interface PostProcessingApplier {
+    fun apply()
 }

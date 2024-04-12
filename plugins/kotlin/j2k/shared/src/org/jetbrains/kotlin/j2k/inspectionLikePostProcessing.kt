@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingGroup.RangeFilterResult.*
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
@@ -43,9 +43,7 @@ class InspectionLikeProcessingGroup(
                     continue
                 }
 
-                // In K2 J2K, don't reanalyze the file after write actions, just assume that
-                // the processing is still applicable if the smart pointer points to a valid element
-                val needRun = if (KotlinPluginModeProvider.isK2Mode()) true else runReadAction {
+                val needRun = runReadAction {
                     element.isValid && processing.isApplicableToElement(element, converterContext.converter.settings)
                 }
 
@@ -58,6 +56,26 @@ class InspectionLikeProcessingGroup(
 
             if (runSingleTime) break
         } while (modificationStamp != runReadAction { file.modificationStamp } && elementToActions.isNotEmpty())
+    }
+
+    context(KtAnalysisSession)
+    override fun computeApplier(
+        file: KtFile,
+        allFiles: List<KtFile>,
+        rangeMarker: RangeMarker?,
+        converterContext: NewJ2kConverterContext
+    ): PostProcessingApplier {
+        val processingDataList = collectAvailableActions(file, converterContext, rangeMarker)
+        return Applier(processingDataList)
+    }
+
+    private class Applier(private val processingDataList: List<ProcessingData>) : PostProcessingApplier {
+        override fun apply() {
+            for ((processing, pointer, _) in processingDataList) {
+                val element = pointer.element ?: continue
+                processing.applyToElement(element)
+            }
+        }
     }
 
     private enum class RangeFilterResult { SKIP, GO_INSIDE, PROCESS }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.*
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.j2k.FileBasedPostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -40,6 +42,16 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
         for (diagnostic in diagnostics) {
             processDiagnostic(diagnostic, file, rangeMarker)
         }
+    }
+
+    context(KtAnalysisSession)
+    override fun computeApplier(
+        file: KtFile,
+        allFiles: List<KtFile>,
+        rangeMarker: RangeMarker?,
+        converterContext: NewJ2kConverterContext
+    ): PostProcessingApplier {
+        TODO("Not yet implemented")
     }
 
     private fun analyzeFileRange(file: KtFile, rangeMarker: RangeMarker?, resolutionFacade: ResolutionFacade): Diagnostics {

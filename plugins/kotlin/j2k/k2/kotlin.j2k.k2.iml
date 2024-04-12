@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.j2k.shared" />
+    <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
   </component>
 </module>

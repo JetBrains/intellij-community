@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.childrenOfType
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics.findAnnotation
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
 import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.lexer.KtTokens.DATA_KEYWORD
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -34,6 +36,11 @@ internal class MergePropertyWithConstructorParameterProcessing : ElementsBasedPo
         for (klass in runReadAction { elements.descendantsOfType<KtClass>() }) {
             klass.convert()
         }
+    }
+
+    context(KtAnalysisSession)
+    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+        error("Not supported in K1 J2K")
     }
 
     private fun KtClass.convert() {

@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.j2k.PostProcessingOptions
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -115,6 +116,11 @@ internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostP
                 converter.convertClass(klass, propertiesWithAccessors)
             }
         }
+    }
+
+    context(KtAnalysisSession)
+    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+        error("Not supported in K1 J2K")
     }
 
     private fun List<KtClassOrObject>.sortedByInheritance(resolutionFacade: ResolutionFacade): List<KtClassOrObject> {

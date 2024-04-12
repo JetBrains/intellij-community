@@ -6,7 +6,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.j2k.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.j2k.PostProcessingApplier
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.descendantsOfType
 import org.jetbrains.kotlin.nj2k.runUndoTransparentActionInEdt
@@ -46,6 +50,48 @@ class RemoveRedundantEmptyLinesProcessing : ElementsBasedPostProcessing() {
             runUndoTransparentActionInEdt(inWriteAction = true) {
                 this.replace(factory.createNewLine())
             }
+        }
+    }
+
+    context(KtAnalysisSession)
+    override fun computeApplier(elements: List<PsiElement>, converterContext: NewJ2kConverterContext): PostProcessingApplier {
+        val containers = elements.descendantsOfType<KtBlockExpression>() +
+                elements.descendantsOfType<KtClassBody>() +
+                elements.descendantsOfType<KtFunctionLiteral>()
+
+        if (containers.isEmpty()) return Applier.EMPTY
+
+        val elementPointers = mutableListOf<SmartPsiElementPointer<PsiWhiteSpace>>()
+        val factory = KtPsiFactory(containers.first().project)
+
+        for (container in containers) {
+            val whiteSpaces = listOf(container.firstChild?.nextSibling, container.lastChild?.prevSibling)
+                .filterIsInstance<PsiWhiteSpace>()
+
+            for (whiteSpace in whiteSpaces) {
+                if (StringUtil.getLineBreakCount(whiteSpace.text) > 1) {
+                    elementPointers += whiteSpace.createSmartPointer()
+                }
+            }
+        }
+
+        return Applier(elementPointers, factory)
+    }
+
+    private class Applier(
+        private val elementPointers: List<SmartPsiElementPointer<PsiWhiteSpace>>,
+        private val factory: KtPsiFactory?,
+    ) : PostProcessingApplier {
+        override fun apply() {
+            if (factory == null) return
+            for (pointer in elementPointers) {
+                val whiteSpace = pointer.element ?: continue
+                whiteSpace.replace(factory.createNewLine())
+            }
+        }
+
+        companion object {
+            val EMPTY = Applier(emptyList(), factory = null)
         }
     }
 }
