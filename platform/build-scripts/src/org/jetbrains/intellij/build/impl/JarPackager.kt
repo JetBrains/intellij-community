@@ -444,6 +444,9 @@ class JarPackager private constructor(
         val libName = libRef.libraryName
         if (includeProjectLib) {
           if (platformLayout!!.hasLibrary(libName) || layout.hasLibrary(libName)) {
+            //if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+            //  Span.current().addEvent("$libName is not included into module $moduleName as explicitly included into platform layout")
+            //}
             continue
           }
 
