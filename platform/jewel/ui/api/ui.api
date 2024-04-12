@@ -221,8 +221,8 @@ public final class org/jetbrains/jewel/ui/component/ChipState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/CircularProgressIndicatorKt {
-	public static final fun CircularProgressIndicator (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun CircularProgressIndicatorBig (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun CircularProgressIndicator (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lkotlinx/coroutines/CoroutineDispatcher;Landroidx/compose/runtime/Composer;II)V
+	public static final fun CircularProgressIndicatorBig (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/CircularProgressStyle;Lkotlinx/coroutines/CoroutineDispatcher;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt {

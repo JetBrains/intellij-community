@@ -1,10 +1,18 @@
 package org.jetbrains.jewel.ui.component
 
+import androidx.compose.animation.core.InfiniteRepeatableSpec
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateValue
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -16,7 +24,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.CircularProgressStyle
 import org.jetbrains.jewel.ui.theme.circularProgressStyle
@@ -26,11 +36,13 @@ import org.jetbrains.jewel.ui.util.toRgbaHexString
 public fun CircularProgressIndicator(
     modifier: Modifier = Modifier,
     style: CircularProgressStyle = JewelTheme.circularProgressStyle,
+    loadingDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     CircularProgressIndicatorImpl(
         modifier = modifier,
         iconSize = DpSize(16.dp, 16.dp),
         style = style,
+        dispatcher = loadingDispatcher,
         frameRetriever = { color ->
             SpinnerProgressIconGenerator.Small.generateSvgFrames(color.toRgbaHexString())
         },
@@ -41,11 +53,13 @@ public fun CircularProgressIndicator(
 public fun CircularProgressIndicatorBig(
     modifier: Modifier = Modifier,
     style: CircularProgressStyle = JewelTheme.circularProgressStyle,
+    loadingDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     CircularProgressIndicatorImpl(
         modifier = modifier,
         iconSize = DpSize(32.dp, 32.dp),
         style = style,
+        dispatcher = loadingDispatcher,
         frameRetriever = { color ->
             SpinnerProgressIconGenerator.Big.generateSvgFrames(color.toRgbaHexString())
         },
@@ -57,37 +71,47 @@ private fun CircularProgressIndicatorImpl(
     modifier: Modifier = Modifier,
     iconSize: DpSize,
     style: CircularProgressStyle,
+    dispatcher: CoroutineDispatcher,
     frameRetriever: (Color) -> List<String>,
 ) {
     val defaultColor = if (JewelTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
-    var isFrameReady by remember { mutableStateOf(false) }
-    var currentFrame: Painter? by remember { mutableStateOf(null) }
-    val currentPainter = currentFrame
-
-    if (currentPainter == null) {
-        Box(modifier.size(iconSize))
-    } else {
-        Icon(
-            modifier = modifier.size(iconSize),
-            painter = currentPainter,
-            contentDescription = null,
-        )
-    }
+    val frames = remember { mutableStateListOf<Painter>() }
+    var framesCount by remember { mutableStateOf(0) }
 
     val density = LocalDensity.current
     LaunchedEffect(density, style.color) {
-        val frames = frameRetriever(style.color.takeOrElse { defaultColor })
-            .map {
-                loadSvgPainter(it.byteInputStream(), density)
-            }
-
-        while (true) {
-            for (i in frames.indices) {
-                currentFrame = frames[i]
-                isFrameReady = true
-                delay(style.frameTime.inWholeMilliseconds)
-            }
+        launch(dispatcher) {
+            frames.clear()
+            frames.addAll(
+                frameRetriever(style.color.takeOrElse { defaultColor }).map {
+                    loadSvgPainter(it.byteInputStream(), density)
+                },
+            )
+            framesCount = frames.size
         }
+    }
+
+    if (framesCount == 0) {
+        Box(modifier.size(iconSize))
+    } else {
+        val transition = rememberInfiniteTransition("CircularProgressIndicator")
+        val currentIndex by
+            transition.animateValue(
+                initialValue = 0,
+                targetValue = framesCount,
+                typeConverter = Int.VectorConverter,
+                animationSpec =
+                InfiniteRepeatableSpec(
+                    tween(
+                        easing = LinearEasing,
+                        durationMillis = (style.frameTime.inWholeMilliseconds * framesCount).toInt(),
+                    ),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            )
+
+        val currentPainter = frames[currentIndex]
+        Icon(modifier = modifier.size(iconSize), painter = currentPainter, contentDescription = null)
     }
 }
 
