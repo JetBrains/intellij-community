@@ -5,6 +5,8 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.productModules.IntellijModuleConverter;
+import org.jetbrains.idea.devkit.dom.impl.productModules.PluginXmlFileConverter;
+import org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesXmlFileConverter;
 import org.jetbrains.idea.devkit.symbols.IntellijModuleSymbol;
 
 import java.util.List;
@@ -23,7 +25,7 @@ public interface ProductModulesElement extends DomElement {
   interface IncludedElement extends DomElement {
     @SubTag("from-module")
     @Required
-    @Convert(IntellijModuleConverter.class)
+    @Convert(ProductModulesXmlFileConverter.class)
     @NotNull GenericDomValue<IntellijModuleSymbol> getIncludedModule();
     
     @Convert(IntellijModuleConverter.class)
@@ -46,7 +48,7 @@ public interface ProductModulesElement extends DomElement {
     @NotNull List<BundledPluginElement> getModules();
   }
   
-  @Convert(IntellijModuleConverter.class)
+  @Convert(PluginXmlFileConverter.class)
   interface BundledPluginElement extends GenericDomValue<IntellijModuleSymbol> {
   }
   
