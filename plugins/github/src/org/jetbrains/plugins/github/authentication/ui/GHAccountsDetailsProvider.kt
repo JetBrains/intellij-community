@@ -6,16 +6,12 @@ import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.coroutineToIndicator
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
+import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
@@ -45,19 +41,8 @@ internal class GHAccountsDetailsProvider(
       null
     }
     if (executor == null) return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
-    return withContext(Dispatchers.IO) {
-      coroutineToIndicator {
-        doLoadDetails(executor, account)
-      }
-    }
-  }
-
-  private fun doLoadDetails(executor: GithubApiRequestExecutor, account: GithubAccount)
-    : Result<GithubAuthenticatedUser> {
-
     val details = try {
-      executor.execute(ProgressManager.getInstance().progressIndicator,
-                       GithubApiRequests.CurrentUser.get(account.server))
+      executor.executeSuspend(GithubApiRequests.CurrentUser.get(account.server))
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
