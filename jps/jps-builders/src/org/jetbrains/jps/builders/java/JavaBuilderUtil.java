@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,23 +128,26 @@ public final class JavaBuilderUtil {
     if(isDepGraphEnabled() && graphConfig != null) {
       Delta delta = null;
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
-      
+
+      NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
+      Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
+      Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
+      List<Pair<Node<?, ?>, Iterable<NodeSource>>> compiledNodes;
+
       if (callback != null) {
-        Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
+        compiledNodes = callback.getNodes();
 
         // Important: in case of errors some sources sent to recompilation might not have corresponding output classes either because a source has compilation errors
         // or because compiler stopped compilation and has not managed to compile some sources.
         // In this case use empty set of delta's "base sources" for dependency calculation, so that only actually recompiled sources will take part in dependency analysis and affected files calculation.
         // Otherwise, some classes that correspond to non-compiled sources might be considered as "deleted" which might result in a large set of affected files,
         // so the next compilation might compile much more files than is actually needed.
-        Iterable<File> inputFiles = Utils.errorsDetected(context)? Collections.emptyList() : Iterators.filter(getFilesContainer(context, FILES_TO_COMPILE_KEY), f -> !compiledWithErrors.contains(f));
-
-        NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
+        Set<File> deltaBaseSources = Utils.errorsDetected(context)? Collections.emptySet() : inputFiles;
         delta = graphConfig.getGraph().createDelta(
-          Iterators.map(inputFiles, pathMapper::toNodeSource),
+          Iterators.map(deltaBaseSources, pathMapper::toNodeSource),
           Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), pathMapper::toNodeSource)
         );
-        for (var nodeData : callback.getNodes()) {
+        for (var nodeData : compiledNodes) {
           delta.associate(nodeData.getFirst(), nodeData.getSecond());
         }
         // todo: consider using delta for marking additional sources for compilation
@@ -154,14 +157,32 @@ public final class JavaBuilderUtil {
         //  }
         //}
       }
+      else {
+        compiledNodes = Collections.emptyList();
+      }
+
+      boolean additionalPassRequired = false;
+      
+      if (Utils.errorsDetected(context) || !inputFiles.isEmpty() && compiledNodes.isEmpty()) {
+        // In case of compilation errors additionally mark files referenced from "error"-files.
+        // So next time compilation is invoked, the compilation scope will be broader: directly used dependencies will be compiled as well.
+        DependencyGraph graph = graphConfig.getGraph();
+        Set<File> errFiles = !compiledWithErrors.isEmpty()? compiledWithErrors : inputFiles;
+        Iterable<Node<?, ?>> nodesWithErrors = Iterators.flat(Iterators.map(Iterators.map(errFiles, pathMapper::toNodeSource), graph::getNodes));
+        Iterable<ReferenceID> usedDependencies = Iterators.unique(Iterators.map(Iterators.flat(Iterators.map(nodesWithErrors, Node::getUsages)), Usage::getElementOwner));
+        for (File src : Iterators.filter(Iterators.map(Iterators.unique(Iterators.flat(Iterators.map(usedDependencies, graph::getSources))), ns -> pathMapper.toPath(ns).toFile()), f -> !inputFiles.contains(f))) {
+          additionalPassRequired = true;
+          FSOperations.markDirtyIfNotDeleted(context, CompilationRound.NEXT, src);
+        }
+      }
 
       for (Key<?> key : List.of(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
         key.set(context, null);
       }
-      if (delta == null) {
-        return false;
+      if (delta != null && updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT, createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context)))) {
+        additionalPassRequired = true;
       }
-      return updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT, createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context)));
+      return additionalPassRequired;
     }
 
     Mappings delta = null;
