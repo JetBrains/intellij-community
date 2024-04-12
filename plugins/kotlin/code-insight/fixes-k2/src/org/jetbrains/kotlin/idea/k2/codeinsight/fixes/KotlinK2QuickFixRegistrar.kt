@@ -87,9 +87,6 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(MakeSuperTypeOpenFixFactory.makeUpperBoundOpenFixFactory)
         registerFactory(AddFunModifierFixFactory.addFunModifierFixFactory)
         registerFactory(AddSuspendModifierFixFactory.addSuspendModifierFixFactory)
-        registerFactory(AddInlineModifierFixFactories.usageIsNotInlinableFactory)
-        registerFactory(AddInlineModifierFixFactories.nonLocalReturnNotAllowed)
-        registerFactory(AddInlineModifierFixFactories.inlineSuspendFunctionTypeUnsupported)
         registerFactory(SpecifyOverrideExplicitlyFixFactory.specifyOverrideExplicitlyFixFactory)
         registerFactory(MakeOverriddenMemberOpenFixFactory.makeOverriddenMemberOpenFixFactory)
     }
@@ -106,6 +103,13 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrBeFinalWarning::class, AddModifierFix.addFinalToProperty)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract::class, AddModifierFix.addFinalToProperty)
         registerPsiQuickFixes(KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning::class, AddModifierFix.addFinalToProperty)
+    }
+
+    private val addInline = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(AddInlineModifierFixFactories.usageIsNotInlinableFactory)
+        registerFactory(AddInlineModifierFixFactories.nonLocalReturnNotAllowed)
+        registerFactory(AddInlineModifierFixFactories.inlineSuspendFunctionTypeUnsupported)
+        registerFactory(MakeTypeParameterReifiedAndFunctionInlineFixFactory.cannotCheckForErasedFactory)
     }
 
     private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -342,6 +346,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         keywords,
         addAbstract,
         addFinal,
+        addInline,
         propertyInitialization,
         overrides,
         imports,

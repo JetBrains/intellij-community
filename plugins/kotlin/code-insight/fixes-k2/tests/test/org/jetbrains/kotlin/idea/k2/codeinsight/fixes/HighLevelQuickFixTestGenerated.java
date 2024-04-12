@@ -5005,7 +5005,28 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/makeTypeParameterReified")
+    public static class MakeTypeParameterReified extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
+        @TestMetadata("noTypeParameter.kt")
+        public void testNoTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/makeTypeParameterReified/noTypeParameter.kt");
+        }
+
+        @TestMetadata("noTypeParameter2.kt")
+        public void testNoTypeParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/makeTypeParameterReified/noTypeParameter2.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/makeTypeParameterReified/typeParameter.kt");
+        }
+    }
 
 
 
