@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (toLowerCase()!!) call" "true"
 // WITH_STDLIB
 fun String?.foo() {
     this!!.toLowerCase()

@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (s!!) call" "true"
 
 interface A<out T>
 class B<out T>: A<T>

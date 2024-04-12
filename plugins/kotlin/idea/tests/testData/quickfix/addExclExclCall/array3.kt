@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (a[0]!!) call" "true"
 
 fun foo(a: Array<String?>) {
     a[0]<caret>.length

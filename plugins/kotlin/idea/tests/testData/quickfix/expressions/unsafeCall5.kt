@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "false"
+// "Add non-null asserted (arg[42, 13]!!) call" "false"
 // ACTION: Convert to block body
 // ACTION: Enable option 'Function return types' for 'Types' inlay hints
 // ACTION: Introduce local variable

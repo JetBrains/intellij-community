@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (length!!) call" "true"
 // WITH_STDLIB
 fun test(s: String?) {
     s.run {

@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "false"
+// "Add non-null asserted (test!!) call" "false"
 // ACTION: Surround with null check
 // ERROR: Not nullable value required to call an 'iterator()' method on for-loop range
 
