@@ -3,8 +3,12 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.CapturingProcessRunner;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,7 +26,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -443,11 +446,9 @@ public class GeneralCommandLineTest {
 
   private Pair<GeneralCommandLine, Path> makeHelperCommand(@Nullable Path copyTo,
                                                            @MagicConstant(stringValues = {CommandTestHelper.ARG, CommandTestHelper.ENV}) String mode,
-                                                           String... args) throws IOException, URISyntaxException {
-    var className = CommandTestHelper.class.getName();
-    var url = GeneralCommandLine.class.getClassLoader().getResource(className.replace(".", "/") + ".class");
-    assertNotNull(url);
-
+                                                           String... args) throws IOException {
+    var mainClass = CommandTestHelper.class;
+    var className = mainClass.getName();
     var commandLine = createCommandLine(PlatformTestUtil.getJavaExe());
 
     var encoding = System.getProperty("file.encoding");
@@ -457,18 +458,19 @@ public class GeneralCommandLineTest {
     if (lang != null) commandLine.withEnvironment("LANG", lang);
 
     commandLine.addParameter("-cp");
-    var packages = className.split("\\.");
-    var classFile = Path.of(url.toURI());
     if (copyTo == null) {
-      var dir = classFile;
-      for (var ignored : packages) dir = dir.getParent();
-      commandLine.addParameter(dir.toString());
+      var jar = PathManager.getJarPathForClass(mainClass);
+      assertNotNull(jar);
+      commandLine.addParameter(jar);
     }
     else {
-      var dir = copyTo;
-      for (int i = 0; i < packages.length - 1; i++) dir = dir.resolve(packages[i]);
-      Files.createDirectories(dir);
-      Files.copy(classFile, dir.resolve(classFile.getFileName()));
+      String resourceName = className.replace(".", "/") + ".class";
+      Path outFile = copyTo.resolve(resourceName);
+      Files.createDirectories(outFile.getParent());
+      try (var inputStream = GeneralCommandLine.class.getClassLoader().getResourceAsStream(resourceName)) {
+        assertNotNull(inputStream);
+        Files.copy(inputStream, outFile);
+      }
       commandLine.addParameter(copyTo.toString());
     }
     commandLine.addParameter(className);
