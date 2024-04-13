@@ -83,7 +83,7 @@ class PythonDocTestingViaPytestTest : PyEnvTestCase() {
 
   @Test
   fun testFunFalse() {
-    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS.$DOCTEST_SIMPLE_FUN_FALSE") {
+    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS.$DOCTEST_SIMPLE_FUN_FALSE", 1) {
       override fun checkTestResults(runner: PyDocTestViaPytestRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
         val test = runner.findTestByName("${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_FALSE")
         Assert.assertFalse(test.isPassed)
