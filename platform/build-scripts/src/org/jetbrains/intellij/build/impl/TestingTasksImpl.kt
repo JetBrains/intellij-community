@@ -580,6 +580,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         systemProperties.compute("vfs.additional-allowed-roots") { _, old -> if (old == null) it else "$it:$old" }
         systemProperties.put("intellij.test.jars.location", it)
       }
+      context.paths.tempDir.resolve("tests.jar.mapping").let { file ->
+        Files.createDirectories(file.parent)
+        context.saveMapping(file)
+        systemProperties.put("intellij.test.jars.mapping.file", file.absolutePathString())
+      }
     }
   }
 

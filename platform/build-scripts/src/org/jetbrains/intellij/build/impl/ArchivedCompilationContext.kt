@@ -8,6 +8,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputsStorage
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
+import kotlin.io.path.writeLines
 
 class ArchivedCompilationContext(private val delegate: CompilationContext) : CompilationContext by delegate {
   private val storage = ArchivedCompilationOutputsStorage(paths = paths, classesOutputDirectory = classesOutputDirectory).apply {
@@ -52,5 +53,9 @@ class ArchivedCompilationContext(private val delegate: CompilationContext) : Com
 
   fun replaceWithCompressedIfNeededLP(paths: List<Path>): List<Path> {
     return runBlocking(Dispatchers.IO) { paths.mapConcurrently(100, ::replaceWithCompressedIfNeeded) }
+  }
+
+  fun saveMapping(file: Path) {
+    file.writeLines(storage.getMapping().map { "${it.key.parent.fileName}/${it.key.fileName}=${it.value}" })
   }
 }

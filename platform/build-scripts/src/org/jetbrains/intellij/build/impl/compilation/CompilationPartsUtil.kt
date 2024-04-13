@@ -286,6 +286,10 @@ internal class ArchivedCompilationOutputsStorage(
 
     return result
   }
+
+  fun getMapping(): Map<Path, Path> {
+    return Collections.unmodifiableMap(unarchivedToArchivedMap)
+  }
 }
 
 @VisibleForTesting
