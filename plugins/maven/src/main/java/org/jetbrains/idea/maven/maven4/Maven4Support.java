@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.maven4;
 
 import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
@@ -26,8 +26,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 
@@ -51,18 +51,22 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
 
   @Override
   public @NotNull List<Path> collectClassPathAndLibsFolder(@NotNull MavenDistribution distribution) {
-    final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
-    final String root = pluginFileOrDir.getParent();
+    final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
 
     final List<Path> classpath = new ArrayList<>();
+    String relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
 
-    if (pluginFileOrDir.isDirectory()) {
+    if (Files.isDirectory(pluginFileOrDir)) {
       MavenLog.LOG.debug("collecting classpath for local run");
-      prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath, root);
+      prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath, pluginFileOrDir.toFile().getParent());
+    }
+    else if (relevantJarsRoot != null && pluginFileOrDir.startsWith(relevantJarsRoot)) {
+      MavenLog.LOG.debug("collecting classpath for local run on archived outputs");
+      prepareClassPathForLocalRunAndUnitTestsArchived(distribution.getVersion(), classpath);
     }
     else {
       MavenLog.LOG.debug("collecting classpath for production");
-      prepareClassPathForProduction(distribution.getVersion(), classpath, root);
+      prepareClassPathForProduction(distribution.getVersion(), classpath, pluginFileOrDir.toFile().getParent());
     }
 
     addMavenLibs(classpath, distribution.getMavenHome());
@@ -108,6 +112,25 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     addDir(classpath, parentPath.resolve("maven40-server-impl/lib"), f -> true);
 
     classpath.add(rootPath.resolve("intellij.maven.server.m40"));
+  }
+
+  private static void prepareClassPathForLocalRunAndUnitTestsArchived(@NotNull String mavenVersion, List<Path> classpath) {
+    BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
+    BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
+
+    final Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+    if (mapping == null) throw new IllegalStateException("Mapping cannot be null at this point");
+
+    classpath.add(Path.of(PathUtil.getJarPathForClass(MavenId.class)));
+    classpath.add(Path.of(mapping.get("production/intellij.maven.server")));
+
+    classpath.add(Path.of(mapping.get("production/intellij.maven.server.telemetry")));
+    classpath.addAll(MavenUtil.collectClasspath(MavenServerTelemetryClasspathUtil.TELEMETRY_CLASSES));
+
+    Path parentPath = MavenUtil.getMavenPluginParentFile();
+    addDir(classpath, parentPath.resolve("maven40-server-impl/lib"), f -> true);
+
+    classpath.add(Path.of(mapping.get("production/intellij.maven.server.m40")));
   }
 
   private static void addMavenLibs(List<Path> classpath, Path mavenHome) {
