@@ -3,9 +3,10 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
+import com.intellij.history.integration.ui.models.RecentChange;
+import com.intellij.history.integration.ui.models.RecentChangeKt;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -30,7 +31,7 @@ public final class RecentChangesPopup {
       @Override
       protected List<RecentChange> compute(@NotNull ProgressIndicator indicator) {
         return LocalHistoryCounter.INSTANCE.logLoadItems(project, LocalHistoryCounter.Kind.Recent, () -> {
-          return vcs.getRecentChanges(ReadAction.compute(() -> {
+          return RecentChangeKt.getRecentChanges(vcs, ReadAction.compute(() -> {
             return gw.createTransientRootEntry();
           }));
         });

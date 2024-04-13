@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.core;
 
-import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.history.integration.ui.models.RecentChange;
+import com.intellij.history.integration.ui.models.RecentChangeKt;
 import org.junit.Test;
 
 import java.util.List;
@@ -37,7 +24,7 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
     add(vcs, createFile(root, "f2"));
     vcs.endChangeSet("b");
 
-    List<RecentChange> cc = vcs.getRecentChanges(root);
+    List<RecentChange> cc = RecentChangeKt.getRecentChanges(vcs, root);
     assertRecentChanges(cc, "b", "a");
 
     RecentChange c0 = cc.get(0);
@@ -66,7 +53,7 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
     add(vcs, createFile(root, "f3"));
     vcs.endChangeSet("b");
 
-    List<RecentChange> cc = vcs.getRecentChanges(root);
+    List<RecentChange> cc = RecentChangeKt.getRecentChanges(vcs, root);
     assertRecentChanges(cc, "b", "a");
 
     RecentChange c0 = cc.get(0);
@@ -102,7 +89,7 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
     add(vcs, changeContent(root, "f2", null));
     vcs.endChangeSet("c");
 
-    List<RecentChange> cc = vcs.getRecentChanges(root);
+    List<RecentChange> cc = RecentChangeKt.getRecentChanges(vcs, root);
     assertEquals(2, cc.size());
     assertEquals("b", cc.get(0).getChangeName());
     assertEquals("a", cc.get(1).getChangeName());
@@ -120,7 +107,7 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
     add(vcs, changeContent(root, "f2", null));
     vcs.endChangeSet("b");
 
-    List<RecentChange> cc = vcs.getRecentChanges(root);
+    List<RecentChange> cc = RecentChangeKt.getRecentChanges(vcs, root);
     assertEquals(2, cc.size());
     assertEquals("b", cc.get(0).getChangeName());
     assertEquals("a", cc.get(1).getChangeName());
@@ -133,7 +120,7 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
     vcs.endChangeSet("change");
     vcs.putUserLabel("label", "project");
 
-    List<RecentChange> cc = vcs.getRecentChanges(root);
+    List<RecentChange> cc = RecentChangeKt.getRecentChanges(vcs, root);
     assertEquals(1, cc.size());
     assertEquals("change", cc.get(0).getChangeName());
   }
@@ -150,7 +137,7 @@ public class LocalVcsRecentChangesTest extends LocalHistoryTestCase {
       vcs.endChangeSet(i + "_");
     }
 
-    List<RecentChange> cc = vcs.getRecentChanges(root);
+    List<RecentChange> cc = RecentChangeKt.getRecentChanges(vcs, root);
     assertEquals(20, cc.size());
 
     for (int i = 0; i < 20; i++) {

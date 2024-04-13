@@ -3,10 +3,10 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.revisions.RecentChange;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
+import com.intellij.history.integration.ui.models.RecentChange;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
