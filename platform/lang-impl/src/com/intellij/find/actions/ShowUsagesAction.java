@@ -480,10 +480,6 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       }
 
       @Override
-      public void beforeClose(String reason) {
-      }
-
-      @Override
       public boolean navigateToSingleUsageImmediately() {
         return true;
       }
@@ -755,6 +751,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       project.getDisposed()
     ));
     opentelemetryScope.close();
+    actionHandler.afterOpen(popup);
     return result;
   }
 
