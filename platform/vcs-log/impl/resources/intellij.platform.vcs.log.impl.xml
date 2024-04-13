@@ -132,10 +132,12 @@
       </action>
       <group class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
       <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
-      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InToolWindow" id="Vcs.Log.OpenAnotherTab">
+      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InToolWindow" id="Vcs.Log.OpenAnotherTab"
+              icon="AllIcons.General.Add">
         <add-to-group group-id="LocalChangesView.TabActions"/>
       </action>
-      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InEditor" id="Vcs.Log.OpenAnotherTabInEditor"/>
+      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InEditor" id="Vcs.Log.OpenAnotherTabInEditor"
+              icon="AllIcons.Actions.OpenNewTab"/>
       <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
       <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
               use-shortcut-of="QuickJavaDoc"/>
