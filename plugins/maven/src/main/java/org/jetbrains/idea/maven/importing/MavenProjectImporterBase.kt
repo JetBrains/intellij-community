@@ -44,7 +44,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     return if (myProjectsTree.isIgnored(project)) false else !project.isAggregator || myImportingSettings.isCreateModulesForAggregators
   }
 
-  protected class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
+  private class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
@@ -134,7 +134,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
       javacOptions.ADDITIONAL_OPTIONS_STRING = options
     }
 
-    protected fun doRefreshFiles(files: Set<File>) {
+    private fun doRefreshFiles(files: Set<File>) {
       LocalFileSystem.getInstance().refreshIoFiles(files)
     }
   }
