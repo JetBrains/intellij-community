@@ -237,4 +237,26 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       assertTrue(stderr.isEmpty());
     }
   }
+
+  @Test
+  public void testRerun() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyDocTestProcessRunner>("/testRunner/env/doc", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyDocTestProcessRunner createProcessRunner() {
+        return new PyDocTestProcessRunner("test_rerun.py", 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull PyDocTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all,
+                                      int exitCode) {
+        assertEquals(0, exitCode);
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(1, runner.getFailedTestsCount());
+      }
+    });
+  }
 }
