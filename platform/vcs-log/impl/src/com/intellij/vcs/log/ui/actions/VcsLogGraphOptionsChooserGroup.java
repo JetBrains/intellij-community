@@ -63,7 +63,8 @@ public class VcsLogGraphOptionsChooserGroup extends DefaultActionGroup implement
       if (icon != null) {
         if (!PermanentGraph.Options.Default.equals(properties.get(MainVcsLogUiProperties.GRAPH_OPTIONS))) {
           e.getPresentation().setIcon(IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS));
-        } else {
+        }
+        else {
           e.getPresentation().setIcon(icon);
         }
       }

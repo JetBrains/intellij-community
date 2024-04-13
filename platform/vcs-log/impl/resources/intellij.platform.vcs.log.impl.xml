@@ -81,7 +81,7 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.vcs.log.ui.actions.history.GetVersionFromHistoryAction"/>
     <openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider implementation="com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider"/>
-    <vcsAnnotationGutterActionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowInFileHistoryAnnotationActionProvider" />
+    <vcsAnnotationGutterActionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowInFileHistoryAnnotationActionProvider"/>
 
     <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
 
@@ -157,7 +157,8 @@
       <action class="com.intellij.vcs.log.ui.actions.InvalidateVcsLogCaches" id="Vcs.Log.InvalidateCaches" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.CheckSelectedCommits" id="Vcs.Log.CheckSelectedCommitsIndexData" internal="true"/>
       <action class="com.intellij.vcs.log.ui.actions.CheckOldCommits" id="Vcs.Log.CheckFirstCommitsIndexData" internal="true"/>
-      <action class="com.intellij.vcs.log.ui.actions.ShowCommitInLogAction" id="Vcs.Log.SelectInLog" icon="AllIcons.Toolwindows.ToolWindowChanges">
+      <action class="com.intellij.vcs.log.ui.actions.ShowCommitInLogAction" id="Vcs.Log.SelectInLog"
+              icon="AllIcons.Toolwindows.ToolWindowChanges">
         <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
       </action>
     </group>

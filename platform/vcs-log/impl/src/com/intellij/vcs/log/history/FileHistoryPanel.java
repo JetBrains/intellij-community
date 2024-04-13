@@ -153,7 +153,7 @@ class FileHistoryPanel extends JPanel implements DataProvider, Disposable {
 
     setLayout(new BorderLayout());
     myFrameDiffPreview = new FrameDiffPreview(myProperties, tablePanel, "vcs.history.diff.splitter.proportion",
-                                                             0.7f, this) {
+                                              0.7f, this) {
       @NotNull
       @Override
       protected DiffEditorViewer createViewer() {
