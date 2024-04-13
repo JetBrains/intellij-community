@@ -11,7 +11,6 @@ import com.intellij.vcs.log.graph.api.elements.GraphElement;
 import com.intellij.vcs.log.graph.api.elements.GraphNode;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.collapsing.LinearFragmentGenerator.GraphFragment;
-import com.intellij.vcs.log.graph.impl.facade.GraphChanges;
 import com.intellij.vcs.log.graph.impl.facade.GraphChangesUtil;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphAction;

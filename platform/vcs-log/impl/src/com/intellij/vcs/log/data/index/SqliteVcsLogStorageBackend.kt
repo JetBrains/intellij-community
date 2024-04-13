@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Internal
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SqlResolve")
 
@@ -14,7 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
-import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.PathIndexer
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.toFilePath
 import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
