@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -17,6 +17,7 @@ import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -254,8 +255,20 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
     String junit4Name = junit4Rt.getName();
-    String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5")
-                                               : junit4Name.replace("junit", "junit5");
+    String junit5Name;
+    if (junit4Rt.isDirectory()) {
+      junit5Name = junit4Name.replace("junit", "junit.v5");
+    }
+    else {
+      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+      if (relevantJarsRoot != null && junit4Rt.toPath().startsWith(relevantJarsRoot) && mapping != null) {
+        return new File(mapping.get("production/intellij.junit.v5.rt"));
+      }
+      else {
+        junit5Name = junit4Name.replace("junit", "junit5");
+      }
+    }
     return new File(junit4Rt.getParent(), junit5Name);
   }
 
