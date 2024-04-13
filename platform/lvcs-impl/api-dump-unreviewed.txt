@@ -668,19 +668,6 @@ c:com.intellij.history.integration.ui.models.Progress$Empty
 - com.intellij.history.integration.ui.models.Progress
 - <init>():V
 - processed(I):V
-f:com.intellij.history.integration.ui.models.RecentChange
-- <init>(com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision):V
-- f:getChangeName():java.lang.String
-- f:getRevisionAfter():com.intellij.history.core.revisions.Revision
-- f:getRevisionBefore():com.intellij.history.core.revisions.Revision
-- f:getTimestamp():J
-- toString():java.lang.String
-f:com.intellij.history.integration.ui.models.RecentChangeDialogModel
-- com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
-- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.ui.models.RecentChange):V
-- getTitle():java.lang.String
-f:com.intellij.history.integration.ui.models.RecentChangeKt
-- sf:getRecentChanges(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry):java.util.List
 f:com.intellij.history.integration.ui.models.RevisionData
 - <init>(com.intellij.history.core.revisions.Revision,java.util.List):V
 - f:component1():com.intellij.history.core.revisions.Revision
@@ -794,12 +781,6 @@ pa:com.intellij.history.integration.ui.views.HistoryDialog$MyAction
 - pa:isEnabled(com.intellij.history.integration.ui.models.HistoryDialogModel):Z
 - performIfEnabled():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.history.integration.ui.views.RecentChangeDialog
-- com.intellij.history.integration.ui.views.DirectoryHistoryDialog
-- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.integration.ui.models.RecentChange):V
-f:com.intellij.history.integration.ui.views.RecentChangesPopup
-- <init>():V
-- s:show(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade):V
 f:com.intellij.history.integration.ui.views.RevisionsList
 - sf:RECENT_PERIOD:I
 - <init>(com.intellij.history.integration.ui.views.RevisionsList$SelectionListener):V

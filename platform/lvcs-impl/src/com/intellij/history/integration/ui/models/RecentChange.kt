@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.history.integration.ui.models
 
 import com.intellij.history.core.LocalHistoryFacade
@@ -7,7 +9,9 @@ import com.intellij.history.core.revisions.Revision
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RecentChange(val revisionBefore: Revision, val revisionAfter: Revision) {
   val changeName: @NlsContexts.Label String?
     get() = revisionAfter.changeSetName
