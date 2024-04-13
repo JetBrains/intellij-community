@@ -5,5 +5,5 @@ import com.intellij.openapi.wm.impl.OnboardingBackgroundImageProviderBase
 import java.net.URL
 
 internal class PyCharmOnboardingBackgroundImageProvider : OnboardingBackgroundImageProviderBase() {
-  override fun getImageUrl(): URL? = javaClass.getResource("/img/pycharm-onboarding-gradient-background.svg")
+  override fun getImageUrl(isDark: Boolean): URL? = javaClass.getResource("/img/pycharm-onboarding-gradient-background.svg")
 }

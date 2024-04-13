@@ -17,7 +17,7 @@ interface OnboardingBackgroundImageProvider {
 
   val isAvailable: Boolean get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.onboarding.background.enabled", true)
 
-  fun getImage(): Image?
+  fun getImage(isDark: Boolean): Image?
   fun setBackgroundImageToDialog(dialog: DialogWrapper, image: Image?)
   fun hasBackgroundImage(dialog: DialogWrapper): Boolean
 }
