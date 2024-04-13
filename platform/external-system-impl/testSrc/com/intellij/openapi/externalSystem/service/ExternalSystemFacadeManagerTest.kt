@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service
 
 import com.intellij.openapi.application.ApplicationManager
@@ -21,9 +21,12 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.io.URLUtil
 import junit.framework.TestCase
 import java.net.URL
 import java.net.URLClassLoader
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import com.intellij.openapi.externalSystem.model.Key as DataNodeKey
 
 class ExternalSystemFacadeManagerTest : UsefulTestCase() {
@@ -71,8 +74,14 @@ class ExternalSystemFacadeManagerTest : UsefulTestCase() {
   }
 
   fun `test remote resolve with custom classes`() {
-    val libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")!!
+    var libUrl = javaClass.classLoader.getResource("dataNodeTest/lib.jar")!!
 
+    if (libUrl.protocol == URLUtil.JAR_PROTOCOL) {
+      // jar in jar
+      val extracted = Files.createTempFile("extracted", ".jar")
+      Files.copy(libUrl.openStream(), extracted, StandardCopyOption.REPLACE_EXISTING)
+      libUrl = extracted.toUri().toURL()
+    }
     val subClassLoader = URLClassLoader(arrayOf(libUrl), this::class.java.classLoader)
 
 
