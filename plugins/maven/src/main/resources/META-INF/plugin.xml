@@ -382,6 +382,9 @@
     <registryKey key="maven.legacy.import.available" defaultValue="false"
                  description="Set to true to enable legacy Maven import. If the value is false, only 'fast' Maven import is available. Legacy import will be removed completely in one of the upcoming releases"/>
 
+    <registryKey key="maven.sync.refresh.resolved.artifacts" defaultValue="false"
+                 description="Refresh resolved artifacts after Maven sync"/>
+
     <registryKey key="maven.incremental.sync.in.ui" defaultValue="false"
                  description="Show Maven incremental sync option in UI"/>
 
