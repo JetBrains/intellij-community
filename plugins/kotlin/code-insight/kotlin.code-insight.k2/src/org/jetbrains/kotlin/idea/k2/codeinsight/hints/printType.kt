@@ -42,29 +42,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
             text(" & ")
             text(DefaultTypeClassIds.ANY.relativeClassName.asString())
         }
-        is KtUsualClassType -> {
-            val classId = type.classId
-            printClassId(classId, shortNameWithCompanionNameSkip(classId))
-            val ownTypeArguments = type.ownTypeArguments
-            if (ownTypeArguments.isNotEmpty()) {
-                text("<")
-                val iterator = ownTypeArguments.iterator()
-                while (iterator.hasNext()) {
-                    when(val projection = iterator.next()) {
-                        is KtStarTypeProjection -> text("*")
-                        is KtTypeArgumentWithVariance -> {
-                            val label = projection.variance.label
-                            if (label.isNotEmpty()) {
-                                text("$label ")
-                            }
-                            printKtType(projection.type)
-                        }
-                    }
-                    if (iterator.hasNext()) text(", ")
-                }
-                text(">")
-            }
-        }
+        is KtUsualClassType -> printNonErrorClassType(type)
         is KtFlexibleType -> {
             val lower = type.lowerBound
             val upper = type.upperBound
@@ -74,13 +52,18 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
                 printClassId((lower as KtNonErrorClassType).classId, "Mutable")
                 text(")")
                 printKtType(upper.withNullability(KtTypeNullability.NON_NULLABLE))
-            } else if (isNullabilityFlexibleType(lower, upper)) {
-                printKtType(lower)
-                text("!")
             } else {
-                printKtType(lower)
-                text("..")
-                printKtType(upper)
+                if (isNullabilityFlexibleType(lower, upper)) {
+                    printKtType(lower)
+                    text("!")
+                } else if (isNonNullableFlexibleType(upper, lower)) {
+                    printNonErrorClassType(upper as KtNonErrorClassType, lower as KtNonErrorClassType)
+                } else {
+                    // fallback case
+                    printKtType(lower)
+                    text("..")
+                    printKtType(upper)
+                }
             }
         }
         is KtTypeParameterType -> {
@@ -142,6 +125,43 @@ internal fun PresentationTreeBuilder.printKtType(type: KtType) {
     if (markedNullable) text("?")
 }
 
+context(KtAnalysisSession)
+private fun PresentationTreeBuilder.printNonErrorClassType(type: KtNonErrorClassType, anotherType: KtNonErrorClassType? = null) {
+    val classId = type.classId
+    printClassId(classId, shortNameWithCompanionNameSkip(classId))
+    val ownTypeArguments = type.ownTypeArguments
+    val anotherOwnTypeArguments = anotherType?.ownTypeArguments
+    if (ownTypeArguments.isNotEmpty()) {
+        text("<")
+        val iterator = ownTypeArguments.iterator()
+        val anotherIterator = anotherOwnTypeArguments?.iterator()
+        while (iterator.hasNext()) {
+            val projection = iterator.next()
+            val anotherProjection = anotherIterator?.takeIf { it.hasNext() }?.next()
+            val optionalProjection = anotherProjection != null && projection != anotherProjection
+            when (projection) {
+                is KtStarTypeProjection -> {
+                    if (optionalProjection) text("(")
+                    text("*")
+                    if (optionalProjection) text(")")
+                }
+                is KtTypeArgumentWithVariance -> {
+                    val label = projection.variance.label
+                    if (label.isNotEmpty()) {
+                        if (optionalProjection) text("(")
+                        text(label)
+                        if (optionalProjection) text(")")
+                        text(" ")
+                    }
+                    printKtType(projection.type)
+                }
+            }
+            if (iterator.hasNext()) text(", ")
+        }
+        text(">")
+    }
+}
+
 private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String) {
     text(
         name,
@@ -161,27 +181,53 @@ private fun isMutabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
 
 
 private fun isNullabilityFlexibleType(lower: KtType, upper: KtType): Boolean {
-    val isTheSameType = lower is KtNonErrorClassType && upper is KtNonErrorClassType && lower.classId == upper.classId ||
-            lower is KtTypeParameterType && upper is KtTypeParameterType && lower.symbol == upper.symbol
-    if (isTheSameType &&
-        lower.nullability == KtTypeNullability.NON_NULLABLE
-        && upper.nullability == KtTypeNullability.NULLABLE
-    ) {
-        if (lower !is KtNonErrorClassType && upper !is KtNonErrorClassType) {
+    if (lower.nullability == KtTypeNullability.NON_NULLABLE && upper.nullability == KtTypeNullability.NULLABLE) {
+        if (lower is KtTypeParameterType && upper is KtTypeParameterType && lower.symbol == upper.symbol) {
             return true
         }
-        if (lower is KtNonErrorClassType && upper is KtNonErrorClassType) {
-            val lowerOwnTypeArguments = lower.ownTypeArguments
-            val upperOwnTypeArguments = upper.ownTypeArguments
-            if (lowerOwnTypeArguments.size == upperOwnTypeArguments.size) {
-                for ((index, ktTypeProjection) in lowerOwnTypeArguments.withIndex()) {
-                    if (upperOwnTypeArguments[index].type != ktTypeProjection.type) {
-                        return false
-                    }
-                }
-                return true
+        if (lower is KtNonErrorClassType && upper is KtNonErrorClassType && lower.classId == upper.classId) {
+            return isSimilarTypes(lower, upper)
+        }
+    }
+    return false
+}
+
+private fun isNonNullableFlexibleType(lower: KtType, upper: KtType): Boolean {
+    if (lower is KtNonErrorClassType && upper is KtNonErrorClassType &&
+        lower.classId == upper.classId &&
+        lower.nullability == KtTypeNullability.NON_NULLABLE &&
+        upper.nullability == lower.nullability &&
+        isSimilarTypes(lower, upper)
+    ) {
+        val lowerTypeArguments = lower.ownTypeArguments
+        val upperTypeArguments = upper.ownTypeArguments
+        if (lowerTypeArguments.isNotEmpty() && upperTypeArguments.isNotEmpty()) {
+            // by isSimilarTypes(lower, upper) lowerTypeArguments is the same size as upperTypeArguments
+            val lowerIterator = lowerTypeArguments.iterator()
+            val upperIterator = upperTypeArguments.iterator()
+            while (lowerIterator.hasNext()) {
+                val lowerNext = lowerIterator.next()
+                val upperNext = upperIterator.next()
+                if (lowerNext != upperNext) return true
             }
         }
+    }
+    return false
+}
+
+private fun isSimilarTypes(
+    lower: KtNonErrorClassType,
+    upper: KtNonErrorClassType
+): Boolean {
+    val lowerOwnTypeArguments = lower.ownTypeArguments
+    val upperOwnTypeArguments = upper.ownTypeArguments
+    if (lowerOwnTypeArguments.size == upperOwnTypeArguments.size) {
+        for ((index, ktTypeProjection) in lowerOwnTypeArguments.withIndex()) {
+            if (upperOwnTypeArguments[index].type != ktTypeProjection.type) {
+                return false
+            }
+        }
+        return true
     }
     return false
 }

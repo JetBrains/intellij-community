@@ -113,11 +113,6 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
-    @TestMetadata("FlexibleType2.kt")
-    public void testFlexibleType2() throws Exception {
-        runTest("testData/codeInsight/hints/types/FlexibleType2.kt");
-    }
-
     @TestMetadata("FunctionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("testData/codeInsight/hints/types/FunctionalType.kt");
@@ -131,6 +126,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("JavaFQName.kt")
     public void testJavaFQName() throws Exception {
         runTest("testData/codeInsight/hints/types/JavaFQName.kt");
+    }
+
+    @TestMetadata("JavaNonNullableArray.kt")
+    public void testJavaNonNullableArray() throws Exception {
+        runTest("testData/codeInsight/hints/types/JavaNonNullableArray.kt");
     }
 
     @TestMetadata("LambdaReturnType.kt")

@@ -113,11 +113,6 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
-    @TestMetadata("FlexibleType2.kt")
-    public void testFlexibleType2() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/types/FlexibleType2.kt");
-    }
-
     @TestMetadata("FunctionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/FunctionalType.kt");
@@ -131,6 +126,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
     @TestMetadata("JavaFQName.kt")
     public void testJavaFQName() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/JavaFQName.kt");
+    }
+
+    @TestMetadata("JavaNonNullableArray.kt")
+    public void testJavaNonNullableArray() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/JavaNonNullableArray.kt");
     }
 
     @TestMetadata("LambdaReturnType.kt")
