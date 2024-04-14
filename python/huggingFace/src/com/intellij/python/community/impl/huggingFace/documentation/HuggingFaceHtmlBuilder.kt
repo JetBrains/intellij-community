@@ -51,25 +51,7 @@ class HuggingFaceHtmlBuilder(
   // todo: delete once IJPL-970 is fixed
   // This is a temporary patch to fix copy-paste ability of the HF cards code blocks
   // in general, must be fixed platform-wide in the IJPL-970
-  private fun fixCodeBlocks(htmlText: String): String {
-    val preTagPattern = Regex("<pre[^>]*>(.*?)</pre>", RegexOption.DOT_MATCHES_ALL)
-    val brTagReplacement = "<wbr>${System.lineSeparator()}"
-
-    val sb = StringBuilder(htmlText)
-    val matches = preTagPattern.findAll(htmlText).toList().asReversed()
-
-    var lengthDifference = 0
-    for (match in matches) {
-      val fullMatch = match.value
-      val replacedText = fullMatch.replace("<br>", brTagReplacement)
-      val startIndex = match.range.first + lengthDifference
-      val endIndex = match.range.last + 1 + lengthDifference
-      sb.replace(startIndex, endIndex, replacedText)
-      lengthDifference += replacedText.length - fullMatch.length
-    }
-
-    return sb.toString()
-  }
+  private fun fixCodeBlocks(htmlText: String) = PRE_TAG_REGEX.replace(htmlText) { it.value.replace("<br>", BR_TAG_REPLACEMENT) }
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
     val cardTitle = modelInfo.itemId.replace("-", NBHP)
@@ -120,5 +102,7 @@ class HuggingFaceHtmlBuilder(
       .attr("src", "AllIcons.Plugins.Downloads")
     private val LIKES_ICON = HtmlChunk.tag("icon")
       .attr(".src", "AllIcons.Plugins.Rating")
+    private val PRE_TAG_REGEX = Regex("<pre><code>(.*?)</code></pre>", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.MULTILINE))
+    private val BR_TAG_REPLACEMENT = "<wbr>${System.lineSeparator()}"
   }
 }
