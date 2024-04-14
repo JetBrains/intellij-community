@@ -10,6 +10,7 @@ import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Arrays;
 /**
  * Implementation on top of DurableEnumerator
  */
+@ApiStatus.Internal
 public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEnumerator, CleanableStorage {
 
   //TODO RC: current implementation relies on knowledge of append-only-log record format -- header size, page

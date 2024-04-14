@@ -29275,14 +29275,6 @@ f:com.intellij.util.indexing.TimestampsKeyDescriptor
 - isEqual(com.intellij.util.indexing.TimestampsImmutable,com.intellij.util.indexing.TimestampsImmutable):Z
 - read(java.io.DataInput):com.intellij.util.indexing.TimestampsImmutable
 - save(java.io.DataOutput,com.intellij.util.indexing.TimestampsImmutable):V
-f:com.intellij.util.indexing.TimestampsKeyDescriptorEx
-- com.intellij.util.containers.hash.EqualityPolicy
-- com.intellij.util.io.dev.enumerator.DataExternalizerEx
-- <init>():V
-- getHashCode(com.intellij.util.indexing.TimestampsImmutable):I
-- isEqual(com.intellij.util.indexing.TimestampsImmutable,com.intellij.util.indexing.TimestampsImmutable):Z
-- read(java.nio.ByteBuffer):com.intellij.util.indexing.TimestampsImmutable
-- writerFor(com.intellij.util.indexing.TimestampsImmutable):com.intellij.util.io.dev.enumerator.DataExternalizerEx$KnownSizeRecordWriter
 f:com.intellij.util.indexing.UnindexedFilesIndexer
 - com.intellij.openapi.project.DumbModeTask
 - <init>(com.intellij.openapi.project.Project,java.util.Map,java.lang.String,it.unimi.dsi.fastutil.longs.LongSet):V
