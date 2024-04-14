@@ -113,18 +113,25 @@ internal fun <T : PsiElement> SmartPsiElementPointer<T>?.getElementInReadAction(
 
 
 private val NO_RETURN_TYPE = object : KtCallableReturnTypeFilter {
-    context(KtAnalysisSession)
-    override fun shouldRenderReturnType(type: KtType, symbol: KtCallableSymbol): Boolean = false
+    override fun shouldRenderReturnType(analysisSession: KtAnalysisSession, type: KtType, symbol: KtCallableSymbol): Boolean = false
 }
 
 private val NO_CALLABLE_RECEIVER = object : KtCallableReceiverRenderer {
-    context(KtAnalysisSession, KtDeclarationRenderer)
-    override fun renderReceiver(symbol: KtReceiverParameterSymbol, printer: PrettyPrinter) {}
+    override fun renderReceiver(
+        analysisSession: KtAnalysisSession,
+        symbol: KtReceiverParameterSymbol,
+        declarationRenderer: KtDeclarationRenderer,
+        printer: PrettyPrinter
+    ) {}
 }
 
 private val NO_MODIFIER_LIST = object : KtModifierListRenderer {
-    context(KtAnalysisSession, KtDeclarationModifiersRenderer)
-    override fun renderModifiers(symbol: KtDeclarationSymbol, printer: PrettyPrinter) {}
+    override fun renderModifiers(
+        analysisSession: KtAnalysisSession,
+        symbol: KtDeclarationSymbol,
+        declarationModifiersRenderer: KtDeclarationModifiersRenderer,
+        printer: PrettyPrinter
+    ) {}
 
 }
 
