@@ -13,7 +13,7 @@ public class PatternVariableCanBeUsedInspectionTest extends LightQuickFixParamet
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     PatternVariableCanBeUsedInspection inspection = new PatternVariableCanBeUsedInspection();
-    inspection.reportOnCastOnly = true;
+    inspection.reportAlsoCastWithIntroducingNewVariable = true;
     return new LocalInspectionTool[]{inspection};
   }
 
