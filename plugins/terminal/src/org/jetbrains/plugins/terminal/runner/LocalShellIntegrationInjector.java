@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.terminal.runner;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -150,7 +152,9 @@ public final class LocalShellIntegrationInjector {
   static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
     String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
     final File result;
-    if (jarPath.endsWith(".jar")) {
+    if (PluginManagerCore.isRunningFromSources()) {
+      result = Path.of(PathManager.getCommunityHomePath()).resolve("plugins/terminal/resources/").resolve(relativePath).toFile();
+    } else if (jarPath.endsWith(".jar")) {
       File jarFile = new File(jarPath);
       if (!jarFile.isFile()) {
         throw new IOException("Broken installation: " + jarPath + " is not a file");
