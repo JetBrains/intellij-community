@@ -1,14 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.diff.Block;
 import com.intellij.history.core.InMemoryLocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
+import com.intellij.platform.lvcs.impl.RevisionId;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -18,13 +17,15 @@ import java.util.List;
 import static org.easymock.EasyMock.*;
 
 public class SelectionCalculatorTest extends LocalHistoryTestCase {
+  public static final String PATH = "f";
   IdeaGateway gw = new MyIdeaGateway();
   LocalHistoryFacade vcs = new InMemoryLocalHistoryFacade();
 
   @Test
   public void testSelectionWasNotChanged() {
-    List<Revision> rr = createRevisions("abc\ndef\nghi", "abc1\ndef1\nghi1");
-    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 2);
+    RootEntry rootEntry = new RootEntry();
+    List<RevisionId> rr = createRevisions(rootEntry, "abc\ndef\nghi", "abc1\ndef1\nghi1");
+    SelectionCalculator c = SelectionCalculator.create(vcs, gw, rootEntry, PATH, rr,  0, 2);
 
     Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
     Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
@@ -35,8 +36,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   @Test
   public void testSelectionWasMoved() {
-    List<Revision> rr = createRevisions("abc\ndef\nghi", "def\nghi");
-    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 1);
+    RootEntry rootEntry = new RootEntry();
+    List<RevisionId> rr = createRevisions(rootEntry, "abc\ndef\nghi", "def\nghi");
+    SelectionCalculator c = SelectionCalculator.create(vcs, gw, rootEntry, PATH, rr,  0, 1);
 
     Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
     Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
@@ -47,8 +49,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   @Test
   public void testSelectionForVeryOldRevisionTakenBackward() {
-    List<Revision> rr = createRevisions("ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
-    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 1);
+    RootEntry rootEntry = new RootEntry();
+    List<RevisionId> rr = createRevisions(rootEntry, "ghi\nabc\ndef", "abc\nghi\ndef", "abc\ndef\nghi");
+    SelectionCalculator c = SelectionCalculator.create(vcs, gw, rootEntry, PATH, rr, 0, 1);
 
     Block b2 = c.getSelectionFor(rr.get(2), Progress.EMPTY);
     Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
@@ -61,8 +64,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   @Test
   public void testNormalizingLineEnds() {
-    List<Revision> rr = createRevisions("abc\ndef\nghi", "abc\r\ndef\r\nghi");
-    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 1);
+    RootEntry rootEntry = new RootEntry();
+    List<RevisionId> rr = createRevisions(rootEntry, "abc\ndef\nghi", "abc\r\ndef\r\nghi");
+    SelectionCalculator c = SelectionCalculator.create(vcs, gw, rootEntry, PATH, rr, 0, 1);
 
     Block b0 = c.getSelectionFor(rr.get(0), Progress.EMPTY);
     Block b1 = c.getSelectionFor(rr.get(1), Progress.EMPTY);
@@ -73,8 +77,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   @Test
   public void testProgressOnGetSelection() {
-    List<Revision> rr = createRevisions("one", "two", "three", "four");
-    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 0);
+    RootEntry rootEntry = new RootEntry();
+    List<RevisionId> rr = createRevisions(rootEntry, "one", "two", "three", "four");
+    SelectionCalculator c = SelectionCalculator.create(vcs, gw, rootEntry, PATH, rr, 0, 0);
 
     Progress p = createStrictMock(Progress.class);
     p.processed(25);
@@ -90,8 +95,9 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   @Test
   public void testProgressOnCanCalculate() {
-    List<Revision> rr = createRevisions("one", "two");
-    RevisionSelectionCalculator c = new RevisionSelectionCalculator(gw, rr, 0, 0);
+    RootEntry rootEntry = new RootEntry();
+    List<RevisionId> rr = createRevisions(rootEntry, "one", "two");
+    SelectionCalculator c = SelectionCalculator.create(vcs, gw, rootEntry, PATH, rr, 0, 0);
 
     Progress p = createMock(Progress.class);
     p.processed(50);
@@ -103,13 +109,12 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
     verify(p);
   }
 
-  private List<Revision> createRevisions(String... contents) {
-    RootEntry r = new RootEntry();
-    vcs.addChangeInTests(createFile(r, "f", contents[0], -1, false));
+  private @NotNull List<RevisionId> createRevisions(@NotNull RootEntry rootEntry, String... contents) {
+    vcs.addChangeInTests(createFile(rootEntry, PATH, contents[0], -1, false));
     for (int i = 1; i < contents.length; i++) {
-      vcs.addChangeInTests(changeContent(r, "f", contents[i], i));
+      vcs.addChangeInTests(changeContent(rootEntry, PATH, contents[i], i));
     }
-    return collectRevisions(vcs, r, "f", null, null);
+    return collectRevisionIds(vcs, PATH, null, null);
   }
 
   private void assertBlock(int from, int to, String content, Block b) {

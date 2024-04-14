@@ -1,15 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -22,9 +21,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.*;
+import com.intellij.platform.lvcs.impl.RevisionId;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
@@ -142,14 +144,32 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
     return LocalHistoryImpl.getInstanceImpl().getFacade();
   }
 
-  protected List<Revision> getRevisionsFor(@NotNull VirtualFile f) {
-    return getRevisionsFor(f, null);
+  /**
+   * Includes revisions for all ChangeSets plus a current revision.
+   */
+  protected @NotNull List<RevisionId> getRevisionIdsFor(@NotNull VirtualFile f) {
+    List<RevisionId> revisionIds = ContainerUtil.map(getChangesFor(f), change -> new RevisionId.ChangeSet(change.getId()));
+    return ContainerUtil.concat(Arrays.asList(RevisionId.Current.INSTANCE), revisionIds);
   }
 
-  protected List<Revision> getRevisionsFor(@NotNull VirtualFile f, @Nullable String pattern) {
-    return ReadAction.compute(() -> {
-      return LocalHistoryTestCase.collectRevisions(getVcs(), getRootEntry(), f.getPath(), myProject.getLocationHash(), pattern);
-    });
+  protected @NotNull List<ChangeSet> getChangesFor(@NotNull VirtualFile f) {
+    return getChangesFor(f, null);
+  }
+
+  protected @NotNull List<ChangeSet> getChangesFor(@NotNull VirtualFile f, @Nullable String pattern) {
+    return LocalHistoryTestCase.collectChanges(getVcs(), f.getPath(), myProject.getLocationHash(), pattern);
+  }
+
+  protected @Nullable Entry getEntryFor(@NotNull ChangeSet changeSet, @NotNull VirtualFile f) {
+    return getEntryFor(new RevisionId.ChangeSet(changeSet.getId()), f);
+  }
+
+  protected @Nullable Entry getCurrentEntry(@NotNull VirtualFile f) {
+    return getEntryFor(RevisionId.Current.INSTANCE, f);
+  }
+
+  protected @Nullable Entry getEntryFor(@NotNull RevisionId revisionId, @NotNull VirtualFile f) {
+    return LocalHistoryTestCase.getEntryFor(getVcs(), getRootEntry(), revisionId, f.getPath());
   }
 
   protected RootEntry getRootEntry() {
@@ -161,7 +181,8 @@ public abstract class IntegrationTestCase extends HeavyPlatformTestCase {
   }
 
   protected static void addContentRoot(@NotNull Module module, @NotNull String path) {
-    ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.addContentRoot(module, FileUtil.toSystemIndependentName(path)));
+    ApplicationManager.getApplication()
+      .runWriteAction(() -> ModuleRootModificationUtil.addContentRoot(module, FileUtil.toSystemIndependentName(path)));
   }
 
   protected void addExcludedDir(final String path) {

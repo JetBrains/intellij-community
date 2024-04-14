@@ -702,15 +702,19 @@ f:com.intellij.history.integration.ui.models.RevisionSelectionCalculator
 - com.intellij.history.integration.ui.models.SelectionCalculator
 - <init>(com.intellij.history.integration.IdeaGateway,java.util.List,I,I):V
 - f:canCalculateFor(com.intellij.history.core.revisions.Revision,com.intellij.history.integration.ui.models.Progress):Z
-- f:getSelectionFor(com.intellij.history.core.revisions.Revision,com.intellij.history.integration.ui.models.Progress):com.intellij.diff.Block
 a:com.intellij.history.integration.ui.models.SelectionCalculator
 - sf:Companion:com.intellij.history.integration.ui.models.SelectionCalculator$Companion
 - <init>(com.intellij.history.integration.IdeaGateway,java.util.List,I,I):V
 - f:canCalculateFor(com.intellij.platform.lvcs.impl.RevisionId,com.intellij.history.integration.ui.models.Progress):Z
+- sf:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I):com.intellij.history.integration.ui.models.SelectionCalculator
+- sf:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I,Z):com.intellij.history.integration.ui.models.SelectionCalculator
 - pa:getEntry(com.intellij.platform.lvcs.impl.RevisionId):com.intellij.history.core.tree.Entry
 - f:getSelectionFor(com.intellij.platform.lvcs.impl.RevisionId,com.intellij.history.integration.ui.models.Progress):com.intellij.diff.Block
 - f:processContents(kotlin.jvm.functions.Function2):V
 f:com.intellij.history.integration.ui.models.SelectionCalculator$Companion
+- f:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I):com.intellij.history.integration.ui.models.SelectionCalculator
+- f:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I,Z):com.intellij.history.integration.ui.models.SelectionCalculator
+- bs:create$default(com.intellij.history.integration.ui.models.SelectionCalculator$Companion,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I,Z,I,java.lang.Object):com.intellij.history.integration.ui.models.SelectionCalculator
 f:com.intellij.history.integration.ui.models.SelectionDifferenceModel
 - com.intellij.history.integration.ui.models.FileDifferenceModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.integration.ui.models.RevisionSelectionCalculator,com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision,I,I,Z):V

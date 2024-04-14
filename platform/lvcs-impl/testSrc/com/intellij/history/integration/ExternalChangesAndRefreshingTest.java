@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.Paths;
-import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -66,23 +66,23 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   private void doTestRefreshing(boolean async) throws IOException {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     createFileExternally("f1.txt");
     createFileExternally("f2.txt");
 
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
 
     refreshVFS(async);
 
-    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+    assertEquals(before + 1, getChangesFor(myRoot).size());
   }
 
   public void testChangeSetName() throws IOException {
     createFileExternally("f.txt");
     refreshVFS();
-    Revision r = getRevisionsFor(myRoot).get(1);
-    assertEquals("External change", r.getChangeSetName());
+    ChangeSet change = getChangesFor(myRoot).get(0);
+    assertEquals("External change", change.getName());
   }
 
   public void testRefreshDuringCommand() {
@@ -134,17 +134,17 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   }
 
   public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     createChildDirectory(myRoot, FILTERED_DIR_NAME);
     String path = Paths.appended(myRoot.getPath(), FILTERED_DIR_NAME);
 
     FileUtil.delete(new File(path));
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
 
     refreshVFS();
 
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
   }
 
   public void testCreationOfExcludedDirWithFilesDuringRefreshShouldNotThrowException() throws Exception {

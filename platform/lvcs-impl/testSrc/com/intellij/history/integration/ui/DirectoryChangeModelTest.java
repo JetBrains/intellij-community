@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui;
 
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.DirectoryEntry;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IntegrationTestCase;
@@ -18,9 +17,9 @@ public class DirectoryChangeModelTest extends IntegrationTestCase {
     VirtualFile f = createDirectory("foo");
     rename(f, "bar");
 
-    List<Revision> revs = getRevisionsFor(f);
+    List<ChangeSet> revs = getChangesFor(f);
 
-    Difference d = new Difference(false, revs.get(0).findEntry(), revs.get(1).findEntry());
+    Difference d = new Difference(false, getCurrentEntry(f), getEntryFor(revs.get(0), f));
     DirectoryChangeModel m = createModelOn(d);
 
     assertEquals("bar", m.getEntryName(0));
@@ -39,11 +38,11 @@ public class DirectoryChangeModelTest extends IntegrationTestCase {
     VirtualFile f = createFile("foo.txt");
     setContent(f, "xxx");
 
-    List<Revision> revs = getRevisionsFor(f);
+    List<ChangeSet> revs = getChangesFor(f);
 
-    Difference d1 = new Difference(true, revs.get(0).findEntry(), revs.get(1).findEntry());
-    Difference d2 = new Difference(true, null, revs.get(1).findEntry());
-    Difference d3 = new Difference(true, revs.get(1).findEntry(), null);
+    Difference d1 = new Difference(true, getCurrentEntry(f), getEntryFor(revs.get(0), f));
+    Difference d2 = new Difference(true, null, getEntryFor(revs.get(0), f));
+    Difference d3 = new Difference(true, getEntryFor(revs.get(0), f), null);
 
     assertTrue(createModelOn(d1).canShowFileDifference());
     assertTrue(createModelOn(d2).canShowFileDifference());

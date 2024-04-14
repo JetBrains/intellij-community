@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.changes.Change;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.changes.DeleteChange;
 import com.intellij.history.core.changes.StructuralChange;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,32 +34,33 @@ public class FileListeningTest extends IntegrationTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    assertTrue("Aaaah, extension '" + IGNORED_EXTENSION+"' is no longer ignored. Please pick another ignored extension, tests count on you!",
-               FileTypeManager.getInstance().isFileIgnored("x."+IGNORED_EXTENSION));
+    assertTrue(
+      "Aaaah, extension '" + IGNORED_EXTENSION + "' is no longer ignored. Please pick another ignored extension, tests count on you!",
+      FileTypeManager.getInstance().isFileIgnored("x." + IGNORED_EXTENSION));
   }
 
   public void testCreatingFiles() throws Exception {
     VirtualFile f = createFile("file.txt");
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(1, getChangesFor(f).size());
   }
 
   public void testCreatingDirectories() throws IOException {
     VirtualFile f = createDirectory("dir");
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(1, getChangesFor(f).size());
   }
 
   public void testIgnoringFilteredFileTypes() throws Exception {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
     createFile("file." + IGNORED_EXTENSION);
 
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
   }
 
   public void testIgnoringFilteredDirectories() throws IOException {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     createDirectory(FILTERED_DIR_NAME);
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
   }
 
   public void testIgnoringFilesRecursively() throws IOException {
@@ -99,7 +100,7 @@ public class FileListeningTest extends IntegrationTestCase {
                     f.class
                     f.txt
                    """
-                 , buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
+      , buildDBFileStructure(myRoot, 0, new StringBuilder()).toString()
     );
   }
 
@@ -115,21 +116,21 @@ public class FileListeningTest extends IntegrationTestCase {
 
   public void testChangingFileContent() throws Exception {
     VirtualFile f = createFile("file.txt");
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(1, getChangesFor(f).size());
 
     setBinaryContent(f, new byte[]{1});
-    assertEquals(3, getRevisionsFor(f).size());
+    assertEquals(2, getChangesFor(f).size());
 
     setBinaryContent(f, new byte[]{2});
-    assertEquals(4, getRevisionsFor(f).size());
+    assertEquals(3, getChangesFor(f).size());
   }
 
   public void testRenamingFile() throws Exception {
     VirtualFile f = createFile("file.txt");
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(1, getChangesFor(f).size());
 
     rename(f, "file2.txt");
-    assertEquals(3, getRevisionsFor(f).size());
+    assertEquals(2, getChangesFor(f).size());
   }
 
   public void testRenamingFileOnlyAfterRenamedEvent() throws Exception {
@@ -138,11 +139,11 @@ public class FileListeningTest extends IntegrationTestCase {
     VirtualFileListener l = new VirtualFileListener() {
       @Override
       public void beforePropertyChange(@NotNull VirtualFilePropertyEvent e) {
-        log[0] = getRevisionsFor(file).size();
+        log[0] = getChangesFor(file).size();
       }
     };
 
-    assertEquals(2, getRevisionsFor(file).size());
+    assertEquals(1, getChangesFor(file).size());
 
     addFileListenerDuring(l, new RunnableAdapter() {
       @Override
@@ -151,71 +152,71 @@ public class FileListeningTest extends IntegrationTestCase {
       }
     });
 
-    assertEquals(2, log[0]);
-    assertEquals(3, getRevisionsFor(file).size());
+    assertEquals(1, log[0]);
+    assertEquals(2, getChangesFor(file).size());
   }
 
   public void testRenamingFilteredFileToNonFiltered() throws Exception {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     VirtualFile file = createFile("file." + IGNORED_EXTENSION);
-    assertThat(getRevisionsFor(myRoot)).hasSize(before);
+    assertThat(getChangesFor(myRoot)).hasSize(before);
 
     rename(file, "file.txt");
-    assertThat(getRevisionsFor(myRoot)).hasSize(before + 1);
-    assertThat(getRevisionsFor(file)).hasSize(4);
+    assertThat(getChangesFor(myRoot)).hasSize(before + 1);
+    assertThat(getChangesFor(file)).hasSize(3);
   }
 
   public void testRenamingNonFilteredFileToFiltered() throws Exception {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     VirtualFile f = createFile("file.txt");
-    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+    assertEquals(before + 1, getChangesFor(myRoot).size());
 
     rename(f, "file." + IGNORED_EXTENSION);
-    assertEquals(before + 2, getRevisionsFor(myRoot).size());
+    assertEquals(before + 2, getChangesFor(myRoot).size());
   }
 
   public void testRenamingFilteredDirectoriesToNonFiltered() throws Exception {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     VirtualFile file = createFile(FILTERED_DIR_NAME);
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
 
     rename(file, "not_filtered");
-    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+    assertEquals(before + 1, getChangesFor(myRoot).size());
 
-    assertThat(getRevisionsFor(file)).hasSize(4);
+    assertThat(getChangesFor(file)).hasSize(3);
   }
 
-  public void testRenamingNonFilteredDirectoriesToFiltered() throws IOException {
-    int before = getRevisionsFor(myRoot).size();
+  public void testRenamingNonFilteredDirectoriesToFiltered() {
+    int before = getChangesFor(myRoot).size();
 
     VirtualFile f = createDirectory("not_filtered");
-    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+    assertEquals(before + 1, getChangesFor(myRoot).size());
 
     rename(f, FILTERED_DIR_NAME);
-    assertEquals(before + 2, getRevisionsFor(myRoot).size());
+    assertEquals(before + 2, getChangesFor(myRoot).size());
   }
 
   public void testChangingROStatusForFile() throws Exception {
     VirtualFile f = createFile("f.txt");
-    assertEquals(2, getRevisionsFor(f).size());
+    assertEquals(1, getChangesFor(f).size());
 
     setReadOnlyAttribute(f, true);
-    assertEquals(3, getRevisionsFor(f).size());
+    assertEquals(2, getChangesFor(f).size());
 
     setReadOnlyAttribute(f, false);
-    assertEquals(4, getRevisionsFor(f).size());
+    assertEquals(3, getChangesFor(f).size());
   }
 
   public void testIgnoringROStatusChangeForUnversionedFiles() throws Exception {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     VirtualFile f = createFile("f." + IGNORED_EXTENSION);
     setReadOnlyAttribute(f, true);
 
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
   }
 
   private static void setReadOnlyAttribute(VirtualFile f, boolean status) throws IOException {
@@ -228,18 +229,18 @@ public class FileListeningTest extends IntegrationTestCase {
   public void testDeletion() throws IOException {
     VirtualFile f = createDirectory("f.txt");
 
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     delete(f);
-    assertEquals(before + 1, getRevisionsFor(myRoot).size());
+    assertEquals(before + 1, getChangesFor(myRoot).size());
   }
 
   public void testDeletionOfFilteredDirectoryDoesNotThrowsException() throws IOException {
-    int before = getRevisionsFor(myRoot).size();
+    int before = getChangesFor(myRoot).size();
 
     VirtualFile f = createDirectory(FILTERED_DIR_NAME);
     delete(f);
-    assertEquals(before, getRevisionsFor(myRoot).size());
+    assertEquals(before, getChangesFor(myRoot).size());
   }
 
   public void testDeletionDoesNotVersionIgnoredFilesRecursively() throws IOException {
@@ -286,12 +287,12 @@ public class FileListeningTest extends IntegrationTestCase {
     createFileExternally("dir/subDir/file.txt");
     LocalFileSystem.getInstance().refresh(false);
 
-    List<Revision> revs = getRevisionsFor(myRoot);
-    assertEquals(5, revs.size());
-    assertNotNull(revs.get(0).findEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(1).findEntry().findEntry("dir/subDir/file.txt"));
-    assertNotNull(revs.get(2).findEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(3).findEntry().findEntry("dir/subDir/file.txt"));
+    List<ChangeSet> changes = getChangesFor(myRoot);
+    assertEquals(4, changes.size());
+    assertNotNull(getCurrentEntry(myRoot).findEntry("dir/subDir/file.txt"));
+    assertNull(getEntryFor(changes.get(0), myRoot).findEntry("dir/subDir/file.txt"));
+    assertNotNull(getEntryFor(changes.get(1), myRoot).findEntry("dir/subDir/file.txt"));
+    assertNull(getEntryFor(changes.get(2), myRoot).findEntry("dir/subDir/file.txt"));
   }
 
   public void testCreationAndDeletionOfFileUnderUnversionedDir() throws IOException {
@@ -309,12 +310,12 @@ public class FileListeningTest extends IntegrationTestCase {
     createFileExternally("dir/subDir/file.txt");
     LocalFileSystem.getInstance().refresh(false);
 
-    List<Revision> revs = getRevisionsFor(myRoot);
-    assertEquals(5, revs.size());
-    assertNotNull(revs.get(0).findEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(1).findEntry().findEntry("dir/subDir"));
-    assertNotNull(revs.get(2).findEntry().findEntry("dir/subDir/file.txt"));
-    assertNull(revs.get(3).findEntry().findEntry("dir/subDir"));
+    List<ChangeSet> revs = getChangesFor(myRoot);
+    assertEquals(4, revs.size());
+    assertNotNull(getCurrentEntry(myRoot).findEntry("dir/subDir/file.txt"));
+    assertNull(getEntryFor(revs.get(0), myRoot).findEntry("dir/subDir"));
+    assertNotNull(getEntryFor(revs.get(1), myRoot).findEntry("dir/subDir/file.txt"));
+    assertNull(getEntryFor(revs.get(2), myRoot).findEntry("dir/subDir"));
   }
 
   private static void sortEntries(final List<Entry> entries) {

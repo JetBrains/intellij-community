@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.history.core.revisions.CurrentRevision;
-import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.utils.RunnableAdapter;
 import com.intellij.openapi.command.CommandProcessor;
@@ -42,13 +27,12 @@ public class ActionsTest extends IntegrationTestCase {
     setDocumentTextFor(f, "doc2");
     a.finish();
 
-    List<Revision> rr = getRevisionsFor(f);
+    List<ChangeSet> changes = getChangesFor(f);
     assertEquals("""
-                   current: doc2
                    action: doc1
                    null: file2
                    null: file1
-                   External change: null""", getNameAndOldContent(rr));
+                   External change: null""", getNameAndOldContent(changes, f));
   }
 
   /**
@@ -67,13 +51,12 @@ public class ActionsTest extends IntegrationTestCase {
       a.finish();
     }, "command", null);
 
-    List<Revision> rr = getRevisionsFor(f);
+    List<ChangeSet> changes = getChangesFor(f);
     assertEquals("""
-                   current: doc2
                    command: doc1
                    null: initial
                    null:\s
-                   External change: null""", getNameAndOldContent(rr));
+                   External change: null""", getNameAndOldContent(changes, f));
   }
 
   public void testActionInsideCommandSurroundedWithSomeChanges() throws Exception {
@@ -95,18 +78,17 @@ public class ActionsTest extends IntegrationTestCase {
       }
     }, "command", null);
 
-    List<Revision> rr = getRevisionsFor(f);
+    List<ChangeSet> changes = getChangesFor(f);
     assertEquals("""
-                   current: doc3
                    command: doc1
                    null:\s
-                   External change: null""", getNameAndOldContent(rr));
+                   External change: null""", getNameAndOldContent(changes, f));
   }
 
-  private static @NotNull String getNameAndOldContent(@NotNull List<Revision> revisions) {
-    return StringUtil.join(revisions, revision -> {
-      String name = revision instanceof CurrentRevision ? "current" : revision.getChangeSetName();
-      Entry entry = revision.findEntry();
+  private @NotNull String getNameAndOldContent(@NotNull List<ChangeSet> changes, @NotNull VirtualFile file) {
+    return StringUtil.join(changes, change -> {
+      String name = change.getName();
+      Entry entry = getEntryFor(change, file);
       String content = entry == null ? "null" : getContentAsString(entry);
       return name + ": " + content;
     }, "\n");

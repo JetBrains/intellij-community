@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.revertion;
 
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.RevisionId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -278,15 +264,17 @@ public class DifferenceReverterTest extends IntegrationTestCase {
   }
 
   private void revertChange(int change, int... diffsIndices) throws Exception {
-    List<Revision> revs = getRevisionsFor(myRoot);
-    Revision leftRev = revs.get(change + 1);
-    Revision rightRev = revs.get(change);
-    List<Difference> diffs = Revision.getDifferencesBetween(leftRev, rightRev);
+    List<RevisionId> revs = getRevisionIdsFor(myRoot);
+    RevisionId leftRev = revs.get(change + 1);
+    RevisionId rightRev = revs.get(change);
+    List<Difference> diffs = Entry.getDifferencesBetween(getEntryFor(leftRev, myRoot), getEntryFor(rightRev, myRoot));
     List<Difference> toRevert = new ArrayList<>();
     for (int i : diffsIndices) {
       toRevert.add(diffs.get(i));
     }
     if (diffsIndices.length == 0) toRevert = diffs;
-    new DifferenceReverter(myProject, getVcs(), myGateway, toRevert, leftRev).revert();
+    new DifferenceReverter(myProject, getVcs(), myGateway, toRevert, () -> {
+      return "Revert";
+    }).revert();
   }
 }

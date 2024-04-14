@@ -1,17 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.*;
-import com.intellij.history.core.revisions.CurrentRevision;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.TestContent;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.TestVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Clock;
+import com.intellij.platform.lvcs.impl.RevisionId;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -31,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.platform.lvcs.impl.diff.DiffUtilsKt.findEntry;
 
 public abstract class LocalHistoryTestCase extends Assert {
   @Rule
@@ -165,19 +166,28 @@ public abstract class LocalHistoryTestCase extends Assert {
     return facade.getChangeListInTests().getChangesInTests().get(0);
   }
 
-  public static @NotNull List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
-    CurrentRevision currentRevision = new CurrentRevision(root, path);
-    List<Revision> revisions = RevisionsCollector.collect(facade, root, path, projectId, pattern);
-    return ContainerUtil.concat(Arrays.asList(currentRevision), revisions);
+  public static @NotNull List<RevisionId> collectRevisionIds(@NotNull LocalHistoryFacade facade, @NotNull String path,
+                                                             @Nullable String projectId, @Nullable String pattern) {
+    List<RevisionId> revisionIds = ContainerUtil.map(collectChanges(facade, path, projectId, pattern),
+                                                     set -> new RevisionId.ChangeSet(set.getId()));
+    return ContainerUtil.concat(Arrays.asList(RevisionId.Current.INSTANCE), revisionIds);
   }
 
-  public static @NotNull List<ChangeSet> collectChanges(LocalHistoryFacade facade, String path, String projectId, String pattern) {
+  public static @NotNull List<ChangeSet> collectChanges(@NotNull LocalHistoryFacade facade, @NotNull String path,
+                                                        @Nullable String projectId, @Nullable String pattern) {
     List<ChangeSet> result = new ArrayList<>();
     LocalHistoryFacadeKt.collectChanges(facade, projectId, path, pattern, changeSet -> {
       result.add(changeSet);
       return Unit.INSTANCE;
     });
     return result;
+  }
+
+  public static @Nullable Entry getEntryFor(@NotNull LocalHistoryFacade facade, @NotNull RootEntry rootEntry,
+                                            @NotNull RevisionId revisionId, @NotNull String path) {
+    return ReadAction.compute(() -> {
+      return findEntry(facade, rootEntry, revisionId, path, true);
+    });
   }
 
   @SafeVarargs

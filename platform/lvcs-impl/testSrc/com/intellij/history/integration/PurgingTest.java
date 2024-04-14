@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.core.LocalHistoryTestCase;
 import com.intellij.history.core.changes.ChangeSet;
-import com.intellij.history.core.revisions.Revision;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
@@ -116,9 +115,9 @@ public class PurgingTest extends IntegrationTestCase {
 
     getVcs().getChangeListInTests().purgeObsolete(1);
 
-    List<Revision> rr = getRevisionsFor(file);
-    assertThat(rr).hasSize(2);
-    assertEquals("1", rr.get(1).getLabel());
+    List<ChangeSet> changes = getChangesFor(file);
+    assertThat(changes).hasSize(1);
+    assertEquals("1", changes.get(0).getLabel());
   }
 
   private void createChangesWithTimestamps(long... tt) {

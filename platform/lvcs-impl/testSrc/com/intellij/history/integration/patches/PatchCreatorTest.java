@@ -1,14 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.patches;
 
 import com.intellij.history.core.revisions.Difference;
-import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.PatchingTestCase;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.lvcs.impl.RevisionId;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -123,11 +124,11 @@ public class PatchCreatorTest extends PatchingTestCase {
   }
 
   private void createPatchBetweenRevisions(int left, int right, boolean reverse) throws Exception {
-    List<Revision> rr = getRevisionsFor(myRoot);
-    Revision l = rr.get(left);
-    Revision r = rr.get(right);
+    List<RevisionId> rr = getRevisionIdsFor(myRoot);
+    RevisionId l = rr.get(left);
+    RevisionId r = rr.get(right);
 
-    List<Difference> differences = Revision.getDifferencesBetween(l, r);
+    List<Difference> differences = Entry.getDifferencesBetween(getEntryFor(l, myRoot), getEntryFor(r, myRoot));
     List<Change> changes = new ArrayList<>();
     for (Difference d : differences) {
       Change c = new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));

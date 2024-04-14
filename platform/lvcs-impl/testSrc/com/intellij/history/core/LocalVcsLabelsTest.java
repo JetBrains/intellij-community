@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
-import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.tree.RootEntry;
+import com.intellij.platform.lvcs.impl.RevisionId;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -25,13 +25,13 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     add(myVcs, changeContent(myRoot, "file", null));
     myVcs.putUserLabel("2", "project");
 
-    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
-    assertEquals(5, rr.size());
+    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
+    assertEquals(4, changes.size());
 
-    assertEquals("2", rr.get(1).getLabel());
-    assertNull(rr.get(2).getLabel());
-    assertEquals("1", rr.get(3).getLabel());
-    assertNull(rr.get(4).getLabel());
+    assertEquals("2", changes.get(0).getLabel());
+    assertNull(changes.get(1).getLabel());
+    assertEquals("1", changes.get(2).getLabel());
+    assertNull(changes.get(3).getLabel());
   }
 
   @Test
@@ -45,10 +45,10 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     setCurrentTimestamp(30);
     myVcs.putUserLabel("", "project");
 
-    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
-    assertEquals(30, rr.get(1).getTimestamp());
-    assertEquals(20, rr.get(2).getTimestamp());
-    assertEquals(10, rr.get(3).getTimestamp());
+    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
+    assertEquals(30, changes.get(0).getTimestamp());
+    assertEquals(20, changes.get(1).getTimestamp());
+    assertEquals(10, changes.get(2).getTimestamp());
   }
 
   @Test
@@ -58,10 +58,10 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     add(myVcs, changeContent(myRoot, "file", "two"));
     myVcs.putUserLabel("", "project");
 
-    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
+    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
 
-    assertContent("two", rr.get(0).findEntry());
-    assertContent("one", rr.get(2).findEntry());
+    assertContent("two", getEntryFor(myVcs, myRoot, RevisionId.Current.INSTANCE, "file"));
+    assertContent("one", getEntryFor(myVcs, myRoot, new RevisionId.ChangeSet(changes.get(1).getId()), "file"));
   }
 
   @Test
@@ -71,14 +71,14 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     add(myVcs, createFile(myRoot, "two"));
     myVcs.putUserLabel("2", "project");
 
-    List<Revision> rr = collectRevisions(myVcs, myRoot, "one", "project", null);
-    assertEquals(4, rr.size());
-    assertEquals("2", rr.get(1).getLabel());
-    assertEquals("1", rr.get(2).getLabel());
+    List<ChangeSet> changes = collectChanges(myVcs, "one", "project", null);
+    assertEquals(3, changes.size());
+    assertEquals("2", changes.get(0).getLabel());
+    assertEquals("1", changes.get(1).getLabel());
 
-    rr = collectRevisions(myVcs, myRoot, "two", "project", null);
-    assertEquals(3, rr.size());
-    assertEquals("2", rr.get(1).getLabel());
+    changes = collectChanges(myVcs, "two", "project", null);
+    assertEquals(2, changes.size());
+    assertEquals("2", changes.get(0).getLabel());
   }
 
   @Test
@@ -88,9 +88,9 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     setCurrentTimestamp(20);
     myVcs.putUserLabel("", "project");
 
-    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
-    assertEquals(20, rr.get(1).getTimestamp());
-    assertEquals(10, rr.get(2).getTimestamp());
+    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
+    assertEquals(20, changes.get(0).getTimestamp());
+    assertEquals(10, changes.get(1).getTimestamp());
   }
 
   @Test
@@ -101,10 +101,10 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     myVcs.putUserLabel("label", "project");
     myVcs.endChangeSet("changeSet");
 
-    List<Revision> rr = collectRevisions(myVcs, myRoot, "file", "project", null);
-    assertEquals(3, rr.size());
-    assertEquals("changeSet", rr.get(1).getChangeSetName());
-    assertEquals(null, rr.get(2).getChangeSetName());
+    List<ChangeSet> changes = collectChanges(myVcs, "file", "project", null);
+    assertEquals(2, changes.size());
+    assertEquals("changeSet", changes.get(0).getName());
+    assertNull(changes.get(1).getName());
   }
 
   @Test
@@ -115,15 +115,15 @@ public class LocalVcsLabelsTest extends LocalHistoryTestCase {
     setCurrentTimestamp(123);
     myVcs.putSystemLabel("label", "project", 456);
 
-    List<Revision> rr1 = collectRevisions(myVcs, myRoot, "f1", "project", null);
-    List<Revision> rr2 = collectRevisions(myVcs, myRoot, "f2", "project", null);
-    assertEquals(3, rr1.size());
-    assertEquals(3, rr2.size());
+    List<ChangeSet> changes1 = collectChanges(myVcs, "f1", "project", null);
+    List<ChangeSet> changes2 = collectChanges(myVcs, "f2", "project", null);
+    assertEquals(2, changes1.size());
+    assertEquals(2, changes2.size());
 
-    assertEquals("label", rr1.get(1).getLabel());
-    assertEquals("label", rr2.get(1).getLabel());
+    assertEquals("label", changes1.get(0).getLabel());
+    assertEquals("label", changes2.get(0).getLabel());
 
-    Revision r = rr1.get(1);
+    ChangeSet r = changes1.get(0);
     assertEquals(123, r.getTimestamp());
     assertEquals(456, r.getLabelColor());
   }
