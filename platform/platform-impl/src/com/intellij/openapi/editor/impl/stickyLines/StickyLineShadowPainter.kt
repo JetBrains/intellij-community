@@ -33,31 +33,31 @@ internal class StickyLineShadowPainter {
   private var shadowHeight: Int = 0
 
   fun updateShadow(c: JComponent, newWidth: Int, newHeight: Int) {
-    if (!isEnabled() || c.graphicsConfiguration == null) {
-      shadow = null
-      return
-    }
-    if (newWidth == 0 || newHeight == 0) {
-      shadow = null
-    } else if (shadow == null || width != newWidth || height != newHeight) {
+    if (isEnabled() && newWidth != 0 && newHeight != 0 && c.graphicsConfiguration != null) {
       // paint 1/2 of icon as a workaround on rendering issue with Shadow.Bottom
-      val sh = SHADOW_ICON.iconHeight / 2
-      shadow = painter.createShadow(c, newWidth, newHeight + sh)
-      width = newWidth
+      val newShadowHeight = SHADOW_ICON.iconHeight / 2
+      if (shadow == null || width != newWidth || shadowHeight != newShadowHeight) {
+        shadow = painter.createShadow(c, newWidth, newShadowHeight)
+        width = newWidth
+        shadowHeight = newShadowHeight
+      }
       height = newHeight
-      shadowHeight = sh
+    } else {
+      shadow = null
     }
   }
 
   @Suppress("GraphicsSetClipInspection")
   fun paintShadow(g: Graphics?) {
-    if (!isEnabled()) return
-
-    val shadow = shadow
-    if (shadow != null && g is Graphics2D) {
-      g.setClip(0, 0, width, height + shadowHeight)
-      UIUtil.drawImage(g, shadow, 0, 0, null)
-      g.setClip(0, 0, width, height)
+    if (isEnabled()) {
+      val shadow = shadow
+      if (shadow != null && g is Graphics2D) {
+        g.setClip(0, 0, width, height + shadowHeight)
+        g.translate(0, height)
+        UIUtil.drawImage(g, shadow, 0, 0, null)
+        g.translate(0, -height)
+        g.setClip(0, 0, width, height)
+      }
     }
   }
 
