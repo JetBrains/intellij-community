@@ -22,6 +22,7 @@
       <reference ref="LocalHistory.ShowHistory"/>
       <reference ref="LocalHistory.ShowSelectionHistory"/>
       <reference ref="LocalHistory.ShowProjectHistory"/>
+      <reference ref="RecentChanges"/>
       <reference ref="LocalHistory.PutLabel"/>
 
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>
