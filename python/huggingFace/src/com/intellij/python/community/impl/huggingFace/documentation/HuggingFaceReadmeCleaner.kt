@@ -119,10 +119,7 @@ class HuggingFaceReadmeCleaner(
   }
 
   private fun removeMarkdownSeparators() {
-    markdown = markdown
-      .replace(Regex("\\n[-]{3,}\\n"), "\n")
-      .replace(Regex("\\n[*]{3,}\\n"), "\n")
-      .replace(Regex("\\n[_]{3,}\\n"), "\n")
+    markdown = markdown.replace(MD_SEPARATORS_REGEX, "\n")
   }
 
   @Nls
@@ -143,5 +140,6 @@ class HuggingFaceReadmeCleaner(
     private val INTERNAL_LINK_REGEX = Regex("""\[(.*?)\]\(#(.*?)\)""")
     private val RELATIVE_LINK_REGEX = Regex("""\[(.*?)\]\((?!http|#)(.*?)(?<!\.(jpg|jpeg|png|gif))\)""")
     private val SUMMARY_TAGS_REGEX = Regex("<summary>(.*?)</summary>")
+    private val MD_SEPARATORS_REGEX = Regex("\\n(-{3,}|_{3,}|\\*{3,})\\n")
   }
 }
