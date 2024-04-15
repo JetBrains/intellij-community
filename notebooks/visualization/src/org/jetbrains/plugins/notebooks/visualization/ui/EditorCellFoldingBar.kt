@@ -40,7 +40,7 @@ internal class EditorCellFoldingBar(
 
     override fun paint(g: Graphics) {
       val appearance = editor.notebookAppearance
-      val color = if (mouseOver) {
+      val color = if (selected) {
         appearance.getCellStripeHoverColor(editor)
       }
       else {
@@ -75,6 +75,14 @@ internal class EditorCellFoldingBar(
     get() = panel.isVisible
     set(value) {
       panel.isVisible = value
+    }
+
+  var selected: Boolean = false
+    set(value) {
+      if (field != value) {
+        field = value
+        panel.repaint()
+      }
     }
 
   init {

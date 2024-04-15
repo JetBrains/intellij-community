@@ -49,7 +49,6 @@ class EditorCellInput(
         it.updatePosition(location.y, size.height)
       }
     })
-    it.hide()
   }
 
   private fun toggleFolding(inputComponentFactory: (EditorCellViewComponent) -> EditorCellViewComponent) {
@@ -113,11 +112,11 @@ class EditorCellInput(
     updateGutterIcons()
   }
 
-  fun mouseExited() {
+  fun hideFolding() {
     folding.hide()
   }
 
-  fun mouseEntered() {
+  fun showFolding() {
     folding.show()
   }
 
@@ -128,6 +127,10 @@ class EditorCellInput(
   fun updatePresentation(view: EditorCellViewComponent) {
     _component.dispose()
     _component = view
+  }
+
+  fun updateSelection(value: Boolean) {
+    folding.updateSelection(value)
   }
 }
 

@@ -72,8 +72,13 @@ class EditorCellView(
 
   private var output: EditorCellOutput? = null
 
+  private var selected = false
+
+  private var mouseOver = false
+
   init {
     update()
+    updateSelection(false)
   }
 
   private fun updateBoundaries() {
@@ -133,6 +138,8 @@ class EditorCellView(
     val outputController = controllers.filterIsInstance<NotebookOutputInlayController>().firstOrNull()
     if (outputController != null) {
       output = EditorCellOutput(editor, outputController)
+      updateCellHighlight()
+      updateFolding()
     }
     updateBoundaries()
     updateCellHighlight()
@@ -171,13 +178,13 @@ class EditorCellView(
   }
 
   fun mouseExited() {
-    input.mouseExited()
-    output?.mouseExited()
+    mouseOver = false
+    updateFolding()
   }
 
   fun mouseEntered() {
-    input.mouseEntered()
-    output?.mouseEntered()
+    mouseOver = true
+    updateFolding()
   }
 
   private fun removeCellHighlight() {
@@ -197,7 +204,7 @@ class EditorCellView(
     toRemove.forEach { editor.markupModel.removeHighlighter(it) }
   }
 
-  internal fun updateCellHighlight() {
+  private fun updateCellHighlight() {
     removeCellHighlight()
     val interval = intervalPointer.get() ?: error("Invalid interval")
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
@@ -237,6 +244,25 @@ class EditorCellView(
 
     for (controller: NotebookCellInlayController in controllers) {
       controller.createGutterRendererLineMarker(editor, interval)
+    }
+  }
+
+  fun updateSelection(value: Boolean) {
+    selected = value
+    updateFolding()
+    updateCellHighlight()
+  }
+
+  private fun updateFolding() {
+    input.updateSelection(selected)
+    output?.updateSelection(selected)
+    if (mouseOver || selected) {
+      input.showFolding()
+      output?.showFolding()
+    }
+    else {
+      input.hideFolding()
+      output?.hideFolding()
     }
   }
 

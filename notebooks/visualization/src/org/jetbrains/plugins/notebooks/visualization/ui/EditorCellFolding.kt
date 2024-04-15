@@ -33,4 +33,8 @@ class EditorCellFolding(editor: EditorEx, toggleListener: () -> Unit) {
     foldingBar?.setLocation(y, height)
   }
 
+  fun updateSelection(value: Boolean) {
+    foldingBar?.selected = value
+  }
+
 }
