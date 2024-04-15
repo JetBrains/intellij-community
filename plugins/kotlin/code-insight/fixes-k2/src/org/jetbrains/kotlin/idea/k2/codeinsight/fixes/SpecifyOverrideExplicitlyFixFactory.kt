@@ -4,8 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.analysis.api.calls.successfulVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtCallableReturnTypeFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -13,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -41,9 +41,7 @@ internal object SpecifyOverrideExplicitlyFixFactory {
 
             for (specifier in ktClass.superTypeListEntries) {
                 if (specifier is KtDelegatedSuperTypeEntry) {
-                    val delegateExpression = specifier.delegateExpression as? KtNameReferenceExpression
-                    val resolvedCall = delegateExpression?.resolveCall()?.successfulVariableAccessCall()
-                    val delegateTargetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol ?: return@ModCommandBased emptyList()
+                    val delegateTargetSymbol = specifier.getSymbol() ?: return@ModCommandBased emptyList()
 
                     if (delegateTargetSymbol is KtValueParameterSymbol &&
                         delegateTargetSymbol.getContainingSymbol().let {
@@ -84,6 +82,13 @@ internal object SpecifyOverrideExplicitlyFixFactory {
             val elementContext = ElementContext(signature, delegateParameters, generatedMembers)
             listOf(SpecifyOverrideExplicitlyFix(ktClass, elementContext))
         }
+
+    context(KtAnalysisSession)
+    private fun KtDelegatedSuperTypeEntry.getSymbol(): KtNamedSymbol? {
+        val nameReferenceExpression = delegateExpression as? KtNameReferenceExpression ?: return null
+        val declaration = nameReferenceExpression.reference?.resolve() as? KtDeclaration ?: return null
+        return declaration.getSymbol() as? KtNamedSymbol
+    }
 
     private val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
         returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS

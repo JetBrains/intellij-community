@@ -5374,6 +5374,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/notPossible.kt");
         }
 
+        @TestMetadata("objectDeclaration.kt")
+        public void testObjectDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/objectDeclaration.kt");
+        }
+
         @TestMetadata("outer.kt")
         public void testOuter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/outer.kt");

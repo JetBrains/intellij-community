@@ -14145,6 +14145,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/specifyOverrideExplicitly/notPossible.kt");
         }
 
+        @TestMetadata("objectDeclaration.kt")
+        public void testObjectDeclaration() throws Exception {
+            runTest("testData/quickfix/specifyOverrideExplicitly/objectDeclaration.kt");
+        }
+
         @TestMetadata("outer.kt")
         public void testOuter() throws Exception {
             runTest("testData/quickfix/specifyOverrideExplicitly/outer.kt");
