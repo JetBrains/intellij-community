@@ -122,8 +122,7 @@ class InstanceContainerImpl(
     }
     val debugString = if (scopeName == null) containerName else "($containerName x $scopeName)"
     LOG.trace { "$debugString : registration start" }
-    val existingKeys = state().holders.keys
-    return InstanceRegistrarImpl(debugString, existingKeys) { actions ->
+    return InstanceRegistrarImpl(debugString, state().holders) { actions ->
       register(debugString, registrationScope, actions)
     }
   }
@@ -201,7 +200,11 @@ class InstanceContainerImpl(
     updateState { state: InstanceContainerState ->
       val existingHolder = state.getByName(keyClassName)
       if (existingHolder != null) {
-        throw InstanceAlreadyRegisteredException(keyClassName)
+        throw InstanceAlreadyRegisteredException(
+          keyClassName,
+          existingInstanceClassName = existingHolder.instanceClassName(),
+          newInstanceClassName = holder.instanceClassName(),
+        )
       }
       state.replaceByClass(keyClass, holder)
     }
