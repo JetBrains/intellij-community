@@ -9,12 +9,15 @@ import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.diagnostic.dto.toJsonStatistics
 import it.unimi.dsi.fastutil.longs.LongSet
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import kotlin.reflect.KMutableProperty1
 
@@ -60,7 +63,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private val timesImpl = ScanningTimesImpl(scanningReason = scanningReason, scanningType = scanningType, scanningId = scanningSessionId,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
-  override val scanningStatistics: ArrayList<JsonScanningStatistics> = arrayListOf()
+  private val scanningStatisticsItems: AtomicReference<PersistentList<JsonScanningStatistics>> = AtomicReference(persistentListOf())
+  override val scanningStatistics: List<JsonScanningStatistics> get() = scanningStatisticsItems.get()
 
   private val events = mutableListOf<Event>()
 
@@ -68,7 +72,8 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   private var currentDumbModeStart: ZonedDateTime? = null
 
   fun addScanningStatistics(statistics: ScanningStatistics) {
-    scanningStatistics += statistics.toJsonStatistics()
+    val jsonStatistics = statistics.toJsonStatistics()
+    scanningStatisticsItems.updateAndGet { it.add(jsonStatistics) }
   }
 
   private sealed interface Event {

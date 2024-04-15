@@ -366,11 +366,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
     progressReporter.setSubTasksCount(providers.size)
 
-    // Workaround for concurrent modification of the [scanningHistory].
-    // PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible may finish earlier than some of its spawned tasks.
-    // And some scanning statistics may be tried to be added to the [scanningHistory],
-    // leading to ConcurrentModificationException in the statistics' processor.
-    val allTasksFinished = Ref.create(false)
     val sharedExplanationLogger = IndexingReasonExplanationLogger()
     val tasks = providers.map { provider: IndexableFilesIterator ->
       val scanningStatistics = ScanningStatistics(provider.debugName)
@@ -444,11 +439,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           scanningStatistics.tryFinishFilesChecking()
           scanningStatistics.totalOneThreadTimeWithPauses = System.nanoTime() - providerScanningStartTime
           scanningStatistics.numberOfSkippedFiles = thisProviderDeduplicateFilter.numberOfSkippedFiles
-          synchronized(allTasksFinished) {
-            if (!allTasksFinished.get()) {
-              scanningHistory.addScanningStatistics(scanningStatistics)
-            }
-          }
+          scanningHistory.addScanningStatistics(scanningStatistics)
         }
       }
     }
@@ -457,10 +448,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       runTasksConcurrently(tasks)
     }
     finally {
-      synchronized(allTasksFinished) {
-        allTasksFinished.set(true)
-        projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate())
-      }
+      projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate())
     }
   }
 
