@@ -118,6 +118,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private LinkPanel myHomePage;
   private LinkPanel myForumUrl;
   private LinkPanel myLicenseUrl;
+  private LinkPanel myPluginReportUrl;
   private VendorInfoPanel myVendorInfoPanel;
   private LinkPanel myBugtrackerUrl;
   private LinkPanel myDocumentationUrl;
@@ -767,6 +768,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     myForumUrl = new LinkPanel(infoPanel, false);
     mySourceCodeUrl = new LinkPanel(infoPanel, false);
     myLicenseUrl = new LinkPanel(infoPanel, false);
+    myPluginReportUrl = new LinkPanel(infoPanel, false);
 
     infoPanel.add(myVendorInfoPanel = new VendorInfoPanel());
     infoPanel.add(myRating = new JLabel());
@@ -1228,6 +1230,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       updateUrlComponent(myBugtrackerUrl, "plugins.configurable.bugtracker.url", pluginNode.getBugtrackerUrl());
       updateUrlComponent(myDocumentationUrl, "plugins.configurable.documentation.url", pluginNode.getDocumentationUrl());
       updateUrlComponent(mySourceCodeUrl, "plugins.configurable.source.code", pluginNode.getSourceCodeUrl());
+      updateUrlComponent(myPluginReportUrl, "plugins.configurable.report.marketplace.plugin", pluginNode.getReportPluginUrl());
 
       myVendorInfoPanel.show(pluginNode);
 
@@ -1316,9 +1319,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void showLicensePanel() {
-    IdeaPluginDescriptor plugin = getDescriptorForActions();
-    String productCode = plugin.getProductCode();
-    if (plugin.isBundled() || LicensePanel.isEA2Product(productCode)) {
+    IdeaPluginDescriptor descriptor = getDescriptorForActions();
+    String productCode = descriptor.getProductCode();
+    if (descriptor.isBundled() || LicensePanel.isEA2Product(productCode)) {
       myLicensePanel.hideWithChildren();
       return;
     }
@@ -1334,19 +1337,21 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     }
     else if (myMarketplace) {
-      String message;
-      if (plugin instanceof PluginNode && ((PluginNode)plugin).getTags().contains(Tags.Freemium.name())) {
-        message = IdeBundle.message("label.install.a.limited.functionality.for.free");
-      }
-      else {
-        message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
-      }
-      myLicensePanel.setText(message, false, false);
-      myLicensePanel.showBuyPlugin(() -> plugin, false);
+      boolean requiresCommercialIde = false;
 
-      // if the plugin requires commercial IDE, we do not show trial/price message
-      boolean requiresCommercialIde = plugin instanceof PluginNode
-                                      && ((PluginNode)plugin).getSuggestedCommercialIde() != null;
+      if (descriptor instanceof PluginNode plugin) {
+        Integer trialPeriod = plugin.getTrialPeriod();
+        boolean isFreemium = plugin.getTags().contains(Tags.Freemium.name());
+        requiresCommercialIde = plugin.getSuggestedCommercialIde() != null;
+
+        myLicensePanel.setText(getPaidPluginLicenseText(isFreemium, trialPeriod), false, false);
+      } else {
+        myLicensePanel.setText(IdeBundle.message("label.install.paid.without.trial"), false, false);
+      }
+
+      myLicensePanel.showBuyPlugin(() -> descriptor, false);
+
+      // if the descriptor requires a commercial IDE, we do not show trial/price message
       myLicensePanel.setVisible(!requiresCommercialIde);
     }
     else {
@@ -1653,6 +1658,19 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   private void updateIconLocation() {
     if (myLoadingIcon.isVisible()) {
       myLoadingIcon.updateLocation(this);
+    }
+  }
+
+  private static @NotNull @Nls String getPaidPluginLicenseText(boolean isFreemium, Integer trialPeriod) {
+    boolean withTrial = trialPeriod != null && trialPeriod != 0;
+    if (isFreemium) {
+      return withTrial ?
+             IdeBundle.message("label.install.freemium.for.free.with.trial.or", trialPeriod) :
+             IdeBundle.message("label.install.freemium.for.free.without.trial.or");
+    } else {
+      return withTrial ?
+             IdeBundle.message("label.install.paid.with.trial.or", trialPeriod) :
+             IdeBundle.message("label.install.paid.without.trial");
     }
   }
 
