@@ -180,7 +180,7 @@ final class UnindexedFilesFinder {
 
     Supplier<@NotNull Boolean> checker = CachedFileType.getFileTypeChangeChecker();
     FileType cachedFileType = file.getFileType();
-    return ReadAction.nonBlocking(() -> {
+    return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid()) {
         return null;
       }
@@ -285,7 +285,7 @@ final class UnindexedFilesFinder {
 
       fileStatusBuilder.explain(indexedFile, explanationLogger);
       return fileStatusBuilder.build();
-    }).executeSynchronously();
+    });
   }
 
   private void applyOrScheduleRequiredIndex(ID<?, ?> indexId,
