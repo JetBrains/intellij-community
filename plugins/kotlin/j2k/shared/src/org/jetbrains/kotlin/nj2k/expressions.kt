@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.INTERFACE
 import org.jetbrains.kotlin.nj2k.tree.JKLiteralExpression.LiteralType
 import org.jetbrains.kotlin.nj2k.types.JKNoType
@@ -183,9 +184,6 @@ fun JKExpression.unboxFieldReference(): JKFieldAccessExpression? = when {
     else -> null
 }
 
-fun JKFieldAccessExpression.asAssignmentFromTarget(): JKKtAssignmentStatement? =
-    parent.safeAs<JKKtAssignmentStatement>()?.takeIf { it.field == this }
-
 fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
     when (parent.safeAs<JKUnaryExpression>()?.operator?.token) {
         JKOperatorToken.PLUSPLUS, JKOperatorToken.MINUSMINUS -> true
@@ -195,13 +193,6 @@ fun JKFieldAccessExpression.isInDecrementOrIncrement(): Boolean =
 context(KtAnalysisSession)
 fun JKVariable.hasUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
     findUsages(scope, context).isNotEmpty()
-
-context(KtAnalysisSession)
-fun JKVariable.hasWritableUsages(scope: JKTreeElement, context: NewJ2kConverterContext): Boolean =
-    findUsages(scope, context).any {
-        it.asAssignmentFromTarget() != null
-                || it.isInDecrementOrIncrement()
-    }
 
 fun equalsExpression(left: JKExpression, right: JKExpression, typeFactory: JKTypeFactory) =
     JKBinaryExpression(
@@ -223,7 +214,7 @@ fun createCompanion(declarations: List<JKDeclaration>): JKClass =
         JKAnnotationList(),
         emptyList(),
         JKVisibilityModifierElement(Visibility.PUBLIC),
-        JKModalityModifierElement(Modality.FINAL)
+        JKModalityModifierElement(FINAL)
     )
 
 fun JKClass.getCompanion(): JKClass? =
