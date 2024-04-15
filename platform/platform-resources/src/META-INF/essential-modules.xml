@@ -1,6 +1,7 @@
 <idea>
   <content>
     <module name="intellij.platform.settings.local"/>
+    <module name="intellij.libraries.ktor.client"/>
 
     <!-- todo navbar is not essential-->
     <module name="intellij.platform.navbar.compatibility"/>

@@ -17,9 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.OutputStream
 
-@get:ApiStatus.Internal
-@get:ApiStatus.Experimental
-val httpClient: HttpClient by lazy {
+private val httpClient: HttpClient by lazy {
   // HttpTimeout is not used - CIO engine handles that
   HttpClient(CIO) {
     expectSuccess = true

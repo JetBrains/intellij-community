@@ -32,7 +32,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.*
 import java.util.*
-import kotlin.collections.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readLines
 
@@ -806,11 +805,19 @@ private fun getLibraryFiles(
 ): MutableList<Path> {
   val files = library.getPaths(JpsOrderRootType.COMPILED)
   val libName = library.name
+  if (libName == "ktor-client-jvm") {
+    return files
+  }
 
   // allow duplication if packed into the same target file and have the same common prefix
   files.removeIf {
     val alreadyCopiedFor = copiedFiles.get(it) ?: return@removeIf false
     val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
+
+    if (alreadyCopiedFor.library.name.startsWith("ktor-") && libName.startsWith("ktor-")) {
+      return@removeIf true
+    }
+
     alreadyCopiedFor.targetFile == targetFile &&
     (alreadyCopiedLibraryName.startsWith("ktor-") ||
      alreadyCopiedLibraryName.startsWith("commons-") ||
