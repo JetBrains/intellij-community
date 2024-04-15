@@ -230,21 +230,11 @@ class IdeaPluginDescriptorImpl(
     context: DescriptorListLoadingContext,
     dataLoader: DataLoader,
   ) {
-    // include module file descriptor if not specified as `depends` (old way - xi:include)
-    // must be first because merged into raw descriptor
     for (module in content.modules) {
       val subDescriptorFile = module.configFile ?: "${module.name}.xml"
-      module.descriptor = createSub(
-        raw = pathResolver.resolveModuleFile(
-          readContext = context,
-          dataLoader = dataLoader,
-          path = subDescriptorFile,
-          readInto = null,
-        ),
-        descriptorPath = subDescriptorFile,
-        context = context,
-        moduleName = module.name,
-      )
+      val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
+      val subDescriptor = createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+      module.descriptor = subDescriptor
     }
 
     initByRawDescriptor(raw = raw, context = context, pathResolver = pathResolver, dataLoader = dataLoader)

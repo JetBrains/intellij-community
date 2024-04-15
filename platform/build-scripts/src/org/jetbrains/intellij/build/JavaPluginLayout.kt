@@ -78,7 +78,6 @@ object JavaPluginLayout {
         "intellij.java.impl.refactorings",
         "intellij.jsp.spi",
         "intellij.java.uast",
-        "intellij.java.structuralSearch",
         "intellij.java.typeMigration",
         "intellij.java.featuresTrainer",
         "intellij.java.performancePlugin"
@@ -106,7 +105,6 @@ object JavaPluginLayout {
       spec.excludeProjectLibrary("jetbrains-annotations-java5")
     }
   }
-
 
   /**
    * A special plugin for JetBrains Client

@@ -92,7 +92,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   /* This property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of 
      this module */
   override val currentModeId: String
-    get() = if (AppMode.isRemoteDevHost()) "backend" else "local_IDE" 
+    get() = if (AppMode.isRemoteDevHost()) "backend" else "local_IDE"
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }
@@ -229,16 +229,60 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
       moduleName = null,
     )
     context.debugData?.recordDescriptorPath(descriptor, raw, PluginManagerCore.PLUGIN_XML_PATH)
-    descriptor.readExternal(raw = raw, pathResolver = pluginPathResolver, context = context, dataLoader = dataLoader)
+    for (module in descriptor.content.modules) {
+      val subDescriptorFile = module.configFile ?: "${module.name}.xml"
+      val input = dataLoader.load(subDescriptorFile, pluginDescriptorSourceOnly = true)
+      var classPath: List<Path>? = null
+      val subRaw = if (input == null) {
+        val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
+        if (Files.exists(jarFile)) {
+          classPath = Collections.singletonList(jarFile)
+          loadModuleFromSeparateJar(
+            pool = zipFilePool,
+            jarFile = jarFile,
+            subDescriptorFile = subDescriptorFile,
+            context = context,
+            pathResolver = pluginPathResolver,
+            dataLoader = dataLoader,
+          )
+        }
+        else {
+          throw RuntimeException("Cannot resolve $subDescriptorFile (dataLoader=$dataLoader)")
+        }
+      }
+      else {
+        readModuleDescriptor(
+          input = input,
+          readContext = context,
+          pathResolver = pluginPathResolver,
+          dataLoader = dataLoader,
+          includeBase = null,
+          readInto = null,
+          locationSource = null,
+        )
+      }
+
+      val subDescriptor = descriptor.createSub(
+        raw = subRaw,
+        descriptorPath = subDescriptorFile,
+        context = context,
+        moduleName = module.name,
+      )
+      if (classPath != null) {
+        subDescriptor.jarFiles = classPath
+      }
+      module.descriptor = subDescriptor
+    }
+    descriptor.initByRawDescriptor(raw = raw, context = context, pathResolver = pluginPathResolver, dataLoader = dataLoader)
     descriptor.jarFiles = fileItems.map { it.file }
     return descriptor
   }
 
   override fun isOptionalProductModule(moduleName: String): Boolean = false
-  
+
   override fun findProductContentModuleClassesRoot(moduleName: String, moduleDir: Path): Path {
     return moduleDir.resolve("$moduleName.jar")
-  } 
+  }
 
   override val shouldLoadDescriptorsFromCoreClassPath: Boolean
     get() = true

@@ -133,7 +133,7 @@ class ClassLoaderConfigurator(
       configureDependenciesInOldFormat(module, mainDependentClassLoader)
     }
     else {
-      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID) {
+      if (module.packagePrefix == null && module.pluginId != PluginManagerCore.CORE_ID && module.jarFiles == null) {
         throw PluginException("Package is not specified (module=$module)", module.pluginId)
       }
 
@@ -159,7 +159,8 @@ class ClassLoaderConfigurator(
       }
       else {
         module.pluginClassLoader = PluginClassLoader(
-          classPath = mainInfo.classPath,
+          classPath = module.jarFiles?.let { ClassPath(it, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false) }
+                      ?: mainInfo.classPath,
           parents = dependencies,
           pluginDescriptor = module,
           coreLoader = coreLoader,
@@ -366,11 +367,22 @@ private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): Lis
     return emptyList()
   }
 
-  val result = Array(modules.size) {
-    val module = modules.get(it).requireDescriptor()
-    "${module.packagePrefix ?: throw PluginException("Package is not specified (module=$module)", module.pluginId)}." to module.moduleName
+  val result = ArrayList<Pair<String, String?>>(modules.size)
+  for (item in modules) {
+    val module = item.requireDescriptor()
+    val packagePrefix = module.packagePrefix
+    if (packagePrefix == null) {
+      if (module.jarFiles.isNullOrEmpty()) {
+        // If jarFiles is not set for a module, the only way to separate it is by package prefix. Therefore, we require the package prefix.
+        throw PluginException("Package is not specified (module=$module)", module.pluginId)
+      }
+      else {
+        continue
+      }
+    }
+    result.add("$packagePrefix." to module.moduleName)
   }
-  return result.asList()
+  return result
 }
 
 private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): List<String> {

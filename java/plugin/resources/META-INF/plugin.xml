@@ -29,7 +29,10 @@
     <xi:fallback/>
   </xi:include>
 
-  <depends optional="true" config-file="intellij.java.structuralSearch.xml">com.intellij.modules.structuralsearch</depends>
+  <content>
+    <module name="intellij.java.structuralSearch"/>
+  </content>
+
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
   <depends optional="true" config-file="intellij.java.featuresTrainer.xml">training</depends>
   <depends optional="true" config-file="intellij.java.performancePlugin.xml">com.jetbrains.performancePlugin</depends>
