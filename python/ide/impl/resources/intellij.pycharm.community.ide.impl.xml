@@ -77,6 +77,8 @@
       implementationClass="com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector"/>
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
     <newUIConfigurable implementation="com.intellij.pycharm.community.ide.impl.configuration.PyExperimentalUIConfigurable"/>
+
+
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
