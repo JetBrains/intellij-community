@@ -2,14 +2,16 @@
 package com.intellij.openapi.ui
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 
+@ApiStatus.Internal
 interface BannerImageProvider {
 
   companion object {
     @JvmStatic
-    fun getInstance(): BannerImageProvider = ApplicationManager.getApplication().service()
+    fun getInstance(): BannerImageProvider? = ApplicationManager.getApplication().serviceOrNull()
   }
 
   fun getIDEBanner(): Image?
