@@ -13,8 +13,11 @@ import javax.swing.Icon
 
 internal abstract class PreviewFilePromoAction(private val topic: PromoTopic) : AnAction(), PromoAction {
   override fun getPromotedProductIcon(): Icon = PythonIcons.Python.Pycharm
-  override fun getPromotedProductTitle(): String = PluginAdvertiserService.pyCharmProfessional.name
-  override fun getCallToAction(): String = IdeBundle.message("plugin.advertiser.free.trial.action")
+  override fun getCallToAction(): String {
+    return IdeBundle.message("plugin.advertiser.product.call.to.action",
+                             PluginAdvertiserService.pyCharmProfessional.name,
+                             IdeBundle.message("plugin.advertiser.free.trial.action"))
+  }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

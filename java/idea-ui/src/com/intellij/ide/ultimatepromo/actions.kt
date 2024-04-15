@@ -16,8 +16,11 @@ import javax.swing.Icon
 
 internal abstract class UltimatePromoAction(private val pluginId: String) : DumbAwareAction(), PromoAction {
   override fun getPromotedProductIcon(): Icon = JavaUIIcons.IdeaUltimatePromoSmall
-  override fun getPromotedProductTitle(): String = PluginAdvertiserService.ideaUltimate.name
-  override fun getCallToAction(): String = IdeBundle.message("plugin.advertiser.free.trial.action")
+  override fun getCallToAction(): String {
+    return IdeBundle.message("plugin.advertiser.product.call.to.action",
+                             PluginAdvertiserService.ideaUltimate.name,
+                             IdeBundle.message("plugin.advertiser.free.trial.action"))
+  }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
