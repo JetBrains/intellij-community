@@ -73,13 +73,16 @@ __jetbrains_intellij_escape_json() {
       <<< "$1"
 }
 
-__jetbrains_intellij_prompt_shown() {
-  builtin printf '\e]1341;prompt_shown\a'
-}
+# Store our PS1 value in a variable to reference it in a convenient way
+# Surround 'prompt shown' esc sequence with \[ \] to not count characters inside as part of prompt width
+__JETBRAINS_INTELLIJ_PS1='\[\e]1341;prompt_shown\a\]'
 
 __jetbrains_intellij_configure_prompt() {
-  # Surround 'prompt shown' esc sequence with \[ \] to not count characters inside as part of prompt width
-  PS1="\[$(__jetbrains_intellij_prompt_shown)\]"
+  if [ "$PS1" != $__JETBRAINS_INTELLIJ_PS1 ]; then
+    # Remember the original prompt to use it in '__jetbrains_intellij_report_prompt_state'
+    __JETBRAINS_INTELLIJ_ORIGINAL_PS1=$PS1
+  fi
+  PS1=$__JETBRAINS_INTELLIJ_PS1
 }
 
 __jetbrains_intellij_debug_log() {
@@ -111,6 +114,7 @@ __jetbrains_intellij_initialized=""
 
 __jetbrains_intellij_command_terminated() {
   builtin local last_exit_code="$?"
+  __jetbrains_intellij_configure_prompt
   if [ -n "${__JETBRAINS_INTELLIJ_GENERATOR_COMMAND-}" ]
   then
     unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
@@ -118,7 +122,6 @@ __jetbrains_intellij_command_terminated() {
   fi
 
   __jetbrains_intellij_report_prompt_state
-  __jetbrains_intellij_configure_prompt
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
     __jetbrains_intellij_fix_prompt_command_order
@@ -151,7 +154,7 @@ __jetbrains_intellij_report_prompt_state() {
     conda_env="$CONDA_DEFAULT_ENV"
   fi
 
-  builtin local prompt="$PS1"
+  builtin local prompt="$__JETBRAINS_INTELLIJ_ORIGINAL_PS1"
   builtin local expanded_prompt=""
   # Prompt expansion was introduced in 4.4 version of Bash
   if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 4) ))
