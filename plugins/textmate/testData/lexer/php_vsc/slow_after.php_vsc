@@ -816,8 +816,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.definition.begin.br
 text.html.php;meta.embedded.block.php;source.php: [2653, 2654], {
 }
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;punctuation.definition.comment.php: [2654, 2656], {//}
-text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [2656, 2745], {                $pagesAndSize[] = $quoteLetterAPIData->estcomptext[$i]->PagesInstruction;}
-text.html.php;meta.embedded.block.php;source.php: [2745, 2746], {
+text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [2656, 2746], {                $pagesAndSize[] = $quoteLetterAPIData->estcomptext[$i]->PagesInstruction;
 }
 text.html.php;meta.embedded.block.php;source.php: [2746, 2762], {                }
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [2762, 2763], {$}
@@ -918,8 +917,7 @@ text.html.php;meta.embedded.block.php;source.php;punctuation.terminator.expressi
 text.html.php;meta.embedded.block.php;source.php: [3126, 3127], {
 }
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;punctuation.definition.comment.php: [3127, 3129], {//}
-text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [3129, 3248], {                $finishingInstruction[] = str_replace("\r\n", "<br>", $quoteLetterAPIData->estcomptext[$i]->Finishing);}
-text.html.php;meta.embedded.block.php;source.php: [3248, 3249], {
+text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [3129, 3249], {                $finishingInstruction[] = str_replace("\r\n", "<br>", $quoteLetterAPIData->estcomptext[$i]->Finishing);
 }
 text.html.php;meta.embedded.block.php;source.php: [3249, 3265], {                }
 text.html.php;meta.embedded.block.php;source.php;variable.other.php;punctuation.definition.variable.php: [3265, 3266], {$}
@@ -992,13 +990,11 @@ text.html.php;meta.embedded.block.php;source.php: [3526, 3527], {
 }
 text.html.php;meta.embedded.block.php;source.php;punctuation.whitespace.comment.leading.php: [3527, 3539], {            }
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;punctuation.definition.comment.php: [3539, 3541], {//}
-text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [3541, 3592], {trim(preg_replace) removes white space from strings}
-text.html.php;meta.embedded.block.php;source.php: [3592, 3593], {
+text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [3541, 3593], {trim(preg_replace) removes white space from strings
 }
 text.html.php;meta.embedded.block.php;source.php;punctuation.whitespace.comment.leading.php: [3593, 3605], {            }
 text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php;punctuation.definition.comment.php: [3605, 3607], {//}
-text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [3607, 3679], {htmlspecialchars ENTQUOTES removes escaping quotes from middle of string}
-text.html.php;meta.embedded.block.php;source.php: [3679, 3680], {
+text.html.php;meta.embedded.block.php;source.php;comment.line.double-slash.php: [3607, 3680], {htmlspecialchars ENTQUOTES removes escaping quotes from middle of string
 }
 text.html.php;meta.embedded.block.php;source.php: [3680, 3692], {            }
 text.html.php;meta.embedded.block.php;source.php;keyword.control.for.php: [3692, 3695], {for}
@@ -8975,33 +8971,27 @@ text.html.php;meta.embedded.block.html;source.js: [54385, 54386], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [54386, 54390], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54390, 54392], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54392, 54399], {testing}
-text.html.php;meta.embedded.block.html;source.js: [54399, 54400], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54392, 54400], {testing
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [54400, 54404], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54404, 54406], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54406, 54482], {console.log(<?php //echo $compCount, $sellLevelCount, $sellPriceCount ?>//);}
-text.html.php;meta.embedded.block.html;source.js: [54482, 54483], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54406, 54483], {console.log(<?php //echo $compCount, $sellLevelCount, $sellPriceCount ?>//);
 }
 text.html.php;meta.embedded.block.html;source.js: [54483, 54493], {    <?php }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54493, 54495], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54495, 54536], {for ($i = 0;$i < $sellPriceCount;$i++){?>}
-text.html.php;meta.embedded.block.html;source.js: [54536, 54537], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54495, 54537], {for ($i = 0;$i < $sellPriceCount;$i++){?>
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [54537, 54541], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54541, 54543], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54543, 54591], {console.log('<?php //echo $sellLevel[$i] ?>//');}
-text.html.php;meta.embedded.block.html;source.js: [54591, 54592], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54543, 54592], {console.log('<?php //echo $sellLevel[$i] ?>//');
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [54592, 54596], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54596, 54598], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54598, 54646], {console.log('<?php //echo $sellPrice[$i] ?>//');}
-text.html.php;meta.embedded.block.html;source.js: [54646, 54647], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54598, 54647], {console.log('<?php //echo $sellPrice[$i] ?>//');
 }
 text.html.php;meta.embedded.block.html;source.js: [54647, 54657], {    <?php }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54657, 54659], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54659, 54663], {} ?>}
-text.html.php;meta.embedded.block.html;source.js: [54663, 54664], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54659, 54664], {} ?>
 }
 text.html.php;meta.embedded.block.html;source.js: [54664, 54665], {
 }
@@ -9009,15 +8999,13 @@ text.html.php;meta.embedded.block.html;source.js: [54665, 54666], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [54666, 54670], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54670, 54672], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54672, 54711], {PAGE-WIDE VARIABLES, OUTSIDE OF IF ELSE}
-text.html.php;meta.embedded.block.html;source.js: [54711, 54712], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54672, 54712], {PAGE-WIDE VARIABLES, OUTSIDE OF IF ELSE
 }
 text.html.php;meta.embedded.block.html;source.js: [54712, 54713], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [54713, 54717], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [54717, 54719], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54719, 54765], {php variables same for all component scenarios}
-text.html.php;meta.embedded.block.html;source.js: [54765, 54766], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [54719, 54766], {php variables same for all component scenarios
 }
 text.html.php;meta.embedded.block.html;source.js: [54766, 54817], {    const estNum = "<?php echo $estimateNumber?>";
 }
@@ -9045,8 +9033,7 @@ text.html.php;meta.embedded.block.html;source.js: [55340, 55341], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [55341, 55345], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [55345, 55347], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55347, 55381], { creating arrays of parsed strings}
-text.html.php;meta.embedded.block.html;source.js: [55381, 55382], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55347, 55382], { creating arrays of parsed strings
 }
 text.html.php;meta.embedded.block.html;source.js: [55382, 55414], {    const pageSizeStrings = [];
 }
@@ -9056,8 +9043,7 @@ text.html.php;meta.embedded.block.html;source.js: [55474, 55502], {    const did
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [55502, 55506], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [55506, 55508], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55508, 55563], { creating arrays for parsed strings Multiple Components}
-text.html.php;meta.embedded.block.html;source.js: [55563, 55564], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55508, 55564], { creating arrays for parsed strings Multiple Components
 }
 text.html.php;meta.embedded.block.html;source.js: [55564, 55612], {    <?php for ($i = 0;$i < $compCount;$i++){ ?>
 }
@@ -9075,8 +9061,7 @@ text.html.php;meta.embedded.block.html;source.js: [55841, 55842], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [55842, 55846], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [55846, 55848], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55848, 55897], {handling checkboxes single comp, ONCLICK FUNCTION}
-text.html.php;meta.embedded.block.html;source.js: [55897, 55898], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55848, 55898], {handling checkboxes single comp, ONCLICK FUNCTION
 }
 text.html.php;meta.embedded.block.html;source.js: [55898, 55939], {    const pricingCheckboxRow = (id) => {
 }
@@ -9084,23 +9069,19 @@ text.html.php;meta.embedded.block.html;source.js: [55939, 55940], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [55940, 55948], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [55948, 55950], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55950, 56020], {FUNCTION IS PASSED THE ELEMENTS ID AND DETERMINE IF THE ROW IS CHECKED}
-text.html.php;meta.embedded.block.html;source.js: [56020, 56021], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [55950, 56021], {FUNCTION IS PASSED THE ELEMENTS ID AND DETERMINE IF THE ROW IS CHECKED
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [56021, 56029], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [56029, 56031], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [56031, 56126], {IF AN ELEMENT IS CHECKED, WE WILL DISPLAY IT AND ADD IT TO OUR ARRAY OF WHAT IS TO BE DISPLAYED}
-text.html.php;meta.embedded.block.html;source.js: [56126, 56127], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [56031, 56127], {IF AN ELEMENT IS CHECKED, WE WILL DISPLAY IT AND ADD IT TO OUR ARRAY OF WHAT IS TO BE DISPLAYED
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [56127, 56135], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [56135, 56137], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [56137, 56201], {WE WILL NEED THIS ARRAY OF ITEMS LATER ON WHEN SPACING ON CANVAS}
-text.html.php;meta.embedded.block.html;source.js: [56201, 56202], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [56137, 56202], {WE WILL NEED THIS ARRAY OF ITEMS LATER ON WHEN SPACING ON CANVAS
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [56202, 56210], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [56210, 56212], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [56212, 56306], {IF AN ELEMENT IS UNCHECKED, FUNCTION WILL HIDE IT AND REMOVE IT'S INDEX FROM THE CHECKED ARRAY}
-text.html.php;meta.embedded.block.html;source.js: [56306, 56307], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [56212, 56307], {IF AN ELEMENT IS UNCHECKED, FUNCTION WILL HIDE IT AND REMOVE IT'S INDEX FROM THE CHECKED ARRAY
 }
 text.html.php;meta.embedded.block.html;source.js: [56307, 56359], {        let row2show = document.getElementById(id);
 }
@@ -9184,8 +9165,7 @@ text.html.php;meta.embedded.block.html;source.js: [58151, 58165], {            }
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [58165, 58177], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [58177, 58179], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [58179, 58198], {if row is unchecked}
-text.html.php;meta.embedded.block.html;source.js: [58198, 58199], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [58179, 58199], {if row is unchecked
 }
 text.html.php;meta.embedded.block.html;source.js: [58199, 58239], {        } else if (!row2show.checked) {
 }
@@ -9285,15 +9265,13 @@ text.html.php;meta.embedded.block.html;source.js: [60298, 60299], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [60299, 60303], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [60303, 60305], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [60305, 60385], {checks a string by id for blank spaces, for Pages/Size for Single Component only}
-text.html.php;meta.embedded.block.html;source.js: [60385, 60386], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [60305, 60386], {checks a string by id for blank spaces, for Pages/Size for Single Component only
 }
 text.html.php;meta.embedded.block.html;source.js: [60386, 60422], {    const stringChecker = (id) => {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [60422, 60430], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [60430, 60432], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [60432, 60502], {checks a string by ID for blank spaces, parses it and pushes the split}
-text.html.php;meta.embedded.block.html;source.js: [60502, 60503], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [60432, 60503], {checks a string by ID for blank spaces, parses it and pushes the split
 }
 text.html.php;meta.embedded.block.html;source.js: [60503, 60565], {        let string2Split = document.getElementById(id).value;
 }
@@ -9317,8 +9295,7 @@ text.html.php;meta.embedded.block.html;source.js: [60853, 60854], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [60854, 60858], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [60858, 60860], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [60860, 60959], {check for PACKING AND DELIVERY string length and break new lines accordingly for multiple compnents}
-text.html.php;meta.embedded.block.html;source.js: [60959, 60960], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [60860, 60960], {check for PACKING AND DELIVERY string length and break new lines accordingly for multiple compnents
 }
 text.html.php;meta.embedded.block.html;source.js: [60960, 61013], {    const packDeliveryStringCheckerMulti = (id) => {
 }
@@ -9328,8 +9305,7 @@ text.html.php;meta.embedded.block.html;source.js: [61075, 61110], {        if (s
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [61110, 61122], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [61122, 61124], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [61124, 61165], {breaks up long strings ever 85 characters}
-text.html.php;meta.embedded.block.html;source.js: [61165, 61166], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [61124, 61166], {breaks up long strings ever 85 characters
 }
 text.html.php;meta.embedded.block.html;source.js: [61166, 61235], {            let stringSplitUP = string2Split.match(/[\s\S]{1,85}/g);
 }
@@ -9375,8 +9351,7 @@ text.html.php;meta.embedded.block.html;source.js: [61986, 62051], {             
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [62051, 62071], {                    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [62071, 62073], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62073, 62093], {//for multiple comps}
-text.html.php;meta.embedded.block.html;source.js: [62093, 62094], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62073, 62094], {//for multiple comps
 }
 text.html.php;meta.embedded.block.html;source.js: [62094, 62159], {                    <?php for ($i = 0;$i < $compCount;$i++) { ?>
 }
@@ -9402,8 +9377,7 @@ text.html.php;meta.embedded.block.html;source.js: [62494, 62495], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [62495, 62499], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [62499, 62501], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62501, 62566], {checks for multitple strings in PAGE SIZE for multiple components}
-text.html.php;meta.embedded.block.html;source.js: [62566, 62567], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62501, 62567], {checks for multitple strings in PAGE SIZE for multiple components
 }
 text.html.php;meta.embedded.block.html;source.js: [62567, 62616], {    const pageSizeStringCheckerMulti = (id) => {
 }
@@ -9411,13 +9385,11 @@ text.html.php;meta.embedded.block.html;source.js: [62616, 62678], {        let s
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [62678, 62686], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [62686, 62688], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62688, 62715], { console.log(string2Split);}
-text.html.php;meta.embedded.block.html;source.js: [62715, 62716], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62688, 62716], { console.log(string2Split);
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [62716, 62724], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [62724, 62726], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62726, 62785], {stringSplitUP determines where each Page Size row is broken}
-text.html.php;meta.embedded.block.html;source.js: [62785, 62786], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62726, 62786], {stringSplitUP determines where each Page Size row is broken
 }
 text.html.php;meta.embedded.block.html;source.js: [62786, 62842], {        let stringSplitUP = string2Split.split("<br>");
 }
@@ -9425,8 +9397,7 @@ text.html.php;meta.embedded.block.html;source.js: [62842, 62899], {        for (
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [62899, 62911], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [62911, 62913], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62913, 62933], {//for multiple comps}
-text.html.php;meta.embedded.block.html;source.js: [62933, 62934], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [62913, 62934], {//for multiple comps
 }
 text.html.php;meta.embedded.block.html;source.js: [62934, 62991], {            <?php for ($i = 0;$i < $compCount;$i++) { ?>
 }
@@ -9460,13 +9431,11 @@ text.html.php;meta.embedded.block.html;source.js: [63535, 63536], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [63536, 63540], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [63540, 63542], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [63542, 63622], {handling checkboxes for multiple components similar to single component function}
-text.html.php;meta.embedded.block.html;source.js: [63622, 63623], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [63542, 63623], {handling checkboxes for multiple components similar to single component function
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [63623, 63627], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [63627, 63629], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [63629, 63700], {at the end it calls the getrowcount function to ensure proper placement}
-text.html.php;meta.embedded.block.html;source.js: [63700, 63701], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [63629, 63701], {at the end it calls the getrowcount function to ensure proper placement
 }
 text.html.php;meta.embedded.block.html;source.js: [63701, 63747], {    const pricingCheckboxRowMulti = (id) => {
 }
@@ -9474,8 +9443,7 @@ text.html.php;meta.embedded.block.html;source.js: [63747, 63799], {        let r
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [63799, 63807], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [63807, 63809], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [63809, 63835], { console.log(row2show.id);}
-text.html.php;meta.embedded.block.html;source.js: [63835, 63836], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [63809, 63836], { console.log(row2show.id);
 }
 text.html.php;meta.embedded.block.html;source.js: [63836, 63888], {        <?php for ($i = 0;$i < $compCount;$i++){ ?>
 }
@@ -9557,8 +9525,7 @@ text.html.php;meta.embedded.block.html;source.js: [66063, 66077], {            }
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [66077, 66089], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [66089, 66091], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [66091, 66110], {if row is unchecked}
-text.html.php;meta.embedded.block.html;source.js: [66110, 66111], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [66091, 66111], {if row is unchecked
 }
 text.html.php;meta.embedded.block.html;source.js: [66111, 66151], {        } else if (!row2show.checked) {
 }
@@ -9652,8 +9619,7 @@ text.html.php;meta.embedded.block.html;source.js: [68537, 68547], {        }
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [68547, 68555], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [68555, 68557], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [68557, 68643], {sorts the checked row array at end of function to ensure rows are ordered ASC properly}
-text.html.php;meta.embedded.block.html;source.js: [68643, 68644], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [68557, 68644], {sorts the checked row array at end of function to ensure rows are ordered ASC properly
 }
 text.html.php;meta.embedded.block.html;source.js: [68644, 68707], {        checkedRowsArray<?php echo $i?>.sort(function (a, b) {
 }
@@ -9673,8 +9639,7 @@ text.html.php;meta.embedded.block.html;source.js: [68802, 68803], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [68803, 68807], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [68807, 68809], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [68809, 68821], {getting date}
-text.html.php;meta.embedded.block.html;source.js: [68821, 68822], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [68809, 68822], {getting date
 }
 text.html.php;meta.embedded.block.html;source.js: [68822, 68850], {    let today = new Date();
 }
@@ -9682,8 +9647,7 @@ text.html.php;meta.embedded.block.html;source.js: [68850, 68905], {    let dd = 
 }
 text.html.php;meta.embedded.block.html;source.js: [68905, 68965], {    let mm = String(today.getMonth() + 1).padStart(2, '0'); }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [68965, 68967], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [68967, 68980], {January is 0!}
-text.html.php;meta.embedded.block.html;source.js: [68980, 68981], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [68967, 68981], {January is 0!
 }
 text.html.php;meta.embedded.block.html;source.js: [68981, 69004], {    if (mm === '02') {
 }
@@ -9743,8 +9707,7 @@ text.html.php;meta.embedded.block.html;source.js: [69682, 69683], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [69683, 69687], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [69687, 69689], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [69689, 69783], {our canvas and the writing tool for first canvas page (there will always be at least this one)}
-text.html.php;meta.embedded.block.html;source.js: [69783, 69784], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [69689, 69784], {our canvas and the writing tool for first canvas page (there will always be at least this one)
 }
 text.html.php;meta.embedded.block.html;source.js: [69784, 69842], {    const canvas = document.getElementById('the-canvas');
 }
@@ -9754,18 +9717,15 @@ text.html.php;meta.embedded.block.html;source.js: [69883, 69884], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [69884, 69888], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [69888, 69890], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [69890, 69933], {end of our variables used across whole page}
-text.html.php;meta.embedded.block.html;source.js: [69933, 69934], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [69890, 69934], {end of our variables used across whole page
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [69934, 69938], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [69938, 69940], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [69940, 69993], {start of our IF ELSE determining amount of components}
-text.html.php;meta.embedded.block.html;source.js: [69993, 69994], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [69940, 69994], {start of our IF ELSE determining amount of components
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [69994, 69998], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [69998, 70000], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70000, 70031], {if component count is 1 or less}
-text.html.php;meta.embedded.block.html;source.js: [70031, 70032], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70000, 70032], {if component count is 1 or less
 }
 text.html.php;meta.embedded.block.html;source.js: [70032, 70068], {    <?php if ($compCount <= 1) { ?>
 }
@@ -9773,8 +9733,7 @@ text.html.php;meta.embedded.block.html;source.js: [70068, 70069], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [70069, 70073], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [70073, 70075], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70075, 70118], {check for multiple page/size/finish strings}
-text.html.php;meta.embedded.block.html;source.js: [70118, 70119], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70075, 70119], {check for multiple page/size/finish strings
 }
 text.html.php;meta.embedded.block.html;source.js: [70119, 70151], {    stringChecker("sizepages");
 }
@@ -9782,13 +9741,11 @@ text.html.php;meta.embedded.block.html;source.js: [70151, 70152], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [70152, 70156], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [70156, 70158], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70158, 70256], {for each page size string, we will create a form input element and assign it's value, id, function}
-text.html.php;meta.embedded.block.html;source.js: [70256, 70257], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70158, 70257], {for each page size string, we will create a form input element and assign it's value, id, function
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [70257, 70261], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [70261, 70263], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70263, 70314], {there is an initial empty html element to hold this}
-text.html.php;meta.embedded.block.html;source.js: [70314, 70315], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70263, 70315], {there is an initial empty html element to hold this
 }
 text.html.php;meta.embedded.block.html;source.js: [70315, 70400], {    document.getElementById('sizepageArea').innerHTML = pageSizeStrings.map(value =>
 }
@@ -9800,8 +9757,7 @@ text.html.php;meta.embedded.block.html;source.js: [70613, 70614], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [70614, 70618], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [70618, 70620], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70620, 70655], {position of hatteras on top of page}
-text.html.php;meta.embedded.block.html;source.js: [70655, 70656], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70620, 70656], {position of hatteras on top of page
 }
 text.html.php;meta.embedded.block.html;source.js: [70656, 70680], {    logo = new Image();
 }
@@ -9817,13 +9773,11 @@ text.html.php;meta.embedded.block.html;source.js: [70825, 70826], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [70826, 70830], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [70830, 70832], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70832, 70871], {position of signature on bottom of page}
-text.html.php;meta.embedded.block.html;source.js: [70871, 70872], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70832, 70872], {position of signature on bottom of page
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [70872, 70876], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [70876, 70878], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70878, 70920], {this will require change for all employees}
-text.html.php;meta.embedded.block.html;source.js: [70920, 70921], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [70878, 70921], {this will require change for all employees
 }
 text.html.php;meta.embedded.block.html;source.js: [70921, 70950], {    signature = new Image();
 }
@@ -9839,13 +9793,11 @@ text.html.php;meta.embedded.block.html;source.js: [71096, 71097], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [71097, 71101], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [71101, 71103], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71103, 71128], {(element, x axis, y axis)}
-text.html.php;meta.embedded.block.html;source.js: [71128, 71129], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71103, 71129], {(element, x axis, y axis)
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [71129, 71133], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [71133, 71135], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71135, 71151], {canvas placement}
-text.html.php;meta.embedded.block.html;source.js: [71151, 71152], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71135, 71152], {canvas placement
 }
 text.html.php;meta.embedded.block.html;source.js: [71152, 71270], {    ctx.fillText("56 Park Road, Tinton Falls, NJ 07724  732-223-9888  connect@hatteras.us www.hatteras.us", 110, 50);
 }
@@ -9855,13 +9807,11 @@ text.html.php;meta.embedded.block.html;source.js: [71304, 71305], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [71305, 71309], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [71309, 71311], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71311, 71396], { for prepopulating fields one is our component fields and the other is all qty prices}
-text.html.php;meta.embedded.block.html;source.js: [71396, 71397], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71311, 71397], { for prepopulating fields one is our component fields and the other is all qty prices
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [71397, 71401], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [71401, 71403], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71403, 71445], {get all html elements that have this class}
-text.html.php;meta.embedded.block.html;source.js: [71445, 71446], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71403, 71446], {get all html elements that have this class
 }
 text.html.php;meta.embedded.block.html;source.js: [71446, 71519], {    let prePopulatedFields = document.querySelectorAll(".prepopulated");
 }
@@ -9871,8 +9821,7 @@ text.html.php;meta.embedded.block.html;source.js: [71590, 71591], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [71591, 71595], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [71595, 71597], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71597, 71710], {our Y axis for each comp field, will be dynamically changed in response to each other to create a more fluid page}
-text.html.php;meta.embedded.block.html;source.js: [71710, 71711], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71597, 71711], {our Y axis for each comp field, will be dynamically changed in response to each other to create a more fluid page
 }
 text.html.php;meta.embedded.block.html;source.js: [71711, 71815], {    let projnameYaxis, pagesizeYaxis, proofYaxis, inkYaxis, stockYaxis, finishYaxis, packdeliveryYaxis;
 }
@@ -9884,8 +9833,7 @@ text.html.php;meta.embedded.block.html;source.js: [71945, 71946], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [71946, 71950], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [71950, 71952], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71952, 72000], {function for populating prices on initialization}
-text.html.php;meta.embedded.block.html;source.js: [72000, 72001], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [71952, 72001], {function for populating prices on initialization
 }
 text.html.php;meta.embedded.block.html;source.js: [72001, 72050], {    const getPrepopulatedPriceFunction = () => {
 }
@@ -9893,8 +9841,7 @@ text.html.php;meta.embedded.block.html;source.js: [72050, 72051], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [72051, 72059], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [72059, 72061], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [72061, 72102], {last string is 50,100,150, 200, 250, 300.}
-text.html.php;meta.embedded.block.html;source.js: [72102, 72103], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [72061, 72103], {last string is 50,100,150, 200, 250, 300.
 }
 text.html.php;meta.embedded.block.html;source.js: [72103, 72164], {        for (let i = 0; i < prepopulatedPrice.length; i++) {
 }
@@ -9938,20 +9885,17 @@ text.html.php;meta.embedded.block.html;source.js: [73380, 73381], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [73381, 73385], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [73385, 73387], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [73387, 73475], {function for determining which rows are shown/hidden and assigning necessary coordinates}
-text.html.php;meta.embedded.block.html;source.js: [73475, 73476], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [73387, 73476], {function for determining which rows are shown/hidden and assigning necessary coordinates
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [73476, 73480], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [73480, 73482], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [73482, 73570], {calls the prepopulateprice function at it's end to smoothly fill in what should be there}
-text.html.php;meta.embedded.block.html;source.js: [73570, 73571], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [73482, 73571], {calls the prepopulateprice function at it's end to smoothly fill in what should be there
 }
 text.html.php;meta.embedded.block.html;source.js: [73571, 73621], {    const getRowCountforQuantityPricing = () => {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [73621, 73629], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [73629, 73631], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [73631, 73658], {if all 6 rows are displayed}
-text.html.php;meta.embedded.block.html;source.js: [73658, 73659], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [73631, 73659], {if all 6 rows are displayed
 }
 text.html.php;meta.embedded.block.html;source.js: [73659, 73704], {        if (checkedRowsArray.length === 6) {
 }
@@ -9985,8 +9929,7 @@ text.html.php;meta.embedded.block.html;source.js: [74282, 74283], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [74283, 74295], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [74295, 74297], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [74297, 74306], {five rows}
-text.html.php;meta.embedded.block.html;source.js: [74306, 74307], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [74297, 74307], {five rows
 }
 text.html.php;meta.embedded.block.html;source.js: [74307, 74359], {        } else if (checkedRowsArray.length === 5) {
 }
@@ -10150,15 +10093,13 @@ text.html.php;meta.embedded.block.html;source.js: [77963, 77964], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [77964, 77976], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [77976, 77978], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [77978, 77984], {4 rows}
-text.html.php;meta.embedded.block.html;source.js: [77984, 77985], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [77978, 77985], {4 rows
 }
 text.html.php;meta.embedded.block.html;source.js: [77985, 78037], {        } else if (checkedRowsArray.length === 4) {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [78037, 78049], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [78049, 78051], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [78051, 78070], {each without 50 + x}
-text.html.php;meta.embedded.block.html;source.js: [78070, 78071], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [78051, 78071], {each without 50 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [78071, 78166], {            if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(100) === -1) {
 }
@@ -10272,8 +10213,7 @@ text.html.php;meta.embedded.block.html;source.js: [80798, 80799], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [80799, 80815], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [80815, 80817], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [80817, 80836], {all without 100 + x}
-text.html.php;meta.embedded.block.html;source.js: [80836, 80837], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [80817, 80837], {all without 100 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [80837, 80940], {            } else if (checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(150) === -1) {
 }
@@ -10365,8 +10305,7 @@ text.html.php;meta.embedded.block.html;source.js: [83012, 83013], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [83013, 83029], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [83029, 83031], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [83031, 83050], {all without 150 + x}
-text.html.php;meta.embedded.block.html;source.js: [83050, 83051], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [83031, 83051], {all without 150 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [83051, 83154], {            } else if (checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(200) === -1) {
 }
@@ -10436,8 +10375,7 @@ text.html.php;meta.embedded.block.html;source.js: [84682, 84683], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [84683, 84699], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [84699, 84701], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [84701, 84721], {4 rows without 200 x}
-text.html.php;meta.embedded.block.html;source.js: [84721, 84722], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [84701, 84722], {4 rows without 200 x
 }
 text.html.php;meta.embedded.block.html;source.js: [84722, 84825], {            } else if (checkedRowsArray.indexOf(200) === -1 && checkedRowsArray.indexOf(250) === -1) {
 }
@@ -10485,8 +10423,7 @@ text.html.php;meta.embedded.block.html;source.js: [85809, 85810], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [85810, 85826], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [85826, 85828], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [85828, 85843], {without 250 300}
-text.html.php;meta.embedded.block.html;source.js: [85843, 85844], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [85828, 85844], {without 250 300
 }
 text.html.php;meta.embedded.block.html;source.js: [85844, 85947], {            } else if (checkedRowsArray.indexOf(250) === -1 && checkedRowsArray.indexOf(300) === -1) {
 }
@@ -10516,15 +10453,13 @@ text.html.php;meta.embedded.block.html;source.js: [86402, 86403], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [86403, 86415], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [86415, 86417], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [86417, 86427], {three rows}
-text.html.php;meta.embedded.block.html;source.js: [86427, 86428], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [86417, 86428], {three rows
 }
 text.html.php;meta.embedded.block.html;source.js: [86428, 86480], {        } else if (checkedRowsArray.length === 3) {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [86480, 86492], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [86492, 86494], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [86494, 86519], {each without 50 + 100 + x}
-text.html.php;meta.embedded.block.html;source.js: [86519, 86520], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [86494, 86520], {each without 50 + 100 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [86520, 86655], {            if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(150) === -1) {
 }
@@ -10600,8 +10535,7 @@ text.html.php;meta.embedded.block.html;source.js: [88480, 88481], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [88481, 88497], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [88497, 88499], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [88499, 88523], {all without 50 + 150 + x}
-text.html.php;meta.embedded.block.html;source.js: [88523, 88524], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [88499, 88524], {all without 50 + 150 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [88524, 88666], {            } else if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(200) === -1) {
 }
@@ -10677,8 +10611,7 @@ text.html.php;meta.embedded.block.html;source.js: [90491, 90492], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [90492, 90508], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [90508, 90510], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [90510, 90531], {/all without 50+200+x}
-text.html.php;meta.embedded.block.html;source.js: [90531, 90532], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [90510, 90532], {/all without 50+200+x
 }
 text.html.php;meta.embedded.block.html;source.js: [90532, 90674], {            } else if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(200) === -1 && checkedRowsArray.indexOf(100) === -1) {
 }
@@ -10754,8 +10687,7 @@ text.html.php;meta.embedded.block.html;source.js: [92499, 92500], {
 }
 text.html.php;meta.embedded.block.html;source.js: [92500, 92514], {            } }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [92514, 92516], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [92516, 92541], {each without 50 + 100 + x}
-text.html.php;meta.embedded.block.html;source.js: [92541, 92542], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [92516, 92542], {each without 50 + 100 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [92542, 92677], {            if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(150) === -1) {
 }
@@ -10831,8 +10763,7 @@ text.html.php;meta.embedded.block.html;source.js: [94502, 94503], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [94503, 94519], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [94519, 94521], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [94521, 94545], {all without 50 + 150 + x}
-text.html.php;meta.embedded.block.html;source.js: [94545, 94546], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [94521, 94546], {all without 50 + 150 + x
 }
 text.html.php;meta.embedded.block.html;source.js: [94546, 94688], {            } else if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(200) === -1) {
 }
@@ -10908,8 +10839,7 @@ text.html.php;meta.embedded.block.html;source.js: [96513, 96514], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [96514, 96530], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [96530, 96532], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [96532, 96555], {/all without 100 +150+x}
-text.html.php;meta.embedded.block.html;source.js: [96555, 96556], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [96532, 96556], {/all without 100 +150+x
 }
 text.html.php;meta.embedded.block.html;source.js: [96556, 96699], {            } else if (checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(200) === -1) {
 }
@@ -10967,15 +10897,13 @@ text.html.php;meta.embedded.block.html;source.js: [98022, 98036], {            }
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [98036, 98048], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [98048, 98050], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [98050, 98058], {two rows}
-text.html.php;meta.embedded.block.html;source.js: [98058, 98059], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [98050, 98059], {two rows
 }
 text.html.php;meta.embedded.block.html;source.js: [98059, 98111], {        } else if (checkedRowsArray.length === 2) {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [98111, 98123], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [98123, 98125], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [98125, 98154], {each without 50 + 100 + 150 x}
-text.html.php;meta.embedded.block.html;source.js: [98154, 98155], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [98125, 98155], {each without 50 + 100 + 150 x
 }
 text.html.php;meta.embedded.block.html;source.js: [98155, 98330], {            if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(200) === -1) {
 }
@@ -11021,8 +10949,7 @@ text.html.php;meta.embedded.block.html;source.js: [99458, 99459], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [99459, 99475], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [99475, 99477], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [99477, 99502], {each without 50 100 200 x}
-text.html.php;meta.embedded.block.html;source.js: [99502, 99503], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [99477, 99503], {each without 50 100 200 x
 }
 text.html.php;meta.embedded.block.html;source.js: [99503, 99685], {            } else if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(200) === -1 && checkedRowsArray.indexOf(250) === -1) {
 }
@@ -11054,8 +10981,7 @@ text.html.php;meta.embedded.block.html;source.js: [100376, 100377], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [100377, 100393], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [100393, 100395], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [100395, 100420], {each without 50 100 250 x}
-text.html.php;meta.embedded.block.html;source.js: [100420, 100421], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [100395, 100421], {each without 50 100 250 x
 }
 text.html.php;meta.embedded.block.html;source.js: [100421, 100603], {            } else if (checkedRowsArray.indexOf(50) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(250) === -1 && checkedRowsArray.indexOf(300) === -1) {
 }
@@ -11087,8 +11013,7 @@ text.html.php;meta.embedded.block.html;source.js: [101294, 101295], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [101295, 101311], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [101311, 101313], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [101313, 101339], {each without 100 150 200 x}
-text.html.php;meta.embedded.block.html;source.js: [101339, 101340], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [101313, 101340], {each without 100 150 200 x
 }
 text.html.php;meta.embedded.block.html;source.js: [101340, 101523], {            } else if (checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(200) === -1 && checkedRowsArray.indexOf(250) === -1) {
 }
@@ -11120,8 +11045,7 @@ text.html.php;meta.embedded.block.html;source.js: [102207, 102208], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [102208, 102224], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [102224, 102226], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [102226, 102252], {each without 100 150 250 x}
-text.html.php;meta.embedded.block.html;source.js: [102252, 102253], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [102226, 102253], {each without 100 150 250 x
 }
 text.html.php;meta.embedded.block.html;source.js: [102253, 102436], {            } else if (checkedRowsArray.indexOf(150) === -1 && checkedRowsArray.indexOf(100) === -1 && checkedRowsArray.indexOf(250) === -1 && checkedRowsArray.indexOf(300) === -1) {
 }
@@ -11235,8 +11159,7 @@ text.html.php;meta.embedded.block.html;source.js: [105917, 105918], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [105918, 105930], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [105930, 105932], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [105932, 105939], {no rows}
-text.html.php;meta.embedded.block.html;source.js: [105939, 105940], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [105932, 105940], {no rows
 }
 text.html.php;meta.embedded.block.html;source.js: [105940, 105992], {        } else if (checkedRowsArray.length === 0) {
 }
@@ -11256,13 +11179,11 @@ text.html.php;meta.embedded.block.html;source.js: [106131, 106132], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [106132, 106136], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [106136, 106138], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [106138, 106186], {letter heading and other absolute text on canvas}
-text.html.php;meta.embedded.block.html;source.js: [106186, 106187], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [106138, 106187], {letter heading and other absolute text on canvas
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [106187, 106191], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [106191, 106193], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [106193, 106231], {elements written twice are for bolding}
-text.html.php;meta.embedded.block.html;source.js: [106231, 106232], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [106193, 106232], {elements written twice are for bolding
 }
 text.html.php;meta.embedded.block.html;source.js: [106232, 106271], {    ctx.fillText(repCompany, 20, 120);
 }
@@ -11308,8 +11229,7 @@ text.html.php;meta.embedded.block.html;source.js: [107067, 107108], {    ctx.fil
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [107108, 107112], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [107112, 107114], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [107114, 107203], {will determine the X axis for schedule template based on how long the variable passed is.}
-text.html.php;meta.embedded.block.html;source.js: [107203, 107204], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [107114, 107204], {will determine the X axis for schedule template based on how long the variable passed is.
 }
 text.html.php;meta.embedded.block.html;source.js: [107204, 107240], {    if (scheduleTime.length > 35) {
 }
@@ -11355,8 +11275,7 @@ text.html.php;meta.embedded.block.html;source.js: [108612, 108613], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [108613, 108617], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [108617, 108619], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108619, 108664], {prepopulates component fields besides pricing}
-text.html.php;meta.embedded.block.html;source.js: [108664, 108665], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108619, 108665], {prepopulates component fields besides pricing
 }
 text.html.php;meta.embedded.block.html;source.js: [108665, 108723], {    for (let i = 0; i < prePopulatedFields.length; i++) {
 }
@@ -11364,8 +11283,7 @@ text.html.php;meta.embedded.block.html;source.js: [108723, 108724], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [108724, 108732], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [108732, 108734], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108734, 108807], {if its value is not empty and it's id is this specific field, write it in}
-text.html.php;meta.embedded.block.html;source.js: [108807, 108808], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108734, 108808], {if its value is not empty and it's id is this specific field, write it in
 }
 text.html.php;meta.embedded.block.html;source.js: [108808, 108901], {        if (prePopulatedFields[i].value !== "" && prePopulatedFields[i].id === 'projname') {
 }
@@ -11373,8 +11291,7 @@ text.html.php;meta.embedded.block.html;source.js: [108901, 108902], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [108902, 108914], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [108914, 108916], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108916, 108930], {set its y axis}
-text.html.php;meta.embedded.block.html;source.js: [108930, 108931], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108916, 108931], {set its y axis
 }
 text.html.php;meta.embedded.block.html;source.js: [108931, 108964], {            projnameYaxis = 230;
 }
@@ -11382,8 +11299,7 @@ text.html.php;meta.embedded.block.html;source.js: [108964, 108965], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [108965, 108977], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [108977, 108979], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108979, 109016], {write it in the canvas and the header}
-text.html.php;meta.embedded.block.html;source.js: [109016, 109017], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [108979, 109017], {write it in the canvas and the header
 }
 text.html.php;meta.embedded.block.html;source.js: [109017, 109092], {            ctx.fillText(prePopulatedFields[i].value, 100, projnameYaxis);
 }
@@ -11403,8 +11319,7 @@ text.html.php;meta.embedded.block.html;source.js: [109428, 109490], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [109490, 109502], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [109502, 109504], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [109504, 109522], {for multiple items}
-text.html.php;meta.embedded.block.html;source.js: [109522, 109523], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [109504, 109523], {for multiple items
 }
 text.html.php;meta.embedded.block.html;source.js: [109523, 109586], {            for (let i = 0; i < pageSizeStrings.length; i++) {
 }
@@ -11488,13 +11403,11 @@ text.html.php;meta.embedded.block.html;source.js: [111445, 111446], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [111446, 111450], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [111450, 111452], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [111452, 111541], {function to change form fields and erase pre-existing text identify the row to edit by id}
-text.html.php;meta.embedded.block.html;source.js: [111541, 111542], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [111452, 111542], {function to change form fields and erase pre-existing text identify the row to edit by id
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [111542, 111546], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [111546, 111548], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [111548, 111633], {each row will have to be cleared before being rewritten over to prevent ugly jumbling}
-text.html.php;meta.embedded.block.html;source.js: [111633, 111634], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [111548, 111634], {each row will have to be cleared before being rewritten over to prevent ugly jumbling
 }
 text.html.php;meta.embedded.block.html;source.js: [111634, 111681], {    const editThisRow = (idPassedAsParam) => {
 }
@@ -11518,8 +11431,7 @@ text.html.php;meta.embedded.block.html;source.js: [112040, 112041], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [112041, 112053], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [112053, 112055], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [112055, 112075], {sizepages is useless}
-text.html.php;meta.embedded.block.html;source.js: [112075, 112076], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [112055, 112076], {sizepages is useless
 }
 text.html.php;meta.embedded.block.html;source.js: [112076, 112125], {        } else if (thisRow.id === 'sizepages') {
 }
@@ -11579,8 +11491,7 @@ text.html.php;meta.embedded.block.html;source.js: [113222, 113223], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [113223, 113235], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [113235, 113237], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113237, 113285], {handling our pagefinishsize inputs by class name}
-text.html.php;meta.embedded.block.html;source.js: [113285, 113286], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113237, 113286], {handling our pagefinishsize inputs by class name
 }
 text.html.php;meta.embedded.block.html;source.js: [113286, 113352], {        } else if (thisRow.classList.contains('sizePageGroup')) {
 }
@@ -11588,8 +11499,7 @@ text.html.php;meta.embedded.block.html;source.js: [113352, 113353], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [113353, 113365], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [113365, 113367], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113367, 113395], {all elements with this class}
-text.html.php;meta.embedded.block.html;source.js: [113395, 113396], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113367, 113396], {all elements with this class
 }
 text.html.php;meta.embedded.block.html;source.js: [113396, 113504], {            let allWithThisClass = Array.prototype.slice.call(document.querySelectorAll('.sizePageGroup'));
 }
@@ -11597,8 +11507,7 @@ text.html.php;meta.embedded.block.html;source.js: [113504, 113505], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [113505, 113517], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [113517, 113519], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113519, 113553], {for each in our element class list}
-text.html.php;meta.embedded.block.html;source.js: [113553, 113554], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113519, 113554], {for each in our element class list
 }
 text.html.php;meta.embedded.block.html;source.js: [113554, 113618], {            for (let i = 0; i < allWithThisClass.length; i++) {
 }
@@ -11606,15 +11515,13 @@ text.html.php;meta.embedded.block.html;source.js: [113618, 113619], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [113619, 113635], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [113635, 113637], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113637, 113692], {if the clicked on row value is equal to each el list ID}
-text.html.php;meta.embedded.block.html;source.js: [113692, 113693], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113637, 113693], {if the clicked on row value is equal to each el list ID
 }
 text.html.php;meta.embedded.block.html;source.js: [113693, 113760], {                if (thisRow.value === allWithThisClass[i].value) {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [113760, 113780], {                    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [113780, 113782], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113782, 113798], { if that el is 0}
-text.html.php;meta.embedded.block.html;source.js: [113798, 113799], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [113782, 113799], { if that el is 0
 }
 text.html.php;meta.embedded.block.html;source.js: [113799, 113834], {                    if (i === 0) {
 }
@@ -11628,8 +11535,7 @@ text.html.php;meta.embedded.block.html;source.js: [114021, 114022], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [114022, 114046], {                        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [114046, 114048], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [114048, 114063], {if that el is 1}
-text.html.php;meta.embedded.block.html;source.js: [114063, 114064], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [114048, 114064], {if that el is 1
 }
 text.html.php;meta.embedded.block.html;source.js: [114064, 114106], {                    } else if (i === 1) {
 }
@@ -11667,13 +11573,11 @@ text.html.php;meta.embedded.block.html;source.js: [114793, 114807], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [114807, 114819], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [114819, 114821], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [114821, 114843], {editing price qty rows}
-text.html.php;meta.embedded.block.html;source.js: [114843, 114844], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [114821, 114844], {editing price qty rows
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [114844, 114856], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [114856, 114858], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [114858, 114864], {qty 50}
-text.html.php;meta.embedded.block.html;source.js: [114864, 114865], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [114858, 114865], {qty 50
 }
 text.html.php;meta.embedded.block.html;source.js: [114865, 114912], {        } else if (thisRow.id === "sell050") {
 }
@@ -11685,8 +11589,7 @@ text.html.php;meta.embedded.block.html;source.js: [115053, 115054], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [115054, 115066], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [115066, 115068], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115068, 115075], {qty 100}
-text.html.php;meta.embedded.block.html;source.js: [115075, 115076], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115068, 115076], {qty 100
 }
 text.html.php;meta.embedded.block.html;source.js: [115076, 115123], {        } else if (thisRow.id === "sell100") {
 }
@@ -11698,8 +11601,7 @@ text.html.php;meta.embedded.block.html;source.js: [115266, 115267], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [115267, 115279], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [115279, 115281], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115281, 115288], {qty 150}
-text.html.php;meta.embedded.block.html;source.js: [115288, 115289], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115281, 115289], {qty 150
 }
 text.html.php;meta.embedded.block.html;source.js: [115289, 115336], {        } else if (thisRow.id === "sell150") {
 }
@@ -11711,8 +11613,7 @@ text.html.php;meta.embedded.block.html;source.js: [115479, 115480], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [115480, 115492], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [115492, 115494], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115494, 115501], {qty 200}
-text.html.php;meta.embedded.block.html;source.js: [115501, 115502], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115494, 115502], {qty 200
 }
 text.html.php;meta.embedded.block.html;source.js: [115502, 115549], {        } else if (thisRow.id === "sell200") {
 }
@@ -11724,8 +11625,7 @@ text.html.php;meta.embedded.block.html;source.js: [115692, 115693], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [115693, 115705], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [115705, 115707], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115707, 115714], {qty 250}
-text.html.php;meta.embedded.block.html;source.js: [115714, 115715], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115707, 115715], {qty 250
 }
 text.html.php;meta.embedded.block.html;source.js: [115715, 115762], {        } else if (thisRow.id === "sell250") {
 }
@@ -11737,8 +11637,7 @@ text.html.php;meta.embedded.block.html;source.js: [115905, 115906], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [115906, 115918], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [115918, 115920], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115920, 115927], {qty 300}
-text.html.php;meta.embedded.block.html;source.js: [115927, 115928], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [115920, 115928], {qty 300
 }
 text.html.php;meta.embedded.block.html;source.js: [115928, 115975], {        } else if (thisRow.id === "sell300") {
 }
@@ -11758,27 +11657,23 @@ text.html.php;meta.embedded.block.html;source.js: [116137, 116178], {    <?php }
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [116178, 116182], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [116182, 116184], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116184, 116225], {MULTIPLE COMPONENTS!!!!!!!!!!!!!!!!!!!!!!}
-text.html.php;meta.embedded.block.html;source.js: [116225, 116226], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116184, 116226], {MULTIPLE COMPONENTS!!!!!!!!!!!!!!!!!!!!!!
 }
 text.html.php;meta.embedded.block.html;source.js: [116226, 116227], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [116227, 116231], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [116231, 116233], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116233, 116297], {for each component, get it's page/size and pack/delivery strings}
-text.html.php;meta.embedded.block.html;source.js: [116297, 116298], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116233, 116298], {for each component, get it's page/size and pack/delivery strings
 }
 text.html.php;meta.embedded.block.html;source.js: [116298, 116347], {    <?php for ($i = 0;$i < $compCount;$i++) { ?>
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [116347, 116351], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [116351, 116353], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116353, 116446], {dynamically create input form elements for each component similarly to single component above}
-text.html.php;meta.embedded.block.html;source.js: [116446, 116447], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116353, 116447], {dynamically create input form elements for each component similarly to single component above
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [116447, 116451], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [116451, 116453], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116453, 116529], {and finally hide our input that captures the initial value from PHP back-end}
-text.html.php;meta.embedded.block.html;source.js: [116529, 116530], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [116453, 116530], {and finally hide our input that captures the initial value from PHP back-end
 }
 text.html.php;meta.embedded.block.html;source.js: [116530, 116591], {    pageSizeStringCheckerMulti('sizepages<?php echo $i ?>');
 }
@@ -11824,8 +11719,7 @@ text.html.php;meta.embedded.block.html;source.js: [118162, 118163], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [118163, 118167], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [118167, 118169], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118169, 118196], {identifying our extra pages}
-text.html.php;meta.embedded.block.html;source.js: [118196, 118197], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118169, 118197], {identifying our extra pages
 }
 text.html.php;meta.embedded.block.html;source.js: [118197, 118249], {    const page2 = document.getElementById('page2');
 }
@@ -11835,8 +11729,7 @@ text.html.php;meta.embedded.block.html;source.js: [118301, 118353], {    const p
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [118353, 118357], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [118357, 118359], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118359, 118401], {our canvas and the writing tool per canvas}
-text.html.php;meta.embedded.block.html;source.js: [118401, 118402], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118359, 118402], {our canvas and the writing tool per canvas
 }
 text.html.php;meta.embedded.block.html;source.js: [118402, 118464], {    const canvas2 = document.getElementById('second-canvas');
 }
@@ -11852,8 +11745,7 @@ text.html.php;meta.embedded.block.html;source.js: [118673, 118716], {    const c
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [118716, 118720], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [118720, 118722], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118722, 118816], {identifying our signatures location we don't draw it yet because it is TBD which page it is on}
-text.html.php;meta.embedded.block.html;source.js: [118816, 118817], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118722, 118817], {identifying our signatures location we don't draw it yet because it is TBD which page it is on
 }
 text.html.php;meta.embedded.block.html;source.js: [118817, 118846], {    signature = new Image();
 }
@@ -11861,8 +11753,7 @@ text.html.php;meta.embedded.block.html;source.js: [118846, 118896], {    signatu
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [118896, 118900], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [118900, 118902], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118902, 118929], { placement for ALL CANVASES}
-text.html.php;meta.embedded.block.html;source.js: [118929, 118930], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [118902, 118930], { placement for ALL CANVASES
 }
 text.html.php;meta.embedded.block.html;source.js: [118930, 119048], {    ctx.fillText("56 Park Road, Tinton Falls, NJ 07724  732-223-9888  connect@hatteras.us www.hatteras.us", 110, 50);
 }
@@ -11890,8 +11781,7 @@ text.html.php;meta.embedded.block.html;source.js: [119641, 119675], {    ctx4.fi
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [119675, 119679], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [119679, 119681], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [119681, 119708], {position of hatteras on top}
-text.html.php;meta.embedded.block.html;source.js: [119708, 119709], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [119681, 119709], {position of hatteras on top
 }
 text.html.php;meta.embedded.block.html;source.js: [119709, 119733], {    logo = new Image();
 }
@@ -11915,8 +11805,7 @@ text.html.php;meta.embedded.block.html;source.js: [120017, 120018], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [120018, 120022], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [120022, 120024], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [120024, 120044], {PAGE 1 ONLY HEADINGS}
-text.html.php;meta.embedded.block.html;source.js: [120044, 120045], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [120024, 120045], {PAGE 1 ONLY HEADINGS
 }
 text.html.php;meta.embedded.block.html;source.js: [120045, 120084], {    ctx.fillText(repCompany, 20, 120);
 }
@@ -11954,8 +11843,7 @@ text.html.php;meta.embedded.block.html;source.js: [120771, 120772], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [120772, 120776], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [120776, 120778], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [120778, 120886], {function to check for amount of extra rows each component utilizes. with this we can determine page overflow}
-text.html.php;meta.embedded.block.html;source.js: [120886, 120887], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [120778, 120887], {function to check for amount of extra rows each component utilizes. with this we can determine page overflow
 }
 text.html.php;meta.embedded.block.html;source.js: [120887, 120933], {    const checkForComponentOverflow = () => {
 }
@@ -11981,13 +11869,11 @@ text.html.php;meta.embedded.block.html;source.js: [121357, 121358], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [121358, 121362], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [121362, 121364], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [121364, 121403], {PLACING FOOTER BASED ON COMPONENT COUNT}
-text.html.php;meta.embedded.block.html;source.js: [121403, 121404], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [121364, 121404], {PLACING FOOTER BASED ON COMPONENT COUNT
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [121404, 121408], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [121408, 121410], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [121410, 121437], {3 comps per page MAX  6 - 7}
-text.html.php;meta.embedded.block.html;source.js: [121437, 121438], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [121410, 121438], {3 comps per page MAX  6 - 7
 }
 text.html.php;meta.embedded.block.html;source.js: [121438, 121492], {    <?php if ($compCount >= 5 && $compCount < 6) { ?>
 }
@@ -12049,8 +11935,7 @@ text.html.php;meta.embedded.block.html;source.js: [123099, 123100], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [123100, 123104], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [123104, 123106], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [123106, 123145], {if 7 or more comps we'll push to page 4}
-text.html.php;meta.embedded.block.html;source.js: [123145, 123146], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [123106, 123146], {if 7 or more comps we'll push to page 4
 }
 text.html.php;meta.embedded.block.html;source.js: [123146, 123189], {    <?php } else if ($compCount >= 6) { ?>
 }
@@ -12112,8 +11997,7 @@ text.html.php;meta.embedded.block.html;source.js: [124797, 124798], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [124798, 124802], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [124802, 124804], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [124804, 124844], {defaulting to 2 pages if 5 or less comps}
-text.html.php;meta.embedded.block.html;source.js: [124844, 124845], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [124804, 124845], {defaulting to 2 pages if 5 or less comps
 }
 text.html.php;meta.embedded.block.html;source.js: [124845, 124867], {    <?php } else { ?>
 }
@@ -12141,8 +12025,7 @@ text.html.php;meta.embedded.block.html;source.js: [125118, 125160], {    ctx2.fi
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [125160, 125164], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [125164, 125166], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [125166, 125200], { console.log(scheduleTime.length);}
-text.html.php;meta.embedded.block.html;source.js: [125200, 125201], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [125166, 125201], { console.log(scheduleTime.length);
 }
 text.html.php;meta.embedded.block.html;source.js: [125201, 125237], {    if (scheduleTime.length > 35) {
 }
@@ -12192,18 +12075,15 @@ text.html.php;meta.embedded.block.html;source.js: [126595, 126596], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [126596, 126600], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [126600, 126602], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [126602, 126647], {identifies which components have which fields}
-text.html.php;meta.embedded.block.html;source.js: [126647, 126648], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [126602, 126648], {identifies which components have which fields
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [126648, 126652], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [126652, 126654], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [126654, 126747], {php "$i" variables will be pushed to each array indicating which components have which fields}
-text.html.php;meta.embedded.block.html;source.js: [126747, 126748], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [126654, 126748], {php "$i" variables will be pushed to each array indicating which components have which fields
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [126748, 126752], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [126752, 126754], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [126754, 126822], {allows us to hide the input for elements that don't have indexof($i)}
-text.html.php;meta.embedded.block.html;source.js: [126822, 126823], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [126754, 126823], {allows us to hide the input for elements that don't have indexof($i)
 }
 text.html.php;meta.embedded.block.html;source.js: [126823, 126852], {    let groupnamecomps = [];
 }
@@ -12223,8 +12103,7 @@ text.html.php;meta.embedded.block.html;source.js: [127003, 127004], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [127004, 127008], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [127008, 127010], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [127010, 127091], {for each component we'll check if it has these fields and store it's # if it does}
-text.html.php;meta.embedded.block.html;source.js: [127091, 127092], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [127010, 127092], {for each component we'll check if it has these fields and store it's # if it does
 }
 text.html.php;meta.embedded.block.html;source.js: [127092, 127147], {    <?php for ($i = 0;$i < count($groupName);$i++){ ?>
 }
@@ -12302,23 +12181,19 @@ text.html.php;meta.embedded.block.html;source.js: [128356, 128357], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [128357, 128361], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [128361, 128363], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128363, 128434], {SETTING OUR Y AXIS VARIABLES BASED ON COMPONENT COUNT FROM ARRAYS ABOVE}
-text.html.php;meta.embedded.block.html;source.js: [128434, 128435], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128363, 128435], {SETTING OUR Y AXIS VARIABLES BASED ON COMPONENT COUNT FROM ARRAYS ABOVE
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [128435, 128439], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [128439, 128441], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128441, 128492], {various if/else requirements can be added as needed}
-text.html.php;meta.embedded.block.html;source.js: [128492, 128493], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128441, 128493], {various if/else requirements can be added as needed
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [128493, 128497], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [128497, 128499], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128499, 128605], {component 1 is always set, components 3, 6, 9 will have their Y axis set at 110 AKA top of respective page}
-text.html.php;meta.embedded.block.html;source.js: [128605, 128606], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128499, 128606], {component 1 is always set, components 3, 6, 9 will have their Y axis set at 110 AKA top of respective page
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [128606, 128610], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [128610, 128612], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128612, 128678], {all other components will follow the previous comp's Y coordinates}
-text.html.php;meta.embedded.block.html;source.js: [128678, 128679], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128612, 128679], {all other components will follow the previous comp's Y coordinates
 }
 text.html.php;meta.embedded.block.html;source.js: [128679, 128723], {    const firstComponentHeadingStart = 260;
 }
@@ -12330,8 +12205,7 @@ text.html.php;meta.embedded.block.html;source.js: [128760, 128809], {    <?php  
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [128809, 128813], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [128813, 128815], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128815, 128865], {if it is the first component, hand-place its start}
-text.html.php;meta.embedded.block.html;source.js: [128865, 128866], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128815, 128866], {if it is the first component, hand-place its start
 }
 text.html.php;meta.embedded.block.html;source.js: [128866, 128895], {    <?php if ($i === 0) { ?>
 }
@@ -12339,8 +12213,7 @@ text.html.php;meta.embedded.block.html;source.js: [128895, 128896], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [128896, 128900], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [128900, 128902], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128902, 128930], {this instance has all fields}
-text.html.php;meta.embedded.block.html;source.js: [128930, 128931], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [128902, 128931], {this instance has all fields
 }
 text.html.php;meta.embedded.block.html;source.js: [128931, 129072], {    if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12348,8 +12221,7 @@ text.html.php;meta.embedded.block.html;source.js: [129072, 129218], {        && 
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [129218, 129226], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [129226, 129228], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [129228, 129253], {header should always stay}
-text.html.php;meta.embedded.block.html;source.js: [129253, 129254], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [129228, 129254], {header should always stay
 }
 text.html.php;meta.embedded.block.html;source.js: [129254, 129316], {        yheader<?php echo $i ?> = firstComponentHeadingStart;
 }
@@ -12379,8 +12251,7 @@ text.html.php;meta.embedded.block.html;source.js: [130138, 130139], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [130139, 130147], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [130147, 130149], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [130149, 130169], {missing only packdel}
-text.html.php;meta.embedded.block.html;source.js: [130169, 130170], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [130149, 130170], {missing only packdel
 }
 text.html.php;meta.embedded.block.html;source.js: [130170, 130318], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12412,8 +12283,7 @@ text.html.php;meta.embedded.block.html;source.js: [131239, 131240], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [131240, 131248], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [131248, 131250], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [131250, 131269], {missing only finish}
-text.html.php;meta.embedded.block.html;source.js: [131269, 131270], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [131250, 131270], {missing only finish
 }
 text.html.php;meta.embedded.block.html;source.js: [131270, 131418], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12445,8 +12315,7 @@ text.html.php;meta.embedded.block.html;source.js: [132342, 132343], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [132343, 132351], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [132351, 132353], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [132353, 132371], {missing only stock}
-text.html.php;meta.embedded.block.html;source.js: [132371, 132372], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [132353, 132372], {missing only stock
 }
 text.html.php;meta.embedded.block.html;source.js: [132372, 132520], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12478,8 +12347,7 @@ text.html.php;meta.embedded.block.html;source.js: [133490, 133491], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [133491, 133499], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [133499, 133501], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [133501, 133517], {missing only ink}
-text.html.php;meta.embedded.block.html;source.js: [133517, 133518], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [133501, 133518], {missing only ink
 }
 text.html.php;meta.embedded.block.html;source.js: [133518, 133668], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -12511,8 +12379,7 @@ text.html.php;meta.embedded.block.html;source.js: [134595, 134596], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [134596, 134604], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [134604, 134606], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [134606, 134624], {missing only proof}
-text.html.php;meta.embedded.block.html;source.js: [134624, 134625], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [134606, 134625], {missing only proof
 }
 text.html.php;meta.embedded.block.html;source.js: [134625, 134775], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12544,8 +12411,7 @@ text.html.php;meta.embedded.block.html;source.js: [135693, 135694], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [135694, 135702], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [135702, 135704], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [135704, 135725], {missing only pagesize}
-text.html.php;meta.embedded.block.html;source.js: [135725, 135726], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [135704, 135726], {missing only pagesize
 }
 text.html.php;meta.embedded.block.html;source.js: [135726, 135876], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12569,8 +12435,7 @@ text.html.php;meta.embedded.block.html;source.js: [136508, 136509], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [136509, 136517], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [136517, 136519], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [136519, 136535], {ONLY HAS PACKDEL}
-text.html.php;meta.embedded.block.html;source.js: [136535, 136536], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [136519, 136536], {ONLY HAS PACKDEL
 }
 text.html.php;meta.embedded.block.html;source.js: [136536, 136690], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -12586,8 +12451,7 @@ text.html.php;meta.embedded.block.html;source.js: [137078, 137079], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [137079, 137087], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [137087, 137089], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [137089, 137104], {ONLY HAS FINISH}
-text.html.php;meta.embedded.block.html;source.js: [137104, 137105], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [137089, 137105], {ONLY HAS FINISH
 }
 text.html.php;meta.embedded.block.html;source.js: [137105, 137259], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -12605,8 +12469,7 @@ text.html.php;meta.embedded.block.html;source.js: [137606, 137607], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [137607, 137611], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [137611, 137613], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [137613, 137655], {comp 3, 6,and 9 will start their new pages}
-text.html.php;meta.embedded.block.html;source.js: [137655, 137656], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [137613, 137656], {comp 3, 6,and 9 will start their new pages
 }
 text.html.php;meta.embedded.block.html;source.js: [137656, 137715], {    <?php } else if ($i === 2 || $i === 5 || $i === 8) {?>
 }
@@ -12614,8 +12477,7 @@ text.html.php;meta.embedded.block.html;source.js: [137715, 137716], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [137716, 137720], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [137720, 137722], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [137722, 137736], {has all fields}
-text.html.php;meta.embedded.block.html;source.js: [137736, 137737], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [137722, 137737], {has all fields
 }
 text.html.php;meta.embedded.block.html;source.js: [137737, 137878], {    if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12623,8 +12485,7 @@ text.html.php;meta.embedded.block.html;source.js: [137878, 138024], {        && 
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [138024, 138032], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [138032, 138034], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [138034, 138059], {header should always stay}
-text.html.php;meta.embedded.block.html;source.js: [138059, 138060], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [138034, 138060], {header should always stay
 }
 text.html.php;meta.embedded.block.html;source.js: [138060, 138114], {        yheader<?php echo $i ?> = firstCompOnNewPage;
 }
@@ -12654,8 +12515,7 @@ text.html.php;meta.embedded.block.html;source.js: [138892, 138893], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [138893, 138901], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [138901, 138903], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [138903, 138923], {missing only packdel}
-text.html.php;meta.embedded.block.html;source.js: [138923, 138924], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [138903, 138924], {missing only packdel
 }
 text.html.php;meta.embedded.block.html;source.js: [138924, 139072], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12687,8 +12547,7 @@ text.html.php;meta.embedded.block.html;source.js: [139941, 139942], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [139942, 139950], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [139950, 139952], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [139952, 139971], {missing only finish}
-text.html.php;meta.embedded.block.html;source.js: [139971, 139972], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [139952, 139972], {missing only finish
 }
 text.html.php;meta.embedded.block.html;source.js: [139972, 140120], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12720,8 +12579,7 @@ text.html.php;meta.embedded.block.html;source.js: [141036, 141037], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [141037, 141045], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [141045, 141047], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [141047, 141065], {missing only stock}
-text.html.php;meta.embedded.block.html;source.js: [141065, 141066], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [141047, 141066], {missing only stock
 }
 text.html.php;meta.embedded.block.html;source.js: [141066, 141214], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12753,8 +12611,7 @@ text.html.php;meta.embedded.block.html;source.js: [142132, 142133], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [142133, 142141], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [142141, 142143], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [142143, 142159], {missing only ink}
-text.html.php;meta.embedded.block.html;source.js: [142159, 142160], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [142143, 142160], {missing only ink
 }
 text.html.php;meta.embedded.block.html;source.js: [142160, 142310], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -12786,8 +12643,7 @@ text.html.php;meta.embedded.block.html;source.js: [143229, 143230], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [143230, 143238], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [143238, 143240], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [143240, 143258], {missing only proof}
-text.html.php;meta.embedded.block.html;source.js: [143258, 143259], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [143240, 143259], {missing only proof
 }
 text.html.php;meta.embedded.block.html;source.js: [143259, 143409], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12819,8 +12675,7 @@ text.html.php;meta.embedded.block.html;source.js: [144319, 144320], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [144320, 144328], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [144328, 144330], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [144330, 144351], {missing only pagesize}
-text.html.php;meta.embedded.block.html;source.js: [144351, 144352], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [144330, 144352], {missing only pagesize
 }
 text.html.php;meta.embedded.block.html;source.js: [144352, 144502], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12844,8 +12699,7 @@ text.html.php;meta.embedded.block.html;source.js: [145126, 145127], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [145127, 145135], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [145135, 145137], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [145137, 145153], {ONLY HAS PACKDEL}
-text.html.php;meta.embedded.block.html;source.js: [145153, 145154], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [145137, 145154], {ONLY HAS PACKDEL
 }
 text.html.php;meta.embedded.block.html;source.js: [145154, 145308], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -12861,8 +12715,7 @@ text.html.php;meta.embedded.block.html;source.js: [145688, 145689], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [145689, 145697], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [145697, 145699], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [145699, 145714], {ONLY HAS FINISH}
-text.html.php;meta.embedded.block.html;source.js: [145714, 145715], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [145699, 145715], {ONLY HAS FINISH
 }
 text.html.php;meta.embedded.block.html;source.js: [145715, 145869], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -12880,8 +12733,7 @@ text.html.php;meta.embedded.block.html;source.js: [146252, 146253], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [146253, 146257], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [146257, 146259], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146259, 146281], {else follow the leader}
-text.html.php;meta.embedded.block.html;source.js: [146281, 146282], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146259, 146282], {else follow the leader
 }
 text.html.php;meta.embedded.block.html;source.js: [146282, 146304], {    <?php } else  {?>
 }
@@ -12889,8 +12741,7 @@ text.html.php;meta.embedded.block.html;source.js: [146304, 146305], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [146305, 146309], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [146309, 146311], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146311, 146325], {has all fields}
-text.html.php;meta.embedded.block.html;source.js: [146325, 146326], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146311, 146326], {has all fields
 }
 text.html.php;meta.embedded.block.html;source.js: [146326, 146467], {    if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12898,8 +12749,7 @@ text.html.php;meta.embedded.block.html;source.js: [146467, 146613], {        && 
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [146613, 146621], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [146621, 146623], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146623, 146648], {header should always stay}
-text.html.php;meta.embedded.block.html;source.js: [146648, 146649], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146623, 146649], {header should always stay
 }
 text.html.php;meta.embedded.block.html;source.js: [146649, 146694], {        if (!ypricing<?php echo $i - 1 ?>) {
 }
@@ -12913,13 +12763,11 @@ text.html.php;meta.embedded.block.html;source.js: [146857, 146867], {        }
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [146867, 146875], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [146875, 146877], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146877, 146922], {if we have multiple page size inputs, set the}
-text.html.php;meta.embedded.block.html;source.js: [146922, 146923], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146877, 146923], {if we have multiple page size inputs, set the
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [146923, 146931], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [146931, 146933], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146933, 146987], { distance from the next field equal to 15px * how many}
-text.html.php;meta.embedded.block.html;source.js: [146987, 146988], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [146933, 146988], { distance from the next field equal to 15px * how many
 }
 text.html.php;meta.embedded.block.html;source.js: [146988, 147054], {        ypagesize<?php echo $i ?> = yheader<?php echo $i ?> + 15;
 }
@@ -12947,8 +12795,7 @@ text.html.php;meta.embedded.block.html;source.js: [147766, 147767], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [147767, 147775], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [147775, 147777], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [147777, 147797], {missing only packdel}
-text.html.php;meta.embedded.block.html;source.js: [147797, 147798], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [147777, 147798], {missing only packdel
 }
 text.html.php;meta.embedded.block.html;source.js: [147798, 147946], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -12988,8 +12835,7 @@ text.html.php;meta.embedded.block.html;source.js: [148979, 148980], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [148980, 148988], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [148988, 148990], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [148990, 149009], {missing only finish}
-text.html.php;meta.embedded.block.html;source.js: [149009, 149010], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [148990, 149010], {missing only finish
 }
 text.html.php;meta.embedded.block.html;source.js: [149010, 149158], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -13029,8 +12875,7 @@ text.html.php;meta.embedded.block.html;source.js: [150238, 150239], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [150239, 150247], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [150247, 150249], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [150249, 150267], {missing only stock}
-text.html.php;meta.embedded.block.html;source.js: [150267, 150268], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [150249, 150268], {missing only stock
 }
 text.html.php;meta.embedded.block.html;source.js: [150268, 150416], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -13070,8 +12915,7 @@ text.html.php;meta.embedded.block.html;source.js: [151498, 151499], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [151499, 151507], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [151507, 151509], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [151509, 151525], {missing only ink}
-text.html.php;meta.embedded.block.html;source.js: [151525, 151526], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [151509, 151526], {missing only ink
 }
 text.html.php;meta.embedded.block.html;source.js: [151526, 151676], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -13111,8 +12955,7 @@ text.html.php;meta.embedded.block.html;source.js: [152759, 152760], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [152760, 152768], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [152768, 152770], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [152770, 152788], {missing only proof}
-text.html.php;meta.embedded.block.html;source.js: [152788, 152789], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [152770, 152789], {missing only proof
 }
 text.html.php;meta.embedded.block.html;source.js: [152789, 152939], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) > -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -13152,8 +12995,7 @@ text.html.php;meta.embedded.block.html;source.js: [154019, 154020], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [154020, 154028], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [154028, 154030], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [154030, 154051], {missing only pagesize}
-text.html.php;meta.embedded.block.html;source.js: [154051, 154052], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [154030, 154052], {missing only pagesize
 }
 text.html.php;meta.embedded.block.html;source.js: [154052, 154202], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) > -1 && inkcomps.indexOf(<?php echo $i ?>) > -1
 }
@@ -13185,8 +13027,7 @@ text.html.php;meta.embedded.block.html;source.js: [154990, 154991], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [154991, 154999], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [154999, 155001], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [155001, 155017], {ONLY HAS PACKDEL}
-text.html.php;meta.embedded.block.html;source.js: [155017, 155018], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [155001, 155018], {ONLY HAS PACKDEL
 }
 text.html.php;meta.embedded.block.html;source.js: [155018, 155172], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -13210,8 +13051,7 @@ text.html.php;meta.embedded.block.html;source.js: [155716, 155717], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [155717, 155725], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [155725, 155727], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [155727, 155742], {ONLY HAS FINISH}
-text.html.php;meta.embedded.block.html;source.js: [155742, 155743], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [155727, 155743], {ONLY HAS FINISH
 }
 text.html.php;meta.embedded.block.html;source.js: [155743, 155897], {    } else if (pagesizecomps.indexOf(<?php echo $i ?>) === -1 && proofcomps.indexOf(<?php echo $i ?>) === -1 && inkcomps.indexOf(<?php echo $i ?>) === -1
 }
@@ -13241,22 +13081,19 @@ text.html.php;meta.embedded.block.html;source.js: [156474, 156475], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [156475, 156479], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [156479, 156481], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156481, 156550], {/////////////////////////////////////////////////////////////////////}
-text.html.php;meta.embedded.block.html;source.js: [156550, 156551], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156481, 156551], {/////////////////////////////////////////////////////////////////////
 }
 text.html.php;meta.embedded.block.html;source.js: [156551, 156552], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [156552, 156556], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [156556, 156558], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156558, 156621], {//function for prepopulating fields similar to single component}
-text.html.php;meta.embedded.block.html;source.js: [156621, 156622], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156558, 156622], {//function for prepopulating fields similar to single component
 }
 text.html.php;meta.embedded.block.html;source.js: [156622, 156670], {    <?php for ($i = 0;$i < $compCount;$i++){ ?>
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [156670, 156674], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [156674, 156676], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156676, 156691], {get it's fields}
-text.html.php;meta.embedded.block.html;source.js: [156691, 156692], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156676, 156692], {get it's fields
 }
 text.html.php;meta.embedded.block.html;source.js: [156692, 156795], {    let prepopulatedFields<?php echo $i?> = document.querySelectorAll(".prepopulated<?php echo $i?>");
 }
@@ -13266,8 +13103,7 @@ text.html.php;meta.embedded.block.html;source.js: [156897, 156898], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [156898, 156902], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [156902, 156904], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156904, 156926], {for each of its fields}
-text.html.php;meta.embedded.block.html;source.js: [156926, 156927], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [156904, 156927], {for each of its fields
 }
 text.html.php;meta.embedded.block.html;source.js: [156927, 157001], {    for (let i = 0; i < prepopulatedFields<?php echo $i ?>.length; i++) {
 }
@@ -13275,8 +13111,7 @@ text.html.php;meta.embedded.block.html;source.js: [157001, 157002], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [157002, 157010], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [157010, 157012], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157012, 157022], {group name}
-text.html.php;meta.embedded.block.html;source.js: [157022, 157023], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157012, 157023], {group name
 }
 text.html.php;meta.embedded.block.html;source.js: [157023, 157150], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('groupname') && groupnamecomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13284,15 +13119,13 @@ text.html.php;meta.embedded.block.html;source.js: [157150, 157151], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [157151, 157163], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [157163, 157165], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157165, 157232], {if this field has a value and this fields id is equal to this field}
-text.html.php;meta.embedded.block.html;source.js: [157232, 157233], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157165, 157233], {if this field has a value and this fields id is equal to this field
 }
 text.html.php;meta.embedded.block.html;source.js: [157233, 157376], {            if (prepopulatedFields<?php echo $i?>[i].value !== "" && prepopulatedFields<?php echo $i?>[i].id === "groupname<?php echo $i?>") {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [157376, 157392], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [157392, 157394], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157394, 157439], {if it's under 3 lets put it on the first page}
-text.html.php;meta.embedded.block.html;source.js: [157439, 157440], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157394, 157440], {if it's under 3 lets put it on the first page
 }
 text.html.php;meta.embedded.block.html;source.js: [157440, 157479], {                <?php if ($i < 2) { ?>
 }
@@ -13302,8 +13135,7 @@ text.html.php;meta.embedded.block.html;source.js: [157592, 157705], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [157705, 157721], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [157721, 157723], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157723, 157744], {comp 3 to 5 on page 2}
-text.html.php;meta.embedded.block.html;source.js: [157744, 157745], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [157723, 157745], {comp 3 to 5 on page 2
 }
 text.html.php;meta.embedded.block.html;source.js: [157745, 157802], {                <?php } else if ($i >= 2 && $i < 5) { ?>
 }
@@ -13315,8 +13147,7 @@ text.html.php;meta.embedded.block.html;source.js: [158030, 158144], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [158144, 158160], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [158160, 158162], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [158162, 158184], {comp 6 -8 go on page 3}
-text.html.php;meta.embedded.block.html;source.js: [158184, 158185], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [158162, 158185], {comp 6 -8 go on page 3
 }
 text.html.php;meta.embedded.block.html;source.js: [158185, 158242], {                <?php } else if ($i >= 5 && $i < 8) { ?>
 }
@@ -13328,8 +13159,7 @@ text.html.php;meta.embedded.block.html;source.js: [158470, 158584], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [158584, 158600], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [158600, 158602], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [158602, 158636], {comp 9 and after will go to page 4}
-text.html.php;meta.embedded.block.html;source.js: [158636, 158637], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [158602, 158637], {comp 9 and after will go to page 4
 }
 text.html.php;meta.embedded.block.html;source.js: [158637, 158684], {                <?php } else if ($i >= 8) { ?>
 }
@@ -13355,8 +13185,7 @@ text.html.php;meta.embedded.block.html;source.js: [159436, 159545], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [159545, 159557], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [159557, 159559], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [159559, 159580], {comp 3 to 5 on page 2}
-text.html.php;meta.embedded.block.html;source.js: [159580, 159581], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [159559, 159581], {comp 3 to 5 on page 2
 }
 text.html.php;meta.embedded.block.html;source.js: [159581, 159634], {            <?php } else if ($i >= 2 && $i < 5) { ?>
 }
@@ -13368,8 +13197,7 @@ text.html.php;meta.embedded.block.html;source.js: [159854, 159964], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [159964, 159976], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [159976, 159978], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [159978, 160000], {comp 6 -8 go on page 3}
-text.html.php;meta.embedded.block.html;source.js: [160000, 160001], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [159978, 160001], {comp 6 -8 go on page 3
 }
 text.html.php;meta.embedded.block.html;source.js: [160001, 160054], {            <?php } else if ($i >= 5 && $i < 8) { ?>
 }
@@ -13381,8 +13209,7 @@ text.html.php;meta.embedded.block.html;source.js: [160274, 160384], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [160384, 160396], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [160396, 160398], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [160398, 160432], {comp 9 and after will go to page 4}
-text.html.php;meta.embedded.block.html;source.js: [160432, 160433], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [160398, 160433], {comp 9 and after will go to page 4
 }
 text.html.php;meta.embedded.block.html;source.js: [160433, 160476], {            <?php } else if ($i >= 8) { ?>
 }
@@ -13400,8 +13227,7 @@ text.html.php;meta.embedded.block.html;source.js: [160839, 160840], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [160840, 160848], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [160848, 160850], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [160850, 160859], {page size}
-text.html.php;meta.embedded.block.html;source.js: [160859, 160860], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [160850, 160860], {page size
 }
 text.html.php;meta.embedded.block.html;source.js: [160860, 160986], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('sizepages') && pagesizecomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13409,15 +13235,13 @@ text.html.php;meta.embedded.block.html;source.js: [160986, 160987], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [160987, 160999], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [160999, 161001], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [161001, 161068], {if this field has a value and this fields id is equal to this field}
-text.html.php;meta.embedded.block.html;source.js: [161068, 161069], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [161001, 161069], {if this field has a value and this fields id is equal to this field
 }
 text.html.php;meta.embedded.block.html;source.js: [161069, 161212], {            if (prepopulatedFields<?php echo $i?>[i].value !== "" && prepopulatedFields<?php echo $i?>[i].id === "sizepages<?php echo $i?>") {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [161212, 161228], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [161228, 161230], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [161230, 161275], {if it's under 3 lets put it on the first page}
-text.html.php;meta.embedded.block.html;source.js: [161275, 161276], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [161230, 161276], {if it's under 3 lets put it on the first page
 }
 text.html.php;meta.embedded.block.html;source.js: [161276, 161315], {                <?php if ($i < 2) { ?>
 }
@@ -13497,8 +13321,7 @@ text.html.php;meta.embedded.block.html;source.js: [163766, 163767], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [163767, 163775], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [163775, 163777], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [163777, 163783], {proofs}
-text.html.php;meta.embedded.block.html;source.js: [163783, 163784], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [163777, 163784], {proofs
 }
 text.html.php;meta.embedded.block.html;source.js: [163784, 163904], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('proofs') && proofcomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13552,8 +13375,7 @@ text.html.php;meta.embedded.block.html;source.js: [165521, 165522], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [165522, 165530], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [165530, 165532], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [165532, 165542], {inkcoating}
-text.html.php;meta.embedded.block.html;source.js: [165542, 165543], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [165532, 165543], {inkcoating
 }
 text.html.php;meta.embedded.block.html;source.js: [165543, 165665], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('inkcoating') && inkcomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13607,8 +13429,7 @@ text.html.php;meta.embedded.block.html;source.js: [167314, 167315], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [167315, 167323], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [167323, 167325], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [167325, 167330], {stock}
-text.html.php;meta.embedded.block.html;source.js: [167330, 167331], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [167325, 167331], {stock
 }
 text.html.php;meta.embedded.block.html;source.js: [167331, 167450], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('stock') && stockcomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13662,8 +13483,7 @@ text.html.php;meta.embedded.block.html;source.js: [169044, 169045], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [169045, 169053], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [169053, 169055], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [169055, 169064], {finishing}
-text.html.php;meta.embedded.block.html;source.js: [169064, 169065], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [169055, 169065], {finishing
 }
 text.html.php;meta.embedded.block.html;source.js: [169065, 169189], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('finishing') && finishcomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13673,8 +13493,7 @@ text.html.php;meta.embedded.block.html;source.js: [169190, 169333], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [169333, 169349], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [169349, 169351], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [169351, 169396], {if it's under 3 lets put it on the first page}
-text.html.php;meta.embedded.block.html;source.js: [169396, 169397], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [169351, 169397], {if it's under 3 lets put it on the first page
 }
 text.html.php;meta.embedded.block.html;source.js: [169397, 169436], {                <?php if ($i < 2) { ?>
 }
@@ -13754,8 +13573,7 @@ text.html.php;meta.embedded.block.html;source.js: [171831, 171832], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [171832, 171840], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [171840, 171842], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [171842, 171854], {packdelivery}
-text.html.php;meta.embedded.block.html;source.js: [171854, 171855], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [171842, 171855], {packdelivery
 }
 text.html.php;meta.embedded.block.html;source.js: [171855, 171980], {        if (prepopulatedFields<?php echo $i ?>[i].id.includes('packdelivery') && packcomps.indexOf(<?php echo $i ?>) > -1) {
 }
@@ -13765,8 +13583,7 @@ text.html.php;meta.embedded.block.html;source.js: [171981, 172127], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [172127, 172143], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [172143, 172145], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [172145, 172190], {if it's under 3 lets put it on the first page}
-text.html.php;meta.embedded.block.html;source.js: [172190, 172191], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [172145, 172191], {if it's under 3 lets put it on the first page
 }
 text.html.php;meta.embedded.block.html;source.js: [172191, 172230], {                <?php if ($i < 2) { ?>
 }
@@ -13856,8 +13673,7 @@ text.html.php;meta.embedded.block.html;source.js: [174745, 174746], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [174746, 174750], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [174750, 174752], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [174752, 174768], {comp 1, 2 page 1}
-text.html.php;meta.embedded.block.html;source.js: [174768, 174769], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [174752, 174769], {comp 1, 2 page 1
 }
 text.html.php;meta.embedded.block.html;source.js: [174769, 174796], {    <?php if ($i < 2) { ?>
 }
@@ -13887,8 +13703,7 @@ text.html.php;meta.embedded.block.html;source.js: [175429, 175447], {    ctx.str
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [175447, 175451], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [175451, 175453], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [175453, 175470], {comp 3,4,5 page 2}
-text.html.php;meta.embedded.block.html;source.js: [175470, 175471], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [175453, 175471], {comp 3,4,5 page 2
 }
 text.html.php;meta.embedded.block.html;source.js: [175471, 175516], {    <?php } else if ($i >= 2 && $i < 5) { ?>
 }
@@ -13918,8 +13733,7 @@ text.html.php;meta.embedded.block.html;source.js: [176160, 176179], {    ctx2.st
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [176179, 176183], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [176183, 176185], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [176185, 176202], {comp 6,7,8 page 3}
-text.html.php;meta.embedded.block.html;source.js: [176202, 176203], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [176185, 176203], {comp 6,7,8 page 3
 }
 text.html.php;meta.embedded.block.html;source.js: [176203, 176248], {    <?php } else if ($i >= 5 && $i < 8) { ?>
 }
@@ -13949,8 +13763,7 @@ text.html.php;meta.embedded.block.html;source.js: [176892, 176911], {    ctx3.st
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [176911, 176915], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [176915, 176917], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [176917, 176930], {comp 9 page 4}
-text.html.php;meta.embedded.block.html;source.js: [176930, 176931], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [176917, 176931], {comp 9 page 4
 }
 text.html.php;meta.embedded.block.html;source.js: [176931, 176966], {    <?php } else if ($i >= 8) { ?>
 }
@@ -13986,13 +13799,11 @@ text.html.php;meta.embedded.block.html;source.js: [177659, 177660], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [177660, 177664], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [177664, 177666], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [177666, 177714], {func for prepopulating multiple qty/pricing rows}
-text.html.php;meta.embedded.block.html;source.js: [177714, 177715], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [177666, 177715], {func for prepopulating multiple qty/pricing rows
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [177715, 177719], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [177719, 177721], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [177721, 177770], {compares elements by ID and checkedrowarray index}
-text.html.php;meta.embedded.block.html;source.js: [177770, 177771], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [177721, 177771], {compares elements by ID and checkedrowarray index
 }
 text.html.php;meta.embedded.block.html;source.js: [177771, 177817], {    const getPrepopulatedPriceMulti = () => {
 }
@@ -14138,13 +13949,11 @@ text.html.php;meta.embedded.block.html;source.js: [184166, 184167], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [184167, 184171], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [184171, 184173], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [184173, 184222], {func for counting rows checked for each component}
-text.html.php;meta.embedded.block.html;source.js: [184222, 184223], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [184173, 184223], {func for counting rows checked for each component
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [184223, 184227], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [184227, 184229], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [184229, 184266], {calls the prepopulate function at end}
-text.html.php;meta.embedded.block.html;source.js: [184266, 184267], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [184229, 184267], {calls the prepopulate function at end
 }
 text.html.php;meta.embedded.block.html;source.js: [184267, 184307], {    const getRowCountQtyMulti = () => {
 }
@@ -14154,8 +13963,7 @@ text.html.php;meta.embedded.block.html;source.js: [184359, 184360], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [184360, 184368], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [184368, 184370], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [184370, 184377], {all six}
-text.html.php;meta.embedded.block.html;source.js: [184377, 184378], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [184370, 184378], {all six
 }
 text.html.php;meta.embedded.block.html;source.js: [184378, 184439], {        if (checkedRowsArray<?php echo $i ?>.length === 6) {
 }
@@ -14229,8 +14037,7 @@ text.html.php;meta.embedded.block.html;source.js: [186528, 186529], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [186529, 186541], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [186541, 186543], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [186543, 186549], {5 rows}
-text.html.php;meta.embedded.block.html;source.js: [186549, 186550], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [186543, 186550], {5 rows
 }
 text.html.php;meta.embedded.block.html;source.js: [186550, 186618], {        } else if (checkedRowsArray<?php echo $i ?>.length === 5) {
 }
@@ -14612,15 +14419,13 @@ text.html.php;meta.embedded.block.html;source.js: [198730, 198731], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [198731, 198743], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [198743, 198745], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [198745, 198766], {will be 4 rows and on}
-text.html.php;meta.embedded.block.html;source.js: [198766, 198767], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [198745, 198767], {will be 4 rows and on
 }
 text.html.php;meta.embedded.block.html;source.js: [198767, 198835], {        } else if (checkedRowsArray<?php echo $i ?>.length === 2) {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [198835, 198847], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [198847, 198849], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [198849, 198866], {each without 50 x}
-text.html.php;meta.embedded.block.html;source.js: [198866, 198867], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [198849, 198867], {each without 50 x
 }
 text.html.php;meta.embedded.block.html;source.js: [198867, 198994], {            if (checkedRowsArray<?php echo $i ?>.indexOf(50) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(100) === -1) {
 }
@@ -14738,8 +14543,7 @@ text.html.php;meta.embedded.block.html;source.js: [202529, 202530], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [202530, 202546], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [202546, 202548], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [202548, 202566], {each without 100 x}
-text.html.php;meta.embedded.block.html;source.js: [202566, 202567], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [202548, 202567], {each without 100 x
 }
 text.html.php;meta.embedded.block.html;source.js: [202567, 202702], {            } else if (checkedRowsArray<?php echo $i ?>.indexOf(100) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(150) === -1) {
 }
@@ -14819,8 +14623,7 @@ text.html.php;meta.embedded.block.html;source.js: [205008, 205009], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [205009, 205025], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [205025, 205027], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [205027, 205045], {each without 150 x}
-text.html.php;meta.embedded.block.html;source.js: [205045, 205046], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [205027, 205046], {each without 150 x
 }
 text.html.php;meta.embedded.block.html;source.js: [205046, 205181], {            } else if (checkedRowsArray<?php echo $i ?>.indexOf(150) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(200) === -1) {
 }
@@ -14864,8 +14667,7 @@ text.html.php;meta.embedded.block.html;source.js: [206280, 206281], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [206281, 206293], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [206293, 206295], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [206295, 206300], {1 row}
-text.html.php;meta.embedded.block.html;source.js: [206300, 206301], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [206295, 206301], {1 row
 }
 text.html.php;meta.embedded.block.html;source.js: [206301, 206369], {        } else if (checkedRowsArray<?php echo $i ?>.length === 1) {
 }
@@ -14873,8 +14675,7 @@ text.html.php;meta.embedded.block.html;source.js: [206369, 206370], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [206370, 206382], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [206382, 206384], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [206384, 206405], {each without 50 100 x}
-text.html.php;meta.embedded.block.html;source.js: [206405, 206406], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [206384, 206406], {each without 50 100 x
 }
 text.html.php;meta.embedded.block.html;source.js: [206406, 206589], {            if (checkedRowsArray<?php echo $i ?>.indexOf(50) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(100) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(150) === -1) {
 }
@@ -14938,8 +14739,7 @@ text.html.php;meta.embedded.block.html;source.js: [208382, 208383], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [208383, 208399], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [208399, 208401], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [208401, 208422], {each without 50 150 x}
-text.html.php;meta.embedded.block.html;source.js: [208422, 208423], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [208401, 208423], {each without 50 150 x
 }
 text.html.php;meta.embedded.block.html;source.js: [208423, 208613], {            } else if (checkedRowsArray<?php echo $i ?>.indexOf(50) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(200) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(150) === -1) {
 }
@@ -14973,8 +14773,7 @@ text.html.php;meta.embedded.block.html;source.js: [209414, 209415], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [209415, 209431], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [209431, 209433], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [209433, 209451], {each without 100 x}
-text.html.php;meta.embedded.block.html;source.js: [209451, 209452], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [209433, 209452], {each without 100 x
 }
 text.html.php;meta.embedded.block.html;source.js: [209452, 209643], {            } else if (checkedRowsArray<?php echo $i ?>.indexOf(100) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(150) === -1 && checkedRowsArray<?php echo $i ?>.indexOf(200) === -1) {
 }
@@ -15008,8 +14807,7 @@ text.html.php;meta.embedded.block.html;source.js: [210440, 210454], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [210454, 210466], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [210466, 210468], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [210468, 210474], {0 rows}
-text.html.php;meta.embedded.block.html;source.js: [210474, 210475], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [210468, 210475], {0 rows
 }
 text.html.php;meta.embedded.block.html;source.js: [210475, 210543], {        } else if (checkedRowsArray<?php echo $i ?>.length === 0) {
 }
@@ -15047,13 +14845,11 @@ text.html.php;meta.embedded.block.html;source.js: [211122, 211123], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [211123, 211127], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [211127, 211129], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211129, 211187], {function to change form fields and erase pre-existing text}
-text.html.php;meta.embedded.block.html;source.js: [211187, 211188], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211129, 211188], {function to change form fields and erase pre-existing text
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [211188, 211192], {    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [211192, 211194], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211194, 211267], {modified for two components, passed variables in their ID and Func Params}
-text.html.php;meta.embedded.block.html;source.js: [211267, 211268], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211194, 211268], {modified for two components, passed variables in their ID and Func Params
 }
 text.html.php;meta.embedded.block.html;source.js: [211268, 211316], {    const editThisRow2 = (idPassedAsParam) => {
 }
@@ -15065,8 +14861,7 @@ text.html.php;meta.embedded.block.html;source.js: [211461, 211462], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [211462, 211470], {        }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [211470, 211472], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211472, 211515], { //projname, notes, description is it's own}
-text.html.php;meta.embedded.block.html;source.js: [211515, 211516], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211472, 211516], { //projname, notes, description is it's own
 }
 text.html.php;meta.embedded.block.html;source.js: [211516, 211557], {        if (thisRow.id === 'projname') {
 }
@@ -15084,8 +14879,7 @@ text.html.php;meta.embedded.block.html;source.js: [211798, 211843], {        } e
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [211843, 211855], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [211855, 211857], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211857, 211932], {determining where our additional notes will be based on the component count}
-text.html.php;meta.embedded.block.html;source.js: [211932, 211933], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [211857, 211933], {determining where our additional notes will be based on the component count
 }
 text.html.php;meta.embedded.block.html;source.js: [211933, 211995], {            <?php if ($compCount >= 5 && $compCount < 7) { ?>
 }
@@ -15115,8 +14909,7 @@ text.html.php;meta.embedded.block.html;source.js: [212428, 212484], {           
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [212484, 212496], {            }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [212496, 212498], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [212498, 212513], {comp group name}
-text.html.php;meta.embedded.block.html;source.js: [212513, 212514], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [212498, 212514], {comp group name
 }
 text.html.php;meta.embedded.block.html;source.js: [212514, 212576], {            if (thisRow.id === 'groupname<?php echo $i ?>') {
 }
@@ -15158,8 +14951,7 @@ text.html.php;meta.embedded.block.html;source.js: [213686, 213687], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [213687, 213703], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [213703, 213705], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [213705, 213721], {page/finish size}
-text.html.php;meta.embedded.block.html;source.js: [213721, 213722], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [213705, 213722], {page/finish size
 }
 text.html.php;meta.embedded.block.html;source.js: [213722, 213791], {            } else if (thisRow.id === 'sizepages<?php echo $i ?>') {
 }
@@ -15193,8 +14985,7 @@ text.html.php;meta.embedded.block.html;source.js: [214624, 214625], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [214625, 214641], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [214641, 214643], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [214643, 214649], {proofs}
-text.html.php;meta.embedded.block.html;source.js: [214649, 214650], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [214643, 214650], {proofs
 }
 text.html.php;meta.embedded.block.html;source.js: [214650, 214716], {            } else if (thisRow.id === 'proofs<?php echo $i ?>') {
 }
@@ -15228,8 +15019,7 @@ text.html.php;meta.embedded.block.html;source.js: [215533, 215534], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [215534, 215550], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [215550, 215552], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [215552, 215563], {ink coating}
-text.html.php;meta.embedded.block.html;source.js: [215563, 215564], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [215552, 215564], {ink coating
 }
 text.html.php;meta.embedded.block.html;source.js: [215564, 215634], {            } else if (thisRow.id === 'inkcoating<?php echo $i ?>') {
 }
@@ -15263,8 +15053,7 @@ text.html.php;meta.embedded.block.html;source.js: [216427, 216428], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [216428, 216444], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [216444, 216446], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [216446, 216451], {stock}
-text.html.php;meta.embedded.block.html;source.js: [216451, 216452], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [216446, 216452], {stock
 }
 text.html.php;meta.embedded.block.html;source.js: [216452, 216517], {            } else if (thisRow.id === 'stock<?php echo $i ?>') {
 }
@@ -15298,8 +15087,7 @@ text.html.php;meta.embedded.block.html;source.js: [217326, 217327], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [217327, 217343], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [217343, 217345], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [217345, 217354], {finishing}
-text.html.php;meta.embedded.block.html;source.js: [217354, 217355], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [217345, 217355], {finishing
 }
 text.html.php;meta.embedded.block.html;source.js: [217355, 217424], {            } else if (thisRow.id === 'finishing<?php echo $i ?>') {
 }
@@ -15333,8 +15121,7 @@ text.html.php;meta.embedded.block.html;source.js: [218241, 218242], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [218242, 218258], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [218258, 218260], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [218260, 218273], {pack delivery}
-text.html.php;meta.embedded.block.html;source.js: [218273, 218274], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [218260, 218274], {pack delivery
 }
 text.html.php;meta.embedded.block.html;source.js: [218274, 218346], {            } else if (thisRow.id === 'packdelivery<?php echo $i ?>') {
 }
@@ -15368,8 +15155,7 @@ text.html.php;meta.embedded.block.html;source.js: [219171, 219172], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [219172, 219188], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [219188, 219190], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219190, 219235], {EDITING THE PAGE SIZE ROWS FOR EACH COMPONENT}
-text.html.php;meta.embedded.block.html;source.js: [219235, 219236], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219190, 219236], {EDITING THE PAGE SIZE ROWS FOR EACH COMPONENT
 }
 text.html.php;meta.embedded.block.html;source.js: [219236, 219322], {            } else if (thisRow.classList.contains('sizePageGroup<?php echo $i ?>')) {
 }
@@ -15377,8 +15163,7 @@ text.html.php;meta.embedded.block.html;source.js: [219322, 219323], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [219323, 219339], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [219339, 219341], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219341, 219369], {all elements with this class}
-text.html.php;meta.embedded.block.html;source.js: [219369, 219370], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219341, 219370], {all elements with this class
 }
 text.html.php;meta.embedded.block.html;source.js: [219370, 219513], {                let allWithThisClass<?php echo $i?> = Array.prototype.slice.call(document.querySelectorAll('.sizePageGroup<?php echo $i ?>'));
 }
@@ -15386,15 +15171,13 @@ text.html.php;meta.embedded.block.html;source.js: [219513, 219514], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [219514, 219530], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [219530, 219532], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219532, 219559], {for each size field we have}
-text.html.php;meta.embedded.block.html;source.js: [219559, 219560], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219532, 219560], {for each size field we have
 }
 text.html.php;meta.embedded.block.html;source.js: [219560, 219644], {                for (let i = 0; i < allWithThisClass<?php echo $i ?>.length; i++) {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [219644, 219664], {                    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [219664, 219666], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219666, 219714], {if the input  value is even to the array's value}
-text.html.php;meta.embedded.block.html;source.js: [219714, 219715], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [219666, 219715], {if the input  value is even to the array's value
 }
 text.html.php;meta.embedded.block.html;source.js: [219715, 219802], {                    if (thisRow.value === allWithThisClass<?php echo $i ?>[i].value) {
 }
@@ -15448,8 +15231,7 @@ text.html.php;meta.embedded.block.html;source.js: [221546, 221547], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [221547, 221563], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [221563, 221565], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [221565, 221610], {EDITING PACK DELIVERY ROWS FOR EACH COMPONENT}
-text.html.php;meta.embedded.block.html;source.js: [221610, 221611], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [221565, 221611], {EDITING PACK DELIVERY ROWS FOR EACH COMPONENT
 }
 text.html.php;meta.embedded.block.html;source.js: [221611, 221696], {            } else if (thisRow.classList.contains('packdelGroup<?php echo $i ?>')) {
 }
@@ -15457,15 +15239,13 @@ text.html.php;meta.embedded.block.html;source.js: [221696, 221697], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [221697, 221713], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [221713, 221715], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [221715, 221743], {all elements with this class}
-text.html.php;meta.embedded.block.html;source.js: [221743, 221744], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [221715, 221744], {all elements with this class
 }
 text.html.php;meta.embedded.block.html;source.js: [221744, 221886], {                let allWithThisClass<?php echo $i?> = Array.prototype.slice.call(document.querySelectorAll('.packdelGroup<?php echo $i ?>'));
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [221886, 221902], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [221902, 221904], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [221904, 221931], {for each size field we have}
-text.html.php;meta.embedded.block.html;source.js: [221931, 221932], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [221904, 221932], {for each size field we have
 }
 text.html.php;meta.embedded.block.html;source.js: [221932, 222016], {                for (let i = 0; i < allWithThisClass<?php echo $i ?>.length; i++) {
 }
@@ -15473,8 +15253,7 @@ text.html.php;meta.embedded.block.html;source.js: [222016, 222017], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [222017, 222037], {                    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [222037, 222039], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [222039, 222087], {if the input  value is even to the array's value}
-text.html.php;meta.embedded.block.html;source.js: [222087, 222088], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [222039, 222088], {if the input  value is even to the array's value
 }
 text.html.php;meta.embedded.block.html;source.js: [222088, 222175], {                    if (thisRow.value === allWithThisClass<?php echo $i ?>[i].value) {
 }
@@ -15530,8 +15309,7 @@ text.html.php;meta.embedded.block.html;source.js: [223916, 223917], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [223917, 223933], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [223933, 223935], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [223935, 223973], {EDITING FINISH ROWS FOR EACH COMPONENT}
-text.html.php;meta.embedded.block.html;source.js: [223973, 223974], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [223935, 223974], {EDITING FINISH ROWS FOR EACH COMPONENT
 }
 text.html.php;meta.embedded.block.html;source.js: [223974, 224058], {            } else if (thisRow.classList.contains('finishGroup<?php echo $i ?>')) {
 }
@@ -15539,8 +15317,7 @@ text.html.php;meta.embedded.block.html;source.js: [224058, 224059], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [224059, 224075], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [224075, 224077], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [224077, 224105], {all elements with this class}
-text.html.php;meta.embedded.block.html;source.js: [224105, 224106], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [224077, 224106], {all elements with this class
 }
 text.html.php;meta.embedded.block.html;source.js: [224106, 224247], {                let allWithThisClass<?php echo $i?> = Array.prototype.slice.call(document.querySelectorAll('.finishGroup<?php echo $i ?>'));
 }
@@ -15548,8 +15325,7 @@ text.html.php;meta.embedded.block.html;source.js: [224247, 224248], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [224248, 224264], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [224264, 224266], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [224266, 224293], {for each size field we have}
-text.html.php;meta.embedded.block.html;source.js: [224293, 224294], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [224266, 224294], {for each size field we have
 }
 text.html.php;meta.embedded.block.html;source.js: [224294, 224378], {                for (let i = 0; i < allWithThisClass<?php echo $i ?>.length; i++) {
 }
@@ -15557,8 +15333,7 @@ text.html.php;meta.embedded.block.html;source.js: [224378, 224379], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [224379, 224399], {                    }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [224399, 224401], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [224401, 224449], {if the input  value is even to the array's value}
-text.html.php;meta.embedded.block.html;source.js: [224449, 224450], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [224401, 224450], {if the input  value is even to the array's value
 }
 text.html.php;meta.embedded.block.html;source.js: [224450, 224537], {                    if (thisRow.value === allWithThisClass<?php echo $i ?>[i].value) {
 }
@@ -15616,8 +15391,7 @@ text.html.php;meta.embedded.block.html;source.js: [226271, 226272], {
 }
 text.html.php;meta.embedded.block.html;source.js;punctuation.whitespace.comment.leading.js: [226272, 226288], {                }
 text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js;punctuation.definition.comment.js: [226288, 226290], {//}
-text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [226290, 226338], {EDITING QUANTITY PRICING ROWS FOR EACH COMPONENT}
-text.html.php;meta.embedded.block.html;source.js: [226338, 226339], {
+text.html.php;meta.embedded.block.html;source.js;comment.line.double-slash.js: [226290, 226339], {EDITING QUANTITY PRICING ROWS FOR EACH COMPONENT
 }
 text.html.php;meta.embedded.block.html;source.js: [226339, 226415], {            } else if (lastStringOfIDforPricing === "050<?php echo $i?>") {
 }

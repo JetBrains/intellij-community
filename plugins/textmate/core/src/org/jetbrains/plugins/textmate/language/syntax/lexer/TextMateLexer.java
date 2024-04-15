@@ -148,7 +148,6 @@ public final class TextMateLexer {
         closeScopeSelector(output, startPosition + lineStartOffset); // closing content scope
         if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null
-            && lastRule.getCaptureRules(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
             parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states)
             ||

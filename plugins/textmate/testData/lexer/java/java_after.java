@@ -2106,8 +2106,7 @@ source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.bo
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;punctuation.whitespace.comment.leading.java: [7572, 7578], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java;punctuation.definition.comment.java: [7578, 7580], {//}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java: [7580, 7615], { Check if server is already running}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java: [7615, 7616], {
+source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java: [7580, 7616], { Check if server is already running
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java: [7616, 7622], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;meta.try.java;keyword.control.try.java: [7622, 7625], {try}
@@ -2295,13 +2294,11 @@ source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.bo
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;punctuation.whitespace.comment.leading.java: [8225, 8231], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java;punctuation.definition.comment.java: [8231, 8233], {//}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java: [8233, 8261], { Check if webserver is alive}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java: [8261, 8262], {
+source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java: [8233, 8262], { Check if webserver is alive
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;punctuation.whitespace.comment.leading.java: [8262, 8268], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java;punctuation.definition.comment.java: [8268, 8270], {//}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java: [8270, 8295], { otherwise stop execution}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java: [8295, 8296], {
+source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;comment.line.double-slash.java: [8270, 8296], { otherwise stop execution
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java: [8296, 8302], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.try.java;meta.try.body.java;keyword.control.java: [8302, 8307], {while}
@@ -2399,8 +2396,7 @@ source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.bo
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java;punctuation.whitespace.comment.leading.java: [8554, 8560], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java;comment.line.double-slash.java;punctuation.definition.comment.java: [8560, 8562], {//}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java;comment.line.double-slash.java: [8562, 8578], {logger.error(e);}
-source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java: [8578, 8579], {
+source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java;comment.line.double-slash.java: [8562, 8579], {logger.error(e);
 }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java: [8579, 8585], {      }
 source.java;meta.class.java;meta.class.body.java;meta.method.java;meta.method.body.java;meta.catch.java;meta.catch.body.java;variable.other.object.java: [8585, 8591], {System}

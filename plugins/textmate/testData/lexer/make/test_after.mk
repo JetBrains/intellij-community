@@ -113,7 +113,7 @@ source.makefile;meta.scope.recipe.makefile: [250, 251], { }
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [251, 253], {$(}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;variable.other.makefile: [253, 259], {CFLAGS}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [259, 260], {)}
-source.makefile: [260, 261], {
+source.makefile;meta.scope.recipe.makefile: [260, 261], {
 }
 source.makefile: [261, 262], {
 }
@@ -123,7 +123,7 @@ source.makefile;meta.scope.target.makefile;meta.scope.prerequisites.makefile: [2
 source.makefile;meta.scope.target.makefile;meta.scope.prerequisites.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [273, 275], {$(}
 source.makefile;meta.scope.target.makefile;meta.scope.prerequisites.makefile;string.interpolated.makefile;variable.other.makefile: [275, 278], {OBJ}
 source.makefile;meta.scope.target.makefile;meta.scope.prerequisites.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [278, 279], {)}
-source.makefile: [279, 280], {
+source.makefile;meta.scope.target.makefile: [279, 280], {
 }
 source.makefile;meta.scope.recipe.makefile: [280, 281], {	}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [281, 283], {$(}
@@ -141,7 +141,7 @@ source.makefile;meta.scope.recipe.makefile: [305, 306], { }
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [306, 308], {$(}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;variable.other.makefile: [308, 312], {LIBS}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [312, 313], {)}
-source.makefile: [313, 314], {
+source.makefile;meta.scope.recipe.makefile: [313, 314], {
 }
 source.makefile;meta.scope.conditional.makefile: [314, 315], {	}
 source.makefile;meta.scope.conditional.makefile;keyword.control.ifeq.makefile: [315, 319], {ifeq}
@@ -168,13 +168,13 @@ source.makefile: [386, 387], {
 source.makefile;meta.scope.target.makefile;support.function.target.PHONY.makefile: [387, 393], {.PHONY}
 source.makefile;meta.scope.target.makefile;punctuation.separator.key-value.makefile: [393, 394], {:}
 source.makefile;meta.scope.target.makefile;meta.scope.prerequisites.makefile: [394, 400], { clean}
-source.makefile: [400, 401], {
+source.makefile;meta.scope.target.makefile: [400, 401], {
 }
 source.makefile: [401, 402], {
 }
 source.makefile;meta.scope.target.makefile;entity.name.function.target.makefile: [402, 407], {clean}
 source.makefile;meta.scope.target.makefile;punctuation.separator.key-value.makefile: [407, 408], {:}
-source.makefile: [408, 409], {
+source.makefile;meta.scope.target.makefile: [408, 409], {
 }
 source.makefile;meta.scope.recipe.makefile: [409, 410], {	}
 source.makefile;meta.scope.recipe.makefile: [410, 416], {rm -f }
@@ -185,5 +185,4 @@ source.makefile;meta.scope.recipe.makefile: [423, 436], {/*.o *~ core }
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [436, 438], {$(}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;variable.other.makefile: [438, 444], {INCDIR}
 source.makefile;meta.scope.recipe.makefile;string.interpolated.makefile;punctuation.definition.variable.makefile: [444, 445], {)}
-source.makefile;meta.scope.recipe.makefile: [445, 447], {/*}
-source.makefile: [447, 448], {~}
+source.makefile;meta.scope.recipe.makefile: [445, 448], {/*~}
