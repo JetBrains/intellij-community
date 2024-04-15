@@ -2407,6 +2407,8 @@ a:com.intellij.openapi.wm.IdeFocusManager
 - requestFocusInProject(java.awt.Component,com.intellij.openapi.project.Project):com.intellij.openapi.util.ActionCallback
 - a:runOnOwnContext(com.intellij.openapi.actionSystem.DataContext,java.lang.Runnable):V
 - a:toFront(javax.swing.JComponent):V
+f:com.intellij.openapi.wm.IdeFocusUtilKt
+- sf:awaitFocusSettlesDown(com.intellij.openapi.wm.IdeFocusManager,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.wm.IdeFrame
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - a:getBalloonLayout():com.intellij.ui.BalloonLayout
