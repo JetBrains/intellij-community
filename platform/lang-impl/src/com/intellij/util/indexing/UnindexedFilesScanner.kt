@@ -70,30 +70,24 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                                 private val myStartSuspended: Boolean,
                                                 private val myOnProjectOpen: Boolean,
                                                 isIndexingFilesFilterUpToDate: Boolean,
-                                                predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
+                                                val predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
                                                 mark: StatusMark?,
                                                 private val indexingReason: String,
-                                                scanningType: ScanningType,
-                                                startCondition: Future<*>?,
-                                                shouldHideProgressInSmartMode: Boolean?,
-                                                futureScanningHistory: SettableFuture<ProjectScanningHistory>,
-                                                forceReindexTrigger: Predicate<IndexedFile>?) : FilesScanningTask {
+                                                private val scanningType: ScanningType,
+                                                private val startCondition: Future<*>?,
+                                                private val shouldHideProgressInSmartMode: Boolean?,
+                                                private val futureScanningHistory: SettableFuture<ProjectScanningHistory>,
+                                                private val forceReindexingTrigger: Predicate<IndexedFile>?) : FilesScanningTask {
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
   }
 
   private val myIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val myFilterHandler: FilesFilterScanningHandler
-  private val myScanningType: ScanningType
-  private val myStartCondition: Future<*>?
   private val myPusher: PushedFilePropertiesUpdater
   private val myProvidedStatusMark: StatusMark?
-  val predefinedIndexableFilesIterators: List<IndexableFilesIterator>?
   private val myFutureScanningRequestToken: FutureScanningRequestToken
   private var flushQueueAfterScanning = true
-  private val shouldHideProgressInSmartMode: Boolean?
-  private val futureScanningHistory: SettableFuture<ProjectScanningHistory>
-  private val forceReindexingTrigger: Predicate<IndexedFile>?
 
   @TestOnly
   constructor(project: Project) : this(project, false, false, false, null, null,
@@ -139,11 +133,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     myFilterHandler = if (isIndexingFilesFilterUpToDate
     ) IdleFilesFilterScanningHandler(filterHolder)
     else UpdatingFilesFilterScanningHandler(filterHolder)
-    myScanningType = scanningType
-    myStartCondition = startCondition
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject)
     myProvidedStatusMark = if (predefinedIndexableFilesIterators == null) null else mark
-    this.predefinedIndexableFilesIterators = predefinedIndexableFilesIterators
     LOG.assertTrue(this.predefinedIndexableFilesIterators == null || !predefinedIndexableFilesIterators!!.isEmpty())
     LOG.assertTrue( // doing partial scanning of only dirty files on startup
       !myOnProjectOpen ||
@@ -154,9 +145,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     if (isFullIndexUpdate()) {
       myProject.putUserData(CONTENT_SCANNED, null)
     }
-    this.shouldHideProgressInSmartMode = shouldHideProgressInSmartMode
-    this.futureScanningHistory = futureScanningHistory
-    this.forceReindexingTrigger = forceReindexTrigger
   }
 
   private fun defaultHideProgressInSmartModeStrategy(): Boolean {
@@ -190,7 +178,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     oldTask.myFutureScanningRequestToken.markSuccessful()
     myFutureScanningRequestToken.markSuccessful()
-    LOG.assertTrue(!(myStartCondition != null && oldTask.myStartCondition != null), "Merge of two start conditions is not implemented")
+    LOG.assertTrue(!(startCondition != null && oldTask.startCondition != null), "Merge of two start conditions is not implemented")
     val mergedHideProgress: Boolean?
     if (shouldHideProgressInSmartMode == null) {
       mergedHideProgress = oldTask.shouldHideProgressInSmartMode
@@ -221,8 +209,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       mergeIterators(predefinedIndexableFilesIterators, oldTask.predefinedIndexableFilesIterators),
       StatusMark.mergeStatus(myProvidedStatusMark, oldTask.myProvidedStatusMark),
       reason,
-      merge(oldTask.myScanningType, oldTask.myScanningType),
-      myStartCondition ?: oldTask.myStartCondition,
+      merge(oldTask.scanningType, oldTask.scanningType),
+      startCondition ?: oldTask.startCondition,
       mergedHideProgress, mergedScanningHistoryFuture, mergedPredicate
     )
   }
@@ -558,11 +546,11 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       // Test will run a bit slower, but behavior will be more stable
       LockSupport.parkNanos(DELAY_IN_TESTS_MS * 1000000L)
     }
-    val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, myScanningType)
+    val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, scanningType)
     myIndex.loadIndexes()
     myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
-    if (myStartCondition != null) { // wait until indexes for dirty files are cleared
-      ProgressIndicatorUtils.awaitWithCheckCanceled(myStartCondition)
+    if (startCondition != null) { // wait until indexes for dirty files are cleared
+      ProgressIndicatorUtils.awaitWithCheckCanceled(startCondition)
     }
     // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
     // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
