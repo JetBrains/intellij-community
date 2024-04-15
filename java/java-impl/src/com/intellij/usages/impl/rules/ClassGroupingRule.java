@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -100,14 +101,15 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
     }
 
-    private static @NlsSafe String createText(PsiClass aClass) {
+    @NotNull
+    private static @NlsSafe String createText(@NotNull PsiClass aClass) {
       String text = aClass.getName();
       PsiClass containingClass = aClass.getContainingClass();
       while (containingClass != null) {
         text = containingClass.getName() + '.' + text;
         containingClass = containingClass.getContainingClass();
       }
-      return text;
+      return StringUtil.notNullize(text);
     }
 
     @Override
