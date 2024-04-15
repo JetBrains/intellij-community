@@ -12,19 +12,25 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JButton
 import javax.swing.SwingConstants
 
 @ApiStatus.Internal
-class PromoFeaturePage(
+open class PromoFeaturePage(
   val productIcon: Icon,
   val suggestedIde: SuggestedIde,
   @NlsContexts.Label val descriptionHtml: String,
   val features: List<PromoFeatureListItem>,
   @NlsContexts.Label val trialLabel: String,
   val pluginId: String?
-)
+) {
+  open fun getButtonOpenPromotionText(): @Nls String = FeaturePromoBundle.message("get.prefix.with.placeholder", suggestedIde.name)
+
+  @Nls
+  open fun getTitle(): String = FeaturePromoBundle.message("upgrade.to", suggestedIde.name)
+}
 
 @ApiStatus.Internal
 class PromoFeatureListItem(
@@ -43,7 +49,7 @@ object PromoPages {
       row {
         icon(page.productIcon)
 
-        label(FeaturePromoBundle.message("upgrade.to", page.suggestedIde.name))
+        label(page.getTitle())
           .applyToComponent {
             font = JBFont.label().biggerOn(3.0f).asBold()
           }
@@ -74,8 +80,7 @@ object PromoPages {
 
       row {
         cell()
-
-        (button(FeaturePromoBundle.message("get.prefix.with.placeholder", page.suggestedIde.name)) { event ->
+        (button(page.getButtonOpenPromotionText()) { event ->
           val source = event.source as? JButton
           val dialog = source?.parent?.let { DialogWrapper.findInstance(it) }
           openDownloadLink(dialog)

@@ -83,6 +83,11 @@
                              provider="com.intellij.pycharm.community.ide.impl.promotion.PromoDjangoConfigurableProvider"
                              bundle="messages.PyCharmCommunityCustomizationBundle"
                              key="promo.configurable.django"/>
+    <applicationConfigurable id="promo.ai.assistant"
+                             groupId="tools"
+                             provider="com.intellij.pycharm.community.ide.impl.promotion.PromoAiAssistantConfigurableProvider"
+                             bundle="messages.PyCharmCommunityCustomizationBundle"
+                             key="promo.configurable.ai"/>
     <applicationConfigurable id="promo.remoteSsh"
                              groupId="tools"
                              provider="com.intellij.pycharm.community.ide.impl.promotion.PromoRemoteSshConfigurableProvider"

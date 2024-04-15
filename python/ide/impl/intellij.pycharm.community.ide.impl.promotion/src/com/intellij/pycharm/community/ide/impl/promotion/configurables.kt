@@ -27,6 +27,7 @@ internal class PromoDatabaseConfigurableProvider : ProPromoConfigurableProvider(
 internal class PromoJSConfigurableProvider : ProPromoConfigurableProvider(PromoJSConfigurable::class)
 internal class PromoTSConfigurableProvider : ProPromoConfigurableProvider(PromoTSConfigurable::class)
 internal class PromoDjangoConfigurableProvider : ProPromoConfigurableProvider(PromoDjangoConfigurable::class)
+internal class PromoAiAssistantConfigurableProvider : ProPromoConfigurableProvider(PromoAiAssistantConfigurable::class)
 internal class PromoJupyterConfigurableProvider : ProPromoConfigurableProvider(PromoJupyterConfigurable::class)
 internal class PromoRemoteSshConfigurableProvider : ProPromoConfigurableProvider(PromoRemoteSshConfigurable::class)
 
@@ -57,6 +58,13 @@ internal class PromoDjangoConfigurable : ProPromoConfigurable() {
   override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.django")
   override fun createComponent(): JComponent =  djangoFeatures(PromoEventSource.SETTINGS)
 }
+
+internal class PromoAiAssistantConfigurable : ProPromoConfigurable() {
+  override fun getId(): String = "promo.ai"
+  override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.ai")
+  override fun createComponent(): JComponent =  aiAssistantFeatures(PromoEventSource.SETTINGS)
+}
+
 
 internal class PromoJupyterConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.jupyter"

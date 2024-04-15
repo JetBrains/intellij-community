@@ -2,6 +2,10 @@
 package com.intellij.pycharm.community.ide.impl.promotion
 
 import com.intellij.icons.AllIcons
+import com.intellij.llmInstaller.LLMIcons
+import com.intellij.llmInstaller.LLMInstallerBundle
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
@@ -23,6 +27,32 @@ private fun featurePage(@NlsContexts.Label title: String, items: List<PromoFeatu
     page = page,
     openLearnMore = createOpenLearnMorePageLambda(source, topic),
     openDownloadLink = createOpenDownloadPageLambda(source, topic),
+  )
+}
+
+private fun aiAssistantFeaturePage(@NlsContexts.Label title: String, items: List<PromoFeatureListItem>,
+                                   source: PromoEventSource): JComponent {
+  val page = object: PromoFeaturePage(
+    productIcon = PythonIcons.Python.Pycharm,
+    suggestedIde = PluginAdvertiserService.pyCharmProfessional,
+    descriptionHtml = title,
+    features = items,
+    trialLabel = "",
+    pluginId = null
+  ) {
+    override fun getButtonOpenPromotionText() = PyCharmCommunityCustomizationBundle.message("feature.ai.assistant.open.toolwindow")
+
+    override fun getTitle() = PyCharmCommunityCustomizationBundle.message("feature.ai.assistant.title")
+  }
+  return PromoPages.build(
+    page = page,
+    openLearnMore = createOpenLearnMorePageLambda(source, PromoTopic.AiCodeCompletion),
+    openDownloadLink = { dialog ->
+      ProjectManager.getInstance().openProjects.forEach {
+        activateAIAssistantToolwindow(it)
+      }
+      dialog?.close(DialogWrapper.CLOSE_EXIT_CODE)
+    }
   )
 }
 
@@ -59,6 +89,14 @@ internal fun djangoFeatures(source: PromoEventSource): JComponent {
   )
 }
 
+internal fun aiAssistantFeatures(source: PromoEventSource): JComponent {
+  return aiAssistantFeaturePage(
+    PyCharmCommunityCustomizationBundle.message("feature.ai.assistant.description.html", "https://www.jetbrains.com/ai"),
+    aiAssistantFeatureList,
+    source
+  )
+}
+
 internal fun jupyterFeatures(source: PromoEventSource): JComponent {
   return featurePage(
     PyCharmCommunityCustomizationBundle.message("feature.jupyter.description.html",
@@ -92,6 +130,15 @@ internal val djangoPromoFeatureList = listOf(
   PromoFeatureListItem(AllIcons.Actions.ReformatCode, PyCharmCommunityCustomizationBundle.message("feature.django.code")),
   PromoFeatureListItem(AllIcons.FileTypes.Html, PyCharmCommunityCustomizationBundle.message("feature.django.djangoTemplates")),
   PromoFeatureListItem(AllIcons.General.Web, PyCharmCommunityCustomizationBundle.message("feature.django.endpoints"))
+)
+
+internal val aiAssistantFeatureList = listOf(
+  PromoFeatureListItem(LLMIcons.Login.FeatureContext, LLMInstallerBundle.message("panel.activate.suggestion.enjoy.ai.features")),
+  PromoFeatureListItem(LLMIcons.Login.FeatureComment, LLMInstallerBundle.message("panel.activate.suggestion.ask.anything")),
+  PromoFeatureListItem(LLMIcons.Login.FeatureCodeBlock, LLMInstallerBundle.message("panel.activate.suggestion.generate.code")),
+  PromoFeatureListItem(LLMIcons.Login.FeatureAnswer, LLMInstallerBundle.message("panel.activate.suggestion.explain.errors")),
+  PromoFeatureListItem(LLMIcons.Login.FeatureDocs, LLMInstallerBundle.message("panel.activate.suggestion.generate.commit.messages"))
+
 )
 
 internal val javaScriptPromoFeatureList = listOf(
