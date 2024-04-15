@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction
 import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -180,8 +181,10 @@ class StaticImportMemberQuestionAction<T extends PsiMember> implements QuestionA
   }
 
   private static @NlsSafe @NotNull String getElementPresentableName(@NotNull PsiMember element) {
-    PsiClass aClass = element.getContainingClass();
-    LOG.assertTrue(aClass != null);
-    return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
+    return ReadAction.compute(() -> {
+      PsiClass aClass = element.getContainingClass();
+      LOG.assertTrue(aClass != null);
+      return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
+    });
   }
 }
