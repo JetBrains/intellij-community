@@ -15,32 +15,28 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 
 abstract class PartiallyExcludedFilesStateHolder<T>(
   project: Project,
-  private val hashingStrategy: HashingStrategy<T>? = null
+  private val hashingStrategy: HashingStrategy<T>
 ) : Disposable {
-  private fun PartialLocalLineStatusTracker.setExcludedFromCommit(element: T, isExcluded: Boolean) =
+  private fun PartialLocalLineStatusTracker.setExcludedFromCommit(element: T, isExcluded: Boolean) {
     getChangeListId(element)?.let { setExcludedFromCommit(it, isExcluded) }
+  }
 
-  private fun PartialLocalLineStatusTracker.getExcludedFromCommitState(element: T): ExclusionState =
-    getChangeListId(element)?.let { getExcludedFromCommitState(it) } ?: ExclusionState.NO_CHANGES
+  private fun PartialLocalLineStatusTracker.getExcludedFromCommitState(element: T): ExclusionState {
+    return getChangeListId(element)?.let { getExcludedFromCommitState(it) } ?: ExclusionState.NO_CHANGES
+  }
 
   protected val myUpdateQueue =
     MergingUpdateQueue(PartiallyExcludedFilesStateHolder::class.java.name, 300, true, MergingUpdateQueue.ANY_COMPONENT, this)
 
   private val myIncludedElements: MutableSet<T> = createElementsSet()
-  private val myTrackerExclusionStates: MutableMap<T, ExclusionState> = when (hashingStrategy) {
-    null -> HashMap()
-    else -> CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
-  }
+  private val myTrackerExclusionStates: MutableMap<T, ExclusionState> = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
 
   init {
     MyTrackerManagerListener().install(project)
   }
 
   private fun createElementsSet(elements: Collection<T> = emptyList()): MutableSet<T> {
-    return when (hashingStrategy) {
-      null -> HashSet(elements)
-      else -> CollectionFactory.createCustomHashingStrategySet(hashingStrategy).also { it.addAll(elements) }
-    }
+    return CollectionFactory.createCustomHashingStrategySet(hashingStrategy).also { it.addAll(elements) }
   }
 
   override fun dispose() = Unit
@@ -50,21 +46,8 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   protected abstract fun findElementFor(tracker: PartialLocalLineStatusTracker, changeListId: String): T?
   protected abstract fun findTrackerFor(element: T): PartialLocalLineStatusTracker?
 
-  private val trackers
+  private val trackers: Sequence<Pair<T, PartialLocalLineStatusTracker>>
     get() = trackableElements.mapNotNull { element -> findTrackerFor(element)?.let { tracker -> element to tracker } }
-
-  @RequiresEdt
-  open fun updateExclusionStates() {
-    myTrackerExclusionStates.clear()
-
-    trackers.forEach { (element, tracker) ->
-      val state = tracker.getExcludedFromCommitState(element)
-      if (state != ExclusionState.NO_CHANGES) myTrackerExclusionStates[element] = state
-    }
-  }
-
-  fun getExclusionState(element: T): ExclusionState =
-    myTrackerExclusionStates[element] ?: if (element in myIncludedElements) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
 
   private fun scheduleExclusionStatesUpdate() {
     myUpdateQueue.queue(DisposableUpdate.createDisposable(myUpdateQueue, "updateExcludedFromCommit") { updateExclusionStates() })
@@ -119,6 +102,21 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       if (state == ExclusionState.ALL_EXCLUDED) set -= element else set += element
     }
     return set
+  }
+
+  fun getExclusionState(element: T): ExclusionState {
+    return myTrackerExclusionStates[element]
+           ?: if (element in myIncludedElements) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
+  }
+
+  @RequiresEdt
+  open fun updateExclusionStates() {
+    myTrackerExclusionStates.clear()
+
+    trackers.forEach { (element, tracker) ->
+      val state = tracker.getExcludedFromCommitState(element)
+      if (state != ExclusionState.NO_CHANGES) myTrackerExclusionStates[element] = state
+    }
   }
 
   fun setIncludedElements(elements: Collection<T>) {
