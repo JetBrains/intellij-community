@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.vcs.log.ui
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.ui
 
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.LafIconLookup
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics

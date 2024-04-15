@@ -13290,3 +13290,14 @@ com.intellij.xml.breadcrumbs.NavigatableCrumb
 - getAnchorOffset():I
 - a:getHighlightRange():com.intellij.openapi.util.TextRange
 - a:navigate(com.intellij.openapi.editor.Editor,Z):V
+f:com.intellij.util.ui.RootIcon
+- sf:INSTANCE:com.intellij.util.ui.RootIcon
+- sf:create(java.awt.Color):com.intellij.util.ui.ColorIcon
+- sf:createAndScale(java.awt.Color):com.intellij.util.ui.ColorIcon
+- sf:createAndScaleCheckbox(java.awt.Color):com.intellij.util.ui.RootIcon$CheckboxColorIcon
+f:com.intellij.util.ui.RootIcon$CheckboxColorIcon
+- com.intellij.util.ui.ColorIcon
+- <init>(I,java.awt.Color,I):V
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- f:prepare(Z):V
+- withIconPreScaled(Z):com.intellij.util.ui.RootIcon$CheckboxColorIcon

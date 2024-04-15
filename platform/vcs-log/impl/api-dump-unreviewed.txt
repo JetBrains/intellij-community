@@ -1303,17 +1303,6 @@ c:com.intellij.vcs.log.ui.MainVcsLogUiDataRule
 - com.intellij.ide.impl.dataRules.GetDataRule
 - <init>():V
 - getData(com.intellij.openapi.actionSystem.DataProvider):java.lang.Object
-f:com.intellij.vcs.log.ui.RootIcon
-- sf:INSTANCE:com.intellij.vcs.log.ui.RootIcon
-- sf:create(java.awt.Color):com.intellij.util.ui.ColorIcon
-- sf:createAndScale(java.awt.Color):com.intellij.util.ui.ColorIcon
-- sf:createAndScaleCheckbox(java.awt.Color):com.intellij.vcs.log.ui.RootIcon$CheckboxColorIcon
-f:com.intellij.vcs.log.ui.RootIcon$CheckboxColorIcon
-- com.intellij.util.ui.ColorIcon
-- <init>(I,java.awt.Color,I):V
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
-- f:prepare(Z):V
-- withIconPreScaled(Z):com.intellij.vcs.log.ui.RootIcon$CheckboxColorIcon
 f:com.intellij.vcs.log.ui.VcsLogActionIds
 - sf:BRANCH_ACTIONS_GROUP:java.lang.String
 - sf:CHANGES_BROWSER_POPUP_ACTION_GROUP:java.lang.String
