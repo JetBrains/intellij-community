@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -170,8 +171,10 @@ class AsyncEditorLoader internal constructor(
   }
 
   private fun executeDelayedActions(delayedActions: Array<Runnable>) {
-    for (action in delayedActions) {
-      action.run()
+    resetThreadContext().use {
+      for (action in delayedActions) {
+        action.run()
+      }
     }
   }
 
