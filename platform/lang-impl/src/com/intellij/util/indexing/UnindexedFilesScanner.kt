@@ -368,16 +368,17 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     val sharedExplanationLogger = IndexingReasonExplanationLogger()
     val tasks = providers.map { provider: IndexableFilesIterator ->
-      val scanningStatistics = ScanningStatistics(provider.debugName)
-      scanningStatistics.setProviderRoots(provider, myProject)
-      val origin = provider.origin
-      val fileScannerVisitors = sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) }
-
-      val thisProviderDeduplicateFilter =
-        IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter)
-
       ProgressManager.checkCanceled() // give a chance to suspend indexing
+
       Runnable {
+        val scanningStatistics = ScanningStatistics(provider.debugName)
+        scanningStatistics.setProviderRoots(provider, myProject)
+        val origin = provider.origin
+        val fileScannerVisitors = sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) }
+
+        val thisProviderDeduplicateFilter =
+          IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter)
+
         val providerScanningStartTime = System.nanoTime()
         try {
           myProject.getService(PerProjectIndexingQueue::class.java)
