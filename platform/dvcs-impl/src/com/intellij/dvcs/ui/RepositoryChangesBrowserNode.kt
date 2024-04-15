@@ -15,8 +15,8 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
 import com.intellij.util.FontUtil.spaceAndThinSpace
+import com.intellij.util.ui.CheckboxIcon
 import com.intellij.util.ui.JBUI.insets
-import com.intellij.util.ui.RootIcon
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.vcs.branch.BranchPresentation.getPresentableText
 import com.intellij.vcs.branch.BranchPresentation.getSingleTooltip
@@ -77,6 +77,6 @@ open class RepositoryChangesBrowserNode(repository: Repository,
     }
 
     fun getRepositoryIcon(repository: Repository, colorManager: VcsLogColorManager = getColorManager(repository.project)) =
-      RootIcon.createAndScale(colorManager.getRootColor(repository.root))
+      CheckboxIcon.createAndScale(colorManager.getRootColor(repository.root))
   }
 }

@@ -386,7 +386,7 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
 
   fun setRoot(rootColor: CommitDetailsPanel.RootColor?) {
     if (rootColor != null) {
-      icon = RootIcon.createAndScale(rootColor.color)
+      icon = CheckboxIcon.createAndScale(rootColor.color)
       tooltipText = rootColor.root.path
     }
     else {

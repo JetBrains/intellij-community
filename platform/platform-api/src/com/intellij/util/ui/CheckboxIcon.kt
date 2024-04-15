@@ -10,7 +10,7 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
 
-object RootIcon {
+object CheckboxIcon {
   @JvmStatic
   fun create(
     color: Color,
@@ -23,8 +23,8 @@ object RootIcon {
   fun createAndScale(color: Color): ColorIcon = JBUIScale.scaleIcon(create(color))
 
   @JvmStatic
-  fun createAndScaleCheckbox(color: Color): CheckboxColorIcon {
-    return JBUIScale.scaleIcon(CheckboxColorIcon(iconSize, color, arcSize))
+  fun createAndScaleCheckbox(color: Color): WithColor {
+    return JBUIScale.scaleIcon(WithColor(iconSize, color, arcSize))
   }
 
   private const val iconSize = 14
@@ -34,7 +34,7 @@ object RootIcon {
     get() = if (ExperimentalUI.isNewUI()) 4 else 0
 
 
-  class CheckboxColorIcon(size: Int, color: Color, arc: Int) : ColorIcon(size, size, size, size, color, false, arc) {
+  class WithColor(size: Int, color: Color, arc: Int) : ColorIcon(size, size, size, size, color, false, arc) {
     private var mySelected = false
     private var mySizedIcon: SizedIcon
 
@@ -52,9 +52,9 @@ object RootIcon {
       mySelected = selected
     }
 
-    override fun withIconPreScaled(preScaled: Boolean): CheckboxColorIcon {
+    override fun withIconPreScaled(preScaled: Boolean): WithColor {
       mySizedIcon = mySizedIcon.withIconPreScaled(preScaled) as SizedIcon
-      return super.withIconPreScaled(preScaled) as CheckboxColorIcon
+      return super.withIconPreScaled(preScaled) as WithColor
     }
 
     override fun paintIcon(component: Component, g: Graphics, i: Int, j: Int) {

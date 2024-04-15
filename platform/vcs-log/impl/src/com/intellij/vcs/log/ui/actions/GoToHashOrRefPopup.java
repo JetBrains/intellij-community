@@ -16,9 +16,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
+import com.intellij.util.ui.CheckboxIcon;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.RootIcon;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRefs;
@@ -152,7 +152,7 @@ public class GoToHashOrRefPopup {
     public @NotNull LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
       if (myColorManager.hasMultiplePaths()) {
-        ColorIcon icon = RootIcon.createAndScale(myColorManager.getRootColor(item.getRoot()));
+        ColorIcon icon = CheckboxIcon.createAndScale(myColorManager.getRootColor(item.getRoot()));
         lookupBuilder = lookupBuilder.withTypeText(getTypeText(item), icon, true).withTypeIconRightAligned(true);
       }
       return lookupBuilder;

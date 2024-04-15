@@ -26,8 +26,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.CheckboxIcon;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.RootIcon;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRootFilter;
@@ -294,7 +294,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
   }
 
   private final class SelectVisibleRootAction extends ToggleAction implements DumbAware, KeepingPopupOpenAction {
-    final RootIcon.CheckboxColorIcon myIcon;
+    final CheckboxIcon.WithColor myIcon;
     final VirtualFile myRoot;
     final List<SelectVisibleRootAction> myAllActions;
 
@@ -303,7 +303,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
       myAllActions = allActions;
-      myIcon = RootIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
+      myIcon = CheckboxIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
