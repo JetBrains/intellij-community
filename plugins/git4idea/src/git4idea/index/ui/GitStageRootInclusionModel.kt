@@ -21,17 +21,7 @@ class GitStageRootInclusionModel(private val project: Project,
   init {
     tracker.addListener(object : GitStageTrackerListener {
       override fun update() {
-        val removedRoots = stagedRoots - tracker.state.stagedRoots
-        val addedRoots = tracker.state.stagedRoots - stagedRoots
-
-        stagedRoots = tracker.state.stagedRoots
-
-        includedRoots.removeAll(removedRoots)
-        includedRoots.addAll(addedRoots)
-
-        if (removedRoots.isNotEmpty() || addedRoots.isNotEmpty()) {
-          fireInclusionChanged()
-        }
+        updateInclusion()
       }
     }, disposable)
   }
@@ -48,6 +38,20 @@ class GitStageRootInclusionModel(private val project: Project,
   }
 
   override fun isInclusionEmpty(): Boolean = includedRoots.isEmpty()
+
+  private fun updateInclusion() {
+    val removedRoots = stagedRoots - tracker.state.stagedRoots
+    val addedRoots = tracker.state.stagedRoots - stagedRoots
+
+    stagedRoots = tracker.state.stagedRoots
+
+    includedRoots.removeAll(removedRoots)
+    includedRoots.addAll(addedRoots)
+
+    if (removedRoots.isNotEmpty() || addedRoots.isNotEmpty()) {
+      fireInclusionChanged()
+    }
+  }
 
   override fun addInclusion(items: Collection<Any>) {
     includedRoots.addAll(items.asRoots())
