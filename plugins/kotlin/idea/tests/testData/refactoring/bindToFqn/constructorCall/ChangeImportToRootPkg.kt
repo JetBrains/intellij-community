@@ -3,7 +3,7 @@
 package test
 
 fun foo() {
-    val x = test.foo.<caret>A()
+    val x = <caret>A()
 }
 
 // FILE: test/foo/A.kt
@@ -11,5 +11,5 @@ package test.foo
 
 class A { }
 
-// FILE: test/bar/A.kt
+// FILE: A.kt
 class A { }
