@@ -109,12 +109,16 @@ interface MLApproachListener<M : MLModel<P>, P : Any> {
    * Called if the session was not started,
    * on exceptionally rare occasions,
    * when the [com.intellij.platform.ml.impl.LogDrivenModelInference.startSession] failed with an exception
+   *
+   * This callback is finishing the session listening: [onStartedSession] won't be called.
    */
   fun onFailedToStartSessionWithException(exception: Throwable) {}
 
   /**
    * Called if the session was not started,
    * but the failure is 'ordinary'.
+   *
+   * This callback is finishing the session listening: [onStartedSession] won't be called.
    */
   fun onFailedToStartSession(failure: Session.StartOutcome.Failure<P>) {}
 
@@ -155,15 +159,15 @@ interface MLSessionListener<R, P : Any> {
    * All tier instances were established (the tree will not be growing further),
    * described, and predictions in the [sessionTree] were finished.
    */
-  fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<R, P>) {}
+  fun onSessionFinishedSuccessfully(sessionTree: DescribedRootContainer<R, P>) {}
 
   companion object {
     fun <R, P : Any> Collection<MLSessionListener<R, P>>.asJoinedListener(): MLSessionListener<R, P> {
       val sessionListeners = this@asJoinedListener
 
       return object : MLSessionListener<R, P> {
-        override fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<R, P>) = sessionListeners.forEach {
-          it.onSessionDescriptionFinished(sessionTree)
+        override fun onSessionFinishedSuccessfully(sessionTree: DescribedRootContainer<R, P>) = sessionListeners.forEach {
+          it.onSessionFinishedSuccessfully(sessionTree)
         }
       }
     }

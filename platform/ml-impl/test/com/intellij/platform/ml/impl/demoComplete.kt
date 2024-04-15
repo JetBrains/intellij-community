@@ -198,7 +198,7 @@ class SomeListener(private val name: String) : MLTaskGroupListener {
   }
 
   inner class SessionListener : MLSessionListener<RandomModel, Double> {
-    override fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<RandomModel, Double>) {
+    override fun onSessionFinishedSuccessfully(sessionTree: DescribedRootContainer<RandomModel, Double>) {
       log("session successfully described: $sessionTree")
     }
   }

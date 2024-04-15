@@ -202,7 +202,7 @@ open class LogDrivenModelInference<M : MLModel<P>, P : Any>(
     var sessionListener: MLSessionListener<M, P>? = null
 
     val analyseThenLogStructure = SessionTreeHandler<DescribedRootContainer<M, P>, M, P> { treeRoot ->
-      sessionListener?.onSessionDescriptionFinished(treeRoot)
+      sessionListener?.onSessionFinishedSuccessfully(treeRoot)
     }
 
     val notUsedDescription = sessionDetails.getNotUsedDescription(callParameters, mlModel)

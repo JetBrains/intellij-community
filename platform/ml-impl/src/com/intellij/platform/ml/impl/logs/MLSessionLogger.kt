@@ -20,25 +20,12 @@ interface MLSessionScheme<P : Any> {
   fun configureLogger(sessionAnalysisDeclaration: List<EventField<*>>,
                       sessionStructureAnalysisDeclaration: List<AnalysedLevelScheme>,
                       eventLogGroup: EventLogGroup,
-                      eventPrefix: String): MLSessionLoggerBuilder<P>
+                      eventPrefix: String): MLSessionLogger<P>
 }
 
 typealias AnalysedLevelScheme = LevelSignature<PerTier<AnalysedTierScheme>, PerTier<DescribedTierScheme>>
 
 @ApiStatus.Internal
-fun interface MLSessionLoggerBuilder<P : Any> {
-  fun startLoggingSession(): MLSessionLogger<P>
-}
-
-@ApiStatus.Internal
 interface MLSessionLogger<P : Any> {
-  fun logBeforeSessionStarted(startedSessionAnalysis: List<EventPair<*>>)
-
-  fun logStartFailure(failureAnalysis: List<EventPair<*>>)
-
-  fun logSessionException(exceptionAnalysis: List<EventPair<*>>)
-
-  fun logStarted(startAnalysis: List<EventPair<*>>)
-
-  fun logFinished(sessionStructure: AnalysedRootContainer<P>, finishedSessionAnalysis: List<EventPair<*>>)
+  fun logSession(session: List<EventPair<*>>, structure: AnalysedRootContainer<P>?)
 }

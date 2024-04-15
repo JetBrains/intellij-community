@@ -23,7 +23,7 @@ class SessionAsMultipleEventsLoggingScheme<P : Any, F>(
   override fun configureLogger(sessionAnalysisDeclaration: List<EventField<*>>,
                                sessionStructureAnalysisDeclaration: List<AnalysedLevelScheme>,
                                eventLogGroup: EventLogGroup,
-                               eventPrefix: String): MLSessionLoggerBuilder<P> {
+                               eventPrefix: String): MLSessionLogger<P> {
     require(sessionStructureAnalysisDeclaration.isNotEmpty())
 
     val eventRegister = EventRegister { eventName, fields -> eventLogGroup.registerVarargEvent("${eventPrefix}.$eventName", *fields) }
@@ -36,26 +36,12 @@ class SessionAsMultipleEventsLoggingScheme<P : Any, F>(
     else {
       ComponentComplexRoot.register(fieldPrediction, predictionTransformer, eventRegister, sessionStructureAnalysisDeclaration)
     }
-    val logBeforeStartAnalysis = ComponentSomeAnalysis(COMPONENT_NAME_BEFORE_START_ANALYSIS).register(eventRegister, sessionAnalysisDeclaration)
-    val logAfterStartAnalysis = ComponentSomeAnalysis(COMPONENT_NAME_AFTER_START_ANALYSIS).register(eventRegister, sessionAnalysisDeclaration)
-    val logExceptionAnalysis = ComponentSomeAnalysis(COMPONENT_NAME_EXCEPTION_ANALYSIS).register(eventRegister, sessionAnalysisDeclaration)
-    val logFailureAnalysis = ComponentSomeAnalysis(COMPONENT_NAME_START_FAILURE).register(eventRegister, sessionAnalysisDeclaration)
-    val logAdditionalAnalysis = ComponentSomeAnalysis(COMPONENT_NAME_ADDITIONAL_ANALYSIS).register(eventRegister, sessionAnalysisDeclaration)
+    val logSession = ComponentSomeAnalysis(COMPONENT_NAME_SESSION).register(eventRegister, sessionAnalysisDeclaration)
 
-    return MLSessionLoggerBuilder {
-      object : MLSessionLogger<P> {
-        override fun logBeforeSessionStarted(startedSessionAnalysis: List<EventPair<*>>) = logBeforeStartAnalysis(sessionId, startedSessionAnalysis)
-
-        override fun logStartFailure(failureAnalysis: List<EventPair<*>>) = logFailureAnalysis(sessionId, failureAnalysis)
-
-        override fun logSessionException(exceptionAnalysis: List<EventPair<*>>) = logExceptionAnalysis(sessionId, exceptionAnalysis)
-
-        override fun logStarted(startAnalysis: List<EventPair<*>>) = logAfterStartAnalysis(sessionId, startAnalysis)
-
-        override fun logFinished(sessionStructure: AnalysedRootContainer<P>, finishedSessionAnalysis: List<EventPair<*>>) {
-          logStructure(sessionId, sessionStructure)
-          logAdditionalAnalysis(sessionId, finishedSessionAnalysis)
-        }
+    return object : MLSessionLogger<P> {
+      override fun logSession(session: List<EventPair<*>>, structure: AnalysedRootContainer<P>?) {
+        structure?.let { logStructure(sessionId, it) }
+        logSession(sessionId, session)
       }
     }
   }
@@ -76,11 +62,7 @@ private val COMPONENT_NAME_BRANCHING = { levelI: Int -> "branching_level.$levelI
 private const val COMPONENT_NAME_COMPLEX_ROOT = "complex_root"
 private const val COMPONENT_NAME_SOLITARY_LEAF = "solitary_leaf"
 private const val COMPONENT_NAME_LEAF = "leaf"
-private const val COMPONENT_NAME_BEFORE_START_ANALYSIS = "before_start"
-private const val COMPONENT_NAME_AFTER_START_ANALYSIS = "after_start"
-private const val COMPONENT_NAME_ADDITIONAL_ANALYSIS = "additional_analysis"
-private const val COMPONENT_NAME_EXCEPTION_ANALYSIS = "exception"
-private const val COMPONENT_NAME_START_FAILURE = "start_failure"
+private const val COMPONENT_NAME_SESSION = "session"
 
 private val FIELD_SESSION_ID = IntEventField("session_id")
 private val FIELD_LOCATION_IN_TREE = IntListEventField("location_in_tree")
