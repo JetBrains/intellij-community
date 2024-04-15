@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.formatting.ASTBlock
@@ -9,12 +8,13 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.util.PsiUtilCore
-import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteStyleGuide
-import org.jetbrains.kotlin.idea.formatter.KotlinOfficialStyleGuide
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.nextLeaf
+import org.jetbrains.kotlin.psi.psiUtil.prevLeaf
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 /*
  * ASTBlock.node is nullable, this extension was introduced to minimize changes
@@ -39,9 +39,7 @@ fun PsiElement.getLineCountByDocument(startOffset: Int, endOffset: Int): Int? {
 }
 
 fun PsiElement.isMultiline() = getLineCount() > 1
-
 fun PsiElement?.isLineBreak() = this is PsiWhiteSpace && StringUtil.containsLineBreak(text)
-
 fun PsiElement.leafIgnoringWhitespace(forward: Boolean = true, skipEmptyElements: Boolean = true) =
     leaf(forward) { (!skipEmptyElements || it.textLength != 0) && it !is PsiWhiteSpace }
 
@@ -53,11 +51,9 @@ fun PsiElement.leaf(forward: Boolean = true, filter: (PsiElement) -> Boolean): P
     else prevLeaf(filter)
 
 val PsiElement.isComma: Boolean get() = PsiUtilCore.getElementType(this) == KtTokens.COMMA
-
 fun PsiElement.containsLineBreakInChild(globalStartOffset: Int, globalEndOffset: Int): Boolean =
     getLineCountByDocument(globalStartOffset, globalEndOffset)?.let { it > 1 }
         ?: firstChild.siblings(forward = true, withItself = true)
             .dropWhile { it.startOffset < globalStartOffset }
             .takeWhile { it.endOffset <= globalEndOffset }
             .any { it.textContains('\n') || it.textContains('\r') }
-
