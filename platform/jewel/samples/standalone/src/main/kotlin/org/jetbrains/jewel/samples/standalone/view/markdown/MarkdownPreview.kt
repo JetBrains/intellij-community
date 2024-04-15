@@ -65,7 +65,7 @@ internal fun MarkdownPreview(
     }
 
     val blockRenderer =
-        remember(markdownStyling, isDark, extensions) {
+        remember(markdownStyling, extensions) {
             if (isDark) {
                 MarkdownBlockRenderer.dark(
                     styling = markdownStyling,

@@ -182,7 +182,16 @@ public fun JewelTheme.Companion.lightThemeDefinition(
     defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
     contentColor: Color = IntUiLightTheme.colors.grey(1),
 ): ThemeDefinition =
-    ThemeDefinition(isDark = false, colors, metrics, defaultTextStyle, contentColor, palette, iconData)
+    ThemeDefinition(
+        name = "IntUI Light",
+        isDark = false,
+        colors,
+        metrics,
+        defaultTextStyle,
+        contentColor,
+        palette,
+        iconData,
+    )
 
 @Composable
 public fun JewelTheme.Companion.darkThemeDefinition(
@@ -193,7 +202,16 @@ public fun JewelTheme.Companion.darkThemeDefinition(
     defaultTextStyle: TextStyle = JewelTheme.createDefaultTextStyle(),
     contentColor: Color = IntUiDarkTheme.colors.grey(12),
 ): ThemeDefinition =
-    ThemeDefinition(isDark = true, colors, metrics, defaultTextStyle, contentColor, palette, iconData)
+    ThemeDefinition(
+        name = "IntUI Dark",
+        isDark = true,
+        colors,
+        metrics,
+        defaultTextStyle,
+        contentColor,
+        palette,
+        iconData,
+    )
 
 @Composable
 public fun ComponentStyling.default(): ComponentStyling = with {

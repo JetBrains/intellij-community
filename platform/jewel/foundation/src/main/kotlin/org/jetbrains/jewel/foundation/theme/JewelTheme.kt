@@ -16,6 +16,11 @@ public interface JewelTheme {
 
     public companion object {
 
+        public val name: String
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalThemeName.current
+
         public val globalColors: GlobalColors
             @Composable
             @ReadOnlyComposable
@@ -68,6 +73,7 @@ public fun JewelTheme(
 @Composable
 public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
     CompositionLocalProvider(
+        LocalThemeName provides theme.name,
         LocalIsDarkTheme provides theme.isDark,
         LocalContentColor provides theme.contentColor,
         LocalTextStyle provides theme.defaultTextStyle,
@@ -75,6 +81,10 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
         LocalGlobalMetrics provides theme.globalMetrics,
         content = content,
     )
+}
+
+public val LocalThemeName: ProvidableCompositionLocal<String> = staticCompositionLocalOf {
+    error("No ThemeName provided")
 }
 
 public val LocalContentColor: ProvidableCompositionLocal<Color> =

@@ -754,6 +754,7 @@ public final class org/jetbrains/jewel/foundation/theme/JewelTheme$Companion {
 	public final fun getDefaultTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun getGlobalColors (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics (Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
+	public final fun getName (Landroidx/compose/runtime/Composer;I)Ljava/lang/String;
 	public final fun getTextStyle (Landroidx/compose/runtime/Composer;I)Landroidx/compose/ui/text/TextStyle;
 	public final fun isDark (Landroidx/compose/runtime/Composer;I)Z
 	public final fun isSwingCompatMode (Landroidx/compose/runtime/Composer;I)Z
@@ -767,6 +768,7 @@ public final class org/jetbrains/jewel/foundation/theme/JewelThemeKt {
 	public static final fun getLocalContentColor ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalIconData ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 	public static final fun getLocalTextStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+	public static final fun getLocalThemeName ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
 public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette {
@@ -810,7 +812,7 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette$Compan
 
 public final class org/jetbrains/jewel/foundation/theme/ThemeDefinition {
 	public static final field $stable I
-	public synthetic fun <init> (ZLorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Landroidx/compose/ui/text/TextStyle;JLorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Landroidx/compose/ui/text/TextStyle;JLorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColorPalette ()Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
 	public final fun getContentColor-0d7_KjU ()J
@@ -818,6 +820,7 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeDefinition {
 	public final fun getGlobalColors ()Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics ()Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 	public final fun getIconData ()Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;
+	public final fun getName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public final fun isDark ()Z
 	public fun toString ()Ljava/lang/String;

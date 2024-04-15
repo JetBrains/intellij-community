@@ -21,16 +21,15 @@ import java.net.URI
 
 @Composable
 internal fun MarkdownPreview(@Language("Markdown") rawMarkdown: String, modifier: Modifier = Modifier) {
-    val isDark = JewelTheme.isDark
-
-    val markdownStyling = remember(isDark) { MarkdownStyling.create() }
+    val themeKey = JewelTheme.name
+    val markdownStyling = remember(themeKey) { MarkdownStyling.create() }
 
     val processor = remember { MarkdownProcessor() }
     // TODO move this away from the composition!
     val markdownBlocks by remember { derivedStateOf { processor.processMarkdownDocument(rawMarkdown) } }
 
     val blockRenderer =
-        remember(markdownStyling, isDark) {
+        remember(markdownStyling) {
             MarkdownBlockRenderer.create(
                 styling = markdownStyling,
                 inlineRenderer = InlineMarkdownRenderer.default(),

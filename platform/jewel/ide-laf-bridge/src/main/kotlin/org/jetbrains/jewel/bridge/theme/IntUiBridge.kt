@@ -134,13 +134,14 @@ internal fun createBridgeThemeDefinition(textStyle: TextStyle): ThemeDefinition 
     logger.debug("Obtaining theme definition from Swing...")
 
     return ThemeDefinition(
+        name = lafName(),
         isDark = isDark,
         globalColors = GlobalColors.readFromLaF(),
-        colorPalette = ThemeColorPalette.readFromLaF(),
-        iconData = ThemeIconData.readFromLaF(),
         globalMetrics = GlobalMetrics.readFromLaF(),
         defaultTextStyle = textStyle,
         contentColor = JBColor.foreground().toComposeColor(),
+        colorPalette = ThemeColorPalette.readFromLaF(),
+        iconData = ThemeIconData.readFromLaF(),
     )
 }
 
@@ -1047,10 +1048,15 @@ private fun readIconButtonStyle(): IconButtonStyle =
         ),
     )
 
-@Suppress("UnstableApiUsage")
 internal fun isNewUiTheme(): Boolean {
     if (!NewUI.isEnabled()) return false
 
+    val lafName = lafName()
+    return lafName == "Light" || lafName == "Dark" || lafName == "Light with Light Header"
+}
+
+@Suppress("UnstableApiUsage")
+private fun lafName(): String {
     val lafInfo = LafManager.getInstance().currentUIThemeLookAndFeel
-    return lafInfo.name == "Light" || lafInfo.name == "Dark" || lafInfo.name == "Light with Light Header"
+    return lafInfo.name
 }
