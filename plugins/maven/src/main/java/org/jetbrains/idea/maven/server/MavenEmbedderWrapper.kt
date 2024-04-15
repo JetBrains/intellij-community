@@ -85,13 +85,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput -> embedder.resolveProjects(taskInput, request, ourToken) },
       progressReporter, eventHandler)
-    if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
-      for (result in results) {
-        val data = result.projectData ?: continue
-        MavenBuildPathsChange({ transformer.toIdePath(it)!! }, { transformer.canBeRemotePath(it) }).perform(data.mavenModel)
-      }
-    }
-    return results
+    return MavenServerResultTransformer.getInstance(project)
+      .transform(transformer, results)
   }
 
   @Throws(MavenProcessCanceledException::class)
