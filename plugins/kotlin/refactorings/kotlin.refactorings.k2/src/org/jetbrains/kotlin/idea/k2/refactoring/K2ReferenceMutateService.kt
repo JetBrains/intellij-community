@@ -127,7 +127,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             } else {
                 qualifier?.replaceWith(parentFqn, targetElement) // do recursive short name replacement to preserve type arguments
             }
-            referenceExpression?.replaceShortName(fqName, targetElement)?.parent as KtUserType
+            referenceExpression?.replaceShortName(fqName, targetElement)?.replacedElement?.parent as KtUserType
         }
         return ReplaceResult(replacedElement)
     }
@@ -143,28 +143,17 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     private fun KtQualifiedExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
-        val isPartOfImport = parentOfType<KtImportDirective>(withSelf = false) != null
+        val isImport = parentOfType<KtImportDirective>(withSelf = false) != null
+        if (isImport) return ReplaceResult(replaced(KtPsiFactory(project).createExpression(fqName.asString())), false)
         val selectorExpression = selectorExpression ?: return null
-        val newSelectorExpression = when (selectorExpression) {
-            is KtSimpleNameExpression -> {
-                val newShortName = selectorExpression.replaceShortName(fqName, targetElement)
-                if (targetElement?.isCallableAsExtensionFunction() == true && !isPartOfImport) {
-                    containingKtFile.addImport(fqName)
-                    return ReplaceResult(newShortName, false)
-                } else newShortName
-            }
-
-            is KtCallExpression -> {
-                val newCall = selectorExpression.replaceShortName(fqName)
-                if (targetElement?.isCallableAsExtensionFunction() == true) {
-                    containingKtFile.addImport(fqName)
-                    return ReplaceResult(newCall, false)
-                } else newCall
-            }
-
+        val selectorReplacement = when (selectorExpression) {
+            is KtSimpleNameExpression -> selectorExpression.replaceShortName(fqName, targetElement)
+            is KtCallExpression -> selectorExpression.replaceShortName(fqName, targetElement)
             else -> null
         } ?: return null
-        return ReplaceResult(replaceWithQualified(fqName, newSelectorExpression), !isPartOfImport)
+        if (!selectorReplacement.canBeShortened) return selectorReplacement
+        val newSelectorExpression = selectorReplacement.replacedElement as? KtExpression ?: return null
+        return ReplaceResult(replaceWithQualified(fqName, newSelectorExpression), true)
     }
 
     private fun KtExpression.replaceWithQualified(fqName: FqName, selectorExpression: KtExpression): KtExpression {
@@ -175,12 +164,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return replaced(newQualifiedExpression)
     }
 
-    private fun KtCallExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
-        val newCall = replaceShortName(fqName)
-        if (targetElement?.isCallableAsExtensionFunction() == true) {
-            containingKtFile.addImport(fqName)
-            return ReplaceResult(newCall, false)
-        }
+    private fun KtCallExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
+        val shortNameReplacement = replaceShortName(fqName, targetElement) ?: return null
+        if (!shortNameReplacement.canBeShortened) return shortNameReplacement
+        val newCall = shortNameReplacement.replacedElement as KtExpression
         return ReplaceResult(newCall.replaceWithQualified(fqName, newCall), true)
     }
 
@@ -196,29 +183,33 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return ReplaceResult(replaced(callableReference), shouldShorten)
     }
 
-    private fun KtCallExpression.replaceShortName(fqName: FqName): KtExpression {
+    private fun KtCallExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult? {
         val psiFactory = KtPsiFactory(project)
         val newName = psiFactory.createSimpleName(fqName.shortName().asString())
-        calleeExpression?.replace(newName)
-        return this
+        val newCall = calleeExpression?.replaced(newName)?.parent as? KtCallExpression ?: return null
+        return if (targetElement?.isCallableAsExtensionFunction() == true) {
+            newCall.containingKtFile.addImport(fqName)
+            ReplaceResult(newCall, false)
+        } else ReplaceResult(newCall, true)
     }
 
     private fun KtSimpleNameExpression.replaceWith(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
-        val newNameExpr = replaceShortName(fqName, targetElement)
-        return if (targetElement?.isCallableAsExtensionFunction() == true) { // operation references (infix function calls)
-            newNameExpr.containingKtFile.addImport(fqName)
-            ReplaceResult(newNameExpr, false)
-        } else {
-            ReplaceResult(newNameExpr.replaceWithQualified(fqName, newNameExpr))
-        }
+        val shortNameReplaceResult = replaceShortName(fqName, targetElement)
+        if (!shortNameReplaceResult.canBeShortened) return shortNameReplaceResult
+        val newNameExpr = shortNameReplaceResult.replacedElement as KtExpression
+        return ReplaceResult(newNameExpr.replaceWithQualified(fqName, newNameExpr), true)
     }
 
-    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): KtExpression {
+    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName, targetElement: PsiElement?): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
         val shortName = fqName.shortName().asString()
         val isInfixFun = targetElement is KtNamedFunction && targetElement.modifierList?.hasModifier(KtTokens.INFIX_KEYWORD) == true
         val newNameExpression = if (isInfixFun) psiFactory.createOperationName(shortName) else psiFactory.createSimpleName(shortName)
-        return replaced(newNameExpression)
+        val newSimpleName = replaced(newNameExpression)
+        return if (targetElement?.isCallableAsExtensionFunction() == true) {
+            newSimpleName.containingKtFile.addImport(fqName)
+            ReplaceResult(newSimpleName, false)
+        } else ReplaceResult(newSimpleName, true)
     }
 
     override fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(
