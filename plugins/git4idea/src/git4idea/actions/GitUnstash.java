@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabAvailable;
 import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabVisible;
 
 /**
@@ -50,5 +51,14 @@ public class GitUnstash extends GitRepositoryAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification(GitBundle.message("unstash.error.can.not.unstash.changes.now"))) return;
     GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Project project = e.getProject();
+    if (project != null && isStashTabAvailable() && !isStashTabVisible(project)) {
+      e.getPresentation().setEnabled(false);
+    }
   }
 }
