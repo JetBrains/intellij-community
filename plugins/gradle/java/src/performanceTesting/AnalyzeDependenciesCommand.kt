@@ -3,9 +3,8 @@ package org.jetbrains.plugins.gradle.performanceTesting
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.dependency.analyzer.DAModule
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerManager
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.DEPENDENCIES
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerViewImpl
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
@@ -36,10 +35,10 @@ class AnalyzeDependenciesCommand(text: String, line: Int) : PerformanceCommandCo
         "Module $moduleName not found")
       val systemId = ProjectSystemId.findById(providerId) ?: throw IllegalArgumentException("Provider $providerId not found")
       val dependencyAnalyzerManager = DependencyAnalyzerManager.getInstance(project)
-      val dependencyAnalyzerView = dependencyAnalyzerManager.getOrCreate(systemId)
+      val dependencyAnalyzerView = dependencyAnalyzerManager.getOrCreate(systemId) as DependencyAnalyzerViewImpl
       dependencyAnalyzerView.setSelectedDependency(module, DAModule(moduleName))
       withTimeout(20.seconds) {
-        while ((dependencyAnalyzerView.getData(DEPENDENCIES.name) as List<*>).isEmpty()) {
+        while (dependencyAnalyzerView.getDependencies().isEmpty()) {
           delay(1000)
         }
       }
@@ -49,7 +48,7 @@ class AnalyzeDependenciesCommand(text: String, line: Int) : PerformanceCommandCo
         // Gradle: org.junit.jupiter:junit-jupiter:5.9.1 -> org.junit.jupiter:junit-jupiter:5.9.1
         // Maven: org.junit.jupiter:junit-jupiter:5.9.1 -> org.junit.jupiter:junit-jupiter:5.9.1
         .map { it.name.replace("Gradle: ", "").replace("Maven: ", "") }.toList()
-      val actual = (dependencyAnalyzerView.getData(DEPENDENCIES.name) as List<DependencyAnalyzerDependency>)
+      val actual = dependencyAnalyzerView.getDependencies()
         .map { it.data.toString() }
         .toSet()
 
