@@ -17,15 +17,6 @@ import java.util.stream.Collectors;
 public final class SuspendManagerUtil {
   private static final Logger LOG = Logger.getInstance(SuspendManagerUtil.class);
 
-  public static boolean isEvaluating(SuspendManager suspendManager, ThreadReferenceProxyImpl thread) {
-    for (SuspendContextImpl suspendContext : suspendManager.getEventContexts()) {
-      if (suspendContext.isEvaluating() && thread.equals(suspendContext.getThread())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /**
    * Returns suspend context that suspends the thread specified (may be currently evaluating)
    */

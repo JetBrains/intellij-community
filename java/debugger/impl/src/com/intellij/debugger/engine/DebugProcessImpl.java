@@ -1145,7 +1145,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       ThreadReferenceProxyImpl invokeThread = suspendContext.getThread();
 
-      if (SuspendManagerUtil.isEvaluating(getSuspendManager(), invokeThread)) {
+      if (invokeThread.isEvaluating()) {
         throw EvaluateExceptionUtil.NESTED_EVALUATION_ERROR;
       }
 
@@ -1331,10 +1331,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       ThreadBlockedMonitor.InvocationWatcher invocationWatcher = null;
       try {
+        thread.setEvaluating(true);
         invocationWatcher = myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context);
         result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
       }
       finally {
+        thread.setEvaluating(false);
         if (invocationWatcher != null) {
           invocationWatcher.invocationFinished();
         }
