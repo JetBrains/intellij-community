@@ -11,13 +11,13 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
-internal abstract class ProPromoConfigurable : ConfigurableWithId, Configurable.Promo {
+abstract class ProPromoConfigurable : ConfigurableWithId, Configurable.Promo {
   override fun isModified(): Boolean = false
   override fun apply() = Unit
   override fun getPromoIcon(): Icon = AllIcons.Ultimate.Lock
 }
 
-internal abstract class ProPromoConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
+abstract class ProPromoConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
   final override fun createConfigurable(): Configurable? {
     return clazz.java.getConstructor().newInstance()
   }
