@@ -100,6 +100,10 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     }
   }
 
+  fun scanningStarted() {
+    timesImpl.updatingStart = ZonedDateTime.now(ZoneOffset.UTC)
+  }
+
   fun scanningFinished() {
     val now = ZonedDateTime.now(ZoneOffset.UTC)
     timesImpl.updatingEnd = now
@@ -262,7 +266,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
     override val scanningReason: String?,
     override val scanningType: ScanningType,
     override val scanningId: Long,
-    override val updatingStart: ZonedDateTime,
+    override var updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,
     override var dumbModeStart: ZonedDateTime? = null,

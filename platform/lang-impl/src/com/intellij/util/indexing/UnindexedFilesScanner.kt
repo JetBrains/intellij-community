@@ -77,6 +77,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private val myProvidedStatusMark: StatusMark?
   private val myFutureScanningRequestToken: FutureScanningRequestToken
   private var flushQueueAfterScanning = true
+  private val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, scanningType)
 
   @TestOnly
   constructor(project: Project) : this(project, false, false, false, null, null,
@@ -205,19 +206,18 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   private fun scan(snapshot: PerformanceWatcher.Snapshot,
-                   scanningHistory: ProjectScanningHistoryImpl,
                    indicator: CheckPauseOnlyProgressIndicator,
                    progressReporter: IndexingProgressReporter,
                    markRef: Ref<StatusMark>) {
     var snapshot = snapshot
-    markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
+    markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
     try {
       if (myPusher is PushedFilePropertiesUpdaterImpl) {
         myPusher.performDelayedPushTasks()
       }
     }
     finally {
-      markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
+      markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.name))
 
@@ -228,7 +228,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
 
     val orderedProviders: List<IndexableFilesIterator>
-    markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.CreatingIterators, true)
+    markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, true)
     try {
       if (predefinedIndexableFilesIterators == null) {
         val pair = collectProviders(myProject, myIndex)
@@ -240,32 +240,31 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
     finally {
-      markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.CreatingIterators, false)
+      markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, false)
     }
 
-    markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true)
+    markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true)
     try {
-      collectIndexableFilesConcurrently(indicator, progressReporter, orderedProviders, scanningHistory)
+      collectIndexableFilesConcurrently(indicator, progressReporter, orderedProviders)
       if (isFullIndexUpdate() || myOnProjectOpen) {
         myProject.putUserData(CONTENT_SCANNED, true)
       }
     }
     finally {
-      markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false)
+      markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false)
     }
-    val scanningCompletedMessage = getLogScanningCompletedStageMessage(scanningHistory)
+    val scanningCompletedMessage = getLogScanningCompletedStageMessage()
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage))
   }
 
-  private fun scanAndUpdateUnindexedFiles(scanningHistory: ProjectScanningHistoryImpl,
-                                          indicator: CheckPauseOnlyProgressIndicator,
+  private fun scanAndUpdateUnindexedFiles(indicator: CheckPauseOnlyProgressIndicator,
                                           progressReporter: IndexingProgressReporter,
                                           markRef: Ref<StatusMark>) {
     try {
       if (!IndexInfrastructure.hasIndices()) {
         return
       }
-      scanUnindexedFiles(scanningHistory, indicator, progressReporter, markRef)
+      scanUnindexedFiles(indicator, progressReporter, markRef)
     }
     finally {
       // Scanning may throw exception (or error).
@@ -278,8 +277,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
   }
 
-  private fun scanUnindexedFiles(scanningHistory: ProjectScanningHistoryImpl,
-                                 indicator: CheckPauseOnlyProgressIndicator,
+  private fun scanUnindexedFiles(indicator: CheckPauseOnlyProgressIndicator,
                                  progressReporter: IndexingProgressReporter,
                                  markRef: Ref<StatusMark>) {
     LOG.info("Started scanning for indexing of " + myProject.name + ". Reason: " + indexingReason)
@@ -307,7 +305,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         DumbModeProgressTitle.getInstance(myProject)
           .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime)
       }
-      scan(snapshot, scanningHistory, indicator, progressReporter, markRef)
+      scan(snapshot, indicator, progressReporter, markRef)
     }
     finally {
       Disposer.dispose(scanningLifetime)
@@ -349,8 +347,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   private fun collectIndexableFilesConcurrently(indicator: CheckPauseOnlyProgressIndicator,
                                                 progressReporter: IndexingProgressReporter,
-                                                providers: List<IndexableFilesIterator>,
-                                                projectScanningHistory: ProjectScanningHistoryImpl) {
+                                                providers: List<IndexableFilesIterator>) {
     if (providers.isEmpty()) {
       myFutureScanningRequestToken.markSuccessful()
       return
@@ -389,7 +386,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         val providerScanningStartTime = System.nanoTime()
         try {
           myProject.getService(PerProjectIndexingQueue::class.java)
-            .getSink(provider, projectScanningHistory.scanningSessionId).use { perProviderSink ->
+            .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
               progressReporter.getSubTaskReporter().use { subTaskReporter ->
                 subTaskReporter.setText(provider.rootsScanningProgressText)
                 val rootsAndFiles: MutableList<Pair<VirtualFile?, List<VirtualFile>>> = ArrayList()
@@ -449,7 +446,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           scanningStatistics.numberOfSkippedFiles = thisProviderDeduplicateFilter.numberOfSkippedFiles
           synchronized(allTasksFinished) {
             if (!allTasksFinished.get()) {
-              projectScanningHistory.addScanningStatistics(scanningStatistics)
+              scanningHistory.addScanningStatistics(scanningStatistics)
             }
           }
         }
@@ -511,9 +508,15 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != true, "Scanning is already in progress")
     myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true)
     myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
+    val diagnosticDumper = IndexDiagnosticDumper.getInstance()
     try {
-      val history = performScanningAndIndexing(indicator, progressReporter)
-      futureScanningHistory.set(history)
+      diagnosticDumper.onScanningStarted(scanningHistory)
+      try {
+        performScanningAndIndexing(indicator, progressReporter)
+      } finally {
+        diagnosticDumper.onScanningFinished(scanningHistory)
+      }
+      futureScanningHistory.set(scanningHistory)
     }
     catch (t: Throwable) {
       futureScanningHistory.setException(t)
@@ -535,7 +538,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       // Test will run a bit slower, but behavior will be more stable
       LockSupport.parkNanos(DELAY_IN_TESTS_MS * 1000000L)
     }
-    val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, scanningType)
     myIndex.loadIndexes()
     myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
     if (startCondition != null) { // wait until indexes for dirty files are cleared
@@ -544,12 +546,11 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
     // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
     myIndex.changedFilesCollector.ensureUpToDate()
-    IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory)
     val markRef = Ref<StatusMark>()
     try {
       ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
       (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
-        scanAndUpdateUnindexedFiles(scanningHistory, indicator, progressReporter, markRef)
+        scanAndUpdateUnindexedFiles(indicator, progressReporter, markRef)
       }
     }
     catch (e: Throwable) {
@@ -565,7 +566,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         DependenciesIndexedStatusService.getInstance(myProject)
           .indexingFinished(!scanningHistory.times.wasInterrupted, markRef.get())
       }
-      IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory)
     }
     return scanningHistory
   }
@@ -608,6 +608,26 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     this.flushQueueAfterScanning = flushQueueAfterScanning
   }
 
+  private fun markStage(scanningStage: ProjectScanningHistoryImpl.Stage, isStart: Boolean) {
+    ProgressManager.checkCanceled()
+    val scanningStageTime = Instant.now()
+    if (isStart) {
+      scanningHistory.startStage(scanningStage, scanningStageTime)
+    }
+    else {
+      scanningHistory.stopStage(scanningStage, scanningStageTime)
+    }
+    ProgressManager.checkCanceled()
+  }
+
+  private fun getLogScanningCompletedStageMessage(): String {
+    val statistics = scanningHistory.scanningStatistics
+    val numberOfScannedFiles = statistics.map(JsonScanningStatistics::numberOfScannedFiles).sum()
+    val numberOfFilesForIndexing = statistics.map(JsonScanningStatistics::numberOfFilesForIndexing).sum()
+    return "Scanning completed for " + scanningHistory.project.name + '.' +
+           " Number of scanned files: " + numberOfScannedFiles + "; number of files for indexing: " + numberOfFilesForIndexing
+  }
+
   companion object {
     private val DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0)
 
@@ -640,26 +660,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         uniqueIterators.putIfAbsent(iterator.origin, iterator)
       }
       return ArrayList(uniqueIterators.values)
-    }
-
-    private fun markStage(scanningHistory: ProjectScanningHistoryImpl, scanningStage: ProjectScanningHistoryImpl.Stage, isStart: Boolean) {
-      ProgressManager.checkCanceled()
-      val scanningStageTime = Instant.now()
-      if (isStart) {
-        scanningHistory.startStage(scanningStage, scanningStageTime)
-      }
-      else {
-        scanningHistory.stopStage(scanningStage, scanningStageTime)
-      }
-      ProgressManager.checkCanceled()
-    }
-
-    private fun getLogScanningCompletedStageMessage(scanningHistory: ProjectScanningHistory): String {
-      val statistics = scanningHistory.scanningStatistics
-      val numberOfScannedFiles = statistics.map(JsonScanningStatistics::numberOfScannedFiles).sum()
-      val numberOfFilesForIndexing = statistics.map(JsonScanningStatistics::numberOfFilesForIndexing).sum()
-      return "Scanning completed for " + scanningHistory.project.name + '.' +
-             " Number of scanned files: " + numberOfScannedFiles + "; number of files for indexing: " + numberOfFilesForIndexing
     }
 
     @JvmStatic
