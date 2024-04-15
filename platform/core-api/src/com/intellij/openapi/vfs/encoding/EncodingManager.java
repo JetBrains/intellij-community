@@ -14,6 +14,7 @@ import java.util.Collection;
 public abstract class EncodingManager extends EncodingRegistry {
   public static final @NonNls String PROP_NATIVE2ASCII_SWITCH = "native2ascii";
   public static final @NonNls String PROP_PROPERTIES_FILES_ENCODING = "propertiesFilesEncoding";
+  public static final @NonNls String PROP_DEFAULT_FILES_ENCODING = "defaultFilesEncoding";
 
   public static @NotNull EncodingManager getInstance() {
     return ApplicationManager.getApplication().getService(EncodingManager.class);
