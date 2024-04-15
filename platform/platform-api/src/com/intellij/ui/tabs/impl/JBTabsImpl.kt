@@ -369,11 +369,11 @@ open class JBTabsImpl(
       Disposer.register(parentDisposable, tabActionsAutoHideListenerDisposable)
       gp.addMouseMotionPreprocessor(tabActionsAutoHideListener, tabActionsAutoHideListenerDisposable)
       glassPane = gp
-      StartupUiUtil.addAwtListener({
-                                     if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
-                                       processFocusChange()
-                                     }
-                                   }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable)
+      StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK, parentDisposable) {
+        if (JBPopupFactory.getInstance().getChildPopups(this@JBTabsImpl).isEmpty()) {
+          processFocusChange()
+        }
+      }
       dragHelper = createDragHelper(child, parentDisposable)
       dragHelper!!.start()
     }
@@ -411,31 +411,27 @@ open class JBTabsImpl(
   fun isScrollBarAdjusting(): Boolean = scrollBar.valueIsAdjusting
 
   private fun addMouseMotionAwtListener(parentDisposable: Disposable) {
-    StartupUiUtil.addAwtListener(object : AWTEventListener {
-
-
-      override fun eventDispatched(event: AWTEvent) {
-        val tabRectangle = lastLayoutPass?.headerRectangle ?: return
-        event as MouseEvent
-        val point = event.point
-        SwingUtilities.convertPointToScreen(point, event.component)
-        var rectangle = visibleRect
-        rectangle = rectangle.intersection(tabRectangle)
-        val p = rectangle.location
-        SwingUtilities.convertPointToScreen(p, this@JBTabsImpl)
-        rectangle.location = p
-        val inside = rectangle.contains(point)
-        if (inside == isMouseInsideTabsArea) {
-          return
-        }
-
-        isMouseInsideTabsArea = inside
-        relayoutAlarm.cancelAllRequests()
-        if (!inside) {
-          setRecentlyActive()
-        }
+    StartupUiUtil.addAwtListener(AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable) { event ->
+      val tabRectangle = lastLayoutPass?.headerRectangle ?: return@addAwtListener
+      event as MouseEvent
+      val point = event.point
+      SwingUtilities.convertPointToScreen(point, event.component)
+      var rectangle = visibleRect
+      rectangle = rectangle.intersection(tabRectangle)
+      val p = rectangle.location
+      SwingUtilities.convertPointToScreen(p, this@JBTabsImpl)
+      rectangle.location = p
+      val inside = rectangle.contains(point)
+      if (inside == isMouseInsideTabsArea) {
+        return@addAwtListener
       }
-    }, AWTEvent.MOUSE_MOTION_EVENT_MASK, parentDisposable)
+
+      isMouseInsideTabsArea = inside
+      relayoutAlarm.cancelAllRequests()
+      if (!inside) {
+        setRecentlyActive()
+      }
+    }
   }
 
   private fun isInsideTabsArea(x: Int, y: Int): Boolean {

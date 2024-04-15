@@ -1321,16 +1321,15 @@ private fun tryToExecuteNow(action: AnAction,
           result.setRejected()
           return@performUserActivity
         }
-        addAwtListener(
-          { event1 ->
-            if (event1.id == WindowEvent.WINDOW_OPENED || event1.id == WindowEvent.WINDOW_ACTIVATED) {
-              if (!result.isProcessed) {
-                val we = event1 as WindowEvent
-                IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
-                  result.createSetDoneRunnable(), ModalityState.defaultModalityState())
-              }
+        addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
+          if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
+            if (!result.isProcessed) {
+              val we = it as WindowEvent
+              IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
+                result.createSetDoneRunnable(), ModalityState.defaultModalityState())
             }
-          }, AWTEvent.WINDOW_EVENT_MASK, result)
+          }
+        }
         try {
           ActionUtil.performActionDumbAwareWithCallbacks(action, event)
         }

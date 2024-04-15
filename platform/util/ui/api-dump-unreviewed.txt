@@ -5725,6 +5725,7 @@ f:com.intellij.util.ui.SplitBySeparatorPolicy
 - getPresentableName(java.io.File,I):java.lang.String
 f:com.intellij.util.ui.StartupUiUtil
 - sf:INSTANCE:com.intellij.util.ui.StartupUiUtil
+- sf:addAwtListener(J,com.intellij.openapi.Disposable,java.awt.event.AWTEventListener):V
 - sf:addAwtListener(java.awt.event.AWTEventListener,J,com.intellij.openapi.Disposable):V
 - sf:drawImage(java.awt.Graphics,java.awt.Image):V
 - sf:drawImage(java.awt.Graphics,java.awt.Image,I,I,java.awt.image.ImageObserver):V
