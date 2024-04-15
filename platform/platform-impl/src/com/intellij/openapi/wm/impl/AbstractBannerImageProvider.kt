@@ -17,7 +17,7 @@ private const val TIMEOUT = 500L
 private val LOG = Logger.getInstance(OnboardingBackgroundImageProviderBase::class.java)
 
 @ApiStatus.Internal
-abstract class BannerImageProviderImpl: BannerImageProvider {
+abstract class AbstractBannerImageProvider: BannerImageProvider {
 
   protected open fun getImageUrl(): URL? = null
 
