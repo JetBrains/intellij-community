@@ -15,7 +15,6 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
 import org.jetbrains.annotations.Nls
@@ -25,9 +24,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 object ExecUtil {
-  private val hasGkSudo = PathExecLazyValue.create("gksudo")
-  private val hasKdeSudo = PathExecLazyValue.create("kdesudo")
-  private val hasPkExec = PathExecLazyValue.create("pkexec")
   private val hasGnomeTerminal = PathExecLazyValue.create("gnome-terminal")
   private val hasKdeTerminal = PathExecLazyValue.create("konsole")
   private val hasUrxvt = PathExecLazyValue.create("urxvt")
@@ -155,59 +151,8 @@ object ExecUtil {
     val command = mutableListOf(commandLine.exePath)
     command += commandLine.parametersList.list
 
-    val providedCommand = runCatching {
-      SudoCommandProvider.EXTENSION_POINT_NAME.extensionList.firstNotNullOfOrNull { it.sudoCommand(commandLine) }
-    }.getOrNull()
-
-    val sudoCommandLine = when {
-      providedCommand != null -> providedCommand
-      SystemInfoRt.isWindows -> {
-        val launcherExe = PathManager.findBinFileWithException("launcher.exe")
-        GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
-      }
-      SystemInfoRt.isMac -> {
-        val escapedCommand = command.joinToString(separator = " & \" \" & ") { escapeAppleScriptArgument(it) }
-        val messageArg = " with prompt \"${StringUtil.escapeQuotes(prompt)}\""
-        val escapedScript =
-          "tell current application\n" +
-          "   activate\n" +
-          "   do shell script ${escapedCommand}${messageArg} with administrator privileges without altering line endings\n" +
-          "end tell"
-        GeneralCommandLine(osascriptPath, "-e", escapedScript)
-      }
-      // other UNIX
-      hasGkSudo.get() -> {
-        GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)//NON-NLS
-      }
-      hasKdeSudo.get() -> {
-        GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)//NON-NLS
-      }
-      hasPkExec.get() -> {
-        GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)//NON-NLS
-      }
-      hasTerminalApp() -> {
-        val escapedCommandLine = command.joinToString(separator = " ") { escapeUnixShellArgument(it) }
-        @NlsSafe
-        val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
-          emptyList<String>() -> ""
-          else -> "env " + args.joinToString(separator = " ") { escapeUnixShellArgument(it) } + " "
-        }
-        val script = createTempExecutableScript(
-          "sudo", ".sh",
-          "#!/bin/sh\n" +
-          "echo " + escapeUnixShellArgument(prompt) + "\n" +
-          "echo\n" +
-          "sudo -- " + escapedEnvCommand + escapedCommandLine + "\n" +
-          "STATUS=$?\n" +
-          "echo\n" +
-          "read -p \"Press Enter to close this window...\" TEMP\n" +
-          "exit \$STATUS\n")
-        GeneralCommandLine(getTerminalCommand(IdeUtilIoBundle.message("terminal.title.install"), script.absolutePath))
-      }
-      else -> {
-        throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
-      }
-    }
+    val sudoCommandLine = SudoCommandProvider.getInstance().sudoCommand(commandLine, prompt)
+                          ?: throw UnsupportedOperationException("Cannot `sudo` on this system - no suitable utils found")
 
     val parentEnvType = if (SystemInfoRt.isWindows) GeneralCommandLine.ParentEnvironmentType.NONE else commandLine.parentEnvironmentType
     return sudoCommandLine
@@ -223,7 +168,7 @@ object ExecUtil {
       else -> listOf("env") + args
     }
 
-  private fun envCommandArgs(commandLine: GeneralCommandLine): List<String> =
+  internal fun envCommandArgs(commandLine: GeneralCommandLine): List<String> =
     // sudo doesn't pass parent process environment for security reasons,
     // for the same reasons we pass only explicitly configured env variables
     when (val env = commandLine.environment) {
@@ -237,7 +182,7 @@ object ExecUtil {
     execAndGetOutput(sudoCommand(commandLine, prompt))
 
   @NlsSafe
-  private fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
+  internal fun escapeAppleScriptArgument(arg: String) = "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @JvmStatic
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"
