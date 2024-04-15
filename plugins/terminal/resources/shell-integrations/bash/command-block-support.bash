@@ -121,6 +121,7 @@ __jetbrains_intellij_command_terminated() {
   __jetbrains_intellij_configure_prompt
   if [ -z "$__jetbrains_intellij_initialized" ]; then
     __jetbrains_intellij_initialized='1'
+    __jetbrains_intellij_fix_prompt_command_order
     builtin local shell_info="$(__jetbrains_intellij_collect_shell_info)"
     __jetbrains_intellij_debug_log 'initialized'
     builtin printf '\e]1341;initialized;shell_info=%s\a' "$(__jetbrains_intellij_encode $shell_info)"
@@ -201,6 +202,55 @@ __jetbrains_intellij_collect_shell_info() {
 "\"bashItTheme\": \"$(__jetbrains_intellij_escape_json $bash_it_theme)\""\
 "}"
   builtin printf '%s' $content_json
+}
+
+# Bash-preexec lib is modifying the PROMPT_COMMAND variable in order to call precmd_functions.
+# But it is placing '__bp_precmd_invoke_cmd' function to the start of the PROMPT_COMMAND,
+# so all other hooks from the plugins (like PS1 updating) are invoked after our precmd_functions.
+# And at the moment of our '__jetbrains_intellij_command_terminated' call, we see an outdated PS1.
+# This function is reordering the functions in the PROMPT_COMMAND placing the Bash-preexec hooks to the end.
+function __jetbrains_intellij_fix_prompt_command_order() {
+  function cleanup_command() {
+    builtin local command="$1"
+    command="${command//@(__bp_precmd_invoke_cmd|__bp_interactive_mode)/}"
+    command="${command//$'\n':$'\n'/$'\n'}"
+    # it is the function from the Bash-preexec
+    __bp_sanitize_string command "$command"
+    if [[ "${command:-:}" == ":" ]]; then
+          command=
+    fi
+    printf '%s' "$command"
+  }
+
+  __jetbrains_intellij_debug_log "Before PROMPT_COMMAND modification: $(declare -p PROMPT_COMMAND)"
+  # PROMPT_COMMAND is an array in Bash >= 5.1, so we need two implementations
+  if [[ -n "${BASH_VERSINFO-}" ]] && (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1) )); then
+    # Remove the bash-preexec functions from the PROMPT_COMMAND array
+    for index in "${!PROMPT_COMMAND[@]}"; do
+      builtin local cur_command="${PROMPT_COMMAND[$index]}"
+      cur_command="$(cleanup_command "$cur_command")"
+      if [[ -n $cur_command ]]; then
+        PROMPT_COMMAND[$index]=$cur_command
+      else
+        unset 'PROMPT_COMMAND[$index]'
+      fi
+    done
+    # Add removed functions to the end of the array
+    PROMPT_COMMAND+=('__bp_precmd_invoke_cmd')
+    PROMPT_COMMAND+=('__bp_interactive_mode')
+    # Fix the gaps in the array because of removed items
+    builtin local new_array
+    for i in "${!PROMPT_COMMAND[@]}"; do
+      new_array+=( "${PROMPT_COMMAND[i]}" )
+    done
+    PROMPT_COMMAND=("${new_array[@]}")
+  else
+    PROMPT_COMMAND="$(cleanup_command "$PROMPT_COMMAND")"
+    PROMPT_COMMAND+=$'\n__bp_precmd_invoke_cmd\n__bp_interactive_mode'
+  fi
+
+  unset -f cleanup_command
+  __jetbrains_intellij_debug_log "After PROMPT_COMMAND modification: $(declare -p PROMPT_COMMAND)"
 }
 
 # override clear behaviour to handle it on IDE side and remove the blocks
