@@ -2,67 +2,67 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinIfConditionFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinIfConditionFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingIfBranchFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingIfBranchFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinWhileConditionFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinWhileConditionFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinForConditionFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinForConditionFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingForOrWhileBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingForOrWhileBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinWhenSubjectCaretFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinWhenSubjectCaretFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingWhenBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingWhenBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinMissingWhenEntryBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinMissingWhenEntryBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinDoWhileFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinDoWhileFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFunctionParametersFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFunctionParametersFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFunctionDeclarationBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFunctionDeclarationBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinPropertySetterParametersFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinPropertySetterParametersFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinPropertyAccessorBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinPropertyAccessorBodyFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinTryBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinTryBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinCatchParameterFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinCatchParameterFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinCatchBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinCatchBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinFinallyBodyFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinFinallyBodyFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KtLastLambdaParameterFixer"/>
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinClassInitializerFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinClassInitializerFixer"/>
 
     <smartEnterProcessorFixer
             language="kotlin"
@@ -70,7 +70,7 @@
 
     <smartEnterProcessorFixer
             language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.KotlinValueArgumentListFixer"/>
 
   </extensions>
 
