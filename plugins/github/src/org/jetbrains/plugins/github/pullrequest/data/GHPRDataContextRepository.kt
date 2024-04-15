@@ -123,9 +123,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                     ghostUserDetails,
                                                     account, currentUser,
                                                     repositoryInfo)
-      val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-      val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), project, securityService,
-                                              requestExecutor, account.server, apiRepositoryPath)
+      val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), project, securityService,
+                                                  requestExecutor, apiRepositoryCoordinates)
       val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
       val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
                                                   remoteCoordinates, apiRepositoryCoordinates)
@@ -138,9 +137,9 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
                                                                   cs,
+                                                                  securityService,
                                                                   repoDataService,
                                                                   detailsService,
-                                                                  stateService,
                                                                   reviewService,
                                                                   filesService,
                                                                   commentService,

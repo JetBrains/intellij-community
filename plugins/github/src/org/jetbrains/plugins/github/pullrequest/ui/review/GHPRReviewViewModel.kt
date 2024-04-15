@@ -7,7 +7,6 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
@@ -63,7 +62,7 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
     cs.launch {
       val ctx = currentCoroutineContext()
       val viewerIsAuthor = try {
-        dataProvider.detailsData.loadDetails().await().viewerDidAuthor
+        dataProvider.detailsData.loadDetails().viewerDidAuthor
       }
       catch (e: Exception) {
         LOG.info("Details loading failed", e)

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.google.common.graph.Traverser
 import com.intellij.collaboration.async.classAsCoroutineName
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.impl.patch.FilePatch
@@ -17,6 +19,7 @@ import git4idea.remote.hosting.infoFlow
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
@@ -24,11 +27,11 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataS
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 
-class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
-                                  private val repositoryDataService: GHPRRepositoryDataService,
-                                  private val changesService: GHPRChangesService,
-                                  private val pullRequestId: GHPRIdentifier,
-                                  private val detailsData: GHPRDetailsDataProviderImpl)
+internal class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
+                                           private val repositoryDataService: GHPRRepositoryDataService,
+                                           private val changesService: GHPRChangesService,
+                                           private val pullRequestId: GHPRIdentifier,
+                                           private val detailsData: GHPRDetailsDataProviderImpl)
   : GHPRChangesDataProvider, Disposable {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
@@ -36,23 +39,23 @@ class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
   private var lastKnownHeadSha: String? = null
 
   init {
-    detailsData.addDetailsLoadedListener(this) {
-      val details = detailsData.loadedDetails ?: return@addDetailsLoadedListener
-
-      if (details.baseRefOid != lastKnownBaseSha || details.headRefOid != lastKnownHeadSha) {
-        lastKnownBaseSha = details.baseRefOid
-        lastKnownHeadSha = details.headRefOid
-        reloadChanges()
-      }
-      else {
-        lastKnownBaseSha = details.baseRefOid
-        lastKnownHeadSha = details.headRefOid
+    cs.launchNow(Dispatchers.Main) {
+      detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.collect { details ->
+        if (details.baseRefOid != lastKnownBaseSha || details.headRefOid != lastKnownHeadSha) {
+          lastKnownBaseSha = details.baseRefOid
+          lastKnownHeadSha = details.headRefOid
+          reloadChanges()
+        }
+        else {
+          lastKnownBaseSha = details.baseRefOid
+          lastKnownHeadSha = details.headRefOid
+        }
       }
     }
   }
 
   private val baseBranchFetchRequestValue = LazyCancellableBackgroundProcessValue.create { indicator ->
-    detailsData.loadDetails().thenCompose {
+    cs.async { detailsData.loadDetails() }.asCompletableFuture().thenCompose {
       changesService.fetchBranch(indicator, it.baseRefName)
     }
   }
@@ -68,7 +71,7 @@ class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
   private val changesProviderValue = LazyCancellableBackgroundProcessValue.create { indicator ->
     val commitsRequest = apiCommitsRequestValue.value
 
-    detailsData.loadDetails()
+    cs.async { detailsData.loadDetails() }.asCompletableFuture()
       .thenCompose {
         changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid).thenCombine(commitsRequest) { mergeBaseRef, commits ->
           mergeBaseRef to commits
@@ -82,9 +85,7 @@ class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
   override val newChangesInReviewRequest: SharedFlow<Deferred<Boolean>> = run {
     val repository = repositoryDataService.remoteCoordinates.repository
     val currentRevFlow = repository.infoFlow().map { it.currentRevision }
-    val headRevFlow = detailsData.detailsRequestFlow().transformLatest {
-      runCatching { it.await() }.onSuccess { emit(it.headRefOid) }
-    }
+    val headRevFlow = detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.headRefOid }
 
     // cant just do combineTransform bc it will not cancel previous computation
     currentRevFlow.combine(headRevFlow) { currentRev, headRev ->
@@ -116,7 +117,7 @@ class GHPRChangesDataProviderImpl(parentCs: CoroutineScope,
   override fun loadPatchFromMergeBase(progressIndicator: ProgressIndicator, commitSha: String, filePath: String)
     : CompletableFuture<FilePatch?> {
     // cache merge base
-    return detailsData.loadDetails().thenCompose {
+    return cs.async { detailsData.loadDetails() }.asCompletableFuture().thenCompose {
       changesService.loadMergeBaseOid(progressIndicator, it.baseRefOid, it.headRefOid)
     }.thenCompose {
       changesService.loadPatch(it, commitSha)

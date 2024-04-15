@@ -242,6 +242,7 @@ f:com.intellij.collaboration.api.util.LinkHttpHeaderValue$Companion
 - *sf:combineState(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.StateFlow
 - *sf:combineState(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.StateFlow
 - sf:computationState(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
+- sf:computationStateFlow(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - sf:disposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:disposingScope(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.CoroutineScope
 - bs:disposingScope$default(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext,I,java.lang.Object):kotlinx.coroutines.CoroutineScope
@@ -2370,6 +2371,7 @@ f:com.intellij.collaboration.util.RefComparisonChangeKt
 - sf:getFileStatus(com.intellij.collaboration.util.RefComparisonChange):com.intellij.openapi.vcs.FileStatus
 f:com.intellij.collaboration.util.ResultUtil
 - sf:INSTANCE:com.intellij.collaboration.util.ResultUtil
+- f:processErrorAndGet(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 - f:runCatchingUser-IoAF18A(kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.collaboration.util.ServiceUtilKt
 f:com.intellij.collaboration.util.SingleCoroutineLauncher

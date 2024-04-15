@@ -10,9 +10,9 @@ import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
@@ -21,13 +21,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.*
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewDecision
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.mergeabilityStateComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHReviewersUtils
@@ -50,8 +53,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   private val repositoryDataService: GHPRRepositoryDataService,
   private val securityService: GHPRSecurityService,
   private val avatarIconsProvider: GHAvatarIconsProvider,
-  private val dataProvider: GHPRDetailsDataProvider,
-  private val stateData: GHPRStateDataProvider,
+  private val detailsData: GHPRDetailsDataProvider,
   private val changesData: GHPRChangesDataProvider,
   private val reviewVmHelper: GHPRReviewViewModelHelper
 ) : GHPRReviewFlowViewModel {
@@ -65,8 +67,8 @@ class GHPRReviewFlowViewModelImpl internal constructor(
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
   // TODO: handle error
-  private val mergeabilityState: StateFlow<GHPRMergeabilityState?> = stateData.mergeabilityState
-    .map { it.getOrNull() }
+  private val mergeabilityState: StateFlow<GHPRMergeabilityState?> =
+    detailsData.mergeabilityStateComputationFlow.mapNotNull { it.getOrNull() }
     .stateIn(cs, SharingStarted.Eagerly, null)
 
   override val requestedReviewers: SharedFlow<List<GHPullRequestRequestedReviewer>> =
@@ -140,7 +142,6 @@ class GHPRReviewFlowViewModelImpl internal constructor(
 
   override fun mergeReview() = runAction {
     val details = detailsState.value
-    val mergeability = mergeabilityState.value ?: return@runAction
     val dialog = ReviewMergeCommitMessageDialog(project,
                                                 CollaborationToolsBundle.message("dialog.review.merge.commit.title"),
                                                 GithubBundle.message("pull.request.merge.pull.request", details.number),
@@ -148,17 +149,16 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     if (!dialog.showAndGet()) {
       return@runAction
     }
-    stateData.merge(EmptyProgressIndicator(), splitCommitMessage(dialog.message), mergeability.headRefOid).await()
+    detailsData.merge(splitCommitMessage(dialog.message), details.headRefOid)
   }
 
   override fun rebaseReview() = runAction {
-    val mergeability = mergeabilityState.value ?: return@runAction
-    stateData.rebaseMerge(EmptyProgressIndicator(), mergeability.headRefOid).await()
+    val details = detailsState.value
+    detailsData.rebaseMerge(details.headRefOid)
   }
 
   override fun squashAndMergeReview() = runAction {
     val details = detailsState.value
-    val mergeability = mergeabilityState.value ?: return@runAction
     val commits = changesData.loadCommitsFromApi().await()
     val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
     val dialog = ReviewMergeCommitMessageDialog(project,
@@ -169,25 +169,19 @@ class GHPRReviewFlowViewModelImpl internal constructor(
       return@runAction
     }
     val message = dialog.message
-    stateData.squashMerge(EmptyProgressIndicator(), splitCommitMessage(message), mergeability.headRefOid).await()
+    detailsData.squashMerge(splitCommitMessage(message), details.headRefOid)
   }
 
-  override fun closeReview() = runAction {
-    stateData.close(EmptyProgressIndicator()).await()
-  }
+  override fun closeReview() = runAction(detailsData::close)
 
-  override fun reopenReview() = runAction {
-    stateData.reopen(EmptyProgressIndicator()).await()
-  }
+  override fun reopenReview() = runAction(detailsData::reopen)
 
-  override fun postDraftedReview() = runAction {
-    stateData.markReadyForReview(EmptyProgressIndicator()).await()
-  }
+  override fun postDraftedReview() = runAction(detailsData::markReadyForReview)
 
   override fun removeReviewer(reviewer: GHPullRequestRequestedReviewer) = runAction {
     val reviewers = requestedReviewers.first()
     val delta = CollectionDelta(reviewers, reviewers - reviewer)
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
+    detailsData.adjustReviewers(delta)
   }
 
   override fun requestReview(parentComponent: JComponent) = runAction {
@@ -200,7 +194,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
       reviewers,
       loadPotentialReviewers()
     ).await()
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), selectedReviewers).await()
+    detailsData.adjustReviewers(selectedReviewers)
   }
 
   private fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>> {
@@ -214,13 +208,13 @@ class GHPRReviewFlowViewModelImpl internal constructor(
     val delta = requestedReviewers.combine(reviewerReviews) { reviewers, reviews ->
       CollectionDelta(reviewers, reviewers + reviews.keys)
     }.first()
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
+    detailsData.adjustReviewers(delta)
   }
 
   override fun setMyselfAsReviewer() = runAction {
     val reviewers = requestedReviewers.first()
     val delta = CollectionDelta(reviewers, reviewers + securityService.currentUser)
-    dataProvider.adjustReviewers(EmptyProgressIndicator(), delta).await()
+    detailsData.adjustReviewers(delta)
   }
 
   private fun runAction(action: suspend () -> Unit) {

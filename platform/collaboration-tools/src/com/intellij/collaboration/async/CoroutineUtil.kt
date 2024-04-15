@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.collaboration.async
 
 import com.intellij.collaboration.util.ComputedResult
@@ -542,6 +544,40 @@ fun <T> Flow<Deferred<T>>.computationState(): Flow<ComputedResult<T>> =
       }
     }
   }
+
+
+@OptIn(ExperimentalCoroutinesApi::class)
+inline fun <A, T> computationStateFlow(arguments: Flow<A>, crossinline computer: suspend (A) -> T): Flow<ComputedResult<T>> =
+  arguments.transformLatest { parameters ->
+    supervisorScope {
+      val req = async(start = CoroutineStart.UNDISPATCHED) {
+        computer(parameters)
+      }
+      if (!req.isCompleted) {
+        emit(ComputedResult.loading())
+      }
+
+      val toEmit = ComputedResult.compute { req.await() }
+      currentCoroutineContext().ensureActive()
+      if (toEmit != null) {
+        emit(toEmit)
+      }
+    }
+  }
+
+/**
+ * Awaits the first non-canceled computation and returns the result or throws the exception
+ */
+@JvmName("awaitCompletedDeferred")
+@ApiStatus.Internal
+suspend fun <T> Flow<Deferred<T>>.awaitCompleted(): T =
+  mapLatest {
+    runCatching { it.await() }.also {
+      currentCoroutineContext().ensureActive()
+    }
+  }.filter {
+    it.exceptionOrNull() !is CancellationException
+  }.first().getOrThrow()
 
 /**
  * Maps the flow of requests to a flow of successfully computed values

@@ -85,7 +85,7 @@ internal class GHPRDetailsViewModelImpl(
   private val reviewVmHelper = GHPRReviewViewModelHelper(cs, dataProvider)
   override val changesVm = GHPRChangesViewModelImpl(cs, project, dataContext, dataProvider)
 
-  override val statusVm = GHPRStatusViewModelImpl(cs, project, detailsState, dataProvider.stateData)
+  override val statusVm = GHPRStatusViewModelImpl(cs, project, dataProvider.detailsData, detailsState)
 
   override val reviewFlowVm =
     GHPRReviewFlowViewModelImpl(cs,
@@ -95,7 +95,6 @@ internal class GHPRDetailsViewModelImpl(
                                 dataContext.securityService,
                                 dataContext.avatarIconsProvider,
                                 dataProvider.detailsData,
-                                dataProvider.stateData,
                                 dataProvider.changesData,
                                 reviewVmHelper)
 
