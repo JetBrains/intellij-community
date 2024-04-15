@@ -3,7 +3,6 @@ package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.PerformanceWatcher.Companion.takeSnapshot
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -11,9 +10,6 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.*
-import com.intellij.openapi.project.DumbService.Companion.isDumb
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor.Companion.getInstance
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor.Companion.shouldScanInSmartMode
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
@@ -33,14 +29,7 @@ import com.intellij.util.indexing.dependencies.FutureScanningRequestToken
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.getInstance
-import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
-import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl
-import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl.Companion.finishDumbModeBeginningTracking
-import com.intellij.util.indexing.diagnostic.ProjectScanningHistoryImpl.Companion.startDumbModeBeginningTracking
-import com.intellij.util.indexing.diagnostic.ScanningStatistics
-import com.intellij.util.indexing.diagnostic.ScanningType
-import com.intellij.util.indexing.diagnostic.ScanningType.Companion.merge
+import com.intellij.util.indexing.diagnostic.*
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.IndexableFileScanner.ScanSession
@@ -135,7 +124,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     else UpdatingFilesFilterScanningHandler(filterHolder)
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject)
     myProvidedStatusMark = if (predefinedIndexableFilesIterators == null) null else mark
-    LOG.assertTrue(this.predefinedIndexableFilesIterators == null || !predefinedIndexableFilesIterators!!.isEmpty())
+    LOG.assertTrue(this.predefinedIndexableFilesIterators == null || !predefinedIndexableFilesIterators.isEmpty())
     LOG.assertTrue( // doing partial scanning of only dirty files on startup
       !myOnProjectOpen ||
       isIndexingFilesFilterUpToDate || this.predefinedIndexableFilesIterators == null,
@@ -209,7 +198,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       mergeIterators(predefinedIndexableFilesIterators, oldTask.predefinedIndexableFilesIterators),
       StatusMark.mergeStatus(myProvidedStatusMark, oldTask.myProvidedStatusMark),
       reason,
-      merge(oldTask.scanningType, oldTask.scanningType),
+      ScanningType.merge(oldTask.scanningType, oldTask.scanningType),
       startCondition ?: oldTask.startCondition,
       mergedHideProgress, mergedScanningHistoryFuture, mergedPredicate
     )
@@ -232,7 +221,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.name))
 
-    snapshot = takeSnapshot()
+    snapshot = PerformanceWatcher.takeSnapshot()
 
     if (isFullIndexUpdate()) {
       myIndex.clearIndicesIfNecessary()
@@ -311,10 +300,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     progressReporter.setIndeterminate(true)
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
 
-    val snapshot = takeSnapshot()
+    val snapshot = PerformanceWatcher.takeSnapshot()
     val scanningLifetime = Disposer.newDisposable()
     try {
-      if (!shouldScanInSmartMode()) {
+      if (!UnindexedFilesScannerExecutor.shouldScanInSmartMode()) {
         DumbModeProgressTitle.getInstance(myProject)
           .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime)
       }
@@ -555,10 +544,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     // Not sure that ensureUpToDate is really needed, but it wouldn't hurt to clear up queue not from EDT
     // It was added in this commit: 'Process vfs events asynchronously (IDEA-109525), first cut Maxim.Mossienko 13.11.16, 14:15'
     myIndex.changedFilesCollector.ensureUpToDate()
-    getInstance().onScanningStarted(scanningHistory)
+    IndexDiagnosticDumper.getInstance().onScanningStarted(scanningHistory)
     val markRef = Ref<StatusMark>()
     try {
-      startDumbModeBeginningTracking(myProject, scanningHistory)
+      ProjectScanningHistoryImpl.startDumbModeBeginningTracking(myProject, scanningHistory)
       (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
         scanAndUpdateUnindexedFiles(scanningHistory, indicator, progressReporter, markRef)
       }
@@ -571,12 +560,12 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       throw e
     }
     finally {
-      finishDumbModeBeginningTracking(myProject)
+      ProjectScanningHistoryImpl.finishDumbModeBeginningTracking(myProject)
       if (DependenciesIndexedStatusService.shouldBeUsed() && IndexInfrastructure.hasIndices()) {
         DependenciesIndexedStatusService.getInstance(myProject)
           .indexingFinished(!scanningHistory.times.wasInterrupted, markRef.get())
       }
-      getInstance().onScanningFinished(scanningHistory)
+      IndexDiagnosticDumper.getInstance().onScanningFinished(scanningHistory)
     }
     return scanningHistory
   }
@@ -593,15 +582,15 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     // Note that a project may become dumb/smart immediately after the check
     // If a project becomes smart, in the worst case, we'll trigger additional short dumb mode.
     // If a project becomes dumb, not a problem at all - we'll schedule a scanning task out of dumb mode either way.
-    if (isDumb(myProject) && Registry.`is`("scanning.waits.for.non.dumb.mode", true)) {
+    if (DumbService.isDumb(myProject) && Registry.`is`("scanning.waits.for.non.dumb.mode", true)) {
       object : DumbModeTask() {
         override fun performInDumbMode(indicator: ProgressIndicator) {
-          getInstance(myProject).submitTask(this@UnindexedFilesScanner)
+          UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this@UnindexedFilesScanner)
         }
       }.queue(myProject)
     }
     else {
-      getInstance(myProject).submitTask(this)
+      UnindexedFilesScannerExecutor.getInstance(myProject).submitTask(this)
     }
     return futureScanningHistory
   }
