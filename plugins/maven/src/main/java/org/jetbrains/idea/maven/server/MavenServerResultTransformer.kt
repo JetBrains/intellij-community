@@ -3,10 +3,11 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import java.util.ArrayList
+import org.jetbrains.idea.maven.model.MavenModel
 
 interface MavenServerResultTransformer {
-  fun transform(transformer: RemotePathTransformerFactory.Transformer, results: ArrayList<MavenServerExecutionResult>): Collection<MavenServerExecutionResult>
+
+  fun transform(transformer: RemotePathTransformerFactory.Transformer, model: MavenModel)
 
   companion object {
     @JvmStatic

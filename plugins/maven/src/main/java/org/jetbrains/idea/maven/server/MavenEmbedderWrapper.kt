@@ -85,8 +85,13 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput -> embedder.resolveProjects(taskInput, request, ourToken) },
       progressReporter, eventHandler)
-    return MavenServerResultTransformer.getInstance(project)
-      .transform(transformer, results)
+
+    for (result in results) {
+      val data = result.projectData ?: continue
+      MavenServerResultTransformer.getInstance(project)
+        .transform(transformer, data.mavenModel)
+    }
+    return results
   }
 
   @Throws(MavenProcessCanceledException::class)
