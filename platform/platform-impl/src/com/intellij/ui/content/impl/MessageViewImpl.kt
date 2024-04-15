@@ -33,9 +33,8 @@ internal class MessageViewImpl(project: Project) : MessageView {
     }
   }
 
-  override fun getContentManager(): ContentManager {
-    return toolWindow!!.contentManager
-  }
+  override val contentManager: ContentManager
+    get() = toolWindow!!.contentManager
 
   override fun runWhenInitialized(runnable: Runnable) {
     if (toolWindow == null) {

@@ -28013,11 +28013,15 @@ f:com.intellij.ui.content.ContentManagerUtil
 - s:cleanupContents(com.intellij.ui.content.Content,com.intellij.openapi.project.Project,java.lang.String):V
 - s:getContentManagerFromContext(com.intellij.openapi.actionSystem.DataContext,Z):com.intellij.ui.content.ContentManager
 com.intellij.ui.content.MessageView
+- sf:Companion:com.intellij.ui.content.MessageView$Companion
 - a:getContentManager():com.intellij.ui.content.ContentManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
 - a:runWhenInitialized(java.lang.Runnable):V
+f:com.intellij.ui.content.MessageView$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
 f:com.intellij.ui.content.MessageView$SERVICE
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
+- sf:INSTANCE:com.intellij.ui.content.MessageView$SERVICE
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.ui.content.MessageView
 f:com.intellij.ui.content.TabbedPaneContentUI
 - com.intellij.ui.content.ContentUI
 - java.beans.PropertyChangeListener
