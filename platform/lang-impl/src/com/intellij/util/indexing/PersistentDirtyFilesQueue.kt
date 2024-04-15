@@ -137,7 +137,10 @@ object PersistentDirtyFilesQueue {
     }
     if (isUnittestMode) {
       val idsToPaths = mapOf(*fileIds.map { it to StaleIndexesChecker.getStaleRecordOrExceptionMessage(it) }.toTypedArray())
-      thisLogger().info("dirty file ids stored. Ids & filenames: ${idsToPaths.toString().take(300)}")
+      thisLogger().info("Dirty file ids stored. Size: ${fileIds.size}. Index: $index Path: $queueFile. Ids & filenames: ${idsToPaths.toString().take(300)}")
+    }
+    else {
+      thisLogger().info("Dirty file ids stored. Size: ${fileIds.size}. Index: $index Path: $queueFile")
     }
   }
 }

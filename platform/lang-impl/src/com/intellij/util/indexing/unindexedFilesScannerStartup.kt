@@ -125,7 +125,10 @@ private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: 
   val untrimmedIndexOfFirstElementInOrphanQueue = untrimmedSize - fileIds.size
   val trimmedIndexOfFirstUnseenElement = (projectQueue.lastSeenIndexInOrphanQueue - untrimmedIndexOfFirstElementInOrphanQueue).toInt()
   if (trimmedIndexOfFirstUnseenElement < 0) {
-    LOG.error("Full scanning has to be requested")
+    LOG.error("Full scanning has to be requested. " +
+              "orphanQueue.untrimmedSize=$untrimmedSize, " +
+              "orphanQueue.fileIds.size=${fileIds.size}, " +
+              "projectQueue.lastSeenIndexInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}")
     return fileIds
   }
   return fileIds.subList(trimmedIndexOfFirstUnseenElement, fileIds.size)
