@@ -1,6 +1,5 @@
 // "Collapse loop with stream 'findFirst()'" "true-preview"
 
-import java.awt.*;
 import java.util.List;
 
 public class Main {
@@ -11,5 +10,15 @@ public class Main {
       if (pt != null) return pt;
     }
     return ZERO;
+  }
+
+  static class Point {
+    private int x;
+    private int y;
+
+    Point(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
   }
 }

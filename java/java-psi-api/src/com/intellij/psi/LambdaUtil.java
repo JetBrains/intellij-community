@@ -999,42 +999,43 @@ public final class LambdaUtil {
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
     if (call != null) {
-      JavaResolveResult result = call.resolveMethodGenerics();
-      PsiElement oldTarget = result.getElement();
-      if (oldTarget != null) {
-        String origErrorMessage = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getInferenceErrorMessage() : null;
-        Object marker = new Object();
-        PsiTreeUtil.mark(lambda, marker);
-        PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
-        PsiCall copyCall = copyTopLevelCall(call);
-        if (copyCall == null) return false;
-        PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
-        if (lambdaCopy == null) return false;
-        PsiExpression function = replacer.apply(lambdaCopy);
-        if (function == null) return false;
-        JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
-        if (!oldTarget.getManager().areElementsEquivalent(resultCopy.getElement(), oldTarget)) return false;
-        String copyMessage = resultCopy instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() : null;
-        if (!Objects.equals(origErrorMessage, copyMessage)) return false;
-        if (function instanceof PsiFunctionalExpression) {
-          PsiType functionalType = ((PsiFunctionalExpression)function).getFunctionalInterfaceType();
-          if (functionalType == null) return false;
-          PsiType lambdaFunctionalType = lambda.getFunctionalInterfaceType();
-          if (lambdaFunctionalType != null && !functionalType.getCanonicalText().equals(lambdaFunctionalType.getCanonicalText())) {
-            return false;
-          }
+      Object marker = new Object();
+      PsiTreeUtil.mark(lambda, marker);
+      PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
+      PsiCall copyCall = copyTopLevelCall(call);
+      if (copyCall == null) return false;
+      PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
+      if (lambdaCopy == null) return false;
+      PsiExpression function = replacer.apply(lambdaCopy);
+      if (function == null) return false;
+      PsiElement copyCur = function, cur = lambda;
+      while(cur != call) {
+        cur = cur.getParent();
+        copyCur = copyCur.getParent();
+        if (cur instanceof PsiCall && copyCur instanceof PsiCall) {
+          JavaResolveResult result = ((PsiCall)cur).resolveMethodGenerics();
+          JavaResolveResult resultCopy = ((PsiCall)copyCur).resolveMethodGenerics();
+          if (!equalResolveResult(result, resultCopy)) return false;
         }
-        if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() &&
-            //when lambda has no formal parameter types, it's ignored during applicability check
-            //so unchecked warnings inside lambda's body won't lead to erasure of the type of the containing call
-            //but after replacement of lambda with the equivalent method call, unchecked warning won't be ignored anymore
-            //and the type of the call would be erased => red code may appear
-            !lambda.hasFormalParameterTypes()) {
-          PsiExpression expressionFromBody = extractSingleExpressionFromBody(body);
-          if (expressionFromBody instanceof PsiMethodCallExpression &&
-              PsiTypesUtil.isUncheckedCall(((PsiMethodCallExpression)expressionFromBody).resolveMethodGenerics())) {
-            return false;
-          }
+      }
+      if (function instanceof PsiFunctionalExpression) {
+        PsiType functionalType = ((PsiFunctionalExpression)function).getFunctionalInterfaceType();
+        PsiType lambdaFunctionalType = lambda.getFunctionalInterfaceType();
+        boolean sameType = functionalType == null ? lambdaFunctionalType == null :
+                           lambdaFunctionalType != null &&
+                           functionalType.getCanonicalText().equals(lambdaFunctionalType.getCanonicalText());                   
+        if (!sameType) return false;
+      }
+      if (origType instanceof PsiClassType && !((PsiClassType)origType).isRaw() &&
+          //when lambda has no formal parameter types, it's ignored during applicability check
+          //so unchecked warnings inside lambda's body won't lead to erasure of the type of the containing call
+          //but after replacement of lambda with the equivalent method call, unchecked warning won't be ignored anymore
+          //and the type of the call would be erased => red code may appear
+          !lambda.hasFormalParameterTypes()) {
+        PsiExpression expressionFromBody = extractSingleExpressionFromBody(body);
+        if (expressionFromBody instanceof PsiMethodCallExpression &&
+            PsiTypesUtil.isUncheckedCall(((PsiMethodCallExpression)expressionFromBody).resolveMethodGenerics())) {
+          return false;
         }
       }
     }
@@ -1048,6 +1049,19 @@ public final class LambdaUtil {
       }
     }
     return true;
+  }
+
+  private static boolean equalResolveResult(JavaResolveResult r1, JavaResolveResult r2) {
+    PsiElement target1 = r1.getElement();
+    PsiElement target2 = r2.getElement();
+    boolean targetMatch = target1 == null ? target2 == null : target1.getManager().areElementsEquivalent(target2, target1); 
+    if (!targetMatch) return false;
+    boolean applicable1 = !(r1 instanceof MethodCandidateInfo) || ((MethodCandidateInfo)r1).isApplicable();
+    boolean applicable2 = !(r2 instanceof MethodCandidateInfo) || ((MethodCandidateInfo)r2).isApplicable();
+    if (applicable1 != applicable2) return false;
+    String message1 = r1 instanceof MethodCandidateInfo ? ((MethodCandidateInfo)r1).getInferenceErrorMessage() : null;
+    String message2 = r2 instanceof MethodCandidateInfo ? ((MethodCandidateInfo)r2).getInferenceErrorMessage() : null;
+    return Objects.equals(message1, message2);
   }
 
   /**
