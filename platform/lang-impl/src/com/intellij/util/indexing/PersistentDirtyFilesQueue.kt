@@ -68,8 +68,8 @@ object PersistentDirtyFilesQueue {
   @JvmStatic
   fun readIndexingQueue(queueFile: Path, currentVfsVersion: Long?): Pair<List<Int>, Long?> {
     try {
-      return DataInputStream(queueFile.inputStream().buffered()).use {
-        val result = IntArrayList()
+      DataInputStream(queueFile.inputStream().buffered()).use {
+        val fileIds = IntArrayList()
         val version = it.readLong()
         val (storedVfsVersion, index) = when (version) {
           1L -> {
@@ -87,18 +87,16 @@ object PersistentDirtyFilesQueue {
             Pair(version, null)
           }
         }
-        if (currentVfsVersion == null || storedVfsVersion == currentVfsVersion) {
-          while (it.available() > 0) {
-            result.add(it.readInt())
-          }
-        }
-        else {
+        if (currentVfsVersion != null && storedVfsVersion != currentVfsVersion) {
           thisLogger().info("Discarding dirty files queue $queueFile because vfs version changed: old=$storedVfsVersion, new=$currentVfsVersion")
+          return Pair(IntArrayList(), null)
         }
-        if (isUnittestMode) {
-          thisLogger().info("read dirty file ids: ${result.toIntArray().contentToString()}")
+        while (it.available() > 0) {
+          fileIds.add(it.readInt())
         }
-        Pair(result, index)
+        thisLogger().info("Dirty file ids read. Size: ${fileIds.size}. Index: $index Path: $queueFile." +
+                          if (isUnittestMode) " Ids: ${fileIds.toIntArray().contentToString()}" else "")
+        return Pair(fileIds, index)
       }
     }
     catch (ignored: NoSuchFileException) {
