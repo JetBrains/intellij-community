@@ -6,10 +6,12 @@ import com.intellij.ui.SizedIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformIcons
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
 
+@ApiStatus.Internal
 object CheckboxIcon {
   @JvmStatic
   fun create(
@@ -37,6 +39,8 @@ object CheckboxIcon {
   class WithColor(size: Int, color: Color, arc: Int) : ColorIcon(size, size, size, size, color, false, arc) {
     private var mySelected = false
     private var mySizedIcon: SizedIcon
+
+    fun isSelected() = mySelected
 
     init {
       val icon = if (ExperimentalUI.isNewUI()) {
