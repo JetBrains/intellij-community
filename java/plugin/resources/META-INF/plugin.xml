@@ -8,12 +8,14 @@
   <category>Languages</category>
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
-  <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.vcs</depends>
-  <depends>com.intellij.modules.xdebugger</depends>
-  <depends>com.intellij.modules.xml</depends>
-  <depends>com.intellij.modules.java-capable</depends>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.vcs"/>
+    <plugin id="com.intellij.modules.xdebugger"/>
+    <plugin id="com.intellij.modules.xml"/>
+    <plugin id="com.intellij.modules.java-capable"/>
+  </dependencies>
+
   <depends optional="true" config-file="java-copyright.xml">com.intellij.copyright</depends>
 
   <xi:include href="/META-INF/JavaPlugin.xml"/>
@@ -31,11 +33,11 @@
 
   <content>
     <module name="intellij.java.structuralSearch"/>
+    <module name="intellij.java.featuresTrainer"/>
+    <module name="intellij.java.performancePlugin"/>
   </content>
 
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
-  <depends optional="true" config-file="intellij.java.featuresTrainer.xml">training</depends>
-  <depends optional="true" config-file="intellij.java.performancePlugin.xml">com.jetbrains.performancePlugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <moduleType id="JAVA_MODULE" classpathProvider="true" implementationClass="com.intellij.openapi.module.JavaModuleType"/>
