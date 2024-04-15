@@ -82,4 +82,6 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
 
     return super.performDiffAction()
   }
+
+  override fun isOpenPreviewWithNextDiffShortcut(): Boolean = false
 }

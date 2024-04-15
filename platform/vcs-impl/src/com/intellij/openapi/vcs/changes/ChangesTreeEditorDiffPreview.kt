@@ -59,7 +59,7 @@ abstract class ChangesTreeEditorDiffPreview(
     }
   }
 
-  protected open fun isOpenPreviewWithNextDiffShortcut(): Boolean = false
+  protected open fun isOpenPreviewWithNextDiffShortcut(): Boolean = true
   protected open fun handleNextDiffShortcut() {
     if (!isOpenPreviewWithNextDiffShortcut()) return
     openPreview(true)
