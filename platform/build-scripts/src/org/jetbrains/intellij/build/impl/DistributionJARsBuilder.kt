@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build.impl
 
 import com.fasterxml.jackson.jr.ob.JSON
@@ -93,7 +91,7 @@ internal suspend fun buildDistribution(
         val distAllDir = context.paths.distAllDir
         val libDir = distAllDir.resolve("lib")
         context.bootClassPathJarNames = if (context.useModularLoader) {
-          java.util.List.of(PLATFORM_LOADER_JAR)
+          listOf(PLATFORM_LOADER_JAR)
         }
         else {
           generateClasspath(homeDir = distAllDir, libDir = libDir)
@@ -162,7 +160,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
     }
 
     val additionalDeferred = async {
-      copyAdditionalPlugins(context)
+      copyAdditionalPlugins(context, context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
     }
 
     val pluginDirs = getPluginDirs(context, isUpdateFromSources)
@@ -178,7 +176,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
 
     val specific = specificDeferred.await()
     for ((supportedDist) in pluginDirs) {
-      val specificList = specific.get(supportedDist)
+      val specificList = specific[supportedDist]
       val specificClasspath = specificList?.let { generatePluginClassPath(pluginEntries = it, writeDescriptor = true) }
 
       val byteOut = ByteArrayOutputStream()
@@ -211,27 +209,15 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-fun getProductModules(state: DistributionBuilderState): List<String> {
-  return state.platform.includedModules.asSequence()
-    .filter {
-      !it.relativeOutputFile.contains('\\') && !it.relativeOutputFile.contains('/')
-    }  // filter out jars with relative paths in the name
-    .map { it.moduleName }
-    .distinct()
-    .toList()
-}
-
-private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> {
+private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): List<Pair<SupportedDistribution, Path>> =
   if (isUpdateFromSources) {
-    return listOf(SupportedDistribution(os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch) to
-                    context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
+    listOf(SupportedDistribution(OsFamily.currentOs, JvmArchitecture.currentJvmArch) to context.paths.distAllDir.resolve(PLUGINS_DIRECTORY))
   }
   else {
-    return SUPPORTED_DISTRIBUTIONS.map {
-      it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, context = context).resolve(PLUGINS_DIRECTORY)
+    SUPPORTED_DISTRIBUTIONS.map {
+      it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context).resolve(PLUGINS_DIRECTORY)
     }
   }
-}
 
 suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
@@ -329,7 +315,7 @@ private suspend fun buildOsSpecificBundledPlugins(
     .associateBy(keySelector = { it.first }, valueTransform = { it.second })
 }
 
-suspend fun copyAdditionalPlugins(context: BuildContext): List<Pair<Path, List<Path>>>? {
+suspend fun copyAdditionalPlugins(context: BuildContext, pluginDir: Path): List<Pair<Path, List<Path>>>? {
   val additionalPluginPaths = context.productProperties.getAdditionalPluginPaths(context)
   if (additionalPluginPaths.isEmpty()) {
     return null
@@ -338,7 +324,6 @@ suspend fun copyAdditionalPlugins(context: BuildContext): List<Pair<Path, List<P
   return spanBuilder("copy additional plugins").useWithScope(Dispatchers.IO) {
     val allEntries = mutableListOf<Pair<Path, List<Path>>>()
 
-    val pluginDir = context.paths.distAllDir.resolve(PLUGINS_DIRECTORY)
     for (sourceDir in additionalPluginPaths) {
       val targetDir = pluginDir.resolve(sourceDir.fileName)
       copyDir(sourceDir, targetDir)
@@ -786,7 +771,7 @@ private fun checkOutputOfPluginModules(mainPluginModule: String,
       val moduleName = item.moduleName
       if (containsFileInOutput(moduleName = moduleName,
                                filePath = "META-INF/plugin.xml",
-                               excludes = moduleExcludes.get(moduleName) ?: emptyList(),
+                               excludes = moduleExcludes[moduleName] ?: emptyList(),
                                context = context)) {
         modulesWithPluginXml.add(moduleName)
       }
@@ -805,7 +790,7 @@ private fun checkOutputOfPluginModules(mainPluginModule: String,
     if (module == "intellij.java.guiForms.rt" ||
         !containsFileInOutput(moduleName = module,
                               filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                              excludes = moduleExcludes.get(module) ?: emptyList(),
+                              excludes = moduleExcludes[module] ?: emptyList(),
                               context = context)) {
       "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
       "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
