@@ -123,7 +123,7 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
                                   fileName: String,
                                   side: Side,
                                   line: Int): GHPullRequestReviewComment {
-    val patch = changesProvider.loadPatchFromMergeBase(EmptyProgressIndicator(), commitSha, fileName).asDeferred().await()
+    val patch = changesProvider.loadPatchFromMergeBase(commitSha, fileName)
     check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
     val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line) ?: error("Can't map file line to diff")
     val comment = reviewService.addComment(reviewId, body, commitSha, fileName, position)

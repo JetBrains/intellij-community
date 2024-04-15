@@ -21,6 +21,8 @@ import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.impl.VcsProjectLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHIssueComment
@@ -34,8 +36,6 @@ import java.util.*
 
 internal class GHPRDataProviderRepositoryImpl(private val project: Project,
                                               parentCs: CoroutineScope,
-                                              private val securityService: GHPRSecurityService,
-                                              private val repositoryDataService: GHPRRepositoryDataService,
                                               private val detailsService: GHPRDetailsService,
                                               private val reviewService: GHPRReviewService,
                                               private val filesService: GHPRFilesService,
@@ -49,10 +49,6 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
 
   private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
-
-  init {
-    Disposer.register(this, changesService)
-  }
 
   @RequiresEdt
   override fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider {
@@ -109,8 +105,11 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
       }
     }
 
-    val changesData = GHPRChangesDataProviderImpl(providerCs, repositoryDataService, changesService, id, detailsData).also {
-      Disposer.register(parentDisposable, it)
+    val changesData = GHPRChangesDataProviderImpl(providerCs, changesService, { detailsData.loadDetails().refs }, id)
+    providerCs.launch {
+      detailsData.loadedDetailsState.distinctUntilChangedBy { it?.refs }.drop(1).collect {
+        changesData.signalChangesNeedReload()
+      }
     }
     val reviewData = GHPRReviewDataProviderImpl(providerCs, reviewService, changesData, id, messageBus)
     val viewedStateData = GHPRViewedStateDataProviderImpl(filesService, id).also {
@@ -176,3 +175,6 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     fun onDetailsLoaded(details: GHPullRequest)
   }
 }
+
+private val GHPullRequest.refs: GHPRBranchesRefs
+  get() = GHPRBranchesRefs(baseRefOid, headRefOid)

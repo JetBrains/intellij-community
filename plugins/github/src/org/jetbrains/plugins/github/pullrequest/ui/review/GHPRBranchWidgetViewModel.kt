@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewBranchStateSharedViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowProjectViewModel
 
@@ -44,7 +44,7 @@ internal class GHPRBranchWidgetViewModelImpl(
   override val updateRequired: StateFlow<Boolean> = sharedBranchVm.updateRequired
 
   override val dataLoadingState: StateFlow<ComputedResult<Any>> =
-    dataProvider.changesData.changesRequestFlow().computationState().stateInNow(cs, ComputedResult.loading())
+    dataProvider.changesData.changesComputationState.stateInNow(cs, ComputedResult.loading())
 
   override val editorReviewEnabled: StateFlow<Boolean> = settings.editorReviewEnabledState
 

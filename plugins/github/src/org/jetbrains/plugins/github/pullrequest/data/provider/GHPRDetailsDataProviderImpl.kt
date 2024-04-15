@@ -11,6 +11,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
@@ -25,7 +26,8 @@ internal class GHPRDetailsDataProviderImpl(parentCs: CoroutineScope,
   : GHPRDetailsDataProvider {
   private val cs = parentCs.childScope(classAsCoroutineName())
 
-  private val loadedDetailsState = MutableStateFlow<GHPullRequest?>(null)
+  private val _loadedDetailsState = MutableStateFlow<GHPullRequest?>(null)
+  val loadedDetailsState = _loadedDetailsState.asStateFlow()
 
   override val loadedDetails: GHPullRequest?
     get() = loadedDetailsState.value
@@ -36,7 +38,7 @@ internal class GHPRDetailsDataProviderImpl(parentCs: CoroutineScope,
   override val detailsNeedReloadSignal = detailsLoader.updatedSignal
 
   override suspend fun loadDetails(): GHPullRequest = detailsLoader.load().also {
-    loadedDetailsState.value = it
+    _loadedDetailsState.value = it
   }
 
   private val mergeabilityLoader = LoaderWithMutableCache(cs) { detailsService.loadMergeabilityState(pullRequestId) }

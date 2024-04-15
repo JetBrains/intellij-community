@@ -159,7 +159,7 @@ class GHPRReviewFlowViewModelImpl internal constructor(
 
   override fun squashAndMergeReview() = runAction {
     val details = detailsState.value
-    val commits = changesData.loadCommitsFromApi().await()
+    val commits = changesData.loadCommits()
     val body = "* " + StringUtil.join(commits, { it.messageHeadline }, "\n\n* ")
     val dialog = ReviewMergeCommitMessageDialog(project,
                                                 CollaborationToolsBundle.message("dialog.review.merge.commit.title.with.squash"),
@@ -224,7 +224,8 @@ class GHPRReviewFlowViewModelImpl internal constructor(
       }
       catch (e: Exception) {
         if (e is CancellationException) throw e
-        //TODO: handle???
+        //TODO: show error in UI
+        LOG.warn(e)
       }
     }
   }

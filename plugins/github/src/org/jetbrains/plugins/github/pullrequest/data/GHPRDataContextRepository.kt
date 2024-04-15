@@ -126,7 +126,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), project, securityService,
                                                   requestExecutor, apiRepositoryCoordinates)
       val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-      val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,
+      val changesService = GHPRChangesServiceImpl(cs, project, requestExecutor,
                                                   remoteCoordinates, apiRepositoryCoordinates)
       val reviewService = GHPRReviewServiceImpl(securityService, requestExecutor, apiRepositoryCoordinates)
       val filesService = GHPRFilesServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
@@ -137,8 +137,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(project,
                                                                   cs,
-                                                                  securityService,
-                                                                  repoDataService,
                                                                   detailsService,
                                                                   reviewService,
                                                                   filesService,
@@ -158,7 +156,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val creationService = GHPRCreationServiceImpl(ProgressManager.getInstance(), requestExecutor, repoDataService)
       ensureActive()
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
-                      securityService, repoDataService, creationService, detailsService, reactionsService,
+                      securityService, repoDataService, creationService, detailsService, changesService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
                       filesManager, interactionState,
                       GHPRDiffRequestModelImpl())

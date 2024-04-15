@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
@@ -23,7 +22,7 @@ import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThr
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputationState
 import org.jetbrains.plugins.github.pullrequest.data.provider.pendingReviewComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
@@ -60,7 +59,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
   private val reviewDataProvider = dataProvider.reviewData
   private val changesState: StateFlow<ComputedResult<GitBranchComparisonResult>> =
-    dataProvider.changesData.changesRequestFlow().computationState().stateInNow(cs, ComputedResult.loading())
+    dataProvider.changesData.changesComputationState.stateInNow(cs, ComputedResult.loading())
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
     reviewDataProvider.pendingReviewComputationFlow.stateInNow(cs, ComputedResult.loading())

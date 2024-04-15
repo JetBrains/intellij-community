@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.changesComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRReviewBranchStateSharedViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 
@@ -49,7 +49,7 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
 
   private val changesComputationState =
-    dataProvider.changesData.changesRequestFlow().computationState().onEach {
+    dataProvider.changesData.changesComputationState.onEach {
       it.onFailure {
         LOG.warn("Couldn't load changes for PR ${dataProvider.id.number}", it)
       }
