@@ -45,6 +45,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   protected abstract fun getChangeListId(element: T): String?
   protected abstract fun findElementFor(tracker: PartialLocalLineStatusTracker, changeListId: String): T?
   protected abstract fun findTrackerFor(element: T): PartialLocalLineStatusTracker?
+  protected abstract fun fireInclusionChanged()
 
   private val trackers: Sequence<Pair<T, PartialLocalLineStatusTracker>>
     get() = trackableElements.mapNotNull { element -> findTrackerFor(element)?.let { tracker -> element to tracker } }
@@ -110,7 +111,12 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   @RequiresEdt
-  open fun updateExclusionStates() {
+  fun updateExclusionStates() {
+    rebuildTrackerExclusionStates()
+    fireInclusionChanged()
+  }
+
+  private fun rebuildTrackerExclusionStates() {
     myTrackerExclusionStates.clear()
 
     trackers.forEach { (element, tracker) ->
@@ -128,14 +134,16 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     myIncludedElements.clear()
     myIncludedElements += elements
 
-    updateExclusionStates()
+    rebuildTrackerExclusionStates()
+    fireInclusionChanged()
   }
 
   fun includeElements(elements: Collection<T>) {
     elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, false) }
     myIncludedElements += elements
 
-    updateExclusionStates()
+    rebuildTrackerExclusionStates()
+    fireInclusionChanged()
   }
 
   fun excludeElements(elements: Collection<T>) {
@@ -144,7 +152,8 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       myIncludedElements.remove(it)
     }
 
-    updateExclusionStates()
+    rebuildTrackerExclusionStates()
+    fireInclusionChanged()
   }
 
   fun retainElements(elements: Collection<T>) {
@@ -157,6 +166,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       }
     }
 
-    updateExclusionStates()
+    rebuildTrackerExclusionStates()
+    fireInclusionChanged()
   }
 }

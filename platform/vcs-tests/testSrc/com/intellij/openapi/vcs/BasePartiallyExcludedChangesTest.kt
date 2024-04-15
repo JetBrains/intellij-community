@@ -38,6 +38,8 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
       return PartialChangesUtil.getPartialTracker(getProject(), file)
     }
 
+    override fun fireInclusionChanged() = Unit
+
     fun toggleElements(elements: Collection<FilePath>) {
       val hasExcluded = elements.any { getExclusionState(it) != ExclusionState.ALL_INCLUDED }
       if (hasExcluded) includeElements(elements) else excludeElements(elements)
