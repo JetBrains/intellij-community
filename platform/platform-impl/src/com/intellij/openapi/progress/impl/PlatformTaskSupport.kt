@@ -134,8 +134,12 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
       val modalityContext = newModalityState.asContextElement()
       val pipe = cs.createProgressPipe()
       val taskJob = async(dispatcherCtx + modalityContext) {
-        progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
-        pipe.collectProgressUpdates(action)
+          progressStarted(descriptor.title, descriptor.cancellation, pipe.progressUpdates())
+          // an unhandled exception in `async` can kill the entire computation tree
+          // we need to propagate the exception to the caller, since they may have some way to handle it.
+          runCatching {
+            pipe.collectProgressUpdates(action)
+          }
       }
       val modalJob = cs.launch(modalityContext) {
         val showIndicatorJob = showModalIndicator(taskJob, descriptor, pipe.progressUpdates(), deferredDialog)
@@ -155,7 +159,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
         modalComponent = deferredDialog::modalComponent,
       )
       @OptIn(ExperimentalCoroutinesApi::class)
-      taskJob.getCompleted()
+      taskJob.getCompleted().getOrThrow()
     }
   }
 }
