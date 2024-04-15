@@ -1414,9 +1414,6 @@
 
     <applicationService serviceImplementation="com.intellij.ui.WindowDeactivationManager" client="all"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.ui.BannerImageProvider"
-                        serviceImplementation="com.intellij.openapi.wm.impl.BannerImageProviderImpl"/>
-
     <applicationService serviceInterface="com.intellij.ui.AutoScrollToSourceTaskManager"
                         serviceImplementation="com.intellij.ui.AutoScrollToSourceTaskManagerImpl"/>
 
