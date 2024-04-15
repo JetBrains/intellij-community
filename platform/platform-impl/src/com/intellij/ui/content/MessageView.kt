@@ -3,12 +3,20 @@ package com.intellij.ui.content
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 interface MessageView {
   val contentManager: ContentManager
 
+  @RequiresEdt
+  @RequiresBlockingContext
+  @ApiStatus.Obsolete(since = "2024.2")
   fun runWhenInitialized(runnable: Runnable)
+
+  suspend fun awaitInitialized()
 
   @Deprecated("use {@link MessageView#getInstance(Project)} instead")
   @ScheduledForRemoval
