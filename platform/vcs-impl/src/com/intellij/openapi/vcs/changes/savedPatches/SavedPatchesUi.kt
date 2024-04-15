@@ -28,7 +28,7 @@ open class SavedPatchesUi(project: Project,
                           @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
                           private val isVertical: () -> Boolean,
                           private val isEditorDiffPreview: () -> Boolean,
-                          focusMainUi: (Component?) -> Unit,
+                          private val focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
@@ -39,11 +39,14 @@ open class SavedPatchesUi(project: Project,
 
   private val visibleProviders = providers.toMutableSet()
 
+  private var editorTabPreview: SavedPatchesEditorDiffPreview? = null
+  private var splitDiffProcessor: SavedPatchesDiffProcessor? = null
+
   init {
     patchesTree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
     PopupHandler.installPopupMenu(patchesTree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
-    changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
+    changesBrowser = SavedPatchesChangesBrowser(project, this)
     CombinedSpeedSearch(changesBrowser.viewer, patchesTree.speedSearch)
 
     patchesTree.doubleClickHandler = Processor { e ->
@@ -140,18 +143,39 @@ open class SavedPatchesUi(project: Project,
   }
 
   private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
-    val needUpdatePreviews = isInEditor != (changesBrowser.editorTabPreview != null)
+    val needUpdatePreviews = isInEditor != (editorTabPreview != null)
     if (!isInitial && !needUpdatePreviews) return
 
-    val diffPreviewProcessor = changesBrowser.installDiffPreview(isInEditor)
-    treeDiffSplitter.secondComponent = if (isInEditor) null else diffPreviewProcessor.component
+    if (isInEditor) {
+      val diffPreview = SavedPatchesEditorDiffPreview(changesBrowser, focusMainUi)
+      changesBrowser.setShowDiffActionPreview(diffPreview)
+      editorTabPreview = diffPreview
+
+      splitDiffProcessor?.let { Disposer.dispose(it) }
+      splitDiffProcessor = null
+      treeDiffSplitter.secondComponent = null
+    }
+    else {
+      changesBrowser.setShowDiffActionPreview(null)
+      editorTabPreview?.let { Disposer.dispose(it) }
+      editorTabPreview = null
+
+      val processor = SavedPatchesDiffProcessor(changesBrowser.viewer, false)
+      splitDiffProcessor = processor
+      treeDiffSplitter.secondComponent = processor.component
+    }
   }
 
   override fun dispose() {
+    editorTabPreview?.let { Disposer.dispose(it) }
+    editorTabPreview = null
+
+    splitDiffProcessor?.let { Disposer.dispose(it) }
+    splitDiffProcessor = null
   }
 
   override fun getData(dataId: String): Any? {
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
+    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
     if (SAVED_PATCH_SELECTED_PATCH.`is`(dataId)) return selectedPatchObjectOrNull()
     if (SAVED_PATCHES_UI.`is`(dataId)) return this
     if (SAVED_PATCH_CHANGES.`is`(dataId)) return changesBrowser.getData(dataId)
