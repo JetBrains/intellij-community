@@ -269,7 +269,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     markStage(scanningHistory, ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true)
     try {
-      collectIndexableFilesConcurrently(myProject, indicator, progressReporter, orderedProviders, scanningHistory)
+      collectIndexableFilesConcurrently(indicator, progressReporter, orderedProviders, scanningHistory)
       if (isFullIndexUpdate() || myOnProjectOpen) {
         myProject.putUserData(CONTENT_SCANNED, true)
       }
@@ -371,8 +371,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     myProject.getService(PerProjectIndexingQueue::class.java).flushNow(myIndexingReason)
   }
 
-  private fun collectIndexableFilesConcurrently(project: Project,
-                                                indicator: CheckPauseOnlyProgressIndicator,
+  private fun collectIndexableFilesConcurrently(indicator: CheckPauseOnlyProgressIndicator,
                                                 progressReporter: IndexingProgressReporter,
                                                 providers: List<IndexableFilesIterator>,
                                                 projectScanningHistory: ProjectScanningHistoryImpl) {
@@ -387,7 +386,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
 
     val sessions =
-      IndexableFileScanner.EP_NAME.extensionList.map { scanner: IndexableFileScanner -> scanner.startSession(project) }
+      IndexableFileScanner.EP_NAME.extensionList.map { scanner: IndexableFileScanner -> scanner.startSession(myProject) }
 
     val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
@@ -402,7 +401,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     val sharedExplanationLogger = IndexingReasonExplanationLogger()
     val tasks = providers.map { provider: IndexableFilesIterator ->
       val scanningStatistics = ScanningStatistics(provider.debugName)
-      scanningStatistics.setProviderRoots(provider, project)
+      scanningStatistics.setProviderRoots(provider, myProject)
       val origin = provider.origin
       val fileScannerVisitors = sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) }
 
@@ -413,7 +412,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       Runnable {
         val providerScanningStartTime = System.nanoTime()
         try {
-          project.getService(PerProjectIndexingQueue::class.java)
+          myProject.getService(PerProjectIndexingQueue::class.java)
             .getSink(provider, projectScanningHistory.scanningSessionId).use { perProviderSink ->
               progressReporter.getSubTaskReporter().use { subTaskReporter ->
                 subTaskReporter.setText(provider.rootsScanningProgressText)
@@ -430,14 +429,14 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                 }
 
                 scanningStatistics.startVfsIterationAndScanningApplication()
-                provider.iterateFilesInRoots(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
+                provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
                 scanningStatistics.tryFinishVfsIterationAndScanningApplication()
 
                 scanningStatistics.startFileChecking()
                 for ((first, second) in rootsAndFiles) {
-                  val finder = UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, forceReindexingTrigger,
+                  val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
                                                     first, scanningRequest, myFilterHandler)
-                  val rootIterator = SingleProviderIterator(project, indicator, provider, finder,
+                  val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
                                                             scanningStatistics, perProviderSink)
                   if (!rootIterator.mayBeUsed()) {
                     LOG.warn("Iterator based on $provider can't be used.")
