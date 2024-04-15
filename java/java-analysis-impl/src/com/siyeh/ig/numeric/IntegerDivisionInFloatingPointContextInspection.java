@@ -30,7 +30,6 @@ import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -58,7 +57,7 @@ public final class IntegerDivisionInFloatingPointContextInspection extends BaseI
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     String castTo = (String)infos[0];
     return new IntegerDivisionInFloatingPointContextFix(castTo);
   }
@@ -83,7 +82,10 @@ public final class IntegerDivisionInFloatingPointContextInspection extends BaseI
         return;
       }
       final PsiExpression context = getContainingExpression(expression);
-      final PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
+      PsiType contextType = ExpectedTypeUtils.findExpectedType(context, true);
+      if (contextType == null) {
+        contextType = context.getType();
+      }
       String castTo;
       if (PsiTypes.floatType().equals(contextType) || PsiTypes.doubleType().equals(contextType)) {
         castTo = contextType.getCanonicalText();
