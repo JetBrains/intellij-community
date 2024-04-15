@@ -191,6 +191,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/jvm/KDocReference.kt");
             }
 
+            @TestMetadata("KDocReference2.kt")
+            public void testKDocReference2() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/KDocReference2.kt");
+            }
+
             @TestMetadata("KT10226.kt")
             public void testKT10226() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/KT10226.kt");
