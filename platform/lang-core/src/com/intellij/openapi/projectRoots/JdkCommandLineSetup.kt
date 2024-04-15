@@ -661,7 +661,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
           commandLine.addParameter("-Dsun.stderr.encoding=" + charset.name())
         }
       }
-      catch (_: IllegalArgumentException) { }
+      catch (_: IllegalArgumentException) {
+      }
     }
   }
 
@@ -879,7 +880,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     @Throws(MalformedURLException::class)
     private fun pathToUrl(targetPath: String): String {
-      val url : URL = if (notEscapeClassPathUrl) {
+      val url: URL = if (notEscapeClassPathUrl) {
         // repeat login of `File(path).toURL()` without using system-dependent java.io.File
         URL(URLUtil.FILE_PROTOCOL, "", slashify(targetPath))
       }
