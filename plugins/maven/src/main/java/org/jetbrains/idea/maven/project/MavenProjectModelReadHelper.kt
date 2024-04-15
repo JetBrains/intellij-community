@@ -4,16 +4,15 @@ package org.jetbrains.idea.maven.project
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jdom.Element
 import org.jetbrains.idea.maven.model.MavenModel
 import java.nio.file.Path
 
 interface MavenProjectModelReadHelper {
-  suspend fun interpolate(basedir: Path, file: VirtualFile, model: MavenModel): MavenModel
+  suspend fun interpolate(basedir: Path, mavenModuleFile: VirtualFile, model: MavenModel): MavenModel
 
-  suspend fun assembleInheritance(projectPomDir: Path, parent: MavenModel, model: MavenModel): MavenModel
+  suspend fun assembleInheritance(projectPomDir: Path, parent: MavenModel, model: MavenModel, mavenModuleFile: VirtualFile): MavenModel
 
-  fun filterModules(modules: List<String>, projectFile: VirtualFile): List<String>
+  fun filterModules(modules: List<String>, mavenModuleFile: VirtualFile): List<String>
 
   companion object {
     @JvmStatic

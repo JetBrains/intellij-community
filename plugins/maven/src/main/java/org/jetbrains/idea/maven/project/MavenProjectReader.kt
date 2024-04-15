@@ -209,7 +209,7 @@ class MavenProjectReader(private val myProject: Project) {
           false))
       }
 
-      model = myReadHelper.assembleInheritance(projectPomDir, parentModel, model)
+      model = myReadHelper.assembleInheritance(projectPomDir, parentModel, model, file)
 
       // todo: it is a quick-hack here - we add inherited dummy profiles to correctly collect activated profiles in 'applyProfiles'.
       val profiles = model.profiles
