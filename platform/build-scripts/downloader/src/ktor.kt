@@ -18,6 +18,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.prepareGet
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -75,6 +76,8 @@ private val httpClient = SynchronizedClearableLazy {
     }
   }
 }
+
+fun createSubClient(block: HttpClientConfig<*>.() -> Unit): HttpClient = httpClient.get().config(block)
 
 // copy from util, do not make public
 private class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T>, Supplier<T> {
@@ -284,12 +287,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
           }
 
           val response = effectiveClient.use { client ->
-            client.prepareGet(url).execute {
-              coroutineScope {
-                it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
-              }
-              it
-            }
+            doDownloadFileWithoutCaching(client = client, url = url, tempFile = tempFile)
           }
 
           val statusCode = response.status.value
@@ -342,6 +340,19 @@ private suspend fun downloadFileToCacheLocation(url: String,
   }
 }
 
+suspend fun downloadFileWithoutCaching(url: String, tempFile: Path) {
+  doDownloadFileWithoutCaching(httpClient.get(), url, tempFile)
+}
+
+private suspend fun doDownloadFileWithoutCaching(client: HttpClient, url: String, tempFile: Path): HttpResponse {
+  return client.prepareGet(url).execute {
+    coroutineScope {
+      it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+    }
+    it
+  }
+}
+
 fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
   return writer(CoroutineName("file-reader") + Dispatchers.IO, autoFlush = false) {
     FileChannel.open(file, StandardOpenOption.READ).use { fileChannel ->
@@ -368,7 +379,7 @@ fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
 
 private val WRITE_NEW_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
-internal fun CoroutineScope.writeChannel(file: Path): ByteWriteChannel {
+private fun CoroutineScope.writeChannel(file: Path): ByteWriteChannel {
   return reader(CoroutineName("file-writer") + Dispatchers.IO, autoFlush = true) {
     FileChannel.open(file, WRITE_NEW_OPERATION).use { fileChannel ->
       channel.copyTo(fileChannel)
