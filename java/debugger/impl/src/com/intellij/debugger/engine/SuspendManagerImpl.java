@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -197,7 +198,7 @@ public class SuspendManagerImpl implements SuspendManager {
     LOG.assertTrue(!context.isExplicitlyResumed(thread));
 
     if (context.myResumedThreads == null) {
-      context.myResumedThreads = new HashSet<>();
+      context.myResumedThreads = ConcurrentCollectionFactory.createConcurrentSet();
     }
     context.myResumedThreads.add(thread);
     context.myNotExecutableThreads.remove(thread);

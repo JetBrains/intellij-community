@@ -1194,7 +1194,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         for (SuspendContextImpl suspendingContext : mySuspendManager.getEventContexts()) {
           if (suspendingContexts.contains(suspendingContext) &&
-              !suspendingContext.isEvaluating() &&
+              (!suspendingContext.isEvaluating() || suspendingContext.getThread() != invokeThread) &&
               !suspendingContext.suspends(invokeThread)) {
             mySuspendManager.suspendThread(suspendingContext, invokeThread);
           }
