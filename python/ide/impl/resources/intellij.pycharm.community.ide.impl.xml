@@ -2,7 +2,6 @@
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <module name="intellij.python.community.impl"/>
-    <plugin id="com.intellij.modules.platform"/>
   </dependencies>
 
   <projectListeners>
