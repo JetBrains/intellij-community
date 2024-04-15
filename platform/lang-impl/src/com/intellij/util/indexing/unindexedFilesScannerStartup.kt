@@ -39,7 +39,7 @@ internal enum class FirstScanningState {
 internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           startSuspended: Boolean,
                                           coroutineScope: CoroutineScope,
-                                          indexingReason: String?) {
+                                          indexingReason: String) {
   FileBasedIndex.getInstance().loadIndexes()
   (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
 
@@ -58,7 +58,7 @@ private fun scheduleFullScanning(project: Project,
                                  startSuspended: Boolean,
                                  isFilterUpToDate: Boolean,
                                  coroutineScope: CoroutineScope,
-                                 indexingReason: String?) {
+                                 indexingReason: String) {
   val someDirtyFilesScheduledForIndexingFuture = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, false)
   }.asCompletableFuture()
@@ -74,7 +74,7 @@ private fun isShutdownPerformedForFileBasedIndex(fileBasedIndex: FileBasedIndexI
 private fun scheduleDirtyFilesScanning(project: Project,
                                        startSuspended: Boolean,
                                        coroutineScope: CoroutineScope,
-                                       indexingReason: String?) {
+                                       indexingReason: String) {
   LOG.info("Skipping full scanning on startup because indexable files filter is up-to-date and 'full.scanning.on.startup.can.be.skipped' is set to true")
   val projectDirtyFiles = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, true)

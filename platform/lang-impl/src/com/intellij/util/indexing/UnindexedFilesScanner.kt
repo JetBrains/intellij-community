@@ -72,7 +72,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                                 isIndexingFilesFilterUpToDate: Boolean,
                                                 predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
                                                 mark: StatusMark?,
-                                                indexingReason: String?,
+                                                private val indexingReason: String,
                                                 scanningType: ScanningType,
                                                 startCondition: Future<*>?,
                                                 shouldHideProgressInSmartMode: Boolean?,
@@ -84,7 +84,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   private val myIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val myFilterHandler: FilesFilterScanningHandler
-  private val myIndexingReason: String
   private val myScanningType: ScanningType
   private val myStartCondition: Future<*>?
   private val myPusher: PushedFilePropertiesUpdater
@@ -97,14 +96,15 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private val forceReindexingTrigger: Predicate<IndexedFile>?
 
   @TestOnly
-  constructor(project: Project) : this(project, false, false, false, null, null, null, ScanningType.FULL, null)
+  constructor(project: Project) : this(project, false, false, false, null, null,
+                                       "<unknown>", ScanningType.FULL, null)
 
 
   constructor(project: Project,
-              indexingReason: String?) : this(project, false, false, false, null, null, indexingReason, ScanningType.FULL, null)
+              indexingReason: String) : this(project, false, false, false, null, null, indexingReason, ScanningType.FULL, null)
 
   constructor(project: Project,
-              indexingReason: String?,
+              indexingReason: String,
               shouldHideProgressInSmartMode: Boolean?) : this(project, false, false, false, null, null, indexingReason, ScanningType.FULL,
                                                               null, shouldHideProgressInSmartMode,
                                                               null)
@@ -112,7 +112,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   constructor(project: Project,
               predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
               mark: StatusMark?,
-              indexingReason: String?) : this(project, false, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
+              indexingReason: String) : this(project, false, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
                                               if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
                                               null)
 
@@ -123,7 +123,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
               isIndexingFilesFilterUpToDate: Boolean,
               predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
               mark: StatusMark?,
-              indexingReason: String?,
+              indexingReason: String,
               scanningType: ScanningType,
               startCondition: Future<*>?,
               shouldHideProgressInSmartMode: Boolean? = null,
@@ -139,7 +139,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     myFilterHandler = if (isIndexingFilesFilterUpToDate
     ) IdleFilesFilterScanningHandler(filterHolder)
     else UpdatingFilesFilterScanningHandler(filterHolder)
-    myIndexingReason = if ((indexingReason != null)) indexingReason else "<unknown>"
     myScanningType = scanningType
     myStartCondition = startCondition
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject)
@@ -178,14 +177,14 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     LOG.assertTrue(myProject == oldTask.myProject)
     val reason = if (oldTask.isFullIndexUpdate()) {
-      oldTask.myIndexingReason
+      oldTask.indexingReason
     }
     else if (isFullIndexUpdate()) {
-      myIndexingReason
+      indexingReason
     }
     else {
-      "Merged " + myIndexingReason.removePrefix("Merged ") +
-      " with " + oldTask.myIndexingReason.removePrefix("Merged ")
+      "Merged " + indexingReason.removePrefix("Merged ") +
+      " with " + oldTask.indexingReason.removePrefix("Merged ")
     }
     LOG.debug("Merged $this task")
 
@@ -306,7 +305,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                  indicator: CheckPauseOnlyProgressIndicator,
                                  progressReporter: IndexingProgressReporter,
                                  markRef: Ref<StatusMark>) {
-    LOG.info("Started scanning for indexing of " + myProject.name + ". Reason: " + myIndexingReason)
+    LOG.info("Started scanning for indexing of " + myProject.name + ". Reason: " + indexingReason)
 
     indicator.onPausedStateChanged { paused: Boolean ->
       if (paused) {
@@ -368,7 +367,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   }
 
   private fun flushPerProjectIndexingQueue(indexingReason: String?, indicator: CheckPauseOnlyProgressIndicator) {
-    myProject.getService(PerProjectIndexingQueue::class.java).flushNow(myIndexingReason)
+    myProject.getService(PerProjectIndexingQueue::class.java).flushNow(this.indexingReason)
   }
 
   private fun collectIndexableFilesConcurrently(indicator: CheckPauseOnlyProgressIndicator,
@@ -559,7 +558,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       // Test will run a bit slower, but behavior will be more stable
       LockSupport.parkNanos(DELAY_IN_TESTS_MS * 1000000L)
     }
-    val scanningHistory = ProjectScanningHistoryImpl(myProject, myIndexingReason, myScanningType)
+    val scanningHistory = ProjectScanningHistoryImpl(myProject, indexingReason, myScanningType)
     myIndex.loadIndexes()
     myIndex.registeredIndexes.waitUntilAllIndicesAreInitialized() // wait until stale ids are deleted
     if (myStartCondition != null) { // wait until indexes for dirty files are cleared
