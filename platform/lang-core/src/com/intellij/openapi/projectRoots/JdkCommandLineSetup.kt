@@ -261,10 +261,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
     // copies agent .jar files to the beginning of the classpath to load agent classes faster
     if (isUrlClassloader(vmParameters)) {
-      if (request !is LocalTargetEnvironmentRequest) {
-        throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
-      }
-
       for (parameter in vmParameters.parameters) {
         if (parameter.startsWith(JAVAAGENT)) {
           val jar = parameter.substring(JAVAAGENT.length + 1).substringBefore('=')
@@ -499,20 +495,17 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         }
       }
       if (isUrlClassloader(vmParameters)) {
-        if (request !is LocalTargetEnvironmentRequest) {
-          throw CantRunException(LangCoreBundle.message("error.message.cannot.run.application.with.urlclasspath.on.the.remote.target"))
-        }
-
-        // since request is known to be local we will simplify to TargetValue.fixed below
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader::class.java)))
-        classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt::class.java)))
+        listOf(UrlClassLoader::class.java, StringUtilRt::class.java)
+          .map { PathUtil.getJarPathForClass(it) }
+          .map { requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, it) }
+          .let { classpath.addAll(it) }
 
         //explicitly enumerate jdk classes as UrlClassLoader doesn't delegate to parent classloader when loading resources
         //which leads to exceptions when coverage instrumentation tries to instrument loader class and its dependencies
         javaParameters.jdk?.rootProvider?.getFiles(OrderRootType.CLASSES)?.forEach {
           val path = PathUtil.getLocalPath(it)
-          if (StringUtil.isNotEmpty(path)) {
-            classpath.add(TargetValue.fixed(path))
+          if (!path.isNullOrEmpty()) {
+            classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, path))
           }
         }
       }
