@@ -57,7 +57,7 @@ class ImageSizeOptimizer(private val projectHome: Path) {
       }
       optimizedTotal.add(image.sizeBefore - image.sizeAfter)
     }
-    catch (e: IOException) {
+    catch (_: IOException) {
       throw Exception("Cannot optimize $file")
     }
     println("$file ${image.compressionStats}")
