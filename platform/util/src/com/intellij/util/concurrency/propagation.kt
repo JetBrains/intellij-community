@@ -192,6 +192,9 @@ private fun isContextAwareComputation(runnable: Any): Boolean {
 @Throws(ProcessCanceledException::class)
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boolean, action: () -> T): T {
+  // Even though catching and restoring PCE is unnecessary,
+  // we still would like to have it thrown, as it indicates _where the canceled job was accessed_,
+  // in addition to the original exception indicating _where the canceled job was canceled_
   val originalPCE: Ref<ProcessCanceledException> = Ref(null)
   val deferred = GlobalScope.async(
     // we need to have a job in CoroutineContext so that `Deferred` becomes its child and properly delays cancellation
@@ -201,7 +204,6 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
       action()
     }
     catch (e: ProcessCanceledException) {
-      // A raw PCE scares coroutine framework. Instead, we should message coroutines that we intend to cancel an activity, not fail it.
       originalPCE.set(e)
       throw CancellationException("Masking ProcessCanceledException: ${e.message}", e)
     }
@@ -213,10 +215,9 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
       }
       // `deferred` is an integral part of `job`, so manual cancellation within `action` should lead to the cancellation of `job`
       is CancellationException -> continuation.resumeWithException(it)
-      // Regular exceptions and PCE get propagated to `job` via parent-child relations between Jobs
+      // Regular exceptions get propagated to `job` via parent-child relations between Jobs
     }
   }
-  // Since this function is called strictly in blocking context, we need to preserve the PCE that was thrown
   originalPCE.get()?.let { throw it }
   try {
     return deferred.getCompleted()
