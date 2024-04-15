@@ -32,7 +32,7 @@ open class SavedPatchesUi(project: Project,
                           disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
 
-  protected val tree: SavedPatchesTree
+  protected val patchesTree: SavedPatchesTree
   internal val changesBrowser: SavedPatchesChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
@@ -40,28 +40,28 @@ open class SavedPatchesUi(project: Project,
   private val visibleProviders = providers.toMutableSet()
 
   init {
-    tree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
-    PopupHandler.installPopupMenu(tree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
+    patchesTree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
+    PopupHandler.installPopupMenu(patchesTree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
     changesBrowser = SavedPatchesChangesBrowser(project, focusMainUi, this)
-    CombinedSpeedSearch(changesBrowser.viewer, tree.speedSearch)
+    CombinedSpeedSearch(changesBrowser.viewer, patchesTree.speedSearch)
 
-    tree.doubleClickHandler = Processor { e ->
-      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
+    patchesTree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(patchesTree, e)) return@Processor false
       changesBrowser.showDiff()
       return@Processor true
     }
 
     val bottomToolbar = buildBottomToolbar()
 
-    tree.addSelectionListener {
+    patchesTree.addSelectionListener {
       changesBrowser.selectPatchObject(selectedPatchObjectOrNull())
       bottomToolbar.updateActionsImmediately()
     }
-    tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
+    patchesTree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY) { bottomToolbar.updateActionsImmediately() }
 
     val treePanel = JPanel(BorderLayout())
-    val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
+    val scrollPane = ScrollPaneFactory.createScrollPane(patchesTree, true)
     scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     treePanel.add(scrollPane, BorderLayout.CENTER)
 
@@ -120,7 +120,7 @@ open class SavedPatchesUi(project: Project,
     toolbarGroup.add(applyAction)
     toolbarGroup.add(popAction)
     val toolbar = ActionManager.getInstance().createActionToolbar(SAVED_PATCHES_UI_PLACE, toolbarGroup, true)
-    toolbar.targetComponent = tree
+    toolbar.targetComponent = patchesTree
     return toolbar
   }
 
@@ -158,7 +158,7 @@ open class SavedPatchesUi(project: Project,
     return null
   }
 
-  private fun selectedPatchObjectOrNull() = tree.selectedPatchObjects().findAny().orNull()
+  private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().findAny().orNull()
 
   private fun selectedProvider(): SavedPatchesProvider<*> {
     val selectedPatch = selectedPatchObjectOrNull() ?: return providers.first()
@@ -166,14 +166,14 @@ open class SavedPatchesUi(project: Project,
   }
 
   fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
-    tree.expandPatchesByProvider(provider)
+    patchesTree.expandPatchesByProvider(provider)
   }
 
   @ApiStatus.Internal
   fun setVisibleProviders(newVisibleProviders: Collection<SavedPatchesProvider<*>>) {
     visibleProviders.clear()
     visibleProviders.addAll(newVisibleProviders)
-    tree.rebuildTree()
+    patchesTree.rebuildTree()
   }
 
   companion object {
