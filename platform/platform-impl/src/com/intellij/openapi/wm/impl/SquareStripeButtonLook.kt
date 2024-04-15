@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -22,7 +24,12 @@ import javax.swing.UIManager
 internal open class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
   companion object {
     val ICON_PADDING: Insets
-      get() = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding()
+      get() {
+        if (UISettings.Companion.getInstance().compactMode && ResizeStripeManager.isShowNames()) {
+          return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingForCompactMode()
+        }
+        return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding()
+      }
   }
 
   override fun paintBackground(g: Graphics, component: JComponent, state: Int) {

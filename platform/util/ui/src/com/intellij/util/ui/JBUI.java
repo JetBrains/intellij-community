@@ -1262,12 +1262,20 @@ public final class JBUI {
         return insets(stripeToolbarButtonIconPaddingKey(), defaultStripeToolbarButtonIconPadding());
       }
 
+      public static @NotNull Insets stripeToolbarButtonIconPaddingForCompactMode() {
+        return insets(stripeToolbarButtonIconPaddingKey(), defaultStripeToolbarButtonIconPaddingForCompactMode());
+      }
+
       public static @NotNull String stripeToolbarButtonIconPaddingKey() {
         return "StripeToolbar.Button.iconPadding";
       }
 
       public static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
         return insets(5);
+      }
+
+      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForCompactMode() {
+        return insets(3);
       }
     }
 

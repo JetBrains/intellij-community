@@ -141,7 +141,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
   }
 
   private fun checkMinMax(width: Int): Int {
-    val min = JBUI.scale(if (UISettings.getInstance().compactMode) 32 else 40)
+    val min = JBUI.scale(if (UISettings.getInstance().compactMode) 33 else 40)
     if (width < min) {
       return min
     }
@@ -234,7 +234,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     fun applyShowNames() {
       val uiSettings = UISettings.getInstance()
       val newValue = uiSettings.showToolWindowsNames
-      val defaultWidth = if (newValue) JBUI.scale(if (UISettings.Companion.getInstance().compactMode) 40 else 54) else 0
+      val defaultWidth = if (newValue) JBUI.scale(if (UISettings.Companion.getInstance().compactMode) 41 else 55) else 0
 
       uiSettings.toolWindowLeftSideCustomWidth = defaultWidth
       uiSettings.toolWindowRightSideCustomWidth = defaultWidth
