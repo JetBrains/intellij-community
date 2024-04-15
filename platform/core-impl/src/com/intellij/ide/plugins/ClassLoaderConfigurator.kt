@@ -267,30 +267,12 @@ class ClassLoaderConfigurator(
     val resolveScopeManager: ResolveScopeManager?
     // main plugin descriptor
     if (module.moduleName == null) {
-      resolveScopeManager = when (module.pluginId.idString) {
-        "com.intellij.diagram" -> {
-          // multiple packages - intellij.diagram and intellij.diagram.impl modules
-          createScopeWithExtraPackage("com.intellij.diagram.")
-        }
-        "com.intellij.properties" -> {
-          // todo ability to customize (cannot move due to backward compatibility)
-          object : ResolveScopeManager {
-            override fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String? {
-              if (force) {
-                return null
-              }
-              else if (!name.startsWith(packagePrefix) &&
-                       !name.startsWith("com.intellij.ultimate.PluginVerifier") &&
-                       name != "com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider") {
-                return ""
-              }
-              else {
-                return null
-              }
-            }
-          }
-        }
-        else -> createPluginDependencyAndContentBasedScope(descriptor = module, pluginSet = pluginSet)
+      resolveScopeManager = if (module.pluginId.idString == "com.intellij.diagram") {
+        // multiple packages - intellij.diagram and intellij.diagram.impl modules
+        createScopeWithExtraPackage("com.intellij.diagram.")
+      }
+      else {
+        createPluginDependencyAndContentBasedScope(descriptor = module, pluginSet = pluginSet)
       }
     }
     else {
