@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.formatter
 
-import com.intellij.formatting.*
-import com.intellij.formatting.DependentSpacingRule.Anchor
-import com.intellij.formatting.DependentSpacingRule.Trigger
+import com.intellij.formatting.ASTBlock
+import com.intellij.formatting.Block
+import com.intellij.formatting.DependentSpacingRule
+import com.intellij.formatting.Spacing
+import com.intellij.formatting.SpacingBuilder
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
@@ -40,15 +41,15 @@ class KotlinSpacingBuilder(val commonCodeStyleSettings: CommonCodeStyleSettings,
     }
 
     private data class Condition(
-        val parent: IElementType? = null,
-        val left: IElementType? = null,
-        val right: IElementType? = null,
-        val parentSet: TokenSet? = null,
-        val leftSet: TokenSet? = null,
-        val rightSet: TokenSet? = null
+      val parent: IElementType? = null,
+      val left: IElementType? = null,
+      val right: IElementType? = null,
+      val parentSet: TokenSet? = null,
+      val leftSet: TokenSet? = null,
+      val rightSet: TokenSet? = null
     ) : (ASTBlock, ASTBlock, ASTBlock) -> Boolean {
         override fun invoke(p: ASTBlock, l: ASTBlock, r: ASTBlock): Boolean =
-            (parent == null || p.requireNode().elementType == parent) &&
+          (parent == null || p.requireNode().elementType == parent) &&
                     (left == null || l.requireNode().elementType == left) &&
                     (right == null || r.requireNode().elementType == right) &&
                     (parentSet == null || parentSet.contains(p.requireNode().elementType)) &&
@@ -79,8 +80,8 @@ class KotlinSpacingBuilder(val commonCodeStyleSettings: CommonCodeStyleSettings,
         }
 
         fun inPosition(
-            parent: IElementType? = null, left: IElementType? = null, right: IElementType? = null,
-            parentSet: TokenSet? = null, leftSet: TokenSet? = null, rightSet: TokenSet? = null
+          parent: IElementType? = null, left: IElementType? = null, right: IElementType? = null,
+          parentSet: TokenSet? = null, leftSet: TokenSet? = null, rightSet: TokenSet? = null
         ): CustomSpacingBuilder {
             conditions.add(Condition(parent, left, right, parentSet, leftSet, rightSet))
             return this
@@ -100,7 +101,8 @@ class KotlinSpacingBuilder(val commonCodeStyleSettings: CommonCodeStyleSettings,
             newRule { _: ASTBlock, left: ASTBlock, _: ASTBlock ->
                 val lastChild = left.node?.psi?.lastChild
                 val leftEndsWithComment = lastChild is PsiComment && lastChild.tokenType == KtTokens.EOL_COMMENT
-                val dependentSpacingRule = DependentSpacingRule(Trigger.HAS_LINE_FEEDS).registerData(Anchor.MIN_LINE_FEEDS, emptyLines + 1)
+                val dependentSpacingRule = DependentSpacingRule(DependentSpacingRule.Trigger.HAS_LINE_FEEDS).registerData(
+                  DependentSpacingRule.Anchor.MIN_LINE_FEEDS, emptyLines + 1)
                 val textRange = left.node
                     ?.startOfDeclaration()
                     ?.startOffset
@@ -108,13 +110,13 @@ class KotlinSpacingBuilder(val commonCodeStyleSettings: CommonCodeStyleSettings,
                     ?: left.textRange
 
                 spacingBuilderUtil.createLineFeedDependentSpacing(
-                    numSpacesOtherwise,
-                    numSpacesOtherwise,
-                    if (leftEndsWithComment) max(1, numberOfLineFeedsOtherwise) else numberOfLineFeedsOtherwise,
-                    commonCodeStyleSettings.KEEP_LINE_BREAKS,
-                    commonCodeStyleSettings.KEEP_BLANK_LINES_IN_DECLARATIONS,
-                    textRange,
-                    dependentSpacingRule
+                  numSpacesOtherwise,
+                  numSpacesOtherwise,
+                  if (leftEndsWithComment) max(1, numberOfLineFeedsOtherwise) else numberOfLineFeedsOtherwise,
+                  commonCodeStyleSettings.KEEP_LINE_BREAKS,
+                  commonCodeStyleSettings.KEEP_BLANK_LINES_IN_DECLARATIONS,
+                  textRange,
+                  dependentSpacingRule
                 )
             }
         }
@@ -146,7 +148,7 @@ class KotlinSpacingBuilder(val commonCodeStyleSettings: CommonCodeStyleSettings,
                 // TODO: it's a severe hack but I don't know how to implement it in other way
                 if (child1.requireNode().elementType == KtTokens.EOL_COMMENT && spacing.toString().contains("minLineFeeds=0")) {
                     val isBeforeBlock =
-                        child2.requireNode().elementType == KtNodeTypes.BLOCK || child2.requireNode().firstChildNode
+                      child2.requireNode().elementType == KtNodeTypes.BLOCK || child2.requireNode().firstChildNode
                             ?.elementType == KtNodeTypes.BLOCK
                     val keepBlankLines = if (isBeforeBlock) 0 else commonCodeStyleSettings.KEEP_BLANK_LINES_IN_CODE
                     return createSpacing(0, minLineFeeds = 1, keepLineBreaks = true, keepBlankLines = keepBlankLines)
@@ -182,13 +184,13 @@ class KotlinSpacingBuilder(val commonCodeStyleSettings: CommonCodeStyleSettings,
 
 interface KotlinSpacingBuilderUtil {
     fun createLineFeedDependentSpacing(
-        minSpaces: Int,
-        maxSpaces: Int,
-        minimumLineFeeds: Int,
-        keepLineBreaks: Boolean,
-        keepBlankLines: Int,
-        dependency: TextRange,
-        rule: DependentSpacingRule
+      minSpaces: Int,
+      maxSpaces: Int,
+      minimumLineFeeds: Int,
+      keepLineBreaks: Boolean,
+      keepBlankLines: Int,
+      dependency: TextRange,
+      rule: DependentSpacingRule
     ): Spacing
 
     fun getPreviousNonWhitespaceLeaf(node: ASTNode?): ASTNode?
@@ -197,9 +199,9 @@ interface KotlinSpacingBuilderUtil {
 }
 
 fun rules(
-    commonCodeStyleSettings: CommonCodeStyleSettings,
-    builderUtil: KotlinSpacingBuilderUtil,
-    init: KotlinSpacingBuilder.() -> Unit
+  commonCodeStyleSettings: CommonCodeStyleSettings,
+  builderUtil: KotlinSpacingBuilderUtil,
+  init: KotlinSpacingBuilder.() -> Unit
 ): KotlinSpacingBuilder {
     val builder = KotlinSpacingBuilder(commonCodeStyleSettings, builderUtil)
     builder.init()

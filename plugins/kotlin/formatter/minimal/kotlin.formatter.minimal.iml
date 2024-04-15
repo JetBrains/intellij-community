@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="kotlin.base.resources" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.highlighting.minimal" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
   </component>
 </module>

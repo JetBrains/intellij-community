@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.lang.ASTNode
@@ -7,8 +6,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassBody
+import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
@@ -61,7 +66,7 @@ class KotlinPreFormatProcessor : PreFormatProcessor {
     override fun process(element: ASTNode, range: TextRange): TextRange {
         val psi = element.psi ?: return range
         if (!psi.isValid) return range
-        if (psi.containingFile !is KtFile) return range
+        if (psi.containingFile.fileType !is KotlinFileType) return range
         return Visitor(range).apply { psi.accept(this) }.range
     }
 }
