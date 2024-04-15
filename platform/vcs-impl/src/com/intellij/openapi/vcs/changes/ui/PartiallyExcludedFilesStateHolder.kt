@@ -12,6 +12,9 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 abstract class PartiallyExcludedFilesStateHolder<T>(
   project: Project,
@@ -28,6 +31,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   protected val myUpdateQueue =
     MergingUpdateQueue(PartiallyExcludedFilesStateHolder::class.java.name, 300, true, MergingUpdateQueue.ANY_COMPONENT, this)
 
+  private val lock = ReentrantReadWriteLock()
   private val myIncludedElements: MutableSet<T> = createElementsSet()
   private val myTrackerExclusionStates: MutableMap<T, ExclusionState> = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
 
@@ -71,6 +75,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       }
     }
 
+    @RequiresEdt
     override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
       if (tracker !is PartialLocalLineStatusTracker) return
 
@@ -80,43 +85,63 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
       tracker.addListener(trackerListener, disposable)
     }
 
+    @RequiresEdt
     override fun onTrackerRemoved(tracker: LineStatusTracker<*>) {
       if (tracker !is PartialLocalLineStatusTracker) return
 
-      tracker.getAffectedChangeListsIds().forEach { changeListId ->
-        val element = findElementFor(tracker, changeListId) ?: return@forEach
+      for (changeListId in tracker.getAffectedChangeListsIds()) {
+        val element = findElementFor(tracker, changeListId) ?: continue
 
-        myTrackerExclusionStates -= element
         val exclusionState = tracker.getExcludedFromCommitState(element)
-        if (exclusionState != ExclusionState.NO_CHANGES) {
-          if (exclusionState != ExclusionState.ALL_EXCLUDED) myIncludedElements += element else myIncludedElements -= element
-        }
 
-        scheduleExclusionStatesUpdate()
+        lock.write {
+          myTrackerExclusionStates -= element
+          if (exclusionState != ExclusionState.NO_CHANGES) {
+            if (exclusionState != ExclusionState.ALL_EXCLUDED) {
+              myIncludedElements += element
+            }
+            else {
+              myIncludedElements -= element
+            }
+          }
+        }
       }
+
+      scheduleExclusionStatesUpdate()
     }
   }
 
   fun getIncludedSet(): Set<T> {
-    val set: MutableSet<T> = createElementsSet(myIncludedElements)
-    myTrackerExclusionStates.forEach { (element, state) ->
-      if (state == ExclusionState.ALL_EXCLUDED) set -= element else set += element
+    lock.read {
+      val set: MutableSet<T> = createElementsSet(myIncludedElements)
+      myTrackerExclusionStates.forEach { (element, state) ->
+        if (state == ExclusionState.ALL_EXCLUDED) set -= element else set += element
+      }
+      return set
     }
-    return set
   }
 
   fun getExclusionState(element: T): ExclusionState {
-    return myTrackerExclusionStates[element]
-           ?: if (element in myIncludedElements) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
+    lock.read {
+      val trackerState = myTrackerExclusionStates[element]
+      if (trackerState != null) return trackerState
+      val isIncluded = element in myIncludedElements
+      return if (isIncluded) ExclusionState.ALL_INCLUDED else ExclusionState.ALL_EXCLUDED
+    }
   }
 
   @RequiresEdt
   fun updateExclusionStates() {
-    rebuildTrackerExclusionStates()
+    lock.write {
+      rebuildTrackerExclusionStates()
+    }
+
     fireInclusionChanged()
   }
 
+  @RequiresEdt
   private fun rebuildTrackerExclusionStates() {
+    assert(lock.isWriteLocked)
     myTrackerExclusionStates.clear()
 
     trackers.forEach { (element, tracker) ->
@@ -125,48 +150,65 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     }
   }
 
+  @RequiresEdt
   fun setIncludedElements(elements: Collection<T>) {
     val set: MutableSet<T> = createElementsSet(elements)
     trackers.forEach { (element, tracker) ->
       tracker.setExcludedFromCommit(element, element !in set)
     }
 
-    myIncludedElements.clear()
-    myIncludedElements += elements
-
-    rebuildTrackerExclusionStates()
-    fireInclusionChanged()
-  }
-
-  fun includeElements(elements: Collection<T>) {
-    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, false) }
-    myIncludedElements += elements
-
-    rebuildTrackerExclusionStates()
-    fireInclusionChanged()
-  }
-
-  fun excludeElements(elements: Collection<T>) {
-    elements.forEach {
-      findTrackerFor(it)?.setExcludedFromCommit(it, true)
-      myIncludedElements.remove(it)
+    lock.write {
+      myIncludedElements.clear()
+      myIncludedElements += elements
+      rebuildTrackerExclusionStates()
     }
 
-    rebuildTrackerExclusionStates()
     fireInclusionChanged()
   }
 
+  @RequiresEdt
+  fun includeElements(elements: Collection<T>) {
+    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, false) }
+
+    lock.write {
+      myIncludedElements += elements
+      rebuildTrackerExclusionStates()
+    }
+
+    fireInclusionChanged()
+  }
+
+  @RequiresEdt
+  fun excludeElements(elements: Collection<T>) {
+    for (element in elements) {
+      findTrackerFor(element)?.setExcludedFromCommit(element, true)
+    }
+
+    lock.write {
+      for (element in elements) {
+        myIncludedElements.remove(element)
+      }
+      rebuildTrackerExclusionStates()
+    }
+
+    fireInclusionChanged()
+  }
+
+  @RequiresEdt
   fun retainElements(elements: Collection<T>) {
     val toRetain = createElementsSet(elements)
 
-    myIncludedElements.retainAll(toRetain)
     trackers.forEach { (element, tracker) ->
       if (!toRetain.contains(element)) {
         tracker.setExcludedFromCommit(element, true)
       }
     }
 
-    rebuildTrackerExclusionStates()
+    lock.write {
+      myIncludedElements.retainAll(toRetain)
+      rebuildTrackerExclusionStates()
+    }
+
     fireInclusionChanged()
   }
 }

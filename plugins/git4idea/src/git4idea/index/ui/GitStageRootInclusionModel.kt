@@ -11,10 +11,14 @@ import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 class GitStageRootInclusionModel(private val project: Project,
                                  private val tracker: GitStageTracker,
                                  disposable: Disposable) : BaseInclusionModel() {
+  private val lock = ReentrantReadWriteLock()
   private var stagedRoots = emptySet<VirtualFile>()
   private val includedRoots = mutableSetOf<VirtualFile>()
 
@@ -27,55 +31,79 @@ class GitStageRootInclusionModel(private val project: Project,
   }
 
   override fun getInclusion(): Set<Any> {
-    return includedRoots.asRepositories(project)
+    val roots = lock.read {
+      includedRoots.toList()
+    }
+    return roots.asRepositories(project)
   }
 
   override fun getInclusionState(item: Any): ThreeStateCheckBox.State {
     if (item !is GitRepository) return ThreeStateCheckBox.State.NOT_SELECTED
 
-    if (includedRoots.contains(item.root)) return ThreeStateCheckBox.State.SELECTED
-    return ThreeStateCheckBox.State.NOT_SELECTED
+    lock.read {
+      val isIncluded = includedRoots.contains(item.root)
+      return if (isIncluded) ThreeStateCheckBox.State.SELECTED else ThreeStateCheckBox.State.NOT_SELECTED
+    }
   }
 
-  override fun isInclusionEmpty(): Boolean = includedRoots.isEmpty()
+  override fun isInclusionEmpty(): Boolean {
+    lock.read {
+      return includedRoots.isEmpty()
+    }
+  }
 
   private fun updateInclusion() {
-    val removedRoots = stagedRoots - tracker.state.stagedRoots
-    val addedRoots = tracker.state.stagedRoots - stagedRoots
+    val wasChanged: Boolean
+    lock.write {
+      val removedRoots = stagedRoots - tracker.state.stagedRoots
+      val addedRoots = tracker.state.stagedRoots - stagedRoots
 
-    stagedRoots = tracker.state.stagedRoots
+      stagedRoots = tracker.state.stagedRoots
 
-    includedRoots.removeAll(removedRoots)
-    includedRoots.addAll(addedRoots)
+      includedRoots.removeAll(removedRoots)
+      includedRoots.addAll(addedRoots)
 
-    if (removedRoots.isNotEmpty() || addedRoots.isNotEmpty()) {
+      wasChanged = removedRoots.isNotEmpty() || addedRoots.isNotEmpty()
+    }
+
+    if (wasChanged) {
       fireInclusionChanged()
     }
   }
 
   override fun addInclusion(items: Collection<Any>) {
-    includedRoots.addAll(items.asRoots())
+    lock.write {
+      includedRoots.addAll(items.asRoots())
+    }
     fireInclusionChanged()
   }
 
   override fun removeInclusion(items: Collection<Any>) {
-    VcsUtil.removeAllFromSet(includedRoots, items.asRoots())
+    lock.write {
+      VcsUtil.removeAllFromSet(includedRoots, items.asRoots())
+    }
     fireInclusionChanged()
   }
 
   override fun setInclusion(items: Collection<Any>) {
-    includedRoots.clear()
-    includedRoots.addAll(items.asRoots())
+    lock.write {
+      includedRoots.clear()
+      includedRoots.addAll(items.asRoots())
+    }
     fireInclusionChanged()
   }
 
   override fun retainInclusion(items: Collection<Any>) {
-    includedRoots.retainAll(items.asRoots())
+    lock.write {
+      includedRoots.retainAll(items.asRoots())
+    }
     fireInclusionChanged()
   }
 
   override fun clearInclusion() {
-    includedRoots.clear()
+    lock.write {
+      includedRoots.clear()
+    }
     fireInclusionChanged()
   }
 
