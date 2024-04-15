@@ -104,11 +104,6 @@ private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFi
     
     val projectDirtyFilesFromProjectQueue = findProjectFiles(project, projectDirtyFilesQueue.fileIds, vfToFindLimit)
     val projectDirtyFiles = projectDirtyFilesFromProjectQueue + projectDirtyFilesFromOrphanQueue
-    if (!findAllVirtualFiles) {
-      assert(projectDirtyFiles.size < dumbModeThreshold) {
-        "Only ${dumbModeThreshold - 1} of virtual files are needed to put them in FilesToUpdateCollector during scanning in smart mode."
-      }
-    }
     scheduleForIndexing(projectDirtyFiles, fileBasedIndex, dumbModeThreshold - 1)
     ResultOfClearIndexesForDirtyFiles(projectDirtyFilesFromProjectQueue, projectDirtyFilesFromOrphanQueue)
   }
