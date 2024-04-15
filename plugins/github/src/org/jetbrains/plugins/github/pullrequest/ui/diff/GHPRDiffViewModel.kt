@@ -61,7 +61,7 @@ internal class GHPRDiffViewModelImpl(
   override val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 
   private val changesFetchFlow = with(dataProvider.changesData) {
-    changesNeedReloadSignal.withInitial(Unit).mapScoped {
+    changesNeedReloadSignal.withInitial(Unit).mapScoped(true) {
       async {
         loadChanges().also {
           ensureAllRevisionsFetched()

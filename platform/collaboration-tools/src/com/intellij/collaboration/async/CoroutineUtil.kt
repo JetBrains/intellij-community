@@ -13,6 +13,7 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.sync.Mutex
@@ -168,33 +169,46 @@ private class DerivedStateFlow<T>(
 }
 
 @ApiStatus.Experimental
-fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(mapper)
+fun <T, R> Flow<T>.mapScoped(supervisor: Boolean, mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(supervisor, mapper)
 
 @ApiStatus.Experimental
-private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
+fun <T, R> Flow<T>.mapScoped(mapper: CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
+
+/**
+ * Maps each value from a source flow to a distinct [CoroutineScope]
+ *
+ * Can handle [CoroutineStart.UNDISPATCHED]
+ */
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(supervisor: Boolean, mapper: suspend CoroutineScope.(T) -> R): Flow<R> =
   flow {
     coroutineScope {
-      var lastScope: CoroutineScope? = null
-      val breaker = MutableSharedFlow<R>(1)
-      try {
-        launchNow {
+      var lastScope: Job? = null
+      // need a breaker to allow re-emitting in the same coroutine that started the flow
+      val breaker = Channel<R>()
+      launchNow {
+        try {
           collect { state ->
             lastScope?.cancelAndJoinSilently()
-            lastScope = childScope().apply {
-              launchNow {
+            lastScope = launchNow {
+              val scopeBody: suspend CoroutineScope.() -> Unit = {
                 val result = mapper(state)
-                breaker.emit(result)
+                breaker.send(result)
               }
+              if (supervisor) supervisorScope(scopeBody) else coroutineScope(scopeBody)
             }
           }
         }
-        breaker.collect(this@flow)
+        finally {
+          breaker.close()
+        }
       }
-      finally {
-        lastScope?.cancelAndJoinSilently()
-      }
+      breaker.consumeAsFlow().collect(this@flow)
     }
   }
+
+@ApiStatus.Experimental
+private fun <T, R> Flow<T>.mapScoped2(mapper: suspend CoroutineScope.(T) -> R): Flow<R> = mapScoped2(false, mapper)
 
 /**
  * Performs mapping only if the source value is not null

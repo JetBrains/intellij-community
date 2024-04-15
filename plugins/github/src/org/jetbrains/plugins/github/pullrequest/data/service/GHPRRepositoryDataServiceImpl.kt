@@ -53,7 +53,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
   }
 
   private val convertedCollaboratorsRequest: Flow<Deferred<List<GHUser>>> by lazy {
-    collaboratorsRequest.mapScoped {
+    collaboratorsRequest.mapScoped(true) {
       async {
         it.await().map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
       }
@@ -113,7 +113,7 @@ class GHPRRepositoryDataServiceImpl internal constructor(parentCs: CoroutineScop
           .map { GHUser(it.nodeId, it.login, it.htmlUrl, it.avatarUrl ?: "", null) }
         teams + collaboratorsWithWriteAccess
       }
-    }.mapScoped { awaiter ->
+    }.mapScoped(true) { awaiter ->
       async {
         awaiter()
       }
