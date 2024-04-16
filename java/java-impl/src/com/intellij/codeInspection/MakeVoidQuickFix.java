@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -30,13 +30,12 @@ public class MakeVoidQuickFix implements LocalQuickFix {
   private final ProblemDescriptionsProcessor myProcessor;
   private static final Logger LOG = Logger.getInstance(MakeVoidQuickFix.class);
 
-  public MakeVoidQuickFix(@Nullable final ProblemDescriptionsProcessor processor) {
+  public MakeVoidQuickFix(final @Nullable ProblemDescriptionsProcessor processor) {
     myProcessor = processor;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.unused.return.value.make.void.quickfix");
   }
 
@@ -74,9 +73,8 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -99,7 +97,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     csp.run();
   }
 
-  private static void replaceReturnStatements(@NotNull final PsiMethod method) {
+  private static void replaceReturnStatements(final @NotNull PsiMethod method) {
     final PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
     if (statements.length > 0) {
       for (int i = statements.length - 1; i >= 0; i--) {

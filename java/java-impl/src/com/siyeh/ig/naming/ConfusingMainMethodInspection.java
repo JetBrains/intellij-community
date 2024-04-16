@@ -37,8 +37,7 @@ public final class ConfusingMainMethodInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return infos.length > 0
            ? InspectionGadgetsBundle.message("unrunnable.main.method.problem.descriptor")
            : InspectionGadgetsBundle.message("confusing.main.method.problem.descriptor");

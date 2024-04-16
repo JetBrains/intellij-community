@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -77,8 +77,7 @@ public final class CreateTestUtils {
       .compute(() -> CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
   }
 
-  @Nullable
-  public static PsiDirectory chooseDefaultDirectory(Project project, Module currentModule, PsiDirectory[] directories, List<VirtualFile> roots) {
+  public static @Nullable PsiDirectory chooseDefaultDirectory(Project project, Module currentModule, PsiDirectory[] directories, List<VirtualFile> roots) {
     List<PsiDirectory> dirs = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : ModuleRootManager.getInstance(currentModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {

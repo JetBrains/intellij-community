@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
@@ -38,20 +38,17 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
     myImportInsertion = importInsertion;
   }
 
-  @NotNull
   @Override
-  public PsiMember getObject() {
+  public @NotNull PsiMember getObject() {
     return myHelper.getMember();
   }
 
-  @NotNull
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     return Objects.requireNonNull(myHelper.getContainingClass());
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return Objects.requireNonNull(getObject().getName());
   }
 

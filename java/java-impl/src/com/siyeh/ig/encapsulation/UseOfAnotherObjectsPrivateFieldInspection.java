@@ -48,14 +48,12 @@ public final class UseOfAnotherObjectsPrivateFieldInspection
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "AccessingNonPublicFieldOfAnotherObject";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "accessing.non.public.field.of.another.object.problem.descriptor");
   }

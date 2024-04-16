@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -113,8 +113,7 @@ public final class BasicExpressionCompletionContributor {
     }
   }
 
-  @NotNull
-  private static LookupElement expressionToLookupElement(@NotNull PsiExpression expression) {
+  private static @NotNull LookupElement expressionToLookupElement(@NotNull PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression refExpr && !refExpr.isQualified() && refExpr.resolve() instanceof PsiVariable var) {
       final VariableLookupItem item = new VariableLookupItem(var);
       item.setSubstitutor(PsiSubstitutor.EMPTY);

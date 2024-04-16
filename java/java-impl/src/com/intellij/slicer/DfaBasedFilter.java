@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInsight.Nullability;
@@ -122,7 +122,7 @@ final class DfaBasedFilter {
     return getPresentationText(myDfType, getElementType(element));
   }
 
-  private @Nullable static PsiType getElementType(@NotNull PsiElement element) {
+  private static @Nullable PsiType getElementType(@NotNull PsiElement element) {
     if (DumbService.isDumb(element.getProject())) return null;
     if (element instanceof PsiExpression) {
       return ((PsiExpression)element).getType();

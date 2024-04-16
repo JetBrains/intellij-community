@@ -39,8 +39,7 @@ public final class MergeIfAndIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new MergeIfAndPredicate();
   }
 
@@ -63,7 +62,7 @@ public final class MergeIfAndIntention extends MCIntention {
 
     final String parentConditionText = ParenthesesUtils.getText(ct.markUnchanged(parentCondition), ParenthesesUtils.OR_PRECEDENCE);
 
-    @NonNls final String statement = "if(" + parentConditionText + "&&" + childConditionText + ')' + ct.text(childThenBranch);
+    final @NonNls String statement = "if(" + parentConditionText + "&&" + childConditionText + ')' + ct.text(childThenBranch);
     ct.replaceAndRestoreComments(parentStatement, statement);
   }
 }

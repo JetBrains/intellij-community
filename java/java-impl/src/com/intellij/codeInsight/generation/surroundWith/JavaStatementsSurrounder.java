@@ -1,5 +1,5 @@
 
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.surroundWith.Surrounder;
@@ -22,7 +22,7 @@ abstract class JavaStatementsSurrounder implements Surrounder {
   }
 
   @Override
-  @Nullable public TextRange surroundElements(@NotNull Project project,
+  public @Nullable TextRange surroundElements(@NotNull Project project,
                                               @NotNull Editor editor,
                                               PsiElement @NotNull [] elements) throws IncorrectOperationException {
     PsiElement container = elements[0].getParent();
@@ -30,10 +30,9 @@ abstract class JavaStatementsSurrounder implements Surrounder {
     return surroundStatements (project, editor, container, elements);
   }
 
- @Nullable protected abstract TextRange surroundStatements(final Project project, final Editor editor, final PsiElement container, final PsiElement[] statements) throws IncorrectOperationException;
+ protected abstract @Nullable TextRange surroundStatements(final Project project, final Editor editor, final PsiElement container, final PsiElement[] statements) throws IncorrectOperationException;
 
-  @NotNull
-  protected PsiStatement addAfter(final PsiStatement statement, final PsiElement container, final PsiElement[] statements) {
+  protected @NotNull PsiStatement addAfter(final PsiStatement statement, final PsiElement container, final PsiElement[] statements) {
     if (container instanceof PsiSwitchLabeledRuleStatement && !(statement instanceof PsiBlockStatement)) {
       Project project = container.getProject();
       PsiManager manager = PsiManager.getInstance(project);

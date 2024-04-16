@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -37,9 +37,8 @@ public class ChangeToAppendFix extends PsiUpdateModCommandAction<PsiAssignmentEx
     return Presentation.of(text);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("change.to.append.family");
   }
 
@@ -51,15 +50,13 @@ public class ChangeToAppendFix extends PsiUpdateModCommandAction<PsiAssignmentEx
     assignmentExpression.replace(appendExpression);
   }
 
-  @NotNull
-  private TypeInfo getTypeInfo() {
+  private @NotNull TypeInfo getTypeInfo() {
     if (myTypeInfo != null) return myTypeInfo;
     myTypeInfo = calculateTypeInfo();
     return myTypeInfo;
   }
 
-  @NotNull
-  private TypeInfo calculateTypeInfo() {
+  private @NotNull TypeInfo calculateTypeInfo() {
     if (myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER) ||
         myLhsType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
       return new TypeInfo(true, false);

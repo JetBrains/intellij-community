@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.editorActions.FixDocCommentAction;
@@ -17,12 +17,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddJavadocIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   @Override
-  public void invoke(@NotNull final Project project, final @NotNull Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiElement element) throws IncorrectOperationException {
     FixDocCommentAction.generateOrFixComment(element, project, editor);
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final @NotNull Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiIdentifier ||
         element instanceof PsiJavaCodeReferenceElement ||
         element instanceof PsiJavaModuleReferenceElement) {
@@ -50,16 +50,14 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
     return false;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     //noinspection DialogTitleCapitalization
     return JavaBundle.message("intention.family.add.javadoc");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     //noinspection DialogTitleCapitalization
     return getFamilyName();
   }

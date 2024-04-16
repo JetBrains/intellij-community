@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -38,11 +38,10 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                             @NotNull Collection<AbstractTreeNode<?>> children,
-                                             ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();
@@ -135,8 +134,7 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
     return false;
   }
 
-  @Nullable
-  private static PsiFile getBaseRootFile(PsiElement element) {
+  private static @Nullable PsiFile getBaseRootFile(PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 

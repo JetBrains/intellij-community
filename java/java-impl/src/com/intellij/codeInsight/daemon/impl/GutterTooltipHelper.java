@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocHighlightingManagerImpl;
@@ -27,8 +27,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
    * @param skipFirstMember {@code true} to skip a method (or field) name in the link to element
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    */
-  @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
+  public static @NotNull <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
                                                              @NotNull String prefix,
                                                              boolean skipFirstMember,
                                                              @Nullable String actionId) {
@@ -42,8 +41,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    * @param pressMessageKey JavaBundle key to retrieve context help message with shortcut
    */
-  @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
+  public static @NotNull <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
                                                              @NotNull String prefix,
                                                              boolean skipFirstMember,
                                                              @Nullable String actionId,
@@ -61,8 +59,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
    * @param skipFirstMemberOfElement a function that returns {@code true} to skip a method (or field) name for the current element
    * @param actionId                 an action identifier to generate context help or {@code null} if not applicable
    */
-  @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<? extends E> elements,
+  public static @NotNull <E extends PsiElement> String getTooltipText(@NotNull Collection<? extends E> elements,
                                                              @NotNull Function<? super E, String> elementToPrefix,
                                                              @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                              @Nullable String actionId) {
@@ -88,8 +85,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
   }
 
   @Override
-  @Nullable
-  protected PsiElement getContainingElement(@NotNull PsiElement element) {
+  protected @Nullable PsiElement getContainingElement(@NotNull PsiElement element) {
     PsiMember member = getStubOrPsiParentOfType(element, PsiMember.class);
     if (member == null && element instanceof PsiMember) {
       member = ((PsiMember)element).getContainingClass();
@@ -98,8 +94,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
   }
 
   @Override
-  @Nullable
-  protected String getPresentableName(@NotNull PsiElement element) {
+  protected @Nullable String getPresentableName(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstantInitializer initializer) {
       return QuickDocHighlightingHelper.getStyledFragment(
         initializer.getEnumConstant().getName(),

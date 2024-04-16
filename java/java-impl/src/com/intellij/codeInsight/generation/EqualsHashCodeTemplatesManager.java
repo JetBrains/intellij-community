@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,11 +43,11 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
   private static final String EQUALS_SUFFIX = "equals";
   private static final String HASH_CODE_SUFFIX = "hashCode";
 
-  @NonNls public static final String INTELLI_J_DEFAULT = "IntelliJ Default";
-  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Apache Commons Lang EqualsBuilder and HashCodeBuilder";
-  @NonNls public static final String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Apache Commons Lang 3 EqualsBuilder and HashCodeBuilder";
-  @NonNls public static final String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Guava Objects.equal() and hashCode()";
-  @NonNls public static final String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals() and hash() (Java 7 and higher)";
+  public static final @NonNls String INTELLI_J_DEFAULT = "IntelliJ Default";
+  public static final @NonNls String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG = "Apache Commons Lang EqualsBuilder and HashCodeBuilder";
+  public static final @NonNls String EQUALS_HASH_CODE_BUILDER_APACHE_COMMONS_LANG_3 = "Apache Commons Lang 3 EqualsBuilder and HashCodeBuilder";
+  public static final @NonNls String OBJECTS_EQUAL_AND_HASH_CODE_GUAVA = "Guava Objects.equal() and hashCode()";
+  public static final @NonNls String JAVA_UTIL_OBJECTS_EQUALS_AND_HASH_CODE = "java.util.Objects.equals() and hash() (Java 7 and higher)";
 
   public static EqualsHashCodeTemplatesManager getInstance() {
     return ApplicationManager.getApplication().getService(EqualsHashCodeTemplatesManager.class);

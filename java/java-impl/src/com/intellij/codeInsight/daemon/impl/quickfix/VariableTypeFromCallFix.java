@@ -33,8 +33,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
                                   JavaElementKind.fromElement(myVar).lessDescriptive().subject(),
                                   myVar.getName(),
@@ -42,8 +41,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("fix.variable.type.family");
   }
 
@@ -53,7 +51,7 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     var scope = PsiSearchHelper.getInstance(project).getUseScope(myVar);
     var handler = CommonJavaRefactoringUtil.getRefactoringSupport().getChangeTypeSignatureHandler();
     handler.runHighlightingTypeMigrationSilently(project, editor, scope, myVar, myExpressionType);
@@ -65,9 +63,8 @@ public final class VariableTypeFromCallFix implements IntentionAction {
   }
 
 
-  @NotNull
-  public static List<IntentionAction> getQuickFixActions(@NotNull PsiMethodCallExpression methodCall,
-                                                         @NotNull PsiExpressionList list) {
+  public static @NotNull List<IntentionAction> getQuickFixActions(@NotNull PsiMethodCallExpression methodCall,
+                                                                  @NotNull PsiExpressionList list) {
     final JavaResolveResult result = methodCall.getMethodExpression().advancedResolve(false);
     PsiMethod method = (PsiMethod) result.getElement();
     final PsiSubstitutor substitutor = result.getSubstitutor();

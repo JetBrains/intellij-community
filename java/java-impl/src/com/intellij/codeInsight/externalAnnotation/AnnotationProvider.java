@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.externalAnnotation;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -46,8 +46,7 @@ public interface AnnotationProvider {
    * @param owner annotation target
    * @return a fix that could be used to add the annotation provided by this provider
    */
-  @NotNull
-  default AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner) {
+  default @NotNull AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner) {
     Project project = owner.getProject();
     return new AddAnnotationFix(getName(project), owner, getAnnotationsToRemove(project));
   }
@@ -57,8 +56,7 @@ public interface AnnotationProvider {
    * @param place where to add the annotation
    * @return a fix that could be used to add the annotation provided by this provider
    */
-  @NotNull
-  default AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner, @NotNull ExternalAnnotationsManager.AnnotationPlace place) {
+  default @NotNull AddAnnotationFix createFix(@NotNull PsiModifierListOwner owner, @NotNull ExternalAnnotationsManager.AnnotationPlace place) {
     Project project = owner.getProject();
     return new AddAnnotationFix(getName(project), owner, PsiNameValuePair.EMPTY_ARRAY, place, getAnnotationsToRemove(project));
   }

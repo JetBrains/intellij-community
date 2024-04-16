@@ -40,8 +40,7 @@ public final class AnonymousInnerClassMayBeStaticInspection extends BaseInspecti
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
   }
 

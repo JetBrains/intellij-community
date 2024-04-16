@@ -54,8 +54,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MethodCallChainPredicate();
   }
 
@@ -142,11 +141,10 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
     }
   }
 
-  @Nullable
-  private static PsiVariable appendStatements(PsiStatement anchor,
-                                              CommentTracker tracker,
-                                              boolean introduceVariable,
-                                              String replacementBlock, @NotNull ModPsiUpdater updater) {
+  private static @Nullable PsiVariable appendStatements(PsiStatement anchor,
+                                                        CommentTracker tracker,
+                                                        boolean introduceVariable,
+                                                        String replacementBlock, @NotNull ModPsiUpdater updater) {
     PsiElement parent = anchor.getParent();
     Project project = anchor.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -167,8 +165,7 @@ public final class MakeCallChainIntoCallSequenceIntention extends MCIntention {
     return variable;
   }
 
-  @NotNull
-  private static String generateReplacementBlock(List<String> calls, String target, String firstStatement) {
+  private static @NotNull String generateReplacementBlock(List<String> calls, String target, String firstStatement) {
     final StringBuilder builder = new StringBuilder("{\n");
     if (firstStatement != null) {
       builder.append(firstStatement);

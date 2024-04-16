@@ -31,7 +31,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 public final class JavaNoVariantsDelegator extends CompletionContributor implements DumbAware {
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     ResultTracker tracker = new ResultTracker(result) {
       @Override
       public void consume(CompletionResult plainResult) {

@@ -97,8 +97,7 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
                                       getTargetSubstitutor(nameValuePair), expectedTypes, context);
   }
 
-  @Nullable
-  public static PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
+  public static @Nullable PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
     PsiType type = null;
     if (value instanceof PsiExpression) {
       type = ((PsiExpression)value).getType();
@@ -141,13 +140,11 @@ public class CreateAnnotationMethodFromUsageFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
-  @Nullable
-  protected PsiNameValuePair getNameValuePair() {
+  protected @Nullable PsiNameValuePair getNameValuePair() {
     return myNameValuePair.getElement();
   }
 }

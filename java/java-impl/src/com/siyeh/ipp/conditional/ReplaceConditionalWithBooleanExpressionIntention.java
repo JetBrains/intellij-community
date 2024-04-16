@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.conditional;
 
 import com.intellij.codeInspection.util.IntentionName;
@@ -30,9 +30,8 @@ public final class ReplaceConditionalWithBooleanExpressionIntention extends MCIn
     return IntentionPowerPackBundle.message("replace.conditional.with.boolean.expression.intention.name");
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(PsiElement element) {

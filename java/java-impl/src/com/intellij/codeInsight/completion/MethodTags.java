@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -31,8 +31,7 @@ public final class MethodTags {
   /**
    * @return LookupElement with support for tags or null if the element doesn't meet tag requirements or can be used without tags
    */
-  @Nullable
-  static LookupElement wrapLookupWithTags(@NotNull LookupElement element, @NotNull Condition<? super String> matcher,
+  static @Nullable LookupElement wrapLookupWithTags(@NotNull LookupElement element, @NotNull Condition<? super String> matcher,
                                           @NotNull String prefix, @NotNull CompletionType completionType) {
     if (matcher.value(element.getLookupString())) {
       return null;
@@ -56,11 +55,9 @@ public final class MethodTags {
   @ApiStatus.Experimental
   static class TagLookupElementDecorator extends LookupElementDecorator<LookupElement> {
 
-    @NotNull
-    private final Set<String> myTags;
+    private final @NotNull Set<String> myTags;
 
-    @NotNull
-    private final String myPrefix;
+    private final @NotNull String myPrefix;
     private final boolean myIsSmart;
 
     protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags, @NotNull String prefix,
@@ -78,8 +75,7 @@ public final class MethodTags {
       super.handleInsert(context);
     }
 
-    @NotNull
-    public Set<String> getTags() {
+    public @NotNull Set<String> getTags() {
       return myTags;
     }
 
@@ -140,8 +136,7 @@ public final class MethodTags {
    */
   @ApiStatus.Experimental
   static class TagMatcher extends PrefixMatcher {
-    @NotNull
-    private final PrefixMatcher myMatcher;
+    private final @NotNull PrefixMatcher myMatcher;
 
     protected TagMatcher(@NotNull PrefixMatcher matcher) {
       super(matcher.getPrefix());
@@ -173,8 +168,7 @@ public final class MethodTags {
    * @return proposed tags (synonyms), which can be used to extend search
    */
   @ApiStatus.Experimental
-  @NotNull
-  static Set<Tag> tags(@Nullable String referenceName) {
+  static @NotNull Set<Tag> tags(@Nullable String referenceName) {
     if (referenceName == null) {
       return Collections.emptySet();
     }

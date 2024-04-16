@@ -46,8 +46,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new IndexedForEachLoopPredicate();
   }
 
@@ -73,7 +72,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
     PsiStatement context = (parent instanceof PsiLabeledStatement) ? (PsiStatement)parent : statement;
     final PsiElement reference = getReferenceToIterate(iteratedValue, context);
 
-    @NonNls final StringBuilder newStatement = new StringBuilder();
+    final @NonNls StringBuilder newStatement = new StringBuilder();
     final String indexText = createVariableName("i", PsiTypes.intType(), statement);
     final String iteratedValueText = (reference instanceof PsiVariable) ? ((PsiVariable)reference).getName() : tracker.text(reference);
     createForLoopDeclaration(statement, isArray, iteratedValueText, indexText, newStatement);
@@ -140,8 +139,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends MCIntention {
     newStatement.append("++){");
   }
 
-  @Nullable
-  private static String getVariableName(PsiExpression expression) {
+  private static @Nullable String getVariableName(PsiExpression expression) {
     if (expression instanceof PsiMethodCallExpression methodCallExpression) {
       final PsiReferenceExpression methodExpression =
         methodCallExpression.getMethodExpression();

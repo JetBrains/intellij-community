@@ -16,7 +16,6 @@
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,11 +25,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public final class PublicInnerClassInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
@@ -44,8 +41,7 @@ public final class PublicInnerClassInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "public.inner.class.problem.descriptor");
   }

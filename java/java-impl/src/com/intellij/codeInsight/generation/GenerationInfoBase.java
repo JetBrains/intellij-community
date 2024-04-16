@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -18,8 +18,7 @@ public abstract class GenerationInfoBase implements GenerationInfo {
   public abstract PsiMember getPsiMember();
 
   @Override
-  @Nullable
-  public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
+  public @Nullable PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
     PsiElement element = leaf;
     while (element.getParent() != aClass) {
       element = element.getParent();

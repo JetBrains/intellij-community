@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -25,10 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return QuickFixBundle.message("remove.unreachable.branches");
   }
 
@@ -197,8 +195,7 @@ public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
    * @param switchBlock a considered switch block
    * @return a list of local variables extracted from a pattern variable if it's possible and necessary.
    */
-  @NotNull
-  private static List<PsiLocalVariable> collectVariables(@NotNull PsiCaseLabelElement label,
+  private static @NotNull List<PsiLocalVariable> collectVariables(@NotNull PsiCaseLabelElement label,
                                                          @NotNull PsiSwitchBlock switchBlock) {
     PsiPrimaryPattern pattern = JavaPsiPatternUtil.getTypedPattern(label);
     if (pattern == null) return Collections.emptyList();

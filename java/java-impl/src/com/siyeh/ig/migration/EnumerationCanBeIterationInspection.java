@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -33,22 +34,17 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
   static final int KEEP_NOTHING = 0;
   static final int KEEP_INITIALIZATION = 1;
   static final int KEEP_DECLARATION = 2;
-  @NonNls
-  static final String ITERATOR_TEXT = "iterator()";
-  @NonNls
-  static final String KEY_SET_ITERATOR_TEXT = "keySet().iterator()";
-  @NonNls
-  static final String VALUES_ITERATOR_TEXT = "values().iterator()";
+  static final @NonNls String ITERATOR_TEXT = "iterator()";
+  static final @NonNls String KEY_SET_ITERATOR_TEXT = "keySet().iterator()";
+  static final @NonNls String VALUES_ITERATOR_TEXT = "values().iterator()";
 
   @Override
-  @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new EnumerationCanBeIterationFix();
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "enumeration.can.be.iteration.problem.descriptor", infos[0]);
   }
@@ -62,8 +58,7 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
     extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "enumeration.can.be.iteration.quickfix");
     }
@@ -158,11 +153,10 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
       }
     }
 
-    @Nullable
-    private static PsiStatement createDeclaration(PsiMethodCallExpression methodCallExpression,
-                                                  String variableName,
-                                                  PsiType parameterType) {
-      @NonNls final StringBuilder newStatementText = new StringBuilder();
+    private static @Nullable PsiStatement createDeclaration(PsiMethodCallExpression methodCallExpression,
+                                                            String variableName,
+                                                            PsiType parameterType) {
+      final @NonNls StringBuilder newStatementText = new StringBuilder();
       final Project project = methodCallExpression.getProject();
       if (JavaCodeStyleSettings.getInstance(methodCallExpression.getContainingFile()).GENERATE_FINAL_LOCALS) {
         newStatementText.append("final ");
@@ -189,7 +183,7 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
         qualifierText = qualifier.getText() + '.';
       }
       newStatementText.append(qualifierText);
-      @NonNls final String methodName =
+      final @NonNls String methodName =
         methodExpression.getReferenceName();
       if ("elements".equals(methodName)) {
         if (TypeUtils.expressionHasTypeOrSubtype(qualifier,
@@ -275,9 +269,9 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
         }
         final PsiReferenceExpression foundReferenceExpression =
           callExpression.getMethodExpression();
-        @NonNls final String foundName =
+        final @NonNls String foundName =
           foundReferenceExpression.getReferenceName();
-        @NonNls final String newExpressionText;
+        final @NonNls String newExpressionText;
         if ("hasMoreElements".equals(foundName)) {
           newExpressionText = newVariableName + ".hasNext()";
         }
@@ -296,8 +290,7 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
       return result;
     }
 
-    @NonNls
-    private static String createVariableName(PsiElement context) {
+    private static @NonNls String createVariableName(PsiElement context) {
       final Project project = context.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
@@ -333,7 +326,7 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression =
         expression.getMethodExpression();
-      @NonNls final String methodName =
+      final @NonNls String methodName =
         methodExpression.getReferenceName();
       final boolean isElements;
       if ("elements".equals(methodName)) {
@@ -426,7 +419,7 @@ public final class EnumerationCanBeIterationInspection extends BaseInspection im
         super.visitMethodCallExpression(expression);
         final PsiReferenceExpression methodExpression =
           expression.getMethodExpression();
-        @NonNls final String methodName =
+        final @NonNls String methodName =
           methodExpression.getReferenceName();
         if (!"hasMoreElements".equals(methodName) &&
             !"nextElement".equals(methodName)) {

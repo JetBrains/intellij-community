@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
@@ -45,9 +45,8 @@ public abstract class JavaTestFramework implements JvmTestFramework {
     return c != null;
   }
 
-  @Nullable
   @Override
-  public String getLibraryPath() {
+  public @Nullable String getLibraryPath() {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
       return descriptor.getLibraryClassesRoots().get(0);
@@ -114,54 +113,46 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   @Override
-  @Nullable
-  public PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findSetUpMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findSetUpMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected abstract PsiMethod findSetUpMethod(@NotNull PsiClass clazz);
+  protected abstract @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz);
 
   @Override
-  @Nullable
-  public PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findTearDownMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findTearDownMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected abstract PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
+  protected abstract @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz);
 
-  @Nullable
   @Override
-  public PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findBeforeClassMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+  public @Nullable PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
     if (clazz instanceof PsiClass && isFrameworkAvailable(clazz)) {
       return findAfterClassMethod((PsiClass)clazz);
     }
     return null;
   }
 
-  @Nullable
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
     return null;
   }
 
@@ -179,27 +170,23 @@ public abstract class JavaTestFramework implements JvmTestFramework {
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     // despite the class name, it could handle (utilizing LightClasses) test frameworks
     // in different (JVM-like) languages like java, groovy, kotlin, scala and so on
     return Language.ANY;
   }
 
-  @Nullable
-  protected abstract PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
+  protected abstract @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException;
 
   public boolean isParameterized(PsiClass clazz) {
     return false;
   }
 
-  @Nullable
-  public PsiMethod findParametersMethod(PsiClass clazz) {
+  public @Nullable PsiMethod findParametersMethod(PsiClass clazz) {
     return null;
   }
 
-  @Nullable
-  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+  public @Nullable FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return null;
   }
 

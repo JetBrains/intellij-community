@@ -33,8 +33,7 @@ import java.util.Set;
 public final class MethodOverridesInaccessibleMethodOfSuperInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(infos[0].equals(PsiModifier.PACKAGE_LOCAL) ?
       "method.overrides.package.local.method.problem.descriptor" :
       "method.overrides.private.display.name.problem.descriptor"

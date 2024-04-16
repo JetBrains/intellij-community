@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -246,8 +246,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  @NotNull
-  private LookupElement createReturnKeyword() {
+  private @NotNull LookupElement createReturnKeyword() {
     TailType returnTail = getReturnTail(myPosition);
     LookupElement ret = createKeyword(PsiKeyword.RETURN);
     if (returnTail != TailTypes.noneType()) {
@@ -554,8 +553,7 @@ public class JavaKeywordCompletion {
     addSealedHierarchyCases(selectorType, containedLabels);
   }
 
-  @NotNull
-  private static Set<String> getSwitchCoveredLabels(@Nullable PsiSwitchBlock block, PsiElement position) {
+  private static @NotNull Set<String> getSwitchCoveredLabels(@Nullable PsiSwitchBlock block, PsiElement position) {
     HashSet<String> labels = new HashSet<>();
     if (block == null) {
       return labels;
@@ -687,8 +685,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  @NotNull
-  private static LookupElement prioritizeForRule(@NotNull LookupElement decorator, @Nullable PsiSwitchBlock switchBlock) {
+  private static @NotNull LookupElement prioritizeForRule(@NotNull LookupElement decorator, @Nullable PsiSwitchBlock switchBlock) {
     if (switchBlock == null) {
       return decorator;
     }
@@ -920,8 +917,7 @@ public class JavaKeywordCompletion {
     }
   }
 
-  @NotNull
-  private LookupElement createTypeDeclaration(String keyword, String className) {
+  private @NotNull LookupElement createTypeDeclaration(String keyword, String className) {
     LookupElement element;
     PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(PsiTreeUtil.nextLeaf(myPosition));
     IElementType nextToken;
@@ -969,8 +965,7 @@ public class JavaKeywordCompletion {
     return element;
   }
 
-  @Nullable
-  private String recommendClassName() {
+  private @Nullable String recommendClassName() {
     if (myPrevLeaf == null) return null;
     if (!myPrevLeaf.textMatches(PsiKeyword.PUBLIC) || !(myPrevLeaf.getParent() instanceof PsiModifierList)) return null;
 
@@ -997,8 +992,7 @@ public class JavaKeywordCompletion {
     return PsiTreeUtil.skipWhitespacesAndCommentsForward(grandParent) instanceof PsiIdentifier;
   }
 
-  @Nullable
-  private static PsiJavaFile getFileForDeclaration(@NotNull PsiElement elementBeforeName) {
+  private static @Nullable PsiJavaFile getFileForDeclaration(@NotNull PsiElement elementBeforeName) {
     PsiElement parent = elementBeforeName.getParent();
     if (parent == null) return null;
     PsiElement grandParent = parent.getParent();

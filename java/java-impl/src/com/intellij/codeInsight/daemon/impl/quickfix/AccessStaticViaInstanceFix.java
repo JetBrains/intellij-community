@@ -79,8 +79,7 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("access.static.via.class.reference.family");
   }
 

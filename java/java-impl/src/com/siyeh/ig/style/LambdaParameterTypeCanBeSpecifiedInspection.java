@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -78,15 +78,13 @@ public final class LambdaParameterTypeCanBeSpecifiedInspection extends BaseInspe
       mySignatureText = signatureText;
     }
 
-    @Nls
     @Override
-    public @NotNull String getName() {
+    public @Nls @NotNull String getName() {
       return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.quickfix", mySignatureText);
     }
 
-    @Nls
     @Override
-    public @NotNull String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("lambda.parameter.type.can.be.specified.family.quickfix");
     }
 

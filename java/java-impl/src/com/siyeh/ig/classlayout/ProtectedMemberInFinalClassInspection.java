@@ -18,7 +18,10 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -43,8 +46,7 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
   }
 
@@ -64,8 +66,7 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
   private static class WeakenVisibilityFix extends ModCommandBatchQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("weaken.visibility.quickfix");
     }
 
@@ -94,8 +95,7 @@ public final class ProtectedMemberInFinalClassInspection extends BaseInspection 
       }
     }
 
-    @Nullable
-    private static PsiClass findAccessObjectClass(@NotNull PsiReference reference, @NotNull PsiMember member) {
+    private static @Nullable PsiClass findAccessObjectClass(@NotNull PsiReference reference, @NotNull PsiMember member) {
       if (!(reference instanceof PsiJavaCodeReferenceElement)) return null;
       PsiElement qualifier = ((PsiJavaCodeReferenceElement)reference).getQualifier();
       if (!(qualifier instanceof PsiExpression)) return null;

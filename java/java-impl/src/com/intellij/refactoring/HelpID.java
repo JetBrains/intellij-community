@@ -1,5 +1,5 @@
 
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.psi.PsiClass;
@@ -63,10 +63,10 @@ public final class HelpID {
   public static final String MOVE_INSTANCE_METHOD       = "refactoring.moveInstMethod";
   public static final String EXTRACT_METHOD_OBJECT = "refactoring.extractMethodObject";
   public static final String REPLACE_CONSTRUCTOR_WITH_BUILDER = "refactoring.replaceConstructorWithBuilder";
-  @NonNls public static final String ExtractClass = "refactorj.extractClass";
-  @NonNls public static final String IntroduceParameterObject = "refactorj.introduceParameterObject";
-  @NonNls public static final String RemoveMiddleman = "refactorj.removeMiddleman";
-  @NonNls public static final String WrapReturnValue = "refactorj.wrapReturnValue";
+  public static final @NonNls String ExtractClass = "refactorj.extractClass";
+  public static final @NonNls String IntroduceParameterObject = "refactorj.introduceParameterObject";
+  public static final @NonNls String RemoveMiddleman = "refactorj.removeMiddleman";
+  public static final @NonNls String WrapReturnValue = "refactorj.wrapReturnValue";
 
   public static String getMoveHelpID(PsiElement element) {
     if (element instanceof PsiPackage){

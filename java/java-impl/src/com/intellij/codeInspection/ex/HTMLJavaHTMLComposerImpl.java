@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -253,8 +253,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
   }
 
   @Override
-  @Nullable
-  public String getQualifiedName(final RefEntity refEntity) {
+  public @Nullable String getQualifiedName(final RefEntity refEntity) {
     if (refEntity instanceof RefJavaElement && ((RefJavaElement)refEntity).isSyntheticJSP()) {
       return XmlStringUtil.escapeString(refEntity.getName());
     }

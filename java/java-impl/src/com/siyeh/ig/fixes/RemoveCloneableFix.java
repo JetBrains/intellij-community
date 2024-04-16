@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -29,10 +29,8 @@ public class RemoveCloneableFix extends PsiUpdateModCommandQuickFix {
     return isCloneCalledInChildren(context) ? null : new RemoveCloneableFix();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("remove.cloneable.quickfix");
   }
 

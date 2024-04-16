@@ -35,8 +35,7 @@ public final class AnonymousClassMethodCountInspection
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "AnonymousInnerClassWithTooManyMethods";
   }
 
@@ -56,8 +55,7 @@ public final class AnonymousClassMethodCountInspection
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
     return InspectionGadgetsBundle.message(
       "anonymous.inner.class.with.too.many.methods.problem.descriptor",

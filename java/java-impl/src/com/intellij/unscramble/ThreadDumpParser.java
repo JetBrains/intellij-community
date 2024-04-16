@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.EventCountDumper;
@@ -24,7 +24,7 @@ public final class ThreadDumpParser {
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
   private static final Pattern ourParkingToWaitForLockPattern = Pattern.compile("- parking to wait for {2}<(.+)>");
-  @NonNls private static final String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
+  private static final @NonNls String PUMP_EVENT = "java.awt.EventDispatchThread.pumpOneEventForFilters";
   private static final Pattern ourIdleTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at java\\.util\\.TimerThread\\.mainLoop");
   private static final Pattern ourIdleSwingTimerThreadPattern = Pattern.compile("java\\.lang\\.Object\\.wait\\([^()]+\\)\\s+at javax\\.swing\\.TimerQueue\\.run");
   private static final String AT_JAVA_LANG_OBJECT_WAIT = "at java.lang.Object.wait(";
@@ -34,8 +34,7 @@ public final class ThreadDumpParser {
   private ThreadDumpParser() {
   }
 
-  @NotNull
-  public static List<ThreadState> parse(String threadDump) {
+  public static @NotNull List<ThreadState> parse(String threadDump) {
     List<ThreadState> result = new ArrayList<>();
     StringBuilder lastThreadStack = new StringBuilder();
     ThreadState lastThreadState = null;
@@ -109,8 +108,7 @@ public final class ThreadDumpParser {
     return result;
   }
 
-  @Nullable
-  private static ThreadState findLockOwner(List<? extends ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
+  private static @Nullable ThreadState findLockOwner(List<? extends ThreadState> result, @Nullable String lockId, boolean ignoreWaiting) {
     if (lockId == null) return null;
 
     final String marker = "- locked <" + lockId + ">";
@@ -132,8 +130,7 @@ public final class ThreadDumpParser {
     result.sort((o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 
-  @Nullable
-  private static String findLockedOwnableSynchronizers(final String stackTrace) {
+  private static @Nullable String findLockedOwnableSynchronizers(final String stackTrace) {
     Matcher m = ourLockedOwnableSynchronizersPattern.matcher(stackTrace);
     if (m.find()) {
       return m.group(1);
@@ -141,8 +138,7 @@ public final class ThreadDumpParser {
     return null;
   }
 
-  @Nullable
-  private static String findWaitingForLock(final String stackTrace) {
+  private static @Nullable String findWaitingForLock(final String stackTrace) {
     Matcher m = ourWaitingForLockPattern.matcher(stackTrace);
     if (m.find()) {
       return m.group(2);
@@ -210,8 +206,7 @@ public final class ThreadDumpParser {
     threadState.setOwnableSynchronizers(findLockedOwnableSynchronizers(threadState.getStackTrace()));
   }
 
-  @Nullable
-  private static ThreadState tryParseThreadStart(String line) {
+  private static @Nullable ThreadState tryParseThreadStart(String line) {
     Matcher m = ourThreadStartPattern.matcher(line);
     if (m.find()) {
       final ThreadState state = new ThreadState(m.group(1), m.group(3));
@@ -240,8 +235,7 @@ public final class ThreadDumpParser {
     return null;
   }
 
-  @Nullable
-  private static Matcher matchYourKit(String line) {
+  private static @Nullable Matcher matchYourKit(String line) {
     if (line.contains("[")) {
       Matcher m = ourYourkitThreadStartPattern.matcher(line);
       if (m.matches()) return m;

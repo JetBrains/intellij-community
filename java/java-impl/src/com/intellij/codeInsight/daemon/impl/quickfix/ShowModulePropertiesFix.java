@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -33,23 +33,19 @@ public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor
     myModuleName = module == null ? null : module.getName();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.MODULE_SETTINGS);
     return action.getTemplatePresentation().getText();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -59,7 +55,7 @@ public class ShowModulePropertiesFix implements QuickFix<CommonProblemDescriptor
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
     return myModuleName != null;
   }
 

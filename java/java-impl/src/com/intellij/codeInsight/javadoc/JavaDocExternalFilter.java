@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.documentation.AbstractExternalFilter;
@@ -93,15 +93,12 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return myReferenceConverters;
   }
 
-  @Nls
-  @Nullable
-  public static String filterInternalDocInfo(@Nls String text) {
+  public static @Nls @Nullable String filterInternalDocInfo(@Nls String text) {
     return text == null ? null : PlatformDocumentationUtil.fixupText(text);
   }
 
-  @Nullable
   @Override
-  public String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
+  public @Nullable String getExternalDocInfoForElement(@NotNull String docURL, PsiElement element) throws Exception {
     String externalDoc = null;
     myElement = element;
 
@@ -151,9 +148,8 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return externalDoc;
   }
 
-  @NotNull
   @Override
-  protected ParseSettings getParseSettings(@NotNull String url) {
+  protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
     return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
   }
 }

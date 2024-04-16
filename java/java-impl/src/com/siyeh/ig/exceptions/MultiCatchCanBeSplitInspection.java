@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.exceptions;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -21,9 +21,8 @@ import java.util.Set;
 
 public final class MultiCatchCanBeSplitInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -37,9 +36,8 @@ public final class MultiCatchCanBeSplitInspection extends BaseInspection {
     return new SplitMultiCatchVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new SplitMultiCatchFix();
   }
 
@@ -105,10 +103,8 @@ public final class MultiCatchCanBeSplitInspection extends BaseInspection {
   }
 
   private static class SplitMultiCatchFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("multi.catch.can.be.split.quickfix");
     }
 

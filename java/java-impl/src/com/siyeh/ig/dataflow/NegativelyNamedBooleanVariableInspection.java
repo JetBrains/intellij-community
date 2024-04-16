@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -20,20 +20,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class NegativelyNamedBooleanVariableInspection extends BaseInspection {
 
-  @NonNls
-  private static final String[] NEGATIVE_NAMES = {"non", "not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "canNot",
+  private static final @NonNls String[] NEGATIVE_NAMES = {"non", "not", "isNot", "isNon", "shouldNot", "shallNot", "willNot", "cannot", "canNot",
     "cant", "hasNot", "hasnt", "couldNot", "doesNot", "hidden", "isHidden", "disabled", "isDisabled", "isInvalid", "invalid"};
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     return new InvertBooleanFix(InspectionGadgetsBundle.message("invert.quickfix", variable.getName()));
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("negatively.named.boolean.variable.problem.descriptor");
   }
 

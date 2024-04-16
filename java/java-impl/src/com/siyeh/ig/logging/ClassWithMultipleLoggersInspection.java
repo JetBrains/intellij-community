@@ -44,8 +44,7 @@ public final class ClassWithMultipleLoggersInspection extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  @NonNls
-  public String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
+  public @NonNls String loggerNamesString = StringUtil.join(JavaLoggingUtils.DEFAULT_LOGGERS, ",");
 
   public ClassWithMultipleLoggersInspection() {
     parseString(loggerNamesString, loggerNames);
@@ -61,8 +60,7 @@ public final class ClassWithMultipleLoggersInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("multiple.loggers.problem.descriptor");
   }
 

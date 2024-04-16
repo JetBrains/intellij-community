@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -105,7 +105,7 @@ public final class CreateMethodFromUsageFix {
                               List<? extends Pair<PsiExpression, PsiType>> arguments,
                               PsiSubstitutor substitutor,
                               ExpectedTypeInfo[] expectedTypes,
-                              @Nullable final PsiElement context) {
+                              final @Nullable PsiElement context) {
 
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 

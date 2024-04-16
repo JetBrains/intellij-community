@@ -39,7 +39,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 
 public final class LoggerInitializedWithForeignClassInspection extends BaseInspection {
 
-  @NonNls private static final String DEFAULT_FACTORY_CLASS_NAMES =
+  private static final @NonNls String DEFAULT_FACTORY_CLASS_NAMES =
     // Log4J 1
     "org.apache.log4j.Logger," +
     // SLF4J
@@ -51,7 +51,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
     // Log4J 2
     "org.apache.logging.log4j.LogManager";
 
-  @NonNls private static final String DEFAULT_FACTORY_METHOD_NAMES =
+  private static final @NonNls String DEFAULT_FACTORY_METHOD_NAMES =
     //Log4J 1
     "getLogger," +
     // SLF4J
@@ -92,8 +92,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.problem.descriptor");
   }
 
@@ -152,14 +151,12 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", newClassName+".class");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("logger.initialized.with.foreign.class.fix.family.name");
     }
 
@@ -182,7 +179,7 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
         if (!expression.equals(referenceExpression.getQualifierExpression())) {
           return;
         }
-        @NonNls final String name = referenceExpression.getReferenceName();
+        final @NonNls String name = referenceExpression.getReferenceName();
         if (!"getName".equals(name)) {
           return;
         }

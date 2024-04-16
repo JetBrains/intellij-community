@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -54,20 +56,17 @@ public class JavaDocFixes {
       }
     }
 
-    @Nullable
-    protected PsiElement getAnchor(PsiElement element) {
+    protected @Nullable PsiElement getAnchor(PsiElement element) {
       return null;
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.javadoc.problem.add.tag", myTag, myValue);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.javadoc.problem.add.tag.family");
     }
   }
@@ -80,15 +79,13 @@ public class JavaDocFixes {
       myName = name;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.javadoc.problem.add.param.tag.family");
     }
 
     @Override
-    @Nullable
-    protected PsiElement getAnchor(PsiElement element) {
+    protected @Nullable PsiElement getAnchor(PsiElement element) {
       PsiElement parent = element == null ? null : element.getParent();
       if (!(parent instanceof PsiDocComment docComment)) return null;
       final PsiJavaDocumentedElement owner = docComment.getOwner();
@@ -134,8 +131,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.javadoc.problem.add.param.tag", myName);
     }
   }
@@ -156,8 +152,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return QuickFixBundle.message("add.docTag.to.custom.tags", myTag);
     }
 
@@ -172,8 +167,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       //noinspection DialogTitleCapitalization
       return QuickFixBundle.message("fix.javadoc.family");
     }
@@ -186,15 +180,13 @@ public class JavaDocFixes {
       myTagName = tagName;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.remove.javadoc.tag");
     }
 
@@ -207,7 +199,7 @@ public class JavaDocFixes {
     }
   }
 
-  private static abstract class AbstractUnknownTagFix extends PsiUpdateModCommandQuickFix {
+  private abstract static class AbstractUnknownTagFix extends PsiUpdateModCommandQuickFix {
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement enclosingTag = element.getParent();

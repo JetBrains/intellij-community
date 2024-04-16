@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -25,8 +25,8 @@ import java.util.Set;
 
 final class SliceForwardUtil {
   static boolean processUsagesFlownFromThe(@NotNull PsiElement element,
-                                           @NotNull final JavaSliceUsage parent,
-                                           @NotNull final Processor<? super SliceUsage> processor) {
+                                           final @NotNull JavaSliceUsage parent,
+                                           final @NotNull Processor<? super SliceUsage> processor) {
     PsiExpression expression = getMethodCallTarget(element);
     JavaSliceBuilder builder = JavaSliceBuilder.create(parent).dropSyntheticField();
     if (expression != null && !builder.process(expression, processor)) {
@@ -77,7 +77,7 @@ final class SliceForwardUtil {
   private static boolean processAssignedFrom(@NotNull PsiElement from,
                                              @NotNull PsiElement context,
                                              @NotNull JavaSliceUsage parent,
-                                             @NotNull final Processor<? super SliceUsage> processor) {
+                                             final @NotNull Processor<? super SliceUsage> processor) {
     if (from instanceof PsiLocalVariable) {
       return searchReferencesAndProcessAssignmentTarget(from, context, parent, processor);
     }
@@ -141,7 +141,7 @@ final class SliceForwardUtil {
   }
 
   private static boolean searchReferencesAndProcessAssignmentTarget(@NotNull PsiElement element,
-                                                                    @Nullable final PsiElement context,
+                                                                    final @Nullable PsiElement context,
                                                                     @NotNull JavaSliceUsage parent,
                                                                     @NotNull Processor<? super SliceUsage> processor) {
     return ReferencesSearch.search(element).forEach(reference -> {
@@ -240,8 +240,7 @@ final class SliceForwardUtil {
     return target == null ? null : Pair.create(target, substitutor);
   }
 
-  @NotNull
-  static PsiElement complexify(@NotNull PsiElement element) {
+  static @NotNull PsiElement complexify(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiParenthesizedExpression && element.equals(((PsiParenthesizedExpression)parent).getExpression())) {
       return complexify(parent);

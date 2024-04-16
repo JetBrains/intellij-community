@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -39,8 +39,7 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
   public boolean ignorePrivateMethods = true;
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     final PsiExpression rhs = (PsiExpression)infos[1];
     final PsiType type = field.getType();
@@ -52,9 +51,8 @@ public final class AssignmentOrReturnOfFieldWithMutableTypeInspection extends Ba
                                              type.getPresentableText(), field.getName());
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiReferenceExpression returnValue = (PsiReferenceExpression)infos[1];
     final String type = (String)infos[2];
     if (CommonClassNames.JAVA_UTIL_DATE.equals(type) ||

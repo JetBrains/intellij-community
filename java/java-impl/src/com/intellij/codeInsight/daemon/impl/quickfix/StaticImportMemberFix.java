@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -82,24 +82,19 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     return IntentionPreviewInfo.DIFF;
   }
 
-  @NotNull
-  protected abstract @IntentionName String getBaseText();
+  protected abstract @NotNull @IntentionName String getBaseText();
 
-  @NotNull
-  protected abstract @NlsSafe String getMemberPresentableText(@NotNull T t);
+  protected abstract @NotNull @NlsSafe String getMemberPresentableText(@NotNull T t);
 
-  @NotNull
-  protected abstract @NlsSafe String getMemberKindPresentableText();
+  protected abstract @NotNull @NlsSafe String getMemberKindPresentableText();
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.get(0)) + "'");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -113,24 +108,20 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
     return currentPsiModificationCount != myPsiModificationCount;
   }
 
-  @NotNull
-  abstract StaticMembersProcessor.MembersToImport<T> getMembersToImport(int maxResults);
+  abstract @NotNull StaticMembersProcessor.MembersToImport<T> getMembersToImport(int maxResults);
 
   abstract boolean toAddStaticImports();
 
-  @NotNull
-  protected abstract QuestionAction createQuestionAction(@NotNull List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
+  protected abstract @NotNull QuestionAction createQuestionAction(@NotNull List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
 
   @Nullable
   PsiElement getElement() {
     return myReferencePointer.getElement();
   }
 
-  @Nullable
-  protected abstract PsiElement getQualifierExpression();
+  protected abstract @Nullable PsiElement getQualifierExpression();
 
-  @Nullable
-  protected abstract PsiElement resolveRef();
+  protected abstract @Nullable PsiElement resolveRef();
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {

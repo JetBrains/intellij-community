@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -365,7 +365,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     typeSelected(type, getDefaultType());
   }
 
-  public static void typeSelected(@NotNull final PsiType type, @Nullable final PsiType defaultType) {
+  public static void typeSelected(final @NotNull PsiType type, final @Nullable PsiType defaultType) {
     if (defaultType == null) return;
     ReadAction.nonBlocking(() -> DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return type.isValid() && defaultType.isValid() ? new StatisticsInfo(getStatsKey(defaultType), serialize(type)) : null;

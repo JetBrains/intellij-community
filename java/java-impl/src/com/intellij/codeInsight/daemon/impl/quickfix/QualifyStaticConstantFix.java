@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -18,9 +18,8 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
     super(file, referenceElement);
   }
 
-  @NotNull
   @Override
-  protected String getBaseText() {
+  protected @NotNull String getBaseText() {
     return JavaBundle.message("qualify.static.constant.access");
   }
 
@@ -33,15 +32,13 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
     });
   }
 
-  @NotNull
   @Override
-  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
-                                                @NotNull Project project,
-                                                Editor editor) {
+  protected @NotNull QuestionAction createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
+                                                         @NotNull Project project,
+                                                         Editor editor) {
     return new StaticImportMemberQuestionAction<PsiField>(project, editor, fieldsToImport, myReferencePointer) {
-      @NotNull
       @Override
-      protected String getPopupTitle() {
+      protected @NotNull String getPopupTitle() {
         return QuickFixBundle.message("field.to.import.chooser.title");
       }
 

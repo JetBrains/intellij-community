@@ -52,8 +52,7 @@ public final class EnumSwitchStatementWhichMissesCasesInspection extends Abstrac
   @SuppressWarnings("PublicField")
   public boolean ignoreSwitchStatementsWithDefault = true;
 
-  @NotNull
-  static @InspectionMessage String buildErrorString(String enumName, Set<String> names) {
+  static @NotNull @InspectionMessage String buildErrorString(String enumName, Set<String> names) {
     if (names.size() == 1) {
       return InspectionGadgetsBundle
         .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());
@@ -73,9 +72,8 @@ public final class EnumSwitchStatementWhichMissesCasesInspection extends Abstrac
     return Set.of(JavaFeature.ENUMS);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {

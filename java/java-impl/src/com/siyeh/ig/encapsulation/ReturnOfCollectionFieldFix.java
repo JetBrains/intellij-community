@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.encapsulation;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -29,8 +29,7 @@ final class ReturnOfCollectionFieldFix extends PsiUpdateModCommandQuickFix {
     myQualifiedClassName = qualifiedClassName;
   }
 
-  @Nullable
-  public static ReturnOfCollectionFieldFix build(PsiReferenceExpression referenceExpression) {
+  public static @Nullable ReturnOfCollectionFieldFix build(PsiReferenceExpression referenceExpression) {
     final String text = referenceExpression.getText();
     if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression, CommonClassNames.JAVA_UTIL_MAP)) {
       if (TypeUtils.expressionHasTypeOrSubtype(referenceExpression, "java.util.SortedMap")) {
@@ -53,15 +52,13 @@ final class ReturnOfCollectionFieldFix extends PsiUpdateModCommandQuickFix {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("return.of.collection.field.fix.family.name");
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementText);
   }
 

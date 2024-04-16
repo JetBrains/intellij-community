@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -25,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
     return new JavaElementVisitor() {
       @Override
@@ -38,8 +37,7 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
         }
       }
 
-      @Nullable
-      private @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
+      private @Nullable @InspectionMessage String getIdentifierWarning(PsiIdentifier identifier) {
         String name = identifier.getText();
         PsiElement parent = identifier.getParent();
         JavaFeature feature = JavaLexer.softKeywordFeature(name);
@@ -116,10 +114,8 @@ public final class ForwardCompatibilityInspection extends AbstractBaseJavaLocalI
   }
 
   private static class QualifyCallFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("qualify.call.fix.family.name");
     }
 

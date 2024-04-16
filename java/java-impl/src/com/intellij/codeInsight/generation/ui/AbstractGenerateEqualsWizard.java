@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.ide.wizard.AbstractWizard;
@@ -53,7 +54,7 @@ public abstract class AbstractGenerateEqualsWizard <C extends PsiElement, M exte
 
   protected final Builder<C, M, I> myBuilder;
 
-  public static abstract class Builder<C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> {
+  public abstract static class Builder<C extends PsiElement, M extends PsiElement, I extends MemberInfoBase<M>> {
     protected abstract C getPsiClass();
     protected abstract List<I> getClassFields();
     protected abstract HashMap<M, I> getFieldsToHashCode();

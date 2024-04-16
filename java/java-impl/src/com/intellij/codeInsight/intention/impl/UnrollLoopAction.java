@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -76,8 +76,7 @@ public final class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopSta
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiVariable getVariable(PsiLoopStatement loop) {
+  private static @Nullable PsiVariable getVariable(PsiLoopStatement loop) {
     if (loop instanceof PsiForeachStatement foreachStatement) {
       return foreachStatement.getIterationParameter();
     }
@@ -90,8 +89,7 @@ public final class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopSta
     return null;
   }
 
-  @NotNull
-  private static List<PsiExpression> extractExpressions(PsiLoopStatement loop) {
+  private static @NotNull List<PsiExpression> extractExpressions(PsiLoopStatement loop) {
     if (loop instanceof PsiForeachStatement foreachStatement) {
       PsiExpression expression = ExpressionUtils.resolveExpression(foreachStatement.getIteratedValue());
       expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -185,8 +183,7 @@ public final class UnrollLoopAction extends PsiUpdateModCommandAction<PsiLoopSta
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.unroll.loop.family");
   }
 

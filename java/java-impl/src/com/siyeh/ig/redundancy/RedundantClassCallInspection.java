@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.*;
@@ -24,9 +24,8 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher CAST =
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_CLASS, "cast").parameterCount(1);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -55,16 +54,15 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static abstract class ReplaceRedundantClassCallFix extends PsiUpdateModCommandQuickFix {
+  private abstract static class ReplaceRedundantClassCallFix extends PsiUpdateModCommandQuickFix {
     final String myReplacement;
 
     ReplaceRedundantClassCallFix(@NonNls String replacement) {
       myReplacement = replacement;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
     }
 
@@ -82,8 +80,7 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
       ct.replaceAndRestoreComments(call, createReplacement(ct.text(arg), ct.text(qualifier.getOperand())));
     }
 
-    @NotNull
-    abstract String createReplacement(String argText, String classText);
+    abstract @NotNull String createReplacement(String argText, String classText);
   }
 
   private static class ReplaceWithInstanceOfFix extends ReplaceRedundantClassCallFix {
@@ -91,9 +88,8 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
       super("instanceof "+typeElement.getType().getPresentableText());
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.INSTANCEOF);
     }
 
@@ -108,9 +104,8 @@ public final class RedundantClassCallInspection extends AbstractBaseJavaLocalIns
       super("("+typeElement.getType().getPresentableText()+")");
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.cast.fix.family.name");
     }
 

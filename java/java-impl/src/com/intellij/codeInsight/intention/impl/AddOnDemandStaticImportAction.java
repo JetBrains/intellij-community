@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -38,8 +38,7 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.add.on.demand.static.import.family");
   }
 
@@ -49,8 +48,7 @@ public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandActi
    * @param element     element to check
    * @return            target class that may be statically imported if any; {@code null} otherwise
    */
-  @Nullable
-  public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
+  public static @Nullable PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
     if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement refExpr)) {
       return null;

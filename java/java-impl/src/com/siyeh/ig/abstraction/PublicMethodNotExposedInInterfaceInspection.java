@@ -54,8 +54,7 @@ public final class PublicMethodNotExposedInInterfaceInspection extends BaseInspe
   }
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "public.method.not.in.interface.problem.descriptor");
   }

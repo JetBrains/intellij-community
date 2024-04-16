@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.*;
@@ -18,12 +18,11 @@ public final class Jsr305Support implements AnnotationPackageSupport {
   public static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
 
-  @Nullable
   @Override
-  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation annotation,
-                                                                       @NotNull PsiElement context,
-                                                                       PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                                       boolean superPackage) {
+  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation annotation,
+                                                                                 @NotNull PsiElement context,
+                                                                                 PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                                                 boolean superPackage) {
     if (superPackage) return null;
     PsiClass declaration = annotation.resolveAnnotationType();
     PsiModifierList modList = declaration == null ? null : declaration.getModifierList();
@@ -48,8 +47,7 @@ public final class Jsr305Support implements AnnotationPackageSupport {
     return null;
   }
 
-  @Nullable
-  private static Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
+  private static @Nullable Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
     String qName = qualifier.getQualifiedName();
     if (qName == null) return null;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(qualifier.getProject());
@@ -99,9 +97,8 @@ public final class Jsr305Support implements AnnotationPackageSupport {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
       case NOT_NULL -> Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
       case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");

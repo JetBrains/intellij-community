@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.java.JavaBundle;
@@ -92,8 +92,7 @@ public final class SuperMethodWarningUtil {
     };
   }
 
-  @NotNull
-  static Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
+  static @NotNull Collection<PsiMethod> getSuperMethods(@NotNull PsiMethod method, PsiClass aClass, @NotNull Collection<? extends PsiElement> ignore) {
     ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     final Collection<PsiMethod> superMethods = DeepestSuperMethodsSearch.search(method).findAll();
@@ -147,7 +146,7 @@ public final class SuperMethodWarningUtil {
   }
 
   public static void checkSuperMethod(@NotNull PsiMethod method,
-                                      @NotNull final PsiElementProcessor<? super PsiMethod> processor,
+                                      final @NotNull PsiElementProcessor<? super PsiMethod> processor,
                                       @NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
     PsiClass aClass = method.getContainingClass();
@@ -223,14 +222,12 @@ public final class SuperMethodWarningUtil {
                                           Messages.getCancelButton(), Messages.getQuestionIcon());
   }
 
-  @Nls
-  @NotNull
-  private static String getDialogMessage(@NotNull String name,
-                                         @NlsSafe @Nullable String actionString,
-                                         boolean isSuperAbstract,
-                                         boolean isParentInterface,
-                                         boolean isContainedInInterface,
-                                         String @NotNull [] classNames) {
+  private static @Nls @NotNull String getDialogMessage(@NotNull String name,
+                                                       @NlsSafe @Nullable String actionString,
+                                                       boolean isSuperAbstract,
+                                                       boolean isParentInterface,
+                                                       boolean isContainedInInterface,
+                                                       String @NotNull [] classNames) {
     HtmlBuilder labelText = new HtmlBuilder();
     int classType = isParentInterface ? 0 : 1;
     labelText.append(JavaBundle.message("label.method", name)).br();

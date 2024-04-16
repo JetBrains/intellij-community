@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -53,14 +53,12 @@ public final class CommonJavaRefactoringUtil {
     PsiTypes.byteType(), PsiTypes.charType(), PsiTypes.shortType(), PsiTypes.intType(), PsiTypes.longType(), PsiTypes.floatType(), PsiTypes.doubleType()
   );
 
-  @NotNull
-  public static JavaBaseRefactoringSupportProvider getRefactoringSupport() {
+  public static @NotNull JavaBaseRefactoringSupportProvider getRefactoringSupport() {
     var provider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
     return (JavaBaseRefactoringSupportProvider)provider;
   }
 
-  @Nullable
-  public static PsiType getTypeByExpression(@NotNull PsiExpression expr) {
+  public static @Nullable PsiType getTypeByExpression(@NotNull PsiExpression expr) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     PsiType type = getTypeByExpression(expr, factory);
     if (LambdaUtil.notInferredType(type)) {
@@ -141,8 +139,7 @@ public final class CommonJavaRefactoringUtil {
     return targetQName.charAt(sourceRootPackage.length()) == '.';
   }
 
-  @Nullable
-  public static PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
+  public static @Nullable PsiDirectory findPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot) {
     final PsiDirectory[] directories = aPackage.getDirectories();
     for (PsiDirectory directory : directories) {
       if (VfsUtilCore.isAncestor(sourceRoot, directory.getVirtualFile(), false)) {
@@ -169,8 +166,7 @@ public final class CommonJavaRefactoringUtil {
     return current;
   }
 
-  @NotNull
-  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
+  public static @NotNull PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, final @NotNull VirtualFile sourceRoot)
     throws IncorrectOperationException {
     PsiDirectory[] existing = aPackage.getDirectories(
       GlobalSearchScopes.directoryScope(aPackage.getManager().getProject(), sourceRoot, true));
@@ -312,8 +308,7 @@ public final class CommonJavaRefactoringUtil {
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
-  @Nullable
-  public static PsiElement getParentStatement(@Nullable PsiElement place, boolean skipScopingStatements) {
+  public static @Nullable PsiElement getParentStatement(@Nullable PsiElement place, boolean skipScopingStatements) {
     PsiElement parent = place;
     while (true) {
       if (parent == null) return null;
@@ -401,8 +396,7 @@ public final class CommonJavaRefactoringUtil {
     return declaration;
   }
 
-  @Nullable
-  private static PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {
+  private static @Nullable PsiStatement getLoopBody(PsiElement container, PsiElement anchorStatement) {
     if(container instanceof PsiLoopStatement) {
       return ((PsiLoopStatement) container).getBody();
     }
@@ -568,12 +562,12 @@ public final class CommonJavaRefactoringUtil {
     return collectExpressions(file, editor.getDocument(), offset, acceptVoid);
   }
 
-  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, @NotNull final PsiExpression expression) {
+  public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type, final @NotNull PsiExpression expression) {
     return getSuggestedName(type, expression, expression);
   }
 
   public static SuggestedNameInfo getSuggestedName(@Nullable PsiType type,
-                                                   @NotNull final PsiExpression expression,
+                                                   final @NotNull PsiExpression expression,
                                                    final PsiElement anchor) {
     final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(expression.getProject());
     final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, type);
@@ -606,7 +600,7 @@ public final class CommonJavaRefactoringUtil {
     return detectConjunct ? type : null;
   }
 
-  public static boolean isInStaticContext(PsiElement element, @Nullable final PsiClass aClass) {
+  public static boolean isInStaticContext(PsiElement element, final @Nullable PsiClass aClass) {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
   }
 
@@ -617,8 +611,7 @@ public final class CommonJavaRefactoringUtil {
     return expression;
   }
 
-  @Nullable
-  public static PsiMethod getChainedConstructor(PsiMethod constructor) {
+  public static @Nullable PsiMethod getChainedConstructor(PsiMethod constructor) {
     final PsiCodeBlock constructorBody = constructor.getBody();
     if (constructorBody == null) return null;
     final PsiStatement[] statements = constructorBody.getStatements();
@@ -634,21 +627,18 @@ public final class CommonJavaRefactoringUtil {
     return null;
   }
 
-  @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiElement @NotNull ... elements) {
+  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(null, elements);
   }
 
-  @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
-                                                                                   final PsiElement @NotNull ... elements) {
+  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final @Nullable PsiTypeParameterList fromList,
+                                                                                             final PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.alwaysTrue(), elements);
   }
 
-  @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
-                                                                                   Condition<? super PsiTypeParameter> filter,
-                                                                                   final PsiElement @NotNull ... elements) {
+  public static @Nullable PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final @Nullable PsiTypeParameterList fromList,
+                                                                                             Condition<? super PsiTypeParameter> filter,
+                                                                                             final PsiElement @NotNull ... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<>();
     for (final PsiElement element : elements) {
@@ -810,8 +800,7 @@ public final class CommonJavaRefactoringUtil {
     }
   }
 
-  @NotNull
-  private static PsiDocTag createParamTag(@NotNull PsiParameter parameter) {
+  private static @NotNull PsiDocTag createParamTag(@NotNull PsiParameter parameter) {
     return JavaPsiFacade.getElementFactory(parameter.getProject()).createParamTag(parameter.getName(), "");
   }
 
@@ -1016,9 +1005,9 @@ public final class CommonJavaRefactoringUtil {
    * 
    * @return {@code true} iff {@code callExpression} would resolve to the same method after replacement of last argument with {@code arrayElements}
    */
-  public static boolean isSafeToFlattenToVarargsCall(@NotNull final PsiCall callExpression,
-                                                     @NotNull final PsiExpression @NotNull [] arrayElements) {
-    @NotNull final PsiMethod oldRefMethod = Objects.requireNonNull(callExpression.resolveMethod());
+  public static boolean isSafeToFlattenToVarargsCall(final @NotNull PsiCall callExpression,
+                                                     final @NotNull PsiExpression @NotNull [] arrayElements) {
+    final @NotNull PsiMethod oldRefMethod = Objects.requireNonNull(callExpression.resolveMethod());
     if (arrayElements.length == 1) {
       PsiType type = arrayElements[0].getType();
       // change foo(new Object[]{array}) to foo(array) is not safe
@@ -1066,7 +1055,7 @@ public final class CommonJavaRefactoringUtil {
     }
   }
 
-  private static PsiExpression @Nullable [] getInitializers(@NotNull final PsiNewExpression newExpression) {
+  private static PsiExpression @Nullable [] getInitializers(final @NotNull PsiNewExpression newExpression) {
     PsiArrayInitializerExpression initializer = newExpression.getArrayInitializer();
     if (initializer != null) {
       return initializer.getInitializers();

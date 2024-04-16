@@ -27,12 +27,12 @@ import java.util.*;
 public class GenerateEqualsHelper implements Runnable {
   private static final Logger LOG = Logger.getInstance(GenerateEqualsHelper.class);
 
-  @NonNls private static final String INSTANCE_NAME = "instanceBaseName";
-  @NonNls private static final String BASE_PARAM_NAME = "baseParamName";
-  @NonNls private static final String SUPER_PARAM_NAME = "superParamName";
-  @NonNls private static final String SUPER_HAS_EQUALS = "superHasEquals";
-  @NonNls private static final String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
-  @NonNls private static final String SUPER_HAS_HASH_CODE = "superHasHashCode";
+  private static final @NonNls String INSTANCE_NAME = "instanceBaseName";
+  private static final @NonNls String BASE_PARAM_NAME = "baseParamName";
+  private static final @NonNls String SUPER_PARAM_NAME = "superParamName";
+  private static final @NonNls String SUPER_HAS_EQUALS = "superHasEquals";
+  private static final @NonNls String CHECK_PARAMETER_WITH_INSTANCEOF = "checkParameterWithInstanceof";
+  private static final @NonNls String SUPER_HAS_HASH_CODE = "superHasHashCode";
 
   private final PsiClass myClass;
   private final PsiField[] myEqualsFields;

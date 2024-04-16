@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -16,7 +16,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -36,9 +35,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     mySeparator = separator;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return maybeAddParentheses(myQualifier.getLookupString()) + mySeparator + getDelegate().getLookupString();
   }
 
@@ -51,9 +49,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return Set.of(getLookupString());
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return maybeAddParentheses(myQualifier.toString()) + mySeparator + getDelegate();
   }
 
@@ -61,8 +58,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return getQualifierObject() instanceof PsiMethod ? s + "()" : s;
   }
 
-  @Nullable
-  private Object getQualifierObject() {
+  private @Nullable Object getQualifierObject() {
     Object qObject = myQualifier.getObject();
     if (qObject instanceof ResolveResult) {
       qObject = ((ResolveResult)qObject).getElement();
@@ -156,8 +152,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     return true;
   }
 
-  @Nullable
-  private LookupElement getComparableQualifier() {
+  private @Nullable LookupElement getComparableQualifier() {
     final CastingLookupElementDecorator casting = myQualifier.as(CastingLookupElementDecorator.CLASS_CONDITION_KEY);
     LookupElement qualifier = casting == null ? myQualifier : casting.getDelegate();
     if (qualifier.getObject() instanceof PsiClass) return null;

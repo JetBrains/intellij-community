@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -38,8 +38,7 @@ public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiI
     return Presentation.of(JavaBundle.message("intention.merge.filter.text"));
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
+  private static @Nullable PsiMethodCallExpression getFilterToMerge(PsiMethodCallExpression methodCallExpression) {
     final PsiMethodCallExpression prevCall = MethodCallUtils.getQualifierMethodCall(methodCallExpression);
     if (prevCall != null && isFilterCall(prevCall)) {
       return prevCall;
@@ -72,13 +71,11 @@ public final class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiI
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.merge.filter.family");
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
+  private static @Nullable PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
     PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if(expressions.length != 1) return null;
     PsiExpression expression = expressions[0];

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -82,7 +82,7 @@ public final class JavaSmartEnterProcessor extends AbstractBasicJavaSmartEnterPr
     return el instanceof PsiImportStatementBase;
   }
 
-  protected static void plainEnter(@NotNull final Editor editor) {
+  protected static void plainEnter(final @NotNull Editor editor) {
     AbstractBasicJavaSmartEnterProcessor.plainEnter(editor);
   }
 
@@ -90,7 +90,7 @@ public final class JavaSmartEnterProcessor extends AbstractBasicJavaSmartEnterPr
     return AbstractBasicJavaSmartEnterProcessor.getEnterHandler();
   }
 
-  protected static boolean isModified(@NotNull final Editor editor) {
+  protected static boolean isModified(final @NotNull Editor editor) {
     return AbstractBasicJavaSmartEnterProcessor.isModified(editor);
   }
 

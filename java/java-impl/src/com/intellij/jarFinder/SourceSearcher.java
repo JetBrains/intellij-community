@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,8 +23,7 @@ import java.util.jar.JarFile;
 public abstract class SourceSearcher {
   private static final String MAVEN_POM_ENTRY_PREFIX = "META-INF/maven/";
 
-  @NotNull
-  protected static List<Element> findElements(@NotNull String expression, @NotNull Element element) {
+  protected static @NotNull List<Element> findElements(@NotNull String expression, @NotNull Element element) {
     return XPathFactory.instance()
       .compile(expression, Filters.element())
       .evaluate(element);
@@ -33,8 +32,7 @@ public abstract class SourceSearcher {
   /**
    * @return url of found artifact
    */
-  @Nullable
-  protected String findSourceJar(@NotNull final ProgressIndicator indicator, @NotNull String artifactId, @NotNull String version)
+  protected @Nullable String findSourceJar(final @NotNull ProgressIndicator indicator, @NotNull String artifactId, @NotNull String version)
     throws SourceSearchException {
     return null;
   }
@@ -43,16 +41,14 @@ public abstract class SourceSearcher {
    * @param classesJar classes jar
    * @return url of found artifact
    */
-  @Nullable
-  protected String findSourceJar(@NotNull final ProgressIndicator indicator,
+  protected @Nullable String findSourceJar(final @NotNull ProgressIndicator indicator,
                                  @NotNull String artifactId,
                                  @NotNull String version,
                                  @NotNull VirtualFile classesJar) throws SourceSearchException {
     return findSourceJar(indicator, artifactId, version);
   }
 
-  @NotNull
-  protected static Element readElementCancelable(final ProgressIndicator indicator, String url) throws IOException {
+  protected static @NotNull Element readElementCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
       .connect(new HttpRequests.RequestProcessor<>() {
@@ -68,8 +64,7 @@ public abstract class SourceSearcher {
       });
   }
 
-  @Nullable
-  protected static String findMavenGroupId(@NotNull VirtualFile classesJar, String artifactId) {
+  protected static @Nullable String findMavenGroupId(@NotNull VirtualFile classesJar, String artifactId) {
     try (JarFile jarFile = new JarFile(VfsUtilCore.virtualToIoFile(classesJar))) {
       final Enumeration<JarEntry> entries = jarFile.entries();
       while (entries.hasMoreElements()) {

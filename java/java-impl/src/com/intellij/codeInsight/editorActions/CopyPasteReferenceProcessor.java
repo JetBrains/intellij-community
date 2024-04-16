@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -44,9 +44,8 @@ import java.util.stream.Collectors;
 public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> extends CopyPastePostProcessor<ReferenceTransferableData> {
   private static final Logger LOG = Logger.getInstance(CopyPasteReferenceProcessor.class);
   
-  @NotNull
   @Override
-  public List<ReferenceTransferableData> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
+  public @NotNull List<ReferenceTransferableData> collectTransferableData(@NotNull PsiFile file, @NotNull Editor editor, int @NotNull [] startOffsets, int @NotNull [] endOffsets) {
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE == CodeInsightSettings.NO) {
       return Collections.emptyList();
     }
@@ -74,9 +73,8 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> exten
 
   protected abstract void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to);
 
-  @NotNull
   @Override
-  public List<ReferenceTransferableData> extractTransferableData(@NotNull Transferable content) {
+  public @NotNull List<ReferenceTransferableData> extractTransferableData(@NotNull Transferable content) {
     ReferenceTransferableData referenceData = null;
     if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
       try {

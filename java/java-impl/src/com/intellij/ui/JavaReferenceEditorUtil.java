@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
@@ -8,7 +8,6 @@ import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionListener;
-
 
 public final class JavaReferenceEditorUtil {
   private JavaReferenceEditorUtil() {
@@ -22,18 +21,16 @@ public final class JavaReferenceEditorUtil {
                                                (NullableFunction<String, Document>)s -> createDocument(s, project, toAcceptClasses), text);
   }
 
-  @Nullable
-  public static Document createDocument(final String text,
-                                        Project project,
-                                        boolean isClassesAccepted) {
+  public static @Nullable Document createDocument(final String text,
+                                                  Project project,
+                                                  boolean isClassesAccepted) {
     return createDocument(text, project, isClassesAccepted, JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
   }
 
-  @Nullable
-  public static Document createDocument(final String text,
-                                        Project project,
-                                        boolean isClassesAccepted,
-                                        JavaCodeFragment.VisibilityChecker visibilityChecker) {
+  public static @Nullable Document createDocument(final String text,
+                                                  Project project,
+                                                  boolean isClassesAccepted,
+                                                  JavaCodeFragment.VisibilityChecker visibilityChecker) {
     final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final JavaCodeFragment fragment = factory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
@@ -41,8 +38,7 @@ public final class JavaReferenceEditorUtil {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
 
-  @Nullable
-  public static Document createTypeDocument(final String text, Project project) {
+  public static @Nullable Document createTypeDocument(final String text, Project project) {
     final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final JavaCodeFragment fragment = factory.createTypeCodeFragment(text, defaultPackage, true);

@@ -51,7 +51,7 @@ public final class IntroduceVariableUtil {
 
   public static final Logger LOG = Logger.getInstance(IntroduceVariableUtil.class);
   public static final Key<Boolean> NEED_PARENTHESIS = Key.create("NEED_PARENTHESIS");
-  @NonNls private static final String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
+  private static final @NonNls String PREFER_STATEMENTS_OPTION = "introduce.variable.prefer.statements";
 
   public static boolean selectLineAtCaret(int offset, PsiElement[] statementsInRange) {
     TextRange range = statementsInRange[0].getTextRange();
@@ -269,9 +269,7 @@ public final class IntroduceVariableUtil {
     return getSelectedExpression(project, injectionHost.getContainingFile(), injectedLanguageManager.injectedToHost(file, startOffset), injectedLanguageManager.injectedToHost(file, endOffset));
   }
 
-  @NlsContexts.DialogMessage
-  @Nullable
-  public static String getErrorMessage(PsiExpression expr) {
+  public static @NlsContexts.DialogMessage @Nullable String getErrorMessage(PsiExpression expr) {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
     if (needParenthesis != null && needParenthesis.booleanValue()) {
       return JavaBundle.message("introduce.variable.change.semantics.warning");

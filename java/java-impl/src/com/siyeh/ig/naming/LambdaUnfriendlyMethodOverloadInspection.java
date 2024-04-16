@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -8,7 +8,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -22,9 +21,8 @@ import java.util.Objects;
  * @author Bas Leijdekkers
  */
 public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspection {
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     if (method.isConstructor()) {
       return null;
@@ -37,9 +35,8 @@ public final class LambdaUnfriendlyMethodOverloadInspection extends BaseInspecti
     return true;
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiMethod method = (PsiMethod)infos[0];
     return InspectionGadgetsBundle.message(method.isConstructor()
                                            ? "lambda.unfriendly.constructor.overload.problem.descriptor"

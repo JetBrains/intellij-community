@@ -36,14 +36,11 @@ public class ConvertSystemOutToLogCallFix extends PsiBasedModCommandAction<PsiMe
   private static final CallMatcher myCallMatcher = CallMatcher.instanceCall(JAVA_IO_PRINT_STREAM, "println", "print");
   private static final Set<String> SUPPORTED_LOGGING_SYSTEMS = Set.of("Log4j2", "Slf4j", "Lombok Slf4j", "Lombok Log4j2");
 
-  @NotNull
-  private final List<JvmLogger> myLoggers;
+  private final @NotNull List<JvmLogger> myLoggers;
 
-  @NotNull
-  private final String myMethodName;
+  private final @NotNull String myMethodName;
 
-  @Nullable
-  private final String myLogName;
+  private final @Nullable String myLogName;
 
   private ConvertSystemOutToLogCallFix(@NotNull List<JvmLogger> loggers,
                                        @Nullable String logName,
@@ -139,8 +136,7 @@ public class ConvertSystemOutToLogCallFix extends PsiBasedModCommandAction<PsiMe
     }
   }
 
-  @NotNull
-  private static String getArguments(@NotNull PsiExpression expression) {
+  private static @NotNull String getArguments(@NotNull PsiExpression expression) {
     PsiType expressionType = expression.getType();
 
     if (expressionType==null ||expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
@@ -154,9 +150,8 @@ public class ConvertSystemOutToLogCallFix extends PsiBasedModCommandAction<PsiMe
     return "String.valueOf(" + expression.getText() + ")";
   }
 
-  @Nullable
-  public static ModCommandAction createFix(@NotNull PsiMethodCallExpression callExpression,
-                                           @NotNull String method) {
+  public static @Nullable ModCommandAction createFix(@NotNull PsiMethodCallExpression callExpression,
+                                                     @NotNull String method) {
     if (!myCallMatcher.matches(callExpression)) {
       return null;
     }
@@ -293,8 +288,7 @@ public class ConvertSystemOutToLogCallFix extends PsiBasedModCommandAction<PsiMe
   public enum PopularLogLevel {
     TRACE, DEBUG, INFO, WARN, ERROR;
 
-    @NlsSafe
-    public String toMethodName() {
+    public @NlsSafe String toMethodName() {
       return name().toLowerCase(Locale.ROOT);
     }
   }

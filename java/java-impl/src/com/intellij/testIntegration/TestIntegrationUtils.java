@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -83,15 +83,13 @@ public final class TestIntegrationUtils {
         return null;
       }
     };
-    @NotNull
-    private final String myDefaultName;
+    private final @NotNull String myDefaultName;
 
     MethodKind(@NotNull String defaultName) {
       myDefaultName = defaultName;
     }
 
-    @NotNull
-    public String getDefaultName() {
+    public @NotNull String getDefaultName() {
       return myDefaultName;
     }
 
@@ -103,8 +101,7 @@ public final class TestIntegrationUtils {
     return klass != null && TestFrameworks.getInstance().isTestClass(klass);
   }
 
-  @Nullable
-  public static PsiClass findOuterClass(@NotNull PsiElement element) {
+  public static @Nullable PsiClass findOuterClass(@NotNull PsiElement element) {
     PsiClass result = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (result == null) {
        final PsiFile containingFile = element.getContainingFile();

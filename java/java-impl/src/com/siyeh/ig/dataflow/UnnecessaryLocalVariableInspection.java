@@ -32,7 +32,8 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UnnecessaryLocalVariableInspection extends BaseInspection {
@@ -68,8 +69,7 @@ public class UnnecessaryLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("unnecessary.local.variable.problem.descriptor");
   }
 

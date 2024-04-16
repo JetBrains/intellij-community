@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -73,8 +73,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.assign.field.from.parameter.family");
   }
 
@@ -86,8 +85,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
     }
   }
 
-  @Nullable
-  private static PsiField findFieldToAssign(@NotNull Project project, @NotNull PsiParameter myParameter) {
+  private static @Nullable PsiField findFieldToAssign(@NotNull Project project, @NotNull PsiParameter myParameter) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     String parameterName = myParameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);

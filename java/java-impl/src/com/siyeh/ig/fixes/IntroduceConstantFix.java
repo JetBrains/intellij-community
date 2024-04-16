@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -25,14 +25,12 @@ public class IntroduceConstantFix extends RefactoringInspectionGadgetsFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFamilyName;
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return JavaRefactoringActionHandlerFactory.getInstance().createIntroduceConstantHandler();
   }
 

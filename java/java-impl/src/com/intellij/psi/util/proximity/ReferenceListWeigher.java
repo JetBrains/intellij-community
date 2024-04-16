@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -23,8 +23,7 @@ public class ReferenceListWeigher extends ProximityWeigher {
     Interfaces, Classes, Exceptions
   }
 
-  @Nullable
-  protected Preference getPreferredCondition(@NotNull final PsiElement position) {
+  protected @Nullable Preference getPreferredCondition(final @NotNull PsiElement position) {
     if (INSIDE_REFERENCE_LIST.accepts(position)) {
       PsiReferenceList list = (PsiReferenceList)position.getParent().getParent();
       PsiReferenceList.Role role = list.getRole();
@@ -68,8 +67,7 @@ public class ReferenceListWeigher extends ProximityWeigher {
     return unknown;
   }
 
-  @NotNull
-  public ReferenceListApplicability getApplicability(@NotNull PsiClass aClass, @NotNull PsiElement position) {
+  public @NotNull ReferenceListApplicability getApplicability(@NotNull PsiClass aClass, @NotNull PsiElement position) {
     Preference condition = getPreferredCondition(position);
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       if (condition == Preference.Interfaces || condition == Preference.Classes) {

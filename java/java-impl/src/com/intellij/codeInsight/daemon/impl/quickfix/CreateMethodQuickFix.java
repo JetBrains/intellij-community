@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -23,15 +23,14 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
   private final String mySignature;
   private final String myBody;
 
-  private CreateMethodQuickFix(final PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  private CreateMethodQuickFix(final PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     super(targetClass);
     mySignature = signature;
     myBody = body;
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     PsiClass myTargetClass = (PsiClass)getStartElement();
     String signature = myTargetClass == null ? "" :
                        PsiFormatUtil.formatMethod(createMethod(myTargetClass), PsiSubstitutor.EMPTY,
@@ -44,8 +43,7 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
@@ -75,8 +73,7 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
     return elementFactory.createMethodFromText(methodText, null);
   }
 
-  @Nullable
-  public static CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
+  public static @Nullable CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, final @NonNls String signature, final @NonNls String body) {
     CreateMethodQuickFix fix = new CreateMethodQuickFix(targetClass, signature, body);
     try {
       fix.createMethod(targetClass);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -18,9 +18,8 @@ import java.util.List;
  * An implementation of {@link PlainTextSymbolCompletionContributor} which is suitable for JVM languages.
  */
 public final class JvmPlainTextSymbolCompletionContributor implements PlainTextSymbolCompletionContributor {
-  @NotNull
   @Override
-  public Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
+  public @NotNull Collection<LookupElement> getLookupElements(@NotNull PsiFile file, int invocationCount, @NotNull String prefix) {
     PsiClassOwner jvmFile = ObjectUtils.tryCast(file, PsiClassOwner.class);
     if (jvmFile == null) return Collections.emptyList();
     List<LookupElement> result = new ArrayList<>();
@@ -93,8 +92,7 @@ public final class JvmPlainTextSymbolCompletionContributor implements PlainTextS
     }
   }
 
-  @Nullable
-  private static String getInfix(String currentPrefix, String className) {
+  private static @Nullable String getInfix(String currentPrefix, String className) {
     if (!currentPrefix.startsWith(className)) return null;
     for (String infix : new String[]{".", "#", "::"}) {
       if (currentPrefix.startsWith(infix, className.length())) {

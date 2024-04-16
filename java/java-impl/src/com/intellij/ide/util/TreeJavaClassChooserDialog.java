@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
@@ -67,8 +67,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     return new TreeJavaClassChooserDialog(title, project, scope, classFilter, null, initialClass, true);
   }
 
-  @Nullable
-  private static Filter<PsiClass> createFilter(@Nullable final ClassFilter classFilter) {
+  private static @Nullable Filter<PsiClass> createFilter(final @Nullable ClassFilter classFilter) {
     if (classFilter == null) {
       return null;
     }
@@ -83,18 +82,16 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   }
 
   @Override
-  @Nullable
-  protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
+  protected @Nullable PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
     if (!(node.getUserObject() instanceof ClassTreeNode descriptor)) return null;
     return descriptor.getPsiClass();
   }
 
   @Override
-  @NotNull
-  protected List<PsiClass> getClassesByName(final String name,
-                                            final boolean checkBoxState,
-                                            final String pattern,
-                                            final GlobalSearchScope searchScope) {
+  protected @NotNull List<PsiClass> getClassesByName(final String name,
+                                                     final boolean checkBoxState,
+                                                     final String pattern,
+                                                     final GlobalSearchScope searchScope) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(getProject());
     PsiClass[] classes = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       return cache
@@ -103,9 +100,8 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     return List.of(classes);
   }
 
-  @NotNull
   @Override
-  protected BaseClassInheritorsProvider<PsiClass> getInheritorsProvider(@NotNull PsiClass baseClass) {
+  protected @NotNull BaseClassInheritorsProvider<PsiClass> getInheritorsProvider(@NotNull PsiClass baseClass) {
     return new JavaInheritorsProvider(getProject(), baseClass, getScope());
   }
 
@@ -117,9 +113,8 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
       myProject = project;
     }
 
-    @NotNull
     @Override
-    protected Query<PsiClass> searchForInheritors(PsiClass baseClass, GlobalSearchScope searchScope, boolean checkDeep) {
+    protected @NotNull Query<PsiClass> searchForInheritors(PsiClass baseClass, GlobalSearchScope searchScope, boolean checkDeep) {
       return ClassInheritorsSearch.search(baseClass, searchScope, checkDeep);
     }
 
@@ -138,8 +133,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     private final PsiClass myBase;
     private final boolean myAcceptsSelf;
     private final boolean myAcceptsInner;
-    @NotNull
-    private final Condition<? super PsiClass> myAdditionalCondition;
+    private final @NotNull Condition<? super PsiClass> myAdditionalCondition;
 
     public InheritanceJavaClassFilterImpl(PsiClass base,
                                           boolean acceptsSelf,

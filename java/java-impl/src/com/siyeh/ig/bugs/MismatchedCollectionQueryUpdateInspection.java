@@ -101,14 +101,12 @@ public final class MismatchedCollectionQueryUpdateInspection extends BaseInspect
 
   @Pattern(VALID_ID_PATTERN)
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "MismatchedQueryAndUpdateOfCollection";
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final boolean updated = ((Boolean)infos[0]).booleanValue();
     if (updated) {
       return InspectionGadgetsBundle.message("mismatched.update.collection.problem.descriptor.updated.not.queried");

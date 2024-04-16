@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,9 +29,8 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   private JComponent myPanel;
 
   public static class Provider implements UsageContextPanel.Provider {
-    @NotNull
     @Override
-    public UsageContextPanel create(@NotNull UsageView usageView) {
+    public @NotNull UsageContextPanel create(@NotNull UsageView usageView) {
       return new UsageContextDataflowToPanel(((UsageViewImpl)usageView).getProject(), usageView.getPresentation());
     }
 
@@ -47,9 +46,8 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       PsiFile file = element.getContainingFile();
       return file instanceof PsiJavaFile;
     }
-    @NotNull
     @Override
-    public String getTabTitle() {
+    public @NotNull String getTabTitle() {
       return JavaBundle.message("dataflow.to.here");
     }
   }
@@ -65,7 +63,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(final @Nullable List<? extends UsageInfo> infos) {
     if (ContainerUtil.isEmpty(infos)) {
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
@@ -94,8 +92,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     return true;
   }
 
-  @NotNull
-  private static SliceAnalysisParams createParams(PsiElement element, boolean dataFlowToThis) {
+  private static @NotNull SliceAnalysisParams createParams(PsiElement element, boolean dataFlowToThis) {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(element.getProject());
     params.dataFlowToThis = dataFlowToThis;
@@ -103,8 +100,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     return params;
   }
 
-  @NotNull
-  protected JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
+  protected @NotNull JComponent createPanel(@NotNull PsiElement element, final boolean dataFlowToThis) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
     SliceAnalysisParams params = createParams(element, dataFlowToThis);
 

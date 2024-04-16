@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.documentation.DocumentationComponent;
@@ -34,9 +34,8 @@ import java.util.Set;
  * @author gregsh
  */
 public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
-  @NotNull
   @Override
-  public String getInformationHint(@NotNull PsiElement element) {
+  public @NotNull String getInformationHint(@NotNull PsiElement element) {
     return StringUtil.escapeXmlEntities(getTypePresentation(element));
   }
 
@@ -61,14 +60,12 @@ public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
     return type == null ? "<unknown>" : type.getPresentableText();
   }
 
-  @NotNull
   @Override
-  public String getErrorHint() {
+  public @NotNull String getErrorHint() {
     return JavaBundle.message("error.hint.no.expression.found");
   }
 
-  @Nullable
-  private static PsiLocalVariable getPossibleLocaleVariable(@NotNull PsiElement elementAt) {
+  private static @Nullable PsiLocalVariable getPossibleLocaleVariable(@NotNull PsiElement elementAt) {
     if (elementAt instanceof PsiIdentifier && elementAt.getParent() instanceof PsiLocalVariable psiVariable &&
         psiVariable.getTypeElement().isInferredType()) {
       return psiVariable;
@@ -80,8 +77,7 @@ public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
     return null;
   }
 
-  @Nullable
-  private static PsiParameter getPossibleParameter(@NotNull PsiElement elementAt) {
+  private static @Nullable PsiParameter getPossibleParameter(@NotNull PsiElement elementAt) {
     if (elementAt instanceof PsiIdentifier identifier &&
         identifier.getParent() instanceof PsiParameter parameter &&
         (parameter.getTypeElement() == null || parameter.getTypeElement().isInferredType())) {
@@ -94,9 +90,8 @@ public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> getExpressionsAt(@NotNull PsiElement elementAt) {
+  public @NotNull List<PsiElement> getExpressionsAt(@NotNull PsiElement elementAt) {
     PsiVariable psiVariable = getPossibleLocaleVariable(elementAt);
     if (psiVariable != null) {
       PsiTypeElement element = psiVariable.getTypeElement();
@@ -131,9 +126,8 @@ public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
     return true;
   }
 
-  @NotNull
   @Override
-  public @Nls String getAdvancedInformationHint(@NotNull PsiElement element) {
+  public @NotNull @Nls String getAdvancedInformationHint(@NotNull PsiElement element) {
     PsiExpression expression = null;
     PsiVariable psiVariable = getPossibleLocaleVariable(element);
     if (psiVariable != null) {

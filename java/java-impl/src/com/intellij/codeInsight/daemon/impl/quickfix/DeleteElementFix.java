@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -29,10 +29,8 @@ public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
     return Presentation.of(myText == null ? getFamilyName() : myText).withFixAllOption(this);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return CommonQuickFixBundle.message("fix.remove.title", JavaElementKind.UNKNOWN.object());
   }
 
@@ -43,7 +41,7 @@ public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
 
   public static final class DeleteMultiFix implements ModCommandAction {
     private final @NotNull PsiElement @NotNull [] myElements;
-    private @NotNull final @Nls String myMessage;
+    private final @NotNull @Nls String myMessage;
 
     public DeleteMultiFix(@NotNull PsiElement @NotNull ... elements) {
       myElements = elements;
