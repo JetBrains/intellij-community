@@ -106,6 +106,7 @@ data class ProjectScanningHistoryImpl(override val project: Project,
   }
 
   fun scanningStarted() {
+    timesImpl.totalUpdatingTime = System.nanoTime()
     timesImpl.updatingStart = ZonedDateTime.now(ZoneOffset.UTC)
   }
 
