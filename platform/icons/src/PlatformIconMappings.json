@@ -836,37 +836,6 @@
         "general/web.svg"
       ]
     },
-    "vcs": {
-      "branchLabel.svg": "icons/branchLabel.svg",
-      "changelist.svg": "vcs/changelist.svg",
-      "changes.svg": "actions/listChanges.svg",
-      "changesPush@12x12.svg": "icons/outgoing.svg",
-      "changesUpdate@12x12.svg": "icons/incoming.svg",
-      "cherryPick.svg": "icons/cherryPick.svg",
-      "commit.svg": "actions/commit.svg",
-      "currentBranchLabel.svg": "icons/currentBranchLabel.svg",
-      "currentBranchFavoriteLabel.svg": "icons/currentBranchFavoriteLabel.svg",
-      "diff.svg": "actions/diff.svg",
-      "fetch.svg": "vcs/fetch.svg",
-      "merge.svg": "vcs/merge.svg",
-      "patch.svg": "vcs/patch.svg",
-      "push.svg": "vcs/push.svg",
-      "revert.svg": "actions/rollback.svg",
-      "stash.svg": [
-        "vcs/Shelve.svg",
-        "vcs/shelveSilent.svg",
-        "vcs/Stash.svg"
-      ],
-      "unshelve.svg": [
-        "vcs/Unshelve.svg",
-        "vcs/unshelveSilent.svg"
-      ],
-      "update.svg": "actions/checkOut.svg",
-      "vcs.svg": [
-        "vcs/branchNode.svg",
-        "vcs/branch.svg"
-      ]
-    },
     "webReferences": {
       "server.svg": "webreferences/server.svg"
     },

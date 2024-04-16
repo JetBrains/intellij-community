@@ -8129,15 +8129,6 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFolder
 - contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - isDirectory():Z
-c:com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction
-- com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction
-- <init>():V
 f:com.intellij.options.VcsGeneralEditorOptionsExtension
 - com.intellij.openapi.options.UiDslUnnamedConfigurable$Simple
 - <init>():V

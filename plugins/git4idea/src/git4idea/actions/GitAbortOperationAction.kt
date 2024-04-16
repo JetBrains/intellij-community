@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
-import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
@@ -27,6 +26,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFreezingProcess
+import icons.DvcsImplIcons
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -55,7 +55,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
     override val notificationErrorDisplayId = REVERT_ABORT_FAILED
   }
 
-  final override fun getMainToolbarIcon(): Icon = ExpUiIcons.Vcs.Abort
+  final override fun getMainToolbarIcon(): Icon = DvcsImplIcons.New.Abort
 
   override fun performInBackground(repository: GitRepository): Boolean {
     if (!confirmAbort(repository)) return false
