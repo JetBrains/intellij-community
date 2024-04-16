@@ -257,13 +257,13 @@ public final class ClasspathBootstrap {
     return new ArrayList<>(cp);
   }
 
-  public static @Nullable String getResourcePath(Class<?> aClass) {
-    return PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+  public static @Nullable String getResourcePath(@NotNull Class<?> aClass) {
+    return PathManager.getJarPathForClass(aClass);
   }
 
-  public static @Nullable File getResourceFile(Class<?> aClass) {
-    final String resourcePath = getResourcePath(aClass);
-    return resourcePath != null? new File(resourcePath) : null;
+  public static @Nullable File getResourceFile(@NotNull Class<?> aClass) {
+    final @Nullable Path resourcePath = PathManager.getJarForClass(aClass);
+    return resourcePath != null ? resourcePath.toFile() : null;
   }
 
   public static void configureReflectionOpenPackages(Consumer<? super String> paramConsumer) {
@@ -275,15 +275,20 @@ public final class ClasspathBootstrap {
 
   private static List<String> getInstrumentationUtilRoots() {
     String instrumentationUtilPath = getResourcePath(NotNullVerifyingInstrumenter.class);
+    assert instrumentationUtilPath != null;
     File instrumentationUtil = new File(instrumentationUtilPath);
     if (instrumentationUtil.isDirectory()) {
       //running from sources: load classes from .../out/production/intellij.java.compiler.instrumentationUtil.java8
       return Arrays.asList(instrumentationUtilPath, new File(instrumentationUtil.getParentFile(), "intellij.java.compiler.instrumentationUtil.java8").getAbsolutePath());
     }
     else {
+      var relevantJarsRoot = PathManager.getArchivedCompliedClassesLocation();
+      Map<String, String> mapping = PathManager.getArchivedCompiledClassesMapping();
+      if (relevantJarsRoot != null && mapping != null && instrumentationUtilPath.startsWith(relevantJarsRoot)) {
+        return Arrays.asList(instrumentationUtilPath, mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
+      }
       //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the same jar
       return Collections.singletonList(instrumentationUtilPath);
     }
   }
-
 }
