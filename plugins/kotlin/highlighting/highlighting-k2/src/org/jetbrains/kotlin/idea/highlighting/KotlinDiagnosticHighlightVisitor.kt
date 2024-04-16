@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.util.containers.toArray
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -87,7 +88,7 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
         } else null
 
         val message = diagnostic.getMessageToRender()
-        val htmlMessage = XmlStringUtil.escapeString(message).replace("\n", "<br>")
+        val htmlMessage = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message).replace("\n", "<br>"))
         val infoBuilder = HighlightInfo.newHighlightInfo(diagnostic.getHighlightInfoType())
             .escapedToolTip(htmlMessage)
             .description(message)

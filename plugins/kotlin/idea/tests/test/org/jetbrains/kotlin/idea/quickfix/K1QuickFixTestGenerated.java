@@ -6799,30 +6799,30 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/quickfix/dataClassPrivateConstructor")
-    public static class DataClassPrivateConstructor extends AbstractK1QuickFixTest {
+    @TestMetadata("testData/quickfix/dataClassConstructorVsCopyVisibility")
+    public static class DataClassConstructorVsCopyVisibility extends AbstractK1QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("AddConsistentCopyVisibilityAnnotation.kt")
         public void testAddConsistentCopyVisibilityAnnotation() throws Exception {
-            runTest("testData/quickfix/dataClassPrivateConstructor/AddConsistentCopyVisibilityAnnotation.kt");
+            runTest("testData/quickfix/dataClassConstructorVsCopyVisibility/AddConsistentCopyVisibilityAnnotation.kt");
         }
 
         @TestMetadata("DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations.kt")
         public void testDataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations() throws Exception {
-            runTest("testData/quickfix/dataClassPrivateConstructor/DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations.kt");
+            runTest("testData/quickfix/dataClassConstructorVsCopyVisibility/DataClassConsistentCopyAndExposedCopyAreIncompatibleAnnotations.kt");
         }
 
         @TestMetadata("DataClassConsistentCopyWrongAnnotationTarget.kt")
         public void testDataClassConsistentCopyWrongAnnotationTarget() throws Exception {
-            runTest("testData/quickfix/dataClassPrivateConstructor/DataClassConsistentCopyWrongAnnotationTarget.kt");
+            runTest("testData/quickfix/dataClassConstructorVsCopyVisibility/DataClassConsistentCopyWrongAnnotationTarget.kt");
         }
 
         @TestMetadata("RemoveRedundantConsistentCopyVisibilityAnnotation.kt")
         public void testRemoveRedundantConsistentCopyVisibilityAnnotation() throws Exception {
-            runTest("testData/quickfix/dataClassPrivateConstructor/RemoveRedundantConsistentCopyVisibilityAnnotation.kt");
+            runTest("testData/quickfix/dataClassConstructorVsCopyVisibility/RemoveRedundantConsistentCopyVisibilityAnnotation.kt");
         }
     }
 
