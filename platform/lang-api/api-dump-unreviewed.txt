@@ -1310,12 +1310,14 @@ f:com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean
 - f:getProviderId():java.lang.String
 - f:getProviderName():java.lang.String
 - f:isEnabledByDefault():Z
+- f:isInvisible():Z
 - f:requiredGroup():com.intellij.codeInsight.hints.InlayGroup
 - f:requiredProviderId():java.lang.String
 - f:setBundle(java.lang.String):V
 - f:setDescriptionKey(java.lang.String):V
 - f:setEnabledByDefault(Z):V
 - f:setImplementationClass(java.lang.String):V
+- f:setInvisible(Z):V
 - f:setLanguage(java.lang.String):V
 - f:setNameKey(java.lang.String):V
 - f:setOptions(java.util.List):V
