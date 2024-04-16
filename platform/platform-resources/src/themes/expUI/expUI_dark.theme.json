@@ -905,9 +905,9 @@
         },
         "Background": "Gray3",
         "Foreground": "Gray14",
-        "info.Foreground": "Gray9",
+        "info.Foreground": "Gray10",
         "timer.Foreground": "Gray14",
-        "link": "Blue8"
+        "link": "Blue9"
       }
     },
 
