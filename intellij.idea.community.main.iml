@@ -217,6 +217,6 @@
     <orderEntry type="module" module-name="intellij.vcs.github.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ide.monolith.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
   </component>
 </module>
