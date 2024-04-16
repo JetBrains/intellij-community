@@ -9,6 +9,7 @@ import com.intellij.diff.util.Range;
 import com.intellij.openapi.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -392,6 +393,7 @@ public final class ByLineRt {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts, MergeRange range) {
     //noinspection SSBasedInspection
     return conflicts.stream().map(conflict -> new MergeLineFragmentImpl(conflict.start1 + range.start1, conflict.end1 + range.start1,

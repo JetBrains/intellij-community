@@ -20,8 +20,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
+@Internal
 class MergeImportUtil {
   companion object {
 
@@ -87,10 +89,12 @@ class MergeImportUtil {
  * @property importBlockStart The start index of import range (inclusive).
  * @property importBlockEnd The end index of import range (exclusive).
  */
+@Internal
 data class MergeLineFragmentsWithImportMetadata(val fragments: List<MergeLineFragment>, val importBlockStart: Int = -1, val importBlockEnd: Int = -1) {
   fun isIndexInImportRange(index: Int) = index in importBlockStart..<importBlockEnd
 }
 
+@Internal
 data class ProcessorData<T : TextBlockTransferableData>(val processor: CopyPastePostProcessor<T>, val data: List<T>) {
   fun process(project: Project, editor: Editor, bounds: RangeMarker, caretOffset: Int, indented: Ref<in Boolean>) {
     if (data.isEmpty()) return

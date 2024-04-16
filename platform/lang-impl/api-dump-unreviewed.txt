@@ -4961,13 +4961,6 @@ f:com.intellij.codeInsight.editorActions.CopyPasteIndentProcessor
 - extractTransferableData(java.awt.datatransfer.Transferable):java.util.List
 - processTransferableData(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.RangeMarker,I,com.intellij.openapi.util.Ref,java.util.List):V
 - requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
-a:com.intellij.codeInsight.editorActions.CopyPastePostProcessor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- a:collectTransferableData(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I[],I[]):java.util.List
-- extractTransferableData(java.awt.datatransfer.Transferable):java.util.List
-- processTransferableData(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.RangeMarker,I,com.intellij.openapi.util.Ref,java.util.List):V
-- requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
 com.intellij.codeInsight.editorActions.CopyPastePreProcessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:preprocessOnCopy(com.intellij.psi.PsiFile,I[],I[],java.lang.String):java.lang.String

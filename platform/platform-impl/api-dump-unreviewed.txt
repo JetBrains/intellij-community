@@ -881,13 +881,6 @@ f:com.intellij.codeInsight.editorActions.TextBlockTransferable
 - getTransferData(java.awt.datatransfer.DataFlavor):java.lang.Object
 - getTransferDataFlavors():java.awt.datatransfer.DataFlavor[]
 - isDataFlavorSupported(java.awt.datatransfer.DataFlavor):Z
-com.intellij.codeInsight.editorActions.TextBlockTransferableData
-- sf:PLAIN_TEXT_PRIORITY:I
-- a:getFlavor():java.awt.datatransfer.DataFlavor
-- getOffsetCount():I
-- getOffsets(I[],I):I
-- getPriority():I
-- setOffsets(I[],I):I
 f:com.intellij.codeInsight.folding.impl.FoldingUtil
 - s:createFoldTreeIterator(com.intellij.openapi.editor.Editor):java.util.Iterator
 - s:findFoldRegion(com.intellij.openapi.editor.Editor,I,I):com.intellij.openapi.editor.FoldRegion

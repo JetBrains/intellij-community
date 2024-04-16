@@ -9,6 +9,13 @@ a:com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 - s:findBreadcrumbsCollector(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 - a:handlesFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:watchForChanges(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.Disposable,java.lang.Runnable):V
+com.intellij.codeInsight.editorActions.TextBlockTransferableData
+- sf:PLAIN_TEXT_PRIORITY:I
+- a:getFlavor():java.awt.datatransfer.DataFlavor
+- getOffsetCount():I
+- getOffsets(I[],I):I
+- getPriority():I
+- setOffsets(I[],I):I
 a:com.intellij.codeInsight.highlighting.TooltipLinkHandler
 - <init>():V
 - getDescription(java.lang.String,com.intellij.openapi.editor.Editor):java.lang.String
