@@ -67,6 +67,7 @@ Cleaning output files:
 End of files
 Compiling files:
   src/classLiteral.kt
+  src/importA.kt
 End of files
 Exit code: OK
 ------------------------------------------
