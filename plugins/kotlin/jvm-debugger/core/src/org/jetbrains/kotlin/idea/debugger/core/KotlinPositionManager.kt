@@ -3,6 +3,7 @@
 // The package directive doesn't match the file location to prevent API breakage
 package org.jetbrains.kotlin.idea.debugger
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
 import com.intellij.debugger.SourcePosition
@@ -19,12 +20,17 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -42,6 +48,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
+import kotlinx.coroutines.*
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
@@ -72,7 +79,7 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import kotlin.coroutines.resume
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val sourceSearchScopes: List<GlobalSearchScope> = listOf(
@@ -611,34 +618,54 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
 
         val isInsideProjectWithCompose = position.isInsideProjectWithCompose()
-        var nonBlocking = ReadAction.nonBlocking<List<ClassPrepareRequest>> {
-            val kotlinRequests = createKotlinClassPrepareRequests(requestor, position)
-            if (isInsideProjectWithCompose) {
-                val singletonRequest = getClassPrepareRequestForComposableSingletons(debugProcess, requestor, file)
-                if (singletonRequest == null)
-                    kotlinRequests
-                else
-                    kotlinRequests + singletonRequest
+        val xBreakpoint = requestor.asSafely<Breakpoint<*>>()?.xBreakpoint
+        val xSession = debugProcess.asSafely<DebugProcessImpl>()?.xdebugProcess?.session.asSafely<XDebugSessionImpl>()
+        return runBlockingCancellable {
+            if (xBreakpoint == null || xSession == null) {
+                collectPrepareRequestPatterns(requestor, position, isInsideProjectWithCompose, file)
             } else {
-                kotlinRequests
+                cancelIfExpired({ readAction { xSession.isBreakpointActive(xBreakpoint) } }) {
+                    collectPrepareRequestPatterns(requestor, position, isInsideProjectWithCompose, file)
+                }
+            }
+        }.mapNotNull { pattern -> debugProcess.requestsManager.createClassPrepareRequest(requestor, pattern) }
+    }
+
+    private suspend fun collectPrepareRequestPatterns(
+        requestor: ClassPrepareRequestor,
+        position: SourcePosition,
+        isInsideProjectWithCompose: Boolean,
+        file: KtFile
+    ): List<String> {
+        val project = debugProcess.project
+        return withBackgroundProgress(
+            project, KotlinDebuggerCoreBundle.message("progress.title.installing.kotlin.breakpoint"),
+            cancellable = false
+        ) {
+            withProgressText(KotlinDebuggerCoreBundle.message("progress.text.waiting.for.smart.mode")) {
+                waitForSmartMode(project)
+            }
+            smartReadAction(project) {
+                doCollectPrepareRequestPatterns(requestor, position, isInsideProjectWithCompose, file)
             }
         }
-            .inSmartMode(debugProcess.project)
+    }
 
-        val xBreakpoint = requestor.safeAs<Breakpoint<*>>()?.xBreakpoint
-        val xSession = debugProcess.asSafely<DebugProcessImpl>()?.xdebugProcess?.session.asSafely<XDebugSessionImpl>()
-        if (xBreakpoint != null && xSession != null) {
-            nonBlocking = nonBlocking.expireWhen { !xSession.isBreakpointActive(xBreakpoint) }
-        }
-        try {
-            return nonBlocking.executeSynchronously()
-        } catch (_: ProcessCanceledException) {
-            return emptyList()
+    private fun doCollectPrepareRequestPatterns(
+        requestor: ClassPrepareRequestor, position: SourcePosition,
+        isInsideProjectWithCompose: Boolean, file: KtFile
+    ): List<String> {
+        val kotlinRequests = getKotlinClassPrepareRequestPatterns(requestor, position)
+        return if (isInsideProjectWithCompose) {
+            val singletonRequest = getClassPrepareRequestPatternForComposableSingletons(file)
+            kotlinRequests + singletonRequest
+        } else {
+            kotlinRequests
         }
     }
 
     @RequiresReadLock
-    private fun createKotlinClassPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<ClassPrepareRequest> {
+    private fun getKotlinClassPrepareRequestPatterns(requestor: ClassPrepareRequestor, position: SourcePosition): List<String> {
         val refinedPosition = when (requestor) {
             is SourcePositionRefiner -> requestor.refineSourcePosition(position)
             else -> position
@@ -646,12 +673,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
         return ClassNameProvider(debugProcess.project, debugProcess.searchScope, ClassNameProvider.Configuration.DEFAULT)
             .getCandidates(refinedPosition)
-            .flatMap { name ->
-                listOfNotNull(
-                    debugProcess.requestsManager.createClassPrepareRequest(requestor, name),
-                    debugProcess.requestsManager.createClassPrepareRequest(requestor, "$name$*")
-               )
-            }
+            .flatMap { name -> listOf(name, "$name$*") }
     }
 }
 
@@ -772,4 +794,33 @@ private class IrLambdaDescriptor(name: String) : Comparable<IrLambdaDescriptor> 
         }
         return lambdaId.size - other.lambdaId.size
     }
+}
+
+private suspend fun <T> CoroutineScope.cancelIfExpired(condition: suspend () -> Boolean, action: suspend () -> T): T {
+    val cancellationJob = cancelWhenExpired(this, condition)
+    try {
+        return action()
+    } finally {
+        cancellationJob.cancel()
+    }
+}
+
+private suspend fun cancelWhenExpired(scope: CoroutineScope, condition: suspend () -> Boolean): Job {
+    suspend fun checkExpired() {
+        if (!condition()) {
+            scope.cancel()
+        }
+    }
+    checkExpired()
+    return scope.launch {
+        while (true) {
+            checkExpired()
+            delay(500)
+        }
+    }
+}
+
+// Replace with platform implementation when IJPL-805 is fixed
+private suspend fun waitForSmartMode(project: Project) = suspendCancellableCoroutine {
+    DumbService.getInstance(project).runWhenSmart(ContextAwareRunnable { it.resume(Unit) })
 }
