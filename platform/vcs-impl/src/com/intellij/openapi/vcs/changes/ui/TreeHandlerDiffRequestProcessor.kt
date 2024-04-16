@@ -54,6 +54,8 @@ open class TreeHandlerChangesTreeTracker(
   protected val updateWhileShown: Boolean = false
 ) {
   private val isCombinedViewer = editorViewer is CombinedDiffComponentProcessor
+  private val isForceKeepCurrentFileWhileFocused = editorViewer is ChangeViewDiffRequestProcessor &&
+                                                   editorViewer.forceKeepCurrentFileWhileFocused()
 
   private val updatePreviewQueue = MergingUpdateQueue("TreeHandlerChangesTreeTracker", 100, true, editorViewer.component, editorViewer.disposable).apply {
     setRestartTimerOnAdd(true)
@@ -121,8 +123,8 @@ open class TreeHandlerChangesTreeTracker(
         refreshCombinedDiffProcessor(tree, editorViewer, handler, onlyBlockSelection)
       }
       is ChangeViewDiffRequestProcessor -> {
-        val keepOldSelectedDiffContent = updateType == UpdateType.ON_MODEL_CHANGE
-        editorViewer.refresh(keepOldSelectedDiffContent)
+        val fromModelRefresh = updateType == UpdateType.ON_MODEL_CHANGE
+        editorViewer.refresh(fromModelRefresh)
       }
       else -> fail(editorViewer)
     }
@@ -154,9 +156,12 @@ open class TreeHandlerChangesTreeTracker(
         return updateType == UpdateType.ON_MODEL_CHANGE &&
                eatenUpdate.updateType == UpdateType.ON_SELECTION_CHANGE
       }
-      else {
+      else if (isForceKeepCurrentFileWhileFocused) {
         return updateType == UpdateType.ON_SELECTION_CHANGE &&
                eatenUpdate.updateType == UpdateType.ON_MODEL_CHANGE
+      }
+      else {
+        return true
       }
     }
   }

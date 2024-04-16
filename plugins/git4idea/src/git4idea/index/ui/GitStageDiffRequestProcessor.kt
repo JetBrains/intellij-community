@@ -34,6 +34,8 @@ class GitStageDiffRequestProcessor(val stageTree: GitStageTree,
     return !isInEditor || super.shouldAddToolbarBottomBorder(toolbarComponents)
   }
 
+  override fun forceKeepCurrentFileWhileFocused(): Boolean = true
+
   override fun createGoToChangeAction(): AnAction {
     return MyGoToChangePopupAction()
   }

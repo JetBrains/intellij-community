@@ -86,6 +86,8 @@ private class ChangesViewDiffPreviewProcessor(private val panel: ChangesViewMana
 
   override fun showAllChangesForEmptySelection(): Boolean = false
 
+  override fun forceKeepCurrentFileWhileFocused(): Boolean = true
+
   private fun setAllowExcludeFromCommit(value: Boolean) {
     if (DiffUtil.isUserDataFlagSet(ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
     context.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
