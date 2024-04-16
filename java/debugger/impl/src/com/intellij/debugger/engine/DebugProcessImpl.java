@@ -899,18 +899,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                      @NotNull SteppingBreakpoint breakpoint,
                                                      RequestHint hint,
                                                      boolean resetThreadFilter,
-                                                     int explicitSuspendPolicy) {
+                                                     int suspendPolicy) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     if (resetThreadFilter) {
       BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(debugProcess.getProject()).getBreakpointManager();
       breakpointManager.removeThreadFilter(debugProcess); // clear the filter on resume
-    }
-    int suspendPolicy;
-    if (explicitSuspendPolicy != -1) {
-      suspendPolicy = explicitSuspendPolicy;
-    }
-    else {
-      suspendPolicy = context.getSuspendPolicy();
     }
     breakpoint.setSuspendPolicy(
       suspendPolicy == EventRequest.SUSPEND_EVENT_THREAD ? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL);
@@ -1915,14 +1908,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
       LightOrRealThreadInfo threadFilterFromContext = getThreadFilterFromContext(context);
       applyThreadFilter(threadFilterFromContext);
-      int explicitSuspendPolicy;
+      int breakpointSuspendPolicy = context.getSuspendPolicy();
       if (threadFilterFromContext != null && threadFilterFromContext.getRealThread() == null) {
-        explicitSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+        breakpointSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
       }
-      else {
-        explicitSuspendPolicy = -1;
-      }
-      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, explicitSuspendPolicy);
+      prepareAndSetSteppingBreakpoint(context, myRunToCursorBreakpoint, null, false, breakpointSuspendPolicy);
       final DebugProcessImpl debugProcess = context.getDebugProcess();
 
       if (debugProcess.getRequestsManager().getWarning(myRunToCursorBreakpoint) == null) {
