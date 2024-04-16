@@ -13,8 +13,8 @@ import com.intellij.platform.navbar.compatibility.backend.IdeNavBarVmItem
 import com.intellij.platform.navbar.compatibility.backend.ProjectNavBarItem
 import com.intellij.platform.navbar.compatibility.backend.fireOnFileChanges
 import com.intellij.platform.navbar.compatibility.backend.toVmItems
-import com.intellij.platform.navbar.ide.NavBarServiceDelegate
-import com.intellij.platform.navbar.ide.fireOnIdeActivity
+import com.intellij.platform.navbar.frontend.NavBarServiceDelegate
+import com.intellij.platform.navbar.frontend.fireOnIdeActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow

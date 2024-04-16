@@ -193,5 +193,5 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="intellij.platform.navbar.backend.xml"/>
-  <xi:include href="intellij.platform.navbar.ide.xml"/>
+  <xi:include href="intellij.platform.navbar.frontend.xml"/>
 </idea-plugin>

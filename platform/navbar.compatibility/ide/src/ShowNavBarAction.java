@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.platform.navbar.ide.NavBarService;
+import com.intellij.platform.navbar.frontend.NavBarService;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.platform.navbar.ide.NavBarIdeBundle.messagePointer;
-import static com.intellij.platform.navbar.ide.NavBarServiceKt.isNavbarShown;
+import static com.intellij.platform.navbar.frontend.NavBarFrontendBundle.messagePointer;
+import static com.intellij.platform.navbar.frontend.NavBarServiceKt.isNavbarShown;
 
 /**
  * @author Konstantin Bulenkov

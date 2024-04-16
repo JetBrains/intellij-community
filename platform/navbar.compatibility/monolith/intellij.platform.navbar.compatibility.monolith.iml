@@ -13,7 +13,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" />
-    <orderEntry type="module" module-name="intellij.platform.navbar.ide" />
+    <orderEntry type="module" module-name="intellij.platform.navbar.frontend" />
     <orderEntry type="module" module-name="intellij.platform.navbar.compatibility.backend" />
   </component>
 </module>

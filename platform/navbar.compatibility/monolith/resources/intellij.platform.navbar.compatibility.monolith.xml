@@ -4,7 +4,7 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <!--suppress PluginXmlValidity -->
-    <projectService serviceInterface="com.intellij.platform.navbar.ide.NavBarServiceDelegate"
+    <projectService serviceInterface="com.intellij.platform.navbar.frontend.NavBarServiceDelegate"
                     serviceImplementation="com.intellij.platform.navbar.compatibility.monolith.MonolithNavbarServiceDelegate"/>
   </extensions>
 </idea-plugin>

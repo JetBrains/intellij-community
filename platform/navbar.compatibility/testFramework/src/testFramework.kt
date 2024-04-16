@@ -11,7 +11,7 @@ import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.compatibility.backend.DefaultNavBarItem
 import com.intellij.platform.navbar.compatibility.backend.compatibilityNavBarItem
 import com.intellij.platform.navbar.compatibility.backend.getBgData
-import com.intellij.platform.navbar.ide.contextModel
+import com.intellij.platform.navbar.frontend.contextModel
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
