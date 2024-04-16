@@ -24,6 +24,8 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("expui/actions/diffWithClipboard.svg", 204552007, 2);
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("expui/actions/filterdups.svg", -360208726, 2);
     /** 16x16 */ public static final @NotNull Icon Generated = load("expui/actions/generated.svg", -505251911, 2);
+    /** 16x16 */ public static final @NotNull Icon GroupByClass = load("expui/actions/groupByClass.svg", -78543826, 2);
+    /** 16x16 */ public static final @NotNull Icon GroupByFile = load("expui/actions/groupByFile.svg", -271612899, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByMethod = load("expui/actions/groupByMethod.svg", 300139270, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByModule = load("expui/actions/groupByModule.svg", 798805301, 2);
     /** 16x16 */ public static final @NotNull Icon GroupByPackage = load("expui/actions/groupByPackage.svg", -694917992, 2);

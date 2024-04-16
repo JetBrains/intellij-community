@@ -8,6 +8,8 @@
       "diffWithClipboard.svg": "actions/diffWithClipboard.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
+      "groupByClass.svg": "actions/GroupByClass.svg",
+      "groupByFile.svg": "actions/GroupByFile.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
       "groupByModule.svg": "actions/GroupByModule.svg",
       "groupByPackage.svg": "actions/GroupByPackage.svg",

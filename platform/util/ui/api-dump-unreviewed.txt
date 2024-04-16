@@ -1279,6 +1279,8 @@ f:com.intellij.icons.ExpUiIcons$Actions
 - sf:DiffWithClipboard:javax.swing.Icon
 - sf:Filterdups:javax.swing.Icon
 - sf:Generated:javax.swing.Icon
+- sf:GroupByClass:javax.swing.Icon
+- sf:GroupByFile:javax.swing.Icon
 - sf:GroupByMethod:javax.swing.Icon
 - sf:GroupByModule:javax.swing.Icon
 - sf:GroupByPackage:javax.swing.Icon
