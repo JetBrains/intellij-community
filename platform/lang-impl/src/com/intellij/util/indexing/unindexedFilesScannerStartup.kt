@@ -38,6 +38,7 @@ internal enum class FirstScanningState {
 
 internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           startSuspended: Boolean,
+                                          allowSkippingScanning: Boolean,
                                           coroutineScope: CoroutineScope,
                                           indexingReason: String) {
   FileBasedIndex.getInstance().loadIndexes()
@@ -46,7 +47,7 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val filterHolder = (FileBasedIndex.getInstance() as FileBasedIndexImpl).indexableFilesFilterHolder
   val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder)
 
-  if (Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
+  if (allowSkippingScanning && Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
     scheduleDirtyFilesScanning(project, startSuspended, coroutineScope, indexingReason)
   }
   else {
