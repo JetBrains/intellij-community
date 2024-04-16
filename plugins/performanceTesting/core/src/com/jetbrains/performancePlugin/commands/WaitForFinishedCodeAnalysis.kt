@@ -143,7 +143,12 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
     }
 
     if (errors.isEmpty()) return
-    cs.launch { errors.forEach { LOG.error(it) } }
+    cs.launch {
+      errors.forEach {
+        LOG.error(it)
+        it.suppressed.forEach { suppressed -> LOG.error("   Suppressed exception: ", suppressed) }
+      }
+    }
   }
 
   interface HighlightedEditor {
