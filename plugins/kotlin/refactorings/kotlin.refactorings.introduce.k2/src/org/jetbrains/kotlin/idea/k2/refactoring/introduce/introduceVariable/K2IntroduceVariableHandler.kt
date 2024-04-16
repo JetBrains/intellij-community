@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableContext
@@ -197,7 +198,10 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
         if (!isRefactoringApplicableByPsi(project, editor, expression)) return
 
         val expressionRenderedType = analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            val expressionType = expression.getKtType()
+            val substringInfo = expression.extractableSubstringInfo as? K2ExtractableSubstringInfo
+            val physicalExpression = expression.substringContextOrThis
+
+            val expressionType = substringInfo?.guessLiteralType() ?: physicalExpression.getKtType()
             if (expressionType != null && expressionType.isUnit) return@analyzeInModalWindow null
             (expressionType ?: builtinTypes.ANY).render(position = Variance.INVARIANT)
         } ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.expression.has.unit.type"))

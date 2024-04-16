@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import java.util.concurrent.Callable
 
+@Deprecated("Don't perform resolve on EDT")
 fun selectElement(
     editor: Editor,
     file: KtFile,

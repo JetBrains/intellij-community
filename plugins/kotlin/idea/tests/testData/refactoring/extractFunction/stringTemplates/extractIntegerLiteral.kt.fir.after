@@ -4,7 +4,7 @@ fun foo(param: Int): String {
     val y = "-4123a"
     val z = "+1243a"
     val u = 123
-    return "ab${string()}def"
+    return "ab${i()}def"
 }
 
-private fun string(): String = "123"
+private fun i(): Int = 123
