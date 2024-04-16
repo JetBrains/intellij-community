@@ -40,14 +40,19 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.KeymapImpl
+import com.intellij.openapi.keymap.impl.UpdateResult
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.awaitFocusSettlesDown
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -77,6 +82,7 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.awt.event.WindowEvent
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -84,7 +90,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
-import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 import kotlin.time.Duration
@@ -1203,23 +1208,33 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                             now: Boolean): ActionCallback {
     ThreadingAssertions.assertEventDispatchThread()
     val result = ActionCallback()
-    val doRunnable = {
-      tryToExecuteNow(action = action,
-                      inputEvent = inputEvent,
-                      contextComponent = contextComponent,
-                      place = place,
-                      result = result,
-                      actionManager = this)
-    }
+    val place = place ?: "tryToExecute"
     if (now) {
-      doRunnable()
+      try {
+        tryToExecuteNow(action, place, contextComponent, inputEvent, result)
+      }
+      finally {
+        if (!result.isProcessed) {
+          result.setRejected()
+        }
+      }
     }
     else {
-      SwingUtilities.invokeLater(doRunnable)
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+        try {
+          tryToExecuteSuspend(action, place, contextComponent, inputEvent, result)
+        }
+        finally {
+          if (!result.isProcessed) {
+            blockingContext {
+              result.setRejected()
+            }
+          }
+        }
+      }
     }
     return result
   }
-
 
   private val _timerEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
@@ -1291,47 +1306,89 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 }
 
-private fun tryToExecuteNow(action: AnAction,
-                            actionManager: ActionManager,
-                            inputEvent: InputEvent?,
-                            contextComponent: Component?,
-                            place: String?,
+private fun doPerformAction(action: AnAction,
+                            event: AnActionEvent,
                             result: ActionCallback) {
-  val presentation = action.templatePresentation.clone()
-  IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
-    {
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-        val context = getContextBy(contextComponent)
-        val event = AnActionEvent(
-          /* inputEvent = */ inputEvent,
-          /* dataContext = */ context,
-          /* place = */ place ?: ActionPlaces.UNKNOWN,
-          /* presentation = */ presentation,
-          /* actionManager = */ actionManager,
-          /* modifiers = */ inputEvent?.modifiersEx ?: 0
-        )
-        ActionUtil.lastUpdateAndCheckDumb(action, event, false)
-        if (!event.presentation.isEnabled) {
-          result.setRejected()
-          return@performUserActivity
-        }
-        addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
-          if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
-            if (!result.isProcessed) {
-              val we = it as WindowEvent
-              IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
-                result.createSetDoneRunnable(), ModalityState.defaultModalityState())
-            }
-          }
-        }
-        try {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-        }
-        finally {
-          result.setDone()
-        }
+  ActionUtil.lastUpdateAndCheckDumb(action, event, false)
+  if (!event.presentation.isEnabled) {
+    result.setRejected()
+    return
+  }
+  addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
+    if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
+      if (!result.isProcessed) {
+        val we = it as WindowEvent
+        IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
+          result.createSetDoneRunnable(), ModalityState.defaultModalityState())
       }
-    }, ModalityState.defaultModalityState())
+    }
+  }
+  (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+    try {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+    }
+    finally {
+      result.setDone()
+    }
+  }
+}
+
+private fun tryToExecuteNow(action: AnAction,
+                            place: String,
+                            contextComponent: Component?,
+                            inputEvent: InputEvent?,
+                            result: ActionCallback) {
+  val presentationFactory = PresentationFactory()
+  val dataContext = DataManager.getInstance().run {
+    if (contextComponent == null) dataContext else getDataContext(contextComponent)
+  }
+  val wrappedContext = Utils.createAsyncDataContext(dataContext)
+  val componentAdjusted = PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext) ?: contextComponent
+  val actionProcessor = object : ActionProcessor() {}
+  val inputEventAdjusted = inputEvent ?: KeyEvent(
+    componentAdjusted, KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
+  val event = Utils.runWithInputEventEdtDispatcher(componentAdjusted) block@{
+    Utils.runUpdateSessionForInputEvent(
+      listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { rearranged, updater, events ->
+      val presentation = updater(action)
+      val event = events[presentation]
+      if (event == null || !presentation.isEnabled) {
+        null
+      }
+      else {
+        UpdateResult(action, event, 0L)
+      }
+    }
+  }?.event
+  if (event != null && event.presentation.isEnabled) {
+    doPerformAction(action, event, result)
+  }
+}
+
+private suspend fun tryToExecuteSuspend(action: AnAction,
+                                        place: String,
+                                        contextComponent: Component?,
+                                        inputEvent: InputEvent?,
+                                        result: ActionCallback) {
+  (if (contextComponent != null) IdeFocusManager.findInstanceByComponent(contextComponent)
+  else IdeFocusManager.getGlobalInstance()).awaitFocusSettlesDown()
+
+  val dataContext = DataManager.getInstance().run {
+    if (contextComponent == null) dataContext else getDataContext(contextComponent)
+  }
+  val wrappedContext = Utils.createAsyncDataContext(dataContext)
+
+  val presentationFactory = PresentationFactory()
+  Utils.expandActionGroupSuspend(DefaultActionGroup(action), presentationFactory, wrappedContext, place, false, false)
+  val presentation = presentationFactory.getPresentation(action)
+  val event = if (presentation.isEnabled) AnActionEvent(
+    inputEvent, wrappedContext, place, presentation, ActionManager.getInstance(), 0, false, false)
+  else null
+  if (event != null && event.presentation.isEnabled) {
+    blockingContext {
+      doPerformAction(action, event, result)
+    }
+  }
 }
 
 private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
@@ -1537,12 +1594,6 @@ private fun reportActionError(module: PluginDescriptor, message: String, cause: 
 private fun getPluginInfo(id: PluginId?): String {
   val plugin = (if (id == null) null else PluginManagerCore.getPlugin(id)) ?: return ""
   return " (Plugin: ${plugin.name ?: id!!.idString})"
-}
-
-private fun getContextBy(contextComponent: Component?): DataContext {
-  val dataManager = DataManager.getInstance()
-  @Suppress("DEPRECATION")
-  return if (contextComponent == null) dataManager.dataContext else dataManager.getDataContext(contextComponent)
 }
 
 private fun createActionToolbarImpl(place: String,
