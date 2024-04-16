@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.webSymbols.WebSymbolsFrameworkHtmlSupport
 import com.intellij.html.webSymbols.WebSymbolsHtmlQueryConfigurator
 import com.intellij.ide.nls.NlsMessages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.meta.PsiPresentableMetaData
@@ -56,8 +57,9 @@ open class WebSymbolAttributeDescriptor private constructor(val tag: XmlTag?,
       supportsEnums && strictEnumValues -> {
         val match = matchEnum(value)
         if (match.isEmpty()) {
-          WebSymbolsBundle.message("web.inspection.message.attribute.value.no.valid",
-                                   value, name, NlsMessages.formatOrList(enumValues!!.map { it.name }))
+          WebSymbolsBundle.message(
+            "web.inspection.message.attribute.value.no.valid",
+            value, name, StringUtil.shortenTextWithEllipsis(NlsMessages.formatOrList(enumValues!!.map { it.name }), 500, 50))
         }
         else {
           null
