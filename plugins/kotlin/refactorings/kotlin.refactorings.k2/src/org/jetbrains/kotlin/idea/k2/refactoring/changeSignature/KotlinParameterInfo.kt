@@ -3,11 +3,22 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
@@ -15,7 +26,11 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiablePar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
+import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.Variance
 
@@ -66,6 +81,25 @@ class KotlinParameterInfo(
     override fun setUseAnySingleVariable(b: Boolean) {
         throw UnsupportedOperationException()
     }
+
+    /**
+     * Reference to parameter index
+     *
+     * 0, if refers to function's extension receiver in `this` expression
+     * Int.MAX_VALUE, if refers to extension's/dispatch's receiver callable
+     */
+    val defaultValueParameterReferences: MutableMap<PsiReference, Int> = mutableMapOf<PsiReference, Int>();
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    fun collectDefaultValueParameterReferences(callable: KtNamedDeclaration) {
+        val expression = defaultValueForCall
+        val file = expression?.containingFile as? KtFile ?: return
+        if (!file.isPhysical && file.analysisContext == null) return
+        allowAnalysisOnEdt {
+            expression.accept(CollectParameterRefsVisitor(callable))
+        }
+    }
+
 
     fun getInheritedName(inheritor: KtCallableDeclaration?): String {
         val name = this.name.quoteIfNeeded()
@@ -159,6 +193,62 @@ class KotlinParameterInfo(
         }
 
         return newParameter
+    }
+
+    private inner class CollectParameterRefsVisitor(
+        private val callableDeclaration: KtNamedDeclaration,
+    ) : KtTreeVisitorVoid() {
+        override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+            val ref = expression.mainReference
+            val parameterIndex = targetToCollect(expression, ref) ?: return
+            defaultValueParameterReferences[ref] = parameterIndex
+        }
+
+        private fun targetToCollect(expression: KtSimpleNameExpression, ref: KtReference): Int? {
+
+            analyze(expression) {
+                val target = ref.resolveToSymbol()
+                val declarationSymbol = callableDeclaration.getSymbol() as? KtCallableSymbol ?: return null
+                if (target is KtValueParameterSymbol) {
+                    if (declarationSymbol is KtFunctionLikeSymbol && target.getContainingSymbol() == declarationSymbol) {
+                        return declarationSymbol.valueParameters.indexOf(target) + (if ((callableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
+                    }
+
+                    if (declarationSymbol.receiverParameter != null &&
+                        (target.getContainingSymbol() as? KtConstructorSymbol)?.getContainingSymbol() == declarationSymbol.receiverParameter?.type?.expandedClassSymbol
+                    ) {
+                        return Int.MAX_VALUE
+                    }
+                    return null
+                }
+
+                if (target is KtPropertySymbol && declarationSymbol is KtConstructorSymbol) {
+                    val parameterIndex = declarationSymbol.valueParameters.indexOfFirst { it.generatedPrimaryConstructorProperty == target }
+                    if (parameterIndex >= 0) {
+                        return parameterIndex
+                    }
+                }
+
+                if (target is KtReceiverParameterSymbol && declarationSymbol.receiverParameter == target) {
+                    //this which refers to function's receiver
+                    return 0
+                }
+
+                val symbol = expression.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
+                (symbol?.dispatchReceiver as? KtImplicitReceiverValue)?.symbol
+                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.getContainingSymbol() }
+                    ?.let { return Int.MAX_VALUE }
+                (symbol?.extensionReceiver as? KtImplicitReceiverValue)?.symbol
+                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.getContainingSymbol() }
+                    ?.let { return Int.MAX_VALUE }
+
+                if (expression.parent is KtThisExpression && declarationSymbol.receiverParameter == null) {
+                    return Int.MAX_VALUE
+                }
+            }
+
+            return null
+        }
     }
 }
 

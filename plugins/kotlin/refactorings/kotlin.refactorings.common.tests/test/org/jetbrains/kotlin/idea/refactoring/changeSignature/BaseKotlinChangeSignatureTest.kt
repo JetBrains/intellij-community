@@ -683,8 +683,55 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinIntParameter(defaultValueForCall = KtPsiFactory(project).createExpression("0")))
     }
 
-    fun testNewParamValueRefsOtherParam() = doTest {//todo substitute references in default value: `org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage.updateArgumentsAndReceiver`
+    fun testNewParamValueRefsOtherParam() = doTest {
         val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("p1 * p1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsProperty() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("n + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsCallExpressions() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("a * b", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsIncrement() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("a * b", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsPrimaryConstructor() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("a + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsOtherParamReceiver() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("this + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsOtherParamRemoveReceiver() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("n + 1", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+        removeParameter(0)
+    }
+
+    fun testNewParamValueRefsSimpleNameWithDefaultValue() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("prop", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+        removeParameter(0)
+    }
+
+    fun testNewParamValueRefsOtherParamReceiver1() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("this@foo.a", method)
+        addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
+    }
+
+    fun testNewParamValueRefsOtherParamNeedVariable() = doTest {
+        val codeFragment = KtPsiFactory(project).createExpressionCodeFragment("this.a", method)
         addParameter(createKotlinIntParameter("p2", codeFragment.getContentElement()!!))
     }
 
