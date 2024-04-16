@@ -2,13 +2,13 @@
 package com.intellij.rt.execution.junit;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -160,7 +160,7 @@ public class ComparisonFailureData {
       try {
         //noinspection SSBasedInspection
         File tempFile = File.createTempFile(expectedOrActualPrefix, "");
-        try (OutputStream stream = new FileOutputStream(tempFile)) {
+        try (OutputStream stream = Files.newOutputStream(tempFile.toPath())) {
           stream.write(text.getBytes(StandardCharsets.UTF_8), 0, text.length());
         }
         attrs.put(expectedOrActualPrefix + "File", tempFile.getAbsolutePath());
