@@ -7,15 +7,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.intellij.util.indexing.events.ChangedFilesCollector.CLEAR_NON_INDEXABLE_FILE_DATA;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 
 public class FilesToUpdateCollector {
   private static final Logger LOG = Logger.getInstance(FilesToUpdateCollector.class);
@@ -24,20 +24,17 @@ public class FilesToUpdateCollector {
 
   private final DirtyFiles myDirtyFiles = new DirtyFiles();
 
-  public void scheduleForUpdate(@NotNull FileIndexingRequest request, @NotNull Collection<Project> dirtyQueueProjects) {
-    int fileId = request.getFileId();
+  public void scheduleForUpdate(@NotNull FileIndexingRequest request, @NotNull Set<Project> containingProjects, @NotNull Collection<Project> dirtyQueueProjects) {
     VirtualFile file = request.getFile();
-    if (!request.isDeleteRequest()) {
-      Set<Project> projects = myFileBasedIndex.get().getContainingProjects(file);
-      if (projects.isEmpty()) {
-        removeNonIndexableFileData(file, fileId);
-        myFileBasedIndex.get().getIndexableFilesFilterHolder().removeFile(fileId);
-        myDirtyFiles.addFile(Collections.emptyList(), fileId); // file will be indexed by another project on project start
-        return;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!request.isDeleteRequest() && containingProjects.isEmpty()) {
+        LOG.error("File without project should not be added to FilesToUpdateCollector because it will not be indexed " +
+                  "(projects pick own update requests and all all delete requests from this collector). " +
+                  "File=" + file.getPath());
       }
     }
-
     VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
+    int fileId = request.getFileId();
     myDirtyFiles.addFile(dirtyQueueProjects, fileId);
     myFilesToUpdate.put(fileId, request);
   }
@@ -45,45 +42,6 @@ public class FilesToUpdateCollector {
   @NotNull
   public DirtyFiles getDirtyFiles() {
     return myDirtyFiles;
-  }
-
-  private void removeNonIndexableFileData(@NotNull VirtualFile file, int fileId) {
-    if (CLEAR_NON_INDEXABLE_FILE_DATA) {
-      List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
-      if (!extensions.isEmpty()) {
-        myFileBasedIndex.get().removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
-      }
-      IndexingFlag.cleanProcessingFlag(file);
-    }
-    else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      checkNotIndexedByContentBasedIndexes(file, fileId);
-    }
-  }
-
-  private void checkNotIndexedByContentBasedIndexes(@NotNull VirtualFile file, int fileId) {
-    List<ID<?, ?>> contentDependentIndexes = getIndexedContentDependentExtensions(fileId);
-    if (!contentDependentIndexes.isEmpty()) {
-      LOG.error("indexes " + contentDependentIndexes + " will not be updated for file = " + file + ", id = " + fileId);
-    }
-  }
-
-  private @NotNull List<ID<?, ?>> getIndexedContentDependentExtensions(int fileId) {
-    List<ID<?, ?>> indexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    RegisteredIndexes registeredIndexes = myFileBasedIndex.get().getRegisteredIndexes();
-    List<ID<?, ?>> contentDependentIndexes;
-    if (registeredIndexes == null) {
-      Set<? extends ID<?, ?>> allContentDependentIndexes = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().stream()
-        .filter(ex -> ex.dependsOnFileContent())
-        .map(ex -> ex.getName())
-        .collect(Collectors.toSet());
-      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> !allContentDependentIndexes.contains(id));
-    }
-    else {
-      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> {
-        return registeredIndexes.isContentDependentIndex(id);
-      });
-    }
-    return contentDependentIndexes;
   }
 
   public void removeScheduledFileFromUpdate(VirtualFile file) {

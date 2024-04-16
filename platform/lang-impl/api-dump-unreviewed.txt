@@ -29022,7 +29022,7 @@ f:com.intellij.util.indexing.FileBasedIndexImpl
 - belongsToProjectIndexableFiles(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - cleanupForNextTest():V
 - cleanupMemoryStorage(Z):V
-- doInvalidateIndicesForFile(I,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
+- doInvalidateIndicesForFile(I,com.intellij.openapi.vfs.VirtualFile,java.util.Set,java.util.List):V
 - doTransientStateChangeForFile(I,com.intellij.openapi.vfs.VirtualFile,java.util.List):V
 - ensureUpToDate(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project,com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.vfs.VirtualFile):Z
 - extractIdFilter(com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.project.Project):com.intellij.util.indexing.IdFilter
@@ -29660,7 +29660,7 @@ c:com.intellij.util.indexing.events.FilesToUpdateCollector
 - isScheduledForUpdate(com.intellij.openapi.vfs.VirtualFile):Z
 - removeFileIdFromFilesScheduledForUpdate(I):V
 - removeScheduledFileFromUpdate(com.intellij.openapi.vfs.VirtualFile):V
-- scheduleForUpdate(com.intellij.util.indexing.events.FileIndexingRequest,java.util.Collection):V
+- scheduleForUpdate(com.intellij.util.indexing.events.FileIndexingRequest,java.util.Set,java.util.Collection):V
 a:com.intellij.util.indexing.events.IndexedFilesListener
 - com.intellij.openapi.vfs.AsyncFileListener
 - <init>():V

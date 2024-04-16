@@ -124,7 +124,7 @@ private suspend fun clearIndexesForDirtyFiles(project: Project,
     
     val projectDirtyFilesFromProjectQueue = findProjectFiles(project, projectDirtyFilesQueue.fileIds, vfToFindLimit)
     val projectDirtyFiles = projectDirtyFilesFromProjectQueue + projectDirtyFilesFromOrphanQueue
-    scheduleForIndexing(projectDirtyFiles, fileBasedIndex, dumbModeThreshold - 1)
+    scheduleForIndexing(projectDirtyFiles, project, fileBasedIndex, dumbModeThreshold - 1)
     ResultOfClearIndexesForDirtyFiles(projectDirtyFilesFromProjectQueue, projectDirtyFilesFromOrphanQueue)
   }
 }
@@ -176,10 +176,10 @@ private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection
   }
 }
 
-private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<VirtualFile>, fileBasedIndex: FileBasedIndexImpl, limit: Int) {
+private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<VirtualFile>, project: Project, fileBasedIndex: FileBasedIndexImpl, limit: Int) {
   readActionBlocking {
     for (file in someProjectDirtyFilesFiles.run { if (limit > 0) take(limit) else this }) {
-      fileBasedIndex.filesToUpdateCollector.scheduleForUpdate(updateRequest(file), emptyList())
+      fileBasedIndex.filesToUpdateCollector.scheduleForUpdate(updateRequest(file), setOf(project), emptyList())
     }
   }
 }
