@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -25,6 +25,7 @@ import javax.swing.tree.DefaultTreeModel
 
 class SavedPatchesChangesBrowser(project: Project,
                                  private val focusMainUi: (Component?) -> Unit,
+                                 internal val isShowDiffWithLocal: () -> Boolean,
                                  parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
 
@@ -114,6 +115,7 @@ class SavedPatchesChangesBrowser(project: Project,
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
+    if (isShowDiffWithLocal()) return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion = false)
     return userObject.createDiffRequestProducer(myProject)
   }
 
@@ -124,7 +126,7 @@ class SavedPatchesChangesBrowser(project: Project,
 
   fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffPreview {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
+    val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, isShowDiffWithLocal, this)
     diffPreviewProcessor = newProcessor
 
     editorTabPreview = if (isInEditor) {
