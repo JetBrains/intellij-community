@@ -134,10 +134,8 @@ public final class FileIndexesValuesApplier {
     this.wasForcedToApplyOnTheSameThread = forceApplicationOnSameThread;
     long startTime = System.nanoTime();
     if (removeDataFromIndicesForFile) {
-      myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file");
-      if (!file.isValid()) {
-        myIndex.getIndexableFilesFilterHolder().removeFile(fileId);
-      }
+      myIndex.removeDataFromIndicesForFile(fileId, file, "invalid_or_large_file_or_indexing_delete_request");
+      myIndex.getIndexableFilesFilterHolder().removeFile(fileId);
     }
 
     if (appliers.isEmpty() && removers.isEmpty()) {

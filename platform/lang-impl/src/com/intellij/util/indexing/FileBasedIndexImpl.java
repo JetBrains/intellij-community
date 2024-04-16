@@ -1359,13 +1359,15 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   // caller is responsible to ensure no concurrent same document processing
-  private void processRefreshedFile(@Nullable Project project, @NotNull final CachedFileContent fileContent,
+  private void processRefreshedFile(@Nullable Project project,
+                                    @NotNull final CachedFileContent fileContent,
+                                    boolean isDeleteRequest,
                                     @NotNull FileIndexingStamp indexingStamp) {
     // ProcessCanceledException will cause re-adding the file to the processing list
     final VirtualFile file = fileContent.getVirtualFile();
     if (getFilesToUpdateCollector().isScheduledForUpdate(file)) {
       try {
-        indexFileContent(project, fileContent, null, indexingStamp).apply(file, null, true);
+        indexFileContent(project, fileContent, isDeleteRequest, null, indexingStamp).apply(file, null, true);
       }
       finally {
         IndexingStamp.flushCache(getFileId(file));
@@ -1398,6 +1400,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   public FileIndexesValuesApplier indexFileContent(@Nullable Project project,
                                                    @NotNull CachedFileContent content,
+                                                   boolean isDeleteRequest,
                                                    @Nullable FileType cachedFileType,
                                                    @NotNull FileIndexingStamp indexingStamp) {
     ProgressManager.checkCanceled();
@@ -1413,7 +1416,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
 
     FileIndexesValuesApplier applier;
-    if (!isValid || isTooLarge(file)) {
+    if (isDeleteRequest || !isValid || isTooLarge(file)) {
       ProgressManager.checkCanceled();
       applier = new FileIndexesValuesApplier(this, fileId, file, indexingStamp, Collections.emptyList(), Collections.emptyList(),
                                              true, true, applicationMode,
@@ -1734,7 +1737,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
       IndexingRequestToken indexingRequest = project.getService(ProjectIndexingDependenciesService.class).getLatestIndexingRequestToken();
       var stamp = indexingRequest.getFileIndexingStamp(item.getFile());
-      processRefreshedFile(project, new CachedFileContent(item.getFile()), stamp);
+      processRefreshedFile(project, new CachedFileContent(item.getFile()), item.isDeleteRequest(), stamp);
     }
   }
 
