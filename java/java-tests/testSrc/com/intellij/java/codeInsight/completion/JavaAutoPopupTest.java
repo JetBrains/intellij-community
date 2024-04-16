@@ -1785,8 +1785,9 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     type(" ");
     assertNotNull(getLookup());
     List<LookupElement> firstItems = Arrays.asList(myFixture.getLookupElements()).subList(0, 4);
-    assertTrue(ContainerUtil.all(
+    boolean inheritors = ReadAction.compute(() -> ContainerUtil.all(
       firstItems, it -> InheritanceUtil.isInheritor((PsiClass)it.getObject(), CommonClassNames.JAVA_UTIL_LIST)));
+    assertTrue(inheritors);
   }
 
   public void test_prefer_previously_selected_despite_many_namesakes() {
