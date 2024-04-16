@@ -387,6 +387,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("testData/copyPaste/imports/ReferencedElementAlsoCopied.kt");
         }
 
+        @TestMetadata("StringTemplateKTIJ9042.kt")
+        public void testStringTemplateKTIJ9042() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateKTIJ9042.kt");
+        }
+
         @TestMetadata("StringTemplateMultipleImports.kt")
         public void testStringTemplateMultipleImports() throws Exception {
             runTest("testData/copyPaste/imports/StringTemplateMultipleImports.kt");
@@ -839,6 +844,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ReferencedElementAlsoCopied.kt")
         public void testReferencedElementAlsoCopied() throws Exception {
             runTest("testData/copyPaste/imports/ReferencedElementAlsoCopied.kt");
+        }
+
+        @TestMetadata("StringTemplateKTIJ9042.kt")
+        public void testStringTemplateKTIJ9042() throws Exception {
+            runTest("testData/copyPaste/imports/StringTemplateKTIJ9042.kt");
         }
 
         @TestMetadata("StringTemplateMultipleImports.kt")
