@@ -60,6 +60,12 @@ public class CompilerReferenceIndex<Input> {
 
   public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
                                 @Nullable PathRelativizerService relativizer, boolean readOnly, int version) {
+    this(indices, buildDir, relativizer, readOnly, version, SystemInfo.isFileSystemCaseSensitive);
+  }
+
+  public CompilerReferenceIndex(Collection<? extends IndexExtension<?, ?, ? super Input>> indices, File buildDir,
+                                @Nullable PathRelativizerService relativizer, boolean readOnly, int version,
+                                boolean isCaseSensitive) {
     myBuildDir = buildDir;
     myIndicesDir = getIndexDir(buildDir);
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
@@ -70,9 +76,10 @@ public class CompilerReferenceIndex<Input> {
         saveVersion(buildDir, version);
       }
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB).toPath()) {
+
         @Override
         public int enumerate(String path) throws IOException {
-          String caseAwarePath = convertToCaseAwarePath(path);
+          String caseAwarePath = convertToCaseAwarePath(path, isCaseSensitive);
           if (relativizer != null) {
             return super.enumerate(relativizer.toRelative(caseAwarePath));
           }
@@ -83,13 +90,13 @@ public class CompilerReferenceIndex<Input> {
         public @Nullable String valueOf(int idx) throws IOException {
           String path = super.valueOf(idx);
           if (relativizer != null && path != null) {
-            return convertToCaseAwarePath(relativizer.toFull(path));
+            return convertToCaseAwarePath(relativizer.toFull(path), isCaseSensitive);
           }
           return path;
         }
 
-        private @NotNull String convertToCaseAwarePath(@NotNull String path) {
-          return SystemInfo.isFileSystemCaseSensitive ? path : StringUtil.toLowerCase(path);
+        private @NotNull String convertToCaseAwarePath(@NotNull String path, boolean isCaseSensitive) {
+          return isCaseSensitive ? path : StringUtil.toLowerCase(path);
         }
       };
 

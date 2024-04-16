@@ -8,15 +8,28 @@ import org.jetbrains.annotations.Nullable;
 class CommonPathRelativizer implements PathRelativizer {
   private final String myPath;
   private final String myIdentifier;
+  /**
+   * can be null when myPath is null, or it is impossible to detect the sensitivity of the file system
+   */
+  @Nullable
+  private final Boolean myIsCaseSensitive;
 
   CommonPathRelativizer(@Nullable String path, @NotNull String identifier) {
+    this(path, identifier, null);
+  }
+
+  CommonPathRelativizer(@Nullable String path, @NotNull String identifier, @Nullable Boolean isCaseSensitive) {
     myPath = path;
     myIdentifier = identifier;
+    myIsCaseSensitive = isCaseSensitive;
   }
 
   @Override
   public @Nullable String toRelativePath(@NotNull String path) {
-    if (myPath == null || !FileUtil.startsWith(path, myPath)) return null;
+    if (myPath == null ||
+        !(myIsCaseSensitive != null ? FileUtil.startsWith(path, myPath, myIsCaseSensitive) : FileUtil.startsWith(path, myPath))) {
+      return null;
+    }
     return myIdentifier + path.substring(myPath.length());
   }
 
