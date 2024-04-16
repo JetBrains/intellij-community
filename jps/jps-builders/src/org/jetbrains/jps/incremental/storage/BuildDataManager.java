@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -521,10 +521,10 @@ public final class BuildDataManager {
       private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
       @Override
-      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources) throws IOException {
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
         lock.readLock().lock();
         try {
-          return delegate.createDelta(sourcesToProcess, deletedSources);
+          return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly);
         }
         finally {
           lock.readLock().unlock();

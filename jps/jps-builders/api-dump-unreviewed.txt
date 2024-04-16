@@ -2783,6 +2783,7 @@ f:org.jetbrains.jps.dependency.AffectionScopeMetaUsage
 - hashCode():I
 - write(org.jetbrains.jps.dependency.GraphDataOutput):V
 org.jetbrains.jps.dependency.BackDependencyIndex
+- s:createEmpty(java.lang.String):org.jetbrains.jps.dependency.BackDependencyIndex
 - a:getDependencies(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
 - a:getKeys():java.lang.Iterable
 - a:getName():java.lang.String
@@ -2808,10 +2809,11 @@ org.jetbrains.jps.dependency.Delta
 - a:associate(org.jetbrains.jps.dependency.Node,java.lang.Iterable):V
 - a:getBaseSources():java.util.Set
 - a:getDeletedSources():java.util.Set
+- a:isSourceOnly():Z
 org.jetbrains.jps.dependency.DependencyGraph
 - java.io.Closeable
 - org.jetbrains.jps.dependency.Graph
-- a:createDelta(java.lang.Iterable,java.lang.Iterable):org.jetbrains.jps.dependency.Delta
+- a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
 - a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
 - a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
 org.jetbrains.jps.dependency.DifferentiateContext

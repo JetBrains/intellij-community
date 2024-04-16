@@ -28,8 +28,8 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
   }
 
   @Override
-  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources) throws IOException {
-    DeltaImpl delta = new DeltaImpl(completeSourceSet(compiledSources, deletedSources), deletedSources);
+  public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
+    Delta delta = isSourceOnly? new SourceOnlyDelta(myRegisteredIndices, compiledSources, deletedSources) : new DeltaImpl(compiledSources, deletedSources);
 
     Set<String> deltaIndices = collect(map(delta.getIndices(), index -> index.getName()), new HashSet<>());
     if (!myRegisteredIndices.equals(deltaIndices)) {
@@ -44,9 +44,9 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
 
     String sessionName = params.getSessionName();
     Iterable<NodeSource> deltaSources = delta.getSources();
-    Set<NodeSource> allProcessedSources = collect(flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
+    Set<NodeSource> allProcessedSources = delta.isSourceOnly()? delta.getDeletedSources() : collect(flat(Arrays.asList(delta.getBaseSources(), deltaSources, delta.getDeletedSources())), new HashSet<>());
     Set<Node<?, ?>> nodesBefore = collect(flat(map(allProcessedSources, this::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
-    Set<Node<?, ?>> nodesAfter = collect(flat(map(deltaSources, delta::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
+    Set<Node<?, ?>> nodesAfter = delta.isSourceOnly()? Collections.emptySet() : collect(flat(map(deltaSources, delta::getNodes)), Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode));
 
     // do not process 'removed' per-source file. This works when a class comes from exactly one source, but might not work, if a class can be associated with several sources
     // better make a node-diff over all compiled sources => the sets of removed, added, deleted _nodes_ will be more accurate and reflecting reality
@@ -209,6 +209,26 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         }
       }
     }
+
+    if (delta.isSourceOnly()) {
+      // Some nodes may be associated with multiple sources. In this case ensure that all these sources are sent to compilation
+      Set<NodeSource> inputSources = delta.getBaseSources();
+      Set<NodeSource> deleted = delta.getDeletedSources();
+      Predicate<? super NodeSource> srcFilter = diffContext.getParams().belongsToCurrentCompilationChunk().and(s -> !deleted.contains(s));
+      for (var node : flat(map(flat(inputSources, deleted), this::getNodes))) {
+        Iterable<NodeSource> nodeSources = getSources(node.getReferenceID());
+        if (count(nodeSources) > 1) {
+          List<NodeSource> filteredNodeSources = collect(filter(nodeSources, srcFilter::test), new SmartList<>());
+          // all sources associated with the node should be either marked 'dirty' or deleted
+          if (find(filteredNodeSources, s -> !inputSources.contains(s)) != null) {
+            for (NodeSource s : filteredNodeSources) {
+              diffContext.affectNodeSource(s);
+            }
+          }
+        }
+      }
+    }
+
     // do not include sources that were already compiled
     affectedSources.removeAll(allProcessedSources);
     // ensure sources explicitly marked by strategies are affected, even if these sources were compiled initially
@@ -301,27 +321,6 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
         }
       });
     }
-  }
-
-  /**
-   * Returns a complete set of node sources based on the input set of node sources.
-   * Some nodes may be associated with multiple sources. If a source from the input set is associated with such a node,
-   * the method makes sure the output set contains the rest of the sources, the node is associated with
-   *
-   * @param sources        set of node sources to be completed.
-   * @param deletedSources registered deleted sources
-   * @return complete set of node sources, containing all sources associated with nodes affected by the sources from the input set.
-   */
-  private Set<NodeSource> completeSourceSet(Iterable<NodeSource> sources, Iterable<NodeSource> deletedSources) {
-    // ensure initial sources are in the result
-    Set<NodeSource> result = collect(sources, new HashSet<>());          // todo: check if a special hashing-policy set is required here
-    Set<NodeSource> deleted = collect(deletedSources, new HashSet<>());
-
-    Set<Node<?, ?>> affectedNodes = collect(flat(map(flat(result, deleted), s -> getNodes(s))), new HashSet<>());
-    for (var node : affectedNodes) {
-      collect(filter(getSources(node.getReferenceID()), s -> !result.contains(s) && !deleted.contains(s) && filter(getNodes(s).iterator(), affectedNodes::contains).hasNext()), result);
-    }
-    return result;
   }
 
   private static final class DiffChangeAdapter implements Difference.Change<Node<?, ?>, Difference> {
