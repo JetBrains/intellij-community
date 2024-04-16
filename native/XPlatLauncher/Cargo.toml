@@ -41,8 +41,8 @@ native-dialog = "0.6.3"
 # (build/src/BuildXPlatLaunchersBuildTarget.kt)
 # we don't need to actually build them (it's +300 crates), but having them in Cargo.toml shows if any updates are available
 [target.'cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))'.build-dependencies]
-cargo-deny = "0.14.2" # checks licenses / vulns
-cargo-about = "0.5.7" # generates license report
+cargo-deny = "0.14.21"  # checks licenses and problematic dependencies
+cargo-about = "0.6.1"   # generates license report
 
 [build-dependencies]
 anyhow = { version = "1.0.81", features = ["std", "backtrace"] }
