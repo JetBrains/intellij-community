@@ -12,8 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
-import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
-import com.intellij.util.indexing.PersistentDirtyFilesQueue.removeCurrentFile
 import com.intellij.util.indexing.UnindexedFilesScanner.Companion.LOG
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
@@ -23,6 +21,7 @@ import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolde
 import com.intellij.util.indexing.projectFilter.usePersistentFilesFilter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlin.math.max
@@ -37,48 +36,67 @@ internal enum class FirstScanningState {
 }
 
 internal fun scanAndIndexProjectAfterOpen(project: Project,
+                                          orphanQueue: OrphanDirtyFilesQueue,
+                                          projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                           startSuspended: Boolean,
                                           allowSkippingScanning: Boolean,
                                           coroutineScope: CoroutineScope,
-                                          indexingReason: String) {
+                                          indexingReason: String): Job {
   FileBasedIndex.getInstance().loadIndexes()
   (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
+  val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
-  val filterHolder = (FileBasedIndex.getInstance() as FileBasedIndexImpl).indexableFilesFilterHolder
+  val filterHolder = fileBasedIndex.indexableFilesFilterHolder
   val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder)
 
-  if (allowSkippingScanning && Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
-    scheduleDirtyFilesScanning(project, startSuspended, coroutineScope, indexingReason)
+  return if (allowSkippingScanning && Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
+    scheduleDirtyFilesScanning(project, orphanQueue, projectDirtyFilesQueue, startSuspended, coroutineScope, indexingReason)
   }
   else {
-    scheduleFullScanning(project, startSuspended, isFilterUpToDate, coroutineScope, indexingReason)
+    scheduleFullScanning(project, orphanQueue, projectDirtyFilesQueue, startSuspended, isFilterUpToDate, coroutineScope, indexingReason)
+  }
+}
+
+internal fun Job.forgetProjectDirtyFilesOnCompletion(fileBasedIndex: FileBasedIndexImpl,
+                                                     project: Project,
+                                                     projectDirtyFilesQueue: ProjectDirtyFilesQueue,
+                                                     orphanQueueUntrimmedSize: Long) {
+  invokeOnCompletion { e ->
+    if (e != null) return@invokeOnCompletion
+    fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.removeFiles(projectDirtyFilesQueue.fileIds)
+    fileBasedIndex.setLastSeenIndexInOrphanQueue(project, orphanQueueUntrimmedSize)
   }
 }
 
 private fun scheduleFullScanning(project: Project,
+                                 orphanQueue: OrphanDirtyFilesQueue,
+                                 projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                  startSuspended: Boolean,
                                  isFilterUpToDate: Boolean,
                                  coroutineScope: CoroutineScope,
-                                 indexingReason: String) {
-  val someDirtyFilesScheduledForIndexingFuture = coroutineScope.async(Dispatchers.IO) {
-    clearIndexesForDirtyFiles(project, false)
-  }.asCompletableFuture()
+                                 indexingReason: String): Job {
+  val someDirtyFilesScheduledForIndexing = coroutineScope.async(Dispatchers.IO) {
+    clearIndexesForDirtyFiles(project, orphanQueue, projectDirtyFilesQueue, false)
+  }
 
   UnindexedFilesScanner(project, startSuspended, true, isFilterUpToDate, null, null, indexingReason,
-                        ScanningType.FULL_ON_PROJECT_OPEN, someDirtyFilesScheduledForIndexingFuture)
+                        ScanningType.FULL_ON_PROJECT_OPEN, someDirtyFilesScheduledForIndexing.asCompletableFuture())
     .queue()
+  return someDirtyFilesScheduledForIndexing
 }
 
 private fun isShutdownPerformedForFileBasedIndex(fileBasedIndex: FileBasedIndexImpl) =
   fileBasedIndex.registeredIndexes?.isShutdownPerformed ?: true
 
 private fun scheduleDirtyFilesScanning(project: Project,
+                                       orphanQueue: OrphanDirtyFilesQueue,
+                                       projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                        startSuspended: Boolean,
                                        coroutineScope: CoroutineScope,
-                                       indexingReason: String) {
+                                       indexingReason: String): Job {
   LOG.info("Skipping full scanning on startup because indexable files filter is up-to-date and 'full.scanning.on.startup.can.be.skipped' is set to true")
   val projectDirtyFiles = coroutineScope.async(Dispatchers.IO) {
-    clearIndexesForDirtyFiles(project, true)
+    clearIndexesForDirtyFiles(project, orphanQueue, projectDirtyFilesQueue, true)
   }
   val projectDirtyFilesFromProjectQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromProjectQueue ?: emptyList() }
   val projectDirtyFilesFromOrphanQueue = coroutineScope.async { projectDirtyFiles.await()?.projectDirtyFilesFromOrphanQueue ?: emptyList() }
@@ -87,18 +105,19 @@ private fun scheduleDirtyFilesScanning(project: Project,
   UnindexedFilesScanner(project, startSuspended, true, true, iterators, null,
                         indexingReason, ScanningType.PARTIAL, projectDirtyFiles.asCompletableFuture())
     .queue()
+  return projectDirtyFiles
 }
 
-private suspend fun clearIndexesForDirtyFiles(project: Project, findAllVirtualFiles: Boolean): ResultOfClearIndexesForDirtyFiles? {
+private suspend fun clearIndexesForDirtyFiles(project: Project,
+                                              orphanQueue: OrphanDirtyFilesQueue,
+                                              projectDirtyFilesQueue: ProjectDirtyFilesQueue,
+                                              findAllVirtualFiles: Boolean): ResultOfClearIndexesForDirtyFiles? {
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   return if (isShutdownPerformedForFileBasedIndex(fileBasedIndex)) null
   else {
-    val projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(project.getQueueFile(), ManagingFS.getInstance().creationTimestamp)
-    val orphanDirtyFileIds = fileBasedIndex.orphanDirtyFileIds
-    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, orphanDirtyFileIds?.getNotSeenIds(project, projectDirtyFilesQueue) ?: emptyList())
+    val projectDirtyFilesFromOrphanQueue = findProjectFiles(project, orphanQueue.getNotSeenIds(project, projectDirtyFilesQueue))
     val allProjectDirtyFileIds = projectDirtyFilesQueue.fileIds + projectDirtyFilesFromOrphanQueue.mapNotNull { (it as? VirtualFileWithId)?.id }
     fileBasedIndex.ensureDirtyFileIndexesDeleted(allProjectDirtyFileIds)
-    removeCurrentFile(project.getQueueFile())
 
     val vfToFindLimit = if (findAllVirtualFiles) -1
     else max(0, dumbModeThreshold - projectDirtyFilesFromOrphanQueue.size - 1)

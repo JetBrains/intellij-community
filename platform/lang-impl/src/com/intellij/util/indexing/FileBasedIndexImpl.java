@@ -91,6 +91,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -154,8 +155,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final IntSet myStaleIds = new IntOpenHashSet();
+  private final DirtyFiles myDirtyFiles = new DirtyFiles(); // project dirty files from last session and new orphan files not in collectors
+  private final Map<Project, Ref<Long>> myLastSeenIndexesInOrphanQueue = new ConcurrentHashMap<>();
   @Nullable
-  private volatile OrphanDirtyFilesQueue myOrphanDirtyFileIds;
+  private volatile OrphanDirtyFilesQueue myOrphanDirtyFileIdsFromLastSession;
 
   final Lock myReadLock;
   public final Lock myWriteLock;
@@ -287,9 +290,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Override
   public void onProjectClosing(@NotNull Project project) {
     myIndexableSets.removeIf(p -> p.second.equals(project));
-    persistDirtyFiles(project);
+    Ref<Long> lastSeenIndex = myLastSeenIndexesInOrphanQueue.remove(project);
+    persistDirtyFiles(project, lastSeenIndex.isNull() ? 0 : lastSeenIndex.get());
     getChangedFilesCollector().getDirtyFiles().removeProject(project);
     myFilesToUpdateCollector.getDirtyFiles().removeProject(project);
+    myDirtyFiles.removeProject(project);
     myIndexableFilesFilterHolder.onProjectClosing(project);
   }
 
@@ -330,8 +335,26 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void setOrphanDirtyFilesQueue(@NotNull OrphanDirtyFilesQueue dirtyFileIds) {
-    myOrphanDirtyFileIds = dirtyFileIds;
+  void setOrphanDirtyFilesQueueFromLastSession(@NotNull OrphanDirtyFilesQueue dirtyFileIds) {
+    myOrphanDirtyFileIdsFromLastSession = dirtyFileIds;
+  }
+
+  @NotNull
+  DirtyFiles getDirtyFiles() {
+    return myDirtyFiles;
+  }
+
+  void registerProject(@NotNull Project project, @NotNull Collection<Integer> projectDirtyFileIdsFromLastSession) {
+    getChangedFilesCollector().getDirtyFiles().addProject(project);
+    myFilesToUpdateCollector.getDirtyFiles().addProject(project);
+    myLastSeenIndexesInOrphanQueue.put(project, new Ref<>(null));
+    // don't lose these ids if the project is closed before indexes are removed
+    myDirtyFiles.addProject(project).addFiles(projectDirtyFileIdsFromLastSession);
+  }
+
+  void setLastSeenIndexInOrphanQueue(@NotNull Project project, long index) {
+    Ref<Long> ref = myLastSeenIndexesInOrphanQueue.get(project);
+    if (ref != null) ref.set(index);
   }
 
   @Override
@@ -564,23 +587,29 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     projects.addAll(getChangedFilesCollector().getDirtyFiles().getProjects());
     projects.addAll(myFilesToUpdateCollector.getDirtyFiles().getProjects());
     for (Project project : projects) {
-      persistDirtyFiles(project);
+      persistDirtyFiles(project, myLastSeenIndexesInOrphanQueue.get(project).get());
     }
   }
 
-  private void persistDirtyFiles(@NotNull Project project) {
+  private void persistDirtyFiles(@NotNull Project project, long lastSeenIndex) {
     IntSet dirtyFileIds = getAllDirtyFiles(project);
-    OrphanDirtyFilesQueue orphanQueue = myOrphanDirtyFileIds;
-    new ProjectDirtyFilesQueue(dirtyFileIds, orphanQueue == null ? 0 : orphanQueue.getUntrimmedSize()).store(project, vfsCreationStamp);
+    new ProjectDirtyFilesQueue(dirtyFileIds, lastSeenIndex).store(project, vfsCreationStamp);
   }
 
   @NotNull
   private IntSet getAllDirtyFiles(@Nullable Project project) {
     IntSet dirtyFileIds = new IntOpenHashSet();
-    ProjectDirtyFiles dirtyFiles1 = getChangedFilesCollector().getDirtyFiles().getProjectDirtyFiles(project);
-    if (dirtyFiles1 != null) dirtyFiles1.addAllTo(dirtyFileIds);
-    ProjectDirtyFiles dirtyFiles2 = myFilesToUpdateCollector.getDirtyFiles().getProjectDirtyFiles(project);
-    if (dirtyFiles2 != null) dirtyFiles2.addAllTo(dirtyFileIds);
+    dirtyFileIds.addAll(getDirtyFiles(getChangedFilesCollector().getDirtyFiles(), project));
+    dirtyFileIds.addAll(getDirtyFiles(myFilesToUpdateCollector.getDirtyFiles(), project));
+    dirtyFileIds.addAll(getDirtyFiles(myDirtyFiles, project));
+    return dirtyFileIds;
+  }
+
+  @NotNull
+  private Collection<Integer> getDirtyFiles(@NotNull DirtyFiles dirtyFiles, @Nullable Project project) {
+    IntSet dirtyFileIds = new IntOpenHashSet();
+    ProjectDirtyFiles dirtyFilesSet = dirtyFiles.getProjectDirtyFiles(project);
+    if (dirtyFilesSet != null) dirtyFilesSet.addAllTo(dirtyFileIds);
     return dirtyFileIds;
   }
 
@@ -615,8 +644,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         IntSet unprocessedOrphanDirtyFiles = new IntOpenHashSet();
-        OrphanDirtyFilesQueue orphanDirtyFileIds = Objects.requireNonNullElse(myOrphanDirtyFileIds, new OrphanDirtyFilesQueue(new IntArrayList(), 0L));
-        myOrphanDirtyFileIds = null;
+        OrphanDirtyFilesQueue orphanDirtyFileIds = getOrphanDirtyFileIdsFromLastSession();
         unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
 
         if (myIsUnitTestMode) {
@@ -628,6 +656,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
           // project dirty files are still in ChangedFilesCollector in case FileBasedIndex is restarted using Tumbler (projects are not closed)
           // we need to persist queues, so we can properly re-read them here and in FileBasedIndexDataInitialization
+          //noinspection TestOnlyProblems
           persistProjectsDirtyFiles();
           // some deleted files were already saved to project queues and saved to disk during project closing
           // we need to read them to avoid false-positive errors in checkIndexForStaleRecords
@@ -646,7 +675,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
         getChangedFilesCollector().clear();
         myFilesToUpdateCollector.clear();
+        myDirtyFiles.clear();
         vfsCreationStamp = 0;
+        myOrphanDirtyFileIdsFromLastSession = null;
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.close();
@@ -872,9 +903,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @Nullable
-  OrphanDirtyFilesQueue getOrphanDirtyFileIds() {
-    return myOrphanDirtyFileIds;
+  @NotNull
+  OrphanDirtyFilesQueue getOrphanDirtyFileIdsFromLastSession() {
+    return Objects.requireNonNullElse(myOrphanDirtyFileIdsFromLastSession, new OrphanDirtyFilesQueue(new IntArrayList(), 0L));
   }
 
   void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
@@ -1961,8 +1992,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(Pair.create(set, project));
-    getChangedFilesCollector().getDirtyFiles().addProject(project);
-    myFilesToUpdateCollector.getDirtyFiles().addProject(project);
   }
 
   @Override

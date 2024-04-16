@@ -10,11 +10,17 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+
+import static com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile;
+import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.forgetProjectDirtyFilesOnCompletion;
 import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.scanAndIndexProjectAfterOpen;
 
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
@@ -40,6 +46,10 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
     }
 
+    OrphanDirtyFilesQueue orphanQueue = fileBasedIndex.getOrphanDirtyFileIdsFromLastSession();
+    Path projectQueueFile = getQueueFile(project);
+    ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().getCreationTimestamp());
+
     // Add project to various lists in read action to make sure that
     // they are not added to lists during disposing of project (in this case project may be stuck forever in those lists)
     boolean registered = ReadAction.compute(() -> {
@@ -48,7 +58,9 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       // note that disposing happens in write action, so it'll be executed after this read action
       Disposer.register(project, () -> onProjectClosing(project));
 
+      fileBasedIndex.registerProject(project, projectDirtyFilesQueue.getFileIds());
       fileBasedIndex.registerProjectFileSets(project);
+      fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.getLastSeenIndexInOrphanQueue());
       fileBasedIndex.getIndexableFilesFilterHolder().onProjectOpened(project);
 
       myOpenProjects.add(project);
@@ -63,7 +75,8 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-    scanAndIndexProjectAfterOpen(project, suspended, true, myCoroutineScope, "On project open");
+    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, suspended, true, myCoroutineScope, "On project open");
+    forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 
   private void onProjectClosing(@NotNull Project project) {

@@ -29651,7 +29651,7 @@ f:com.intellij.util.indexing.diagnostic.presentation.IndexingHtmlKt
 f:com.intellij.util.indexing.events.DirtyFiles
 - <init>():V
 - f:addFile(java.util.Collection,I):V
-- f:addProject(com.intellij.openapi.project.Project):V
+- f:addProject(com.intellij.openapi.project.Project):com.intellij.util.indexing.events.ProjectDirtyFiles
 - f:clear():V
 - f:getProjectDirtyFiles(com.intellij.openapi.project.Project):com.intellij.util.indexing.events.ProjectDirtyFiles
 - f:getProjects():java.util.List
@@ -29686,9 +29686,11 @@ f:com.intellij.util.indexing.events.ProjectDirtyFiles
 - <init>():V
 - f:addAllTo(it.unimi.dsi.fastutil.ints.IntSet):V
 - f:addFile(I):Z
+- f:addFiles(java.util.Collection):V
 - f:clear():V
 - f:containsFile(I):Z
 - f:removeFile(I):Z
+- f:removeFiles(java.util.Collection):V
 f:com.intellij.util.indexing.impl.perFileVersion.AutoRefreshingOnVfsCloseRef
 - java.io.Closeable
 - <init>(kotlin.jvm.functions.Function1):V
