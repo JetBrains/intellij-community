@@ -1,0 +1,56 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.popup;
+
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.NotNull;
+
+public final class ActionPopupOptions {
+  final boolean showNumbers;
+  final boolean useAlphaAsNumbers;
+  final boolean showDisabledActions;
+  final boolean honorActionMnemonics;
+  final int maxRowCount;
+  final boolean autoSelection;
+  final Condition<? super AnAction> preselectCondition;
+
+  public static @NotNull ActionPopupOptions empty() {
+    return new ActionPopupOptions(false, false, false, false, -1, false, null);
+  }
+
+  public static @NotNull ActionPopupOptions showDisabled() {
+    return new ActionPopupOptions(false, false, true, false, -1, false, null);
+  }
+
+  public static @NotNull ActionPopupOptions honorMnemonics() {
+    return new ActionPopupOptions(false, false, false, true, -1, false, null);
+  }
+
+  public static @NotNull ActionPopupOptions create(boolean showNumbers,
+                                                   boolean useAlphaAsNumbers,
+                                                   boolean showDisabledActions,
+                                                   boolean honorActionMnemonics,
+                                                   int maxRowCount,
+                                                   boolean autoSelection,
+                                                   Condition<? super AnAction> preselectCondition) {
+    return new ActionPopupOptions(
+      showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, maxRowCount,
+      autoSelection, preselectCondition);
+  }
+
+  private ActionPopupOptions(boolean showNumbers,
+                             boolean useAlphaAsNumbers,
+                             boolean showDisabledActions,
+                             boolean honorActionMnemonics,
+                             int maxRowCount,
+                             boolean autoSelection,
+                             Condition<? super AnAction> preselectCondition) {
+    this.showNumbers = showNumbers;
+    this.useAlphaAsNumbers = useAlphaAsNumbers;
+    this.showDisabledActions = showDisabledActions;
+    this.honorActionMnemonics = honorActionMnemonics;
+    this.maxRowCount = maxRowCount;
+    this.autoSelection = autoSelection;
+    this.preselectCondition = preselectCondition;
+  }
+}

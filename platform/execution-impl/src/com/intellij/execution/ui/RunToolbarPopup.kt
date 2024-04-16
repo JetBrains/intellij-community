@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -207,8 +208,9 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
                                                  dataContext: DataContext,
                                                  disposeCallback: (() -> Unit)?) :
   PopupFactoryImpl.ActionGroupPopup(
-    null, actionGroup, dataContext, false, false, true, false,
-    disposeCallback, 30, null, ActionPlaces.getPopupPlace("RunToolbarPopup"), PresentationFactory(), false) {
+    null, null, actionGroup, dataContext,
+    ActionPlaces.getPopupPlace("RunToolbarPopup"), PresentationFactory(),
+    ActionPopupOptions.create(false, false, true, false, 30, false, null), disposeCallback) {
 
   private val pinnedSize: Int
   private val serviceState: RunConfigurationStartHistory

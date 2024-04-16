@@ -34,6 +34,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -183,7 +184,8 @@ public final class SettingsEntryPointAction extends ActionGroup
     final @NotNull PresentationFactory myPresentationFactory;
 
     MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
-      super(null, group, context, false, false, true, true, null, -1, null, null, presentationFactory, false);
+      super(null, null, group, context, ActionPlaces.POPUP, presentationFactory,
+            ActionPopupOptions.create(false, false, true, true, -1, false, null), null);
       myPresentationFactory = presentationFactory;
     }
 

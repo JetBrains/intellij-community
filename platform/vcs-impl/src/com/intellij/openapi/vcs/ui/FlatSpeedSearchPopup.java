@@ -16,10 +16,12 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import org.jetbrains.annotations.NotNull;
@@ -32,20 +34,20 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
   public FlatSpeedSearchPopup(@Nullable @NlsContexts.PopupTitle String title,
                               @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
-                              @Nullable Condition<? super AnAction> preselectActionCondition,
+                              @Nullable Condition<? super AnAction> preselectCondition,
                               boolean showDisableActions) {
     this(title, actionGroup, dataContext, ActionPlaces.getPopupPlace("VCS.FlatSpeedSearchPopup"),
-         preselectActionCondition, showDisableActions);
+         preselectCondition, showDisableActions);
   }
 
   public FlatSpeedSearchPopup(@Nullable @NlsContexts.PopupTitle String title,
                               @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
                               @NotNull String place,
-                              @Nullable Condition<? super AnAction> preselectActionCondition,
+                              @Nullable Condition<? super AnAction> preselectCondition,
                               boolean showDisableActions) {
-    super(title, actionGroup, dataContext, false, false, showDisableActions, false,
-          null, -1, preselectActionCondition, place);
+    super(null, title, actionGroup, dataContext, place, new PresentationFactory(),
+          ActionPopupOptions.create(false, false, showDisableActions, false, -1, false, preselectCondition), null);
   }
 
   protected FlatSpeedSearchPopup(@Nullable WizardPopup parent,

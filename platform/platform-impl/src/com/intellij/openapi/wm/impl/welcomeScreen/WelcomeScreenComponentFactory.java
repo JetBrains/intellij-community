@@ -29,6 +29,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
@@ -229,13 +230,13 @@ public final class WelcomeScreenComponentFactory {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        Component component = Objects.requireNonNull(Objects.requireNonNull(e.getInputEvent()).getComponent());
         ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
         PopupFactoryImpl.ActionGroupPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-          null, configureGroup, e.getDataContext(),
-          false, false, false, false, null, -1, null,
-          ActionPlaces.WELCOME_SCREEN,
-          new MenuItemPresentationFactory(true), false);
-        popup.showUnderneathOf(Objects.requireNonNull(e.getInputEvent().getComponent()));
+          null, null, configureGroup, e.getDataContext(),
+          ActionPlaces.WELCOME_SCREEN, new MenuItemPresentationFactory(true),
+          ActionPopupOptions.empty(), null);
+        popup.showUnderneathOf(component);
       }
     };
   }

@@ -174,6 +174,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Runnable myDisposeCallback;
     private final Component myComponent;
 
+    /** @deprecated Use {@link #ActionGroupPopup(WizardPopup, String, ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions, Runnable)} instead */
+    @Deprecated(forRemoval = true)
     public ActionGroupPopup(@PopupTitle @Nullable String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
@@ -183,12 +185,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             Runnable disposeCallback,
                             int maxRowCount,
-                            Condition<? super AnAction> preselectActionCondition,
+                            Condition<? super AnAction> preselectCondition,
                             @Nullable String actionPlace) {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-           maxRowCount, preselectActionCondition, actionPlace, null, false);
+           maxRowCount, preselectCondition, actionPlace, null, false);
     }
 
+    /** @deprecated Use {@link #ActionGroupPopup(WizardPopup, String, ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions, Runnable)} instead */
+    @Deprecated(forRemoval = true)
     public ActionGroupPopup(@PopupTitle @Nullable String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
@@ -198,13 +202,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             Runnable disposeCallback,
                             int maxRowCount,
-                            Condition<? super AnAction> preselectActionCondition,
+                            Condition<? super AnAction> preselectCondition,
                             @Nullable String actionPlace,
                             boolean autoSelection) {
       this(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-           maxRowCount, preselectActionCondition, actionPlace, null, autoSelection);
+           maxRowCount, preselectCondition, actionPlace, null, autoSelection);
     }
 
+    /** @deprecated Use {@link #ActionGroupPopup(WizardPopup, String, ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions, Runnable)} instead */
+    @Deprecated(forRemoval = true)
     public ActionGroupPopup(@PopupTitle @Nullable String title,
                             @NotNull ActionGroup actionGroup,
                             @NotNull DataContext dataContext,
@@ -214,14 +220,16 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             Runnable disposeCallback,
                             int maxRowCount,
-                            Condition<? super AnAction> preselectActionCondition,
+                            Condition<? super AnAction> preselectCondition,
                             @Nullable String actionPlace,
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
       this(null, title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-           disposeCallback, maxRowCount, preselectActionCondition, actionPlace, presentationFactory, autoSelection);
+           disposeCallback, maxRowCount, preselectCondition, actionPlace, presentationFactory, autoSelection);
     }
 
+    /** @deprecated Use {@link #ActionGroupPopup(WizardPopup, String, ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions, Runnable)} instead */
+    @Deprecated(forRemoval = true)
     public ActionGroupPopup(@Nullable WizardPopup parentPopup,
                             @PopupTitle @Nullable String title,
                             @NotNull ActionGroup actionGroup,
@@ -232,15 +240,29 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean honorActionMnemonics,
                             Runnable disposeCallback,
                             int maxRowCount,
-                            Condition<? super AnAction> preselectActionCondition,
+                            Condition<? super AnAction> preselectCondition,
                             @Nullable String actionPlace,
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
-      this(parentPopup, createStep(
-        title, actionGroup, dataContext, actionPlace == null ? ActionPlaces.POPUP : actionPlace,
-        presentationFactory == null ? new PresentationFactory() : presentationFactory, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-        preselectActionCondition,
-        autoSelection), disposeCallback, dataContext, maxRowCount);
+      this(parentPopup, title, actionGroup, dataContext,
+           actionPlace == null ? ActionPlaces.POPUP : actionPlace,
+           presentationFactory == null ? new PresentationFactory() : presentationFactory,
+           ActionPopupOptions.create(showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+                                     maxRowCount, autoSelection, preselectCondition),
+           disposeCallback);
+    }
+
+    public ActionGroupPopup(@Nullable WizardPopup parentPopup,
+                            @PopupTitle @Nullable String title,
+                            @NotNull ActionGroup actionGroup,
+                            @NotNull DataContext dataContext,
+                            @NotNull String actionPlace,
+                            @NotNull PresentationFactory presentationFactory,
+                            @NotNull ActionPopupOptions options,
+                            @Nullable Runnable disposeCallback) {
+      this(parentPopup,
+           createStep(title, actionGroup, dataContext, actionPlace, presentationFactory, options),
+           disposeCallback, dataContext, options.maxRowCount);
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo(
         "Menu", actionGroup, actionPlace, ((ActionPopupStep)getStep()).getPresentationFactory()));
     }
@@ -275,19 +297,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                                    @NotNull DataContext dataContext,
                                                                    @NotNull String actionPlace,
                                                                    @NotNull PresentationFactory presentationFactory,
-                                                                   boolean showNumbers,
-                                                                   boolean useAlphaAsNumbers,
-                                                                   boolean showDisabledActions,
-                                                                   boolean honorActionMnemonics,
-                                                                   Condition<? super AnAction> preselectActionCondition,
-                                                                   boolean autoSelection) {
+                                                                   @NotNull ActionPopupOptions options) {
       DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
       List<ActionItem> items = ActionPopupStep.createActionItems(
         actionGroup, asyncDataContext, actionPlace, presentationFactory,
-        showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
+        options.showNumbers, options.useAlphaAsNumbers, options.showDisabledActions, options.honorActionMnemonics);
       return new ActionPopupStep(items, title, () -> asyncDataContext, actionPlace, presentationFactory,
-                                 showNumbers || honorActionMnemonics && anyMnemonicsIn(items),
-                                 preselectActionCondition, autoSelection, showDisabledActions);
+                                 options.showNumbers || options.honorActionMnemonics && anyMnemonicsIn(items),
+                                 options.preselectCondition, options.autoSelection, options.showDisabledActions);
     }
 
     @Override
@@ -372,7 +389,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                    boolean showDisabledActions,
                                                    Runnable disposeCallback,
                                                    int maxRowCount,
-                                                   Condition<? super AnAction> preselectActionCondition,
+                                                   Condition<? super AnAction> preselectCondition,
                                                    @Nullable String actionPlace) {
     return new ActionGroupPopup(title,
                                 actionGroup,
@@ -383,7 +400,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                 aid == ActionSelectionAid.MNEMONICS,
                                 disposeCallback,
                                 maxRowCount,
-                                preselectActionCondition,
+                                preselectCondition,
                                 actionPlace);
   }
 
@@ -396,9 +413,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                    boolean honorActionMnemonics,
                                                    Runnable disposeCallback,
                                                    int maxRowCount,
-                                                   Condition<? super AnAction> preselectActionCondition) {
+                                                   Condition<? super AnAction> preselectCondition) {
     return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
-                                  disposeCallback, maxRowCount, preselectActionCondition, null);
+                                disposeCallback, maxRowCount, preselectCondition, null);
   }
 
   @Override
