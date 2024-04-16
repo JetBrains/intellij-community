@@ -278,7 +278,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
       val popup = object : ActionGroupPopup(
         null, null, group, dataContext,
         ActionPlaces.getPopupPlace("ResizeStripeManager"), PresentationFactory(),
-        ActionPopupOptions.create(false, false, true, true, -1, false, null), null) {
+        ActionPopupOptions.mnemonicsAndDisabled(), null) {
         override fun afterShowSync() {
           super.afterShowSync()
           list.clearSelection()

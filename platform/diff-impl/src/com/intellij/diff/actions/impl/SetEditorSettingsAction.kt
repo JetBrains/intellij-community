@@ -82,7 +82,7 @@ class SetEditorSettingsAction(
   ) : PopupFactoryImpl.ActionGroupPopup(
     null, null, group, context,
     ActionPlaces.getPopupPlace("SetEditorSettingsAction"), presentationFactory,
-    ActionPopupOptions.create(false, false, true, true, -1, false, null), null) {
+    ActionPopupOptions.mnemonicsAndDisabled(), null) {
 
     override fun getListElementRenderer(): ListCellRenderer<*> {
       return MyRenderer(presentationFactory, this)

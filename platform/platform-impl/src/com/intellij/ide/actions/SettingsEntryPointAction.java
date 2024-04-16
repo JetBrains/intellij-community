@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory.ActionSelectionAid;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
@@ -175,7 +176,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     else {
       return JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+        null, group, context, ActionSelectionAid.MNEMONICS, true);
     }
   }
 
@@ -185,7 +186,7 @@ public final class SettingsEntryPointAction extends ActionGroup
 
     MyPopup(@NotNull ActionGroup group, @NotNull DataContext context, @NotNull PresentationFactory presentationFactory) {
       super(null, null, group, context, ActionPlaces.POPUP, presentationFactory,
-            ActionPopupOptions.create(false, false, true, true, -1, false, null), null);
+            ActionPopupOptions.mnemonicsAndDisabled(), null);
       myPresentationFactory = presentationFactory;
     }
 

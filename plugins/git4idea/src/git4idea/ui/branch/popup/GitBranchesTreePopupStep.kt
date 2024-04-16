@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.treeStructure.Tree
@@ -230,7 +231,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
       val dataContext = createDataContext(project, selectedRepository, repositories)
       val actionItems = ActionPopupStep.createActionItems(
         actionGroup, dataContext, TOP_LEVEL_ACTION_PLACE, presentationFactory,
-        false, false, true, false)
+        ActionPopupOptions.showDisabled())
 
       if (actionItems.singleOrNull()?.action == Utils.EMPTY_MENU_FILLER) {
         return emptyList()

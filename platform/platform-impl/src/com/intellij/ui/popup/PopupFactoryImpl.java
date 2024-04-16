@@ -300,9 +300,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                                    @NotNull ActionPopupOptions options) {
       DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
       return ActionPopupStep.createActionsStep(
-        actionGroup, asyncDataContext, options.showNumbers, options.useAlphaAsNumbers,
-        options.showDisabledActions, title, options.honorActionMnemonics, options.autoSelection,
-        () -> asyncDataContext, actionPlace, options.preselectCondition, -1, presentationFactory);
+        title, actionGroup, asyncDataContext, actionPlace, presentationFactory, () -> asyncDataContext, options);
     }
 
     @Override
@@ -389,17 +387,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                    int maxRowCount,
                                                    Condition<? super AnAction> preselectCondition,
                                                    @Nullable String actionPlace) {
-    return new ActionGroupPopup(title,
-                                actionGroup,
-                                dataContext,
-                                aid == ActionSelectionAid.ALPHA_NUMBERING || aid == ActionSelectionAid.NUMBERING,
-                                aid == ActionSelectionAid.ALPHA_NUMBERING,
-                                showDisabledActions,
-                                aid == ActionSelectionAid.MNEMONICS,
-                                disposeCallback,
-                                maxRowCount,
-                                preselectCondition,
-                                actionPlace);
+    return new ActionGroupPopup(
+      null, title, actionGroup, dataContext,
+      actionPlace == null ? ActionPlaces.POPUP : actionPlace, new PresentationFactory(),
+      ActionPopupOptions.forAid(aid, showDisabledActions, maxRowCount, preselectCondition), disposeCallback);
   }
 
   @Override
@@ -412,8 +403,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                    Runnable disposeCallback,
                                                    int maxRowCount,
                                                    Condition<? super AnAction> preselectCondition) {
-    return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
-                                disposeCallback, maxRowCount, preselectCondition, null);
+    return new ActionGroupPopup(
+      null, title, actionGroup, dataContext,
+      ActionPlaces.POPUP, new PresentationFactory(),
+      ActionPopupOptions.create(showNumbers, true, showDisabledActions, honorActionMnemonics,
+                                maxRowCount, false, preselectCondition), disposeCallback);
   }
 
   @Override
@@ -430,10 +424,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     PresentationFactory presentationFactory = new PresentationFactory();
     DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
     return ActionPopupStep.createActionsStep(
-      actionGroup, asyncDataContext, showNumbers, true, showDisabledActions,
-      title, honorActionMnemonics, autoSelectionEnabled,
+      title, actionGroup, asyncDataContext, actionPlace == null ? ActionPlaces.POPUP : actionPlace, presentationFactory,
       () -> asyncDataContext,
-      actionPlace == null ? ActionPlaces.POPUP : actionPlace, null, defaultOptionIndex, presentationFactory);
+      ActionPopupOptions.forStepAndItems(showNumbers, true, showDisabledActions, honorActionMnemonics,
+                                         autoSelectionEnabled, null, defaultOptionIndex));
   }
 
   @ApiStatus.Internal

@@ -297,8 +297,9 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     val dataContext = Utils.createAsyncDataContext(createActionDataContext())
     val place = ActionPlaces.getPopupPlace(optionButton.getClientProperty(JBOptionButton.PLACE) as? String)
     val presentationFactory = PresentationFactory()
-    val actionItems = ActionPopupStep.createActionItems(actionGroup, dataContext, place, presentationFactory,
-                                                        false, false, true, true)
+    val actionItems = ActionPopupStep.createActionItems(
+      actionGroup, dataContext, place, presentationFactory,
+      ActionPopupOptions.mnemonicsAndDisabled())
     val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
     val step = OptionButtonPopupStep(actionItems, place, defaultSelection, dataContext, presentationFactory)
     return OptionButtonPopup(step, dataContext, toSelect != null || ensureSelection)

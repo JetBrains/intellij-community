@@ -102,30 +102,23 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return defaultOptionIndex;
   }
 
-  public static @NotNull ListPopupStep<PopupFactoryImpl.ActionItem> createActionsStep(@NotNull ActionGroup actionGroup,
+  public static @NotNull ListPopupStep<PopupFactoryImpl.ActionItem> createActionsStep(@PopupTitle @Nullable String title,
+                                                                                      @NotNull ActionGroup actionGroup,
                                                                                       @NotNull DataContext dataContext,
-                                                                                      boolean showNumbers,
-                                                                                      boolean useAlphaAsNumbers,
-                                                                                      boolean showDisabledActions,
-                                                                                      @PopupTitle @Nullable String title,
-                                                                                      boolean honorActionMnemonics,
-                                                                                      boolean autoSelectionEnabled,
-                                                                                      Supplier<? extends DataContext> contextSupplier,
                                                                                       @NotNull String actionPlace,
-                                                                                      Condition<? super AnAction> preselectCondition,
-                                                                                      int defaultOptionIndex,
-                                                                                      @NotNull PresentationFactory presentationFactory) {
+                                                                                      @NotNull PresentationFactory presentationFactory,
+                                                                                      @NotNull Supplier<? extends DataContext> contextSupplier,
+                                                                                      @NotNull ActionPopupOptions options) {
     List<PopupFactoryImpl.ActionItem> items = createActionItems(
-      actionGroup, dataContext, actionPlace, presentationFactory,
-      showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
+      actionGroup, dataContext, actionPlace, presentationFactory, options);
 
-    ActionPopupOptions options = ActionPopupOptions.forStep(
-      showDisabledActions, showNumbers || honorActionMnemonics && PopupFactoryImpl.anyMnemonicsIn(items),
-      autoSelectionEnabled, preselectCondition != null ? preselectCondition :
-                            action -> defaultOptionIndex >= 0 &&
-                                      defaultOptionIndex < items.size() &&
-                                      items.get(defaultOptionIndex).getAction().equals(action));
-    return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, options);
+    ActionPopupOptions stepOptions = ActionPopupOptions.forStep(
+      options.showDisabledActions, options.showNumbers || options.honorActionMnemonics && PopupFactoryImpl.anyMnemonicsIn(items),
+      options.autoSelection, options.preselectCondition != null ? options.preselectCondition :
+                            action -> options.defaultIndex >= 0 &&
+                                      options.defaultIndex < items.size() &&
+                                      items.get(options.defaultIndex).getAction().equals(action));
+    return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, stepOptions);
   }
 
   /** @deprecated Use {@link #createActionItems(ActionGroup, DataContext, String, PresentationFactory, boolean, boolean, boolean, boolean)} instead */
@@ -141,23 +134,23 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return createActionItems(actionGroup, dataContext,
                              actionPlace == null ? ActionPlaces.POPUP : actionPlace,
                              presentationFactory == null ? new PresentationFactory() : presentationFactory,
-                             showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
+                             ActionPopupOptions.create(
+                               showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+                               -1, false, null));
   }
 
   public static @NotNull List<PopupFactoryImpl.ActionItem> createActionItems(@NotNull ActionGroup actionGroup,
                                                                              @NotNull DataContext dataContext,
                                                                              @NotNull String actionPlace,
                                                                              @NotNull PresentationFactory presentationFactory,
-                                                                             boolean showNumbers,
-                                                                             boolean useAlphaAsNumbers,
-                                                                             boolean showDisabledActions,
-                                                                             boolean honorActionMnemonics) {
+                                                                             @NotNull ActionPopupOptions options) {
     if (!isPopupOrMainMenuPlace(actionPlace)) {
       LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
       actionPlace = getPopupOrMainMenuPlace(actionPlace);
     }
     ActionStepBuilder builder = new ActionStepBuilder(
-      dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
+      dataContext, options.showNumbers, options.useAlphaAsNumbers, options.showDisabledActions, options.honorActionMnemonics,
+      actionPlace, presentationFactory);
     builder.buildGroup(actionGroup);
     return builder.getItems();
   }
@@ -281,9 +274,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     boolean honorActionMnemonics, boolean autoSelectionEnabled,
     Supplier<? extends DataContext> contextSupplier,
     Condition<? super AnAction> preselectCondition, int defaultOptionIndex) {
-    return createActionsStep(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, title,
-                             honorActionMnemonics, autoSelectionEnabled, contextSupplier, actionPlace, preselectCondition,
-                             defaultOptionIndex, presentationFactory);
+    return createActionsStep(
+      title, actionGroup, dataContext, actionPlace, presentationFactory, contextSupplier,
+      ActionPopupOptions.forStepAndItems(showNumbers, useAlphaAsNumbers, showDisabledActions,
+                                         honorActionMnemonics, autoSelectionEnabled, preselectCondition,
+                                         defaultOptionIndex));
   }
 
   @Override
