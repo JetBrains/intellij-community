@@ -622,7 +622,11 @@ internal class SoftwareBillOfMaterialsImpl(
   private fun SpdxDocument.spdxPackage(library: MavenLibrary): SpdxPackage {
     val document = this
     val upstreamPackage = spdxPackageUpstream(library.license.forkedFrom)
-    val libPackage = spdxPackage(this, "${library.coordinates.groupId}:${library.coordinates.artifactId}", library.license(this)) {
+    val libPackage = spdxPackage(
+      this, name = "${library.coordinates.groupId}:${library.coordinates.artifactId}",
+      copyrightText = library.license.copyrightText,
+      licenseDeclared = library.license(this),
+    ) {
       setVersionInfo(checkNotNull(library.coordinates.version) {
         "Missing version for ${library.coordinates}"
       })
@@ -643,7 +647,7 @@ internal class SoftwareBillOfMaterialsImpl(
     if (upstream?.version == null || upstream.mavenRepositoryUrl == null) {
       return null
     }
-    return spdxPackage(this, "${upstream.groupId}:${upstream.artifactId}") {
+    return spdxPackage(this, "${upstream.groupId}:${upstream.artifactId}", copyrightText = upstream.license.copyrightText) {
       setVersionInfo(upstream.version)
       setSupplier(upstream.license.supplier ?: SpdxConstants.NOASSERTION_VALUE)
       val coordinates = MavenCoordinates(
@@ -771,12 +775,13 @@ private fun spdxPackage(
   spdxDocument: SpdxDocument,
   name: String,
   licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
+  copyrightText: String? = null,
   init: SpdxPackageBuilder.() -> Unit
 ): SpdxPackage {
   return spdxDocument.createPackage(
     spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri), name,
     SpdxNoAssertionLicense(spdxDocument.modelStore, spdxDocument.documentUri),
-    SpdxConstants.NOASSERTION_VALUE,
+    copyrightText ?: SpdxConstants.NOASSERTION_VALUE,
     licenseDeclared
   ).setFilesAnalyzed(false).apply(init).build()
 }

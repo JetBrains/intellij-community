@@ -71,6 +71,12 @@ data class LibraryLicense(
   var spdxIdentifier: String? = null
 
   /**
+   * [Specification](https://spdx.github.io/spdx-spec/v2.3/package-information/#717-copyright-text-field)
+   */
+  @Internal
+  var copyrightText: String? = null
+
+  /**
    * See:
    * * https://spdx.github.io/spdx-spec/v2.3/package-information/#75-package-supplier-field
    * * https://package-search.jetbrains.com/
@@ -274,6 +280,13 @@ data class LibraryLicense(
           it.suppliedByPersons(authors ?: return@let it)
         }
       )
+    }
+  }
+
+  @Internal
+  fun copyrightText(value: String): LibraryLicense {
+    return copy().apply {
+      copyrightText = value
     }
   }
 }
