@@ -299,12 +299,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                                    @NotNull PresentationFactory presentationFactory,
                                                                    @NotNull ActionPopupOptions options) {
       DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
-      List<ActionItem> items = ActionPopupStep.createActionItems(
-        actionGroup, asyncDataContext, actionPlace, presentationFactory,
-        options.showNumbers, options.useAlphaAsNumbers, options.showDisabledActions, options.honorActionMnemonics);
-      return new ActionPopupStep(items, title, () -> asyncDataContext, actionPlace, presentationFactory,
-                                 options.showNumbers || options.honorActionMnemonics && anyMnemonicsIn(items),
-                                 options.preselectCondition, options.autoSelection, options.showDisabledActions);
+      return ActionPopupStep.createActionsStep(
+        actionGroup, asyncDataContext, options.showNumbers, options.useAlphaAsNumbers,
+        options.showDisabledActions, title, options.honorActionMnemonics, options.autoSelection,
+        () -> asyncDataContext, actionPlace, options.preselectCondition, -1, presentationFactory);
     }
 
     @Override

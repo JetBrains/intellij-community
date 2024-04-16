@@ -20,6 +20,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTIONS
 import com.intellij.ui.components.JBOptionButton.Companion.PROP_OPTION_TOOLTIP
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -402,7 +403,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
                                          place: String, private val defaultSelection: Condition<AnAction>?,
                                          dataContext: DataContext, presentationFactory: PresentationFactory)
     : ActionPopupStep(actions, null, { dataContext }, place, presentationFactory,
-                      true, defaultSelection, false, true) {
+                      ActionPopupOptions.forStep(true, true, false, defaultSelection)) {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex(): Int = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1

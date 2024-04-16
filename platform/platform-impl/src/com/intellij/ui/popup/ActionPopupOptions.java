@@ -4,6 +4,7 @@ package com.intellij.ui.popup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class ActionPopupOptions {
   final boolean showNumbers;
@@ -24,6 +25,13 @@ public final class ActionPopupOptions {
 
   public static @NotNull ActionPopupOptions honorMnemonics() {
     return new ActionPopupOptions(false, false, false, true, -1, false, null);
+  }
+
+  public static @NotNull ActionPopupOptions forStep(boolean showDisabledActions,
+                                                    boolean enableMnemonics,
+                                                    boolean autoSelection,
+                                                    @Nullable Condition<? super AnAction> preselectCondition) {
+    return new ActionPopupOptions(false, false, showDisabledActions, enableMnemonics, -1, autoSelection, preselectCondition);
   }
 
   public static @NotNull ActionPopupOptions create(boolean showNumbers,

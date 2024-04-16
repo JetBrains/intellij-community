@@ -16,9 +16,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ErrorLabel
+import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -192,7 +192,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
   class ChooseContextPopupStep(val actions: List<PopupFactoryImpl.ActionItem>, dataContext: DataContext, presentationFactory: PresentationFactory, val updateToolbar: () -> Unit)
     : ActionPopupStep(actions, IdeBundle.message("run.anything.context.title.working.directory"), Supplier { dataContext },
                       ActionPlaces.getPopupPlace("RunAnythingChooseContext"), presentationFactory,
-                      true, Condition { false }, false, true) {
+                      ActionPopupOptions.forStep(true, true, false, null)) {
 
     override fun getSeparatorAbove(value: PopupFactoryImpl.ActionItem?): ListSeparator? {
       val action = value?.action

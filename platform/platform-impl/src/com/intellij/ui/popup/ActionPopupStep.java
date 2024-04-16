@@ -49,13 +49,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                          @NotNull Supplier<? extends DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
-                         @Nullable Condition<? super AnAction> preselectActionCondition,
+                         @Nullable Condition<? super AnAction> preselectCondition,
                          boolean autoSelection,
                          boolean showDisabledActions,
                          @Nullable PresentationFactory presentationFactory) {
     this(items, title, context, actionPlace == null ? ActionPlaces.POPUP : actionPlace,
          presentationFactory == null ? new PresentationFactory() : presentationFactory,
-         enableMnemonics, preselectActionCondition, autoSelection, showDisabledActions);
+         ActionPopupOptions.forStep(showDisabledActions, enableMnemonics, autoSelection, preselectCondition));
   }
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
@@ -63,20 +63,17 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                          @NotNull Supplier<? extends DataContext> context,
                          @NotNull String actionPlace,
                          @NotNull PresentationFactory presentationFactory,
-                         boolean enableMnemonics,
-                         @Nullable Condition<? super AnAction> preselectActionCondition,
-                         boolean autoSelection,
-                         boolean showDisabledActions) {
+                         @NotNull ActionPopupOptions options) {
     myItems = items;
     myTitle = title;
     myContext = context;
     myActionPlace = getPopupOrMainMenuPlace(actionPlace);
-    myEnableMnemonics = enableMnemonics;
+    myEnableMnemonics = options.honorActionMnemonics;
     myPresentationFactory = presentationFactory;
-    myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
-    myPreselectActionCondition = preselectActionCondition;
-    myAutoSelectionEnabled = autoSelection;
-    myShowDisabledActions = showDisabledActions;
+    myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(options.preselectCondition, items);
+    myPreselectActionCondition = options.preselectCondition;
+    myAutoSelectionEnabled = options.autoSelection;
+    myShowDisabledActions = options.showDisabledActions;
     if (!isPopupOrMainMenuPlace(actionPlace)) {
       LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
     }
@@ -121,16 +118,14 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     List<PopupFactoryImpl.ActionItem> items = createActionItems(
       actionGroup, dataContext, actionPlace, presentationFactory,
       showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
-    boolean enableMnemonics = showNumbers ||
-                              honorActionMnemonics &&
-                              PopupFactoryImpl.anyMnemonicsIn(items);
 
-    return new ActionPopupStep(
-      items, title, contextSupplier, actionPlace, presentationFactory, enableMnemonics,
-      preselectCondition != null ? preselectCondition :
-      action -> defaultOptionIndex >= 0 &&
-                defaultOptionIndex < items.size() && items.get(defaultOptionIndex).getAction().equals(action),
-      autoSelectionEnabled, showDisabledActions);
+    ActionPopupOptions options = ActionPopupOptions.forStep(
+      showDisabledActions, showNumbers || honorActionMnemonics && PopupFactoryImpl.anyMnemonicsIn(items),
+      autoSelectionEnabled, preselectCondition != null ? preselectCondition :
+                            action -> defaultOptionIndex >= 0 &&
+                                      defaultOptionIndex < items.size() &&
+                                      items.get(defaultOptionIndex).getAction().equals(action));
+    return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, options);
   }
 
   /** @deprecated Use {@link #createActionItems(ActionGroup, DataContext, String, PresentationFactory, boolean, boolean, boolean, boolean)} instead */
