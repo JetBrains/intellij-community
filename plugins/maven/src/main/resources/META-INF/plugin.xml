@@ -56,6 +56,8 @@
                     dynamic="true"/>
     <extensionPoint name="versionAwareMavenSupport" interface="org.jetbrains.idea.maven.MavenVersionAwareSupportExtension" dynamic="true"/>
 
+    <extensionPoint name="mavenAdditionalHighlighter" interface="org.jetbrains.idea.maven.dom.MavenAdditionalHightligher" dynamic="true"/>
+
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
