@@ -227,6 +227,7 @@ public class ComparisonFailureData {
     return null;
   }
 
+  @SuppressWarnings("deprecation")
   private static ComparisonFailureData createFileComparisonFailure(Throwable assertion) {
     if (assertion instanceof FileComparisonFailure) {
       final FileComparisonFailure comparisonFailure = (FileComparisonFailure)assertion;
