@@ -1716,13 +1716,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       b = a['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test1);
-        myFixture.completeBasic();
-        myFixture.checkResult(test1);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'x'", "'y'");
-      }
+      () -> assertContainsElements(doTestByText(test1), "'x'", "'y'")
     );
   }
 
@@ -1740,13 +1734,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
          a = m['film']['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test2);
-        myFixture.completeBasic();
-        myFixture.checkResult(test2);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
-      }
+      () -> assertContainsElements(doTestByText(test2), "'name'", "'year'")
     );
   }
 
@@ -1761,13 +1749,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       m['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test3);
-        myFixture.completeBasic();
-        myFixture.checkResult(test3);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
-      }
+      () -> assertContainsElements(doTestByText(test3), "'name'", "'year'")
     );
   }
 
@@ -1784,12 +1766,10 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, test4);
-        myFixture.completeBasic();
-        myFixture.checkResult(test4);
+        List<String> lookupElementStrings = doTestByText(test4);
 
-        assertContainsElements(myFixture.getLookupElementStrings(), "'name'", "'year'");
-        assertDoesntContain(myFixture.getLookupElementStrings(), "'wrong_key'");
+        assertContainsElements(lookupElementStrings, "'name'", "'year'");
+        assertDoesntContain(lookupElementStrings, "'wrong_key'");
       }
     );
   }
@@ -1808,13 +1788,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
           return vehicle["<caret>"]""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, text);
-        myFixture.completeBasic();
-        myFixture.checkResult(text);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"");
-      }
+      () -> assertContainsElements(doTestByText(text), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"")
     );
   }
 
@@ -1832,13 +1806,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
           return vehicle[<caret>]""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, text);
-        myFixture.completeBasic();
-        myFixture.checkResult(text);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"");
-      }
+      () -> assertContainsElements(doTestByText(text), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"")
     );
   }
 
@@ -1856,13 +1824,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
           return vehicle['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, text);
-        myFixture.completeBasic();
-        myFixture.checkResult(text);
-
-        assertContainsElements(myFixture.getLookupElementStrings(), "'id'", "'vin'", "'zip'", "'make'", "'trim'");
-      }
+      () -> assertContainsElements(doTestByText(text), "'id'", "'vin'", "'zip'", "'make'", "'trim'")
     );
   }
 
@@ -1879,12 +1841,10 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        myFixture.configureByText(PythonFileType.INSTANCE, text);
-        myFixture.completeBasic();
-        myFixture.checkResult(text);
+        List<String> lookupElementStrings = doTestByText(text);
 
-        assertContainsElements(myFixture.getLookupElementStrings(), "\"coordinateX\"", "\"coordinateY\"");
-        assertDoesntContain(myFixture.getLookupElementStrings(), "\"z\"");
+        assertContainsElements(lookupElementStrings, "\"coordinateX\"", "\"coordinateY\"");
+        assertDoesntContain(lookupElementStrings, "\"z\"");
       }
     );
   }
