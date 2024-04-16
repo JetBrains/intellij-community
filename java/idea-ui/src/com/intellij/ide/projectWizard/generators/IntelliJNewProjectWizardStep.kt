@@ -22,7 +22,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
@@ -98,7 +97,7 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   protected fun setupJavaSdkUI(builder: Panel) {
     builder.row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      projectWizardJdkComboBox(context, sdkProperty, sdkDownloadTaskProperty, StdModuleTypes.JAVA.id, context.projectJdk)
+      projectWizardJdkComboBox(this, sdkProperty, sdkDownloadTaskProperty)
     }.bottomGap(BottomGap.SMALL)
   }
 
