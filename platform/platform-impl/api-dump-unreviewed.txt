@@ -16697,6 +16697,7 @@ f:com.intellij.openapi.fileEditor.impl.JComponentFileEditor
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.fileEditor.FileEditor
 - <init>(com.intellij.openapi.vfs.VirtualFile,javax.swing.JComponent):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,javax.swing.JComponent,java.lang.String):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - dispose():V
 - getComponent():javax.swing.JComponent
