@@ -74,14 +74,14 @@ public class ComparisonFailureData {
   public static void registerSMAttributes(ComparisonFailureData notification,
                                           String trace,
                                           String failureMessage,
-                                          Map attrs,
+                                          Map<String, String> attrs,
                                           Throwable throwable) {
     registerSMAttributes(notification, trace, failureMessage, attrs, throwable, "Comparison Failure: ", "expected:<");
   }
 
   public static void registerSMAttributes(ComparisonFailureData notification, String trace,
                                           String failureMessage,
-                                          Map attrs,
+                                          Map<String, String> attrs,
                                           Throwable throwable,
                                           String comparisonFailurePrefix,
                                           final String expectedPrefix) {
@@ -145,7 +145,7 @@ public class ComparisonFailureData {
     attrs.put("details", details);
   }
 
-  private static void writeDiffSide(Map attrs, final String expectedOrActualPrefix, final String text, int fullLength) {
+  private static void writeDiffSide(Map<String, String> attrs, final String expectedOrActualPrefix, final String text, int fullLength) {
     String property = System.getProperty("idea.test.cyclic.buffer.size");
 
     int threshold;
