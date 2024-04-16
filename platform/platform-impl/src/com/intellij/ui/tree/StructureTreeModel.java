@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -377,14 +377,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   private static boolean isValid(@NotNull AbstractTreeStructure structure, Object element) {
     if (element == null) return false;
-    if (element instanceof AbstractTreeNode) {
-      AbstractTreeNode<?> node = (AbstractTreeNode<?>)element;
+    if (element instanceof AbstractTreeNode<?> node) {
       if (null == node.getValue()) {
         return false;
       }
     }
-    if (element instanceof ValidateableNode) {
-      ValidateableNode node = (ValidateableNode)element;
+    if (element instanceof ValidateableNode node) {
       if (!node.isValid()) return false;
     }
     return structure.isValid(element);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -369,8 +369,7 @@ public final class ComponentPropertiesCollector {
         }
       }
     }
-    else if (layout instanceof MigLayout) {
-      MigLayout migLayout = (MigLayout)layout;
+    else if (layout instanceof MigLayout migLayout) {
 
       Object constraints = migLayout.getLayoutConstraints();
       if (constraints instanceof LC) {
@@ -400,8 +399,7 @@ public final class ComponentPropertiesCollector {
         addSubValue(UiInspectorUtil.getComponentName(child), migLayout.getComponentConstraints(child));
       }
     }
-    else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout) {
-      com.intellij.ui.layout.migLayout.patched.MigLayout migLayout = (com.intellij.ui.layout.migLayout.patched.MigLayout)layout;
+    else if (layout instanceof com.intellij.ui.layout.migLayout.patched.MigLayout migLayout) {
 
       addMigLayoutLayoutConstraints(migLayout.getLayoutConstraints());
       addMigLayoutAxisConstraints("MigLayout column constraints", migLayout.getColumnConstraints());

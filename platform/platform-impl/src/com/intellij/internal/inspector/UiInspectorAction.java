@@ -250,8 +250,7 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           return Pair.create(clickInfo, rendererComponent);
         }
       }
-      if (component instanceof JTree) {
-        JTree tree = (JTree)component;
+      if (component instanceof JTree tree) {
         TreePath path = tree.getClosestPathForLocation(me.getX(), me.getY());
         if (path != null) {
           int row = tree.getRowForPath(path);

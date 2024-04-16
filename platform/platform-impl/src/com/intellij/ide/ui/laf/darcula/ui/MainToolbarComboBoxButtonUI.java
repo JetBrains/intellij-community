@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.hover.HoverListener;
@@ -140,8 +139,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     Dimension size = super.getDarculaButtonSize(c, prefSize);
-    if (!(c instanceof ComboBoxAction.ComboBoxButton)) return size;
-    AbstractButton button = (AbstractButton)c;
+    if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return size;
 
     if (((ComboBoxAction.ComboBoxButton)c).isArrowVisible())
       size.width += ((AbstractButton)c).getIconTextGap() + EXPAND_ICON.getIconWidth();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.BundleBase;
@@ -161,8 +161,7 @@ public final class SearchUtil {
         processUILabel(each, configurableOptions, path, i18n);
       }
     }
-    else if (component instanceof JTabbedPane) {
-      final JTabbedPane tabbedPane = (JTabbedPane)component;
+    else if (component instanceof JTabbedPane tabbedPane) {
       final int tabCount = tabbedPane.getTabCount();
       for (int i = 0; i < tabCount; i++) {
         final String title = path != null ? path + '.' + tabbedPane.getTitleAt(i) : tabbedPane.getTitleAt(i);
