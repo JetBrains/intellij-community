@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -146,11 +146,12 @@ internal open class IconsClassGenerator(
           moduleConfig?.packageName,
           getPluginPackageIfPossible(module),
           "com.${module.name}.icons",
+          "com.intellij.${module.name.removePrefix("intellij.platform.")}",
           "icons",
         )
         val existingIconsClass = findExistingIconsClass(sourceRoots, possiblePackageNames)
         val packageName = existingIconsClass?.packageName ?: possiblePackageNames.first()
-        val targetRoot = sourceRoot.findPackageDirectory(packageName)
+        val targetRoot = findPackageDirectory(sourceRoot, packageName)
 
         if (existingIconsClass != null && !existingIconsClass.sourceRoot.properties.isForGeneratedSources
             && sourceRoot.properties.isForGeneratedSources && images.isNotEmpty()) {
@@ -189,7 +190,7 @@ internal open class IconsClassGenerator(
   ): ExistingIconsClass? {
     for (sourceRoot in sourceRoots) {
       for (packageName in possiblePackageNames) {
-        val directory = sourceRoot.findPackageDirectory(packageName)
+        val directory = findPackageDirectory(sourceRoot, packageName)
         val className = findIconClass(directory)
         if (className != null) {
           return ExistingIconsClass(sourceRoot, directory.resolve("$className.java"), packageName, className)
@@ -199,11 +200,11 @@ internal open class IconsClassGenerator(
     return null
   }
 
-  private fun JpsTypedModuleSourceRoot<JavaSourceRootProperties>.findPackageDirectory(packageName: String): Path {
-    val packagePrefix = properties.packagePrefix
-    if (packagePrefix == packageName) return path
+  private fun findPackageDirectory(root: JpsTypedModuleSourceRoot<JavaSourceRootProperties>, packageName: String): Path {
+    val packagePrefix = root.properties.packagePrefix
+    if (packagePrefix == packageName) return root.path
     val relativePackage = packageName.removePrefix("$packagePrefix.")
-    return path.resolve(relativePackage.replace('.', File.separatorChar))
+    return root.path.resolve(relativePackage.replace('.', File.separatorChar))
   }
 
   fun processModule(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?) {

@@ -20,6 +20,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="VcsLogIconMappings.json"/>
+
     <changesViewContent tabName="Log"
                         className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
@@ -168,7 +170,7 @@
     </group>
 
     <group id="Vcs.Log.GraphOptionsGroup" class="com.intellij.vcs.log.ui.actions.VcsLogGraphOptionsChooserGroup" popup="true"
-           icon="VcsLogIcons.IntelliSort"/>
+           icon="com.intellij.vcs.log.impl.VcsLogIcons.IntelliSort"/>
 
     <group id="Vcs.Log.BranchActionsGroup" popup="false">
       <separator key="action.vcs.log.branches.separator"/>

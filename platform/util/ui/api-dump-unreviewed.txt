@@ -1989,7 +1989,6 @@ f:com.intellij.icons.ExpUiIcons$Vcs
 - sf:Diff:javax.swing.Icon
 - sf:Fetch:javax.swing.Icon
 - sf:IncomingUpdate:javax.swing.Icon
-- sf:IntelliSort:javax.swing.Icon
 - sf:Merge:javax.swing.Icon
 - sf:OutgoingPush:javax.swing.Icon
 - sf:Patch:javax.swing.Icon

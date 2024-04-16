@@ -891,6 +891,19 @@ e:com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 - sf:Storage:com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 - s:valueOf(java.lang.String):com.intellij.vcs.log.impl.VcsLogErrorHandler$Source
 - s:values():com.intellij.vcs.log.impl.VcsLogErrorHandler$Source[]
+f:com.intellij.vcs.log.impl.VcsLogIcons
+- sf:IntelliSort:javax.swing.Icon
+- <init>():V
+f:com.intellij.vcs.log.impl.VcsLogIcons$New
+- sf:IntelliSort:javax.swing.Icon
+- <init>():V
+f:com.intellij.vcs.log.impl.VcsLogIcons$Process
+- sf:Dots_1:javax.swing.Icon
+- sf:Dots_2:javax.swing.Icon
+- sf:Dots_3:javax.swing.Icon
+- sf:Dots_4:javax.swing.Icon
+- sf:Dots_5:javax.swing.Icon
+- <init>():V
 com.intellij.vcs.log.impl.VcsLogIndexer
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
 - a:readAllFullDetails(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.impl.VcsLogIndexer$PathsEncoder,com.intellij.util.Consumer):V
@@ -2880,7 +2893,6 @@ f:com.intellij.vcs.log.visible.filters.VcsLogFiltersKt
 - a:matchingRanges(java.lang.String):java.lang.Iterable
 f:com.intellij.vcs.log.visible.filters.VcsLogTextFiltersKt
 f:icons.VcsLogIcons
-- sf:IntelliSort:javax.swing.Icon
 - <init>():V
 f:icons.VcsLogIcons$Process
 - sf:Dots_1:javax.swing.Icon
