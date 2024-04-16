@@ -226,7 +226,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         return ApplicationInfoEx.getInstanceEx().isEAP
       }
 
-      private val fusActionNotFound = InspectionsFUS.group.registerEvent("inspections_action_not_found", EventFields.Int("tabId"), EventFields.String("actionId", listOf(PREVIOUS_ACTION_ID, NEXT_ACTION_ID)))
+      private val fusActionNotFound = InspectionsFUS.group.registerEvent("inspection_action_not_found", EventFields.Int("tabId"), EventFields.String("actionId", listOf(PREVIOUS_ACTION_ID, NEXT_ACTION_ID)))
     }
 
     init {
