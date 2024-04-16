@@ -31,7 +31,7 @@ public final class JavaReferenceEditorUtil {
                                                   Project project,
                                                   boolean isClassesAccepted,
                                                   JavaCodeFragment.VisibilityChecker visibilityChecker) {
-    final PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+    final PsiPackage defaultPackage = project.isDefault() ? null : JavaPsiFacade.getInstance(project).findPackage("");
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final JavaCodeFragment fragment = factory.createReferenceCodeFragment(text, defaultPackage, true, isClassesAccepted);
     fragment.setVisibilityChecker(visibilityChecker);
