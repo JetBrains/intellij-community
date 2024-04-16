@@ -86,7 +86,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
 
     @RequiresBlockingContext
     private fun loadScriptDefinitions() {
-        if (project.isDefault || project.isDisposed) {
+        if (project.isDefault || project.isDisposed || !project.isInitialized) {
             return onEarlyEnd()
         }
 
