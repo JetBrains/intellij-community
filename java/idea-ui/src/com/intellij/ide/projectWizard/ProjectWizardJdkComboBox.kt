@@ -34,6 +34,7 @@ import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.util.application
 import com.intellij.util.system.CpuArch
@@ -75,12 +76,12 @@ fun Row.projectWizardJdkComboBox(
   sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?>,
   sdkPropertyId: String,
   projectJdk: Sdk? = null
-) {
+): Cell<ProjectWizardJdkComboBox> {
   val combo = ProjectWizardJdkComboBox(projectJdk, context.disposable)
 
   val selectedJdkProperty = "jdk.selected.$sdkPropertyId"
 
-  cell(combo)
+  return cell(combo)
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment(component.comment, 50)
@@ -109,17 +110,19 @@ fun Row.projectWizardJdkComboBox(
         is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
       }
     }
-
-  val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
-  if (lastSelected != null) {
-    combo.selectedItem = lastSelected
-  } else {
-    combo.registered
-      .maxByOrNull { JavaSdkVersion.fromVersionString(it.jdk.versionString ?: "")?.ordinal ?: 0 }
-      ?.let { combo.selectedItem = it }
-  }
-
-  updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+    .apply {
+      val lastSelected = PropertiesComponent.getInstance().getValue(selectedJdkProperty)
+      if (lastSelected != null) {
+        combo.selectedItem = lastSelected
+      } else {
+        combo.registered
+          .maxByOrNull { JavaSdkVersion.fromVersionString(it.jdk.versionString ?: "")?.ordinal ?: 0 }
+          ?.let { combo.selectedItem = it }
+      }
+    }
+    .apply {
+      updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
+    }
 }
 
 private fun updateGraphProperties(
