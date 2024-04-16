@@ -1760,9 +1760,11 @@ f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 - getPresentableName():java.lang.String
 f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 - org.jetbrains.jps.backwardRefs.CompilerReferenceWriter
+- sf:FS_KEY:java.lang.String
 - sf:PROP_KEY:java.lang.String
 - s:closeIfNeeded(Z):V
 - s:initialize(org.jetbrains.jps.incremental.CompileContext):V
+- *s:isCompilerReferenceFSCaseSensitive():Z
 - s:isEnabled():Z
 f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceRegistrar
 - org.jetbrains.jps.javac.JavacFileReferencesRegistrar
@@ -1773,6 +1775,7 @@ f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceRegistrar
 f:org.jetbrains.jps.backwardRefs.JavaCompilerBackwardReferenceIndex
 - org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 - <init>(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z):V
+- <init>(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z,Z):V
 f:org.jetbrains.jps.backwardRefs.NameEnumerator
 - com.intellij.util.io.PersistentStringEnumerator
 - <init>(java.io.File):V
@@ -1798,6 +1801,7 @@ f:org.jetbrains.jps.backwardRefs.index.CompiledFileData
 - getSignatureData():java.util.Map
 c:org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 - <init>(java.util.Collection,java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z,I):V
+- <init>(java.util.Collection,java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z,I,Z):V
 - <init>(java.util.Collection,java.io.File,Z,I):V
 - close():V
 - s:exists(java.io.File):Z
@@ -3757,7 +3761,9 @@ org.jetbrains.jps.incremental.relativizer.PathRelativizer
 f:org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - <init>():V
 - <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Boolean):V
 - <init>(org.jetbrains.jps.model.JpsProject):V
+- <init>(org.jetbrains.jps.model.JpsProject,java.lang.Boolean):V
 - reportUnhandledPaths():V
 - toFull(java.lang.String):java.lang.String
 - toRelative(java.lang.String):java.lang.String

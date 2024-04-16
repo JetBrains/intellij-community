@@ -2,9 +2,11 @@
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
@@ -25,10 +27,10 @@ import java.io.IOException;
 
 public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<CompiledFileData> {
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
+  public static final String FS_KEY = "jps.backward.ref.index.builder.fs.case.sensitive";
 
   private static volatile JavaBackwardReferenceIndexWriter ourInstance;
   private static int ourInitAttempt = 0;
-
 
   private JavaBackwardReferenceIndexWriter(JavaCompilerBackwardReferenceIndex index) {
     super(index);
@@ -57,6 +59,7 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
     if (ourInstance != null) {
       return;
     }
+
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
@@ -82,7 +85,8 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
       }
 
       if (cleanupOk) {
-        ourInstance = new JavaBackwardReferenceIndexWriter(new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false));
+        JavaCompilerBackwardReferenceIndex index = new JavaCompilerBackwardReferenceIndex(buildDir, dataManager.getRelativizer(), false, isCompilerReferenceFSCaseSensitive());
+        ourInstance = new JavaBackwardReferenceIndexWriter(index);
         ShutDownTracker.getInstance().registerShutdownTask(() -> closeIfNeeded(false));
       }
     }
@@ -93,6 +97,15 @@ public final class JavaBackwardReferenceIndexWriter extends CompilerReferenceWri
 
   public static boolean isEnabled() {
     return SystemProperties.getBooleanProperty(PROP_KEY, false);
+  }
+
+  @ApiStatus.Experimental
+  public static boolean isCompilerReferenceFSCaseSensitive() {
+    String value = System.getProperty(FS_KEY);
+    if (value == null) {
+      return SystemInfo.isFileSystemCaseSensitive;
+    }
+    return Boolean.parseBoolean(value);
   }
 
   synchronized @NotNull CompilerRef.JavaCompilerClassRef asClassUsage(JavacRef aClass) throws IOException {

@@ -307,6 +307,8 @@
     <notificationGroup id="JDK Arch Check" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.arch.checker"/>
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
+    <registryKey key="java.jps.backward.ref.index.builder.fs.case.sensitive"  defaultValue="BY_ROOT"
+                 description="Case sensitivity of the project file system for compiler references. Available values: SENSITIVE, INSENSITIVE, BY_OS (Defined by OS or VM options), BY_ROOT (Defined by first root)"/>
     <applicationService serviceInterface="com.intellij.refactoring.util.CommonJavaInlineUtil" serviceImplementation="com.intellij.refactoring.util.InlineUtil"/>
     <applicationService serviceInterface="com.intellij.refactoring.util.RefactoringConflictsUtil" serviceImplementation="com.intellij.refactoring.util.RefactoringConflictsUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>

@@ -34,27 +34,36 @@ public final class PathRelativizerService {
   private final Set<String> myUnhandledPaths = Collections.synchronizedSet(new LinkedHashSet<>());
 
   public PathRelativizerService(@Nullable String projectPath) {
-    initialize(projectPath, null, null);
+    initialize(projectPath, null, null, null);
+  }
+  public PathRelativizerService(@Nullable String projectPath, @Nullable Boolean projectDirIsCaseSensitive) {
+    initialize(projectPath, null, projectDirIsCaseSensitive, null);
   }
 
   public PathRelativizerService(@NotNull JpsProject project) {
+    this(project, null);
+  }
+
+  public PathRelativizerService(@NotNull JpsProject project, @Nullable Boolean projectDirIsCaseSensitive) {
     File projectBaseDirectory = JpsModelSerializationDataService.getBaseDirectory(project);
     Set<JpsSdk<?>> javaSdks = project.getModules().stream().map(module -> module.getSdk(JpsJavaSdkType.INSTANCE))
       .filter(sdk -> sdk != null && sdk.getVersionString() != null && sdk.getHomePath() != null)
       .collect(Collectors.toSet());
 
-    initialize(projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null, getBuildDirPath(project), javaSdks);
+    initialize(projectBaseDirectory != null ? projectBaseDirectory.getAbsolutePath() : null, getBuildDirPath(project), projectDirIsCaseSensitive, javaSdks);
   }
 
   @TestOnly
   public PathRelativizerService() {
-    initialize(null, null, null);
+    initialize(null, null, null, null);
   }
 
-  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath, @Nullable Set<? extends JpsSdk<?>> javaSdks) {
+  private void initialize(@Nullable String projectPath, @Nullable String buildDirPath,
+                          @Nullable Boolean projectDirIsCaseSensitive,
+                          @Nullable Set<? extends JpsSdk<?>> javaSdks) {
     String normalizedProjectPath = projectPath != null ? normalizePath(projectPath) : null;
     String normalizedBuildDirPath = buildDirPath != null ? normalizePath(buildDirPath) : null;
-    myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER));
+    myRelativizers.add(new CommonPathRelativizer(normalizedBuildDirPath, BUILD_DIR_IDENTIFIER, projectDirIsCaseSensitive));
     myRelativizers.add(new CommonPathRelativizer(normalizedProjectPath, PROJECT_DIR_IDENTIFIER));
     myRelativizers.add(new JavaSdkPathRelativizer(javaSdks));
     myRelativizers.add(new MavenPathRelativizer());
