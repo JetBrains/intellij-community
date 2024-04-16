@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,10 +19,10 @@ public interface VcsLogRefresher {
   @NotNull DataPack getCurrentDataPack();
 
   /**
-   * Synchronously loads some recent commits from the VCS, builds the DataPack and queues to refresh everything. <br/>
-   * This is called on log initialization and on the full refresh.
+   * Asynchronously loads some recent commits from the VCS, builds the DataPack and queues to refresh everything. <br/>
+   * This is called on log initialization.
    */
-  void readFirstBlock();
+  void initialize();
 
   /**
    * Refreshes the log and builds the actual data pack.

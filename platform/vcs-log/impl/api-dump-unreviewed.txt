@@ -262,7 +262,7 @@ com.intellij.vcs.log.data.VcsLogProgress$ProgressListener
 - a:progressStopped():V
 com.intellij.vcs.log.data.VcsLogRefresher
 - a:getCurrentDataPack():com.intellij.vcs.log.data.DataPack
-- a:readFirstBlock():V
+- a:initialize():V
 - a:refresh(java.util.Collection,Z):V
 c:com.intellij.vcs.log.data.VcsLogRefresherImpl
 - com.intellij.openapi.Disposable
@@ -271,7 +271,7 @@ c:com.intellij.vcs.log.data.VcsLogRefresherImpl
 - dispose():V
 - getCurrentDataPack():com.intellij.vcs.log.data.DataPack
 - getProgress():com.intellij.vcs.log.data.VcsLogProgress
-- readFirstBlock():V
+- initialize():V
 - refresh(java.util.Collection,Z):V
 - p:startNewBackgroundTask(com.intellij.openapi.progress.Task$Backgroundable):com.intellij.vcs.log.data.SingleTaskController$SingleTask
 f:com.intellij.vcs.log.data.VcsLogSorter
