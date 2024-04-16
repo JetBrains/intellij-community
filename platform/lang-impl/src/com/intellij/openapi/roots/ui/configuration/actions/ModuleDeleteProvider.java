@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
+public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
   public static ModuleDeleteProvider getInstance() {
     return ApplicationManager.getApplication().getService(ModuleDeleteProvider.class);
   }
@@ -126,9 +126,10 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
     }
     removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
     if (modules != null) {
+      ProjectAttachProcessor attachProcessor = ProjectAttachProcessor.getProcessor();
       for (final Module module : modules) {
-        for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
-          processor.beforeDetach(module);
+        if (attachProcessor != null) {
+          attachProcessor.beforeDetach(module);
         }
         modifiableModuleModel.disposeModule(module);
       }

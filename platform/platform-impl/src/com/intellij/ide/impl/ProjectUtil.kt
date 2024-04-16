@@ -394,15 +394,17 @@ object ProjectUtil {
    * [GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH] or
    * `-1` (when a user cancels the dialog)
    */
-  fun confirmOpenOrAttachProject(): Int {
+  @JvmOverloads
+  fun confirmOpenOrAttachProject(project: Project? = null): Int {
     var mode = GeneralSettings.getInstance().confirmOpenNewProject
     if (mode == GeneralSettings.OPEN_PROJECT_ASK) {
+      val processor = ProjectAttachProcessor.getProcessor()
       val exitCode = Messages.showDialog(
-        IdeBundle.message("prompt.open.project.or.attach"),
+        project?.let { processor?.getDescription(it) } ?: IdeBundle.message("prompt.open.project.or.attach"),
         IdeBundle.message("prompt.open.project.or.attach.title"), arrayOf(
         IdeBundle.message("prompt.open.project.or.attach.button.this.window"),
         IdeBundle.message("prompt.open.project.or.attach.button.new.window"),
-        IdeBundle.message("prompt.open.project.or.attach.button.attach"),
+        project?.let { processor?.getActionText(it) } ?: IdeBundle.message("prompt.open.project.or.attach.button.attach"),
         CommonBundle.getCancelButtonText()
       ),
         0,

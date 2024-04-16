@@ -1714,6 +1714,14 @@
       <add-to-group group-id="MainToolbarRight" anchor="before" relative-to-action="NewUiRunWidget"/>
     </group>
 
+    <group id="WorkspaceProjectGroup">
+      <separator/>
+      <group id="ImportSubprojectGroup" class="com.intellij.ide.workspace.ImportSubprojectActionGroup" popup="true"/>
+      <group id="RemoveSubprojectGroup" class="com.intellij.ide.workspace.RemoveSubprojectActionGroup" popup="true"/>
+      <separator/>
+      <add-to-group group-id="FileMenu" relative-to-action="FileMainSettingsGroup" anchor="before"/>
+    </group>
+
     <action id="FileChooser.LightEditGotoOpenedFile"
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
             icon="AllIcons.General.Locate">

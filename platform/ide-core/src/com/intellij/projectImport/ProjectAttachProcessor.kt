@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -17,7 +18,10 @@ open class ProjectAttachProcessor {
     val EP_NAME: ExtensionPointName<ProjectAttachProcessor> = ExtensionPointName("com.intellij.projectAttachProcessor")
 
     @JvmStatic
-    fun canAttachToProject(): Boolean = EP_NAME.hasAnyExtensions()
+    fun canAttachToProject(): Boolean = getProcessor() != null
+
+    @JvmStatic
+    fun getProcessor() = EP_NAME.extensionList.firstOrNull { it.isEnabled }
   }
 
   /**
@@ -42,4 +46,10 @@ open class ProjectAttachProcessor {
   }
 
   open fun beforeDetach(module: Module) {}
+
+  open val isEnabled: Boolean = true
+
+  open fun getActionText(project: Project): @NlsContexts.Button String? = null
+
+  open fun getDescription(project: Project): @NlsContexts.DetailedDescription String? = null
 }

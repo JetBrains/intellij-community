@@ -75,6 +75,7 @@
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.action.GradleAttachSourcesProvider"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
+    <workspace.subprojectHandler implementation="org.jetbrains.plugins.gradle.workspace.GradleSubprojectHandler"/>
 
     <defender.config implementation="org.jetbrains.plugins.gradle.util.GradleWindowsDefenderCheckerExt"/>
 

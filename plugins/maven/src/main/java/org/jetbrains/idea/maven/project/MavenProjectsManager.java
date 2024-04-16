@@ -324,6 +324,40 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
     tree.setIgnoredFilesPatterns(manager.myState.ignoredPathMasks);
   }
 
+  @NotNull
+  public MavenRoamableSettings getRoamableSettings() {
+    MavenWorkspaceSettings settings = getWorkspaceSettings();
+    return new MavenRoamableSettings(settings.enabledProfiles, settings.disabledProfiles,
+                                     myState.originalFiles, new ArrayList<>(myState.ignoredFiles), myState.ignoredPathMasks);
+  }
+
+  public void applyRoamableSettings(@NotNull MavenRoamableSettings roamableSettings) {
+    if (roamableSettings.originalFiles.isEmpty()) return;
+
+    MavenWorkspaceSettings settings = getWorkspaceSettings();
+    settings.setEnabledProfiles(mergePaths(settings.enabledProfiles, roamableSettings.enabledProfiles));
+    settings.setDisabledProfiles(mergePaths(settings.disabledProfiles, roamableSettings.disabledProfiles));
+
+    myState.originalFiles = mergePaths(myState.originalFiles, roamableSettings.originalFiles);
+    myState.ignoredFiles = new HashSet<>(mergePaths(myState.ignoredFiles, roamableSettings.ignoredFiles));
+    myState.ignoredPathMasks = mergePaths(myState.ignoredPathMasks, roamableSettings.ignoredPathMasks);
+
+    if (myProjectsTree != null) {
+      applyStateToTree(myProjectsTree, this);
+      scheduleUpdateAllMavenProjects(MavenSyncSpec.full("init"));
+    }
+    else {
+      doInit();
+    }
+  }
+
+  @NotNull
+  private static <T> List<T> mergePaths(@NotNull Collection<T> oldPaths, @NotNull Collection<T> newPaths) {
+    LinkedHashSet<T> result = new LinkedHashSet<>(oldPaths);
+    result.addAll(newPaths);
+    return new ArrayList<>(result);
+  }
+
   @Override
   public void doSave() {
     mySaveQueue.queue(new Update(this) {
