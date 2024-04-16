@@ -7,6 +7,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.frontend.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.backend.main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.navbar.compatibility.monolith" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.navbar.monolith.compatibility" scope="RUNTIME" />
   </component>
 </module>
