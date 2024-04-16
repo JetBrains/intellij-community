@@ -91,5 +91,5 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
     super.paintIcon(g, actionButton, toStrokeIcon(icon, UIManager.getColor("ToolWindow.Button.selectedForeground")))
   }
 
-  override fun getButtonArc() = JBValue.UIInteger("Button.ToolWindow.arc", 12)
+  override fun getButtonArc() = JBValue.UIInteger("Button.ToolWindow.arc", if (UISettings.Companion.getInstance().compactMode) 8 else 12)
 }
