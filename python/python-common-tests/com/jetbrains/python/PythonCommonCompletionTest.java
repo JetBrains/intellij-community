@@ -319,6 +319,90 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     doTest();
   }
 
+  // PY-42738
+  public void testDictLiteralValueAccessWithDoubleQuotes() {
+    final String text = """
+    d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
+    d["<caret>"]""";
+    assertSameElements(doTestByText(text), "key1", "key2");
+  }
+
+  // PY-42738
+  public void testDictLiteralValueAccessWithSingleQuotes() {
+    final String text = """
+    d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
+    d['<caret>']""";
+    assertSameElements(doTestByText(text), "key1", "key2");
+  }
+
+  // PY-42738
+  public void testDictLiteralValueAccessWithoutQuotes() {
+    final String text = """
+    d={ "key1": 222, 'key2': 333, 22: True, False: 22 }
+    d[<caret>]""";
+    assertContainsElements(doTestByText(text), "\"key1\"", "'key2'", "22", "False");
+  }
+
+  // PY-42738
+  public void testDictConstructorValueAccessWithDoubleQuotes() {
+    final String text = """
+    d=dict(aaa=222, bbb="val")
+    d["<caret>"]""";
+    assertSameElements(doTestByText(text), "aaa", "bbb");
+  }
+
+  // PY-42738
+  public void testDictConstructorValueAccessWithSingleQuotes() {
+    final String text = """
+    d=dict(aaa=222, bbb="val")
+    d['<caret>']""";
+    assertSameElements(doTestByText(text), "aaa", "bbb");
+  }
+
+  // PY-42738
+  public void testDictConstructorValueAccessWithoutQuotes() {
+    final String text = """
+    d=dict(aaa=222, bbb="val")
+    d[<caret>]""";
+    assertContainsElements(doTestByText(text), "\"aaa\"", "\"bbb\"");
+  }
+
+  // PY-42738
+  public void testDictAssignedValueAccessWithDoubleQuotes() {
+    final String text = """
+      d={}
+      d[30]=True
+      d[False]="zzz"
+      d["xxx"]=25
+      d['yyy']=26
+      d["<caret>"]""";
+    assertSameElements(doTestByText(text), "xxx", "yyy");
+  }
+
+  // PY-42738
+  public void testDictAssignedValueAccessWithSingleQuotes() {
+    final String text = """
+      d={}
+      d[30]=True
+      d[False]="zzz"
+      d["xxx"]=25
+      d['yyy']=26
+      d['<caret>']""";
+    assertSameElements(doTestByText(text), "xxx", "yyy");
+  }
+
+  // PY-42738
+  public void testDictAssignedValueAccessWithoutQuotes() {
+    final String text = """
+      d={}
+      d[30]=True
+      d[False]="zzz"
+      d["xxx"]=25
+      d['yyy']=26
+      d[<caret>]""";
+    assertContainsElements(doTestByText(text), "30", "False", "\"xxx\"", "'yyy'");
+  }
+
   public void testNoParensForDecorator() {  // PY-2210
     doTest();
   }
@@ -1491,7 +1575,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
                                                   bar = foo
                                                   bar['<caret>']""");
     assertNotNull(suggested);
-    assertContainsElements(suggested, "'k1'", "'k2'");
+    assertContainsElements(suggested, "k1", "k2");
   }
 
   // PY-33254
@@ -1716,7 +1800,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       b = a['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> assertContainsElements(doTestByText(test1), "'x'", "'y'")
+      () -> assertContainsElements(doTestByText(test1), "x", "y")
     );
   }
 
@@ -1734,7 +1818,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
          a = m['film']['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> assertContainsElements(doTestByText(test2), "'name'", "'year'")
+      () -> assertContainsElements(doTestByText(test2), "name", "year")
     );
   }
 
@@ -1749,7 +1833,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       m['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> assertContainsElements(doTestByText(test3), "'name'", "'year'")
+      () -> assertContainsElements(doTestByText(test3), "name", "year")
     );
   }
 
@@ -1768,8 +1852,8 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       () -> {
         List<String> lookupElementStrings = doTestByText(test4);
 
-        assertContainsElements(lookupElementStrings, "'name'", "'year'");
-        assertDoesntContain(lookupElementStrings, "'wrong_key'");
+        assertContainsElements(lookupElementStrings, "name", "year");
+        assertDoesntContain(lookupElementStrings, "wrong_key");
       }
     );
   }
@@ -1788,7 +1872,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
           return vehicle["<caret>"]""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> assertContainsElements(doTestByText(text), "\"id\"", "\"vin\"", "\"zip\"", "\"make\"", "\"trim\"")
+      () -> assertContainsElements(doTestByText(text), "id", "vin", "zip", "make", "trim")
     );
   }
 
@@ -1824,7 +1908,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
           return vehicle['<caret>']""";
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> assertContainsElements(doTestByText(text), "'id'", "'vin'", "'zip'", "'make'", "'trim'")
+      () -> assertContainsElements(doTestByText(text), "id", "vin", "zip", "make", "trim")
     );
   }
 
@@ -1843,8 +1927,8 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       () -> {
         List<String> lookupElementStrings = doTestByText(text);
 
-        assertContainsElements(lookupElementStrings, "\"coordinateX\"", "\"coordinateY\"");
-        assertDoesntContain(lookupElementStrings, "\"z\"");
+        assertContainsElements(lookupElementStrings, "coordinateX", "coordinateY");
+        assertDoesntContain(lookupElementStrings, "z");
       }
     );
   }
