@@ -43,7 +43,9 @@ import com.intellij.util.ui.UIUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TerminalColor
 import com.jediterm.terminal.TextStyle
+import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.ui.AwtTransformers
+import com.jediterm.terminal.util.CharUtils
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Color
 import java.awt.Component
@@ -301,3 +303,8 @@ internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> 
   return result!!
 }
 
+/** @return the string without second part of double width character if any */
+internal fun CharBuffer.normalize(): String {
+  val s = this.toString()
+  return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
+}

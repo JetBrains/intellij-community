@@ -99,11 +99,6 @@ private class OutputBuilder(private val commandEndMarker: String?) {
     }
   }
 
-  private fun CharBuffer.normalize(): String {
-    val s = this.toString()
-    return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
-  }
-
   private fun addTextChunk(text: String, style: TextStyle) {
     if (text.isNotEmpty()) {
       repeat(pendingNewLines) {

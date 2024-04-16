@@ -3,15 +3,13 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.terminal.*
 import com.jediterm.terminal.emulator.JediEmulator
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.JediTerminal
-import com.jediterm.terminal.model.StyleState
-import com.jediterm.terminal.model.TerminalSelection
-import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.exp.prompt.BuiltInPromptRenderer
 import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptRenderer
@@ -72,7 +70,8 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
 
     val output: StyledCommandOutput = ShellCommandOutputScraper.scrapeOutput(textBuffer)
     val highlightings = output.styleRanges.toHighlightings(output.text.length)
-    return ExpandedPromptInfo(TextWithHighlightings(output.text, highlightings), terminal.cursorX - 1, terminal.cursorY - 1)
+    val logicalPosition = textBuffer.screenBuffer.cursorToLogicalPosition(terminal.cursorX - 1, terminal.cursorY - 1)
+    return ExpandedPromptInfo(TextWithHighlightings(output.text, highlightings), logicalPosition.column, logicalPosition.line)
   }
 
   private fun List<StyleRange>.toHighlightings(totalTextLength: Int): List<HighlightingInfo> {
@@ -91,6 +90,35 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
     return highlightings
   }
 
+  // TODO: Add tests. Consider using it in TerminalCaretModel, because it is not taking into account the line wraps now.
+  /**
+   * [cursorX] and [cursorY] - the zero-based position of the cursor in the [LinesBuffer] grid.
+   * @return a logical position of the cursor taking into account the line wraps in the grid.
+   * If some lines are wrapped, we consider them as a single logical line.
+   */
+  private fun LinesBuffer.cursorToLogicalPosition(cursorX: Int, cursorY: Int): LogicalPosition {
+    assert(cursorX >= 0 && cursorY >= 0)
+    // Logical line is the number of non wrapped lines before the line with cursor
+    var logicalLine = 0
+    for (curY in 0 until cursorY) {
+      if (!getLine(curY).isWrapped) {
+        logicalLine++
+      }
+    }
+    // Calculate the cumulative length of wrapped lines before the current line
+    val wrappedLines = mutableListOf<TerminalLine>()
+    var curY = cursorY - 1
+    while (curY >= 0 && getLine(curY).isWrapped) {
+      wrappedLines.add(getLine(curY))
+      curY--
+    }
+    val wrappedLinesLength = wrappedLines.sumOf { line -> line.entries.sumOf { it.text.normalize().length } }
+    // Logical column is the cumulative length of the wrapped lines before + the cursor offset in the current line
+    val logicalColumn = wrappedLinesLength + cursorX
+    return LogicalPosition(logicalLine, logicalColumn)
+  }
+
+  // TODO: Add tests
   private fun TextWithHighlightings.subtext(startOffset: Int, endOffset: Int): TextWithHighlightings {
     assert(startOffset in 0..endOffset && endOffset <= text.length)
     if (startOffset == endOffset) {
@@ -114,6 +142,7 @@ class ShellPromptRenderer(private val session: BlockTerminalSession) : TerminalP
     return TextWithHighlightings(text.substring(startOffset, endOffset), adjustedHighlightings)
   }
 
+  // TODO: Add tests
   /** Removes blank text parts with default highlighting from the start */
   private fun TextWithHighlightings.trimStart(): TextWithHighlightings {
     if (text.isEmpty()) {
