@@ -1,12 +1,16 @@
 import com.jetbrains.rd.generator.gradle.RdGenTask
 
-buildscript {
-  apply from: "../../../build/rd-model/model-buildscript.gradle"
+plugins {
+  id "com.jetbrains.rdgen"
+  id "org.jetbrains.kotlin.jvm"
 }
 
-apply from: "../../../build/rd-model/model-base.gradle"
-
 sourceSets.main.java.srcDirs = ["modelSources"]
+
+dependencies {
+  api "com.jetbrains.rd:rd-gen:$rd_version"
+  api "org.jetbrains.kotlin:kotlin-stdlib:$rd_kotlin_version"
+}
 
 rdgen {
   verbose = true
