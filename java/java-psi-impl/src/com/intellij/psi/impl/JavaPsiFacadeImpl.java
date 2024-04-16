@@ -26,6 +26,8 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,19 +49,28 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final NotNullLazyValue<JvmFacadeImpl> myJvmFacade;
   private final JvmPsiConversionHelper myConversionHelper;
 
-  public JavaPsiFacadeImpl(@NotNull Project project) {
+  public JavaPsiFacadeImpl(@NotNull Project project, @Nullable CoroutineScope coroutineScope) {
     myProject = project;
     myFileManager = JavaFileManager.getInstance(myProject);
     myConstantEvaluationHelper = new PsiConstantEvaluationHelperImpl();
     myJvmFacade = NotNullLazyValue.atomicLazy(() -> (JvmFacadeImpl)JvmFacade.getInstance(project));
     myConversionHelper = JvmPsiConversionHelper.getInstance(myProject);
 
-    project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> {
+    MessageBus bus = project.getMessageBus();
+    (coroutineScope == null ? bus.simpleConnect() : bus.connect(coroutineScope)).subscribe(PsiModificationTracker.TOPIC, () -> {
       myClassCache.clear();
       myPackageCache.clear();
     });
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
+  }
+
+  /**
+   * @deprecated Use {@link JavaPsiFacade#getInstance(Project)}
+   */
+  @Deprecated
+  public JavaPsiFacadeImpl(@NotNull Project project) {
+    this(project, null);
   }
 
   @Override

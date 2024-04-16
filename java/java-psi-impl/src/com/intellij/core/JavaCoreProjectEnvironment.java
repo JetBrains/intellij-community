@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.lang.jvm.facade.JvmFacade;
@@ -59,7 +59,7 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   }
 
   protected void registerJavaPsiFacade() {
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(project);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(project, null);
     project.registerService(JavaPsiFacade.class, javaPsiFacade);
   }
 
