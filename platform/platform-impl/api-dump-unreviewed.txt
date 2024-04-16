@@ -29463,16 +29463,24 @@ c:com.intellij.ui.popup.AbstractPopup$MyContentPanel
 - computePreferredSize():java.awt.Dimension
 - getData(java.lang.String):java.lang.Object
 - setDataProvider(com.intellij.openapi.actionSystem.DataProvider):V
+f:com.intellij.ui.popup.ActionPopupOptions
+- s:create(Z,Z,Z,Z,I,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- s:empty():com.intellij.ui.popup.ActionPopupOptions
+- s:forStep(Z,Z,Z,com.intellij.openapi.util.Condition):com.intellij.ui.popup.ActionPopupOptions
+- s:forStepAndItems(Z,Z,Z,Z,Z,com.intellij.openapi.util.Condition,I):com.intellij.ui.popup.ActionPopupOptions
+- s:honorMnemonics():com.intellij.ui.popup.ActionPopupOptions
+- s:mnemonicsAndDisabled():com.intellij.ui.popup.ActionPopupOptions
+- s:showDisabled():com.intellij.ui.popup.ActionPopupOptions
 c:com.intellij.ui.popup.ActionPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 - com.intellij.openapi.ui.popup.SpeedSearchFilter
-- <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,com.intellij.openapi.util.Condition,Z,Z):V
+- <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):V
 - <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,Z,com.intellij.openapi.util.Condition,Z,Z,com.intellij.openapi.actionSystem.impl.PresentationFactory):V
 - canceled():V
-- s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,Z):java.util.List
+- s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):java.util.List
 - s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory):java.util.List
-- s:createActionsStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,java.lang.String,com.intellij.openapi.util.Condition,I,com.intellij.openapi.actionSystem.impl.PresentationFactory):com.intellij.openapi.ui.popup.ListPopupStep
+- s:createActionsStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,java.util.function.Supplier,com.intellij.ui.popup.ActionPopupOptions):com.intellij.openapi.ui.popup.ListPopupStep
 - createAnActionEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
 - getActionPlace():java.lang.String
 - getDefaultOptionIndex():I
@@ -29697,11 +29705,12 @@ c:com.intellij.ui.popup.PopupFactoryImpl
 c:com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
 - com.intellij.ui.popup.list.ListPopupImpl
 - p:<init>(com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.ListPopupStep,java.lang.Runnable,com.intellij.openapi.actionSystem.DataContext,I):V
+- <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable):V
 - <init>(com.intellij.ui.popup.WizardPopup,java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z):V
-- ps:createStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,Z,com.intellij.openapi.util.Condition,Z):com.intellij.openapi.ui.popup.ListPopupStep
+- ps:createStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions):com.intellij.openapi.ui.popup.ListPopupStep
 - dispose():V
 - p:handleLeftKeyPressed(java.awt.event.KeyEvent):V
 - p:handleRightKeyPressed(java.awt.event.KeyEvent):V
@@ -29755,7 +29764,7 @@ f:com.intellij.ui.popup.StackingPopupDispatcherImpl
 - setRestoreFocusSilently():V
 c:com.intellij.ui.popup.StateActionGroupPopup
 - com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
-- <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z,kotlin.jvm.functions.Function1):V
+- <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,com.intellij.ui.popup.ActionPopupOptions,java.lang.Runnable,kotlin.jvm.functions.Function1):V
 - p:createPopup(com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.PopupStep,java.lang.Object):com.intellij.ui.popup.WizardPopup
 - f:getGetState():kotlin.jvm.functions.Function1
 - p:getListElementRenderer():javax.swing.ListCellRenderer
