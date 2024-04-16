@@ -20,6 +20,8 @@ import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.UiNotifyConnector
 import com.intellij.util.ui.update.Update
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -83,6 +85,16 @@ open class TreeHandlerChangesTreeTracker(
     }
     tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener)
     Disposer.register(disposable) { tree.removePropertyChangeListener(JTree.TREE_MODEL_PROPERTY, changeListener) }
+
+    if (isForceKeepCurrentFileWhileFocused) {
+      val focusListener = object : FocusAdapter() {
+        override fun focusGained(e: FocusEvent?) {
+          updatePreviewLater(UpdateType.ON_SELECTION_CHANGE)
+        }
+      }
+      tree.addFocusListener(focusListener)
+      Disposer.register(disposable) { tree.removeFocusListener(focusListener) }
+    }
 
     if (updateWhileShown) {
       UiNotifyConnector.installOn(editorViewer.component, object : Activatable {
