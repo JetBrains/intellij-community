@@ -179,67 +179,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public JsonLikeSyntaxAdapter getSyntaxAdapter(Project project) {
-    return new JsonLikeSyntaxAdapter() {
-      private final JsonElementGenerator myGenerator = new JsonElementGenerator(project);
-      @Override
-      public @Nullable PsiElement getPropertyValue(PsiElement property) {
-        assert property instanceof JsonProperty;
-        return ((JsonProperty)property).getValue();
-      }
-
-      @Override
-      public @NotNull String getPropertyName(PsiElement property) {
-        assert property instanceof JsonProperty;
-        return ((JsonProperty)property).getName();
-      }
-
-      @Override
-      public @NotNull PsiElement getPropertyNameElement(PsiElement property) {
-        assert property instanceof JsonProperty;
-        return ((JsonProperty)property).getNameElement();
-      }
-
-      @Override
-      public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
-        return myGenerator.createProperty(name, value);
-      }
-
-      @Override
-      public boolean ensureComma(PsiElement self, PsiElement newElement) {
-        if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
-          self.getParent().addAfter(myGenerator.createComma(), self);
-          return true;
-        }
-        return false;
-      }
-
-      @Override
-      public void removeIfComma(PsiElement forward) {
-        if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
-          forward.delete();
-        }
-      }
-
-      @Override
-      public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
-        return true;
-      }
-
-      @Override
-      public @NotNull String getDefaultValueFromType(@Nullable JsonSchemaType type) {
-        return type == null ? "" : type.getDefaultValue();
-      }
-
-      @Override
-      public PsiElement adjustNewProperty(PsiElement element) {
-        return element;
-      }
-
-      @Override
-      public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
-        throw new IncorrectOperationException("Shouldn't use leafs for insertion in pure JSON!");
-      }
-    };
+    return JsonOriginalSyntaxAdapter.INSTANCE;
   }
 
   @Override
@@ -266,5 +206,43 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
       return child == null ? element.getTextRange() : child.getTextRange();
     }
     return element.getTextRange();
+  }
+
+  private static class JsonOriginalSyntaxAdapter implements JsonLikeSyntaxAdapter {
+    private static final JsonOriginalSyntaxAdapter INSTANCE = new JsonOriginalSyntaxAdapter();
+
+    @Override
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
+      return new JsonElementGenerator(element.getProject()).createProperty(name, value);
+    }
+
+    @Override
+    public void ensureComma(PsiElement self, PsiElement newElement) {
+      if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
+        self.getParent().addAfter(new JsonElementGenerator(self.getProject()).createComma(), self);
+      }
+    }
+
+    @Override
+    public void removeIfComma(PsiElement forward) {
+      if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == JsonElementTypes.COMMA) {
+        forward.delete();
+      }
+    }
+
+    @Override
+    public boolean fixWhitespaceBefore(PsiElement initialElement, PsiElement element) {
+      return true;
+    }
+
+    @Override
+    public PsiElement adjustNewProperty(PsiElement element) {
+      return element;
+    }
+
+    @Override
+    public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
+      throw new IncorrectOperationException("Shouldn't use leafs for insertion in pure JSON!");
+    }
   }
 }

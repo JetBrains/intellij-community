@@ -53,7 +53,7 @@ open class AddOptionalPropertiesIntention : IntentionAction {
 
       writeAction {
         executeCommand {
-          AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project)).performFix(objectPointer.dereference(), Ref.create())
+          AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project)).performFix(objectPointer.dereference())
         }
       }
       withContext(Dispatchers.EDT) {
@@ -76,7 +76,7 @@ open class AddOptionalPropertiesIntention : IntentionAction {
     val missingProperties = collectMissingPropertiesFromSchema(containingObject.createSmartPointer(), containingObject.project)
                               ?.missingKnownProperties ?: return IntentionPreviewInfo.EMPTY
     AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project))
-      .performFixInner(Ref.create(), containingObject, Ref.create())
+      .performFixInner(containingObject, Ref.create())
     ReformatCodeProcessor(containingObject.containingFile, false).run()
     return IntentionPreviewInfo.DIFF
   }
