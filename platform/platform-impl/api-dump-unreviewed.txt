@@ -21897,7 +21897,7 @@ f:com.intellij.openapi.wm.impl.DefaultCutStrategy
 - com.intellij.openapi.wm.impl.TextCutStrategy
 - <init>():V
 - calcMinTextWidth(java.lang.String,java.awt.FontMetrics):I
-- calcShownText(java.lang.String,java.awt.FontMetrics,I):java.lang.String
+- calcShownText(java.lang.String,java.awt.FontMetrics,I,java.awt.Graphics):java.lang.String
 c:com.intellij.openapi.wm.impl.DefaultToolbarComboButtonModel
 - com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 - <init>():V
@@ -22243,7 +22243,7 @@ f:com.intellij.openapi.wm.impl.TestWindowManager
 - suggestParentWindow(com.intellij.openapi.project.Project):java.awt.Window
 com.intellij.openapi.wm.impl.TextCutStrategy
 - a:calcMinTextWidth(java.lang.String,java.awt.FontMetrics):I
-- a:calcShownText(java.lang.String,java.awt.FontMetrics,I):java.lang.String
+- a:calcShownText(java.lang.String,java.awt.FontMetrics,I,java.awt.Graphics):java.lang.String
 com.intellij.openapi.wm.impl.TitleInfoProvider
 - sf:Companion:com.intellij.openapi.wm.impl.TitleInfoProvider$Companion
 - a:addUpdateListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V

@@ -56,7 +56,7 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     g.color = if (c.isEnabled) c.getForeground() else UIUtil.getLabelDisabledForeground()
 
     val baseline = c.getBaseline(c.width, c.height)
-    val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width)
+    val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width, g)
     val strBounds = metrics.getStringBounds(text, g).getBounds()
     strBounds.setLocation(max(0, (textRect.centerX - strBounds.centerX).toInt()), baseline)
 
