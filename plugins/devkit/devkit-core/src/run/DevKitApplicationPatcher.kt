@@ -68,7 +68,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       "-ea",
     )
 
-    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false")
+    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
 
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")
