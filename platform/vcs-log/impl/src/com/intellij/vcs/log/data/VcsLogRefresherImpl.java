@@ -110,8 +110,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @Override
   public void readFirstBlock() {
     try {
-      myDataPack =
-        buildMultiRepoDataPack(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()), myRecentCommitCount, false);
+      myDataPack = loadRecentData(new CommitCountRequirements(myRecentCommitCount).asMap(myProviders.keySet()), myRecentCommitCount,
+                                  false);
       mySingleTaskController.request(RefreshRequest.RELOAD_ALL); // build/rebuild the full log in background
     }
     catch (ProcessCanceledException e) {
@@ -124,8 +124,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   }
 
   @NotNull
-  private DataPack buildMultiRepoDataPack(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
-                                          int commitCount, boolean isSmallPack) throws VcsException {
+  private DataPack loadRecentData(@NotNull Map<VirtualFile, VcsLogProvider.Requirements> requirements,
+                                  int commitCount, boolean isSmallPack) throws VcsException {
     LogInfo data = loadRecentData(requirements);
     Collection<List<GraphCommit<Integer>>> commits = data.getCommits();
     Map<VirtualFile, CompressedRefs> refs = data.getRefs();
@@ -424,7 +424,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         try {
           int commitCount = SMALL_DATA_PACK_COMMITS_COUNT;
           Map<VirtualFile, VcsLogProvider.Requirements> requirements = prepareRequirements(myProviders.keySet(), commitCount, null);
-          return buildMultiRepoDataPack(requirements, commitCount, true);
+          return loadRecentData(requirements, commitCount, true);
         }
         catch (ProcessCanceledException e) {
           throw e;
