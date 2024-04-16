@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
@@ -97,8 +98,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
               predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
               mark: StatusMark?,
               indexingReason: String) : this(project, false, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
-                                              if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
-                                              null)
+                                             if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
+                                             null)
 
   @JvmOverloads
   constructor(project: Project,
@@ -402,21 +403,30 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                 scanningStatistics.tryFinishVfsIterationAndScanningApplication()
 
                 scanningStatistics.startFileChecking()
-                for ((first, second) in rootsAndFiles) {
-                  val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
-                                                    first, scanningRequest, myFilterHandler)
-                  val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
-                                                            scanningStatistics, perProviderSink)
-                  if (!rootIterator.mayBeUsed()) {
-                    LOG.warn("Iterator based on $provider can't be used.")
-                    continue
+                ReadAction.nonBlocking {
+                  while (!rootsAndFiles.isEmpty()) {
+                    val (first, second) = rootsAndFiles.removeLast()
+                    try {
+                      if (first?.isValid == false) continue
+                      val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
+                                                        first, scanningRequest, myFilterHandler)
+                      val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
+                                                                scanningStatistics, perProviderSink)
+                      if (!rootIterator.mayBeUsed()) {
+                        LOG.warn("Iterator based on $provider can't be used.")
+                        continue
+                      }
+                      second.forEach {
+                        if (it.isValid)
+                          rootIterator.processFile(it)
+                      }
+                    }
+                    catch (e: ProcessCanceledException) {
+                      rootsAndFiles.add(first to second)
+                      throw e
+                    }
                   }
-                  second.forEach(
-                    Consumer { it: VirtualFile? ->
-                      rootIterator.processFile(
-                        it!!)
-                    })
-                }
+                }.executeSynchronously()
                 scanningStatistics.tryFinishFilesChecking()
                 perProviderSink.commit()
               }
