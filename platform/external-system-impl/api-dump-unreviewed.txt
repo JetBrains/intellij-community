@@ -594,6 +594,7 @@ f:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,com.intellij.openapi.Disposable):V
 - f:createComponent():javax.swing.JComponent
 - getData(java.lang.String):java.lang.Object
+- f:getDependencies():java.util.List
 - setSelectedDependency(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Data):V
 - setSelectedDependency(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency$Data,java.lang.String):V
 - setSelectedDependency(com.intellij.openapi.module.Module,java.util.List):V
