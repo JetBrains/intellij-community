@@ -359,7 +359,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   @Override
   public boolean isUnderRoots(@NotNull VirtualFile file) {
     final List<VirtualFile> roots = myDescriptor.getRoots();
-    if (roots.size() == 0) return true;
+    if (roots.isEmpty()) return true;
 
     for (VirtualFile root : roots) {
       if (root != null && VfsUtilCore.isAncestor(root, file, false)) {
@@ -388,7 +388,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   private void processSelectionChange() {
-    if (myListeners.size() == 0) return;
+    if (myListeners.isEmpty()) return;
     List<VirtualFile> selection = new ArrayList<>();
 
     final TreePath[] paths = myTree.getSelectionPaths();

@@ -335,7 +335,7 @@ public final class SearchUtil {
                                                 boolean force) {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
 
-    if (option == null || option.trim().length() == 0) {
+    if (option == null || option.trim().isEmpty()) {
       return false;
     }
     List<String> label = getLabelsFromComponent(rootComponent);
@@ -405,7 +405,7 @@ public final class SearchUtil {
   }
 
   public static boolean isComponentHighlighted(String text, String option, boolean force, final SearchableConfigurable configurable) {
-    if (text == null || option == null || option.length() == 0) {
+    if (text == null || option == null || option.isEmpty()) {
       return false;
     }
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
@@ -431,7 +431,7 @@ public final class SearchUtil {
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter, Color textColor, Color backgroundColor) {
-    if (filter == null || filter.length() == 0) {
+    if (filter == null || filter.isEmpty()) {
       return textToMarkup;
     }
     int bodyStart = textToMarkup.indexOf("<body>");
@@ -541,7 +541,7 @@ public final class SearchUtil {
     int index = 0;
     for (IntPair range : matchingRanges){
       @NlsSafe final String before = text.substring(index, range.first);
-      if (before.length() > 0) {
+      if (!before.isEmpty()) {
         textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
       }
       index = range.second;
@@ -551,7 +551,7 @@ public final class SearchUtil {
                                                                                              SimpleTextAttributes.STYLE_SEARCH_MATCH));
     }
     @NlsSafe final String after = text.substring(index);
-    if (after.length() > 0) {
+    if (!after.isEmpty()) {
       textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
     }
   }
@@ -565,7 +565,7 @@ public final class SearchUtil {
     if (text == null) {
       return;
     }
-    if (filter == null || filter.length() == 0) {
+    if (filter == null || filter.isEmpty()) {
       textRenderer.setDynamicSearchMatchHighlighting(false);
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
@@ -608,7 +608,7 @@ public final class SearchUtil {
       for (String word : selectedWords) {
         text = text.substring(idx);
         final @NlsSafe String before = text.substring(0, text.indexOf(word));
-        if (before.length() > 0) {
+        if (!before.isEmpty()) {
           textRenderer.append(before, new SimpleTextAttributes(background, foreground, null, style));
         }
         idx = text.indexOf(word) + word.length();
@@ -618,7 +618,7 @@ public final class SearchUtil {
                                                                                                SimpleTextAttributes.STYLE_SEARCH_MATCH));
       }
       final @NlsSafe String after = text.substring(idx);
-      if (after.length() > 0) {
+      if (!after.isEmpty()) {
         textRenderer.append(after, new SimpleTextAttributes(background, foreground, null, style));
       }
     }
@@ -669,7 +669,7 @@ public final class SearchUtil {
       withoutQuoted.append(" ").append(filter, beg, start);
       beg = matcher.end(1);
       final String trimmed = filter.substring(start, beg).trim();
-      if (trimmed.length() > 0) {
+      if (!trimmed.isEmpty()) {
         quoted.add(trimmed);
       }
     }

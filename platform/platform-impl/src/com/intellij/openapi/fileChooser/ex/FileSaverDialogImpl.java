@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -211,7 +211,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   private boolean isFileNameExist() {
     if (myPathTextField == null) return false;
     final String path = myPathTextField.getTextFieldText();
-    return path != null && new File(path.trim()).exists() && myFileName.getText().trim().length() > 0;
+    return path != null && new File(path.trim()).exists() && !myFileName.getText().trim().isEmpty();
   }
 
   protected void updateOkButton() {

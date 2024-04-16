@@ -447,13 +447,13 @@ public class WSLDistribution implements AbstractWslDistribution {
     StringBuilder builder = new StringBuilder();
     commandLine.getEnvironment().keySet().stream().sorted().forEach((envName) -> {
       if (StringUtil.isNotEmpty(envName)) {
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append(":");
         }
         builder.append(envName).append("/u");
       }
     });
-    if (builder.length() > 0) {
+    if (!builder.isEmpty()) {
       String prevValue = commandLine.getEnvironment().get(WslConstants.WSLENV);
       if (prevValue == null) {
         prevValue = commandLine.getParentEnvironment().get(WslConstants.WSLENV);

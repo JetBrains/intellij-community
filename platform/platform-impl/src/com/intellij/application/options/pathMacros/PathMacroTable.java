@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -50,7 +50,7 @@ public final class PathMacroTable extends JBTable {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         final String macroValue = getMacroValueAt(row);
-        component.setForeground(macroValue.length() == 0
+        component.setForeground(macroValue.isEmpty()
                                 ? JBColor.RED
                                 : isSelected ? table.getSelectionForeground() : table.getForeground());
         return component;
@@ -233,13 +233,13 @@ public final class PathMacroTable extends JBTable {
 
     @Override
     public boolean checkName(String name) {
-      if (name.length() == 0) return false;
+      if (name.isEmpty()) return false;
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }
 
     @Override
     public boolean isOK(String name, String value) {
-      if(name.length() == 0) return false;
+      if(name.isEmpty()) return false;
       if (hasMacroWithName(name)) {
         Messages.showErrorDialog(PathMacroTable.this,
                                  ApplicationBundle.message("error.variable.already.exists", name), myTitle);

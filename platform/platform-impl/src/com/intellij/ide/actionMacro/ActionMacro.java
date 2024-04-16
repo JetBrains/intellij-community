@@ -162,7 +162,7 @@ public final class ActionMacro {
   }
 
   public void appendKeyPressed(char c, int keyCode, @JdkConstants.InputEventMask int modifiers) {
-    ActionDescriptor lastAction = myActions.size() > 0 ? myActions.get(myActions.size() - 1) : null;
+    ActionDescriptor lastAction = !myActions.isEmpty() ? myActions.get(myActions.size() - 1) : null;
     if (lastAction instanceof TypedDescriptor) {
       ((TypedDescriptor)lastAction).addChar(c, keyCode, modifiers);
     }

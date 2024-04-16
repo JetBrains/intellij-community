@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.BrowserUtil;
@@ -312,7 +312,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     if (parts.size() <= 1) return html;
     StringBuilder b = new StringBuilder();
     for (String part : parts) {
-      boolean addBorder = b.length() > 0;
+      boolean addBorder = !b.isEmpty();
       b.append("<div");
       if (addBorder) {
         b.append(" style='margin-top:6; padding-top:6; border-top: thin solid #");
