@@ -11,13 +11,13 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import kotlin.reflect.KClass
 
-internal abstract class ProPromoConfigurable : ConfigurableWithId, Configurable.Promo {
+abstract class ProPromoConfigurable : ConfigurableWithId, Configurable.Promo {
   override fun isModified(): Boolean = false
   override fun apply() = Unit
   override fun getPromoIcon(): Icon = AllIcons.Ultimate.Lock
 }
 
-internal abstract class ProPromoConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
+abstract class ProPromoConfigurableProvider(private val clazz: KClass<out Configurable>) : ConfigurableProvider() {
   final override fun createConfigurable(): Configurable? {
     return clazz.java.getConstructor().newInstance()
   }
@@ -27,7 +27,6 @@ internal class PromoDatabaseConfigurableProvider : ProPromoConfigurableProvider(
 internal class PromoJSConfigurableProvider : ProPromoConfigurableProvider(PromoJSConfigurable::class)
 internal class PromoTSConfigurableProvider : ProPromoConfigurableProvider(PromoTSConfigurable::class)
 internal class PromoDjangoConfigurableProvider : ProPromoConfigurableProvider(PromoDjangoConfigurable::class)
-internal class PromoAiAssistantConfigurableProvider : ProPromoConfigurableProvider(PromoAiAssistantConfigurable::class)
 internal class PromoJupyterConfigurableProvider : ProPromoConfigurableProvider(PromoJupyterConfigurable::class)
 internal class PromoRemoteSshConfigurableProvider : ProPromoConfigurableProvider(PromoRemoteSshConfigurable::class)
 
@@ -58,13 +57,6 @@ internal class PromoDjangoConfigurable : ProPromoConfigurable() {
   override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.django")
   override fun createComponent(): JComponent =  djangoFeatures(PromoEventSource.SETTINGS)
 }
-
-internal class PromoAiAssistantConfigurable : ProPromoConfigurable() {
-  override fun getId(): String = "promo.ai"
-  override fun getDisplayName(): String = PyCharmCommunityCustomizationBundle.message("promo.configurable.ai")
-  override fun createComponent(): JComponent =  aiAssistantFeatures(PromoEventSource.SETTINGS)
-}
-
 
 internal class PromoJupyterConfigurable : ProPromoConfigurable() {
   override fun getId(): String = "promo.jupyter"

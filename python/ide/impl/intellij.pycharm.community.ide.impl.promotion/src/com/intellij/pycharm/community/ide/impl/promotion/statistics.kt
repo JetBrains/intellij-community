@@ -25,7 +25,7 @@ object PyCharmPromoCollector : CounterUsagesCollector() {
   internal val PromoLearnModeEvent = GROUP.registerEvent("open.learn.more.page", PromoEventSourceField, PromoTopicField)
 }
 
-internal enum class PromoEventSource {
+enum class PromoEventSource {
   GO_TO_ACTION,
   NEW_FILE,
   PROJECT_WIZARD,
@@ -33,7 +33,7 @@ internal enum class PromoEventSource {
   FILE_PREVIEW,
 }
 
-internal enum class PromoTopic {
+enum class PromoTopic {
   AiCodeCompletion,
   Database,
   Dataframe,
@@ -52,7 +52,7 @@ internal fun createOpenDownloadPageLambda(promoEventSource: PromoEventSource, pr
   PromoOpenDownloadPageEvent.log(promoEventSource, promoTopic)
 }
 
-internal fun createOpenLearnMorePageLambda(promoEventSource: PromoEventSource, promoTopic: PromoTopic): (String) -> Unit = { url ->
+fun createOpenLearnMorePageLambda(promoEventSource: PromoEventSource, promoTopic: PromoTopic): (String) -> Unit = { url ->
   BrowserUtil.browse(createLinkWithInfo(promoTopic, url))
   PromoLearnModeEvent.log(promoEventSource, promoTopic)
 }
