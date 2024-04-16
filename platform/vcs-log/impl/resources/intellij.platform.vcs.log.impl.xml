@@ -94,6 +94,8 @@
     <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
     <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
+
+    <bookmarkProvider implementation="com.intellij.vcs.log.ui.VcsLogBookmarkProvider"/>
   </extensions>
 
   <projectListeners>

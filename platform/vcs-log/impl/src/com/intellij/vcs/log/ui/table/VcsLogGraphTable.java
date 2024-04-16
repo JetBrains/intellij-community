@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -157,6 +158,7 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
     getSelectionModel().addListSelectionListener(e -> mySelectionSnapshot = null);
     getColumnModel().setColumnSelectionAllowed(false);
 
+    putClientProperty(BookmarksManager.ALLOWED, true);
     ScrollingUtil.installActions(this, false);
   }
 
