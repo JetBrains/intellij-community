@@ -361,8 +361,11 @@ fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
-fun <T : CommandChain> T.delayType(delayMs: Int, text: String, calculateAnalyzesTime: Boolean = false): T = apply {
-  addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime")
+fun <T : CommandChain> T.delayType(delayMs: Int,
+                                   text: String,
+                                   calculateAnalyzesTime: Boolean = false,
+                                   disableWriteProtection: Boolean = false): T = apply {
+  addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
 fun <T : CommandChain> T.doLocalInspection(): T = apply {
