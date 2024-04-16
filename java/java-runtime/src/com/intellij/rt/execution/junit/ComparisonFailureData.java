@@ -28,7 +28,7 @@ public class ComparisonFailureData {
 
   private final String myExpected;
   private final String myActual;
-  private final String myFilePath;
+  private final String myExpectedFilePath;
   private final String myActualFilePath;
 
   private static final Map<Class<?>, Field> EXPECTED = new HashMap<>();
@@ -60,14 +60,14 @@ public class ComparisonFailureData {
     this(expected, actual, null);
   }
 
-  public ComparisonFailureData(String expected, String actual, String filePath) {
-    this(expected, actual, filePath, null);
+  public ComparisonFailureData(String expected, String actual, String expectedFilePath) {
+    this(expected, actual, expectedFilePath, null);
   }
 
-  public ComparisonFailureData(String expected, String actual, String filePath, String actualFilePath) {
+  public ComparisonFailureData(String expected, String actual, String expectedFilePath, String actualFilePath) {
     myExpected = expected;
     myActual = actual;
-    myFilePath = filePath != null ? new File(filePath).getAbsolutePath() : null;
+    myExpectedFilePath = expectedFilePath != null ? new File(expectedFilePath).getAbsolutePath() : null;
     myActualFilePath = actualFilePath != null ? new File(actualFilePath).getAbsolutePath() : null;
   }
 
@@ -106,17 +106,17 @@ public class ComparisonFailureData {
         attrs.put("message", comparisonFailureMessage);
       }
 
-      final String filePath = notification.getFilePath();
+      final String expectedFilePath = notification.getExpectedFilePath();
       final String actualFilePath = notification.getActualFilePath();
       final String expected = notification.getExpected();
       final String actual = notification.getActual();
 
-      int fullLength = (filePath == null && expected != null ? expected.length() : 0) +
+      int fullLength = (expectedFilePath == null && expected != null ? expected.length() : 0) +
                        (actualFilePath == null && actual != null ? actual.length() : 0) +
                        details.length() +
                        comparisonFailureMessage.length() + 100;
-      if (filePath != null) {
-        attrs.put("expectedFile", filePath);
+      if (expectedFilePath != null) {
+        attrs.put("expectedFile", expectedFilePath);
       }
       else {
         writeDiffSide(attrs, "expected", expected, fullLength);
@@ -183,8 +183,8 @@ public class ComparisonFailureData {
     return isAssertionError(throwableClass.getSuperclass());
   }
 
-  public String getFilePath() {
-    return myFilePath;
+  public String getExpectedFilePath() {
+    return myExpectedFilePath;
   }
 
   public String getActualFilePath() {
