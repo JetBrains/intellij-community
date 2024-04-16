@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.platform.navbar.NavBarItemPresentation
 import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.compatibility.DefaultNavBarItem
+import com.intellij.platform.navbar.backend.compatibility.compatibilityNavBarItem
+import com.intellij.platform.navbar.backend.compatibility.getBgData
 import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.platform.navbar.backend.impl.pathToItem
-import com.intellij.platform.navbar.compatibility.backend.DefaultNavBarItem
-import com.intellij.platform.navbar.compatibility.backend.compatibilityNavBarItem
-import com.intellij.platform.navbar.compatibility.backend.getBgData
 import com.intellij.platform.navbar.frontend.contextModel
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
