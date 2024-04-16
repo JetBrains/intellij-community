@@ -3,14 +3,23 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenModel
 
 interface MavenServerResultTransformer {
 
-  fun transform(transformer: RemotePathTransformerFactory.Transformer, model: MavenModel)
+  fun transform(modelToTransformInPlace: MavenModel, moduleFile: VirtualFile)
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.service<MavenServerResultTransformer>()
+
+    @JvmStatic
+    fun transformPaths(transformer: RemotePathTransformerFactory.Transformer, modelToTransformInPlace: MavenModel) {
+      if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
+        MavenBuildPathsChange({ transformer.toIdePath(it)!! }, { transformer.canBeRemotePath(it) }).perform(modelToTransformInPlace)
+      }
+    }
+
   }
 }

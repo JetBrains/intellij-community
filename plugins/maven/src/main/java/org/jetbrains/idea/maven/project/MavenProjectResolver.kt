@@ -154,10 +154,10 @@ class MavenProjectResolver(private val myProject: Project) {
       val groupedProblems = readingProblems.groupBy { FileUtil.toSystemIndependentName(trimLineAndColumn(it.path)) }
       for ((path, projectProblems) in groupedProblems) {
         val mavenProject = pathToMavenProject[path]
-          if (null != mavenProject) {
-            mavenProject.updateState(projectProblems)
-            tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL), null)
-          }
+        if (null != mavenProject) {
+          mavenProject.updateState(projectProblems)
+          tree.fireProjectResolved(Pair.create(mavenProject, MavenProjectChanges.ALL), null)
+        }
       }
     }
 
@@ -338,6 +338,9 @@ class MavenProjectResolver(private val myProject: Project) {
 
     MavenLog.LOG.debug(
       "Project resolution: updating maven project $mavenProjectCandidate, keepPreviousArtifacts=$keepPreviousArtifacts, dependencies: ${result.mavenModel.dependencies.size}")
+
+    MavenServerResultTransformer.getInstance(myProject)
+      .transform(result.mavenModel, mavenProjectCandidate.file)
 
     mavenProjectCandidate.updateState(
       result.mavenModel,

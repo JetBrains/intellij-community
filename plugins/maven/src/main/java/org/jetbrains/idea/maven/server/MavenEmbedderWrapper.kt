@@ -88,8 +88,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
     for (result in results) {
       val data = result.projectData ?: continue
-      MavenServerResultTransformer.getInstance(project)
-        .transform(transformer, data.mavenModel)
+      MavenServerResultTransformer.transformPaths(transformer, data.mavenModel)
     }
     return results
   }

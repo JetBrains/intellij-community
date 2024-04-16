@@ -66,7 +66,7 @@ abstract class AbstractMavenServerConnector(override val project: Project?,  // 
     val targetBasedir = File(transformer.toRemotePathOrSelf(basedir.toString()))
     val targetPomDir = File(transformer.toRemotePathOrSelf(pomDir.toString()))
     val m = getServer().interpolateAndAlignModel(model, targetBasedir, targetPomDir, MavenRemoteObjectWrapper.ourToken)
-    MavenServerResultTransformer.getInstance(project!!).transform(transformer, m)
+    MavenServerResultTransformer.transformPaths(transformer, m)
     return m
   }
 
