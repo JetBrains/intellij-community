@@ -32,6 +32,7 @@ class GitStashTracker(private val project: Project) : Disposable {
 
   var stashes = emptyMap<VirtualFile, Stashes>()
     private set
+  val roots get() = stashes.keys
 
   init {
     val connection = project.messageBus.connect(this)
