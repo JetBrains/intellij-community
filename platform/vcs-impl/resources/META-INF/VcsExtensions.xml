@@ -93,7 +93,7 @@
                          id="combinedDiffFindPrevious" order="first"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.vcs.changes.patch.tool.DiffPatchFileEditorProvider"
-                        id="DiffPatchFileEditorProvider" fileType="PATCH" isDocumentRequired="true"/>
+                        id="DiffPatchFileEditorProvider" fileType="PATCH"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowStandaloneDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
