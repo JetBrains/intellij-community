@@ -123,8 +123,6 @@ f:com.intellij.execution.process.ConsoleHighlighter
 - a:createProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
 - s:getInstance():com.intellij.execution.process.ElevationService
 - isAvailable():Z
-com.intellij.execution.process.ElevationServiceAvailability
-- a:isAvailable():Z
 a:com.intellij.execution.process.ProcessHandlerFactory
 - <init>():V
 - a:createColoredProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.OSProcessHandler
