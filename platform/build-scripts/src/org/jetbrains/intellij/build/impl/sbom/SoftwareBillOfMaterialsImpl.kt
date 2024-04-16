@@ -48,6 +48,9 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.bufferedReader
@@ -94,10 +97,14 @@ internal class SoftwareBillOfMaterialsImpl(
     check(Files.exists(eula)) {
       "$eula is missing"
     }
+    val currentYear = Instant.ofEpochSecond(context.options.buildDateInSeconds)
+      .let { ZonedDateTime.ofInstant(it, ZoneOffset.UTC) }
+      .year
     Options.DistributionLicense(
       name = "JetBrains User Agreement",
       text = Jsoup.parse(Files.readString(eula)).text(),
-      url = "https://www.jetbrains.com/legal/docs/toolbox/user/"
+      url = "https://www.jetbrains.com/legal/docs/toolbox/user/",
+      copyrightText = "Copyright 2000-$currentYear ${Suppliers.JETBRAINS} and contributors",
     )
   }
 
@@ -139,7 +146,6 @@ internal class SoftwareBillOfMaterialsImpl(
       !context.shouldBuildDistributions() -> "No distribution was built"
       documentNamespace == null -> "Document namespace isn't specified"
       context.productProperties.sbomOptions.creator == null -> "Document creator isn't specified"
-      context.productProperties.sbomOptions.copyrightText == null -> "Copyright text isn't specified"
       context.productProperties.sbomOptions.license == null -> "Distribution license isn't specified"
       else -> null
     }
@@ -218,7 +224,7 @@ internal class SoftwareBillOfMaterialsImpl(
       setSupplier(supplier)
       setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
     }
-    claimContainedFiles(spdxPackage = runtimeArchivePackage, document = this, license = license, context = context)
+    claimContainedFiles(spdxPackage = runtimeArchivePackage, document = this, license = license)
     /**
      * See [BundledRuntime.extract]
      */
@@ -343,7 +349,6 @@ internal class SoftwareBillOfMaterialsImpl(
         spdxPackage = rootPackage,
         files = containedPackages.flatMap { it.files },
         document = document,
-        context = context,
         license = license,
       )
     }
@@ -397,7 +402,7 @@ internal class SoftwareBillOfMaterialsImpl(
           .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
           .setSupplier(creator)
       }
-      claimContainedFiles(spdxPackage = filePackage, document = document, license = license, context = context)
+      claimContainedFiles(spdxPackage = filePackage, document = document, license = license)
       validate(filePackage)
       it.path to filePackage
     }
@@ -590,6 +595,14 @@ internal class SoftwareBillOfMaterialsImpl(
 
     val supplier: String? = license.supplier ?: organizations ?: developers
 
+    val copyrightText: String?
+      get() = if (license.copyrightText == null && license.license == LibraryLicense.JETBRAINS_OWN) {
+        jetBrainsOwnLicense.copyrightText
+      }
+      else {
+        license.copyrightText
+      }
+
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
         license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
@@ -624,8 +637,8 @@ internal class SoftwareBillOfMaterialsImpl(
     val upstreamPackage = spdxPackageUpstream(library.license.forkedFrom)
     val libPackage = spdxPackage(
       this, name = "${library.coordinates.groupId}:${library.coordinates.artifactId}",
-      copyrightText = library.license.copyrightText,
       licenseDeclared = library.license(this),
+      copyrightText = library.copyrightText,
     ) {
       setVersionInfo(checkNotNull(library.coordinates.version) {
         "Missing version for ${library.coordinates}"
@@ -744,11 +757,8 @@ private fun claimContainedFiles(
   files: Collection<SpdxFile> = spdxPackage.files,
   document: SpdxDocument,
   license: Options.DistributionLicense,
-  context: BuildContext,
 ) {
-  spdxPackage.copyrightText = requireNotNull(context.productProperties.sbomOptions.copyrightText) {
-    "Copyright text isn't specified"
-  }
+  spdxPackage.copyrightText = license.copyrightText
   spdxPackage.licenseDeclared = extractedLicenseInfo(
     spdxDocument = document,
     name = license.name,
