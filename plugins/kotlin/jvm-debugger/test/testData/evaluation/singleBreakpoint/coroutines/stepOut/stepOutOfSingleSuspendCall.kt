@@ -2,17 +2,15 @@
 
 import kotlinx.coroutines.*
 
-fun main() {
-    runBlocking  {
-        for (i in 0..100) {
-            launch {
-                val x = funWithSuspendLast(i)
-                // EXPRESSION: i
-                // RESULT: 25: I
-                println("x = $x")
-                delay(1)
-                println("i = $i")
-            }
+fun main() = runBlocking  {
+    for (i in 0..100) {
+        launch(Dispatchers.Default) {
+            val x = funWithSuspendLast(i)
+            // EXPRESSION: i
+            // RESULT: 25: I
+            println("x = $x")
+            delay(1)
+            println("i = $i")
         }
     }
 }

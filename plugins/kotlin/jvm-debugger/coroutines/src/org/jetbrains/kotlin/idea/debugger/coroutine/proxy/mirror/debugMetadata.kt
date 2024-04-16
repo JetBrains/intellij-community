@@ -98,20 +98,14 @@ class BaseContinuationImpl(context: DefaultExecutionContext, private val debugMe
     }
 }
 
-/**
- * This class contains part of the implementation of [BaseContinuationImpl], 
- * it creates a minimized version of BaseContinuationImplMirror,
- * which only contains the next completion reference and the coroutine owner reference, if we could extract it.
- * Used to create a Continuation filter for stepping.
- */
-class BaseContinuationImplLight(context: DefaultExecutionContext) : BaseMirror<ObjectReference, MirrorOfBaseContinuationImplLight>("kotlin.coroutines.jvm.internal.BaseContinuationImpl", context) {
-    private val getCompletion by FieldMirrorDelegate("completion", this)
+class CoroutineStackFrameLight(context: DefaultExecutionContext): BaseMirror<ObjectReference, MirrorOfBaseContinuationImplLight>("kotlin.coroutines.jvm.internal.CoroutineStackFrame", context) {
+    private val getCallerFrame by MethodMirrorDelegate("getCallerFrame", this)
 
     override fun fetchMirror(value: ObjectReference, context: DefaultExecutionContext): MirrorOfBaseContinuationImplLight {
-        val completionValue = getCompletion.value(value)
+        val completionValue = getCallerFrame.value(value, context)
         return MirrorOfBaseContinuationImplLight(
             value,
-            completionValue?.takeIf { getCompletion.isCompatible(it) },
+            completionValue?.takeIf { getCallerFrame.isCompatible(it) },
             completionValue?.takeIf { DebugProbesImplCoroutineOwner.instanceOf(it) }
         )
     }

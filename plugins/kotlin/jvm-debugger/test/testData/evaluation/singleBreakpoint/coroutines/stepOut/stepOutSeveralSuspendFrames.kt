@@ -4,39 +4,44 @@ package souSuspendFun
 
 import kotlinx.coroutines.*
 
-private fun foo(): Int {
-    //Breakpoint!
-    return 42                                                      
+private fun foo(i: Int): Int {
+    if (i == 25) {
+        //Breakpoint!
+        return 10
+    }
+    return 42
 }
 
-suspend fun fourth(): Int {
+suspend fun fourth(i: Int): Int {
     delay(1)
-    foo()
+    foo(i)
     return 5
 }
 
-suspend fun third() : Int? {
+suspend fun third(i: Int) : Int? {
     delay(1)
-    val res = fourth()
+    val res = fourth(i)
     println(res)
-    return res                                 
+    return res
 }
 
-suspend fun second(): Int {
+suspend fun second(i: Int): Int {
     delay(1)
-    return third()?.let { return it } ?: 0
-}      
+    return third(i)?.let { return it } ?: 0
+}
 
-suspend fun first(): Int {
+suspend fun first(i: Int): Int {
     delay(1)
-    second()                                                      
+    second(i)
+    // EXPRESSION: i
+    // RESULT: 25: I
     return 12
 }
 
-fun main() {
-    runBlocking {
-        launch {
-            first()                                                  
+fun main() = runBlocking {
+    for (i in 0 .. 100) {
+        launch(Dispatchers.Default) {
+            first(i)
         }
     }
 }

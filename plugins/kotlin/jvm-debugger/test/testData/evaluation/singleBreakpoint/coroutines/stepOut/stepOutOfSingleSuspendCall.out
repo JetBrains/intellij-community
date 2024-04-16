@@ -1,11 +1,11 @@
-LineBreakpoint created at stepOutOfSingleSuspendCall.kt:23
+LineBreakpoint created at stepOutOfSingleSuspendCall.kt:21
 Run Java
 Connected to the target VM
-stepOutOfSingleSuspendCall.kt:23
-stepOutOfSingleSuspendCall.kt:9
+stepOutOfSingleSuspendCall.kt:21
+stepOutOfSingleSuspendCall.kt:8
+stepOutOfSingleSuspendCall.kt:11
 stepOutOfSingleSuspendCall.kt:12
 stepOutOfSingleSuspendCall.kt:13
-stepOutOfSingleSuspendCall.kt:14
 Compile bytecode for i
 Disconnected from the target VM
 

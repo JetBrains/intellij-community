@@ -26,10 +26,7 @@ import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.BaseContinuationImplLight
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -112,7 +109,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         continuation: ObjectReference,
         defaultExecutionContext: DefaultExecutionContext
     ): CoroutineFilter? {
-        val baseContinuationImpl = BaseContinuationImplLight(defaultExecutionContext)
+        val baseContinuationImpl = CoroutineStackFrameLight(defaultExecutionContext)
         var loopContinuation = continuation
         while (true) {
             val continuationMirror = baseContinuationImpl.mirror(loopContinuation, defaultExecutionContext)
@@ -133,7 +130,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         continuation: ObjectReference,
         defaultExecutionContext: DefaultExecutionContext
     ): CoroutineFilter? {
-        val baseContinuationImpl = BaseContinuationImplLight(defaultExecutionContext)
+        val baseContinuationImpl = CoroutineStackFrameLight(defaultExecutionContext)
         var loopContinuation = continuation
         while (true) {
             val continuationMirror = baseContinuationImpl.mirror(loopContinuation, defaultExecutionContext)
@@ -162,9 +159,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     ): CoroutineFilter? {
         if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             val continuationIdValue = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "tryGetContinuationId", listOf(currentContinuation))
-            if (continuationIdValue != null) {
-                return CoroutineIdFilter(setOf((continuationIdValue as LongValue).value()))
-            }
+            (continuationIdValue as? LongValue)?.value()?.let { if (it != -1L) return CoroutineIdFilter(setOf(it)) }
             thisLogger().warn("[coroutine filter]: Could not extract continuation ID, location = ${context.frameProxy?.location()}")
         }
         val rootContinuation = callMethodFromHelper(ContinuationExtractorHelper::class.java, context, "getRootContinuation", listOf(currentContinuation))

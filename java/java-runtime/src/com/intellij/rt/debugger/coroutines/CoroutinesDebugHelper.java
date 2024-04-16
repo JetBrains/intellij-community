@@ -32,8 +32,11 @@ public final class CoroutinesDebugHelper {
 
   public static long tryGetContinuationId(Object continuation) throws ReflectiveOperationException {
     Object rootContinuation = getCoroutineOwner(continuation);
-    Object debugCoroutineInfo = getField(rootContinuation, DEBUG_COROUTINE_INFO_FIELD);
-    return (long) getField(debugCoroutineInfo, SEQUENCE_NUMBER_FIELD);
+    if (rootContinuation.getClass().getSimpleName().contains(COROUTINE_OWNER_CLASS)) {
+      Object debugCoroutineInfo = getField(rootContinuation, DEBUG_COROUTINE_INFO_FIELD);
+      return (long) getField(debugCoroutineInfo, SEQUENCE_NUMBER_FIELD);
+    }
+    return -1;
   }
 
   // This method tries to extract CoroutineOwner as a root coroutine frame,

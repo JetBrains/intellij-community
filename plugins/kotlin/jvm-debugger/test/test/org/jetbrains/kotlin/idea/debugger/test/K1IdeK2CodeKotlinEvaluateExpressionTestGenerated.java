@@ -250,6 +250,16 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
 
+                @TestMetadata("runToCursorFromNonSuspendToSuspend.kt")
+                public void testRunToCursorFromNonSuspendToSuspend() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorFromNonSuspendToSuspend.kt");
+                }
+
+                @TestMetadata("runToCursorFromSuspendToNonSuspend.kt")
+                public void testRunToCursorFromSuspendToNonSuspend() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorFromSuspendToNonSuspend.kt");
+                }
+
                 @TestMetadata("runToCursorSeveralUndispatchedCoroutines.kt")
                 public void testRunToCursorSeveralUndispatchedCoroutines() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorSeveralUndispatchedCoroutines.kt");
@@ -282,6 +292,23 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
+            public abstract static class StepInto extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported")
+                public static class Unsupported extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("stepIntoCoroutineScope.kt")
+                    public void testStepIntoCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported/stepIntoCoroutineScope.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOut")
             public abstract static class StepOut extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
@@ -301,11 +328,6 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutSeveralSuspendFrames.kt");
                     }
 
-                    @TestMetadata("stepOutSeveralSuspendFramesSeveralCoroutines.kt")
-                    public void testStepOutSeveralSuspendFramesSeveralCoroutines() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutSeveralSuspendFramesSeveralCoroutines.kt");
-                    }
-
                     @TestMetadata("stepOutWithException.kt")
                     public void testStepOutWithException() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/stepOutWithException.kt");
@@ -319,9 +341,124 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
 
+                    @TestMetadata("stepOutCoroutineScope.kt")
+                    public void testStepOutCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutCoroutineScope.kt");
+                    }
+
+                    @TestMetadata("stepOutNoSuspension.kt")
+                    public void testStepOutNoSuspension() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutNoSuspension.kt");
+                    }
+
                     @TestMetadata("stepOutTailCallOptimization.kt")
                     public void testStepOutTailCallOptimization() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOut/unsupported/stepOutTailCallOptimization.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
+            public abstract static class StepOver extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver")
+                public static class Uncategorized extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("basicFlow.kt")
+                    public void testBasicFlow() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/basicFlow.kt");
+                    }
+
+                    @TestMetadata("basicRendezvousChannelStepThroughSender.kt")
+                    public void testBasicRendezvousChannelStepThroughSender() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/basicRendezvousChannelStepThroughSender.kt");
+                    }
+
+                    @TestMetadata("multipleCoroutines.kt")
+                    public void testMultipleCoroutines() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/multipleCoroutines.kt");
+                    }
+
+                    @TestMetadata("oneCoroutine.kt")
+                    public void testOneCoroutine() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/oneCoroutine.kt");
+                    }
+
+                    @TestMetadata("oneCoroutine1.kt")
+                    public void testOneCoroutine1() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/oneCoroutine1.kt");
+                    }
+
+                    @TestMetadata("soSuspendableCallInEndOfFun.kt")
+                    public void testSoSuspendableCallInEndOfFun() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/soSuspendableCallInEndOfFun.kt");
+                    }
+
+                    @TestMetadata("stepOverAsync.kt")
+                    public void testStepOverAsync() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverAsync.kt");
+                    }
+
+                    @TestMetadata("stepOverCancellation.kt")
+                    public void testStepOverCancellation() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverCancellation.kt");
+                    }
+
+                    @TestMetadata("stepOverCancelledAwait.kt")
+                    public void testStepOverCancelledAwait() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverCancelledAwait.kt");
+                    }
+
+                    @TestMetadata("stepOverLaunch.kt")
+                    public void testStepOverLaunch() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
+                    }
+
+                    @TestMetadata("stepOverThroughAllMethods.kt")
+                    public void testStepOverThroughAllMethods() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverThroughAllMethods.kt");
+                    }
+
+                    @TestMetadata("stepThroughCoroutineScope.kt")
+                    public void testStepThroughCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepThroughCoroutineScope.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported")
+                public static class Unsupported extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("newSingleThreadContext.kt")
+                    public void testNewSingleThreadContext() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/newSingleThreadContext.kt");
+                    }
+
+                    @TestMetadata("stepOverCoroutineScope.kt")
+                    public void testStepOverCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverCoroutineScope.kt");
+                    }
+
+                    @TestMetadata("stepOverCoroutineScopeClosingBracket.kt")
+                    public void testStepOverCoroutineScopeClosingBracket() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverCoroutineScopeClosingBracket.kt");
+                    }
+
+                    @TestMetadata("stepOverWithContext.kt")
+                    public void testStepOverWithContext() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stepOverWithContext.kt");
+                    }
+
+                    @TestMetadata("stopInCoroutineScope.kt")
+                    public void testStopInCoroutineScope() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/unsupported/stopInCoroutineScope.kt");
                     }
                 }
             }
