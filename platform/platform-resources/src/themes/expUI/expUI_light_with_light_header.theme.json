@@ -6,7 +6,20 @@
   "nameKey": "light.header.theme.name",
   "editorScheme": "Light",
   "ui": {
-    "CodeWithMe.MainToolbar.NoConnectionLabelForeground": "Gray7",
+    "CodeWithMe": {
+      "MainToolbar.NoConnectionLabelForeground": "Gray7",
+      "EndSessionPopup": {
+        "EndButton": {
+          "Background": "Blue4",
+          "Foreground": "Gray14"
+        },
+        "Background": "Gray14",
+        "Foreground": "Gray1",
+        "info.Foreground": "Gray1",
+        "timer.Foreground": "Gray2",
+        "link": "Gray7"
+      }
+    },
 
     "MainMenu": {
       "background": "Gray13",
