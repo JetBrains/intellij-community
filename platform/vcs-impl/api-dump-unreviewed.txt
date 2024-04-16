@@ -1687,8 +1687,8 @@ a:com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
 - <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent):V
 - b:<init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - pf:getTree():com.intellij.openapi.vcs.changes.ui.ChangesTree
-- p:handleDoubleClick(java.awt.event.MouseEvent):Z
-- p:handleEnterKey():Z
+- handleDoubleClick(java.awt.event.MouseEvent):Z
+- handleEnterKey():Z
 - p:handleEscapeKey():V
 - p:handleNextDiffShortcut():V
 - p:handleSingleClick():V
@@ -1746,6 +1746,7 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - com.intellij.openapi.ui.SimpleToolWindowPanel
 - com.intellij.openapi.Disposable
+- addListener(com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel$Listener,com.intellij.openapi.Disposable):V
 - dispose():V
 - getActions(Z):java.util.List
 - getData(java.lang.String):java.lang.Object
@@ -1758,6 +1759,9 @@ f:com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel
 - setGrouping(java.lang.String):V
 - updateCommitWorkflow():V
 - updateProgressText(java.lang.String,Z):V
+com.intellij.openapi.vcs.changes.ChangesViewManager$ChangesViewToolWindowPanel$Listener
+- java.util.EventListener
+- a:allowExcludeFromCommitChanged():V
 c:com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader
 - com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider$Preloader
 - <init>(com.intellij.openapi.project.Project):V
@@ -4403,25 +4407,29 @@ f:com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - dispose():V
 - f:getChanges():java.util.Collection
+- f:getCurrentPatchObject():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject
 - getData(java.lang.String):java.lang.Object
 - getDiffRequestProducer(java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - f:getDiffWithLocalRequestProducer(java.lang.Object,Z):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
-- f:getEditorTabPreview():com.intellij.openapi.vcs.changes.EditorTabPreview
-- f:installDiffPreview(Z):com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreview
 - f:selectPatchObject(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject):V
-f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreview
-- com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.changes.ui.ChangesTree,Z,com.intellij.openapi.Disposable):V
-- iterateAllChanges():java.lang.Iterable
-- iterateSelectedChanges():java.lang.Iterable
-a:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesEditorDiffPreview
-- com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
-- <init>(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreview,com.intellij.openapi.vcs.changes.ui.ChangesTree,javax.swing.JComponent,kotlin.jvm.functions.Function1):V
+f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
+- com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
+- sf:INSTANCE:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
+- iterateAllChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.util.containers.JBIterable
+- iterateSelectedChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.util.containers.JBIterable
+- selectChange(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
+f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffProcessor
+- com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z):V
+f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesEditorDiffPreview
+- com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
+- <init>(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,kotlin.jvm.functions.Function1):V
+- dispose():V
+- getEditorTabName(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.String
 - openPreview(Z):Z
-- returnFocusToTree():V
 - updateDiffAction(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesOperationsGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -4485,7 +4493,7 @@ c:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 - dispose():V
 - f:expandPatchesByProvider(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider):V
 - getData(java.lang.String):java.lang.Object
-- pf:getTree():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
+- pf:getPatchesTree():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
 - f:updateLayout():V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi$Companion
 - f:getSAVED_PATCHES_UI():com.intellij.openapi.actionSystem.DataKey
