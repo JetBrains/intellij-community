@@ -9,12 +9,13 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ComparisonFailureData {
+
+  public static final String JUNIT_3_COMPARISON_FAILURE = "junit.framework.ComparisonFailure";
+  public static final String JUNIT_4_COMPARISON_FAILURE = "org.junit.ComparisonFailure";
 
   private static final String ASSERTION_CLASS_NAME = "java.lang.AssertionError";
   private static final String ASSERTION_FAILED_CLASS_NAME = "junit.framework.AssertionFailedError";
@@ -23,8 +24,6 @@ public class ComparisonFailureData {
   public static final String OPENTEST4J_VALUE_WRAPPER = "org.opentest4j.ValueWrapper";
   public static final String OPENTEST4J_FILE_INFO = "org.opentest4j.FileInfo";
   public static final Charset OPENTEST4J_FILE_CONTENT_CHARSET = StandardCharsets.UTF_8;
-
-  private static final List<String> COMPARISON_FAILURES = Arrays.asList("org.junit.ComparisonFailure", "org.junit.ComparisonFailure");
 
   private final String myExpected;
   private final String myActual;
@@ -36,7 +35,8 @@ public class ComparisonFailureData {
 
   static {
     try {
-      for (String failure : COMPARISON_FAILURES) init(failure);
+      init(JUNIT_3_COMPARISON_FAILURE);
+      init(JUNIT_4_COMPARISON_FAILURE);
     }
     catch (Throwable ignored) { }
   }
@@ -172,7 +172,7 @@ public class ComparisonFailureData {
     attrs.put(expectedOrActualPrefix, text);
   }
 
-  public static boolean isAssertionError(Class throwableClass) {
+  public static boolean isAssertionError(Class<?> throwableClass) {
     if (throwableClass == null) return false;
     final String throwableClassName = throwableClass.getName();
     if (throwableClassName.equals(ASSERTION_CLASS_NAME) || 
@@ -181,6 +181,21 @@ public class ComparisonFailureData {
       return true;
     }
     return isAssertionError(throwableClass.getSuperclass());
+  }
+
+  public static boolean isComparisonFailure(Class<?> aClass) {
+    if (aClass == null) return false;
+    final String throwableClassName = aClass.getName();
+    if (JUNIT_3_COMPARISON_FAILURE.equals(throwableClassName)) {
+      return true;
+    }
+    if (JUNIT_4_COMPARISON_FAILURE.equals(throwableClassName)) {
+      return true;
+    }
+    if (OPENTEST4J_ASSERTION.equals(throwableClassName)) {
+      return true;
+    }
+    return isComparisonFailure(aClass.getSuperclass());
   }
 
   public String getExpectedFilePath() {
