@@ -20,10 +20,10 @@ internal class AnalysisLogger<M : MLModel<P>, P : Any>(
   private val baseSessionLogger: MLSessionLogger<P>,
 ) : MLApproachInitializationListener<M, P> {
 
-  override fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, callParameters: Environment): MLApproachListener<M, P> {
-    val mlSessionLogger = PatchingLogger(baseSessionLogger)
+  override fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, permanentCallParameters: Environment): MLApproachListener<M, P> {
+    val mlSessionLogger = PatchingLogger(baseSessionLogger, apiPlatform, permanentSessionEnvironment, permanentCallParameters)
 
-    val sessionAnalyser: SessionAnalyser<M, P>? = sessionAnalyserProvider.startSessionAnalysis(callParameters, permanentSessionEnvironment)
+    val sessionAnalyser: SessionAnalyser<M, P>? = sessionAnalyserProvider.startSessionAnalysis(permanentCallParameters, permanentSessionEnvironment)
 
     val patchOnBeforeStarted = mlSessionLogger.acquirePatchLogger(false)
     apiPlatform.coroutineScope.launch {
@@ -96,7 +96,10 @@ internal class AnalysisLogger<M : MLModel<P>, P : Any>(
 }
 
 private class PatchingLogger<P : Any>(
-  private val baseMLSessionLogger: MLSessionLogger<P>
+  private val baseMLSessionLogger: MLSessionLogger<P>,
+  private val apiPlatform: MLApiPlatform,
+  private val permanentSessionEnvironment: Environment,
+  private val permanentCallParameters: Environment,
 ) {
   private val partialSessionLogs: MutableList<List<EventPair<*>>> = mutableListOf()
   private val logLock = ReentrantLock()
@@ -144,7 +147,7 @@ private class PatchingLogger<P : Any>(
     if (flushStoppers == 0) {
       assert(!isAlreadyLogged)
       isAlreadyLogged = true
-      baseMLSessionLogger.logSession(partialSessionLogs.flatten(), structure)
+      baseMLSessionLogger.logSession(apiPlatform, permanentSessionEnvironment, permanentCallParameters, partialSessionLogs.flatten(), structure)
     }
   }
 }

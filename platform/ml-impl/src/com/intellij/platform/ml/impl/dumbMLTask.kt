@@ -58,7 +58,7 @@ interface DumbSessionDetails : LogDrivenModelInference.SessionDetails<DumbMLMode
  * to avoid providing an ML Model to your approach
  */
 @ApiStatus.Internal
-class DumbApproachBuilder(task: MLTask<Unit>) : LogDrivenModelInference.Builder<DumbMLModel, Unit>(task, { DumbSessionDetails.Default(task) }), DumbPredictionsMode
+open class DumbApproachBuilder(task: MLTask<Unit>) : LogDrivenModelInference.Builder<DumbMLModel, Unit>(task, { DumbSessionDetails.Default(task) }), DumbPredictionsMode
 
 /**
  * A wrapper for convenient usage of a [NestableMLSession], when we don't have yet a trained model

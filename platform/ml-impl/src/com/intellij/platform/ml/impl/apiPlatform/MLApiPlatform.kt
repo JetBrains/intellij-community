@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.apiPlatform
 
+import com.intellij.openapi.Disposable
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.MLTaskApproachBuilder
 import com.intellij.platform.ml.impl.model.MLModel
@@ -53,10 +54,12 @@ abstract class MLApiPlatform {
 
   /**
    * Adds another provider for ML tasks' execution process monitoring dynamically.
-   * The event could be removed via the corresponding [ExtensionController.removeExtension] call.
+   * The event will be removed via the corresponding [parentDisposable]'s [Disposable.dispose] call.
    * See [taskListeners].
+   *
+   * @param parentDisposable The [taskListener] will be removed when this disposable will be disposed
    */
-  abstract fun addTaskListener(taskListener: MLTaskGroupListener): ExtensionController
+  abstract fun addTaskListener(taskListener: MLTaskGroupListener, parentDisposable: Disposable)
 
 
   /**
@@ -65,10 +68,6 @@ abstract class MLApiPlatform {
    * TODO: Remove, it is useless, or add a generic "logDebug" method instead of this.
    */
   abstract fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>)
-
-  fun interface ExtensionController {
-    fun removeExtension()
-  }
 
   /**
    * Used to run analysis & description tasks asynchronously

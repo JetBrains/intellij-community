@@ -3,28 +3,26 @@ package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors.COUNTER_EP_NAME
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.platform.ml.Environment
 import com.intellij.platform.ml.Feature
 import com.intellij.platform.ml.ObsoleteTierDescriptor
 import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
-import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
+import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
 import com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy
 import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
 import com.intellij.platform.ml.impl.logs.registerMLTaskLogging
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.platform.ml.with
-import com.intellij.util.application
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.runBlocking
 import java.util.function.Consumer
 
-object MockDumbTask : DumbMLTask(
-  name = "mock",
+object MixedTaskSmart : MLTask<Double>(
+  name = "mixed-task-smart",
+  predictionClass = Double::class.java,
   levels = listOf(
     setOf(TierCompletionSession),
     setOf(TierLookup),
@@ -37,8 +35,37 @@ object MockDumbTask : DumbMLTask(
   )
 )
 
+object MixedTaskDumb : DumbMLTask(
+  name = "mixed-task-dumb",
+  levels = listOf(
+    setOf(TierCompletionSession),
+    setOf(TierLookup),
+    setOf(TierItem)
+  ),
+  callParameters = listOf(
+    setOf(),
+    setOf(),
+    setOf()
+  )
+)
 
-private object DumbModeApiPlatform : TestApiPlatform() {
+object SmartDetails : LogDrivenModelInference.SessionDetails.Default<RandomModel, Double>(MixedTaskSmart) {
+  override val mlModelProvider = RandomModel.Provider
+
+  class Builder : LogDrivenModelInference.SessionDetails.Builder<RandomModel, Double> {
+    override fun build(apiPlatform: MLApiPlatform): LogDrivenModelInference.SessionDetails<RandomModel, Double> {
+      return MockTaskApproachDetails()
+    }
+  }
+}
+
+object MixedSmartApproachBuilder : LogDrivenModelInference.Builder<RandomModel, Double>(MixedTaskSmart,  { SmartDetails })
+
+object MixedDumbApproachBuilder : DumbApproachBuilder(MixedTaskDumb)
+
+
+
+private object DemoMixedApiPlatform : TestApiPlatform() {
   override val tierDescriptors = listOf(
     CompletionSessionFeatures(),
     ItemFeatures1(),
@@ -50,7 +77,8 @@ private object DumbModeApiPlatform : TestApiPlatform() {
   )
 
   override val taskApproaches: List<MLTaskApproachBuilder<*>> = listOf(
-    DumbApproachBuilder(MockDumbTask)
+    MixedDumbApproachBuilder,
+    MixedSmartApproachBuilder,
   )
 
   override val initialTaskListeners: List<MLTaskGroupListener> = listOf(
@@ -58,25 +86,22 @@ private object DumbModeApiPlatform : TestApiPlatform() {
     SomeListener("Alex"),
   )
 
-
-  override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) {
-    val printer = CodeLikePrinter()
-    println("$descriptor is missing the following declaration: ${printer.printCodeLikeString(nonDeclaredFeatures.map { it.declaration })}")
-  }
+  override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) = Unit
 }
 
-private class DumbTaskFusLogger : CounterUsagesCollector() {
+private class MixedTaskFusLogger : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("dumb-task", 1, ML_RECORDER_ID).also {
-      it.registerMLTaskLogging<DumbMLModel, Unit>("finished", MockDumbTask, EntireSessionLoggingStrategy.UNIT)
+    val GROUP = EventLogGroup("mixed-task", 1, ML_RECORDER_ID).also {
+      it.registerMLTaskLogging<DumbMLModel, Unit>("dumb", MixedTaskDumb, EntireSessionLoggingStrategy.UNIT)
+      it.registerMLTaskLogging<RandomModel, Double>("smart", MixedTaskSmart, EntireSessionLoggingStrategy.DOUBLE)
     }
   }
 
   override fun getGroup() = GROUP
 }
 
-class DumbTask : MLApiLogsTestCase() {
-  fun `test dumb ml task`() {
+class MixedTask : MLApiLogsTestCase() {
+  fun `test mixed dumb and smart ml tasks`() {
     // After the session is finished, it will be logged to community/platform/ml-impl/testResources/dumb_ml_logs.js
 
     val logs: MutableList<Pair<String, Map<String, Any>>> = mutableListOf()
@@ -84,11 +109,8 @@ class DumbTask : MLApiLogsTestCase() {
       logs.add(fusLog.event.id to fusLog.event.data)
     }
 
-    ReplaceableIJPlatform.replacingWith(DumbModeApiPlatform) {
-      registerEventLogger(DumbTaskFusLogger())
-
-      val loggerEP = CounterUsageCollectorEP()
-      application.extensionArea.getExtensionPoint(COUNTER_EP_NAME).registerExtension(loggerEP, this.testRootDisposable)
+    ReplaceableIJPlatform.replacingWith(DemoMixedApiPlatform) {
+      registerEventLogger(MixedTaskFusLogger())
 
       FUCollectorTestCase.listenForEvents(ML_RECORDER_ID, this.testRootDisposable, collectLogs) {
 

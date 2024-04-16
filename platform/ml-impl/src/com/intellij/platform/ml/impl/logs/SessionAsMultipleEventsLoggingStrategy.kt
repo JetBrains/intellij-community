@@ -3,8 +3,10 @@ package com.intellij.platform.ml.impl.logs
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.platform.ml.Environment
 import com.intellij.platform.ml.Feature
 import com.intellij.platform.ml.Tier
+import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.session.*
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,13 +15,13 @@ import org.jetbrains.annotations.ApiStatus
  *  to bypass the event's size limit.
  *
  *  If sessions in your ml task are small enough, you could try using
- *  [com.intellij.platform.ml.impl.logs.EntireSessionLoggingScheme].
+ *  [com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy].
  */
 @ApiStatus.Internal
-class SessionAsMultipleEventsLoggingScheme<P : Any, F>(
+class SessionAsMultipleEventsLoggingStrategy<P : Any, F>(
   private val fieldPrediction: EventField<F>,
   private val predictionTransformer: (P?) -> F?
-) : MLSessionScheme<P> {
+) : MLSessionLoggingStrategy<P> {
   override fun configureLogger(sessionAnalysisDeclaration: List<EventField<*>>,
                                sessionStructureAnalysisDeclaration: List<AnalysedLevelScheme>,
                                eventLogGroup: EventLogGroup,
@@ -39,7 +41,7 @@ class SessionAsMultipleEventsLoggingScheme<P : Any, F>(
     val logSession = ComponentSomeAnalysis(COMPONENT_NAME_SESSION).register(eventRegister, sessionAnalysisDeclaration)
 
     return object : MLSessionLogger<P> {
-      override fun logSession(session: List<EventPair<*>>, structure: AnalysedRootContainer<P>?) {
+      override fun logSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, permanentCallParameters: Environment, session: List<EventPair<*>>, structure: AnalysedRootContainer<P>?) {
         structure?.let { logStructure(sessionId, it) }
         logSession(sessionId, session)
       }
@@ -47,7 +49,7 @@ class SessionAsMultipleEventsLoggingScheme<P : Any, F>(
   }
 
   companion object {
-    val DOUBLE: MLSessionScheme<Double> = SessionAsMultipleEventsLoggingScheme(DoubleEventField("prediction")) { it }
+    val DOUBLE: MLSessionLoggingStrategy<Double> = SessionAsMultipleEventsLoggingStrategy(DoubleEventField("prediction")) { it }
   }
 }
 

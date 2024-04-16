@@ -58,6 +58,7 @@ sealed interface Session<P : Any> {
 /**
  * A session, that holds other sessions.
  */
+@ApiStatus.Internal
 interface NestableMLSession<P : Any> : Session<P> {
   /**
    * Start another nested session within this one, that will inherit
@@ -81,6 +82,7 @@ interface NestableMLSession<P : Any> : Session<P> {
 /**
  * A session, that is dedicated to create one prediction at most.
  */
+@ApiStatus.Internal
 interface SinglePrediction<P : Any> : Session<P> {
   /**
    * Call ML model's inference and produce the prediction.

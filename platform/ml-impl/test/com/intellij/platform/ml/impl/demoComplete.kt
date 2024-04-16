@@ -17,14 +17,14 @@ import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
 import com.intellij.platform.ml.impl.logs.AnalysisMethods
-import com.intellij.platform.ml.impl.logs.EntireSessionLoggingScheme
-import com.intellij.platform.ml.impl.logs.registerEventSessionFinished
+import com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy
+import com.intellij.platform.ml.impl.logs.registerMLTaskLogging
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLApproachInitializationListener
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener
 import com.intellij.platform.ml.impl.monitoring.MLSessionListener
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy
+import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy
 import com.intellij.platform.ml.impl.session.*
 import com.intellij.platform.ml.impl.session.analysis.LanguageSpecific
 import com.intellij.platform.ml.impl.session.analysis.SessionAnalyser
@@ -68,8 +68,8 @@ class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific 
 private class MockTaskFusLogger : CounterUsagesCollector() {
   companion object {
     val GROUP = EventLogGroup("mock-task", 1).also {
-      it.registerEventSessionFinished("finished", MockTask, EntireSessionLoggingScheme.DOUBLE,
-                                      AnalysisMethods(
+      it.registerMLTaskLogging("finished", MockTask, EntireSessionLoggingStrategy.DOUBLE,
+                               AnalysisMethods(
                                         sessionAnalysers = listOf(FailureLogger(),
                                                                   ExceptionLogger(),
                                                                   RandomModelSeedAnalyser,
@@ -144,8 +144,8 @@ class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> 
 
   private class LookupAnalyser<M : MLModel<Double>>(
     private val analysis: MutableMap<DescribedSessionTree<M, Double>, PerTier<Set<Feature>>>
-  ) : SessionTree.LevelVisitor<M, Double>(levelIndex = 1) {
-    override fun visitLevel(level: DescribedLevel, levelRoot: DescribedSessionTree<M, Double>) {
+  ) : SessionTree.LevelVisitor<M, DescribedTierData, Double>(levelIndex = 1) {
+    override fun visitLevel(level: LevelData<DescribedTierData>, levelRoot: SessionTree<M, DescribedTierData, Double>) {
       val lookup = level.environment[TierLookup]
       analysis[levelRoot] = mapOf(TierLookup to setOf(LOOKUP_INDEX with lookup.index))
     }
@@ -176,7 +176,7 @@ class SomeListener(private val name: String) : MLTaskGroupListener {
   private fun log(message: String) = println("[Listener $name says] $message")
 
   inner class InitializationListener : MLApproachInitializationListener<RandomModel, Double> {
-    override fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, callParameters: Environment): MLApproachListener<RandomModel, Double> {
+    override fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, permanentCallParameters: Environment): MLApproachListener<RandomModel, Double> {
       log("attempted to initialize session")
       return ApproachListener()
     }

@@ -3,10 +3,8 @@ package com.intellij.platform.ml.impl.logs
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
-import com.intellij.platform.ml.Feature
-import com.intellij.platform.ml.FeatureDeclaration
-import com.intellij.platform.ml.PerTier
-import com.intellij.platform.ml.TierInstance
+import com.intellij.platform.ml.*
+import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.session.*
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,13 +13,13 @@ import org.jetbrains.annotations.ApiStatus
  *
  * If your sessions of your task are large enough, then it's possible that they
  * won't fit into one event, as it has a limit.
- * In such a case try using [com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingScheme].
+ * In such a case try using [com.intellij.platform.ml.impl.logs.SessionAsMultipleEventsLoggingStrategy].
  */
 @ApiStatus.Internal
-class EntireSessionLoggingScheme<P : Any, F>(
+class EntireSessionLoggingStrategy<P : Any, F>(
   private val predictionField: EventField<F>,
   private val predictionTransformer: (P?) -> F?,
-) : MLSessionScheme<P> {
+) : MLSessionLoggingStrategy<P> {
   override fun configureLogger(sessionAnalysisDeclaration: List<EventField<*>>,
                                sessionStructureAnalysisDeclaration: List<AnalysedLevelScheme>,
                                eventLogGroup: EventLogGroup,
@@ -41,7 +39,7 @@ class EntireSessionLoggingScheme<P : Any, F>(
                                                     fieldSession)
 
     return object : MLSessionLogger<P> {
-      override fun logSession(session: List<EventPair<*>>, structure: AnalysedRootContainer<P>?) {
+      override fun logSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, permanentCallParameters: Environment, session: List<EventPair<*>>, structure: AnalysedRootContainer<P>?) {
         eventId.log(buildList {
           if (structure != null) add(fieldSessionStructure with sessionStructureFields.buildObjectEventData(structure))
           add(fieldSession with ObjectEventData(session))
@@ -52,8 +50,8 @@ class EntireSessionLoggingScheme<P : Any, F>(
   }
 
   companion object {
-    val DOUBLE: MLSessionScheme<Double> = EntireSessionLoggingScheme(DoubleEventField("prediction")) { it }
-    val UNIT: MLSessionScheme<Unit> = EntireSessionLoggingScheme(BooleanEventField("prediction")) { null }
+    val DOUBLE: MLSessionLoggingStrategy<Double> = EntireSessionLoggingStrategy(DoubleEventField("prediction")) { it }
+    val UNIT: MLSessionLoggingStrategy<Unit> = EntireSessionLoggingStrategy(BooleanEventField("prediction")) { null }
   }
 }
 
