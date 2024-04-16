@@ -35,8 +35,7 @@ public final class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
-  @Nullable
-  public PsiMethod findOrCreateSetUpMethod(final PsiClass psiClass) {
+  public @Nullable PsiMethod findOrCreateSetUpMethod(final PsiClass psiClass) {
     for (TestFramework framework : DumbService.getDumbAwareExtensions(psiClass.getProject(), TestFramework.EXTENSION_NAME)) {
       if (framework.isTestClass(psiClass)) {
         try {
@@ -54,8 +53,7 @@ public final class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
-  @Nullable
-  public PsiMethod findSetUpMethod(final PsiClass psiClass) {
+  public @Nullable PsiMethod findSetUpMethod(final PsiClass psiClass) {
     for (TestFramework framework : DumbService.getDumbAwareExtensions(psiClass.getProject(), TestFramework.EXTENSION_NAME)) {
       if (framework.isTestClass(psiClass)) {
         final PsiMethod setUpMethod = (PsiMethod)framework.findSetUpMethod(psiClass);
@@ -68,8 +66,7 @@ public final class TestFrameworksImpl extends TestFrameworks {
   }
 
   @Override
-  @Nullable
-  public PsiMethod findTearDownMethod(final PsiClass psiClass) {
+  public @Nullable PsiMethod findTearDownMethod(final PsiClass psiClass) {
     for (TestFramework framework : DumbService.getDumbAwareExtensions(psiClass.getProject(), TestFramework.EXTENSION_NAME)) {
       if (framework.isTestClass(psiClass)) {
         final PsiMethod setUpMethod = (PsiMethod)framework.findTearDownMethod(psiClass);

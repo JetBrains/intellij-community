@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiExpression;
@@ -15,7 +15,7 @@ public class ConditionalGoToInstruction extends ConditionalBranchingInstruction 
   }
 
   public String toString() {
-    @NonNls final String sRole = "[" + role + "]";
+    final @NonNls String sRole = "[" + role + "]";
     return "COND_GOTO " + sRole + " " + offset;
   }
 

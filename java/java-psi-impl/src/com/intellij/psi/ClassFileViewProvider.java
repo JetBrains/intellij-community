@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.Language;
@@ -114,9 +114,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return visitor.isInner;
   }
 
-  @NotNull
   @Override
-  public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
+  public @NotNull SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new ClassFileViewProvider(getManager(), copy, false);
   }
 
@@ -137,9 +136,8 @@ public class ClassFileViewProvider extends SingleRootFileViewProvider {
     return findReferenceAt(offset, getBaseLanguage());
   }
 
-  @Nullable
   @Override
-  public PsiReference findReferenceAt(int offset, @NotNull Language language) {
+  public @Nullable PsiReference findReferenceAt(int offset, @NotNull Language language) {
     PsiFile file = getPsi(language);
     if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
     return findReferenceAt(file, offset);

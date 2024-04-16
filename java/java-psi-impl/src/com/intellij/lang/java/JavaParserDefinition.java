@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
@@ -27,20 +27,17 @@ import org.jetbrains.annotations.Nullable;
 public class JavaParserDefinition implements ParserDefinition {
   public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
 
-  @NotNull
   @Override
-  public Lexer createLexer(@Nullable Project project) {
+  public @NotNull Lexer createLexer(@Nullable Project project) {
     LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
     return createLexer(level);
   }
 
-  @NotNull
-  public static Lexer createLexer(@NotNull LanguageLevel level) {
+  public static @NotNull Lexer createLexer(@NotNull LanguageLevel level) {
     return new JavaLexer(level);
   }
 
-  @NotNull
-  public static Lexer createDocLexer(@NotNull LanguageLevel level) {
+  public static @NotNull Lexer createDocLexer(@NotNull LanguageLevel level) {
     return new JavaDocLexer(level);
   }
 
@@ -49,27 +46,23 @@ public class JavaParserDefinition implements ParserDefinition {
     return JAVA_FILE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return ElementType.JAVA_COMMENT_BIT_SET;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
   }
 
-  @NotNull
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     throw new UnsupportedOperationException("Should not be called directly");
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
     if (type instanceof JavaStubElementType) {
       return ((JavaStubElementType<?, ?>)type).createPsi(node);

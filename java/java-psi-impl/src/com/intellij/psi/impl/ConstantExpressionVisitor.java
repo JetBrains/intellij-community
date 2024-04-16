@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
@@ -393,8 +393,7 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
     }
   }
 
-  @Nullable
-  private static Boolean handleEqualityComparison(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
+  private static @Nullable Boolean handleEqualityComparison(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
     if (lOperandValue instanceof String && rOperandValue instanceof String ||
         lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
       return lOperandValue.equals(rOperandValue) == (tokenType == JavaTokenType.EQEQ);
@@ -619,13 +618,12 @@ final class ConstantExpressionVisitor extends JavaElementVisitor implements PsiC
   }
 
   @Override
-  public Object computeExpression(@NotNull final PsiExpression expression, @NotNull final PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
+  public Object computeExpression(final @NotNull PsiExpression expression, final @NotNull PsiConstantEvaluationHelper.AuxEvaluator auxEvaluator) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expression, myVisitedVars, myThrowExceptionOnOverflow, auxEvaluator);
   }
 
-  @NotNull
   @Override
-  public ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
+  public @NotNull ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow) {
     throw new AssertionError("should not be called");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaPsiBundle;
@@ -17,9 +17,8 @@ public class PsiJavaModuleReferenceImpl extends PsiReferenceBase.Poly<PsiJavaMod
     super(element, new TextRange(0, element.getTextLength()), false);
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getElement().getReferenceText();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -84,12 +84,12 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   }
 
   @Override
-  public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, final @NotNull GlobalSearchScope scope) {
     return getClasses(null, psiPackage, scope);
   }
 
   @Override
-  public PsiClass @NotNull [] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, final @NotNull GlobalSearchScope scope) {
     List<PsiClass> list = null;
     String packageName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
@@ -116,9 +116,8 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     Set<String> names = null;
     FileIndexFacade facade = FileIndexFacade.getInstance(myProject);
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
@@ -147,8 +146,8 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
 
   @Override
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
-                                           @NotNull final GlobalSearchScope scope,
-                                           @NotNull final Processor<? super PsiDirectory> consumer,
+                                           final @NotNull GlobalSearchScope scope,
+                                           final @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     return PackageIndex.getInstance(myProject)

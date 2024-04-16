@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
@@ -257,7 +257,7 @@ public final class JavaResolveUtil {
     return true;
   }
 
-  public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
+  public static void substituteResults(final @NotNull PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
       PsiDeconstructionPattern pattern = ObjectUtils.tryCast(ref.getParent().getParent(), PsiDeconstructionPattern.class);
       for (int i = 0; i < result.length; i++) {
@@ -270,9 +270,8 @@ public final class JavaResolveUtil {
             result[i] = pattern != null && ref.getTypeParameterCount() == 0 
                         ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, JavaPsiPatternUtil.getContextType(pattern))
                         : new CandidateInfo(resolveResult, substitutor) {
-                          @NotNull
                           @Override
-                          public PsiSubstitutor getSubstitutor() {
+                          public @NotNull PsiSubstitutor getSubstitutor() {
                             PsiType[] parameters = ref.getTypeParameters();
                             return super.getSubstitutor().putAll(resultClass, parameters);
                           }
@@ -311,8 +310,7 @@ public final class JavaResolveUtil {
       .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
   }
 
-  @Nullable
-  public static PsiPackage getContainingPackage(@NotNull final PsiElement element) {
+  public static @Nullable PsiPackage getContainingPackage(final @NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file == null) return null;
 

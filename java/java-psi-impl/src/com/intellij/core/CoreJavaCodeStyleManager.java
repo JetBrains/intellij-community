@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.openapi.util.Comparing;
@@ -26,23 +26,20 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiElement shortenClassReferences(@NotNull PsiElement element,
-                                           @MagicConstant(flags = {DO_NOT_ADD_IMPORTS, INCOMPLETE_CODE}) int flags)
+  public @NotNull PsiElement shortenClassReferences(@NotNull PsiElement element,
+                                                    @MagicConstant(flags = {DO_NOT_ADD_IMPORTS, INCOMPLETE_CODE}) int flags)
     throws IncorrectOperationException {
     return element;
   }
 
-  @NotNull
   @Override
-  public String getPrefixByVariableKind(@NotNull VariableKind variableKind) {
+  public @NotNull String getPrefixByVariableKind(@NotNull VariableKind variableKind) {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getSuffixByVariableKind(@NotNull VariableKind variableKind) {
+  public @NotNull String getSuffixByVariableKind(@NotNull VariableKind variableKind) {
     return "";
   }
 
@@ -51,9 +48,8 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return 0;
   }
 
-  @NotNull
   @Override
-  public PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
+  public @NotNull PsiElement shortenClassReferences(@NotNull PsiElement element) throws IncorrectOperationException {
     return element;
   }
 
@@ -70,39 +66,34 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return null;
   }
 
-  @NotNull
   @Override
-  public SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
-                                               @Nullable String propertyName,
-                                               @Nullable PsiExpression expr,
-                                               @Nullable PsiType type,
-                                               boolean correctKeywords) {
+  public @NotNull SuggestedNameInfo suggestVariableName(@NotNull VariableKind kind,
+                                                        @Nullable String propertyName,
+                                                        @Nullable PsiExpression expr,
+                                                        @Nullable PsiType type,
+                                                        boolean correctKeywords) {
     return SuggestedNameInfo.NULL_INFO;
   }
 
-  @NotNull
   @Override
-  public String variableNameToPropertyName(@NotNull @NonNls String name, @NotNull VariableKind variableKind) {
+  public @NotNull String variableNameToPropertyName(@NotNull @NonNls String name, @NotNull VariableKind variableKind) {
     return name;
   }
 
-  @NotNull
   @Override
-  public String propertyNameToVariableName(@NotNull @NonNls String propertyName, @NotNull VariableKind variableKind) {
+  public @NotNull String propertyNameToVariableName(@NotNull @NonNls String propertyName, @NotNull VariableKind variableKind) {
     return propertyName;
   }
 
-  @NotNull
   @Override
-  public String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place, boolean lookForward) {
+  public @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName, PsiElement place, boolean lookForward) {
     return suggestUniqueVariableName(baseName, place, lookForward, v -> false);
   }
 
-  @NotNull
-  private static String suggestUniqueVariableName(@NotNull @NonNls String baseName,
-                                                  PsiElement place,
-                                                  boolean lookForward,
-                                                  Predicate<? super PsiVariable> canBeReused) {
+  private static @NotNull String suggestUniqueVariableName(@NotNull @NonNls String baseName,
+                                                           PsiElement place,
+                                                           boolean lookForward,
+                                                           Predicate<? super PsiVariable> canBeReused) {
     int index = 0;
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     NextName:
@@ -147,18 +138,16 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     }
   }
 
-  @NotNull
   @Override
-  public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
+  public @NotNull String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, Predicate<? super PsiVariable> canBeReused) {
     return suggestUniqueVariableName(baseName, place, true, canBeReused);
   }
 
-  @NotNull
   @Override
-  public SuggestedNameInfo suggestUniqueVariableName(@NotNull final SuggestedNameInfo baseNameInfo,
-                                                     PsiElement place,
-                                                     boolean ignorePlaceName,
-                                                     boolean lookForward) {
+  public @NotNull SuggestedNameInfo suggestUniqueVariableName(final @NotNull SuggestedNameInfo baseNameInfo,
+                                                              PsiElement place,
+                                                              boolean ignorePlaceName,
+                                                              boolean lookForward) {
     final String[] names = baseNameInfo.names;
     final LinkedHashSet<String> uniqueNames = new LinkedHashSet<>(names.length);
     for (String name : names) {
@@ -180,9 +169,8 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     };
   }
 
-  @NotNull
   @Override
-  public PsiElement qualifyClassReferences(@NotNull PsiElement element) {
+  public @NotNull PsiElement qualifyClassReferences(@NotNull PsiElement element) {
     return element;
   }
 
@@ -195,21 +183,18 @@ public class CoreJavaCodeStyleManager extends JavaCodeStyleManager {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestSemanticNames(@NotNull PsiExpression expression) {
+  public @NotNull Collection<String> suggestSemanticNames(@NotNull PsiExpression expression) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind) {
+  public @NotNull Collection<String> suggestSemanticNames(@NotNull PsiExpression expression, @NotNull VariableKind kind) {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames, @NotNull VariableKind kind, @Nullable PsiType type) {
+  public @NotNull SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames, @NotNull VariableKind kind, @Nullable PsiType type) {
     return SuggestedNameInfo.NULL_INFO;
   }
 }

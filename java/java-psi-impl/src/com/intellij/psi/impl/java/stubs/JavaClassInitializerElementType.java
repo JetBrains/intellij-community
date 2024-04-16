@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -9,7 +9,9 @@ import com.intellij.psi.impl.java.stubs.impl.PsiClassInitializerStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiClassInitializerImpl;
 import com.intellij.psi.impl.source.tree.java.ClassInitializerElement;
-import com.intellij.psi.stubs.*;
+import com.intellij.psi.stubs.EmptyStubSerializer;
+import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaClassInitializerElementType extends JavaStubElementType<PsiClassInitializerStub, PsiClassInitializer>
@@ -18,27 +20,25 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
     super("CLASS_INITIALIZER", BasicJavaElementType.BASIC_CLASS_INITIALIZER);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new ClassInitializerElement();
   }
 
   @Override
-  public PsiClassInitializer createPsi(@NotNull final PsiClassInitializerStub stub) {
+  public PsiClassInitializer createPsi(final @NotNull PsiClassInitializerStub stub) {
     return getPsiFactory(stub).createClassInitializer(stub);
   }
 
   @Override
-  public PsiClassInitializer createPsi(@NotNull final ASTNode node) {
+  public PsiClassInitializer createPsi(final @NotNull ASTNode node) {
     return new PsiClassInitializerImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiClassInitializerStub createStub(@NotNull final LighterAST tree,
-                                            @NotNull final LighterASTNode node,
-                                            final @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiClassInitializerStub createStub(final @NotNull LighterAST tree,
+                                                     final @NotNull LighterASTNode node,
+                                                     final @NotNull StubElement<?> parentStub) {
     return new PsiClassInitializerStubImpl(parentStub);
   }
 
@@ -48,6 +48,6 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   }
 
   @Override
-  public void indexStub(@NotNull final PsiClassInitializerStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PsiClassInitializerStub stub, final @NotNull IndexSink sink) {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
@@ -19,8 +19,7 @@ public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory 
     private static final JavaElementTypeContainer INSTANCE = getJavaElementTypeContainer();
   }
 
-  @NotNull
-  private static JavaElementTypeContainer getJavaElementTypeContainer() {
+  private static @NotNull JavaElementTypeContainer getJavaElementTypeContainer() {
     return new JavaElementTypeContainer(
       JavaElementType.ANNOTATION_PARAMETER_LIST,
       JavaElementType.EXTENDS_LIST,

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +17,7 @@ public class FunctionalExpressionKey {
   public static final int UNKNOWN_PARAM_COUNT = -1;
   private final int lambdaParameterCount;
   private final CoarseType lambdaReturnType;
-  @NotNull private final String knownType;
+  private final @NotNull String knownType;
 
   public FunctionalExpressionKey(int lambdaParameterCount, @NotNull CoarseType lambdaReturnType, @Nullable String knownFunExprType) {
     this.lambdaParameterCount = lambdaParameterCount;
@@ -39,8 +25,7 @@ public class FunctionalExpressionKey {
     this.knownType = StringUtil.notNullize(knownFunExprType);
   }
 
-  @NotNull
-  public static FunctionalExpressionKey deserializeKey(@NotNull DataInput dataStream) throws IOException {
+  public static @NotNull FunctionalExpressionKey deserializeKey(@NotNull DataInput dataStream) throws IOException {
     int parameterCount = dataStream.readByte();
     CoarseType type = CoarseType.values()[dataStream.readByte()];
     String knownType = IOUtil.readUTF(dataStream);

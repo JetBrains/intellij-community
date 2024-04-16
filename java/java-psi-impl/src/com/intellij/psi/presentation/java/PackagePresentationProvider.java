@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.presentation.java;
 
 import com.intellij.navigation.ColoredItemPresentation;
@@ -14,7 +14,7 @@ import javax.swing.*;
 
 public final class PackagePresentationProvider implements ItemPresentationProvider<PsiPackage> {
   @Override
-  public ItemPresentation getPresentation(@NotNull final PsiPackage aPackage) {
+  public ItemPresentation getPresentation(final @NotNull PsiPackage aPackage) {
     return new ColoredItemPresentation() {
       @Override
       public TextAttributesKey getTextAttributesKey() {

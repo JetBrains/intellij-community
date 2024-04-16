@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -25,43 +25,40 @@ public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypePar
     super("TYPE_PARAMETER", BasicJavaElementType.BASIC_TYPE_PARAMETER);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new TypeParameterElement();
   }
 
   @Override
-  public PsiTypeParameter createPsi(@NotNull final PsiTypeParameterStub stub) {
+  public PsiTypeParameter createPsi(final @NotNull PsiTypeParameterStub stub) {
     return getPsiFactory(stub).createTypeParameter(stub);
   }
 
   @Override
-  public PsiTypeParameter createPsi(@NotNull final ASTNode node) {
+  public PsiTypeParameter createPsi(final @NotNull ASTNode node) {
     return new PsiTypeParameterImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameterStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiTypeParameterStub createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
     final String name = RecordUtil.intern(tree.getCharTable(), id);
     return new PsiTypeParameterStubImpl(parentStub, name);
   }
 
   @Override
-  public void serialize(@NotNull final PsiTypeParameterStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PsiTypeParameterStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
     String name = stub.getName();
     dataStream.writeName(name);
   }
 
-  @NotNull
   @Override
-  public PsiTypeParameterStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PsiTypeParameterStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiTypeParameterStubImpl(parentStub, dataStream.readNameString());
   }
 
   @Override
-  public void indexStub(@NotNull final PsiTypeParameterStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PsiTypeParameterStub stub, final @NotNull IndexSink sink) {
   }
 }

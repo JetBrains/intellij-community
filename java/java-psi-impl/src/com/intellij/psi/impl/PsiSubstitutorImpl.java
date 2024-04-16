@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,8 +36,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   };
   private static final UnmodifiableHashMap<PsiTypeParameter, PsiType> EMPTY_MAP = UnmodifiableHashMap.empty(PSI_EQUIVALENCE);
 
-  @NotNull
-  private final UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
+  private final @NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> mySubstitutionMap;
   private final SubstitutionVisitor mySimpleSubstitutionVisitor = new SubstitutionVisitor();
 
   PsiSubstitutorImpl(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
@@ -126,8 +125,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
   }
 
-  @NotNull
-  private static TypeAnnotationProvider getMergedProvider(@NotNull PsiType type1, @NotNull PsiType type2) {
+  private static @NotNull TypeAnnotationProvider getMergedProvider(@NotNull PsiType type1, @NotNull PsiType type2) {
     if(type1.getAnnotationProvider() == TypeAnnotationProvider.EMPTY && !(type1 instanceof PsiClassReferenceType)) {
       return type2.getAnnotationProvider();
     }
@@ -166,8 +164,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
       }
     }
 
-    @NotNull
-    private PsiWildcardType rebound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
+    private @NotNull PsiWildcardType rebound(@NotNull PsiWildcardType type, @NotNull PsiType newBound) {
       LOG.assertTrue(type.getBound() != null);
       LOG.assertTrue(newBound.isValid());
 
@@ -181,7 +178,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     }
 
     @Override
-    public PsiType visitClassType(@NotNull final PsiClassType classType) {
+    public PsiType visitClassType(final @NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
@@ -268,19 +265,17 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
+  public @NotNull PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     if (mapping != null && !mapping.isValid()) {
       LOG.error("Invalid type in substitutor: " + mapping + "; " + mapping.getClass());
     }
     return new PsiSubstitutorImpl(mySubstitutionMap, typeParameter, mapping);
   }
 
-  @NotNull
-  private static UnmodifiableHashMap<PsiTypeParameter, PsiType> putAllInternal(@NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> originalMap,
-                                                                               @NotNull PsiClass parentClass,
-                                                                               PsiType[] mappings) {
+  private static @NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> putAllInternal(@NotNull UnmodifiableHashMap<PsiTypeParameter, PsiType> originalMap,
+                                                                                        @NotNull PsiClass parentClass,
+                                                                                        PsiType[] mappings) {
     final PsiTypeParameter[] params = parentClass.getTypeParameters();
     if (params.length == 0) return originalMap;
     UnmodifiableHashMap<PsiTypeParameter, PsiType> newMap = originalMap;
@@ -302,15 +297,13 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     return newMap;
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
+  public @NotNull PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings) {
     return new PsiSubstitutorImpl(putAllInternal(mySubstitutionMap, parentClass, mappings));
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
+  public @NotNull PsiSubstitutor putAll(@NotNull PsiSubstitutor another) {
     if (another instanceof EmptySubstitutor) {
       return this;
     }
@@ -318,9 +311,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
     return putAll(anotherImpl.mySubstitutionMap);
   }
 
-  @NotNull
   @Override
-  public PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  public @NotNull PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     if (map.isEmpty()) return this;
     return new PsiSubstitutorImpl(mySubstitutionMap.withAll(map));
   }
@@ -377,8 +369,7 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   @Override
-  @NotNull
-  public Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
+  public @NotNull Map<PsiTypeParameter, PsiType> getSubstitutionMap() {
     return mySubstitutionMap;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -26,7 +26,7 @@ public final class PsiDiamondTypeUtil {
 
   public static boolean canCollapseToDiamond(final PsiNewExpression expression,
                                              final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType) {
+                                             final @Nullable PsiType expectedType) {
     return canCollapseToDiamond(expression, context, expectedType, false);
   }
 
@@ -36,9 +36,9 @@ public final class PsiDiamondTypeUtil {
   }
 
   private static boolean canCollapseToDiamond(final PsiNewExpression expression,
-                                             final PsiNewExpression context,
-                                             @Nullable final PsiType expectedType,
-                                             boolean skipDiamonds) {
+                                              final PsiNewExpression context,
+                                              final @Nullable PsiType expectedType,
+                                              boolean skipDiamonds) {
     if (PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
       if (classReference != null) {

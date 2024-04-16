@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,14 +29,13 @@ import java.util.regex.Pattern;
 public final class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance(JavaDocUtil.class);
 
-  @NonNls private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
   private static final String JAVA_LANG = "java.lang.";
 
   private JavaDocUtil() {
   }
 
-  @Nullable
-  public static PsiClass resolveClassInTagValue(@Nullable PsiDocTagValue value) {
+  public static @Nullable PsiClass resolveClassInTagValue(@Nullable PsiDocTagValue value) {
     if (value == null) return null;
     PsiElement refHolder = value.getFirstChild();
     if (refHolder != null) {
@@ -78,13 +77,11 @@ public final class JavaDocUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
+  public static @Nullable PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
     return findReferenceTarget(manager, refText, context, true);
   }
 
-  @Nullable
-  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
+  public static @Nullable PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
     LOG.assertTrue(context == null || context.isValid());
     if (context != null) {
       context = context.getNavigationElement();
@@ -145,8 +142,7 @@ public final class JavaDocUtil {
     return aClass;
   }
 
-  @Nullable
-  private static PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
+  private static @Nullable PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
     int parenthIndex = memberRefText.indexOf('(');
     if (parenthIndex < 0) {
       String name = memberRefText;
@@ -215,8 +211,7 @@ public final class JavaDocUtil {
     }
   }
 
-  @Nullable
-  public static String getReferenceText(Project project, PsiElement element) {
+  public static @Nullable String getReferenceText(Project project, PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.presentation.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -22,7 +22,7 @@ import javax.swing.*;
 
 public final class ClassPresentationProvider implements ItemPresentationProvider<PsiClass> {
   @Override
-  public ItemPresentation getPresentation(@NotNull final PsiClass psiClass) {
+  public ItemPresentation getPresentation(final @NotNull PsiClass psiClass) {
     return new ColoredItemPresentation() {
       @Override
       public String getPresentableText() {

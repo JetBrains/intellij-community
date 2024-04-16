@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -108,8 +108,7 @@ public class PsiCaseLabelElementListImpl extends CompositePsiElement implements 
       .anyMatch(Predicate.isEqual(place));
   }
 
-  @Nullable
-  private static PsiCaseLabelElement skipParenthesis(PsiCaseLabelElement e) {
+  private static @Nullable PsiCaseLabelElement skipParenthesis(PsiCaseLabelElement e) {
     if (!(e instanceof PsiParenthesizedExpression)) return e;
 
     return PsiUtil.skipParenthesizedExprDown((PsiParenthesizedExpression)e);

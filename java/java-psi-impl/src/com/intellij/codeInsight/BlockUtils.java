@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -100,8 +100,7 @@ public final class BlockUtils {
     return (T)result.getCodeBlock().getStatements()[0];
   }
 
-  @Nullable
-  public static PsiElement getBody(PsiElement element) {
+  public static @Nullable PsiElement getBody(PsiElement element) {
     if (element instanceof PsiLoopStatement) {
       final PsiStatement loopBody = ((PsiLoopStatement)element).getBody();
       return loopBody instanceof PsiBlockStatement ? ((PsiBlockStatement)loopBody).getCodeBlock() : loopBody;
@@ -218,8 +217,7 @@ public final class BlockUtils {
    * @param codeBlock a block with statements to inline
    * @return a first inlined statement, or null if <code>codeBlock</code> doesn't contain any statements.
    */
-  @Nullable
-  public static PsiElement inlineCodeBlock(@NotNull PsiStatement statement, @NotNull PsiCodeBlock codeBlock) {
+  public static @Nullable PsiElement inlineCodeBlock(@NotNull PsiStatement statement, @NotNull PsiCodeBlock codeBlock) {
     PsiJavaToken lBrace = codeBlock.getLBrace();
     PsiJavaToken rBrace = codeBlock.getRBrace();
     if (lBrace == null || rBrace == null) return null;

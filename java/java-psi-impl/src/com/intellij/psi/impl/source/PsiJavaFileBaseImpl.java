@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -90,8 +90,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
-  public String getPackageName() {
+  public @NotNull String getPackageName() {
     PsiJavaFileStub stub = (PsiJavaFileStub)getGreenStub();
     if (stub != null) {
       return stub.getPackageName();
@@ -452,9 +451,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
                                                     @NotNull PsiScopeProcessor processor) {
     if (!aPackage.getQualifiedName().isEmpty()) {
       processor = new DelegatingScopeProcessor(processor) {
-        @Nullable
         @Override
-        public <T> T getHint(@NotNull Key<T> hintKey) {
+        public @Nullable <T> T getHint(@NotNull Key<T> hintKey) {
           if (hintKey == ElementClassHint.KEY) {
             //noinspection unchecked
             return (T)(ElementClassHint)kind -> kind == ElementClassHint.DeclarationKind.CLASS;
@@ -466,8 +464,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return aPackage.processDeclarations(processor, state, null, place);
   }
 
-  @NotNull
-  private static PsiSubstitutor createRawSubstitutor(@NotNull PsiClass containingClass) {
+  private static @NotNull PsiSubstitutor createRawSubstitutor(@NotNull PsiClass containingClass) {
     return JavaPsiFacade.getElementFactory(containingClass.getProject()).createRawSubstitutor(containingClass);
   }
 
@@ -502,8 +499,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
@@ -516,14 +512,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
                                                                                                                      file -> file.getLanguageLevelInner());
 
   @Override
-  @NotNull
-  public LanguageLevel getLanguageLevel() {
+  public @NotNull LanguageLevel getLanguageLevel() {
     return LANGUAGE_LEVEL_KEY.getValue(this);
   }
 
-  @Nullable
   @Override
-  public PsiJavaModule getModuleDeclaration() {
+  public @Nullable PsiJavaModule getModuleDeclaration() {
     return null;
   }
 
@@ -541,8 +535,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");
 
-  @NotNull
-  private LanguageLevel getLanguageLevelInner() {
+  private @NotNull LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
     }
@@ -586,16 +579,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, ResultWithContext>> {
-    @NotNull
-    private final PsiJavaFileBaseImpl myFile;
+    private final @NotNull PsiJavaFileBaseImpl myFile;
 
     MyCacheBuilder(@NotNull PsiJavaFileBaseImpl file) {
       myFile = file;
     }
 
     @Override
-    @NotNull
-    public Result<MostlySingularMultiMap<String, ResultWithContext>> compute() {
+    public @NotNull Result<MostlySingularMultiMap<String, ResultWithContext>> compute() {
       SymbolCollectingProcessor p = new SymbolCollectingProcessor();
       myFile.processOnDemandPackages(ResolveState.initial(), myFile, p);
       MostlySingularMultiMap<String, ResultWithContext> results = p.getResults();

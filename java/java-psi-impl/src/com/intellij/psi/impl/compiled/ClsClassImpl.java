@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -56,8 +56,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public PsiTypeParameterList getTypeParameterList() {
+  public @NotNull PsiTypeParameterList getTypeParameterList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST)).getPsi();
   }
 
@@ -67,8 +66,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @Nullable
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     return getStub().getQualifiedName();
   }
 
@@ -83,8 +81,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @Nullable
-  public PsiModifierList getModifierList() {
+  public @Nullable PsiModifierList getModifierList() {
     return getModifierListInternal();
   }
 
@@ -98,8 +95,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public PsiReferenceList getExtendsList() {
+  public @NotNull PsiReferenceList getExtendsList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.EXTENDS_LIST)).getPsi();
   }
 
@@ -110,8 +106,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public PsiReferenceList getImplementsList() {
+  public @NotNull PsiReferenceList getImplementsList() {
     return Objects.requireNonNull(getStub().findChildStubByType(JavaStubElementTypes.IMPLEMENTS_LIST)).getPsi();
   }
 
@@ -158,8 +153,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
@@ -183,21 +177,18 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     return myInnersCache.getInnerClasses();
   }
 
-  @NotNull
   @Override
-  public List<PsiField> getOwnFields() {
+  public @NotNull List<PsiField> getOwnFields() {
     return asList(getStub().getChildrenByType(Constants.FIELD_BIT_SET, PsiField.ARRAY_FACTORY));
   }
 
-  @NotNull
   @Override
-  public List<PsiMethod> getOwnMethods() {
+  public @NotNull List<PsiMethod> getOwnMethods() {
     return asList(getStub().getChildrenByType(Constants.METHOD_BIT_SET, PsiMethod.ARRAY_FACTORY));
   }
 
-  @NotNull
   @Override
-  public List<PsiClass> getOwnInnerClasses() {
+  public @NotNull List<PsiClass> getOwnInnerClasses() {
     PsiClass[] classes = getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
     if (classes.length == 0) return Collections.emptyList();
 
@@ -276,14 +267,12 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
   @Override
-  @NotNull
-  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiClassImplUtil.MemberType.METHOD);
   }
 
@@ -302,8 +291,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     return sfn != null ? sfn : obtainSourceFileNameFromClassFileName();
   }
 
-  @NonNls
-  private String obtainSourceFileNameFromClassFileName() {
+  private @NonNls String obtainSourceFileNameFromClassFileName() {
     final String name = getContainingFile().getName();
     int i = name.indexOf('$');
     if (i < 0) {
@@ -346,7 +334,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  public void appendMirrorText(final int indentLevel, @NotNull @NonNls final StringBuilder buffer) {
+  public void appendMirrorText(final int indentLevel, final @NotNull @NonNls StringBuilder buffer) {
     appendText(getDocComment(), indentLevel, buffer, NEXT_LINE);
 
     appendText(getModifierListInternal(), indentLevel, buffer);
@@ -488,8 +476,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "PsiClass:" + getName();
   }
 
@@ -517,8 +504,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
-  @Nullable
-  public PsiClass getSourceMirrorClass() {
+  public @Nullable PsiClass getSourceMirrorClass() {
     final PsiClass delegate = getUserData(DELEGATE_KEY);
     if (delegate instanceof ClsClassImpl) {
       return ((ClsClassImpl)delegate).getSourceMirrorClass();
@@ -553,8 +539,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
@@ -603,8 +588,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
   }
 
