@@ -65,7 +65,7 @@ class NotebookOutputInlayController private constructor(
     }
   }
 
-  private val innerComponent = InnerComponent(editor)
+  private val innerComponent = InnerComponent()
   private val outerComponent = SurroundingComponent.create(editor, innerComponent)
 
   override var inlay: Inlay<*> = createInlay()

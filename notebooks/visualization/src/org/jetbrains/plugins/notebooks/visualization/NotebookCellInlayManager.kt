@@ -33,6 +33,7 @@ import org.jetbrains.plugins.notebooks.visualization.ui.EditorCell
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
+import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.awt.Graphics
 import java.util.*
 import javax.swing.JComponent
@@ -260,27 +261,28 @@ class NotebookCellInlayManager private constructor(
 
   private fun updateConsequentInlays(interestingRange: IntRange) {
     ThreadingAssertions.softAssertReadAccess()
-    editor.notebookCellEditorScrollingPositionKeeper?.saveSelectedCellPosition()
-    val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
-    val fullInterestingRange =
-      if (matchingIntervals.isNotEmpty()) matchingIntervals.first().lines.first..matchingIntervals.last().lines.last
-      else interestingRange
+    keepScrollingPositionWhile(editor) {
+      val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
+      val fullInterestingRange =
+        if (matchingIntervals.isNotEmpty()) matchingIntervals.first().lines.first..matchingIntervals.last().lines.last
+        else interestingRange
 
-    val existingHighlighters = getMatchingHighlightersForLines(fullInterestingRange)
-    val intervalsToAddHighlightersFor = matchingIntervals.associateByTo(HashMap()) { it.lines }
-    for (highlighter in existingHighlighters) {
-      val lines = editor.document.run { getLineNumber(highlighter.startOffset)..getLineNumber(highlighter.endOffset) }
-      if (intervalsToAddHighlightersFor.remove(lines)?.shouldHaveHighlighter != true) {
-        editor.markupModel.removeHighlighter(highlighter)
+      val existingHighlighters = getMatchingHighlightersForLines(fullInterestingRange)
+      val intervalsToAddHighlightersFor = matchingIntervals.associateByTo(HashMap()) { it.lines }
+      for (highlighter in existingHighlighters) {
+        val lines = editor.document.run { getLineNumber(highlighter.startOffset)..getLineNumber(highlighter.endOffset) }
+        if (intervalsToAddHighlightersFor.remove(lines)?.shouldHaveHighlighter != true) {
+          editor.markupModel.removeHighlighter(highlighter)
+        }
       }
-    }
-    addHighlighters(intervalsToAddHighlightersFor.values)
+      addHighlighters(intervalsToAddHighlightersFor.values)
 
-    for (interval in matchingIntervals) {
-      _cells[interval.ordinal].update()
-    }
+      for (interval in matchingIntervals) {
+        _cells[interval.ordinal].update()
+      }
 
-    inlaysChanged()
+      inlaysChanged()
+    }
   }
 
   private fun getMatchingHighlightersForLines(lines: IntRange): List<RangeHighlighterEx> =

@@ -1,13 +1,17 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
 import java.awt.AWTEvent
+import java.awt.BorderLayout
 import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.event.MouseEvent
@@ -26,6 +30,7 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
     if (!GraphicsEnvironment.isHeadless()) {
       setupScrollPaneListener()
     }
+    setupScrollingPositionKeeper()
   }
 
   private fun setupScrollPaneListener() {
@@ -37,6 +42,24 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
       }
       editorEx.gutterComponentEx.mousePosition?.let {
         updateMouseOverCell(editorEx.gutterComponentEx, it)
+      }
+    }
+  }
+
+  private fun setupScrollingPositionKeeper() {
+    val editorEx = original.editor as EditorEx
+    val scrollPane = editorEx.scrollPane
+    val view = scrollPane.viewport.view
+    scrollPane.viewport.view = object : JComponent() {
+      init {
+        layout = BorderLayout()
+        add(view, BorderLayout.CENTER)
+      }
+
+      override fun validateTree() {
+        keepScrollingPositionWhile(editor) {
+          super.validateTree()
+        }
       }
     }
   }
@@ -108,4 +131,12 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
 
 fun decorateTextEditor(textEditor: TextEditor): TextEditor {
   return DecoratedEditor(textEditor)
+}
+
+internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
+  EditorScrollingPositionKeeper(editor).use { keeper ->
+    keeper.savePosition()
+    task.run()
+    keeper.restorePosition(false)
+  }
 }
