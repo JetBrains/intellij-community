@@ -1475,7 +1475,7 @@ internal fun generateLanguagePluginsXml(context: BuildContext, targetPath: Path)
   val root = Element("plugins")
   root.addContent(createPluginNode(context, "com.intellij.ja", "ja", "7 MB"))
   root.addContent(createPluginNode(context, "com.intellij.ko", "ko", "7 MB"))
-  root.addContent(createPluginNode(context, "com.intellij.zh", "zh-CN", "6 MB"))
+  root.addContent(createPluginNode(context, "com.intellij.zh", "zh", "6 MB"))
 
   val document = Document()
   document.rootElement = root
