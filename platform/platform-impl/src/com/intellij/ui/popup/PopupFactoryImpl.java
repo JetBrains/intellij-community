@@ -236,9 +236,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             @Nullable String actionPlace,
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
-      this(parentPopup, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                            preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, maxRowCount);
-      UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace, presentationFactory));
+      this(parentPopup, createStep(
+        title, actionGroup, dataContext, actionPlace == null ? ActionPlaces.POPUP : actionPlace,
+        presentationFactory == null ? new PresentationFactory() : presentationFactory, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+        preselectActionCondition,
+        autoSelection), disposeCallback, dataContext, maxRowCount);
+      UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo(
+        "Menu", actionGroup, actionPlace, ((ActionPopupStep)getStep()).getPresentationFactory()));
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
@@ -269,21 +273,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
     protected static @NotNull ListPopupStep<ActionItem> createStep(@PopupTitle @Nullable String title,
                                                                    @NotNull ActionGroup actionGroup,
                                                                    @NotNull DataContext dataContext,
+                                                                   @NotNull String actionPlace,
+                                                                   @NotNull PresentationFactory presentationFactory,
                                                                    boolean showNumbers,
                                                                    boolean useAlphaAsNumbers,
                                                                    boolean showDisabledActions,
                                                                    boolean honorActionMnemonics,
                                                                    Condition<? super AnAction> preselectActionCondition,
-                                                                   @Nullable String actionPlace,
-                                                                   @Nullable PresentationFactory presentationFactory,
                                                                    boolean autoSelection) {
       DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
       List<ActionItem> items = ActionPopupStep.createActionItems(
-        actionGroup, asyncDataContext, showNumbers, useAlphaAsNumbers,
-        showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
-      return new ActionPopupStep(items, title, () -> asyncDataContext, actionPlace,
+        actionGroup, asyncDataContext, actionPlace, presentationFactory,
+        showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
+      return new ActionPopupStep(items, title, () -> asyncDataContext, actionPlace, presentationFactory,
                                  showNumbers || honorActionMnemonics && anyMnemonicsIn(items),
-                                 preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
+                                 preselectActionCondition, autoSelection, showDisabledActions);
     }
 
     @Override
@@ -408,12 +412,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                               boolean honorActionMnemonics,
                                                               int defaultOptionIndex,
                                                               boolean autoSelectionEnabled) {
+    PresentationFactory presentationFactory = new PresentationFactory();
     DataContext asyncDataContext = Utils.createAsyncDataContext(dataContext);
     return ActionPopupStep.createActionsStep(
       actionGroup, asyncDataContext, showNumbers, true, showDisabledActions,
       title, honorActionMnemonics, autoSelectionEnabled,
       () -> asyncDataContext,
-      actionPlace, null, defaultOptionIndex, null);
+      actionPlace == null ? ActionPlaces.POPUP : actionPlace, null, defaultOptionIndex, presentationFactory);
   }
 
   @ApiStatus.Internal

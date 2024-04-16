@@ -6,6 +6,7 @@ import com.intellij.dvcs.diverged
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.project.Project
@@ -38,6 +39,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
   internal val affectedRepositories get() = selectedRepository?.let(::listOf) ?: repositories
 
+  private val presentationFactory = PresentationFactory()
   private var finalRunnable: Runnable? = null
 
   override fun getFinalRunnable() = finalRunnable
@@ -51,8 +53,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
-        topLevelItems.addAll(
-          createTopLevelActionItems(experimentalUIActionsGroup, project, selectedRepository, affectedRepositories).addSeparators())
+        topLevelItems.addAll(createTopLevelActionItems(project, experimentalUIActionsGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
         if (topLevelItems.isNotEmpty()) {
           topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
         }
@@ -61,7 +62,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
-      topLevelItems.addAll(createTopLevelActionItems(actionGroup, project, selectedRepository, affectedRepositories).addSeparators())
+      topLevelItems.addAll(createTopLevelActionItems(project, actionGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
       if (topLevelItems.isNotEmpty()) {
         topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
       }
@@ -221,13 +222,15 @@ class GitBranchesTreePopupStep(internal val project: Project,
     internal val SINGLE_REPOSITORY_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.SingleRepo.Branch.Actions")
     internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
 
-    private fun createTopLevelActionItems(actionGroup: ActionGroup,
-                                          project: Project,
+    private fun createTopLevelActionItems(project: Project,
+                                          actionGroup: ActionGroup,
+                                          presentationFactory: PresentationFactory,
                                           selectedRepository: GitRepository?,
                                           repositories: List<GitRepository>): List<PopupFactoryImpl.ActionItem> {
       val dataContext = createDataContext(project, selectedRepository, repositories)
-      val actionItems = ActionPopupStep
-        .createActionItems(actionGroup, dataContext, false, false, true, false, TOP_LEVEL_ACTION_PLACE, null)
+      val actionItems = ActionPopupStep.createActionItems(
+        actionGroup, dataContext, TOP_LEVEL_ACTION_PLACE, presentationFactory,
+        false, false, true, false)
 
       if (actionItems.singleOrNull()?.action == Utils.EMPTY_MENU_FILLER) {
         return emptyList()
