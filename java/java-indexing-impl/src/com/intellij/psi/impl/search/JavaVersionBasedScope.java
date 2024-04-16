@@ -30,6 +30,8 @@ public final class JavaVersionBasedScope extends DelegatingGlobalSearchScope {
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     if (!super.contains(file)) return false;
+    // Do not filter directories, as they may contain non-versioned files
+    if (file.isDirectory()) return true;
     VirtualFile baseFile = JavaMultiReleaseUtil.findBaseFile(file);
     if (myLevel.isLessThan(JavaMultiReleaseUtil.MIN_MULTI_RELEASE_VERSION)) {
       // In pre-multi-release 
