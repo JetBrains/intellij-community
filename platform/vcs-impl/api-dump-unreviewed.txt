@@ -4373,6 +4373,7 @@ a:com.intellij.openapi.vcs.changes.savedPatches.AbstractShowDiffForSavedPatchesA
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - a:getDiffRequestProducer(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,java.lang.Object):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 - isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- p:isVisible(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction
 - com.intellij.openapi.vcs.changes.savedPatches.ShelfAction
@@ -4408,7 +4409,7 @@ f:com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser
 - com.intellij.openapi.vcs.changes.ui.AsyncChangesBrowserBase
 - com.intellij.openapi.Disposable
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
 - dispose():V
 - f:getChanges():java.util.Collection
 - f:getCurrentPatchObject():com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject
@@ -4418,16 +4419,16 @@ f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser
 - f:selectPatchObject(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider$PatchObject):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
 - com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
-- sf:INSTANCE:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffPreviewHandler
+- <init>(kotlin.jvm.functions.Function0):V
 - iterateAllChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.util.containers.JBIterable
 - iterateSelectedChanges(com.intellij.openapi.vcs.changes.ui.ChangesTree):com.intellij.util.containers.JBIterable
 - selectChange(com.intellij.openapi.vcs.changes.ui.ChangesTree,com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesDiffProcessor
 - com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
-- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z):V
+- <init>(com.intellij.openapi.vcs.changes.ui.ChangesTree,Z,kotlin.jvm.functions.Function0):V
 f:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesEditorDiffPreview
 - com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
-- <init>(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesChangesBrowser,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0):V
 - dispose():V
 - getEditorTabName(com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper):java.lang.String
 - openPreview(Z):Z
@@ -4490,7 +4491,7 @@ c:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 - com.intellij.openapi.actionSystem.DataProvider
 - sf:Companion:com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi$Companion
 - sf:SAVED_PATCHES_UI_PLACE:java.lang.String
-- <init>(com.intellij.openapi.project.Project,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
+- <init>(com.intellij.openapi.project.Project,java.util.List,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,com.intellij.openapi.Disposable):V
 - dispose():V
 - f:expandPatchesByProvider(com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider):V
 - getData(java.lang.String):java.lang.Object

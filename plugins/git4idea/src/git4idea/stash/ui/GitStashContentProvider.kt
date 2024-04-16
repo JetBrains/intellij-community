@@ -60,7 +60,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
   private inner class GitSavedPatchesUi(private val stashProvider: GitStashProvider, private val shelfProvider: ShelfProvider,
                                         parentDisposable: Disposable) :
     SavedPatchesUi(project, listOf(stashProvider, shelfProvider), isVertical = ::isVertical, isEditorDiffPreview = ::isEditorDiffPreview,
-                   focusMainUi = ::returnFocusToToolWindow, parentDisposable) {
+                   isShowDiffWithLocal = ::isShowDiffWithLocal, focusMainUi = ::returnFocusToToolWindow, parentDisposable) {
 
     init {
       patchesTree.emptyText
@@ -105,6 +105,10 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     toolWindow.activate({
                           IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true)
                         }, false)
+  }
+
+  private fun isShowDiffWithLocal(): Boolean {
+    return Registry.`is`("git.stash.diff.with.local")
   }
 
   companion object {

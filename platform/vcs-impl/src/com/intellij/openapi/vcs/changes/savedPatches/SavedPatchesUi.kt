@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.icons.AllIcons
@@ -28,6 +28,7 @@ open class SavedPatchesUi(project: Project,
                           @ApiStatus.Internal val providers: List<SavedPatchesProvider<*>>,
                           private val isVertical: () -> Boolean,
                           private val isEditorDiffPreview: () -> Boolean,
+                          private val isShowDiffWithLocal: () -> Boolean,
                           private val focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
   JPanel(BorderLayout()), Disposable, DataProvider {
@@ -46,7 +47,7 @@ open class SavedPatchesUi(project: Project,
     patchesTree = SavedPatchesTree(project, providers, visibleProviders::contains, this)
     PopupHandler.installPopupMenu(patchesTree, "Vcs.SavedPatches.ContextMenu", SAVED_PATCHES_UI_PLACE)
 
-    changesBrowser = SavedPatchesChangesBrowser(project, this)
+    changesBrowser = SavedPatchesChangesBrowser(project, isShowDiffWithLocal, this)
     CombinedSpeedSearch(changesBrowser.viewer, patchesTree.speedSearch)
 
     patchesTree.doubleClickHandler = Processor { e ->
@@ -147,7 +148,7 @@ open class SavedPatchesUi(project: Project,
     if (!isInitial && !needUpdatePreviews) return
 
     if (isInEditor) {
-      val diffPreview = SavedPatchesEditorDiffPreview(changesBrowser, focusMainUi)
+      val diffPreview = SavedPatchesEditorDiffPreview(changesBrowser, focusMainUi, isShowDiffWithLocal)
       changesBrowser.setShowDiffActionPreview(diffPreview)
       editorTabPreview = diffPreview
 
@@ -160,7 +161,7 @@ open class SavedPatchesUi(project: Project,
       editorTabPreview?.let { Disposer.dispose(it) }
       editorTabPreview = null
 
-      val processor = SavedPatchesDiffProcessor(changesBrowser.viewer, false)
+      val processor = SavedPatchesDiffProcessor(changesBrowser.viewer, false, isShowDiffWithLocal)
       splitDiffProcessor = processor
       treeDiffSplitter.secondComponent = processor.component
     }

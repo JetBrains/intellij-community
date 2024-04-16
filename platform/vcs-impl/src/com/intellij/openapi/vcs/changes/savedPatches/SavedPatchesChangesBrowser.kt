@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.openapi.Disposable
@@ -20,8 +20,7 @@ import com.intellij.util.ui.StatusText
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
-class SavedPatchesChangesBrowser(project: Project,
-                                 parentDisposable: Disposable)
+class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLocal: () -> Boolean, parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
 
   var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
@@ -104,6 +103,7 @@ class SavedPatchesChangesBrowser(project: Project,
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
+    if (isShowDiffWithLocal()) return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion = false)
     return userObject.createDiffRequestProducer(myProject)
   }
 

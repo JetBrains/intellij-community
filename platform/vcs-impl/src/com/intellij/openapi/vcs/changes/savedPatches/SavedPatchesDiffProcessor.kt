@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
 import com.intellij.diff.FrameDiffTool
@@ -10,9 +10,8 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.Nls
 
-class SavedPatchesDiffProcessor(tree: ChangesTree,
-                                private val isInEditor: Boolean)
-  : TreeHandlerDiffRequestProcessor(SAVED_PATCHES_UI_PLACE, tree, SavedPatchesDiffPreviewHandler) {
+class SavedPatchesDiffProcessor(tree: ChangesTree, private val isInEditor: Boolean, isShowDiffWithLocal: () -> Boolean)
+  : TreeHandlerDiffRequestProcessor(SAVED_PATCHES_UI_PLACE, tree, SavedPatchesDiffPreviewHandler(isShowDiffWithLocal)) {
   init {
     TreeHandlerChangesTreeTracker(tree, this, handler, !isInEditor).track()
   }
@@ -22,7 +21,7 @@ class SavedPatchesDiffProcessor(tree: ChangesTree,
   }
 }
 
-object SavedPatchesDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
+class SavedPatchesDiffPreviewHandler(private val isShowDiffWithLocal: () -> Boolean) : ChangesTreeDiffPreviewHandler() {
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     return collectWrappers(VcsTreeModelData.selected(tree))
   }
@@ -37,15 +36,19 @@ object SavedPatchesDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
 
   private fun collectWrappers(treeModelData: VcsTreeModelData): JBIterable<Wrapper> {
     return treeModelData.iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
-      .map { SavedPatchChangeWrapper(it) }
+      .map { SavedPatchChangeWrapper(it, isShowDiffWithLocal) }
   }
 }
 
-private class SavedPatchChangeWrapper(private val change: SavedPatchesProvider.ChangeObject)
+private class SavedPatchChangeWrapper(private val change: SavedPatchesProvider.ChangeObject,
+                                      private val isShowDiffWithLocal: () -> Boolean)
   : Wrapper(), PresentableChange by change {
 
   override fun getUserObject(): Any = change
   override fun getPresentableName(): @Nls String = change.filePath.name
-  override fun createProducer(project: Project?): DiffRequestProducer? = change.createDiffRequestProducer(project)
+  override fun createProducer(project: Project?): DiffRequestProducer? {
+    if (isShowDiffWithLocal()) return change.createDiffWithLocalRequestProducer(project, useBeforeVersion = false)
+    return change.createDiffRequestProducer(project)
+  }
   override fun getTag(): ChangesBrowserNode.Tag? = change.tag
 }
