@@ -34,22 +34,21 @@ abstract class LineStatusTrackerBase<R : Range>(
   final override val disposable: Disposable = Disposer.newDisposable()
   internal val LOCK: DocumentTracker.Lock = DocumentTracker.Lock()
 
-  protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
-  protected val documentTracker: DocumentTracker
+  val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
+  val documentTracker: DocumentTracker = DocumentTracker(vcsDocument, document, LOCK)
 
   final override var isReleased: Boolean = false
     private set
 
-  protected var isInitialized: Boolean = false
+  var isInitialized: Boolean = false
     private set
 
-  protected val blocks: List<Block>
+  val blocks: List<Block>
     get() = documentTracker.blocks
 
   protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   init {
-    documentTracker = DocumentTracker(vcsDocument, document, LOCK)
     Disposer.register(disposable, documentTracker)
 
     documentTracker.addHandler(MyDocumentTrackerHandler())
