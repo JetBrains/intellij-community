@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-impl-base" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-for-ide:2.0.20-dev-1117">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-for-ide:2.0.20-dev-1563">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/2.0.20-dev-1117/high-level-api-impl-base-for-ide-2.0.20-dev-1117.jar">
-          <sha256sum>3aaf51d5edac59ac7c938dfc0294c2b6955ce50cc59df9cc0dff5220c0c03f39</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/2.0.20-dev-1563/high-level-api-impl-base-for-ide-2.0.20-dev-1563.jar">
+          <sha256sum>599eaeecb8a2ffbcf33822f98293ea38395fbac2661344fdfa05fc46d7df4005</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/2.0.20-dev-1117/high-level-api-impl-base-for-ide-2.0.20-dev-1117.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/2.0.20-dev-1563/high-level-api-impl-base-for-ide-2.0.20-dev-1563.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/2.0.20-dev-1117/high-level-api-impl-base-for-ide-2.0.20-dev-1117-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/2.0.20-dev-1563/high-level-api-impl-base-for-ide-2.0.20-dev-1563-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

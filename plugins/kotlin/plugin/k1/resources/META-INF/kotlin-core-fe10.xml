@@ -46,9 +46,6 @@
             serviceInterface="org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.Fe10QuickFixProviderImpl"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider"
-            serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSessionProvider"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade"
             serviceImplementation="org.jetbrains.kotlin.base.fe10.analysis.IdeFe10AnalysisFacade"/>
     <projectService
@@ -279,14 +276,6 @@
     <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.OldJ2kConverterExtension"/>
   </extensions>
 
-  <!-- Navigation -->
-  <extensions defaultExtensionNs="com.intellij">
-
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
-            serviceImplementation="org.jetbrains.kotlin.idea.references.KtIdeReferenceProviderService"/>
-  </extensions>
-
   <!-- Declaration search and Find Usages -->
   <extensions defaultExtensionNs="com.intellij">
     <targetElementEvaluator language="kotlin"
@@ -304,9 +293,6 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.ExpectActualSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.search.KotlinExpectActualSupportImpl"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker"
-                    serviceImplementation="org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl"/>
 
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinUsageTypeProviderImpl"/>
 

@@ -55,6 +55,8 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtBreakExpression
+import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -62,6 +64,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
@@ -179,10 +182,10 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             return OutputDescriptor(
                 defaultResultExpression = defaultExpressionInfo?.expression,
                 typeOfDefaultFlow = approximate(typeOfDefaultFlow) ?: builtinTypes.UNIT,
-                valuedReturnExpressions = exitSnapshot.valuedReturnExpressions,
+                valuedReturnExpressions = exitSnapshot.valuedReturnExpressions.filter { it is KtReturnExpression },
                 returnValueType = approximate(exitSnapshot.returnValueType) ?: builtinTypes.UNIT,
-                jumpExpressions = exitSnapshot.loopJumpExpressions,
-                hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets && !exitSnapshot.hasMultipleJumpKinds,
+                jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression },
+                hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets,
                 sameExitForDefaultAndJump = if (exitSnapshot.hasJumps) !exitSnapshot.hasEscapingJumps && defaultExpressionInfo != null else defaultExpressionInfo == null
             )
         }
