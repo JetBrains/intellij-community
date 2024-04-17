@@ -55,6 +55,7 @@ import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
 class UnindexedFilesScanner private constructor(private val myProject: Project,
@@ -371,7 +372,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     progressReporter.setSubTasksCount(providers.size)
 
     val sharedExplanationLogger = IndexingReasonExplanationLogger()
-    val providersToCheck = Channel<IndexableFilesIterator>(capacity = SCANNING_THREADS_COUNT)
+    val providersToCheck = Channel<IndexableFilesIterator>(capacity = SCANNING_PARALLELISM)
 
     runBlockingCancellable {
       async {
@@ -381,7 +382,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         providersToCheck.close()
       }
 
-      repeatTaskConcurrently(continueOnException = true) {
+      repeatTaskConcurrently(continueOnException = true, SCANNING_DISPATCHER, SCANNING_PARALLELISM) {
         val provider = providersToCheck.receiveCatching().getOrNull() ?: return@repeatTaskConcurrently false
         blockingContext {
           val scanningStatistics = ScanningStatistics(provider.debugName)
@@ -468,9 +469,12 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
   }
 
-  private suspend fun repeatTaskConcurrently(continueOnException: Boolean, block: suspend () -> Boolean) {
-    withContext(SCANNING_DISPATCHER) {
-      repeat(SCANNING_THREADS_COUNT) {
+  private suspend fun repeatTaskConcurrently(continueOnException: Boolean,
+                                             context: CoroutineContext,
+                                             parallelism: Int,
+                                             block: suspend () -> Boolean) {
+    withContext(context) {
+      repeat(parallelism) {
         async {
           var shouldContinue: Boolean
           do {
@@ -632,12 +636,16 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   companion object {
     private val DELAY_IN_TESTS_MS = SystemProperties.getIntProperty("scanning.delay.before.start.in.tests.ms", 0)
 
-    private val SCANNING_THREADS_COUNT = UnindexedFilesUpdater.getNumberOfScanningThreads().coerceAtLeast(1)
+    private val SCANNING_PARALLELISM = UnindexedFilesUpdater.getNumberOfScanningThreads().coerceAtLeast(1)
+    private val BLOCKING_PROVIDERS_ITERATOR_PARALLELISM = SCANNING_PARALLELISM
 
     // We still have a lot of IO during scanning, so Default dispatcher might be not the best choice at the moment.
     // (this is my best guess, not confirmed by any experiment - you are welcome to experiment with dispatchers if you wish)
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val SCANNING_DISPATCHER = Dispatchers.IO.limitedParallelism(SCANNING_THREADS_COUNT)
+    private val SCANNING_DISPATCHER = Dispatchers.IO.limitedParallelism(SCANNING_PARALLELISM)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val BLOCKING_PROVIDERS_ITERATOR_DISPATCHER = Dispatchers.IO.limitedParallelism(BLOCKING_PROVIDERS_ITERATOR_PARALLELISM)
 
     @JvmField
     val LOG: Logger = Logger.getInstance(UnindexedFilesScanner::class.java)
