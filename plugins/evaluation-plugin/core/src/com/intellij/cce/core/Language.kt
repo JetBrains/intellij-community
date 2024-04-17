@@ -21,6 +21,7 @@ enum class Language(val displayName: String, private val extensions: List<String
   LESS("Less", listOf("less"), "LESS"),
   SCSS("SCSS", listOf("scss"), "SCSS"),
   HTML("HTML", listOf("html"), "HTML"),
+  TERRAFORM("Terraform", listOf("tf", "tfvars"), "HCL-Terraform"),
   ANOTHER("Another", listOf(), ""),
   UNSUPPORTED("Unsupported", listOf(), ""); // TODO: There are no unsupported languages
 
