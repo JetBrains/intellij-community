@@ -4,10 +4,7 @@ package org.jetbrains.idea.devkit.run
 import com.intellij.compiler.options.MakeProjectStepBeforeRun
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.configurations.JavaParameters
-import com.intellij.execution.configurations.ParametersList
-import com.intellij.execution.configurations.RunConfigurationBase
-import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.configurations.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtilRt
@@ -68,7 +65,9 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       "-ea",
     )
 
-    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
+    if (runnerSettings is DebuggingRunnerData) {
+      vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
+    }
 
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
       vmParameters.add("-Xmx2g")

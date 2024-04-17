@@ -37,7 +37,6 @@ fun isCoroutineDumpEnabled(): Boolean {
 @Internal
 fun enableCoroutineDump(): Result<Unit> {
   return runCatching {
-    DebugProbes.enableCreationStackTraces = false
     DebugProbes.install()
   }
 }
