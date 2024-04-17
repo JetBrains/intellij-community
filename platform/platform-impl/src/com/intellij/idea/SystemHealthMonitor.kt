@@ -25,7 +25,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.shellEnvDeferred
@@ -87,7 +86,7 @@ private class MyNotification(
 }
 
 private fun checkInstallationIntegrity() {
-  if (!SystemInfoRt.isUnix || SystemInfoRt.isMac) {
+  if (!SystemInfo.isUnix || SystemInfo.isMac) {
     return
   }
 
@@ -121,7 +120,7 @@ private fun shorten(pathStr: String): String {
   val userHome = Path.of(SystemProperties.getUserHome())
   return if (path.startsWith(userHome)) {
     val relative = userHome.relativize(path)
-    if (SystemInfoRt.isWindows) "%USERPROFILE%\\$relative" else "~/$relative"
+    if (SystemInfo.isWindows) "%USERPROFILE%\\${relative}" else "~/${relative}"
   }
   else {
     pathStr
@@ -134,7 +133,7 @@ private suspend fun checkRuntime() {
   }
 
   LOG.info("${CpuArch.CURRENT} appears to be emulated")
-  if (SystemInfoRt.isMac && CpuArch.isIntel64()) {
+  if (SystemInfo.isMac && CpuArch.isIntel64()) {
     val downloadAction = ExternalProductResourceUrls.getInstance().downloadPageUrl?.let { downloadPageUrl ->
       NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
         BrowserUtil.browse(downloadPageUrl.toExternalForm())
@@ -151,9 +150,9 @@ private suspend fun checkRuntime() {
   // boot JRE is non-bundled and is either non-JB or older than bundled
   var switchAction: NotificationAction? = null
   val directory = PathManager.getCustomOptionsDirectory()
-  if (directory != null && (SystemInfoRt.isWindows || SystemInfoRt.isMac || SystemInfoRt.isLinux) && isJbrOperational()) {
+  if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
     val scriptName = ApplicationNamesInfo.getInstance().scriptName
-    val configName = scriptName + (if (!SystemInfoRt.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
+    val configName = scriptName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
     val configFile = Path.of(directory, configName)
     if (Files.isRegularFile(configFile)) {
       switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
@@ -188,8 +187,8 @@ private fun isModernJBR(): Boolean {
 }
 
 private suspend fun isJbrOperational(): Boolean {
-  val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfoRt.isWindows) "bin/java.exe" else "bin/java")
-  if (Files.isRegularFile(bin) && (SystemInfoRt.isWindows || Files.isExecutable(bin))) {
+  val bin = Path.of(PathManager.getBundledRuntimePath(), if (SystemInfo.isWindows) "bin/java.exe" else "bin/java")
+  if (Files.isRegularFile(bin) && (SystemInfo.isWindows || Files.isExecutable(bin))) {
     try {
       return withTimeout(30.seconds) {
         @Suppress("UsePlatformProcessAwaitExit")
@@ -230,7 +229,7 @@ private suspend fun checkEnvironment() {
     .filter { `var` -> !System.getenv(`var`).isNullOrEmpty() }
     .toList()
   if (!usedVars.isEmpty()) {
-    showNotification("vm.options.env.vars", suppressable = true, null, usedVars.joinToString(separator = ", "))
+    showNotification("vm.options.env.vars", suppressable = true, action = null, usedVars.joinToString(separator = ", "))
   }
 
   try {
@@ -260,7 +259,7 @@ private fun checkLauncher() {
 }
 
 private fun checkSignalBlocking() {
-  if (!SystemInfoRt.isUnix || !JnaLoader.isLoaded()) {
+  if (!SystemInfo.isUnix || !JnaLoader.isLoaded()) {
     return
   }
 
@@ -300,7 +299,7 @@ private interface LibC : Library {
 }
 
 private fun checkTempDirSanity() {
-  if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
+  if (SystemInfo.isUnix && !SystemInfo.isMac) {
     try {
       val probe = Files.createTempFile(Path.of(PathManager.getTempPath()), "ij-exec-check-", ".sh")
       NioFiles.setExecutable(probe)
@@ -315,7 +314,7 @@ private fun checkTempDirSanity() {
 }
 
 private fun checkTempDirEnvVars() {
-  val envVars = if (SystemInfoRt.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
+  val envVars = if (SystemInfo.isWindows) sequenceOf("TMP", "TEMP") else sequenceOf("TMPDIR")
   for (name in envVars) {
     val value = System.getenv(name) ?: continue
     try {
@@ -331,10 +330,10 @@ private fun checkTempDirEnvVars() {
 }
 
 private fun checkAncientOs() {
-  if (SystemInfoRt.isWindows) {
+  if (SystemInfo.isWindows) {
     val buildNumber = SystemInfo.getWinBuildNumber()
     if (buildNumber != null && buildNumber < 10000) {  // 10 1507 = 10240, Server 2016 = 14393
-      showNotification("unsupported.windows", suppressable = true, null)
+      showNotification("unsupported.windows", suppressable = true, action = null)
     }
   }
 }
