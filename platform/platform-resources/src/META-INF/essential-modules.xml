@@ -3,6 +3,8 @@
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.libraries.ktor.client"/>
 
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.kernel.backend"/>
     <!-- todo navbar is not essential-->
     <module name="intellij.platform.navbar.compatibility"/>
     <module name="intellij.platform.navbar.backend.compatibility"/>
