@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="intellij-test-discovery" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-test-discovery-agent:1.0.749">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-test-discovery-agent:1.0.750">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.749/intellij-test-discovery-agent-1.0.749.jar">
-          <sha256sum>39e587358d3481cdf28eebe91c9f4a24b360deeddaaf86c534b0e4a231564e25</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.750/intellij-test-discovery-agent-1.0.750.jar">
+          <sha256sum>8f7213c6e49788c9097e4867787c21e4a7da38b8f71336c9cae7083aaf192c1d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.749/intellij-test-discovery-agent-1.0.749.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.750/intellij-test-discovery-agent-1.0.750.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.749/intellij-test-discovery-agent-1.0.749-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.750/intellij-test-discovery-agent-1.0.750-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
