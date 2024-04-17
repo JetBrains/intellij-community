@@ -269,8 +269,8 @@ public abstract class Logger {
    * to avoid overwhelming the log if 'debug' level is enabled.
    * <p>
    * In production mode, trace messages are disabled by default.
-   * They can be enabled in
-   * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
+   * They can be enabled by appending a <code>:trace</code> suffix in
+   * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>
    * <p>
    * In UsefulTestCase mode, trace messages are disabled by default,
    * use {@code TestLoggerFactory.enableTraceLogging} to enable them.
@@ -287,7 +287,7 @@ public abstract class Logger {
    * Log a stack trace at trace level, which is finer-grained than debug level.
    * <p>
    * In production mode, trace messages are disabled by default.
-   * They can be enabled in
+   * They can be enabled by appending a <code>:trace</code> suffix in
    * <a href="https://plugins.jetbrains.com/docs/intellij/ide-infrastructure.html#logging">Help | Diagnostic Tools | Debug Log Settings</a>.
    * <p>
    * In UsefulTestCase mode, trace messages are disabled by default,

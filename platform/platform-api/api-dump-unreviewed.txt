@@ -2261,6 +2261,7 @@ a:com.intellij.openapi.editor.actionSystem.EditorAction
 - update(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):V
 - updateForKeyboardAccess(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.DataContext):V
 a:com.intellij.openapi.editor.actionSystem.EditorActionHandler
+- psf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>():V
 - p:<init>(Z):V
 - p:doExecute(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.Caret,com.intellij.openapi.actionSystem.DataContext):V
