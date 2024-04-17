@@ -48,9 +48,8 @@ public interface JsonLikeSyntaxAdapter {
     PsiElement adjusted = adjustNewProperty(newElement);
 
     ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement));
-    if (isProcessingProperty) {
-      ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted);
-    }
+    ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted);
+
     return adjusted;
   }
 

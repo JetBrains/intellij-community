@@ -341,9 +341,23 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     @Override
     public void ensureComma(PsiElement self, PsiElement newElement) {
       if (newElement instanceof YAMLKeyValue && self instanceof YAMLKeyValue) {
+        PsiElement sibling = skipSiblingsForward(self);
+        if (sibling != null && sibling.getText().equals("\n")) return;
         self.getParent().addAfter(YAMLElementGenerator.getInstance(self.getProject()).createEol(), self);
       }
     }
+
+    private static @Nullable PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement> @NotNull ... elementClasses) {
+      if (element != null) {
+        for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+          if (!(e instanceof PsiComment) && (!(e instanceof PsiWhiteSpace) || e.textContains('\n'))) {
+            return e;
+          }
+        }
+      }
+      return null;
+    }
+
 
     @Override
     public void removeIfComma(PsiElement forward) {

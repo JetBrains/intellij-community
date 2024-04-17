@@ -219,6 +219,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     @Override
     public void ensureComma(PsiElement self, PsiElement newElement) {
       if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
+        PsiElement sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(self);
+        if (sibling != null && sibling.getText().equals(",")) return;
         self.getParent().addAfter(new JsonElementGenerator(self.getProject()).createComma(), self);
       }
     }
