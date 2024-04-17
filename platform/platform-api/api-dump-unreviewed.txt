@@ -1765,6 +1765,7 @@ c:com.intellij.openapi.actionSystem.DefaultActionGroup
 - s:createPopupGroup(java.util.function.Supplier):com.intellij.openapi.actionSystem.DefaultActionGroup
 - s:createPopupGroupWithEmptyText():com.intellij.openapi.actionSystem.DefaultActionGroup
 - f:getChildActionsOrStubs():com.intellij.openapi.actionSystem.AnAction[]
+- f:getChildren(com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 - f:getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - f:getChildrenCount():I
