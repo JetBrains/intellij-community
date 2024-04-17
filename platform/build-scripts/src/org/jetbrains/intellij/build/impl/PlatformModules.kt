@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
@@ -22,7 +23,7 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 
 private val PLATFORM_API_MODULES = java.util.List.of(
@@ -87,8 +88,6 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.xml.dom.impl",
 
   "intellij.platform.vcs.log",
-  "intellij.platform.vcs.impl",
-  "intellij.smart.update",
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
@@ -137,16 +136,14 @@ internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPlu
   return false
 }
 
-private fun addModule(relativeJarPath: String,
-                      moduleNames: Collection<String>,
-                      productLayout: ProductModulesLayout,
-                      layout: PlatformLayout) {
+private fun addModule(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
   layout.withModules(moduleNames.asSequence()
                        .filter { !productLayout.excludedModuleNames.contains(it) }
                        .map { ModuleItem(moduleName = it, relativeOutputFile = relativeJarPath, reason = "addModule") }
                        .toList())
 }
 
+@Suppress("RedundantSuspendModifier")
 suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: BuildContext): PlatformLayout {
   val enabledPluginModules = getEnabledPluginModules(pluginsToPublish = pluginsToPublish, context = context)
   val productLayout = context.productProperties.productLayout
@@ -160,9 +157,7 @@ suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: B
   )
 }
 
-internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
-                                          projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>,
-                                          context: BuildContext): PlatformLayout {
+internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectLibrariesUsedByPlugins: SortedSet<ProjectLibraryData>, context: BuildContext): PlatformLayout {
   val jetBrainsClientModuleFilter = context.jetBrainsClientModuleFilter
   val productLayout = context.productProperties.productLayout
   val layout = PlatformLayout()
@@ -415,10 +410,7 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
   }
 }
 
-private fun toModuleItemSequence(list: Collection<String>,
-                                 productLayout: ProductModulesLayout,
-                                 reason: String,
-                                 context: BuildContext): Sequence<ModuleItem> {
+private fun toModuleItemSequence(list: Collection<String>, productLayout: ProductModulesLayout, reason: String, context: BuildContext): Sequence<ModuleItem> {
   return list.asSequence()
     .filter { !productLayout.excludedModuleNames.contains(it) }
     .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, context), reason = reason) }
@@ -563,9 +555,21 @@ private fun handleCommonModules(layout: PlatformLayout, result: LinkedHashSet<Mo
   layout.withPatch { moduleOutputPatcher, context ->
     val modules = data.getChild("content")!!.children("module").joinToString(separator = "") {
       val moduleName = it.getAttributeValue("name")!!
-      val moduleContent = Files.readString(context.findFileInModuleSources(moduleName, "$moduleName.xml"))
+      val descriptorFile = "$moduleName.xml"
+      val file = requireNotNull(context.findFileInModuleSources(moduleName, descriptorFile)) {
+        "Cannot find file $descriptorFile in module $moduleName"
+      }
+      val xml = JDOMUtil.load(file)
+      resolveNonXIncludeElement(original = xml, base = file, pathResolver = object : XIncludePathResolver {
+        override fun resolvePath(relativePath: String, base: Path?): Path {
+          val p = relativePath.removePrefix("/")
+          return requireNotNull(context.findFileInModuleSources(moduleName, p)) { "Cannot find $p in module $moduleName" }
+        }
+      })
+
+      val moduleContent = JDOMUtil.write(xml)
       require(!moduleContent.contains("<![CDATA["))
-      """<module name="$moduleName"><![CDATA[${moduleContent!!}]]></module>"""
+      """<module name="$moduleName"><![CDATA[$moduleContent]]></module>"""
     }
     val content = """
         <idea>

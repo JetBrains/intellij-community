@@ -237,14 +237,7 @@ private class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
         val jarFile = pluginDir.resolve("lib/modules/${module.name}.jar")
         if (Files.exists(jarFile)) {
           classPath = Collections.singletonList(jarFile)
-          loadModuleFromSeparateJar(
-            pool = zipFilePool,
-            jarFile = jarFile,
-            subDescriptorFile = subDescriptorFile,
-            context = context,
-            pathResolver = pluginPathResolver,
-            dataLoader = dataLoader,
-          )
+          loadModuleFromSeparateJar(pool = zipFilePool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
         }
         else {
           throw RuntimeException("Cannot resolve $subDescriptorFile (dataLoader=$dataLoader)")

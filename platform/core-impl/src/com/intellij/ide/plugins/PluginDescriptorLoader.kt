@@ -792,14 +792,7 @@ private fun loadProductModule(
       moduleRaw = RawPluginDescriptor().apply { `package` = "unresolved.$moduleName" }
     }
     else {
-      moduleRaw = loadModuleFromSeparateJar(
-        pool = pool,
-        jarFile = jarFile,
-        subDescriptorFile = subDescriptorFile,
-        context = context,
-        pathResolver = pathResolver,
-        dataLoader = dataLoader,
-      )
+      moduleRaw = loadModuleFromSeparateJar(pool = pool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
     }
   }
   else {
@@ -829,17 +822,16 @@ internal fun loadModuleFromSeparateJar(
   jarFile: Path,
   subDescriptorFile: String,
   context: DescriptorListLoadingContext,
-  pathResolver: PathResolver,
   dataLoader: DataLoader,
 ): RawPluginDescriptor {
   val resolver = pool.load(jarFile)
   try {
-    val entry = resolver.loadZipEntry(subDescriptorFile)
-                ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
+    val entry = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
     return readModuleDescriptor(
       input = entry,
       readContext = context,
-      pathResolver = pathResolver,
+      // product module is always fully resolved and do not contain `xi:include`
+      pathResolver = null,
       dataLoader = dataLoader,
       includeBase = null,
       readInto = null,

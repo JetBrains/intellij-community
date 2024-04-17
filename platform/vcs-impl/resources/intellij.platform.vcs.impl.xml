@@ -7,10 +7,6 @@
   <xi:include href="/META-INF/VcsExtensions.xml"/>
   <xi:include href="/META-INF/VcsActions.xml"/>
 
-  <xi:include href="/META-INF/smart-update.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <extensions defaultExtensionNs="com.intellij">
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
               implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType"/>

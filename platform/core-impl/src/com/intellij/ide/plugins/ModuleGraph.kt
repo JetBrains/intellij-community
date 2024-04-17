@@ -82,6 +82,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     if (module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) {
       val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
       if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
+        moduleMap.get("intellij.platform.vcs.impl")?.let { result.add(it) }
         moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
         moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
       }

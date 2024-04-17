@@ -1,4 +1,8 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
