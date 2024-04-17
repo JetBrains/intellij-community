@@ -30,6 +30,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBra
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabNotificationAction
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil.repoAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 private val LOG = logger<GitLabPushNotificationCustomizer>()
@@ -67,7 +68,13 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
   }
 
   private fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GitLabProjectMapping, GitLabAccount>? {
-    AccountUtil.selectPersistedRepoAndAccount(targetRepository, pushResult, preferences.selectedRepoAndAccount)?.let {
+    AccountUtil.selectPersistedRepoAndAccount(
+      targetRepository,
+      pushResult,
+      repoAndAccountState(projectsManager.knownRepositoriesState,
+                          accountManager.accountsState,
+                          preferences.selectedUrlAndAccountId).value
+    )?.let {
       return it
     }
     AccountUtil.selectSingleAccount(projectsManager, accountManager, targetRepository, pushResult, defaultAccountHolder.account)?.let {

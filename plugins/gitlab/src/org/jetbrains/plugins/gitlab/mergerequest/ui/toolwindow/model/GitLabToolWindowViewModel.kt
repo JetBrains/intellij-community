@@ -21,6 +21,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel.Companion.GitLabToolWindowProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil.repoAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 @Service(Service.Level.PROJECT)
@@ -49,12 +50,20 @@ internal class GitLabToolWindowViewModel(
       this, projectsManager, accountManager,
       onSelected = { mapping, account ->
         connectionManager.openConnection(mapping, account)
-        preferences.selectedRepoAndAccount = mapping to account
+        preferences.selectedUrlAndAccountId = mapping.remote.url to account.id
       }
     ).apply {
-      preferences.selectedRepoAndAccount?.let { (repo, account) ->
-        repoSelectionState.value = repo
-        accountSelectionState.value = account
+      // Make sure the first found selected repo and account will be selected
+      launch {
+        val (repo, account) =
+          repoAndAccountState(
+            projectsManager.knownRepositoriesState,
+            accountManager.accountsState,
+            preferences.selectedUrlAndAccountId ?: return@launch
+          ).filterNotNull().first()
+
+        selectRepoAndAccount(repo, account)
+        submitSelection()
       }
     }
   }.stateIn(cs, SharingStarted.Eagerly, null)
@@ -73,7 +82,7 @@ internal class GitLabToolWindowViewModel(
 
   fun switchProject() {
     cs.launch {
-      project.service<GitLabMergeRequestsPreferences>().selectedRepoAndAccount = null
+      project.service<GitLabMergeRequestsPreferences>().selectedUrlAndAccountId = null
       connectionManager.closeConnection()
     }
   }
