@@ -38,8 +38,7 @@ class ClassLoaderConfigurator(
   init {
     resourceFileFactory = try {
       @Suppress("UNCHECKED_CAST")
-      MethodHandles.lookup().findStatic(coreLoader.loadClass("com.intellij.util.lang.PathClassLoader"), "getResourceFileFactory",
-                                        MethodType.methodType(Function::class.java))
+      MethodHandles.lookup().findStatic(coreLoader.loadClass("com.intellij.util.lang.PathClassLoader"), "getResourceFileFactory", MethodType.methodType(Function::class.java))
         .invokeExact() as Function<Path, ResourceFile>
     }
     catch (ignore: ClassNotFoundException) {
@@ -119,8 +118,7 @@ class ClassLoaderConfigurator(
       val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
       val existing = mainToClassPath.put(module.pluginId, mainInfo)
       if (existing != null) {
-        log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}",
-                                  module.pluginId))
+        log.error(PluginException("Main module with ${module.pluginId} is already added (existingClassPath=${existing.files}", module.pluginId))
       }
 
       val mainDependentClassLoader = if (module.isUseIdeaClassLoader) {
@@ -159,8 +157,7 @@ class ClassLoaderConfigurator(
       }
       else {
         module.pluginClassLoader = PluginClassLoader(
-          classPath = module.jarFiles?.let { ClassPath(it, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false) }
-                      ?: mainInfo.classPath,
+          classPath = module.jarFiles?.let { ClassPath(it, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, false) } ?: mainInfo.classPath,
           parents = dependencies,
           pluginDescriptor = module,
           coreLoader = coreLoader,

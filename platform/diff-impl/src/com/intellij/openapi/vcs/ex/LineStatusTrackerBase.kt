@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.DiffUtil
@@ -43,7 +43,8 @@ abstract class LineStatusTrackerBase<R : Range>(
   protected var isInitialized: Boolean = false
     private set
 
-  protected val blocks: List<Block> get() = documentTracker.blocks
+  protected val blocks: List<Block>
+    get() = documentTracker.blocks
 
   protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
@@ -144,7 +145,6 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun <T> readLock(task: () -> T): T {
     return documentTracker.readLock(task)
   }
-
 
   private inner class MyBlockOperations(lock: DocumentTracker.Lock) : LineStatusTrackerBlockOperations<R, Block>(lock) {
     override fun getBlocks(): List<Block>? = if (isValid()) blocks else null
