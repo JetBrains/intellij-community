@@ -61,6 +61,13 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       fatalError("Error for loading config: $configPath, $e. StackTrace: ${stackTraceToString(e)}")
     }
 
+    protected fun runPreliminarySteps(feature: EvaluableFeature<*>, workspace: EvaluationWorkspace) {
+      for (step in feature.getPreliminaryEvaluationSteps()) {
+        println("Starting preliminary step: ${step.name}")
+        step.start(workspace)
+      }
+    }
+
     protected fun loadAndApply(projectPath: String, action: (Project) -> Unit) {
       val project: Project?
 
@@ -99,8 +106,9 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
     override fun run() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
+      val workspace = EvaluationWorkspace.create(config)
+      runPreliminarySteps(feature, workspace)
       loadAndApply(config.projectPath) { project ->
-        val workspace = EvaluationWorkspace.create(config)
         val stepFactory = BackgroundStepFactory(feature, config, project, null, EvaluationRootInfo(true))
         EvaluationProcess.build({
                                   customize()
@@ -139,6 +147,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
       val workspace = EvaluationWorkspace.open(workspacePath)
       val config = workspace.readConfig(feature.getStrategySerializer())
+      runPreliminarySteps(feature, workspace)
       loadAndApply(config.projectPath) { project ->
         val process = EvaluationProcess.build({
                                                 shouldGenerateActions = false

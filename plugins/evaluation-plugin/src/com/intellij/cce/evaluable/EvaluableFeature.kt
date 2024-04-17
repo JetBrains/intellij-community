@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable
 
 import com.intellij.cce.core.Language
@@ -53,6 +53,12 @@ interface EvaluableFeature<T : EvaluationStrategy> {
    * additional steps to set up evaluation
    */
   fun getEvaluationSteps(language: Language, strategy: T): List<EvaluationStep>
+
+
+  /**
+   * additional steps to set up evaluation before project is opened
+   */
+  fun getPreliminaryEvaluationSteps(): List<EvaluationStep>
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<EvaluableFeature<EvaluationStrategy>>("com.intellij.cce.evaluableFeature")
