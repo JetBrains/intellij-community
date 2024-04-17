@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWith
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.*;
 import com.intellij.psi.scope.processor.MethodsProcessor;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -75,12 +74,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public PsiClass @NotNull [] getClasses() {
-    StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      return stub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
-    }
-
-    return calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
+    return withGreenStubOrAst(
+      stub -> stub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY),
+      ast -> ast.getChildrenAsPsiElements(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY)
+    );
   }
 
   @Override
@@ -91,17 +88,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public @NotNull String getPackageName() {
-    PsiJavaFileStub stub = (PsiJavaFileStub)getGreenStub();
-    if (stub != null) {
-      return stub.getPackageName();
-    }
-
-    String name = myPackageName;
-    if (name == null) {
-      PsiPackageStatement statement = getPackageStatement();
-      myPackageName = name = statement == null ? "" : statement.getPackageName();
-    }
-    return name;
+    return withGreenStubOrAst(
+      PsiJavaFileStub.class,
+      stub -> stub.getPackageName(),
+      ast -> {
+        String name = myPackageName;
+        if (name == null) {
+          PsiPackageStatement statement = getPackageStatement();
+          myPackageName = name = statement == null ? "" : statement.getPackageName();
+        }
+        return name;
+      }
+    );
   }
 
   @Override
@@ -155,16 +153,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   @Override
   public PsiImportList getImportList() {
-    StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
-      if (nodes.length == 1) return nodes[0];
-      assert nodes.length == 0;
-      return null;
-    }
-
-    ASTNode node = calcTreeElement().findChildByType(JavaElementType.IMPORT_LIST);
-    return (PsiImportList)SourceTreeToPsiMap.treeElementToPsi(node);
+    return withGreenStubOrAst(
+      stub -> {
+        PsiImportList[] nodes = stub.getChildrenByType(JavaStubElementTypes.IMPORT_LIST, PsiImportList.ARRAY_FACTORY);
+        if (nodes.length == 1) return nodes[0];
+        assert nodes.length == 0;
+        return null;
+      },
+      ast -> {
+        ASTNode node = ast.findChildByType(JavaElementType.IMPORT_LIST);
+        return (PsiImportList)SourceTreeToPsiMap.treeElementToPsi(node);
+      }
+    );
   }
 
   @Override

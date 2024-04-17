@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -87,22 +86,18 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
 
   @Override
   public GrTypeDefinition @NotNull [] getTypeDefinitions() {
-    final StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      return stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
-    }
-
-    return calcTreeElement().getChildrenAsPsiElements(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
+    return withGreenStubOrAst(
+      stub -> stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY),
+      ast -> ast.getChildrenAsPsiElements(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY)
+    );
   }
 
   @Override
   public GrMethod @NotNull [] getMethods() {
-    final StubElement<?> stub = getGreenStub();
-    if (stub != null) {
-      return stub.getChildrenByType(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY);
-    }
-
-    return calcTreeElement().getChildrenAsPsiElements(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY);
+    return withGreenStubOrAst(
+      stub -> stub.getChildrenByType(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY),
+      ast -> ast.getChildrenAsPsiElements(GroovyStubElementTypes.METHOD, GrMethod.ARRAY_FACTORY)
+    );
   }
 
   @Override
