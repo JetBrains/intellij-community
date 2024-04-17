@@ -67,17 +67,18 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         // If continuation could not be extracted or the root continuation was not an instance of BaseContinuationImpl,
         // dump coroutines running on the current thread and compute [CoroutineIdFilter].
         val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-        val coroutineIdFilter = if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+        return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
             // first try the helper, it is the fastest way, then try the mirror
             val currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
                 ?: debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
-            CoroutineIdFilter(currentCoroutines)
+
+            if (currentCoroutines.isNotEmpty()) CoroutineIdFilter(currentCoroutines)
+            else null
         } else {
             //TODO: IDEA-341142 show nice notification about this
             thisLogger().warn("[coroutine filter]: kotlinx-coroutines debug agent was not enabled, DebugProbesImpl class is not found.")
             null
         }
-        return coroutineIdFilter
     }
 
     /**

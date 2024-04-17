@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.engine.LightOrRealThreadInfo
 import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
@@ -28,7 +29,12 @@ data class CoroutineJobInfo(private val coroutineFilter: CoroutineFilter) : Ligh
         @JvmStatic
         fun extractJobInfo(suspendContext: SuspendContextImpl): LightOrRealThreadInfo? {
             if (!Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")) return null
-            return getCoroutineFilter(suspendContext)?.let { CoroutineJobInfo(it) }
+            try {
+                return getCoroutineFilter(suspendContext)?.let { CoroutineJobInfo(it) }
+            } catch (e: Throwable) {
+                Logger.getInstance(CoroutineJobInfo::class.java).error(e)
+                return null
+            }
         }
     }
 }
