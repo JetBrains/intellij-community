@@ -51,9 +51,10 @@ public final class PsiUtil {
     PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) return true;
 
+    // e.g., Project / Project, CoroutineScope
     for (PsiMethod constructor : constructors) {
       int parametersCount = constructor.getParameterList().getParametersCount();
-      if (parametersCount <= 1) {
+      if (parametersCount <= 2) {
         return true;
       }
     }
