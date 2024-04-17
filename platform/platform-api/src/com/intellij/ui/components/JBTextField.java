@@ -3,10 +3,12 @@ package com.intellij.ui.components;
 
 import com.intellij.ui.TextAccessor;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
@@ -107,5 +109,28 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     TextUI ui = getUI();
     String text = ui == null ? null : ui.getToolTipText2D(this, event.getPoint());
     return text != null ? text : getToolTipText();
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBTextField();
+    }
+    return accessibleContext;
+  }
+
+  private class AccessibleJBTextField extends AccessibleJTextField {
+    @Override
+    public String getAccessibleDescription() {
+      String description = super.getAccessibleDescription();
+      if (description == null) {
+        //noinspection HardCodedStringLiteral
+        String emptyText = myEmptyText.toString();
+        if (!emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        }
+      }
+      return description;
+    }
   }
 }

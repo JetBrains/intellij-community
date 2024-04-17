@@ -8331,6 +8331,7 @@ c:com.intellij.ui.components.JBPasswordField
 - javax.swing.JPasswordField
 - com.intellij.util.ui.ComponentWithEmptyText
 - <init>():V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - getEmptyText():com.intellij.util.ui.StatusText
 - p:paintComponent(java.awt.Graphics):V
 - setPasswordIsStored(Z):V
@@ -8473,6 +8474,7 @@ c:com.intellij.ui.components.JBTextArea
 - <init>(java.lang.String,I,I):V
 - <init>(javax.swing.text.Document):V
 - <init>(javax.swing.text.Document,java.lang.String,I,I):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
 - getPreferredSize():java.awt.Dimension
@@ -8487,6 +8489,7 @@ c:com.intellij.ui.components.JBTextField
 - <init>(I):V
 - <init>(java.lang.String):V
 - <init>(java.lang.String,I):V
+- getAccessibleContext():javax.accessibility.AccessibleContext
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getEmptyText():com.intellij.util.ui.StatusText
 - p:getEmptyTextComponentBounds(java.awt.Rectangle):java.awt.Rectangle

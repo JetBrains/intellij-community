@@ -26,6 +26,11 @@ internal class JTextFieldPanel : UISandboxPanel {
       withStateLabel {
         textField().enabled(false)
       }
+      row("With empty text:") {
+        textField().apply {
+          component.emptyText.text = "Type some text here"
+        }
+      }
 
       group("Validation") {
         withStateLabel("Error") {

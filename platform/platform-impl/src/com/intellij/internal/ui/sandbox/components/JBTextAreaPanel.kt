@@ -28,6 +28,16 @@ internal class JBTextAreaPanel : UISandboxPanel {
           .addText()
           .rows(5)
       }
+      row {
+        textArea()
+          .label("Empty text:", LabelPosition.TOP)
+          .align(AlignX.FILL)
+          .rows(3)
+          .apply {
+            component.emptyText.text = "Type some text here"
+          }
+      }
+
     }
   }
 
