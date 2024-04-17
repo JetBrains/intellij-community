@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.syncAction
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
@@ -24,6 +25,7 @@ interface GradleSyncContributor {
    */
   suspend fun onModelFetchPhaseCompleted(
     context: ProjectResolverContext,
+    storage: MutableEntityStorage,
     phase: GradleModelFetchPhase
   ) = Unit
 
@@ -35,7 +37,8 @@ interface GradleSyncContributor {
    * Use this context to access to the fetched Gradle models.
    */
   suspend fun onModelFetchCompleted(
-    context: ProjectResolverContext
+    context: ProjectResolverContext,
+    storage: MutableEntityStorage
   ) = Unit
 
   /**
@@ -48,6 +51,7 @@ interface GradleSyncContributor {
    */
   suspend fun onModelFetchFailed(
     context: ProjectResolverContext,
+    storage: MutableEntityStorage,
     exception: Throwable
   ) = Unit
 
@@ -63,7 +67,8 @@ interface GradleSyncContributor {
    */
   @ApiStatus.Internal
   suspend fun onProjectLoadedActionCompleted(
-    context: ProjectResolverContext
+    context: ProjectResolverContext,
+    storage: MutableEntityStorage
   ) = Unit
 
   companion object {

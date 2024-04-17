@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing.syncAction
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
@@ -22,33 +23,36 @@ import kotlin.coroutines.cancellation.CancellationException
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
-  fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, GradleModelFetchPhase) -> Unit) {
+  fun whenPhaseCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage, GradleModelFetchPhase) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
       override suspend fun onModelFetchPhaseCompleted(
         context: ProjectResolverContext,
+        storage: MutableEntityStorage,
         phase: GradleModelFetchPhase
       ) {
-        action(context, phase)
+        action(context, storage, phase)
       }
     }, parentDisposable)
   }
 
-  fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
+  fun whenModelFetchCompleted(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
       override suspend fun onModelFetchCompleted(
-        context: ProjectResolverContext
+        context: ProjectResolverContext,
+        storage: MutableEntityStorage
       ) {
-        action(context)
+        action(context, storage)
       }
     }, parentDisposable)
   }
 
-  fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext) -> Unit) {
+  fun whenProjectLoaded(parentDisposable: Disposable, action: suspend (ProjectResolverContext, MutableEntityStorage) -> Unit) {
     GradleSyncContributor.EP_NAME.point.registerExtension(object : GradleSyncContributor {
       override suspend fun onProjectLoadedActionCompleted(
-        context: ProjectResolverContext
+        context: ProjectResolverContext,
+        storage: MutableEntityStorage
       ) {
-        action(context)
+        action(context, storage)
       }
     }, parentDisposable)
   }
