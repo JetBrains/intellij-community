@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
 import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
@@ -63,21 +64,24 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   private final KeyDescriptorEx<K> keyDescriptor;
   /**
-   * We need not just {@link DataExternalizerEx} but {@link KeyDescriptorEx} for values, because we need to compare values
-   * to skip storing duplicates
+   * If it implements {@link KeyDescriptorEx} => we'll use it to compare values to skip storing duplicates
    */
-  private final KeyDescriptorEx<V> valueDescriptor;
+  private final DataExternalizerEx<V> valueDescriptor;
+
+  private final boolean valueIsComparable;
 
   /** Ctor is for internal use mostly, use {@link DurableMapFactory} to configure and create the map */
   public DurableMapOverAppendOnlyLog(@NotNull AppendOnlyLog keyValuesLog,
                                      @NotNull DurableIntToMultiIntMap keyHashToIdMap,
                                      @NotNull KeyDescriptorEx<K> keyDescriptor,
-                                     @NotNull KeyDescriptorEx<V> valueDescriptor) {
+                                     @NotNull DataExternalizerEx<V> valueDescriptor) {
     this.keyValuesLog = keyValuesLog;
     this.keyHashToIdMap = keyHashToIdMap;
 
     this.keyDescriptor = keyDescriptor;
     this.valueDescriptor = valueDescriptor;
+
+    valueIsComparable = valueDescriptor instanceof KeyDescriptorEx<V>;
   }
 
   @Override
@@ -341,10 +345,14 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   /** valueDescriptor is expected to NOT process null values, so we compare null values separately */
   private boolean nullSafeEquals(@Nullable V value,
                                  @Nullable V anotherValue) {
+    if (!valueIsComparable) {
+      return false;
+    }
     if ((anotherValue == null && value == null)) {
       return true;
     }
-    if ((anotherValue != null && value != null) && valueDescriptor.isEqual(value, anotherValue)) {
+    if ((anotherValue != null && value != null)
+        && ((KeyDescriptorEx<V>)valueDescriptor).isEqual(value, anotherValue)) {
       return true;
     }
     return false;
@@ -400,7 +408,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   private long appendEntry(@NotNull K key,
                            @Nullable V value) throws IOException {
-    DataExternalizerEx.KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
+    KnownSizeRecordWriter keyWriter = keyDescriptor.writerFor(key);
     int keySize = keyWriter.recordSize();
     if (keySize < 0) {
       throw new AssertionError("keySize(" + key + ")=" + keySize + ": must be strictly positive");
@@ -416,7 +424,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
       }, recordSize);
     }
     else {
-      DataExternalizerEx.KnownSizeRecordWriter valueWriter = valueDescriptor.writerFor(value);
+      KnownSizeRecordWriter valueWriter = valueDescriptor.writerFor(value);
       int valueSize = valueWriter.recordSize();
       int recordSize = Integer.BYTES + keySize + valueSize;
       return keyValuesLog.append(buffer -> {

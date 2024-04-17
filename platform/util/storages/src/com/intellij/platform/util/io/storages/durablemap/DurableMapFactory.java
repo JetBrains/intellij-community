@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
+import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
 import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
@@ -40,12 +41,12 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
   private final StorageFactory<? extends DurableIntToMultiIntMap> mapFactory;
 
   private final KeyDescriptorEx<K> keyDescriptor;
-  private final KeyDescriptorEx<V> valueDescriptor;
+  private final DataExternalizerEx<V> valueDescriptor;
 
   private DurableMapFactory(@NotNull StorageFactory<? extends AppendOnlyLog> logFactory,
                             @NotNull StorageFactory<? extends DurableIntToMultiIntMap> mapFactory,
                             @NotNull KeyDescriptorEx<K> keyDescriptor,
-                            @NotNull KeyDescriptorEx<V> valueDescriptor) {
+                            @NotNull DataExternalizerEx<V> valueDescriptor) {
     this.logFactory = logFactory;
     this.mapFactory = mapFactory;
     this.keyDescriptor = keyDescriptor;
@@ -53,7 +54,7 @@ public class DurableMapFactory<K, V> implements StorageFactory<DurableMapOverApp
   }
 
   public static <K, V> @NotNull DurableMapFactory<K, V> withDefaults(@NotNull KeyDescriptorEx<K> keyDescriptor,
-                                                                     @NotNull KeyDescriptorEx<V> valueDescriptor) {
+                                                                     @NotNull DataExternalizerEx<V> valueDescriptor) {
     return new DurableMapFactory<>(DEFAULT_VALUES_LOG_FACTORY, DEFAULT_MAP_FACTORY,
                                    keyDescriptor, valueDescriptor);
   }
