@@ -15,6 +15,13 @@ interface Component {
   fun isFocusOwner(): Boolean
   fun getLocationOnScreen(): Point
   fun getClass(): Class
+  fun getForeground(): ColorRef
+  fun getBackground(): ColorRef
+}
+
+@Remote("java.awt.Color")
+interface ColorRef{
+  fun getRGB(): Int
 }
 
 @Remote("java.lang.Class")

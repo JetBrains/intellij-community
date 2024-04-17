@@ -7,6 +7,8 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.Locators
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.openapi.util.SystemInfo
+import java.awt.event.KeyEvent
 
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
   x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
@@ -29,9 +31,17 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
     get() = ideaFrameComponent.isInFullScreen()
 
   val leftToolWindowToolbar: ToolWindowLeftToolbarUi = x(Locators.byClass("ToolWindowLeftToolbar"), ToolWindowLeftToolbarUi::class.java)
+
   val rightToolWindowToolbar: ToolWindowRightToolbarUi = x(Locators.byClass("ToolWindowRightToolbar"), ToolWindowRightToolbarUi::class.java)
+
   val settingsButton = x("//div[@myicon='settings.svg']")
+
   val runActionButton = x("//div[@myicon='run.svg']")
+
+  fun openSettingsDialog() = if (SystemInfo.isMac)
+    keyboard { hotKey(KeyEvent.VK_META, KeyEvent.VK_COMMA) }
+  else
+    keyboard { hotKey(KeyEvent.VK_CONTROL, KeyEvent.VK_ALT, KeyEvent.VK_S) }
 }
 
 @Remote("com.intellij.openapi.wm.impl.ProjectFrameHelper")
