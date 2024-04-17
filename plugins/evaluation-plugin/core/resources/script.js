@@ -158,6 +158,7 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   }
   addRelevanceModelBlock(popup, lookup, "trigger")
   addRelevanceModelBlock(popup, lookup, "filter")
+  addContextBlock(popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -192,6 +193,18 @@ function addRelevanceModelBlock(popup, lookup, relevanceMode) {
   relevanceModelResults.innerHTML = `${relevanceMode} model score:` + addInfo[`${relevanceMode}_score`]
     + ", decision: " + addInfo[`${relevanceMode}_decision`]
   popup.appendChild(relevanceModelResults)
+}
+
+function addContextBlock(popup, lookup) {
+  if (!("aia_context" in lookup["additionalInfo"])) return
+  let addInfo = lookup["additionalInfo"]
+  let contextBlock = document.createElement("DIV")
+  contextBlock.style.whiteSpace = "inherit"
+  let code = document.createElement("code")
+  code.innerHTML = addInfo["aia_context"]
+  contextBlock.appendChild(code)
+  code.style.whiteSpace = "inherit"
+  popup.appendChild(contextBlock)
 }
 
 // thanks to AI Assistant
