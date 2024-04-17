@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ public final class RecentProjectsGroup extends ActionGroup implements DumbAware,
   @NotNull
   @Override
   public ActionRemoteBehavior getBehavior() {
+    if (PlatformUtils.isRider()) return ActionRemoteBehavior.FrontendThenBackend;
     return ActionRemoteBehavior.Disabled;
   }
 
