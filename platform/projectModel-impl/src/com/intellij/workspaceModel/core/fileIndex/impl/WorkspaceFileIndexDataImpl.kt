@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
@@ -317,9 +318,41 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
           val singleFileSourceDir = singleFileSourcesTracker.getSourceDirectoryIfExists(root)
           if (singleFileSourceDir != null && singleFileSourceDir.isValid && addedRoots.add(singleFileSourceDir)) result.add(singleFileSourceDir)
         }
-        else if (addedRoots.add(root)) result.add(root)
+        else {
+          if (addedRoots.add(root)) result.add(root)
+          if (root.fileType is ArchiveFileType) {
+            root.findChild("META-INF")?.findChild("versions")?.children?.forEach { versionRoot -> 
+              val version = versionRoot.name.toIntOrNull()
+              if (version != null && version >= 9) {
+                if (addedRoots.add(versionRoot)) result.add(versionRoot)
+              }
+            }
+          }
+        }
       }
     }
+  }
+
+  private fun isVersionRoot(root: VirtualFile, directory: VirtualFile): Boolean {
+    val parent = directory.parent ?: return false
+    if (parent.name == "versions") {
+      val grandParent = parent.parent
+      if (grandParent != null && grandParent.name == "META-INF" && root == grandParent.parent) {
+        val version = directory.name.toIntOrNull()
+        return version != null && version >= 9
+      }
+    }
+    return false
+  }
+
+  private fun correctRoot(root: VirtualFile, file: VirtualFile): VirtualFile {
+    if (root.fileType !is ArchiveFileType) return root
+    var cur = file
+    while (cur != root) {
+      if (isVersionRoot(root, cur)) return cur
+      cur = cur.parent
+    }
+    return root
   }
 
   override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTime {
@@ -332,7 +365,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                   } ?: return@addMeasuredTime null
 
     val packagePrefix = (fileSet.data as JvmPackageRootDataInternal).packagePrefix
-    val packageName = VfsUtilCore.getRelativePath(dir, fileSet.root, '.') 
+    val packageName = VfsUtilCore.getRelativePath(dir, correctRoot(fileSet.root, dir), '.') 
                       ?: error("${dir.presentableUrl} is not under ${fileSet.root.presentableUrl}")
     return@addMeasuredTime when {
       packagePrefix.isEmpty() -> packageName

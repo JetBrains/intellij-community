@@ -159,12 +159,6 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
             PsiDirectory psiDir = psiManager.findDirectory(dir);
             if (psiDir != null && !consumer.process(psiDir)) return false;
           }
-          for (VirtualFile verSpec : JavaMultiReleaseUtil.findVersionSpecificFiles(dir)) {
-            if (scope.contains(verSpec)) {
-              PsiDirectory psiDir = psiManager.findDirectory(verSpec);
-              if (psiDir != null && !consumer.process(psiDir)) return false;
-            }
-          }
           return true;
         }
       });
