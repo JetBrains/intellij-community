@@ -24,7 +24,7 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
 
   private var mouseOverCell: EditorCellView? = null
 
-  private val component = createLayer(original.component)
+  private val component = addNestedScrollingSupport(createLayer(original.component))
 
   init {
     if (!GraphicsEnvironment.isHeadless()) {
@@ -104,7 +104,7 @@ private class DecoratedEditor(private val original: TextEditor) : TextEditor by 
           null
         }
         if (component != null) {
-          updateMouseOverCell(component, Point(SwingUtilities.convertPoint(e.component, e.point, component)))
+          updateMouseOverCell(component, SwingUtilities.convertPoint(e.component, e.point, component))
         }
       }
     }
