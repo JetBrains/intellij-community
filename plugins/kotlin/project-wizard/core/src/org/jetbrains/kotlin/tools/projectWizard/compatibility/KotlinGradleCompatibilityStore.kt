@@ -6,6 +6,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import org.apache.velocity.VelocityContext
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.plugins.gradle.jvmcompat.*
@@ -146,25 +147,7 @@ private fun KotlinGradleVersionMapping.toDefaultDataString(): String {
     }.toString()
 }
 
-internal fun KotlinGradleCompatibilityState.generateDefaultData(): String {
-    return """
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.tools.projectWizard.compatibility;
-
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityState
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
- */
-internal val DEFAULT_KOTLIN_GRADLE_COMPATIBILITY_DATA = KotlinGradleCompatibilityState(
-    kotlinVersions = listOf(
-${kotlinVersions.joinToString("," + System.lineSeparator()) { " ".repeat(8) + "\"$it\"" }}
-    ),
-    compatibility = listOf(
-${compatibility.toList().joinToString("," + System.lineSeparator()) { it.toDefaultDataString() }}
-    )
-)
-""".trimIndent()
+internal fun KotlinGradleCompatibilityState.provideDefaultDataContext(context: VelocityContext) {
+    context.put("KOTLIN_VERSIONS", kotlinVersions)
+    context.put("COMPATIBILITY_ENTRIES", compatibility)
 }

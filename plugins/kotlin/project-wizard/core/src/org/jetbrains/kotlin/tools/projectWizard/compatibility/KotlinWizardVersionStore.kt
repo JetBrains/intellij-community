@@ -5,7 +5,9 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import org.apache.velocity.VelocityContext
 import org.jetbrains.plugins.gradle.jvmcompat.*
+import kotlin.reflect.typeOf
 
 internal object KotlinWizardVersionParser : IdeVersionedDataParser<KotlinWizardVersionState>() {
     override fun parseJson(data: JsonObject): KotlinWizardVersionState? {
@@ -82,29 +84,8 @@ class KotlinWizardVersionStore : IdeVersionedDataStorage<KotlinWizardVersionStat
 }
 
 
-internal fun KotlinWizardVersionState.generateDefaultData(): String {
-    return """
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.tools.projectWizard.compatibility;
-
-import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionState
-
-/**
- * NOTE THIS FILE IS AUTO-GENERATED
- * DO NOT EDIT IT BY HAND, run "Generate Kotlin Wizard Default Data" configuration instead
- */
-internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
-    kotlinPluginVersion = "$kotlinPluginVersion",
-    kotlinForComposeVersion = "$kotlinForComposeVersion",
-    composeCompilerExtension = "$composeCompilerExtension",
-    minGradleFoojayVersion = "$minGradleFoojayVersion",
-    minKotlinFoojayVersion = "$minKotlinFoojayVersion",
-    foojayVersion = "$foojayVersion",
-    failsafeVersion = "$failsafeVersion",
-    surefireVersion = "$surefireVersion",
-    gradleAndroidVersion = "$gradleAndroidVersion",
-    codehausMojoExecVersion = "$codehausMojoExecVersion"
-)
-""".trimIndent()
+internal fun KotlinWizardVersionState.provideDefaultDataContext(context: VelocityContext) {
+    KotlinWizardVersionState::class.members.filter { it.returnType == typeOf<String?>() }.forEach { field ->
+        context.put(field.name, field.call(this))
+    }
 }
