@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,6 +25,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public boolean USE_CREDENTIAL_HELPER = false;
     public boolean STAGING_AREA_ENABLED = false;
     public boolean COMBINED_STASHES_AND_SHELVES_ENABLED = false;
+    public boolean COMPARE_WITH_LOCAL_IN_STASHES_ENABLED = true;
 
     public boolean SHOW_DROP_COMMIT_DIALOG = true;
   }
@@ -100,6 +101,14 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setCombinedStashesAndShelvesTabEnabled(boolean isEnabled) {
     myState.COMBINED_STASHES_AND_SHELVES_ENABLED = isEnabled;
+  }
+
+  public boolean isCompareWithLocalInStashesEnabled() {
+    return myState.COMPARE_WITH_LOCAL_IN_STASHES_ENABLED;
+  }
+
+  public void setCompareWithLocalInStashesEnabled(boolean isEnabled) {
+    myState.COMPARE_WITH_LOCAL_IN_STASHES_ENABLED = isEnabled;
   }
 
   public boolean isShowDropCommitDialog() {

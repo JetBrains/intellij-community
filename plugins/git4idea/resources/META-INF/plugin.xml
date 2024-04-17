@@ -603,8 +603,6 @@
                  description="Search for available executables in WSL on Windows"/>
     <registryKey key="git.enable.stash.toolwindow" defaultValue="true"
                  description="Show toolwindow tab with stashes"/>
-    <registryKey key="git.stash.diff.with.local" defaultValue="true"
-                 description="Show diff with the local version in the stash tool window tab" />
     <registryKey key="git.can.use.restore.command" defaultValue="true"
                  description="Use 'git restore --staged --worktree --source=HEAD -- paths' instead of 'git reset --hard' to speed up worktree cleanup."/>
     <registryKey key="git.stage.separate.undo.stack" defaultValue="true"
