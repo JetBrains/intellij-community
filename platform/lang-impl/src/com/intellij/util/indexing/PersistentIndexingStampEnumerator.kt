@@ -2,9 +2,9 @@
 package com.intellij.util.indexing
 
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory
-import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx
+import com.intellij.platform.util.io.storages.DataExternalizerEx
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
-import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx
+import com.intellij.platform.util.io.storages.KeyDescriptorEx
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.*
 import org.jetbrains.annotations.ApiStatus

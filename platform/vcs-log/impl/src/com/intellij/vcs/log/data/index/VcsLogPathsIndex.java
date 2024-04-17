@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
-import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.EqualityPolicy;

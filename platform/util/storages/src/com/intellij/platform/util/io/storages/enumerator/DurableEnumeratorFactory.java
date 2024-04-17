@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.enumerator;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.util.io.storages.StorageFactory;

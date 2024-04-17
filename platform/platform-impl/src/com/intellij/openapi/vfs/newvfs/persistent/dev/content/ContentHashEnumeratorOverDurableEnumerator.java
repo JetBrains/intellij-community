@@ -3,10 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
-import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
 import com.intellij.util.io.ScannableDataEnumeratorEx;

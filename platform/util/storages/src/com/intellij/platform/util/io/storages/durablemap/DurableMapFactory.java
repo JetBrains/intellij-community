@@ -3,9 +3,9 @@ package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLog;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
-import com.intellij.platform.util.io.storages.enumerator.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
-import com.intellij.platform.util.io.storages.enumerator.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;

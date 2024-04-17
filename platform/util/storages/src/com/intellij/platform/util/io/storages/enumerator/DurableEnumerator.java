@@ -2,6 +2,8 @@
 package com.intellij.platform.util.io.storages.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.DurableIntToMultiIntMap;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.util.io.CleanableStorage;
