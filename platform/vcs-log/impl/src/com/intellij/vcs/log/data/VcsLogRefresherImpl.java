@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -254,7 +255,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             return VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH.getOrDefault(provider);
           });
 
-          smallDataPack = optimize && supportsIncrementalRefresh && SMALL_DATA_PACK_COMMITS_COUNT > 0
+          smallDataPack = optimize && supportsIncrementalRefresh && isSmallDataPackEnabled()
                           ? buildSmallDataPack() : DataPack.EMPTY;
 
           if (smallDataPack != DataPack.EMPTY) {
@@ -268,6 +269,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
           throw e;
         }
       }
+    }
+
+    private static boolean isSmallDataPackEnabled() {
+      return SMALL_DATA_PACK_COMMITS_COUNT > 0 && !ApplicationManager.getApplication().isUnitTestMode();
     }
 
     private @NotNull Collection<VirtualFile> getRootsToRefresh(@NotNull List<? extends RefreshRequest> requests) {
