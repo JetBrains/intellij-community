@@ -30,8 +30,7 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
     return super.openPreview(requestFocus)
   }
 
-  override fun handleEscapeKey() {
-    closePreview()
+  override fun returnFocusToTree() {
     restoreToolWindowFocus(oldToolWindowFocus)
   }
 
@@ -82,4 +81,6 @@ class VcsLogEditorDiffPreview(private val changesBrowser: VcsLogChangesBrowser)
 
     return super.performDiffAction()
   }
+
+  override fun isOpenPreviewWithNextDiffShortcut(): Boolean = false
 }

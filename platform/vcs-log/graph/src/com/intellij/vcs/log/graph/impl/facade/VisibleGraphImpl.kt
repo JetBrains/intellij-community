@@ -184,11 +184,8 @@ class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphC
     override fun isRepaintRequired() = isRepaintRequired
   }
 
-  class LinearGraphActionImpl(private val affectedElement: PrintElementWithGraphElement?,
-                              private val type: GraphAction.Type) : LinearGraphAction {
-    override fun getAffectedElement() = affectedElement
-    override fun getType() = type
-  }
+  data class LinearGraphActionImpl(override val affectedElement: PrintElementWithGraphElement?,
+                                   override val type: GraphAction.Type) : LinearGraphAction
 
   private inner class RowInfoImpl(private val nodeId: Int, private val visibleRow: Int) : RowInfo<CommitId> {
     override fun getCommit(): CommitId {

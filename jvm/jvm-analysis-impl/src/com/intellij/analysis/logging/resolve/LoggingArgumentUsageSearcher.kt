@@ -15,9 +15,9 @@ class LoggingArgumentUsageSearcher : UsageSearcher {
     if (target !is LoggingArgumentSymbol) return emptyList()
     val uLiteralExpression = target.getPlaceholderString() ?: return emptyList()
     return getLogArgumentReferences(uLiteralExpression)?.let {
-      val psiUsageList = it.filter { ref: PsiSymbolReference -> ref.resolvesTo(target) }
-                           .map(PsiUsage::textUsage) + DefUsage(target.expression)
-      psiUsageList.map { psiUsage -> LoggingArgumentPsiUsageQuery(psiUsage) }
+      it.filter { ref: PsiSymbolReference -> ref.resolvesTo(target) }
+        .flatMap { usage -> listOf(PsiUsage.textUsage(usage), DefUsage(target.expression)) }
+        .map { psiUsage -> LoggingArgumentPsiUsageQuery(psiUsage) }
     } ?: emptyList()
   }
 }

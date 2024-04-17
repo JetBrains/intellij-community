@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.formatting.Block;
@@ -47,8 +47,7 @@ public final class JavaFormattingModelBuilder implements FormattingModelBuilder 
     return doGetRangeAffectingIndent(elementAtOffset);
   }
 
-  @Nullable
-  public static TextRange doGetRangeAffectingIndent(final ASTNode elementAtOffset) {
+  public static @Nullable TextRange doGetRangeAffectingIndent(final ASTNode elementAtOffset) {
     ASTNode current = elementAtOffset;
     current = findNearestExpressionParent(current);
     if (current == null) {
@@ -84,8 +83,7 @@ public final class JavaFormattingModelBuilder implements FormattingModelBuilder 
    * @param node  target node
    * @return      given node range if there is no error-element before it; combined range otherwise
    */
-  @Nullable
-  private static TextRange combineWithErrorElementIfPossible(@NotNull ASTNode node) {
+  private static @Nullable TextRange combineWithErrorElementIfPossible(@NotNull ASTNode node) {
     if (node.getElementType() == TokenType.ERROR_ELEMENT) {
       return node.getTextRange();
     }
@@ -103,8 +101,7 @@ public final class JavaFormattingModelBuilder implements FormattingModelBuilder 
     }
   }
 
-  @Nullable
-  private static ASTNode findNearestExpressionParent(final ASTNode current) {
+  private static @Nullable ASTNode findNearestExpressionParent(final ASTNode current) {
     ASTNode result = current;
     while (result != null) {
       PsiElement psi = result.getPsi();

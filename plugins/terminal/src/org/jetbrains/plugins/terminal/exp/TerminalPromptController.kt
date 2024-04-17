@@ -28,6 +28,7 @@ class TerminalPromptController(
   val commandHistory: List<String>
     get() = commandHistoryManager.history
 
+  // should be accessed in EDT
   var promptIsVisible: Boolean by Delegates.observable(true) { _, oldValue, newValue ->
     if (newValue != oldValue) listeners.forEach { it.promptVisibilityChanged(newValue) }
   }
@@ -104,6 +105,7 @@ class TerminalPromptController(
     fun promptContentUpdated(renderingInfo: PromptRenderingInfo) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
     fun commandSearchRequested() {}
+    @RequiresEdt
     fun promptVisibilityChanged(visible: Boolean) {}
   }
 

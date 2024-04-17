@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.components;
 
 import com.intellij.icons.AllIcons;
@@ -160,11 +160,11 @@ final class ValueCellRenderer implements TableCellRenderer {
       StringBuilder attrs = new StringBuilder();
       for (Map.Entry<TextAttribute, ?> entry : attributes.entrySet()) {
         if (entry.getKey() == TextAttribute.FAMILY || entry.getKey() == TextAttribute.SIZE || entry.getValue() == null) continue;
-        if (attrs.length() > 0) attrs.append(",");
+        if (!attrs.isEmpty()) attrs.append(",");
         String name = ReflectionUtil.getField(TextAttribute.class, entry.getKey(), String.class, "name");
         attrs.append(name != null ? name : entry.getKey()).append("=").append(entry.getValue());
       }
-      if (attrs.length() > 0) {
+      if (!attrs.isEmpty()) {
         sb.append(" {").append(attrs).append("}");
       }
 
@@ -309,23 +309,23 @@ final class ValueCellRenderer implements TableCellRenderer {
       if (properties != null) {
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
           if (entry.getKey().equals(UiInspectorAction.ADDED_AT_STACKTRACE)) continue;
-          if (sb.length() > 0) sb.append(",");
+          if (!sb.isEmpty()) sb.append(",");
           sb.append('[').append(entry.getKey()).append("->").append(entry.getValue()).append(']');
         }
       }
-      if (sb.length() == 0) sb.append("-");
+      if (sb.isEmpty()) sb.append("-");
       value = sb;
     }
     if (value.getClass().isArray()) {
       int length = Array.getLength(value);
       for (int index = 0; index < length; index++) {
-        if (sb.length() > 0) sb.append(", ");
+        if (!sb.isEmpty()) sb.append(", ");
         Object obj = Array.get(value, index);
         if (obj != null) {
           sb.append(obj.getClass().getName());
         }
       }
-      value = sb.length() == 0 ? "-" : sb;
+      value = sb.isEmpty() ? "-" : sb;
     }
     String toString = StringUtil.notNullize(String.valueOf(value), "toString()==null");
     return toString.replace('\n', ' ');

@@ -72,7 +72,7 @@ internal class PromoSpringModuleBuilder : ModuleBuilder(), PromoModuleBuilder {
       }
 
       override fun updateStep() {
-        FUSEventSource.NEW_PROJECT_WIZARD.logPluginSuggested(null, PluginId.getId(SPRING_PLUGIN_ID))
+        FUSEventSource.NEW_PROJECT_WIZARD.logIdeSuggested(null, "IU", PluginId.getId(SPRING_PLUGIN_ID))
       }
     }
   }

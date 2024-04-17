@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -374,8 +374,7 @@ public final class EditorEmbeddedComponentManager {
       myEditor.getInlayModel().addListener(new InlayModel.SimpleAdapter() {
         @Override
         public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
-          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer) {
-            JComponent component = (JComponent)inlay.getRenderer();
+          if ((changeFlags & InlayModel.ChangeFlags.HEIGHT_CHANGED) != 0 && inlay.getRenderer() instanceof MyRenderer component) {
             // This method can be called while validating the same component. Prevent resetting parent validation flags.
             if (component.isValid()) {
               component.revalidate();

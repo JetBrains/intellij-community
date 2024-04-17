@@ -128,7 +128,7 @@ object CreateFromUsageUtil {
 
                 org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat(null, container, declaration, sibling)
             }
-            else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
+            else -> throw KotlinExceptionWithAttachments("Unknown containing element: ${container::class.java}")
                 .withPsiAttachment("container", container)
         }
 

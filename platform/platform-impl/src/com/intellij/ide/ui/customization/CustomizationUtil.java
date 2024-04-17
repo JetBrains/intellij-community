@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -335,8 +335,7 @@ public final class CustomizationUtil {
     @NotNull String text;
     @Nullable String description = null;
     Icon icon = null;
-    if (obj instanceof Group) {
-      Group group = (Group)obj;
+    if (obj instanceof Group group) {
       String name = group.getName();
       @NlsSafe String id = group.getId();
       text = name != null ? name : Objects.requireNonNullElse(id, IdeBundle.message("action.group.name.unnamed.group"));
@@ -345,8 +344,7 @@ public final class CustomizationUtil {
         description = id;
       }
     }
-    else if (obj instanceof String) {
-      String actionId = (String)obj;
+    else if (obj instanceof String actionId) {
       AnAction action = ActionManager.getInstance().getAction(actionId);
       String name = action != null ? action.getTemplatePresentation().getText() : null;
       text = !StringUtil.isEmptyOrSpaces(name) ? name : actionId;

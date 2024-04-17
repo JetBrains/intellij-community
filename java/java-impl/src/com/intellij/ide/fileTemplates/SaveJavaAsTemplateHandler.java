@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.actions.SaveFileAsTemplateHandler;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class SaveJavaAsTemplateHandler implements SaveFileAsTemplateHandler {
   @Override
-  @Nullable
-  public String getTemplateText(final PsiFile psiFile, String fileText, String nameWithoutExtension) {
+  public @Nullable String getTemplateText(final PsiFile psiFile, String fileText, String nameWithoutExtension) {
     if(psiFile instanceof PsiJavaFile javaFile){
       String packageName = javaFile.getPackageName();
       if (packageName.length() > 0){

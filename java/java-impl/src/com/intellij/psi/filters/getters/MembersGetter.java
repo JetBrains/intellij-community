@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -43,7 +43,7 @@ public abstract class MembersGetter {
   private final List<PsiMethod> myPlaceMethods = new ArrayList<>();
   protected final PsiElement myPlace;
 
-  protected MembersGetter(StaticMemberProcessor processor, @NotNull final PsiElement place) {
+  protected MembersGetter(StaticMemberProcessor processor, final @NotNull PsiElement place) {
     myPlace = place;
     processor.processMembersOfRegisteredClasses(Conditions.alwaysTrue(), (member, psiClass) -> myImportedStatically.add(member));
 
@@ -76,7 +76,7 @@ public abstract class MembersGetter {
     return true;
   }
 
-  public void processMembers(final Consumer<? super LookupElement> results, @Nullable final PsiClass where,
+  public void processMembers(final Consumer<? super LookupElement> results, final @Nullable PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
     if (where == null || isPrimitiveClass(where)) return;
 
@@ -167,9 +167,7 @@ public abstract class MembersGetter {
     }
   }
 
-  @Nullable
-  protected abstract LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass);
+  protected abstract @Nullable LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass);
 
-  @Nullable
-  protected abstract LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass);
+  protected abstract @Nullable LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass);
 }

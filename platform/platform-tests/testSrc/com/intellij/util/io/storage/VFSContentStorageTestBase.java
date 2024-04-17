@@ -18,6 +18,7 @@ import java.util.function.IntSupplier;
 import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
@@ -192,7 +193,8 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
     reopenStorage();
 
-
+    //Here it is assumed iterator returns record in the same order records were appended
+    // It is not required in iterator contract though
     RecordIdIterator iterator = storage.createRecordIdIterator();
     for (int i = 0; i < recordIds.length && iterator.hasNextId(); i++) {
       int id = iterator.nextId();
@@ -240,7 +242,12 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     assertEquals(
       contentsToWrite.length,
       storage.getRecordsCount(),
-      "Must be still " + contentsToWrite.length + " record in storage -- no additional duplicates"
+      "Must be still " + contentsToWrite.length + " records in storage -- no additional duplicates"
+    );
+    assertEquals(
+      contentsToWrite.length,
+      recordsCountViaIterator(),
+      "Iterator must return only " + contentsToWrite.length + " records in storage -- no additional duplicates"
     );
   }
 
@@ -275,6 +282,11 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
       storage.getRecordsCount(),
       "Must be still " + contentsToWrite.length + " record in storage -- no additional duplicates"
     );
+    assertEquals(
+      contentsToWrite.length,
+      recordsCountViaIterator(),
+      "Iterator must return only " + contentsToWrite.length + " records in storage -- no additional duplicates"
+    );
   }
 
 
@@ -300,6 +312,7 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
     }
     finally {
       pool.shutdown();
+      pool.awaitTermination(10, SECONDS);
     }
 
     assertEquals(
@@ -317,16 +330,21 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
         "Same content stored twice -- must be assigned the same id"
       );
     }
+
     assertEquals(
       contentsToWrite.length,
       storage.getRecordsCount(),
       "Must be still " + contentsToWrite.length + " record in storage -- no additional duplicates"
     );
+    assertEquals(
+      contentsToWrite.length,
+      recordsCountViaIterator(),
+      "Iterator must return only " + contentsToWrite.length + " records in storage -- no additional duplicates"
+    );
   }
 
 
   //======================================== infrastructure: ==================================================//
-
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
     storagePath = tempDir.resolve("content-storage");
@@ -396,5 +414,15 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
 
   private static ByteArraySequence readContent(@NotNull InputStream input) throws IOException {
     return new ByteArraySequence(input.readAllBytes());
+  }
+
+  protected int recordsCountViaIterator() throws IOException {
+    RecordIdIterator it = storage.createRecordIdIterator();
+    int recordCount = 0;
+    while(it.hasNextId()){
+      int recordId = it.nextId();
+      recordCount ++;
+    }
+    return recordCount;
   }
 }

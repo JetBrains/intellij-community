@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
 package org.jetbrains.intellij.build.dev
 
 import com.dynatrace.hash4j.hashing.HashFunnel
@@ -63,13 +61,12 @@ data class BuildRequest(
 
   @JvmField val buildOptionsTemplate: BuildOptions? = null,
 ) {
-  override fun toString(): String {
-    return "BuildRequest(platformPrefix='$platformPrefix', " +
-           "additionalModules=$additionalModules, " +
-           "productionClassOutput=$productionClassOutput, " +
-           "keepHttpClient=$keepHttpClient, " +
-           "generateRuntimeModuleRepository=$generateRuntimeModuleRepository"
-  }
+  override fun toString(): String =
+    "BuildRequest(platformPrefix='$platformPrefix', " +
+    "additionalModules=$additionalModules, " +
+    "productionClassOutput=$productionClassOutput, " +
+    "keepHttpClient=$keepHttpClient, " +
+    "generateRuntimeModuleRepository=$generateRuntimeModuleRepository"
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -96,7 +93,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     val files = try {
       Files.newDirectoryStream(buildDir).toList()
     }
-    catch (ignored: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       Files.createDirectories(buildDir)
       return@withContext buildDir
     }
@@ -112,13 +109,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   }
 
   val runDir = buildDir.resolve(productDirNameWithoutClassifier)
-  val context = createBuildContext(
-    createProductProperties = createProductProperties,
-    request = request,
-    runDir = runDir,
-    buildDir = buildDir,
-    jarCacheDir = request.jarCacheDir,
-  )
+  val context = createBuildContext(createProductProperties, request, runDir, request.jarCacheDir, buildDir)
   compileIfNeeded(context)
 
   coroutineScope {
@@ -163,7 +154,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async {
-      buildPlugins(request = request, context = context, runDir = runDir, platformLayout = platformLayout, artifactTask = artifactTask)
+      buildPlugins(request, context, runDir, platformLayout, artifactTask)
     }
 
     launch {
@@ -340,12 +331,8 @@ private suspend fun buildPlugins(
 
   artifactTask.join()
 
-  val pluginEntries = buildPlugins(
-    pluginBuildDescriptors = pluginBuildDescriptors,
-    platformLayout = platformLayout.await(),
-    context = context,
-  )
-  val additionalPlugins = copyAdditionalPlugins(context)
+  val pluginEntries = buildPlugins(pluginBuildDescriptors, platformLayout.await(), context)
+  val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
   return pluginEntries to additionalPlugins
 }
 
@@ -367,7 +354,7 @@ internal suspend fun createBuildContext(
       spanBuilder("create build context").useWithScope {
         // we cannot inject a proper build time as it is a part of resources, so, set to the first day of the current month
         val buildOptionsTemplate = request.buildOptionsTemplate
-        val useCompiledClassesFromProjectOutput = buildOptionsTemplate?.useCompiledClassesFromProjectOutput ?: true
+        val useCompiledClassesFromProjectOutput = buildOptionsTemplate == null || buildOptionsTemplate.useCompiledClassesFromProjectOutput
         val classOutDir = if (useCompiledClassesFromProjectOutput) {
           request.productionClassOutput.parent.toString()
         }
@@ -447,8 +434,8 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
     return true
   }
 
-  return satisfiesBundlingRequirements(plugin = plugin, osFamily = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch, context = context) ||
-         satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
+  return satisfiesBundlingRequirements(plugin, OsFamily.currentOs, JvmArchitecture.currentJvmArch, context) ||
+         satisfiesBundlingRequirements(plugin, osFamily = null, JvmArchitecture.currentJvmArch, context)
 }
 
 internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, request: BuildRequest): ProductProperties {
@@ -481,9 +468,8 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
   }
 }
 
-private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> {
-  return sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
-}
+private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> =
+  sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 
 private suspend fun layoutPlatform(
   runDir: Path,
@@ -529,13 +515,11 @@ private suspend fun layoutPlatform(
   return entries to sortedClassPath
 }
 
-private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
-  return LinkedHashSet(context.bundledPluginModules) + additionalModules
-}
+private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> =
+  LinkedHashSet(context.bundledPluginModules) + additionalModules
 
-fun getAdditionalModules(): Sequence<String>? {
-  return System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
-}
+fun getAdditionalModules(): Sequence<String>? =
+  System.getProperty("additional.modules")?.splitToSequence(',')?.map(String::trim)?.filter { it.isNotEmpty() }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
   if (additionalModules.isEmpty()) {
@@ -549,6 +533,5 @@ private fun computeAdditionalModulesFingerprint(additionalModules: List<String>)
   }
 }
 
-private fun getCommunityHomePath(homePath: Path): Path {
-  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
-}
+private fun getCommunityHomePath(homePath: Path): Path =
+  if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath

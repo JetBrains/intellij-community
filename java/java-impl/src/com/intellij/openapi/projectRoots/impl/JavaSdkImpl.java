@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -175,8 +175,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return binPath + File.separator + VM_EXE_NAME;
   }
 
-  @NotNull
-  private static String getConvertedHomePath(@NotNull Sdk sdk) {
+  private static @NotNull String getConvertedHomePath(@NotNull Sdk sdk) {
     String homePath = sdk.getHomePath();
     assert homePath != null : sdk;
     String path = FileUtil.toSystemDependentName(homePath);
@@ -633,8 +632,7 @@ public final class JavaSdkImpl extends JavaSdk {
     return VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
-  @NotNull
-  private static String vfsPath(@NotNull Path path) {
+  private static @NotNull String vfsPath(@NotNull Path path) {
     return FileUtil.toSystemIndependentName(path.toAbsolutePath().toString());
   }
 

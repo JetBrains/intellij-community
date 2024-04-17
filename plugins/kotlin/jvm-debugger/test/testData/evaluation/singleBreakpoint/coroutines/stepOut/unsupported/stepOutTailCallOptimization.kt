@@ -5,7 +5,6 @@ package souSuspendFun
 import kotlinx.coroutines.*
 
 private fun foo(): Int {
-    //Breakpoint!
     return 42                                                      // 1
 }
 
@@ -14,11 +13,15 @@ suspend fun fourth() = foo()                                       // 2
 
 // Multiline suspend without doResume
 suspend fun third() : Int? {
+    //Breakpoint!
     return fourth()                                                // 3
 }
 
 // One line suspend with doResume
-suspend fun second(): Int = third()?.let { return it } ?: 0        // 4 (FIX IT)
+suspend fun second(): Int {
+    delay(20)
+    return third()?.let { return it } ?: 0
+}      
 
 // Multiline suspend with doResume
 suspend fun first(): Int {
@@ -26,12 +29,11 @@ suspend fun first(): Int {
     return 12
 }
 
-fun main() {
-    runBlocking {
-        launch {
-            first()
-        }
+fun main() = runBlocking {
+    launch {
+        first()                                                    // 6
     }
+    println("End")
 }
 
 // STEP_OUT: 5

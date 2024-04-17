@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing.impl;
 
@@ -17,15 +17,19 @@ import java.io.IOException;
 /**
  * @author Eugene Zhuravlev
  */
-public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
+public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value> {
   // there is no volatile as we modify under write lock and read under read lock
   protected ValueContainerImpl<Value> myAdded;
   protected IntSet myInvalidated;
 
-  // cached snapshot of merged (stored + modified) data. should be accessed only read-only outside updatable container
+  /**
+   * Cached snapshot of merged (stored + modified) data. should be accessed only read-only outside updatable container.
+   * This object is always created by {@link #myInitializer}, hence if initializer is null -- it must also be null
+   */
   private volatile ValueContainerImpl<Value> myMergedSnapshot;
+  //RC: why is it Nullable? It seems quite NPE-prone
   private final @Nullable Computable<? extends ValueContainer<Value>> myInitializer;
-  
+
   public ChangeTrackingValueContainer(@Nullable Computable<? extends ValueContainer<Value>> initializer) {
     myInitializer = initializer;
   }
@@ -58,6 +62,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     myInvalidated.add(inputId);
     return true;
   }
+
   protected boolean removeFromAdded(int inputId) {
     return myAdded != null && myAdded.removeAssociatedValue(inputId);
   }
@@ -152,7 +157,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   boolean containsCachedMergedData() {
     return myMergedSnapshot != null;
   }
-  
+
   @Override
   public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
     if (needsCompacting()) {

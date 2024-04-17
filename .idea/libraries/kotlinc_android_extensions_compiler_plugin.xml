@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.android-extensions-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:android-extensions-compiler-plugin-for-ide:2.0.20-dev-642">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:android-extensions-compiler-plugin-for-ide:2.0.20-dev-1117">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.0.20-dev-642/android-extensions-compiler-plugin-for-ide-2.0.20-dev-642.jar">
-          <sha256sum>a088c8adffae3ef80a19d4b34378deff15f76d48c836aecce1f9c1026cb244f4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.0.20-dev-1117/android-extensions-compiler-plugin-for-ide-2.0.20-dev-1117.jar">
+          <sha256sum>52a22b4c0819745d36ee873ffe8441235b797fb5b522fca958017b28bf523b31</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.0.20-dev-642/android-extensions-compiler-plugin-for-ide-2.0.20-dev-642.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.0.20-dev-1117/android-extensions-compiler-plugin-for-ide-2.0.20-dev-1117.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.0.20-dev-642/android-extensions-compiler-plugin-for-ide-2.0.20-dev-642-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2.0.20-dev-1117/android-extensions-compiler-plugin-for-ide-2.0.20-dev-1117-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

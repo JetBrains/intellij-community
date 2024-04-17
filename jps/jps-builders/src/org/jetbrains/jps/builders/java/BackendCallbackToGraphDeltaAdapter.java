@@ -4,10 +4,7 @@ package org.jetbrains.jps.builders.java;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
-import org.jetbrains.jps.dependency.GraphConfiguration;
-import org.jetbrains.jps.dependency.Node;
-import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.Usage;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.java.*;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -58,6 +55,14 @@ final class BackendCallbackToGraphDeltaAdapter implements Callbacks.Backend {
 
   public List<Pair<Node<?, ?>, Iterable<NodeSource>>> getNodes() {
     try {
+      NodeSourcePathMapper pathMapper = myGraphConfig.getPathMapper();
+      for (NodeSource source : Iterators.flat(Iterators.map(myNodes, p -> p.getSecond()))) {
+        myPerSourceAdditionalUsages.remove(pathMapper.toPath(source));
+      }
+      for (Map.Entry<Path, Set<Usage>> entry : myPerSourceAdditionalUsages.entrySet()) {
+        NodeSource src = pathMapper.toNodeSource(entry.getKey());
+        myNodes.add(new Pair<>(new FileNode(src.toString(), entry.getValue()), List.of(src)));
+      }
       return myNodes;
     }
     finally {

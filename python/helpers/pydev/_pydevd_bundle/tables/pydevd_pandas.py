@@ -187,14 +187,7 @@ def analyze_categorical_column(column):
 
 
 def analyze_numeric_column(column):
-    if column.dtype.kind in ['i', 'u']:
-        bins = np.bincount(column)
-        unique_values = np.count_nonzero(bins)
-    else:
-        # for float type we don't compute number of unique values because it's an
-        # expensive operation, just take number of elements in a column
-        unique_values = column.size
-    if unique_values <= ColumnVisualisationUtils.NUM_BINS:
+    if column.size <= ColumnVisualisationUtils.NUM_BINS:
         res = column.value_counts().sort_index().to_dict()
     else:
         def format_function(x):

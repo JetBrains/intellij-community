@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -37,9 +37,9 @@ import java.util.function.Supplier;
 public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
   private final Function<? super PsiElement, String> myTooltip;
-  @NotNull private final String myDebugName;
+  private final @NotNull String myDebugName;
 
-  public MarkerType(@NotNull String debugName, @NotNull Function<? super PsiElement, String> tooltip, @NotNull final LineMarkerNavigator navigator) {
+  public MarkerType(@NotNull String debugName, @NotNull Function<? super PsiElement, String> tooltip, final @NotNull LineMarkerNavigator navigator) {
     myTooltip = tooltip;
     myDebugName = debugName;
     if (ApplicationManager.getApplication().isUnitTestMode() && navigator instanceof GutterIconNavigationHandler<?>) {
@@ -56,13 +56,11 @@ public class MarkerType {
     return myDebugName;
   }
 
-  @NotNull
-  public GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
+  public @NotNull GutterIconNavigationHandler<PsiElement> getNavigationHandler() {
     return handler;
   }
 
-  @NotNull
-  public Function<? super PsiElement, String> getTooltip() {
+  public @NotNull Function<? super PsiElement, String> getTooltip() {
     return myTooltip;
   }
 
@@ -93,8 +91,7 @@ public class MarkerType {
       }
     });
 
-  @Nullable
-  private static String calculateOverridingMethodTooltip(@NotNull PsiMethod method, boolean acceptSelf) {
+  private static @Nullable String calculateOverridingMethodTooltip(@NotNull PsiMethod method, boolean acceptSelf) {
     PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
     if (superMethods.length == 0) return null;
 
@@ -107,8 +104,7 @@ public class MarkerType {
       IdeActions.ACTION_GOTO_SUPER);
   }
 
-  @Nullable
-  private static String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
+  private static @Nullable String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
     FindSuperElementsHelper.SiblingInfo pair = FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method);
     if (pair == null) return null;
 
@@ -119,8 +115,7 @@ public class MarkerType {
       IdeActions.ACTION_GOTO_SUPER);
   }
 
-  @NotNull
-  private static String getTooltipPrefix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod, @NotNull String prefix) {
+  private static @NotNull String getTooltipPrefix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod, @NotNull String prefix) {
     StringBuilder sb = new StringBuilder(prefix);
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -134,8 +129,7 @@ public class MarkerType {
     return method.getSignature(PsiSubstitutor.EMPTY).equals(superMethod.getSignature(PsiSubstitutor.EMPTY));
   }
 
-  @NotNull
-  private static <E extends PsiElement> PsiElementProcessor.CollectElementsWithLimit<E> getProcessor(int limit, boolean set) {
+  private static @NotNull <E extends PsiElement> PsiElementProcessor.CollectElementsWithLimit<E> getProcessor(int limit, boolean set) {
     return set ? new PsiElementProcessor.CollectElementsWithLimit<>(limit, new HashSet<>())
                : new PsiElementProcessor.CollectElementsWithLimit<>(limit);
   }
@@ -148,13 +142,11 @@ public class MarkerType {
     return getImplementationTooltip(processor.getCollection(), JavaBundle.message("tooltip.is.functionally.implemented.in"));
   }
 
-  @NotNull
-  private static String getImplementationTooltip(@NotNull String prefixKey, PsiElement @NotNull ... elements) {
+  private static @NotNull String getImplementationTooltip(@NotNull String prefixKey, PsiElement @NotNull ... elements) {
     return getImplementationTooltip(Arrays.asList(elements), JavaBundle.message(prefixKey));
   }
 
-  @NotNull
-  private static String getImplementationTooltip(@NotNull Collection<? extends PsiElement> elements, @NotNull String prefix) {
+  private static @NotNull String getImplementationTooltip(@NotNull Collection<? extends PsiElement> elements, @NotNull String prefix) {
     return GutterTooltipHelper.getTooltipText(elements, prefix, true, IdeActions.ACTION_GOTO_IMPLEMENTATION);
   }
 

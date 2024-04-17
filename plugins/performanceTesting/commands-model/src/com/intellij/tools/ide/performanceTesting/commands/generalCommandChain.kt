@@ -102,6 +102,10 @@ fun <T : CommandChain> T.reopenProject(): T = apply {
   addCommand("${CMD_PREFIX}openProject")
 }
 
+fun <T : CommandChain> T.closeProject(): T = apply {
+  addCommand("${CMD_PREFIX}closeProject")
+}
+
 fun <T : CommandChain> T.storeIndices(): T = apply {
   addCommand("${CMD_PREFIX}storeIndices")
 }
@@ -582,6 +586,10 @@ fun <T : CommandChain> T.linkMavenProject(projectPath: Path): T = apply {
 
 fun <T : CommandChain> T.linkGradleProject(projectPath: Path): T = apply {
   addCommand("${CMD_PREFIX}linkGradleProject ${projectPath}")
+}
+
+fun <T : CommandChain> T.analyzeDependencies(moduleName: String, providerId: BuildType): T = apply {
+  addCommand("${CMD_PREFIX}analyzeDependencies $moduleName $providerId")
 }
 
 fun <T : CommandChain> T.refreshMavenProject(failureExpectedPattern: String = ""): T = apply {

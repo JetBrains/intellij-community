@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory
@@ -10,6 +10,7 @@ import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.PersistentEnumerator
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.DataInput
 import java.io.DataOutput
@@ -82,6 +83,7 @@ class TimestampsKeyDescriptor : KeyDescriptor<TimestampsImmutable> {
 }
 
 /** Descriptor for [com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableEnumerator] */
+@ApiStatus.Internal
 class TimestampsKeyDescriptorEx : KeyDescriptorEx<TimestampsImmutable> {
 
   override fun isEqual(timestamp1: TimestampsImmutable, timestamp2: TimestampsImmutable): Boolean {

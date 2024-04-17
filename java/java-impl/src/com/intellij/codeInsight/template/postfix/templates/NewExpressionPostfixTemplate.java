@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.*;
@@ -49,9 +49,8 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     super("new", "new T()", selectorAllExpressionsWithCurrentOffset(CONSTRUCTOR));
   }
 
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
+  public @Nullable String getTemplateString(@NotNull PsiElement element) {
     return element instanceof PsiMethodCallExpression ? "new $expr$" : "new $expr$($END$)";
   }
 
@@ -90,11 +89,10 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate imp
     item.handleInsert(createInsertionContext(editor, file, item, startOffset));
   }
 
-  @NotNull
-  private static InsertionContext createInsertionContext(@NotNull Editor editor,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull JavaPsiClassReferenceElement item,
-                                                         int startOffset) {
+  private static @NotNull InsertionContext createInsertionContext(@NotNull Editor editor,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull JavaPsiClassReferenceElement item,
+                                                                  int startOffset) {
     Document document = editor.getDocument();
     final OffsetMap offsetMap = new OffsetMap(document);
     final InsertionContext insertionContext = new InsertionContext(offsetMap,

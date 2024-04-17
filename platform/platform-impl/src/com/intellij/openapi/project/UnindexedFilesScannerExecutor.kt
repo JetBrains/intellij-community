@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface UnindexedFilesScannerExecutor {
   val isRunning: StateFlow<Boolean>
-  val taskQueue: MergingTaskQueue<FilesScanningTask>
+  val hasQueuedTasks: Boolean
   val startedOrStoppedEvent: Flow<*>
 
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
@@ -37,6 +37,10 @@ interface UnindexedFilesScannerExecutor {
       else {
         SystemProperties.getBooleanProperty("scanning.in.smart.mode", true)
       }
+    }
+
+    fun <T: MergeableQueueTask<T>> unwrapTask(task: MergingTaskQueue.QueuedTask<T>): T {
+      return task.task
     }
   }
 }

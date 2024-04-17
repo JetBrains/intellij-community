@@ -33,9 +33,6 @@
             serviceInterface="org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver"
             serviceImplementation="org.jetbrains.kotlin.idea.modules.IdeJavaModuleResolver"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.resolve.ModuleAnnotationsResolver"
-            serviceImplementation="org.jetbrains.kotlin.idea.compiler.IdeModuleAnnotationsResolver"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.resolve.LanguageVersionSettingsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.compiler.IdeLanguageVersionSettingsProvider"/>
     <projectService

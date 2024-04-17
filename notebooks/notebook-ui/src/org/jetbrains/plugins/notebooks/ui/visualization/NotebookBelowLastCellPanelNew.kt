@@ -4,9 +4,8 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbar
-import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -17,21 +16,26 @@ import javax.swing.SwingUtilities
 
 class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayout()) {
   private var toolbar: JupyterToolbar? = null
+  private val actionGroup = createActionGroup()
 
   init {
     if (editor.editorKind != EditorKind.DIFF) {
       isOpaque = false
-      preferredSize = Dimension(1, editor.notebookAppearance.CELL_BORDER_HEIGHT * 4)
+      border = JBUI.Borders.empty(editor.notebookAppearance.CELL_BORDER_HEIGHT)
     }
   }
 
   fun initialize() {
-    // this toolbar is special - persistent and unique
-    val actionGroup = createActionGroup() ?: return
+    addComponentListeners()
+    recreateToolbar()  // this toolbar is special - persistent and unique
+  }
+
+  private fun recreateToolbar() {
+    actionGroup ?: return
+    toolbar?.let { remove(it) }
     toolbar = JupyterToolbar(actionGroup, editor.contentComponent)
     add(toolbar)
     adjustToolbarBounds()
-    addComponentListeners()
   }
 
   private fun addComponentListeners() {
@@ -48,6 +52,11 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
     })
   }
 
+  override fun updateUI() {
+    super.updateUI()
+    recreateToolbar()
+  }
+
   private fun createActionGroup(): ActionGroup? {
     return CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
   }
@@ -60,7 +69,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
       val panelLocationInEditor = SwingUtilities.convertPoint(this, Point(0, 0), editorComponent)
 
       val xCoordinate = panelLocationInEditor.x + xOffset
-      val yCoordinate = panelLocationInEditor.y + Y_OFFSET
+      val yCoordinate = panelLocationInEditor.y
 
       tb.bounds = Rectangle(xCoordinate, yCoordinate, toolbarPreferredSize.width, toolbarPreferredSize.height)
       revalidate()
@@ -69,7 +78,6 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   }
 
   companion object {
-    private val Y_OFFSET = JBUIScale.scale(30)
     const val ACTION_GROUP_ID = "Jupyter.BelowCellNewPanel"
   }
 }

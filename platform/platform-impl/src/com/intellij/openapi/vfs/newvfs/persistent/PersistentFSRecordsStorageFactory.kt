@@ -27,49 +27,46 @@ abstract class PersistentFSRecordsStorageFactory(val id: Int) : StorageFactory<P
         val recordsStorage = PersistentFSRecordsLockFreeOverMMappedFile(mappedFileStorage)
 
         if (acquireStorageOwnership) {
-          val currentProcessPid = ProcessHandle.current().pid().toInt()
-          val acquiredByPid = recordsStorage.tryAcquireExclusiveAccess(currentProcessPid, /*forcibly: */ false)
-          if (acquiredByPid != currentProcessPid) {
-            val ownerProcess = ProcessHandle.of(acquiredByPid.toLong()).getOrNull()
+          val currentProcess = ProcessHandle.current()
+          val currentProcessPid = currentProcess.pid().toInt()
+          val acquiredBy = recordsStorage.tryAcquireExclusiveAccess(currentProcessPid,
+                                                                    System.currentTimeMillis(),
+                                                                    /*forcibly: */ false)
+          if (acquiredBy.ownerProcessPid != currentProcessPid) {
+            val ownerProcess = ProcessHandle.of(acquiredBy.ownerProcessPid.toLong()).getOrNull()
             if (ownerProcess != null && ownerProcess.isAlive) {
-              //OSes re-use process ids, so false positives (pid collision) are possible.
-              //But this branch is reached only after improper shutdown, and we can't 100% guarantee VFS recovery after such
-              // a shutdowns anyway. So pid collision is just another case of bad luck -- it won't be a recovery, but a VFS
-              // rebuild.
-              //MAYBE RC: we could do a bit better by checking that an ownerProcess runs a JVM -- this should greatly
-              //          reduce collision probability. But how to do that?
-              //          1. Check ownerProcess.info().command()=='java': not reliable, it could be 'idea', or something else.
-              //          2. Check .command() == thisProcess.command(): not reliable, it could any _other_ JB app process using
-              //             this process's VFS -- this is exactly the scenario we're trying to catch with that 'storage ownership'
-              //             check
-              //          3. Check .commandLine().contains('JetBrains'): better, since most of our tools has 'JetBrains' either in
-              //             exec path, or somewhere in classpath -- but again, it leaves out rare cases there VFS is acquired by
-              //             something _unusual_
-              //          4. Timestamp: store not only the pid, but also a _timestamp_ of VFS acquisition -- compare this timestamp
-              //             with ownerProcess.startInstant. If ownerProcess happened to be started _after_ VFS was acquired -- it
-              //             is definitely a false positive, just a pid collision: original process that really acquired VFS has
-              //             already died, and it's pid is now re-used by a new process. This seems to be the most reliable option,
-              //             but it needs additional development (i.e. additional header field in records to store timestamp)
-
-              val message = "Records storage [$storagePath] is in use by another process [pid: $acquiredByPid, info: ${ownerProcess.info()}]"
-              val failIfUsedByAnotherProcess = SystemProperties.getBooleanProperty("vfs.fail-if-used-by-another-process", true)
-              if (failIfUsedByAnotherProcess) {
-                throw StorageAlreadyInUseException(message)
+              val ownerStartedAtMs = ownerProcess.info().startInstant().getOrNull()?.toEpochMilli() ?: 0
+              //OSes re-use process ids, so false positives (=pid collision) are possible: ownerProcess could be a new
+              // process that re-uses original owner pid. To avoid such false-positives we check ownershipStarted timestamp
+              // against owner process start time: false-owner must be started _after_ real owner has died, hence _after_
+              // ownership timestamp:
+              val likelyTrueOwner = (ownerStartedAtMs <= acquiredBy.ownershipAcquiredAtMs)
+              if (likelyTrueOwner) {
+                val message = "Records storage [$storagePath] is in use by another process [${acquiredBy}, info: ${ownerProcess.info()}]"
+                val failIfUsedByAnotherProcess = SystemProperties.getBooleanProperty("vfs.fail-if-used-by-another-process", true)
+                if (failIfUsedByAnotherProcess) {
+                  throw StorageAlreadyInUseException(message)
+                }
+                else {
+                  FSRecords.LOG.error(message)
+                }
               }
               else {
-                FSRecords.LOG.error(message)
+                FSRecords.LOG.warn("Records storage [$storagePath] was in use by process [${acquiredBy}] which is not exist now (wasn't closed properly/crashed?) -> re-acquiring forcibly (pid-collision with ${ownerProcess.info()} was successfully resolved)")
               }
             }
             else {
-              FSRecords.LOG.warn("Records storage [$storagePath] was in use by process [pid: $acquiredByPid] which is not exist now (wasn't closed properly/crashed?) -> re-acquiring forcibly")
+              FSRecords.LOG.warn("Records storage [$storagePath] was in use by process [${acquiredBy}] which is not exist now (wasn't closed properly/crashed?) -> re-acquiring forcibly")
             }
 
             //Previous owner process is terminated, i.e. storage wasn't closed properly on an app termination (crash?)
             // => acquire storage forcibly
-            val acquiredByPidForcibly = recordsStorage.tryAcquireExclusiveAccess(currentProcessPid, /*forcibly: */ true)
-            if (acquiredByPidForcibly != currentProcessPid) {
-              //yet another process acquired records concurrently => too suspicious, just fail:
-              val concurrentlyOwnedProcess = ProcessHandle.of(acquiredByPidForcibly.toLong()).getOrNull()
+            val acquiredByPidForcibly = recordsStorage.tryAcquireExclusiveAccess(currentProcessPid,
+                                                                                 System.currentTimeMillis(),
+                                                                                 /*forcibly: */ true)
+            if (acquiredByPidForcibly.ownerProcessPid != currentProcessPid) {
+              //yet another process acquired records concurrently => things get too complicated, just fail:
+              val concurrentlyOwnedProcess = ProcessHandle.of(acquiredByPidForcibly.ownerProcessPid.toLong()).getOrNull()
               throw StorageAlreadyInUseException("Records storage [$storagePath] is in use by another process [pid: $acquiredByPidForcibly, info: ${concurrentlyOwnedProcess?.info()}]")
             }
           }

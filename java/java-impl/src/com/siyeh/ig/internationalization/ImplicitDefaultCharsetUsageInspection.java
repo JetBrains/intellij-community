@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.intention.FileModifier.SafeTypeForPreview;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
@@ -39,9 +39,8 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
   private static final List<String> UTF_8_ARG = Collections.singletonList("java.nio.charset.StandardCharsets.UTF_8");
   private static final List<String> FALSE_AND_UTF_8_ARG = Arrays.asList("false", "java.nio.charset.StandardCharsets.UTF_8");
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     if (infos[0] instanceof PsiNewExpression) {
       return InspectionGadgetsBundle.message("implicit.default.charset.usage.constructor.problem.descriptor");
     }
@@ -75,8 +74,7 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
 
   private static final Key<CharsetOverload> HAS_CHARSET_OVERLOAD = Key.create("Method has Charset overload");
 
-  @NotNull
-  private static CharsetOverload getCharsetOverload(PsiMethod method) {
+  private static @NotNull CharsetOverload getCharsetOverload(PsiMethod method) {
     if (method == null) return CharsetOverload.NONE;
 
     CharsetOverload charsetOverload = method.getUserData(HAS_CHARSET_OVERLOAD);
@@ -106,9 +104,8 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
     return charsetOverload;
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     PsiCallExpression call = (PsiCallExpression)infos[0];
     LanguageLevel level = PsiUtil.getLanguageLevel(call);
     if (!level.isAtLeast(LanguageLevel.JDK_1_7)) return null;
@@ -251,10 +248,8 @@ public final class ImplicitDefaultCharsetUsageInspection extends BaseInspection 
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(arguments);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("implicit.default.charset.usage.fix.family.name");
     }
   }

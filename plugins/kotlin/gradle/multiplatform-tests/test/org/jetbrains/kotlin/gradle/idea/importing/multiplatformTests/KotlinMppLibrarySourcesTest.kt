@@ -28,12 +28,19 @@ class KotlinMppLibrarySourcesTest : AbstractKotlinMppGradleImportingTest() {
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.9.20+")
-    //TODO: Unmute after fixing KTIJ-26986: Fix for navigation needs KGP to be updated
-    @Ignore
+    @PluginTargetVersions(pluginVersion = "1.9.20 <=> 2.0.0-dev-10424")
+    fun testExpectActualInOldKotlinTestPublication() {
+        doTest {
+            publish("kotlin-test")
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0-dev-10425+")
     fun testExpectActualInStdlibSources() {
         doTest {
             publish("stdlib", "kotlin-test")
         }
     }
+    
 }

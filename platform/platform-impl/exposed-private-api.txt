@@ -113,7 +113,6 @@ com/intellij/ui/popup/list/PopupInlineActionsSupport$Companion
 com/intellij/ui/wizard/WizardCallback
 com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
 com/intellij/util/concurrency/ChildContext
-com/intellij/util/io/ScannableDataEnumeratorEx$ValueReader
 com/intellij/util/io/SimpleStringPersistentEnumerator
 com/intellij/util/io/blobstorage/ByteBufferReader
 com/intellij/util/io/blobstorage/ByteBufferWriter

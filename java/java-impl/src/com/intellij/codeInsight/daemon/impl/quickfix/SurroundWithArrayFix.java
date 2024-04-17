@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -24,7 +24,7 @@ import java.util.Collection;
 
 public class SurroundWithArrayFix implements ModCommandAction {
   private final PsiCall myMethodCall;
-  @Nullable private final PsiExpression myExpression;
+  private final @Nullable PsiExpression myExpression;
   private boolean boxing;
 
   public SurroundWithArrayFix(@Nullable PsiCall methodCall, @Nullable PsiExpression expression) {
@@ -33,8 +33,7 @@ public class SurroundWithArrayFix implements ModCommandAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("surround.with.array.initialization");
   }
 
@@ -44,8 +43,7 @@ public class SurroundWithArrayFix implements ModCommandAction {
            Presentation.of(getFamilyName()).withFixAllOption(this).withPriority(PriorityAction.Priority.HIGH);
   }
 
-  @Nullable
-  protected PsiExpression getExpression(PsiElement element) {
+  protected @Nullable PsiExpression getExpression(PsiElement element) {
     if (myMethodCall == null || !myMethodCall.isValid()) {
       return myExpression == null || !myExpression.isValid() ? null : myExpression;
     }
@@ -66,8 +64,7 @@ public class SurroundWithArrayFix implements ModCommandAction {
     return null;
   }
 
-  @Nullable
-  private PsiExpression checkMethod(final PsiElement element, final PsiMethod psiMethod) {
+  private @Nullable PsiExpression checkMethod(final PsiElement element, final PsiMethod psiMethod) {
     final PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
     final PsiExpressionList argumentList = myMethodCall.getArgumentList();
     int idx = 0;
@@ -113,8 +110,7 @@ public class SurroundWithArrayFix implements ModCommandAction {
     return ModCommand.psiUpdate(expression, e -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(e.replace(toReplace)));
   }
 
-  @NonNls
-  private static String getArrayCreation(@NotNull PsiExpression expression, boolean boxing) {
+  private static @NonNls String getArrayCreation(@NotNull PsiExpression expression, boolean boxing) {
     final PsiType expressionType = expression.getType();
     assert expressionType != null;
     final PsiType arrayComponentType = TypeConversionUtil.erasure(expressionType);

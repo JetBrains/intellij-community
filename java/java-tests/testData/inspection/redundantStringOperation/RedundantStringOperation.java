@@ -26,4 +26,8 @@ class Substring {
   void m(StringBuilder sb, StringBuilder chars) {
     sb.append(chars.<warning descr="Call to 'substring()' is redundant">substring</warning>(1, 3));
   }
+
+  int z(String s) {
+    return s.<warning descr="Unnecessary 'toCharArray()' call">toCharArray</warning>().length;
+  }
 }

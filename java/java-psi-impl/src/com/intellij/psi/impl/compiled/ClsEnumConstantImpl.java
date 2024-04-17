@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
@@ -53,8 +53,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   @Override
-  @NotNull
-  public JavaResolveResult resolveMethodGenerics() {
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
 
@@ -63,9 +62,8 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+  public @NotNull PsiEnumConstantInitializer getOrCreateInitializingClass() {
     throw new IncorrectOperationException("cannot create initializing class in cls enum constant");
   }
 
@@ -75,8 +73,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaPsiFacade.getElementFactory(getProject()).createType(getContainingClass());
   }
 

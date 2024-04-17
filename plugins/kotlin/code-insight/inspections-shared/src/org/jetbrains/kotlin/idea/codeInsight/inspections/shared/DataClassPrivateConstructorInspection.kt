@@ -7,10 +7,12 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.doesDataClassCopyRespectConstructorVisibility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.primaryConstructorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
@@ -28,15 +30,8 @@ internal class DataClassPrivateConstructorInspection : AbstractKotlinInspection(
         return primaryConstructorVisitor { constructor ->
             val containingClass = constructor.containingClass()
             if (containingClass?.isData() == true && constructor.isPrivate()) {
-                val isAnnotated = containingClass.annotationEntries.any {
-                    // A more correct solution is to resolve the annotation to see if it's FQN matches FQNs of annotations from stdlib.
-                    // But it's too much hassle. This inspection will be eventually dropped anyway.
-                    // "ConsistentCopyVisibility" and "ExposedCopyVisibility" are unique enough names.
-                    // And false negatives are not a big deal in case of annotation name collision
-                    it.shortName == StandardClassIds.Annotations.ConsistentCopyVisibility.shortClassName ||
-                            it.shortName == StandardClassIds.Annotations.ExposedCopyVisibility.shortClassName
-                }
-                if (isAnnotated) {
+
+                if (isAnnotatedWithMigrationAnnotations(containingClass)) {
                     return@primaryConstructorVisitor
                 }
                 val keyword = constructor.modifierList?.getModifier(KtTokens.PRIVATE_KEYWORD) ?: return@primaryConstructorVisitor
@@ -52,4 +47,13 @@ internal class DataClassPrivateConstructorInspection : AbstractKotlinInspection(
             }
         }
     }
+}
+
+private fun isAnnotatedWithMigrationAnnotations(containingClass: KtClass): Boolean {
+    // A more correct solution is to resolve the annotation to see if it's FQN matches FQNs of annotations from stdlib.
+    // But it's too much hassle. This inspection will be eventually dropped anyway.
+    // "ConsistentCopyVisibility" and "ExposedCopyVisibility" are unique enough names.
+    // And false negatives are not a big deal in case of annotation name collision
+    return KotlinPsiHeuristics.hasAnnotation(containingClass, StandardClassIds.Annotations.ConsistentCopyVisibility.shortClassName) ||
+            KotlinPsiHeuristics.hasAnnotation(containingClass, StandardClassIds.Annotations.ExposedCopyVisibility.shortClassName)
 }

@@ -169,7 +169,7 @@ com.intellij.util.containers.ConcurrentBitSet
 - a:set(I):Z
 - a:set(I,Z):V
 - a:size():I
-- a:writeTo(java.io.DataOutputStream):V
+- a:toIntArray():I[]
 com.intellij.util.containers.ConcurrentPackedBitsArray
 - a:clear():V
 - s:create(I):com.intellij.util.containers.ConcurrentPackedBitsArray
@@ -185,16 +185,6 @@ com.intellij.util.containers.ConcurrentThreeStateBitSet
 f:com.intellij.util.containers.ConcurrentThreeStateBitSet$Companion
 - f:create():com.intellij.util.containers.ConcurrentThreeStateBitSet
 - f:create(I):com.intellij.util.containers.ConcurrentThreeStateBitSet
-f:com.intellij.util.containers.ConcurrentThreeStateBitSetImpl
-- com.intellij.util.containers.ConcurrentThreeStateBitSet
-- <init>():V
-- <init>(I):V
-- b:<init>(I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- clear():V
-- compareAndSet(I,java.lang.Boolean,java.lang.Boolean):Z
-- get(I):java.lang.Boolean
-- set(I,java.lang.Boolean):V
-- size():I
 *f:org.jetbrains.concurrency.AsyncCache
 - <init>(java.util.function.Function,java.util.function.Function):V
 - f:computeOrGet(com.intellij.openapi.util.UserDataHolder):org.jetbrains.concurrency.AsyncPromise

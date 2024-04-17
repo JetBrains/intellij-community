@@ -73,7 +73,7 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
     val testSpec = ReadAction.compute<String?, IllegalStateException> {
       val pythonFile = PsiManager.getInstance(project).findFile(virtualFile) as? PyFile ?: return@compute null
       val qName = pythonFile.getQName() ?: return@compute null
-      (listOf(qName) + listOfNotNull(pyClass?.name, pyFunction?.name)).joinToString(".")
+      (listOf(qName) + listOfNotNull(pyClass?.name, pyFunction?.name)).joinToString(TEST_NAME_PARTS_SPLITTER)
     } ?: return null
 
     return TargetEnvironmentFunction {

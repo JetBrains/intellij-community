@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -533,7 +533,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Nullable
-  protected static Window getCurrentWindow(@NotNull Project project) {
+  public static Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -1206,9 +1206,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myPopupType = getMostSuitablePopupType();
     myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
     Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
+    if (popupOwner instanceof RootPaneContainer root && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
-      RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
       LOG.debug("popup owner fixed for JDK cache");
     }
@@ -2027,10 +2026,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Override
-  public void setSize(final @NotNull Dimension size) {
+  public void setSize(@NotNull Dimension size) {
+    setSize(null, size);
+  }
+
+  @Override
+  public void setSize(@Nullable Point location, @NotNull Dimension size) {
     // do not update the bounds programmatically if the user moves or resizes the popup
     if (!isBusy()) {
-      setBounds(null, new Dimension(size));
+      setBounds(location, new Dimension(size));
       if (myPopup != null) Optional.ofNullable(getContentWindow(myContent)).ifPresent(Container::validate); // to adjust content size
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
@@ -228,8 +228,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return ClassReferencePointer.constant(ref);
   }
 
-  @Nullable
-  private static PsiTypeElement getRootTypeElement(@NotNull PsiJavaCodeReferenceElement ref) {
+  private static @Nullable PsiTypeElement getRootTypeElement(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement root = SyntaxTraverser.psiApi()
       .parents(ref.getParent())
       .takeWhile(it -> it instanceof PsiTypeElement || it instanceof PsiReferenceParameterList || it instanceof PsiJavaCodeReferenceElement)
@@ -237,8 +236,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return ObjectUtils.tryCast(root, PsiTypeElement.class);
   }
 
-  @NotNull
-  private static JBIterable<PsiJavaCodeReferenceElement> allReferencesInside(@NotNull PsiTypeElement rootType) {
+  private static @NotNull JBIterable<PsiJavaCodeReferenceElement> allReferencesInside(@NotNull PsiTypeElement rootType) {
     return SyntaxTraverser.psiTraverser(rootType).filter(PsiJavaCodeReferenceElement.class);
   }
 
@@ -260,14 +258,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         return result;
       }
 
-      @Nullable
-      private PsiJavaCodeReferenceElement findReferenceByIndex(PsiClassReferenceType type) {
+      private @Nullable PsiJavaCodeReferenceElement findReferenceByIndex(PsiClassReferenceType type) {
         PsiTypeElement root = getRootTypeElement(type.getReference());
         return root == null ? null : allReferencesInside(root).get(index);
       }
 
-      @Nullable
-      private PsiType calcTypeByParent() {
+      private @Nullable PsiType calcTypeByParent() {
         if (!parent.isValid()) return null;
 
         PsiType type = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnType() : ((PsiVariable)parent).getType();

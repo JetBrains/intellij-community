@@ -45,7 +45,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
   public static final PsiJavaElementPattern.Capture<PsiElement> AFTER_NEW = psiElement().afterLeaf(PsiKeyword.NEW);
 
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet _result) {
     if (parameters.getCompletionType() == CompletionType.CLASS_NAME ||
       parameters.isExtendedCompletion() && mayContainClassName(parameters)) {
       addAllClasses(parameters, _result);
@@ -68,8 +68,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
   public static void addAllClasses(@NotNull CompletionParameters parameters,
                                    final boolean filterByScope,
-                                   @NotNull final PrefixMatcher matcher,
-                                   @NotNull final Consumer<? super LookupElement> consumer) {
+                                   final @NotNull PrefixMatcher matcher,
+                                   final @NotNull Consumer<? super LookupElement> consumer) {
     final PsiElement insertedElement = parameters.getPosition();
     final PsiFile psiFile = insertedElement.getContainingFile();
 
@@ -183,10 +183,9 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                                         new LimitedAccessibleClassPreprocessor(parameters, filterByScope, classProcessor));
   }
 
-  @NotNull
-  private static GlobalSearchScope getReferenceScope(@NotNull CompletionParameters parameters,
-                                                     boolean filterByScope,
-                                                     boolean inPermitsList) {
+  private static @NotNull GlobalSearchScope getReferenceScope(@NotNull CompletionParameters parameters,
+                                                              boolean filterByScope,
+                                                              boolean inPermitsList) {
     PsiElement insertedElement = parameters.getPosition();
     PsiFile psiFile = insertedElement.getContainingFile().getOriginalFile();
     Project project = insertedElement.getProject();
@@ -210,8 +209,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     return GlobalSearchScope.fileScope(psiFile);
   }
 
-  @NotNull
-  private static MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
+  private static @NotNull MultiMap<String, PsiClass> getAllAnnotationClasses(PsiElement context, PrefixMatcher matcher) {
     MultiMap<String, PsiClass> map = new MultiMap<>();
     GlobalSearchScope scope = context.getResolveScope();
     PsiClass annotation = JavaPsiFacade.getInstance(context.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
@@ -231,8 +229,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     return map;
   }
 
-  @NotNull
-  private static String getClassNameWithContainers(@NotNull PsiClass psiClass) {
+  private static @NotNull String getClassNameWithContainers(@NotNull PsiClass psiClass) {
     StringBuilder name = new StringBuilder(Objects.requireNonNull(psiClass.getName()));
     for (PsiClass parent : JBIterable.generate(psiClass.getContainingClass(), PsiClass::getContainingClass)) {
       name.insert(0, parent.getName() + ".");
@@ -274,7 +271,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
 
   @Override
-  public @NlsContexts.HintText String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(final @NotNull CompletionParameters parameters, final Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     if (shouldShowSecondSmartCompletionHint(parameters)) {

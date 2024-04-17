@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -43,9 +43,8 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     super(new MyHandler(methodKind));
   }
 
-  @Nullable
   @Override
-  public AnAction createEditTemplateAction(DataContext dataContext) {
+  public @Nullable AnAction createEditTemplateAction(DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
@@ -81,8 +80,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     return findTargetClass(editor, file);
   }
 
-  @Nullable
-  private static PsiClass findTargetClass(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PsiClass findTargetClass(@NotNull Editor editor, @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
@@ -159,7 +157,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+    public void invoke(@NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
       final PsiClass targetClass = findTargetClass(editor, file);
       final List<TestFramework> frameworks = new ArrayList<>(TestIntegrationUtils.findSuitableFrameworks(targetClass));
       for (Iterator<TestFramework> iterator = frameworks.iterator(); iterator.hasNext(); ) {
@@ -211,8 +209,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       });
     }
 
-    @Nullable
-    private static PsiMethod generateDummyMethod(PsiFile file, Editor editor, PsiClass targetClass) throws IncorrectOperationException {
+    private static @Nullable PsiMethod generateDummyMethod(PsiFile file, Editor editor, PsiClass targetClass) throws IncorrectOperationException {
       final PsiMethod method = TestIntegrationUtils.createDummyMethod(file);
       final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
 

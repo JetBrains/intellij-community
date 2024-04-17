@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit3;
 
-import com.intellij.rt.execution.junit.ComparisonDetailsExtractor;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
@@ -161,13 +160,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner<T
       }
       try {
         final String trace = getTrace(failure);
-        ComparisonFailureData notification = null;
-        if (failure.getClass().getName().equals("com.intellij.rt.execution.junit.FileComparisonFailure")) {
-          notification = ComparisonFailureData.create(failure);
-        }
-        else if (failure instanceof ComparisonFailure || failure.getClass().getName().equals("org.junit.ComparisonFailure")) {
-          notification = new ComparisonFailureData(ComparisonDetailsExtractor.getExpected(failure), ComparisonDetailsExtractor.getActual(failure));
-        }
+        ComparisonFailureData notification = ComparisonFailureData.create(failure);
         ComparisonFailureData.registerSMAttributes(notification, trace, failure.getMessage(), attrs, failure);
       }
       catch (Throwable e) {

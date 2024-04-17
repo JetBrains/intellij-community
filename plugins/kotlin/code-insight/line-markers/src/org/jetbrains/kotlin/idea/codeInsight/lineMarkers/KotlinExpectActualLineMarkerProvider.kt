@@ -175,11 +175,14 @@ internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collectio
 
     val project = navigatableDeclarations.first().project
     val projectStructureProvider = ProjectStructureProvider.getInstance(project)
-
-    return navigatableDeclarations
+    val moduleNames = navigatableDeclarations
         .mapNotNull { navigatable -> navigatable.element?.let { projectStructureProvider.getModule(it, null).moduleName } }
-        .sorted()
-        .joinToString()
+
+    return when (moduleNames.size) {
+        0 -> null
+        1 -> moduleNames.single()
+        else -> moduleNames.sorted().joinToString(", ", prefix = "[", postfix = "]")
+    }
 }
 
 private val KtModule.moduleName: String

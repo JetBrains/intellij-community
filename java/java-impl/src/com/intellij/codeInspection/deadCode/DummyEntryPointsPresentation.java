@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -26,9 +26,8 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     super(toolWrapper, context);
   }
 
-  @NotNull
   @Override
-  public RefFilter getFilter() {
+  public @NotNull RefFilter getFilter() {
     return myFilter;
   }
 
@@ -105,8 +104,7 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
   }
 
   @Override
-  @NotNull
-  public DeadHTMLComposer getComposer() {
+  public @NotNull DeadHTMLComposer getComposer() {
     return new DeadHTMLComposer(this);
   }
 

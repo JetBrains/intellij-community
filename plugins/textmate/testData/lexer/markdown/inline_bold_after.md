@@ -6,26 +6,26 @@ text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;marku
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [18, 19], {*}
 text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [19, 20], {
 }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [20, 42], {   But this one spans }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [42, 43], {*}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown: [43, 46], {two}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [46, 47], {*}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [47, 55], { lines.
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [20, 43], {    But this one spans }
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [43, 44], {*}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown: [44, 47], {two}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [47, 48], {*}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [48, 56], { lines.
 }
-text.html.markdown;markup.list.unnumbered.markdown;punctuation.definition.list.markdown: [55, 56], {*}
-text.html.markdown;markup.list.unnumbered.markdown: [56, 57], { }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [57, 80], {Another list item with }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.bold.markdown;punctuation.definition.bold.markdown: [80, 82], {__}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.bold.markdown: [82, 88], {inline}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.bold.markdown;punctuation.definition.bold.markdown: [88, 90], {__}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [90, 102], { formatting
+text.html.markdown;markup.list.unnumbered.markdown;punctuation.definition.list.markdown: [56, 57], {*}
+text.html.markdown;markup.list.unnumbered.markdown: [57, 58], { }
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [58, 81], {Another list item with }
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.bold.markdown;punctuation.definition.bold.markdown: [81, 83], {__}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.bold.markdown: [83, 89], {inline}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.bold.markdown;punctuation.definition.bold.markdown: [89, 91], {__}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [91, 103], { formatting
 }
-text.html.markdown;markup.list.unnumbered.markdown;punctuation.definition.list.markdown: [102, 103], {*}
-text.html.markdown;markup.list.unnumbered.markdown: [103, 104], { }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [104, 123], {This one is tricky
+text.html.markdown;markup.list.unnumbered.markdown;punctuation.definition.list.markdown: [103, 104], {*}
+text.html.markdown;markup.list.unnumbered.markdown: [104, 105], { }
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown: [105, 124], {This one is tricky
 }
-text.html.markdown;markup.list.unnumbered.markdown;punctuation.definition.list.markdown: [123, 124], {*}
-text.html.markdown;markup.list.unnumbered.markdown: [124, 125], { }
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [125, 126], {*}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown: [126, 140], {This is a list}
-text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [140, 141], {*}
+text.html.markdown;markup.list.unnumbered.markdown;punctuation.definition.list.markdown: [124, 125], {*}
+text.html.markdown;markup.list.unnumbered.markdown: [125, 126], { }
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [126, 127], {*}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown: [127, 141], {This is a list}
+text.html.markdown;markup.list.unnumbered.markdown;meta.paragraph.markdown;markup.italic.markdown;punctuation.definition.italic.markdown: [141, 142], {*}

@@ -164,6 +164,17 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  public void testStaticMainMethodInSuperClass() {
+    myFixture.addClass("public class B { public static void main(String[] args) {} }");
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByText("MainTest.java", """
+      class A implements B {}
+      """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(1, marks.size());
+    });
+  }
+
   public void testAbstractInstanceMainMethodInSuperInterface() {
     myFixture.addClass("public interface B {  void main(); }");
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {

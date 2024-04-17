@@ -173,9 +173,7 @@ internal class OtlpService private constructor() {
   }
 
   companion object {
-    private val instance = SynchronizedClearableLazy {
-      return@SynchronizedClearableLazy OtlpService()
-    }
+    private val instance = SynchronizedClearableLazy(::OtlpService)
 
     fun getInstance(): OtlpService = instance.value
   }

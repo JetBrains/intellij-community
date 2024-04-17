@@ -18,7 +18,6 @@ com/jetbrains/rd/util/reactive/Signal
 com/jetbrains/rd/util/reactive/ViewableMap
 com/jetbrains/rd/util/reactive/ViewableSet
 it/unimi/dsi/fastutil/ints/Int2ObjectMap
-it/unimi/dsi/fastutil/ints/IntCollection
 it/unimi/dsi/fastutil/ints/IntList
 it/unimi/dsi/fastutil/ints/IntSet
 it/unimi/dsi/fastutil/longs/LongSet

@@ -20,7 +20,8 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
+    <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
-  <xi:include href="/META-INF/github-core-config.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/github-core-config.xml"/>
 </idea-plugin>

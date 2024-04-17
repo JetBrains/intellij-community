@@ -133,7 +133,9 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   }
 
   private void queueDetection() {
-    myDetectionQueue.queueDetection(myDetectorsToProcess);
+    synchronized (myLock) {
+      myDetectionQueue.queueDetection(myDetectorsToProcess);
+    }
   }
 
   private void notifyUser(Collection<String> frameworkNames) {

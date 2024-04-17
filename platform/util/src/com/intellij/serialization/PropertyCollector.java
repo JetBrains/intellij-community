@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization;
 
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.BitUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -43,7 +42,7 @@ public class PropertyCollector {
   }
 
   /**
-   * Result is not cached because callers should cache it if needed.
+   * The result is not cached because callers should cache it if needed.
    */
   public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
     return doCollect(aClass, configuration, classToOwnFields);
@@ -70,10 +69,7 @@ public class PropertyCollector {
     do {
       accessors.addAll(classToOwnFields == null ? doCollectOwnFields(currentClass, configuration) : classToOwnFields.get(currentClass));
     }
-    while ((currentClass = currentClass.getSuperclass()) != null &&
-           currentClass != Object.class &&
-           currentClass != AtomicReference.class &&
-           !configuration.isAnnotatedAsTransient(currentClass));
+    while ((currentClass = currentClass.getSuperclass()) != null && isSerializableClass(configuration, currentClass));
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter,
     // but annotation moved to var, not to getter/setter, so, we must remove duplicated accessor
@@ -95,32 +91,36 @@ public class PropertyCollector {
     return accessors;
   }
 
+  // not safe for now to change behavior and collect properties in the same loop as fields
   private static @NotNull Map<String, Pair<Method, Method>> collectPropertyAccessors(@NotNull Class<?> aClass,
                                                                                      @NotNull List<? super MutableAccessor> accessors,
                                                                                      @NotNull Configuration configuration) {
     // (name,(getter,setter))
-    final Map<String, Pair<Method, Method>> candidates = new TreeMap<>();
-    for (Method method : aClass.getMethods()) {
-      if (!Modifier.isPublic(method.getModifiers())) {
-        continue;
-      }
+    Map<String, Pair<Method, Method>> candidates = new TreeMap<>();
+    Class<?> currentClass = aClass;
+    do {
+      for (Method method : currentClass.getDeclaredMethods()) {
+        if (!Modifier.isPublic(method.getModifiers())) {
+          continue;
+        }
 
-      NameAndIsSetter propertyData = getPropertyData(method.getName());
-      if (propertyData == null || method.getParameterCount() != (propertyData.isSetter ? 1 : 0) ||
-          propertyData.name.equals("class")) {
-        continue;
-      }
+        NameAndIsSetter propertyData = getPropertyData(method.getName());
+        if (propertyData == null || method.getParameterCount() != (propertyData.isSetter ? 1 : 0) || propertyData.name.equals("class")) {
+          continue;
+        }
 
-      Pair<Method, Method> candidate = candidates.get(propertyData.name);
-      if (candidate == null) {
-        candidate = Couple.getEmpty();
+        Pair<Method, Method> candidate = candidates.get(propertyData.name);
+        if (candidate == null) {
+          candidate = Pair.empty();
+        }
+        if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
+          continue;
+        }
+        candidate = new Pair<>(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
+        candidates.put(propertyData.name, candidate);
       }
-      if ((propertyData.isSetter ? candidate.second : candidate.first) != null) {
-        continue;
-      }
-      candidate = new Couple<>(propertyData.isSetter ? candidate.first : method, propertyData.isSetter ? method : candidate.second);
-      candidates.put(propertyData.name, candidate);
     }
+    while ((currentClass = currentClass.getSuperclass()) != null && isSerializableClass(configuration, currentClass));
 
     for (Iterator<Map.Entry<String, Pair<Method, Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Pair<Method, Method>> candidate = iterator.next();
@@ -135,6 +135,12 @@ public class PropertyCollector {
       }
     }
     return candidates;
+  }
+
+  private static boolean isSerializableClass(@NotNull Configuration configuration, Class<?> currentClass) {
+    return currentClass != Object.class &&
+           currentClass != AtomicReference.class &&
+           !configuration.isAnnotatedAsTransient(currentClass);
   }
 
   private static @Nullable NameAndIsSetter getPropertyData(@NotNull String methodName) {
@@ -181,13 +187,10 @@ public class PropertyCollector {
     if (getter == null || configuration.isAnnotatedAsTransient(getter)) {
       return false;
     }
-    if (getter.getDeclaringClass() == AtomicReference.class) {
-      return false;
-    }
 
     if (setter == null) {
       // check hasStoreAnnotations to ensure that this addition will not lead to regression
-      // (since there is a chance that there are some existing not-annotated list getters without setter)
+      // (since there is a chance that there are some existing not-annotated list getters without a setter)
       return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) &&
              configuration.hasStoreAnnotations(getter);
     }

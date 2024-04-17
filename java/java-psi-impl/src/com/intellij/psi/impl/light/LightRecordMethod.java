@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
@@ -28,8 +28,7 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
   }
 
   @Override
-  @NotNull
-  public PsiRecordComponent getRecordComponent() {
+  public @NotNull PsiRecordComponent getRecordComponent() {
     return myRecordComponent;
   }
 
@@ -38,9 +37,8 @@ public final class LightRecordMethod extends LightMethod implements LightRecordM
     return myRecordComponent.getTextOffset();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return myRecordComponent.getNavigationElement();
   }
 

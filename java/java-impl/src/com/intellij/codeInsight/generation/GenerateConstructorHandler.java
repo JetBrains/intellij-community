@@ -173,8 +173,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
   }
 
   @Override
-  @NotNull
-  protected List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
+  protected @NotNull List<? extends GenerationInfo> generateMemberPrototypes(PsiClass aClass, ClassMember[] members) throws IncorrectOperationException {
     if (members.length == 1 && members[0] instanceof RecordConstructorMember) {
       return Collections.singletonList(new PsiGenerationInfo<>(((RecordConstructorMember)members[0]).generateRecordConstructor()));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -34,8 +34,7 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  @Nullable
-  private static UsageType getMethodUsageType(PsiElement element) {
+  private static @Nullable UsageType getMethodUsageType(PsiElement element) {
     if (element instanceof PsiReferenceExpression) {
       final PsiMethod containerMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (containerMethod != null) {
@@ -129,8 +128,7 @@ public final class JavaUsageTypeProvider implements UsageTypeProviderEx {
     */
   }
 
-  @Nullable
-  private static UsageType getClassUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
+  private static @Nullable UsageType getClassUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     final PsiJavaCodeReferenceElement codeReference = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
     if(codeReference != null && isNestedClassOf(codeReference,targets)){
       return UsageType.CLASS_NESTED_CLASS_ACCESS;

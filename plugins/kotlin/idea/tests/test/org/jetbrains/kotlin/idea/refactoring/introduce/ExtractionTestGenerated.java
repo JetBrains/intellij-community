@@ -22,6 +22,44 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     @TestMetadata("testData/refactoring/introduceVariable")
     public abstract static class IntroduceVariable extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/introduceVariable/collectionElement")
+        public static class CollectionElement extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("errorType.kt")
+            public void testErrorType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/errorType.kt");
+            }
+
+            @TestMetadata("flexibleType.kt")
+            public void testFlexibleType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/flexibleType.kt");
+            }
+
+            @TestMetadata("flexibleType2.kt")
+            public void testFlexibleType2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/flexibleType2.kt");
+            }
+
+            @TestMetadata("typeParameterType.kt")
+            public void testTypeParameterType() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/typeParameterType.kt");
+            }
+
+            @TestMetadata("typeParameterType2.kt")
+            public void testTypeParameterType2() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/typeParameterType2.kt");
+            }
+
+            @TestMetadata("typeParameterType3.kt")
+            public void testTypeParameterType3() throws Exception {
+                runTest("testData/refactoring/introduceVariable/collectionElement/typeParameterType3.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable/explicateTypeArguments")
         public static class ExplicateTypeArguments extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -501,6 +539,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("introduceToFile.kt")
             public void testIntroduceToFile() throws Exception {
                 runTest("testData/refactoring/introduceVariable/introduceToFile.kt");
+            }
+
+            @TestMetadata("invalidInplaceName.kt")
+            public void testInvalidInplaceName() throws Exception {
+                runTest("testData/refactoring/introduceVariable/invalidInplaceName.kt");
             }
 
             @TestMetadata("It.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
@@ -20,8 +20,7 @@ public class SurroundWithIfFix extends PsiUpdateModCommandQuickFix {
   private final String mySuffix;
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return JavaBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
   }
 
@@ -49,8 +48,7 @@ public class SurroundWithIfFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.surround.if.family");
   }
 

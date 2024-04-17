@@ -91,7 +91,7 @@ class OnboardingDialog(var titleGetter: (StartupWizardStage?) -> @NlsContexts.Di
   }
 
   fun showError(notification: NotificationData) {
-    overlay.showError(notification)
+    overlay.showError(notification, OnboardingBackgroundImageProvider.getInstance().hasBackgroundImage(this))
   }
 
   override fun createCenterPanel(): JComponent {

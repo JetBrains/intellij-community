@@ -1,18 +1,12 @@
+[graph]
 targets = [ ]
 exclude = ["cargo-deny", "cargo-about"]
 
 [advisories]
-vulnerability = "deny"
-unmaintained = "deny"
-yanked = "deny"
-notice = "deny"
-ignore = [ ]
+version = 2
 
 [licenses]
-unlicensed = "deny"
-copyleft = "deny"
-allow-osi-fsf-free = "neither"
-default = "deny"
+version = 2
 confidence-threshold = 0.95
 allow = [
     "MIT",
@@ -21,11 +15,9 @@ allow = [
     "ISC", # libloading, MIT / Apache 2.0 alike
     "Unicode-DFS-2016" # serde -> [..] -> unicode-ident
 ]
-deny = [ ]
-exceptions = [ ]
 unused-allowed-license = "deny"
 
-# allows to use our own unpublished packages
+# allows using our own unpublished packages
 [licenses.private]
 ignore = true
 registries = [ ]

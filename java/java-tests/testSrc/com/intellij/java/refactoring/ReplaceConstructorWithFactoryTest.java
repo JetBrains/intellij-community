@@ -10,8 +10,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.modcommand.*;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
 
 public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase {
@@ -53,6 +51,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     LookupElement newMain = ContainerUtil.find(lookup.getItems(), l -> l.getLookupString().equals("newMain"));
     assertNotNull(newMain);
     ((LookupImpl)lookup).finishLookup('\n', newMain);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/replaceConstructorWithFactory/afterWithSelection.java");
   }
 

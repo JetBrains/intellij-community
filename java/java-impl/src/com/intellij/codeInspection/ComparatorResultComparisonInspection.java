@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
@@ -28,9 +28,8 @@ public final class ComparatorResultComparisonInspection extends AbstractBaseJava
   public static final LongRangeSet NEGATIVE_INTEGERS = LongRangeSet.range(Integer.MIN_VALUE, -1);
   public static final LongRangeSet POSITIVE_INTEGERS = LongRangeSet.range(1, Integer.MAX_VALUE);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -97,22 +96,17 @@ public final class ComparatorResultComparisonInspection extends AbstractBaseJava
       myRelation = relation;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
 
-    @NotNull
-    private String getReplacement() {
+    private @NotNull String getReplacement() {
       return myYodaCondition ? "0 " + myRelation.getFlipped() : myRelation + " 0";
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.comparator.result.comparison.fix.family.name");
     }
 

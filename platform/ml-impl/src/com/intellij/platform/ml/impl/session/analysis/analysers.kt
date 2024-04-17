@@ -3,6 +3,8 @@ package com.intellij.platform.ml.impl.session.analysis
 
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.ml.*
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.session.DescribedRootContainer
@@ -42,7 +44,13 @@ interface StructureAnalyser<M, P> {
 interface SessionAnalyserProvider<M : MLModel<P>, P : Any> {
   val declaration: List<EventField<*>>
 
-  fun startSessionAnalysis(callParameters: Environment, sessionEnvironment: Environment) : SessionAnalyser<M, P>
+  /**
+   * @param callParameters The parameters that were passed from the MLTask usage place.
+   * @param sessionEnvironment The environment, that is described to be passed to the ML model.
+   *
+   * @return The analyzer, that will be contributing to the ML logs. Returns null, if none analysis should be run now.
+   */
+  fun startSessionAnalysis(callParameters: Environment, sessionEnvironment: Environment) : SessionAnalyser<M, P>?
 }
 
 @ApiStatus.Internal
@@ -50,27 +58,27 @@ interface SessionAnalyser<M : MLModel<P>, P : Any> {
   /**
    * Called before we have attempted to start session and only have initial environment
    */
-  suspend fun onBeforeSessionStarted(): List<EventPair<*>>
+  suspend fun onBeforeSessionStarted(): List<EventPair<*>> = emptyList()
 
   /**
    * Called when we've failed to start session, or an exception has been thrown during runtime
    */
-  suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>): List<EventPair<*>>
+  suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>): List<EventPair<*>> = emptyList()
 
   /**
    * Called when we've failed to start session, or an exception has been thrown during runtime
    */
-  suspend fun onSessionFailedWithException(exception: Throwable): List<EventPair<*>>
+  suspend fun onSessionFailedWithException(exception: Throwable): List<EventPair<*>> = emptyList()
 
   /**
    * Called when an ML model has been successfully acquired, and we were able to start the ML session
    */
-  suspend fun onSessionStarted(session: Session<P>, mlModel: M): List<EventPair<*>>
+  suspend fun onSessionStarted(session: Session<P>, mlModel: M): List<EventPair<*>> = emptyList()
 
   /**
    * Called when the session has been successfully finished
    */
-  suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>>
+  suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>> = emptyList()
 
   abstract class Default<M : MLModel<P>, P : Any> : SessionAnalyserProvider<M, P> {
     private inner class EnvironmentAwareAnalyser(
@@ -110,32 +118,41 @@ internal fun <M : MLModel<P>, P : Any> Collection<SessionAnalyserProvider<M, P>>
 
   override val declaration: List<EventField<*>> = analyserProviders.flatMap { it.declaration }
 
-  override fun startSessionAnalysis(callParameters: Environment, sessionEnvironment: Environment): SessionAnalyser<M, P> {
-    val analysers = analyserProviders.map { it.startSessionAnalysis(callParameters, sessionEnvironment) }
+  override fun startSessionAnalysis(callParameters: Environment, sessionEnvironment: Environment): SessionAnalyser<M, P>? {
+    val analysers = analyserProviders.mapNotNull { it.startSessionAnalysis(callParameters, sessionEnvironment) }
+    if (analysers.isEmpty()) return null
+
     return object : SessionAnalyser<M, P> {
       override suspend fun onBeforeSessionStarted(): List<EventPair<*>> {
-        return analyseAll(analysers.map { { it.onBeforeSessionStarted() } })
+        return analyseAll(analysers.map { { it.onBeforeSessionStarted().alsoDebug("before started", it) } })
       }
 
       override suspend fun onSessionFailedToStart(failure: Session.StartOutcome.Failure<P>): List<EventPair<*>> {
-        return analyseAll(analysers.map { { it.onSessionFailedToStart(failure) } })
+        return analyseAll(analysers.map { { it.onSessionFailedToStart(failure).alsoDebug("failed to start", it) } })
       }
 
       override suspend fun onSessionFailedWithException(exception: Throwable): List<EventPair<*>> {
-        return analyseAll(analysers.map { { it.onSessionFailedWithException(exception) } })
+        return analyseAll(analysers.map { { it.onSessionFailedWithException(exception).alsoDebug("failed with exception", it) } })
       }
 
       override suspend fun onSessionStarted(session: Session<P>, mlModel: M): List<EventPair<*>> {
-        return analyseAll(analysers.map { { it.onSessionStarted(session, mlModel) } })
+        return analyseAll(analysers.map { { it.onSessionStarted(session, mlModel).alsoDebug("session started", it) } })
       }
 
       override suspend fun onSessionFinished(sessionTreeRoot: DescribedRootContainer<M, P>): List<EventPair<*>> {
-        return analyseAll(analysers.map { { it.onSessionFinished(sessionTreeRoot) } })
+        return analyseAll(analysers.map { { it.onSessionFinished(sessionTreeRoot).alsoDebug("session finished", it) } })
       }
 
       private suspend fun analyseAll(analysers: Collection<suspend () -> List<EventPair<*>>>): List<EventPair<*>> = coroutineScope {
         val analysisJobs = analysers.map { async { it() } }
         return@coroutineScope analysisJobs.flatMap { it.await() }
+      }
+
+      private fun List<EventPair<*>>.alsoDebug(event: String, analyser: SessionAnalyser<M, P>): List<EventPair<*>> {
+        logger<SessionAnalyser<M, P>>().debug {
+          "Analyser ${analyser.javaClass} produced the following fields on $event: ${this.map { it.field.name }}"
+        }
+        return this
       }
     }
   }

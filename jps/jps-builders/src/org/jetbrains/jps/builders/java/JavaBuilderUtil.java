@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -128,21 +128,21 @@ public final class JavaBuilderUtil {
     if(isDepGraphEnabled() && graphConfig != null) {
       Delta delta = null;
       BackendCallbackToGraphDeltaAdapter callback = GRAPH_DELTA_CALLBACK_KEY.get(context);
-      
-      if (callback != null) {
-        Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
 
+      NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
+      Set<File> inputFiles = getFilesContainer(context, FILES_TO_COMPILE_KEY);
+
+      if (callback != null) {
         // Important: in case of errors some sources sent to recompilation might not have corresponding output classes either because a source has compilation errors
         // or because compiler stopped compilation and has not managed to compile some sources.
         // In this case use empty set of delta's "base sources" for dependency calculation, so that only actually recompiled sources will take part in dependency analysis and affected files calculation.
         // Otherwise, some classes that correspond to non-compiled sources might be considered as "deleted" which might result in a large set of affected files,
         // so the next compilation might compile much more files than is actually needed.
-        Iterable<File> inputFiles = Utils.errorsDetected(context)? Collections.emptyList() : Iterators.filter(getFilesContainer(context, FILES_TO_COMPILE_KEY), f -> !compiledWithErrors.contains(f));
-
-        NodeSourcePathMapper pathMapper = graphConfig.getPathMapper();
+        Set<File> deltaBaseSources = Utils.errorsDetected(context)? Collections.emptySet() : inputFiles;
         delta = graphConfig.getGraph().createDelta(
-          Iterators.map(inputFiles, pathMapper::toNodeSource),
-          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), pathMapper::toNodeSource)
+          Iterators.map(deltaBaseSources, pathMapper::toNodeSource),
+          Iterators.map(getRemovedPaths(chunk, dirtyFilesHolder), pathMapper::toNodeSource),
+          false
         );
         for (var nodeData : callback.getNodes()) {
           delta.associate(nodeData.getFirst(), nodeData.getSecond());
@@ -158,10 +158,7 @@ public final class JavaBuilderUtil {
       for (Key<?> key : List.of(GRAPH_DELTA_CALLBACK_KEY, FILES_TO_COMPILE_KEY, COMPILED_WITH_ERRORS_KEY, SUCCESSFULLY_COMPILED_FILES_KEY)) {
         key.set(context, null);
       }
-      if (delta == null) {
-        return false;
-      }
-      return updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT, createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context)));
+      return delta != null && updateDependencyGraph(context, delta, chunk, CompilationRound.NEXT, createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context)));
     }
 
     Mappings delta = null;
@@ -205,20 +202,25 @@ public final class JavaBuilderUtil {
   }
 
   public static void markDirtyDependenciesForInitialRound(CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dfh, ModuleChunk chunk) throws IOException {
-    if (hasRemovedPaths(chunk, dfh)) {
-      BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-      GraphConfiguration graphConfig = dataManager.getDependencyGraph();
-      if (isDepGraphEnabled() && graphConfig != null) {
-        NodeSourcePathMapper mapper = graphConfig.getPathMapper();
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    GraphConfiguration graphConfig = dataManager.getDependencyGraph();
+    if (isDepGraphEnabled() && graphConfig != null) {
+      NodeSourcePathMapper mapper = graphConfig.getPathMapper();
+      Set<NodeSource> toCompile = new HashSet<>();
+      dfh.processDirtyFiles((target, file, root) -> toCompile.add(mapper.toNodeSource(file)));
+      if (!toCompile.isEmpty() || hasRemovedPaths(chunk, dfh)) {
         Delta delta = graphConfig.getGraph().createDelta(
-          Collections.emptyList(), Iterators.map(getRemovedPaths(chunk, dfh), mapper::toNodeSource)
+          toCompile, Iterators.map(getRemovedPaths(chunk, dfh), mapper::toNodeSource), true
         );
         updateDependencyGraph(context, delta, chunk, CompilationRound.CURRENT, null);
-        return;
       }
-      final Mappings delta = dataManager.getMappings().createDelta();
-      final Set<File> empty = Collections.emptySet();
-      updateMappings(context, delta, dfh, chunk, empty, empty, CompilationRound.CURRENT, null);
+    }
+    else {
+      if (hasRemovedPaths(chunk, dfh)) {
+        final Mappings delta = dataManager.getMappings().createDelta();
+        final Set<File> empty = Collections.emptySet();
+        updateMappings(context, delta, dfh, chunk, empty, empty, CompilationRound.CURRENT, null);
+      }
     }
   }
 

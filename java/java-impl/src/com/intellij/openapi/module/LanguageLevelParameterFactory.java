@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
@@ -16,9 +16,8 @@ public final class LanguageLevelParameterFactory extends ProjectTemplateParamete
     return IJ_LANGUAGE_LEVEL;
   }
 
-  @Nullable
   @Override
-  public WizardInputField createField(String defaultValue) {
+  public @Nullable WizardInputField createField(String defaultValue) {
     return null;
   }
 
@@ -27,9 +26,8 @@ public final class LanguageLevelParameterFactory extends ProjectTemplateParamete
     return LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject()).getLanguageLevel().name();
   }
 
-  @Nullable
   @Override
-  public String detectParameterValue(Project project) {
+  public @Nullable String detectParameterValue(Project project) {
     return null;
   }
 

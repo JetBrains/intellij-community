@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.core.CoreBundle;
@@ -36,7 +36,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
   }
 
   @Override
-  public void performPaste(@NotNull final DataContext dataContext) {
+  public void performPaste(final @NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
@@ -109,12 +109,12 @@ public final class JavaFilePasteProvider implements PasteProvider {
   }
 
   @Override
-  public boolean isPastePossible(@NotNull final DataContext dataContext) {
+  public boolean isPastePossible(final @NotNull DataContext dataContext) {
     return true;
   }
 
   @Override
-  public boolean isPasteEnabled(@NotNull final DataContext dataContext) {
+  public boolean isPasteEnabled(final @NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null || ideView.getDirectories().length == 0) {
@@ -124,8 +124,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
     return pasteText != null && getPastedClasses(project, pasteText).length >= 1;
   }
 
-  @Nullable
-  static String detectClassName(@NotNull Project project, @NotNull String fileText) {
+  static @Nullable String detectClassName(@NotNull Project project, @NotNull String fileText) {
     final PsiClass[] classes = getPastedClasses(project, fileText);
     if (classes.length < 1) return null;
     for (PsiClass aClass : classes) {

@@ -169,7 +169,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     app.registerComponents(modules = pluginSet.getEnabledModules(), app = app)
 
     val task = suspend {
-      initConfigurationStore(app)
+      initConfigurationStore(app, emptyList())
 
       addKeysFromPlugins()
       Registry.markAsLoaded()

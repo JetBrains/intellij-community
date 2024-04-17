@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, CompressedDetails> {
+final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<ChangeKind>, CompressedDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   public static final String PATHS = "paths";
   public static final String INDEX_PATHS_IDS = "paths-ids";

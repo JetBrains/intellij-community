@@ -613,6 +613,29 @@ public abstract class KotlinFirSurroundWithTestGenerated extends AbstractKotlinF
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression")
+    public static class TryFinallyExpression extends AbstractKotlinFirSurroundWithTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithTryFinallyExpressionSurrounder, this, testDataFilePath);
+        }
+
+        @TestMetadata("asStatement.kt")
+        public void testAsStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression/asStatement.kt");
+        }
+
+        @TestMetadata("singleExpression.kt")
+        public void testSingleExpression() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression/singleExpression.kt");
+        }
+
+        @TestMetadata("singleExpressionUnit.kt")
+        public void testSingleExpressionUnit() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/surroundWith/tryFinallyExpression/singleExpressionUnit.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/surroundWith/functionLiteral")
     public static class FunctionLiteral extends AbstractKotlinFirSurroundWithTest {
         private void runTest(String testDataFilePath) throws Exception {

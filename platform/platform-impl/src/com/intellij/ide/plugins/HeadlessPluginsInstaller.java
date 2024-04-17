@@ -24,12 +24,6 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
   private static final Logger LOG = Logger.getInstance(HeadlessPluginsInstaller.class);
 
   @Override
-  @SuppressWarnings("deprecation")
-  public @NotNull String getCommandName() {
-    return "installPlugins";
-  }
-
-  @Override
   public int getRequiredModality() {
     return NOT_IN_EDT;
   }

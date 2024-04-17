@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.durablemaps;
 
 import com.intellij.openapi.util.Pair;
@@ -14,6 +14,7 @@ import com.intellij.util.io.dev.enumerator.DataExternalizerEx;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.HashUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ import java.util.function.BiPredicate;
  * Simplest implementation: (key, value) pairs stored in append-only log, {@link DurableIntToMultiIntMap} is used to keep
  * and update the mapping.
  * <p/>
- * Intended for read-dominant use-cases: i.e. for not too much updates -- otherwise ao-log grows up quickly.
+ * Intended for read-dominant use-cases: i.e. for not too many updates -- otherwise ao-log grows up quickly.
  * <p/>
  * Map doesn't allow null keys. It does allow null values, but {@code .put(key,null)} is equivalent to {@code .remove(key)}
  * Map needs a compaction from time to time
@@ -45,6 +46,16 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   //         serialization and store key-value themself (EHMap _could_ be made more concurrent, but it is harder, and
   //         I'm not convinced it is worth the complexity exactly because it should be very fast, and lock should
   //         almost never be contended then)
+
+  //RC: important property: .keyHashToIdMap must be non-essential for the Map persistence. The map state is fully contained in
+  // .keyValuesLog -- i.e. in any moment .keyHashToIdMap content could be dropped, and fully rebuild from .keyValuesLog.
+  // Keeping this invariant is crucial for crash-tolerance, because current [int->int*] implementation is NOT crash-tolerant
+  // -- so if we want to have crash-tolerance for the DurableMap, we're forced to see the .keyHashToIdMap as
+  // non-essential, drop it if any doubts, and recover from the .keyValuesLog, relying on AppendOnlyLog _being_ crash-tolerant.
+  // This invariant is implied in the current Map implementation: e.g. for remove(key) just removing the key.hash from .keyHashToIdMap
+  // is not enough -- if we do only that, the remove could be lost on crash. So we need to append 'key removed' entry to
+  // .keyValuesLog first, and only after that remove the hash from .keyHashToIdMap -- so the remove survives potential crash.
+  //
 
   //Append-only-log records format: <keySize:int32><keyBytes><valueBytes>
   //  keySize sign bit is used for marking 'deleted'/value=null records: keySize<0 means record is deleted
@@ -73,15 +84,18 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public boolean containsMapping(@NotNull K key) throws IOException {
-    int keyHash = adjustHash(keyDescriptor.getHashCode(key));
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
 
-    int foundRecordId = keyHashToIdMap.lookup(keyHash, recordId -> {
+    int foundRecordId = keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       return keyValuesLog.read(logRecordId, recordBuffer -> {
-        int keyRecordSize = recordBuffer.getInt(0);
-        if (keyRecordSize < 0) {
-          return false;//negative key-size => value=null <=> no mapping
+        int header = readHeader(recordBuffer);
+        if (isValueVoid(header)) {
+          return false;
         }
+
+        int keyRecordSize = keySize(header);
         ByteBuffer keyRecordSlice = recordBuffer.slice(Integer.BYTES, keyRecordSize);
         K candidateKey = keyDescriptor.read(keyRecordSlice);
         if (keyDescriptor.isEqual(key, candidateKey)) {
@@ -98,10 +112,11 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public V get(@NotNull K key) throws IOException {
-    int keyHash = adjustHash(keyDescriptor.getHashCode(key));
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
 
     Ref<Pair<K, V>> resultRef = new Ref<>();
-    keyHashToIdMap.lookup(keyHash, recordId -> {
+    keyHashToIdMap.lookup(adjustedHash, recordId -> {
       long logRecordId = convertStoredIdToLogId(recordId);
       Pair<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
       if (entry != null) {
@@ -125,13 +140,14 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   @Override
   public void put(@NotNull K key,
                   @Nullable V value) throws IOException {
-    int keyHash = adjustHash(keyDescriptor.getHashCode(key));
+    int keyHash = keyDescriptor.getHashCode(key);
+    int adjustedHash = HashUtils.adjustHash(keyHash);
     //Abstraction break: synchronize on keyHashToIdMap because we know keyHashToIdMap uses this-monitor to synchronize
     //    itself
     synchronized (keyHashToIdMap) {
       Ref<Pair<K, V>> resultRef = new Ref<>();
       int foundRecordId = keyHashToIdMap.lookup(
-        keyHash,
+        adjustedHash,
         candidateRecordId -> {
           long logRecordId = convertStoredIdToLogId(candidateRecordId);
           Pair<K, V> entry = readEntryIfKeyMatch(logRecordId, key);
@@ -164,16 +180,16 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
       if (keyRecordExists) {
         // (key) record exist, but with different value => replace recordId:
         if (value != null) {
-          keyHashToIdMap.replace(keyHash, foundRecordId, storedRecordId);
+          keyHashToIdMap.replace(adjustedHash, foundRecordId, storedRecordId);
         }
         else {//remove deleted mapping
-          keyHashToIdMap.remove(keyHash, foundRecordId);
+          keyHashToIdMap.remove(adjustedHash, foundRecordId);
         }
       }
       else {
         // (key) record don't exist yet => put it:
         if (value != null) {
-          keyHashToIdMap.put(keyHash, storedRecordId);
+          keyHashToIdMap.put(adjustedHash, storedRecordId);
         }
       }
     }
@@ -214,10 +230,12 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   }
 
 
+  @Override
   public boolean isEmpty() throws IOException {
     return keyHashToIdMap.isEmpty();
   }
 
+  @Override
   public int size() throws IOException {
     return keyHashToIdMap.size();
   }
@@ -248,8 +266,8 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   ) throws IOException {
     //FIXME RC: design the new map creation: how/where to create it? Paths should somehow be
     //          passed from outside, but also maybe tuned here?
-    //          Maybe just use the storageFactory? Keep the factory created the Map in a fields, and use either it,
-    //          or the one passed from outside?
+    //          Maybe just use the storageFactory? Keep the factory by which the current Map was created in a fields, and
+    //          use either it, or the one passed from outside?
     //MAYBE RC: should we do a compaction if there is nothing to compact really -- i.e. if there is 0 wasted records?
     //          Or maybe we should return current map in this case? Or reject explicitly, by throwing exception?
     //          Or just leave it on caller decision?
@@ -284,8 +302,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
 
   @Override
   public boolean isClosed() {
-    //TODO please, implement me
-    throw new UnsupportedOperationException("Method is not implemented yet");
+    return keyHashToIdMap.isClosed();
   }
 
   @Override
@@ -323,18 +340,6 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     return storedRecordId;
   }
 
-  /** @return hash that is acceptable as a key in keyHashToIdMap */
-  private static int adjustHash(int hash) {
-    if (hash == DurableIntToMultiIntMap.NO_VALUE) {
-      //DurableIntToMultiIntMap doesn't allow 0 keys/values, hence replace 0 key with just anything !=0.
-      // Key (=hash) doesn't identify value uniquely anyway, hence this replacement just adds another
-      // collision -- basically, we replaced original Key.hash with our own hash, which avoids 0 at
-      // the cost of slightly higher collision chances
-      return -1;// anything !=0 will do
-    }
-    return hash;
-  }
-
   /** valueDescriptor is expected to NOT process null values, so we compare null values separately */
   private boolean nullSafeEquals(@Nullable V value,
                                  @Nullable V anotherValue) {
@@ -347,7 +352,10 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
     return false;
   }
 
-  /** @return [key, value] pair by logRecordId, if key==expectedKey, null if the record contains key!=expectedKey */
+  /**
+   * @return [key, value] pair by logRecordId, if key==expectedKey, null if the record contains key!=expectedKey
+   * I.e. it is just short-circuit version of {@link #readEntry(long)} and check entry.key.equals(expectedKey)
+   */
   private Pair<K, V> readEntryIfKeyMatch(long logRecordId,
                                          @NotNull K expectedKey) throws IOException {
     return keyValuesLog.read(logRecordId, recordBuffer -> {
@@ -424,7 +432,7 @@ public class DurableMapOverAppendOnlyLog<K, V> implements DurableMap<K, V> {
   }
 
   private static int readHeader(@NotNull ByteBuffer keyBuffer) {
-    return keyBuffer.get(0);
+    return keyBuffer.getInt(0);
   }
 
   private static void putHeader(@NotNull ByteBuffer keyBuffer,

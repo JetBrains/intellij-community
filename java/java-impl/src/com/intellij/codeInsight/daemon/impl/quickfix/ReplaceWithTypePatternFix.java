@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -17,8 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class ReplaceWithTypePatternFix extends PsiUpdateModCommandAction<PsiReferenceExpression> {
-  @NotNull private final SmartPsiElementPointer<PsiClass> myResolvedExprClass;
-  @NlsSafe private final String myPatternVarName;
+  private final @NotNull SmartPsiElementPointer<PsiClass> myResolvedExprClass;
+  private final @NlsSafe String myPatternVarName;
 
   public ReplaceWithTypePatternFix(@NotNull PsiReferenceExpression exprToReplace, @NotNull PsiClass resolvedExprClass,
                                    @NotNull String patternVarName) {
@@ -53,8 +53,7 @@ public class ReplaceWithTypePatternFix extends PsiUpdateModCommandAction<PsiRefe
     return QuickFixBundle.message("replace.with.type.pattern.fix");
   }
 
-  @Nullable
-  private PsiClass getResolvedExprClass() {
+  private @Nullable PsiClass getResolvedExprClass() {
     return myResolvedExprClass.getElement();
   }
 }

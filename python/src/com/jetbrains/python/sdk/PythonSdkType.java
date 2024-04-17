@@ -85,9 +85,10 @@ public final class PythonSdkType extends SdkType {
   /**
    * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
    * hyphen sign (<i>-</i>) for <i>docker-compose:</i> scheme.
-   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>
+   * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>.
+   * As with a new workspace model paths changed on save, hence we need to support <code>//wsl</code> as well
    */
-  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\wsl).+");
+  private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\|//wsl).+");
 
   /**
    * Old configuration may have this prefix in homepath. We must remove it
@@ -478,6 +479,10 @@ public final class PythonSdkType extends SdkType {
 
   @Override
   public @Nullable String getVersionString(final @NotNull String sdkHome) {
+    // Paths like \\wsl and ssh:// can't be used here
+    if (CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN.matcher(sdkHome).matches()) {
+      return null;
+    }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     return flavor != null ? flavor.getVersionString(sdkHome) : null;
   }

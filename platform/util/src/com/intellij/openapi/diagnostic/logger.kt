@@ -7,9 +7,20 @@ import org.jetbrains.annotations.NonNls
 import java.lang.invoke.MethodHandles
 import java.util.concurrent.CancellationException
 
-inline fun <reified T : Any> T.thisLogger(): Logger = Logger.getInstance(T::class.java)
-
+/**
+ * Returns a logger that corresponds to the [T] class.
+ */
 inline fun <reified T : Any> logger(): Logger = Logger.getInstance(T::class.java)
+
+/**
+ * Returns a logger that corresponds to the [T] class inferred from the receiver.
+ *
+ * A shortcut to [logger] to avoid writing the type parameter by hand.
+ *
+ * Note: this method only uses [this] value to infer the type parameter [T].
+ * It does not use the **actual** runtime class (`this::class`) of the receiver value.
+ */
+inline fun <reified T : Any> T.thisLogger(): Logger = Logger.getInstance(T::class.java)
 
 /**
  * Returns a logger that corresponds to the class of the caller method.

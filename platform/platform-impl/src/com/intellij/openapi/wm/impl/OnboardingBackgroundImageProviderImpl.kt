@@ -7,7 +7,8 @@ import java.net.URL
 
 @Internal
 class OnboardingBackgroundImageProviderImpl : OnboardingBackgroundImageProviderBase() {
-  override fun getImageUrl(): URL? =
-    if (PlatformUtils.isIntelliJ()) javaClass.getResource("/images/gradientBackground.svg")
+  override fun getImageUrl(isDark: Boolean): URL? =
+    if (PlatformUtils.isIntelliJ()) javaClass.getResource(if (isDark) "/images/gradientBackground-dark.svg"
+                                                          else "/images/gradientBackground-light.svg")
     else null
 }

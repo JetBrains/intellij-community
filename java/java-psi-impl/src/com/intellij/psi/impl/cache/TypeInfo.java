@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.LighterAST;
@@ -355,8 +355,7 @@ public /*sealed*/ abstract class TypeInfo {
   /**
    * @return short type representation (unqualified name without generic parameters)
    */
-  @NotNull
-  public String getShortTypeText() {
+  public @NotNull String getShortTypeText() {
     return text(true);
   }
 
@@ -371,16 +370,14 @@ public /*sealed*/ abstract class TypeInfo {
   /**
    * @return return type of the constructor (null-type)
    */
-  @NotNull
-  public static TypeInfo createConstructorType() {
+  public static @NotNull TypeInfo createConstructorType() {
     return TypeInfo.SimpleTypeInfo.NULL;
   }
 
   /**
    * @return type created from {@link LighterAST}
    */
-  @NotNull
-  public static TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement<?> parentStub) {
+  public static @NotNull TypeInfo create(@NotNull LighterAST tree, @NotNull LighterASTNode element, StubElement<?> parentStub) {
     int arrayCount = 0;
 
     LighterASTNode typeElement = null;
@@ -470,9 +467,8 @@ public /*sealed*/ abstract class TypeInfo {
                     JavaTokenType.DOUBLE_KEYWORD, JavaTokenType.FLOAT_KEYWORD, JavaTokenType.SHORT_KEYWORD,
                     JavaTokenType.BOOLEAN_KEYWORD, JavaTokenType.BYTE_KEYWORD, JavaTokenType.VOID_KEYWORD);
 
-  @NotNull
-  private static TypeInfo fromTypeElement(@NotNull LighterAST tree,
-                                          @NotNull LighterASTNode typeElement) {
+  private static @NotNull TypeInfo fromTypeElement(@NotNull LighterAST tree,
+                                                   @NotNull LighterASTNode typeElement) {
     TypeInfo info = null;
     TypeKind derivedKind = null;
     for (LighterASTNode child : tree.getChildren(typeElement)) {
@@ -553,15 +549,13 @@ public /*sealed*/ abstract class TypeInfo {
    * Instead, create the type structure explicitly, using the corresponding constructors of {@link SimpleTypeInfo}, {@link RefTypeInfo} and
    * {@link DerivedTypeInfo}.
    */
-  @NotNull
   @Deprecated
-  public static TypeInfo fromString(@Nullable String text, boolean ellipsis) {
+  public static @NotNull TypeInfo fromString(@Nullable String text, boolean ellipsis) {
     TypeInfo typeInfo = fromString(text);
     return ellipsis ? typeInfo.withEllipsis() : typeInfo;
   }
 
-  @NotNull
-  public static TypeInfo fromString(@Nullable String text) {
+  public static @NotNull TypeInfo fromString(@Nullable String text) {
     if (text == null) return TypeInfo.SimpleTypeInfo.NULL;
     TypeKind kind = TEXT_TO_KIND.get(text);
     if (kind != null) {
@@ -619,8 +613,7 @@ public /*sealed*/ abstract class TypeInfo {
     return new RefTypeInfo(text);
   }
 
-  @NotNull
-  public static TypeInfo readTYPE(@NotNull StubInputStream record) throws IOException {
+  public static @NotNull TypeInfo readTYPE(@NotNull StubInputStream record) throws IOException {
     int flags = record.readByte() & 0xFF;
     boolean hasTypeAnnotations = isSet(flags, HAS_TYPE_ANNOTATIONS);
     int kindOrdinal = clear(flags, HAS_TYPE_ANNOTATIONS);
@@ -698,14 +691,12 @@ public /*sealed*/ abstract class TypeInfo {
    * @return type text without annotations
    * @deprecated Use simply {@link TypeInfo#text()}
    */
-  @Nullable
   @Deprecated
-  public static String createTypeText(@NotNull TypeInfo typeInfo) {
+  public static @Nullable String createTypeText(@NotNull TypeInfo typeInfo) {
     return typeInfo.text();
   }
 
-  @NotNull
-  public static String internFrequentType(@NotNull String type) {
+  public static @NotNull String internFrequentType(@NotNull String type) {
     int frequentIndex = (type.length() < 32 && (ourTypeLengthMask & (1 << type.length())) != 0) ? ourFrequentTypeIndex.getInt(type) : 0;
     return frequentIndex == 0 ? StringUtil.internEmptyString(type) : ourIndexFrequentType[frequentIndex];
   }

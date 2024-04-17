@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.codeStyle.properties.ValueListPropertyAccessor;
@@ -20,9 +20,8 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     super(object, field);
   }
 
-  @Nullable
   @Override
-  protected PackageEntryTable fromExternal(@NotNull List<String> strList) {
+  protected @Nullable PackageEntryTable fromExternal(@NotNull List<String> strList) {
     PackageEntryTable entryTable = new PackageEntryTable();
     for (String strValue : strList) {
       String parseStr = strValue.trim();
@@ -56,9 +55,8 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     return entryTable;
   }
 
-  @NotNull
   @Override
-  protected List<String> toExternal(@NotNull PackageEntryTable value) {
+  protected @NotNull List<String> toExternal(@NotNull PackageEntryTable value) {
     List<String> externalList = new ArrayList<>();
     for (PackageEntry entry : value.getEntries()) {
       if (entry == PackageEntry.BLANK_LINE_ENTRY) {
@@ -84,9 +82,8 @@ public class JavaPackageEntryTableAccessor extends ValueListPropertyAccessor<Pac
     return externalList;
   }
 
-  @Nullable
   @Override
-  protected String valueToString(@NotNull List<String> value) {
+  protected @Nullable String valueToString(@NotNull List<String> value) {
     return toCommaSeparatedString(value);
   }
 

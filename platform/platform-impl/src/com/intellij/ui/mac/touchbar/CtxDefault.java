@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.Executor;
@@ -130,7 +130,7 @@ final class CtxDefault {
       return;
     }
 
-    if (((DefaultActionGroup)runButtons).getChildrenCount() > 0) {
+    if (group.getChildrenCount() > 0) {
       LOG.debug("RunnersGroup for touchbar is already filled, skip fill");
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
@@ -98,15 +98,13 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     return requests;
   }
 
-  @Nullable
   @Override
-  public String getHint(@NotNull QuickFix fix) {
+  public @Nullable String getHint(@NotNull QuickFix fix) {
     return myUnusedParameters.getHint(fix);
   }
 
-  @Nullable
   @Override
-  public LocalQuickFix getQuickFix(String hint) {
+  public @Nullable LocalQuickFix getQuickFix(String hint) {
     return myUnusedParameters.getQuickFix(hint);
   }
 
@@ -137,8 +135,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
                 });
   }
 
-  @NotNull
-  private OptPane getEntryPointsPane() {
+  private @NotNull OptPane getEntryPointsPane() {
     List<OptRegularComponent> content = new ArrayList<>();
     content.add(dropdown("TEST_ENTRY_POINTS", JavaBundle.message("label.unused.declaration.reachable.from.tests.option"),
                          option("true", JavaBundle.message("radio.button.unused.declaration.used.option")),
@@ -258,8 +255,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       });
     }
 
-    @NotNull
-    private ProblemDescriptor createProblemDescriptor(@NotNull PsiVariable psiVariable) {
+    private @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiVariable psiVariable) {
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
         toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), 

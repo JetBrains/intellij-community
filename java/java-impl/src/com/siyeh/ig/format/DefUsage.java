@@ -15,21 +15,18 @@ public class DefUsage implements PsiUsage {
     myArg = arg;
   }
 
-  @NotNull
   @Override
-  public Pointer<? extends PsiUsage> createPointer() {
+  public @NotNull Pointer<? extends PsiUsage> createPointer() {
     return Pointer.hardPointer(this);
   }
 
-  @NotNull
   @Override
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myArg.getContainingFile();
   }
 
-  @NotNull
   @Override
-  public TextRange getRange() {
+  public @NotNull TextRange getRange() {
     return myArg.getTextRange();
   }
 

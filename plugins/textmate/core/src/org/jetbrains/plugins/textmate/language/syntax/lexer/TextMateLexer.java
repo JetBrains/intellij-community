@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntLists;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -32,7 +32,7 @@ public final class TextMateLexer {
 
   @NotNull
   private TextMateScope myCurrentScope = TextMateScope.EMPTY;
-  private IntArrayList myNestedScope = IntArrayList.of();
+  private IntList myNestedScope = IntArrayList.of();
   private FList<TextMateLexerState> myStates = FList.emptyList();
 
   private final CharSequence myLanguageScopeName;
@@ -101,23 +101,27 @@ public final class TextMateLexer {
     int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
 
     StringWithId string = new StringWithId(line);
-    while (true) {
-      final TextMateLexerState lexerState = states.getHead();
-      if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
+
+    FList<TextMateLexerState> whileStates = states;
+    while (!whileStates.isEmpty()) {
+      final TextMateLexerState whileState = whileStates.getHead();
+      whileStates = whileStates.getTail();
+      if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
         MatchData matchWhile = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
-                                                                 matchBeginOfString, lexerState);
-        if (!matchWhile.matched()) {
-          closeScopeSelector(output, linePosition + lineStartOffset);
-          closeScopeSelector(output, linePosition + lineStartOffset);
-          states = states.getTail();
-          // this is happening at line start, none of the previous states couldn't be run on this line, so no need to update anchorByteOffset
-          continue;
+                                                                 matchBeginOfString, whileState);
+        if (matchWhile.matched()) {
+          // todo: support whileCaptures
+          if (anchorByteOffset == -1) {
+            anchorByteOffset = matchWhile.byteOffset().end;
+          }
         }
         else {
-          anchorByteOffset = matchWhile.byteOffset().end;
+          closeScopeSelector(output, linePosition + lineStartOffset);
+          closeScopeSelector(output, linePosition + lineStartOffset);
+          states = whileStates;
+          anchorByteOffset = -1;
         }
       }
-      break;
     }
 
     Set<TextMateLexerState> localStates = new HashSet<>();
@@ -136,6 +140,7 @@ public final class TextMateLexer {
       if (endMatch.matched() && (!currentMatch.matched() ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
+        // todo: applyEndPatternLast
         TextMateLexerState poppedState = states.getHead();
         if (poppedState.matchData.matched() && !poppedState.matchedEOL) {
           // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
@@ -148,7 +153,6 @@ public final class TextMateLexer {
         closeScopeSelector(output, startPosition + lineStartOffset); // closing content scope
         if (lastRule.getCaptureRules(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptureRules(Constants.CaptureKey.CAPTURES) == null
-            && lastRule.getCaptureRules(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
             parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, lineStartOffset, states)
             ||

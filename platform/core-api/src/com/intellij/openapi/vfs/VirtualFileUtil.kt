@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
@@ -215,6 +216,7 @@ object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, Str
 /**
  * Resolves [VirtualFile] from absolute [absoluteOrRelativeFilePath] if found or by relative [absoluteOrRelativeFilePath] from [VirtualFile]
  */
+@RequiresBackgroundThread(generateAssertion = false)
 fun VirtualFile.resolveFromRootOrRelative(absoluteOrRelativeFilePath: String): VirtualFile? {
   return fileSystem.findFileByPath(absoluteOrRelativeFilePath) ?: findFileByRelativePath(absoluteOrRelativeFilePath)
 }

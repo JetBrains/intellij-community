@@ -25,9 +25,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.platform.backend.documentation.InlineDocumentation
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -50,7 +47,7 @@ internal class DocRenderItemImpl(override val editor: Editor,
                                  textRange: TextRange,
                                  override var textToRender: @Nls String?,
                                  private val docRendererFactory: (DocRenderItem) -> DocRenderer,
-                                 private val inlineDocumentationFinder: InlineDocumentationFinder?) : DocRenderItem {
+                                 private val inlineDocumentationFinder: InlineDocumentationFinder?) : DocRenderItem, MutableDocRenderItem {
   override val highlighter: RangeHighlighter
   override var foldRegion: CustomFoldRegion? = null
     private set
@@ -64,7 +61,7 @@ internal class DocRenderItemImpl(override val editor: Editor,
     highlighter = (editor.markupModel as MarkupModelEx)
       .addRangeHighlighterAndChangeAttributes(null, textRange.startOffset, textRange.endOffset,
                                               0, HighlighterTargetArea.EXACT_RANGE, false) { h: RangeHighlighterEx ->
-        h.putUserData(DocRenderItemManagerImpl.OWN_HIGHLIGHTER, true)
+        h.putUserData(DocRenderItemManagerImpl.OWNS_HIGHLIGHTER, true)
       }
     updateIcon(null)
   }

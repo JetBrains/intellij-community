@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.psi.*;
@@ -122,8 +122,7 @@ class AssociativeExpression extends EliminableExpression {
     return true;
   }
 
-  @Nullable
-  static AssociativeExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
+  static @Nullable AssociativeExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
     return EliminateUtils.createExpression(parenthesized, AssociativeExpression::new, OUTER_OPERATORS);
   }
 }

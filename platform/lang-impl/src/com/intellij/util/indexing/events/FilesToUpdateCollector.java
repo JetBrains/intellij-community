@@ -32,6 +32,7 @@ public class FilesToUpdateCollector {
       if (projects.isEmpty()) {
         removeNonIndexableFileData(file, fileId);
         myFileBasedIndex.get().getIndexableFilesFilterHolder().removeFile(fileId);
+        myDirtyFiles.addFile(Collections.emptyList(), fileId); // file will be indexed by another project on project start
         return;
       }
     }

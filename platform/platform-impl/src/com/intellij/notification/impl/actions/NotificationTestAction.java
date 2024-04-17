@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -155,7 +155,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       NotificationInfo notification = null;
 
       for (String line : StringUtil.splitByLines(text, false)) {
-        if (line.length() == 0) {
+        if (line.isEmpty()) {
           if (notification != null) {
             notification = null;
             continue;

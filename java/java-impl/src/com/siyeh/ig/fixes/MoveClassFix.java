@@ -30,14 +30,12 @@ import org.jetbrains.annotations.NotNull;
 public class MoveClassFix extends RefactoringInspectionGadgetsFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("move.class.quickfix");
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
   }
 

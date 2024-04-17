@@ -24,9 +24,6 @@ private val LOG = Logger.getInstance(FormatterStarter::class.java)
 internal class FormatterStarter : ApplicationStarter {
   private val messageOutput = StdIoMessageOutput
 
-  override val commandName: String
-    get() = "format"
-
   override fun main(args: List<String>) {
     messageOutput.info("$appInfo Formatter\n")
     LOG.info(args.joinToString(",", prefix = "Attributes: "))

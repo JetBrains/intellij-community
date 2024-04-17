@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
@@ -42,7 +42,7 @@ private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.p
 class ModuleStructureValidator(private val context: BuildContext, modules: Collection<ModuleItem>) {
   // filter out jars with relative paths in name
   private val modules: Collection<ModuleItem> = modules.filter {
-    !it.relativeOutputFile.contains("\\") || !it.relativeOutputFile.contains('/')
+    it.reason != ModuleIncludeReasons.PRODUCT_MODULES && (!it.relativeOutputFile.contains("\\") || !it.relativeOutputFile.contains('/'))
   }
 
   private val errors = ArrayList<AssertionError>()
@@ -154,8 +154,12 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
     }
 
     // start validating from product xml descriptor
-    val productDescriptorName = "META-INF/${context.productProperties.platformPrefix}Plugin.xml"
-    val productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
+    var productDescriptorName = ""
+    var productDescriptorFile: Path? = null
+    for (c in listOf("META-INF/plugin.xml", "META-INF/${context.productProperties.platformPrefix}Plugin.xml")) {
+      productDescriptorName = c
+      productDescriptorFile = findDescriptorFile(productDescriptorName, roots) ?: continue
+    }
     if (productDescriptorFile == null) {
       errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
       return

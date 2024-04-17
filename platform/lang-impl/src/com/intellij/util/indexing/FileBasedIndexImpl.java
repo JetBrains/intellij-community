@@ -82,7 +82,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlinx.coroutines.CoroutineScope;
@@ -155,7 +154,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final IntSet myStaleIds = new IntOpenHashSet();
-  private final IntSet myDirtyFilesIds = new IntOpenHashSet();
+  @Nullable
+  private volatile OrphanDirtyFilesQueue myOrphanDirtyFileIds;
 
   final Lock myReadLock;
   public final Lock myWriteLock;
@@ -330,10 +330,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void addDirtyFileIds(@NotNull IntSet dirtyFileIds) {
-    synchronized (myDirtyFilesIds) {
-      myDirtyFilesIds.addAll(dirtyFileIds);
-    }
+  void setOrphanDirtyFilesQueue(@NotNull OrphanDirtyFilesQueue dirtyFileIds) {
+    myOrphanDirtyFileIds = dirtyFileIds;
   }
 
   @Override
@@ -572,7 +570,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private void persistDirtyFiles(@NotNull Project project) {
     IntSet dirtyFileIds = getAllDirtyFiles(project);
-    PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(project), dirtyFileIds, vfsCreationStamp);
+    OrphanDirtyFilesQueue orphanQueue = myOrphanDirtyFileIds;
+    new ProjectDirtyFilesQueue(dirtyFileIds, orphanQueue == null ? 0 : orphanQueue.getUntrimmedSize()).store(project, vfsCreationStamp);
   }
 
   @NotNull
@@ -615,15 +614,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         PersistentIndicesConfiguration.saveConfiguration();
 
-        IntSet unprocessedDirtyFiles = new IntOpenHashSet();
-        synchronized (myDirtyFilesIds) {
-          unprocessedDirtyFiles.addAll(myDirtyFilesIds);
-          myDirtyFilesIds.clear();
-        }
+        IntSet unprocessedOrphanDirtyFiles = new IntOpenHashSet();
+        OrphanDirtyFilesQueue orphanDirtyFileIds = Objects.requireNonNullElse(myOrphanDirtyFileIds, new OrphanDirtyFilesQueue(new IntArrayList(), 0L));
+        myOrphanDirtyFileIds = null;
+        unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
 
         if (myIsUnitTestMode) {
           IntSet allStaleIdsToCheck = new IntOpenHashSet();
-          allStaleIdsToCheck.addAll(unprocessedDirtyFiles);
+          allStaleIdsToCheck.addAll(unprocessedOrphanDirtyFiles);
           synchronized (myStaleIds) {
             allStaleIdsToCheck.addAll(myStaleIds);
             myStaleIds.clear();
@@ -643,12 +641,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        IntSet dirtyFilesWithoutProject = getAllDirtyFiles(null);
-        // we need to persist unprocessed dirty files to disk otherwise we lose them if
-        // FileBasedIndexTumbler shutdown is performed twice in a row, or IDE is quickly closed
-        dirtyFilesWithoutProject.addAll(unprocessedDirtyFiles);
-        PersistentDirtyFilesQueue.storeIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(),
-                                                     dirtyFilesWithoutProject, vfsCreationStamp);
+        IntSet orphanDirtyFilesFromThisSession = getAllDirtyFiles(null);
+        orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).store(vfsCreationStamp);
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
         getChangedFilesCollector().clear();
         myFilesToUpdateCollector.clear();
@@ -878,28 +872,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @NotNull
-  IntList ensureDirtyFileIndexesDeleted() {
-    synchronized (myDirtyFilesIds) {
-      try {
-        return ensureDirtyFileIndexesDeleted(myDirtyFilesIds);
-      }
-      finally {
-        myDirtyFilesIds.clear();
-      }
-    }
+  @Nullable
+  OrphanDirtyFilesQueue getOrphanDirtyFileIds() {
+    return myOrphanDirtyFileIds;
   }
 
-  @NotNull
-  IntList ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
-    if (dirtyFiles.isEmpty()) return new IntArrayList();
+  void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
+    if (dirtyFiles.isEmpty()) return;
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       Collection<ID<?, ?>> indexIDs = myRegisteredIndexes.getState().getIndexIDs();
       for (int fileId : dirtyFiles) {
         removeFileDataFromIndices(indexIDs, fileId, null);
       }
     });
-    return new IntArrayList(dirtyFiles);
   }
 
   @Override

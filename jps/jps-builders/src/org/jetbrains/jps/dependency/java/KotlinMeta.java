@@ -148,6 +148,16 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return container != null? container.getFunctions() : Collections.emptyList();
   }
 
+  public Iterable<KmTypeAlias> getKmTypeAliases() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container != null? container.getTypeAliases() : Collections.emptyList();
+  }
+
+  public Iterable<KmConstructor> getKmConstructors() {
+    KmDeclarationContainer container = getDeclarationContainer();
+    return container instanceof KmClass? ((KmClass)container).getConstructors() : Collections.emptyList();
+  }
+
   public Iterable<KmTypeParameter> getTypeParameters() {
     KmDeclarationContainer container = getDeclarationContainer();
     return container instanceof KmClass? ((KmClass)container).getTypeParameters() : Collections.emptyList();
@@ -177,7 +187,9 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     private final KotlinMeta myPast;
     private final Supplier<Specifier<KmFunction, KmFunctionsDiff>> myFunctionsDiff;
+    private final Supplier<Specifier<KmConstructor, KmConstructorsDiff>> myConstructorsDiff;
     private final Supplier<Specifier<KmProperty, KmPropertiesDiff>> myPropertiesDiff;
+    private final Supplier<Specifier<KmTypeAlias, KmTypeAliasDiff>> myAliasesDiff;
 
     Diff(KotlinMeta past) {
       myPast = past;
@@ -189,17 +201,33 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
         KmFunctionsDiff::new
       ));
 
+      myConstructorsDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmConstructors(), getKmConstructors(),
+        (c1, c2) -> Objects.equals(JvmExtensionsKt.getSignature(c1), JvmExtensionsKt.getSignature(c2)),
+        c -> Objects.hashCode(JvmExtensionsKt.getSignature(c)),
+        KmConstructorsDiff::new
+      ));
+
       myPropertiesDiff = Utils.lazyValue(() -> Difference.deepDiff(
         myPast.getKmProperties(), getKmProperties(),
         (p1, p2) -> Objects.equals(p1.getName(), p2.getName()),
         p -> Objects.hashCode(p.getName()),
         KmPropertiesDiff::new
       ));
+
+      myAliasesDiff = Utils.lazyValue(() -> Difference.deepDiff(
+        myPast.getKmTypeAliases(), getKmTypeAliases(),
+        (a1, a2) -> Objects.equals(a1.getName(), a2.getName()),
+        a -> Objects.hashCode(a.getName()),
+        KmTypeAliasDiff::new
+      ));
     }
 
     @Override
     public boolean unchanged() {
-      return !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() && functions().unchanged() && properties().unchanged()/*&& !dataChanged()*/;
+      return
+        !kindChanged() && !versionChanged() && !packageChanged() && !extraChanged() && !typeParametersVarianceChanged() && !containerVisibilityChanged() &&
+        functions().unchanged() && properties().unchanged() && constructors().unchanged() && typeAliases().unchanged()/*&& !dataChanged()*/;
     }
 
     public boolean kindChanged() {
@@ -238,8 +266,16 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return myFunctionsDiff.get();
     }
 
+    public Specifier<KmConstructor, KmConstructorsDiff> constructors() {
+      return myConstructorsDiff.get();
+    }
+
     public Specifier<KmProperty, KmPropertiesDiff> properties() {
       return myPropertiesDiff.get();
+    }
+
+    public Specifier<KmTypeAlias, KmTypeAliasDiff> typeAliases() {
+      return myAliasesDiff.get();
     }
   }
 
@@ -254,7 +290,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged();
+      return !becameNullable() && !argsBecameNotNull() && !receiverParameterChanged() && !visibilityChanged() && !hasDefaultDeclarationChanges();
     }
 
     public boolean becameNullable() {
@@ -296,9 +332,98 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
       return nowType == null || !Objects.equals(pastType.getClassifier(), nowType.getClassifier());
     }
 
+    public boolean hasDefaultDeclarationChanges() {
+      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      if (before == 0) {
+        return after > 0; // there were no default declarations, but some parameters now define default values
+      }
+      return after < before; // default definitions still exist, but some parameters do not define default values anymore
+    }
+
     private static Iterable<KmType> getParameterTypes(KmFunction f) {
       // return all types that can make up a jvm signature
       return Iterators.filter(Iterators.flat(List.of(f.getContextReceiverTypes(), Iterators.asIterable(f.getReceiverParameterType()), Iterators.map(f.getValueParameters(), KmValueParameter::getType))), Objects::nonNull);
+    }
+  }
+  
+  public static final class KmTypeAliasDiff implements Difference {
+    private final KmTypeAlias past;
+    private final KmTypeAlias now;
+
+    public KmTypeAliasDiff(KmTypeAlias past, KmTypeAlias now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !visibilityChanged() && !underlyingTypeChanged();
+    }
+
+
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean underlyingTypeChanged() {
+      return !Objects.equals(past.getUnderlyingType(), now.getUnderlyingType());
+    }
+  }
+
+  public static final class KmConstructorsDiff implements Difference {
+    private final KmConstructor past;
+    private final KmConstructor now;
+
+    public KmConstructorsDiff(KmConstructor past, KmConstructor now) {
+      this.past = past;
+      this.now = now;
+    }
+
+    @Override
+    public boolean unchanged() {
+      return !argsBecameNotNull() && !visibilityChanged() && !hasDefaultDeclarationChanges();
+    }
+
+    public boolean visibilityChanged() {
+      return Attributes.getVisibility(past) != Attributes.getVisibility(now);
+    }
+
+    public boolean accessRestricted() {
+      return getVisibilityLevel(Attributes.getVisibility(now)) < getVisibilityLevel(Attributes.getVisibility(past));
+    }
+
+    public boolean argsBecameNotNull() {
+      var nowIt = getParameterTypes(now).iterator();
+      for (KmType pastParam : getParameterTypes(past)) {
+        if (!nowIt.hasNext()) {
+          // should not happen normally if getParameterTypes correctly collects all KmFunction properties that make up a jvm signature.
+          // This check make code resistant to possible future changes in kotlinc
+          break;
+        }
+        KmType nowParam = nowIt.next();
+        if (Attributes.isNullable(pastParam) && !Attributes.isNullable(nowParam)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public boolean hasDefaultDeclarationChanges() {
+      int before = Iterators.count(Iterators.filter(past.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      int after = Iterators.count(Iterators.filter(now.getValueParameters(), Attributes::getDeclaresDefaultValue));
+      if (before == 0) {
+        return after > 0; // there were no default declarations, but some parameters now define default values
+      }
+      return after < before; // default definitions still exist, but some parameters do not define default values anymore
+    }
+
+    private static Iterable<KmType> getParameterTypes(KmConstructor f) {
+      return Iterators.map(f.getValueParameters(), KmValueParameter::getType);
     }
   }
 

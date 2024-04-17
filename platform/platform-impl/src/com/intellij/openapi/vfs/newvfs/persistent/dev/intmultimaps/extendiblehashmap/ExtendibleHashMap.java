@@ -221,17 +221,17 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   }
 
   @Override
-  public boolean remove(int key,
-                        int value) throws IOException {
+  public synchronized boolean remove(int key,
+                                     int value) throws IOException {
     HashMapSegmentLayout segment = segmentForKey(key);
 
     return hashMapAlgo.remove(segment, key, value);
   }
 
   @Override
-  public boolean replace(int key,
-                         int oldValue,
-                         int newValue) throws IOException {
+  public synchronized boolean replace(int key,
+                                      int oldValue,
+                                      int newValue) throws IOException {
     HashMapSegmentLayout segment = segmentForKey(key);
 
     return hashMapAlgo.replace(segment, key, oldValue, newValue);
@@ -316,18 +316,19 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     }
   }
 
+  @Override
   public synchronized boolean isClosed() {
     return !storage.isOpen();
   }
 
   @Override
-  public void closeAndUnsafelyUnmap() throws IOException {
+  public synchronized void closeAndUnsafelyUnmap() throws IOException {
     close();
     storage.closeAndUnsafelyUnmap();
   }
 
   @Override
-  public void closeAndClean() throws IOException {
+  public synchronized void closeAndClean() throws IOException {
     close();
     storage.closeAndClean();
   }
@@ -1025,7 +1026,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
         //This deals with the issue above -- table being overflowed by tombstones -- but only partially. This branch
         // fixes correctness (table doesn't fail if there is at least 1 unfilled slot), but doesn't fix performance,
         // which likely is awful long before we reach this branch due to looooong probing sequences
-        
+
         for (int slot = 0; slot < capacity; slot++) {
           table.updateEntry(slot, NO_VALUE, NO_VALUE);
         }

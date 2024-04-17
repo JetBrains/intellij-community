@@ -2,7 +2,6 @@
 package com.intellij.execution;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -68,12 +67,6 @@ public abstract class Executor {
   public abstract @NonNls String getContextActionId();
 
   public abstract @NonNls String getHelpId();
-
-  @FunctionalInterface
-  public interface ActionWrapper {
-    @NotNull
-    AnAction wrap(@NotNull AnAction original);
-  }
 
   /**
    * @return text of the action specialized for given configuration name

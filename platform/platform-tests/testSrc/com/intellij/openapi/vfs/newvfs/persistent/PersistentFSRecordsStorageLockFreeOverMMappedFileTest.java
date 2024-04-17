@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.OwnershipInfo;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -66,7 +67,7 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   public void recordOffsetCalculatedByStorageIsConsistentWithPlainCalculation() {
     int enoughRecords = (PAGE_SIZE / RECORD_SIZE_IN_BYTES) * 16;
 
-    long expectedRecordOffsetInFile = PersistentFSRecordsLockFreeOverMMappedFile.HEADER_SIZE;
+    long expectedRecordOffsetInFile = PersistentFSRecordsLockFreeOverMMappedFile.FileHeader.HEADER_SIZE;
     for (int recordId = NULL_ID + 1; recordId < enoughRecords; recordId++) {
 
       long recordOffsetInFile = storage.recordOffsetInFileUnchecked(recordId);
@@ -85,24 +86,39 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   @Test
   public void tryAcquireExclusiveAccess_alwaysSucceedWithoutConcurrentRequests() {
     int currentPid = 123;
-    int ownerPid = storage.tryAcquireExclusiveAccess(currentPid, false);
+    long acquiringTimestamp = 42;
+    OwnershipInfo owner = storage.tryAcquireExclusiveAccess(currentPid, acquiringTimestamp, /*force: */ false);
     assertEquals(
       "Acquire must be successful since there no other owners",
       currentPid,
-      ownerPid
+      owner.ownerProcessPid
+    );
+    assertEquals(
+      "Acquire must be successful since there no other owners",
+      acquiringTimestamp,
+      owner.ownershipAcquiredAtMs
     );
   }
 
   @Test
   public void ifStorageIsAcquired_acquireWithDifferentPid_MustFailToChangeOwner() {
     int currentPid = 123;
+    long acquiringTimestamp = 42;
+
     int competingPid = 124;
-    storage.tryAcquireExclusiveAccess(currentPid, false);
-    int ownerPid = storage.tryAcquireExclusiveAccess(competingPid, false);
+    long competingTimestamp = 42;
+
+    OwnershipInfo owner1 = storage.tryAcquireExclusiveAccess(currentPid, acquiringTimestamp, /*force: */ false);
+    OwnershipInfo owner2 = storage.tryAcquireExclusiveAccess(competingPid, competingTimestamp, /*force: */ false);
     assertEquals(
-      "If storage is already acquired, acquire must fail, and owner must not change",
+      "First acquire ownership must succeed since no previous owner",
       currentPid,
-      ownerPid
+      owner1.ownerProcessPid
+    );
+    assertEquals(
+      "If storage is already acquired, 2nd acquire must fail, and owner must not change",
+      currentPid,
+      owner2.ownerProcessPid
     );
   }
 
@@ -110,31 +126,37 @@ public class PersistentFSRecordsStorageLockFreeOverMMappedFileTest
   @Test
   public void processAlreadyAcquiredStorage_alwaysSucceedInAcquiringAgain() {
     int currentPid = 123;
-    storage.tryAcquireExclusiveAccess(currentPid, false);
-    int ownerPid = storage.tryAcquireExclusiveAccess(currentPid, false);
+    long acquiringTimestamp1 = 42;
+    long acquiringTimestamp2 = 43;
+    storage.tryAcquireExclusiveAccess(currentPid, acquiringTimestamp1, false);
+    OwnershipInfo owner = storage.tryAcquireExclusiveAccess(currentPid, acquiringTimestamp2, false);
     assertEquals(
       "Same process could always acquire storage again (i.e. acquire is idempotent)",
       currentPid,
-      ownerPid
+      owner.ownerProcessPid
+    );
+    assertEquals(
+      "Ownership acquisition timestamp must NOT change (i.e. acquire is idempotent)",
+      acquiringTimestamp1,
+      owner.ownershipAcquiredAtMs
     );
   }
 
   @Test
   public void reopenedStorageHasNoOwner_henceCouldBeAcquired_ByAnyProcess() throws IOException {
     int firstOwnerPid = 123;
-    storage.tryAcquireExclusiveAccess(firstOwnerPid, false);
+    storage.tryAcquireExclusiveAccess(firstOwnerPid, 42L, false);
 
     storage.close();
     storage = openStorage(storagePath);
 
     int secondOwnerPid = 125;
-    int ownerPid = storage.tryAcquireExclusiveAccess(secondOwnerPid, false);
+    OwnershipInfo owner = storage.tryAcquireExclusiveAccess(secondOwnerPid, 43L, false);
     assertEquals(
       ".close() clears the owner, so any process could acquire the reopened storage",
       secondOwnerPid,
-      ownerPid
+      owner.ownerProcessPid
     );
-
   }
 
 }

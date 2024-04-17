@@ -3,10 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
 import com.intellij.debugger.DebuggerManagerEx
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.StepIntoMethodBreakpoint
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.SuspendOtherThreadsRequestor
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.requests.CustomProcessingLocatableEventRequestor
 import com.intellij.debugger.settings.DebuggerSettings
@@ -15,6 +12,7 @@ import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.event.LocatableEvent
 import com.sun.jdi.request.EventRequest
+import java.util.function.Function
 
 object CoroutineBreakpointFacility {
     fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, method: Method): Boolean {
@@ -51,6 +49,10 @@ object CoroutineBreakpointFacility {
                 }
             }
 
+            override fun applyAfterContextSwitch() = Function<SuspendContextImpl, Boolean> { c ->
+                scheduleStepOverCommandForSuspendSwitch(c)
+            }
+
             private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl): Boolean {
                 DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(it).prepareSteppingRequestsAndHints(it)
                 // false return value will resume the execution in the `DebugProcessEvents` and
@@ -60,7 +62,9 @@ object CoroutineBreakpointFacility {
         }
 
         breakpoint.suspendPolicy = when (context.suspendPolicy) {
-            EventRequest.SUSPEND_ALL -> if (useCoroutineIdFiltering) DebuggerSettings.SUSPEND_THREAD else DebuggerSettings.SUSPEND_ALL
+            EventRequest.SUSPEND_ALL ->
+                if (useCoroutineIdFiltering && !DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) DebuggerSettings.SUSPEND_THREAD
+                else DebuggerSettings.SUSPEND_ALL
             EventRequest.SUSPEND_EVENT_THREAD -> DebuggerSettings.SUSPEND_THREAD
             EventRequest.SUSPEND_NONE -> DebuggerSettings.SUSPEND_NONE
             else -> DebuggerSettings.SUSPEND_ALL

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,27 +55,23 @@ class ClsBinaryExpressionImpl extends ClsElementImpl implements PsiBinaryExpress
     }
   }
 
-  @NotNull
   @Override
-  public PsiExpression getLOperand() {
+  public @NotNull PsiExpression getLOperand() {
     return myLOperand;
   }
 
-  @NotNull
   @Override
-  public PsiExpression getROperand() {
+  public @NotNull PsiExpression getROperand() {
     return myROperand;
   }
 
-  @NotNull
   @Override
-  public PsiJavaToken getOperationSign() {
+  public @NotNull PsiJavaToken getOperationSign() {
     return myOperator;
   }
 
-  @NotNull
   @Override
-  public IElementType getOperationTokenType() {
+  public @NotNull IElementType getOperationTokenType() {
     return myOperator.getTokenType();
   }
 

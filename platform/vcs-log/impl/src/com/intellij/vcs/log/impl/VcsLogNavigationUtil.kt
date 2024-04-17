@@ -44,7 +44,7 @@ object VcsLogNavigationUtil {
   private val LOG = logger<VcsLogNavigationUtil>()
 
   @JvmStatic
-  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): CompletableFuture<Boolean> {
+  fun jumpToRevisionAsync(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): CompletableFuture<Boolean> {
     val resultFuture = CompletableFuture<Boolean>()
 
     val progressTitle = VcsLogBundle.message("vcs.log.show.commit.in.log.process", hash.toShortString())
@@ -61,8 +61,9 @@ object VcsLogNavigationUtil {
     return resultFuture
   }
 
-  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
+  private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath? = null): Boolean {
     val logUi = showCommitInLogTab(project, hash, root, false) { logUi ->
+      if (filePath == null) return@showCommitInLogTab true
       // Structure filter might prevent us from navigating to FilePath
       val hasFilteredChanges = logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
                                logUi.properties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] &&
@@ -70,7 +71,7 @@ object VcsLogNavigationUtil {
       return@showCommitInLogTab !hasFilteredChanges
     } ?: return false
 
-    logUi.selectFilePath(filePath, true)
+    if (filePath != null) logUi.selectFilePath(filePath, true)
     return true
   }
 

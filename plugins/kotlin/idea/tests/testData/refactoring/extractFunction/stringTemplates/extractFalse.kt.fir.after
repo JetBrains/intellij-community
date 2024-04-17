@@ -3,7 +3,7 @@ fun foo(param: Int): String {
     val x = "xyfalsez"
     val y = "xyFalsez"
     val z = false
-    return "ab${string()}def"
+    return "ab${bool()}def"
 }
 
-private fun string(): String = "false"
+private fun bool(): Boolean = false

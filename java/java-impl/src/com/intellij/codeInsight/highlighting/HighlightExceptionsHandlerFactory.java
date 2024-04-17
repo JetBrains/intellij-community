@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -39,8 +39,7 @@ public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHand
     return null;
   }
 
-  @Nullable
-  private static HighlightUsagesHandlerBase<PsiClass> createHighlightTryHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiElement parent) {
+  private static @Nullable HighlightUsagesHandlerBase<PsiClass> createHighlightTryHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiElement parent) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
     PsiCodeBlock tryBlock = ((PsiTryStatement)parent).getTryBlock();
@@ -51,8 +50,7 @@ public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHand
     return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, null, alwaysTrue());
   }
 
-  @Nullable
-  private static HighlightUsagesHandlerBase<PsiClass> createHighlightExceptionUsagesFromThrowsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiJavaCodeReferenceElement parent) {
+  private static @Nullable HighlightUsagesHandlerBase<PsiClass> createHighlightExceptionUsagesFromThrowsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiJavaCodeReferenceElement parent) {
     PsiElement list = parent.getParent();
     if (!(list instanceof PsiReferenceList)) return null;
     PsiElement method = list.getParent();
@@ -68,8 +66,7 @@ public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHand
     return new HighlightThrowsClassesHandler(editor, file, target, type, block, resolved);
   }
 
-  @Nullable
-  private static HighlightUsagesHandlerBase<PsiClass> createHighlightCatchHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiElement parent) {
+  private static @Nullable HighlightUsagesHandlerBase<PsiClass> createHighlightCatchHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target, @NotNull PsiElement parent) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
     PsiTryStatement tryStatement = ((PsiCatchSection)parent).getTryStatement();
@@ -96,8 +93,7 @@ public final class HighlightExceptionsHandlerFactory extends HighlightUsagesHand
     return new HighlightExceptionsHandler(editor, file, target, types, tryBlock, resourceList, filter);
   }
 
-  @Nullable
-  private static HighlightUsagesHandlerBase<PsiClass> createThrowsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  private static @Nullable HighlightUsagesHandlerBase<PsiClass> createThrowsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.highlight.throws");
 
     PsiElement grand = target.getParent().getParent();

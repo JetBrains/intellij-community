@@ -1,8 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -28,9 +31,8 @@ public final class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspe
   private static final CallMatcher LIST_REMOVE = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "remove").parameterTypes("int");
   private static final CallMatcher LIST_SIZE = instanceCall(CommonClassNames.JAVA_UTIL_LIST, "size").parameterCount(0);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -116,10 +118,8 @@ public final class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static class ListRemoveInLoopFix extends PsiUpdateModCommandQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "List.subList().clear()");
     }
 
@@ -140,7 +140,7 @@ public final class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspe
 
       String start = startEnd.getFirst();
       String end = startEnd.getSecond();
-      @NonNls final String statementText = ct.text(listExpression) + ".subList(" + start + "," + end + ").clear();";
+      final @NonNls String statementText = ct.text(listExpression) + ".subList(" + start + "," + end + ").clear();";
       final String replacementText = "if(" + end + ">" + start + "){" + statementText + "}";
       PsiIfStatement ifStatement = (PsiIfStatement)ct.replaceAndRestoreComments(loopStatement, replacementText);
       ct = new CommentTracker();

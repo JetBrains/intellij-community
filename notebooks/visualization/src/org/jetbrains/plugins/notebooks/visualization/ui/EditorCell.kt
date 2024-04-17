@@ -32,6 +32,21 @@ class EditorCell(
   val visible: Boolean
     get() = _visible
 
+  private var _selected = false
+
+  var selected: Boolean
+    get() = _selected
+    set(value) {
+      if (_selected != value) {
+        _selected = value
+        updateSelection(value)
+      }
+    }
+
+  private fun updateSelection(value: Boolean) {
+    view?.updateSelection(value)
+  }
+
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
   var view: EditorCellView? = viewFactory()
@@ -48,6 +63,7 @@ class EditorCell(
     _visible = true
     if (view == null) {
       view = viewFactory()
+      view?.updateSelection(_selected)
       gutterAction?.let { view?.setGutterAction(it) }
     }
   }

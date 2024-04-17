@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -23,9 +23,8 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     super("ANNOTATION", BasicJavaElementType.BASIC_ANNOTATION);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new AnnotationElement();
   }
 
@@ -39,9 +38,8 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     return new PsiAnnotationImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiAnnotationStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiAnnotationStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String text = LightTreeUtil.toFilteredString(tree, node, null);
     return new PsiAnnotationStubImpl(parentStub, text);
   }
@@ -51,9 +49,8 @@ public class JavaAnnotationElementType extends JavaStubElementType<PsiAnnotation
     dataStream.writeUTFFast(stub.getText());
   }
 
-  @NotNull
   @Override
-  public PsiAnnotationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiAnnotationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PsiAnnotationStubImpl(parentStub, dataStream.readUTFFast());
   }
 

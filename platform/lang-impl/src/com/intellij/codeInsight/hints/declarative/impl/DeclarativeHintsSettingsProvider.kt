@@ -13,11 +13,11 @@ class DeclarativeHintsSettingsProvider : InlaySettingsProvider {
     val providerDescriptions = InlayHintsProviderExtensionBean.EP.extensionList
     val settings = DeclarativeInlayHintsSettings.getInstance()
     return providerDescriptions
-      .filter { Language.findLanguageByID(it.language) == language }
+      .filter { !it.isInvisible && Language.findLanguageByID(it.language) == language }
       .map {
-      val isEnabled = settings.isProviderEnabled(it.requiredProviderId()) ?: it.isEnabledByDefault
-      DeclarativeHintsProviderSettingsModel(it, isEnabled, language, project)
-    }
+        val isEnabled = settings.isProviderEnabled(it.requiredProviderId()) ?: it.isEnabledByDefault
+        DeclarativeHintsProviderSettingsModel(it, isEnabled, language, project)
+      }
   }
 
   override fun getSupportedLanguages(project: Project): Collection<Language> {

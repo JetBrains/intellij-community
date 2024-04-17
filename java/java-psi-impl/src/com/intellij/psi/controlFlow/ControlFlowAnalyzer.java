@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -126,8 +126,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       myStatements.pop();
     }
 
-    @NotNull
-    private PsiElement peekElement() {
+    private @NotNull PsiElement peekElement() {
       return myStatements.peek();
     }
 
@@ -141,8 +140,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  @NotNull
-  private IntList getEmptyIntArray() {
+  private @NotNull IntList getEmptyIntArray() {
     if (intArrayPool.isEmpty()) {
       return new IntArrayList(1);
     }
@@ -1059,8 +1057,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
    *
    * @return list of targets or list of single null element if no appropriate targets found
    */
-  @NotNull
-  private List<PsiElement> findThrowToBlocks(@NotNull PsiThrowStatement statement) {
+  private @NotNull List<PsiElement> findThrowToBlocks(@NotNull PsiThrowStatement statement) {
     final PsiExpression exceptionExpr = statement.getException();
     if (exceptionExpr == null) return Collections.emptyList();
     final PsiType throwType = exceptionExpr.getType();
@@ -1068,8 +1065,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     return findThrowToBlocks((PsiClassType)throwType);
   }
 
-  @NotNull
-  private List<PsiElement> findThrowToBlocks(@NotNull PsiClassType throwType) {
+  private @NotNull List<PsiElement> findThrowToBlocks(@NotNull PsiClassType throwType) {
     List<PsiElement> blocks = new ArrayList<>();
     for (int i = myCatchParameters.size() - 1; i >= 0; i--) {
       ProgressManager.checkCanceled();
@@ -1896,8 +1892,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.addInstruction(instruction);
   }
 
-  @Nullable
-  private PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
+  private @Nullable PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
     if (refExpr.getParent() instanceof PsiMethodCallExpression) return null;
     return myPolicy.getUsedVariable(refExpr);
   }
@@ -1911,13 +1906,11 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
       myCalls = new ArrayList<>();
     }
 
-    @NotNull
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return myElement;
     }
 
-    @NotNull
-    public List<CallInstruction> getCalls() {
+    public @NotNull List<CallInstruction> getCalls() {
       return myCalls;
     }
 

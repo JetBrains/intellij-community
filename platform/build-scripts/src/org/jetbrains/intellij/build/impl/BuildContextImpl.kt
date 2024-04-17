@@ -178,7 +178,17 @@ class BuildContextImpl(
   }
 
   override val bundledPluginModules: List<String>
-    get() = productProperties.productLayout.bundledPluginModules
+    get() {
+      return bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
+    }
+  
+  private val bundledPluginModulesForModularLoader by lazy {
+    productProperties.rootModuleForModularLoader?.let { rootModule ->
+      originalModuleRepository.loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map { 
+        it.stringId 
+      }
+    }
+  }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
     val result = distFiles.filterTo(mutableListOf()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,9 +18,8 @@ public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
     super("");
   }
 
-  @NotNull
   @Override
-  public String getDescription(@NotNull PsiElement e) {
+  public @NotNull String getDescription(@NotNull PsiElement e) {
     return CodeInsightBundle.message("unwrap.with.placeholder", e.getText());
   }
 
@@ -59,8 +58,7 @@ public class JavaPolyadicExpressionUnwrapper extends JavaUnwrapper {
     return e.getParent();
   }
 
-  @Nullable
-  private static PsiExpression findOperand(@NotNull PsiElement e, @NotNull PsiPolyadicExpression expression) {
+  private static @Nullable PsiExpression findOperand(@NotNull PsiElement e, @NotNull PsiPolyadicExpression expression) {
     final TextRange elementTextRange = e.getTextRange();
 
     for (PsiExpression operand : expression.getOperands()) {

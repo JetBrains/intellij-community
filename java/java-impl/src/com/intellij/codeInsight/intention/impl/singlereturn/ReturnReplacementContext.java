@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -55,8 +55,7 @@ final class ReturnReplacementContext {
     replace();
   }
 
-  @Nullable
-  private PsiStatement goUp() {
+  private @Nullable PsiStatement goUp() {
     PsiElement parent = myReturnStatement.getParent();
     while (parent instanceof PsiCodeBlock) {
       PsiElement grandParent = parent.getParent();
@@ -124,8 +123,7 @@ final class ReturnReplacementContext {
     }
   }
 
-  @Nullable
-  private PsiStatement advance(PsiStatement currentContext) {
+  private @Nullable PsiStatement advance(PsiStatement currentContext) {
     PsiElement contextParent = currentContext.getParent();
     if (contextParent instanceof PsiLoopStatement) {
       Object mark = new Object();
@@ -251,8 +249,7 @@ final class ReturnReplacementContext {
     return codeBlock;
   }
 
-  @NotNull
-  private PsiBlockStatement getBlockFromIf(PsiIfStatement ifStatement, boolean inThen) {
+  private @NotNull PsiBlockStatement getBlockFromIf(PsiIfStatement ifStatement, boolean inThen) {
     if (inThen) {
       PsiStatement elseBranch = ifStatement.getElseBranch();
       if (elseBranch == null) {

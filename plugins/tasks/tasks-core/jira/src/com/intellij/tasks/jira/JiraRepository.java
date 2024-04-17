@@ -277,7 +277,7 @@ public class JiraRepository extends BaseRepositoryImpl {
     else if (!isInCloud()) {
       if (isUseBearerTokenAuthentication()) {
         setUseHttpAuthentication(false);
-        method.addRequestHeader(new Header(HttpAuthenticator.WWW_AUTH_RESP, "Bearer " + myPassword));
+        method.addRequestHeader(new Header(HttpAuthenticator.WWW_AUTH_RESP, "Bearer " + getPassword()));
       }
       else {
         setUseHttpAuthentication(true);

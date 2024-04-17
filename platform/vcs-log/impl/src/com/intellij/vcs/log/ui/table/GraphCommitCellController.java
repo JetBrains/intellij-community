@@ -23,6 +23,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public abstract class GraphCommitCellController implements VcsLogCellController {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogGraphTable myTable;

@@ -61,6 +61,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
@@ -490,6 +491,11 @@ public abstract class UsefulTestCase extends TestCase {
       UITestUtil.replaceIdeEventQueueSafely();
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
     }
+    else if (runFromCoroutine()) {
+      CoroutineKt.runTestInCoroutineScope(() -> {
+        defaultRunBare(wrappedRunnable);
+      }, getCoroutineTimeout());
+    }
     else {
       defaultRunBare(wrappedRunnable);
     }
@@ -524,6 +530,14 @@ public abstract class UsefulTestCase extends TestCase {
       return policy.runInDispatchThread();
     }
     return true;
+  }
+
+  protected boolean runFromCoroutine() {
+    return false;
+  }
+
+  protected Duration getCoroutineTimeout() {
+    return Duration.ofMinutes(1);
   }
 
   protected static <T extends Throwable> void edt(@NotNull ThrowableRunnable<T> runnable) throws T {

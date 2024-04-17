@@ -3,51 +3,47 @@
 
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-interface ModuleGraph : Graph<IdeaPluginDescriptorImpl> {
-  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl>
-
-  fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl>
-}
-
-@ApiStatus.Internal
-open class ModuleGraphBase protected constructor(
+class ModuleGraph internal constructor(
+  @JvmField val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>,
   private val modules: Collection<IdeaPluginDescriptorImpl>,
   private val directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
   private val directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-) : ModuleGraph {
+) : Graph<IdeaPluginDescriptorImpl> {
   override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = Collections.unmodifiableCollection(modules)
 
-  override fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
+  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
     return getOrEmpty(directDependencies, descriptor)
   }
 
   override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
 
-  override fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
-    return getOrEmpty(directDependents, descriptor)
-  }
+  fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = getOrEmpty(directDependents, descriptor)
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
 
   fun builder(): DFSTBuilder<IdeaPluginDescriptorImpl> = DFSTBuilder(this, null, true)
 
-  internal fun sorted(builder: DFSTBuilder<IdeaPluginDescriptorImpl> = builder()): SortedModuleGraph {
-    return SortedModuleGraph(
-      topologicalComparator = toCoreAwareComparator(builder.comparator()),
-      modules = modules,
-      directDependencies = directDependencies,
-      directDependents = directDependents,
+  internal fun sorted(builder: DFSTBuilder<IdeaPluginDescriptorImpl> = builder()): ModuleGraph {
+    val topologicalComparator = toCoreAwareComparator(builder.comparator())
+    return ModuleGraph(
+      topologicalComparator = topologicalComparator,
+      modules = modules.sortedWith(topologicalComparator),
+      directDependencies = copySorted(directDependencies, topologicalComparator),
+      directDependents = copySorted(directDependents, topologicalComparator)
     )
   }
 }
 
-internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraphBase {
+private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
+
+internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraph {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
   val modules = ArrayList<IdeaPluginDescriptorImpl>(moduleMap.size)
   for (module in plugins) {
@@ -65,7 +61,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   }
 
   val hasAllModules = moduleMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER.idString)
-  val result = Collections.newSetFromMap<IdeaPluginDescriptorImpl>(IdentityHashMap())
+  val result: MutableSet<IdeaPluginDescriptorImpl> = Collections.newSetFromMap(IdentityHashMap())
   val directDependencies = IdentityHashMap<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>(modules.size)
   for (module in modules) {
     val implicitDep = if (hasAllModules) getImplicitDependency(module, moduleMap) else null
@@ -80,6 +76,19 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
 
     collectDirectDependenciesInOldFormat(module, moduleMap, result)
     collectDirectDependenciesInNewFormat(module, moduleMap, result)
+
+    // Check modules as well, for example, intellij.diagram.impl.vcs.
+    // We are not yet ready to recommend adding a dependency on extracted VCS modules since the coordinates are not finalized.
+    if (module.pluginId != PluginManagerCore.CORE_ID || module.moduleName != null) {
+      val strictCheck = module.isBundled || PluginManagerCore.isVendorJetBrains(module.vendor ?: "")
+      if (!strictCheck || doesDependOnPluginAlias(module, VCS_ALIAS_ID)) {
+        moduleMap.get("intellij.platform.vcs.dvcs.impl")?.let { result.add(it) }
+        moduleMap.get("intellij.platform.vcs.log.impl")?.let { result.add(it) }
+      }
+      if (!strictCheck) {
+        moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
+      }
+    }
 
     if (module.moduleName != null && module.pluginId != PluginManagerCore.CORE_ID) {
       // add main as implicit dependency
@@ -105,7 +114,17 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
   }
 
-  return object : ModuleGraphBase(modules = modules, directDependencies = directDependencies, directDependents = directDependents) {}
+  return ModuleGraph(
+    topologicalComparator = Comparator { _, _ -> 0 },
+    modules = modules,
+    directDependencies = directDependencies,
+    directDependents = directDependents,
+  )
+}
+
+// alias in most cases points to Core plugin, so, we cannot use computed dependencies to check
+private fun doesDependOnPluginAlias(plugin: IdeaPluginDescriptorImpl, @Suppress("SameParameterValue") aliasId: PluginId): Boolean {
+  return plugin.pluginDependencies.any { it.pluginId == aliasId } || plugin.dependencies.plugins.any { it.id == aliasId }
 }
 
 private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
@@ -121,21 +140,12 @@ private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImp
   }
 }
 
-private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-                       descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
+private fun getOrEmpty(
+  map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+  descriptor: IdeaPluginDescriptorImpl,
+): Collection<IdeaPluginDescriptorImpl> {
   return map.getOrDefault(descriptor, Collections.emptyList())
 }
-
-class SortedModuleGraph(
-  val topologicalComparator: Comparator<IdeaPluginDescriptorImpl>,
-  modules: Collection<IdeaPluginDescriptorImpl>,
-  directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-) : ModuleGraphBase(
-  modules = modules.sortedWith(topologicalComparator),
-  directDependencies = copySorted(directDependencies, topologicalComparator),
-  directDependents = copySorted(directDependents, topologicalComparator)
-)
 
 private fun copySorted(
   map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
@@ -153,13 +163,17 @@ private fun copySorted(
  * classes without declaring explicit dependency on the Java module. This method is intended to add implicit dependency on the Java plugin
  * for such plugins to avoid breaking compatibility with them.
  */
-private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
-                                  idMap: Map<String, IdeaPluginDescriptorImpl>): IdeaPluginDescriptorImpl? {
+private fun getImplicitDependency(
+  descriptor: IdeaPluginDescriptorImpl,
+  idMap: Map<String, IdeaPluginDescriptorImpl>,
+): IdeaPluginDescriptorImpl? {
   // skip our plugins as expected to be up to date whether bundled or not
   if (descriptor.isBundled ||
       descriptor.packagePrefix != null ||
       descriptor.implementationDetail ||
-      descriptor.content.modules.isNotEmpty()) {
+      descriptor.content.modules.isNotEmpty() ||
+      descriptor.dependencies.modules.isNotEmpty() ||
+      descriptor.dependencies.plugins.isNotEmpty()) {
     return null
   }
 

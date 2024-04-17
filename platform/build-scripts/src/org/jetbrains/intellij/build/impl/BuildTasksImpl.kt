@@ -853,6 +853,16 @@ private fun checkProductProperties(context: BuildContextImpl) {
       )
     }
   }
+  properties.rootModuleForModularLoader?.let { rootModule ->
+    checkModule(rootModule, "productProperties.rootModuleForModularLoader", context)
+    if (properties.productLayout.bundledPluginModules.isNotEmpty()) {
+      context.messages.error("""
+        |'${properties.javaClass.name}' uses module-based loader, so the following bundled plugins must be specified in product-modules.xml file 
+        |located in '$rootModule', not via 'productLayout.bundledPluginModules' property: 
+        |${properties.productLayout.bundledPluginModules.joinToString("\n")}
+        |""".trimMargin())
+    }
+  }
 
   checkModules(properties.modulesToCompileTests, "productProperties.modulesToCompileTests", context)
 
@@ -1465,7 +1475,7 @@ internal fun generateLanguagePluginsXml(context: BuildContext, targetPath: Path)
   val root = Element("plugins")
   root.addContent(createPluginNode(context, "com.intellij.ja", "ja", "7 MB"))
   root.addContent(createPluginNode(context, "com.intellij.ko", "ko", "7 MB"))
-  root.addContent(createPluginNode(context, "com.intellij.zh", "zh-CN", "6 MB"))
+  root.addContent(createPluginNode(context, "com.intellij.zh", "zh", "6 MB"))
 
   val document = Document()
   document.rootElement = root

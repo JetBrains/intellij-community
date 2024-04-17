@@ -36,6 +36,17 @@ public final class Iterators {
     return false;
   }
 
+  public static int count(Iterable<?> iterable) {
+    if (iterable instanceof Collection) {
+      return ((Collection<?>)iterable).size();
+    }
+    int count = 0;
+    for (Object obj: iterable) {
+      count += 1;
+    }
+    return count;
+  }
+
   public static <T> T find(Iterable<? extends T> iterable, BooleanFunction<? super T> cond) {
     if (iterable != null) {
       for (T o : iterable) {
@@ -195,6 +206,27 @@ public final class Iterators {
 
   public static <T> Iterable<T> asIterable(final T[] elem) {
     return elem == null? Collections.<T>emptyList() : Arrays.asList(elem);
+  }
+
+  public static <T> Iterable<T> reverse(final List<T> list) {
+    return new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        final ListIterator<T> li = list.listIterator(list.size());
+        return new BaseIterator<T>() {
+          @Override
+          public boolean hasNext() {
+            return li.hasPrevious();
+          }
+
+          @Override
+          public T next() {
+            return li.previous();
+          }
+        };
+      }
+    };
   }
 
   public static <T> Iterator<T> asIterator(final T elem) {

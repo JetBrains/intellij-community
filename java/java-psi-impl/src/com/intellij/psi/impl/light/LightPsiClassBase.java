@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -56,15 +42,13 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
       visitor.visitElement(this);
     }
   }
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     PsiElement parent = getParent();
     if (parent instanceof PsiJavaFile) {
       return StringUtil.getQualifiedName(((PsiJavaFile)parent).getPackageName(), getName());
@@ -107,9 +91,8 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiClassImplUtil.getImplementsListTypes(this);
   }
 
-  @Nullable
   @Override
-  public PsiClass getSuperClass() {
+  public @Nullable PsiClass getSuperClass() {
     return PsiClassImplUtil.getSuperClass(this);
   }
 
@@ -148,15 +131,13 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiClassImplUtil.getAllInnerClasses(this);
   }
 
-  @Nullable
   @Override
-  public PsiField findFieldByName(@NonNls String name, boolean checkBases) {
+  public @Nullable PsiField findFieldByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findFieldByName(this, name, checkBases);
   }
 
-  @Nullable
   @Override
-  public PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
+  public @Nullable PsiMethod findMethodBySignature(@NotNull PsiMethod patternMethod, boolean checkBases) {
     return PsiClassImplUtil.findMethodBySignature(this, patternMethod, checkBases);
   }
 
@@ -170,39 +151,33 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiClassImplUtil.findMethodsByName(this, name, checkBases);
   }
 
-  @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases) {
     return PsiClassImplUtil.findMethodsAndTheirSubstitutorsByName(this, name, checkBases);
   }
 
-  @NotNull
   @Override
-  public List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
+  public @NotNull List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors() {
     return PsiClassImplUtil.getAllWithSubstitutorsByMap(this, PsiClassImplUtil.MemberType.METHOD);
   }
 
-  @Nullable
   @Override
-  public PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
+  public @Nullable PsiClass findInnerClassByName(@NonNls String name, boolean checkBases) {
     return PsiClassImplUtil.findInnerByName(this, name, checkBases);
   }
 
-  @Nullable
   @Override
-  public PsiElement getLBrace() {
+  public @Nullable PsiElement getLBrace() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getRBrace() {
+  public @Nullable PsiElement getRBrace() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @Nullable PsiIdentifier getNameIdentifier() {
     return null;
   }
 
@@ -216,9 +191,8 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
-  @NotNull
   @Override
-  public Collection<HierarchicalMethodSignature> getVisibleSignatures() {
+  public @NotNull Collection<HierarchicalMethodSignature> getVisibleSignatures() {
     return PsiSuperMethodImplUtil.getVisibleSignatures(this);
   }
 
@@ -227,9 +201,8 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     throw new IncorrectOperationException("Cannot rename light class");
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return null;
   }
 
@@ -248,9 +221,8 @@ public abstract class LightPsiClassBase extends LightElement implements PsiClass
     return PsiImplUtil.getTypeParameters(this);
   }
 
-  @NotNull
   @Override
-  public abstract PsiModifierList getModifierList();
+  public abstract @NotNull PsiModifierList getModifierList();
 
   @Override
   public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name) {

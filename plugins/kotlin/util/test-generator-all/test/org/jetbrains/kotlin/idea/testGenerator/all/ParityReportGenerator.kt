@@ -137,9 +137,9 @@ object ParityReportGenerator {
             }
         }
 
-    private fun handleCategories(invertedFileCases: Map<String, Case>, ignored: BooleanArray, variation: Variation) {
+    private fun handleCategories(invertedFileCases: Map<String, Case>, ignored: BooleanArray) {
         invertedFileCases.forEach { (fileName, case) ->
-            val counter = variation.successByCategory.computeIfAbsent(case.category) { AtomicInteger() }
+            val category = case.category
             val file = File(KotlinRoot.DIR, fileName)
             val caseNameFile: CaseNameFile = case.files.firstOrNull() ?: return@forEach
             ignored.fill(false)
@@ -147,6 +147,7 @@ object ParityReportGenerator {
                 ignored[1] = true
             }
             file.handleIgnored(k1Variation, k2Variation, ignored = ignored) {
+                val counter = it.successByCategory.computeIfAbsent(category) { AtomicInteger() }
                 counter.incrementAndGet()
             }
         }
@@ -155,8 +156,8 @@ object ParityReportGenerator {
     private fun reportSharedFilesDetails(invertedK1FileCases: Map<String, Case>, invertedK2FileCases: Map<String, Case>, stringBuilder: StringBuilder) {
         val testClassesPerCategory = mutableMapOf<GroupCategory, AtomicInteger>()
         val ignored = BooleanArray(2)
-        handleCategories(invertedK1FileCases, ignored, k1Variation)
-        handleCategories(invertedK2FileCases, ignored, k2Variation)
+        handleCategories(invertedK1FileCases, ignored)
+        handleCategories(invertedK2FileCases, ignored)
 
         val sharedFiles = buildList<Pair<String, Case>> {
             for (invertedK2FileCasesEntry in invertedK2FileCases) {

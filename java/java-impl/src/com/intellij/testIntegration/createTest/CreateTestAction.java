@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -38,14 +38,12 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   private static final String CREATE_TEST_IN_THE_SAME_ROOT = "create.test.in.the.same.root";
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return CodeInsightBundle.message("intention.create.test");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -126,8 +124,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     }, CodeInsightBundle.message("intention.create.test.title"), this);
   }
 
-  @NotNull
-  public static Module suggestModuleForTests(@NotNull Project project, @NotNull Module productionModule) {
+  public static @NotNull Module suggestModuleForTests(@NotNull Project project, @NotNull Module productionModule) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (productionModule.equals(TestModuleProperties.getInstance(module).getProductionModule())) {
         return module;
@@ -150,8 +147,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     return new CreateTestDialog(project, CodeInsightBundle.message("intention.create.test.title"), srcClass, srcPackage, srcModule);
   }
 
-  @Nullable
-  protected static PsiClass getContainingClass(PsiElement element) {
+  protected static @Nullable PsiClass getContainingClass(PsiElement element) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
     if (aClass == null) return null;
     return TestIntegrationUtils.findOuterClass(element);

@@ -40,6 +40,7 @@
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="Git4Idea"/>
     <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

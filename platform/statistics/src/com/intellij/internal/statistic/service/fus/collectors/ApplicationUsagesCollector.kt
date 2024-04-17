@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -44,6 +45,8 @@ abstract class ApplicationUsagesCollector : FeatureUsagesCollector() {
   }
 
   open suspend fun getMetricsAsync(): Set<MetricEvent> {
-    return getMetrics()
+    return blockingContext {
+      getMetrics()
+    }
   }
 }

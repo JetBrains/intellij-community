@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.psi.*;
@@ -70,19 +70,17 @@ final class EliminateUtils {
     return ctor.apply(outerExpr, operand);
   }
 
-  @Nullable
-  private static PsiPolyadicExpression getInnerExpression(@NotNull PsiParenthesizedExpression parenthesized,
-                                                          @NotNull Set<IElementType> innerOperators) {
+  private static @Nullable PsiPolyadicExpression getInnerExpression(@NotNull PsiParenthesizedExpression parenthesized,
+                                                                    @NotNull Set<IElementType> innerOperators) {
     PsiPolyadicExpression expression = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(parenthesized), PsiPolyadicExpression.class);
     if (expression == null) return null;
     if (!innerOperators.contains(expression.getOperationTokenType()) || expression.getOperands().length < 2) return null;
     return expression;
   }
 
-  @Nullable
-  private static PsiPolyadicExpression getOuterExpression(@NotNull PsiPolyadicExpression innerExpression,
-                                                          @NotNull PsiExpression operand,
-                                                          @NotNull Map<IElementType, IElementType[]> outerOperators) {
+  private static @Nullable PsiPolyadicExpression getOuterExpression(@NotNull PsiPolyadicExpression innerExpression,
+                                                                    @NotNull PsiExpression operand,
+                                                                    @NotNull Map<IElementType, IElementType[]> outerOperators) {
     PsiPolyadicExpression expression = ObjectUtils.tryCast(operand.getParent(), PsiPolyadicExpression.class);
     if (expression == null) return null;
     IElementType innerOperator = innerExpression.getOperationTokenType();
@@ -98,8 +96,7 @@ final class EliminateUtils {
     return PsiPrecedenceUtil.getPrecedenceForOperator(outerOperator) == PsiPrecedenceUtil.getPrecedenceForOperator(innerOperator);
   }
 
-  @Nullable
-  private static PsiExpression skipPrefixedExprUp(@NotNull PsiExpression expression) {
+  private static @Nullable PsiExpression skipPrefixedExprUp(@NotNull PsiExpression expression) {
     while (expression.getParent() instanceof PsiPrefixExpression prefixExpression) {
       if (!ArrayUtil.contains(prefixExpression.getOperationTokenType(), PREFIXES)) return null;
       expression = prefixExpression;
@@ -129,8 +126,7 @@ final class EliminateUtils {
     return handler.apply(expression, isNegated);
   }
 
-  @Nullable
-  private static IElementType invert(@NotNull IElementType tokenType) {
+  private static @Nullable IElementType invert(@NotNull IElementType tokenType) {
     return INVERTED_OPS.get(tokenType);
   }
 
@@ -179,10 +175,9 @@ final class EliminateUtils {
     });
   }
 
-  @Nullable
-  static IElementType getOperandTokenType(@NotNull PsiPolyadicExpression expression,
-                                          @NotNull PsiExpression operand,
-                                          @Nullable IElementType outerTokenType) {
+  static @Nullable IElementType getOperandTokenType(@NotNull PsiPolyadicExpression expression,
+                                                    @NotNull PsiExpression operand,
+                                                    @Nullable IElementType outerTokenType) {
     PsiJavaToken operandToken = expression.getTokenBeforeOperand(operand);
     if (operandToken == null) return outerTokenType;
     IElementType innerTokenType = operandToken.getTokenType();

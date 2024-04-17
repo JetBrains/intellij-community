@@ -1,7 +1,7 @@
 text.html.smarty;comment.block.smarty;punctuation.definition.comment.smarty: [0, 1], {{}
 text.html.smarty;comment.block.smarty: [1, 2], {*}
-text.html.smarty;comment.block.smarty: [2, 23], { define the function }
-text.html.smarty: [23, 26], {*}
+text.html.smarty;comment.block.smarty: [2, 25], { define the function *}}
+text.html.smarty: [25, 26], {
 }
 text.html.smarty;meta.embedded.line.tag.smarty;source.smarty;punctuation.section.embedded.begin.smarty: [26, 27], {{}
 text.html.smarty;meta.embedded.line.tag.smarty;source.smarty: [27, 36], {function }
@@ -101,8 +101,8 @@ text.html.smarty: [284, 285], {
 }
 text.html.smarty;comment.block.smarty;punctuation.definition.comment.smarty: [285, 286], {{}
 text.html.smarty;comment.block.smarty: [286, 287], {*}
-text.html.smarty;comment.block.smarty: [287, 319], { create an array to demonstrate }
-text.html.smarty: [319, 322], {*}
+text.html.smarty;comment.block.smarty: [287, 321], { create an array to demonstrate *}}
+text.html.smarty: [321, 322], {
 }
 text.html.smarty;meta.embedded.line.tag.smarty;source.smarty;punctuation.section.embedded.begin.smarty: [322, 323], {{}
 text.html.smarty;meta.embedded.line.tag.smarty;source.smarty;variable.other.smarty;punctuation.definition.variable.smarty: [323, 324], {$}
@@ -157,8 +157,8 @@ text.html.smarty: [430, 431], {
 }
 text.html.smarty;comment.block.smarty;punctuation.definition.comment.smarty: [431, 432], {{}
 text.html.smarty;comment.block.smarty: [432, 433], {*}
-text.html.smarty;comment.block.smarty: [433, 469], { run the array through the function }
-text.html.smarty: [469, 472], {*}
+text.html.smarty;comment.block.smarty: [433, 471], { run the array through the function *}}
+text.html.smarty: [471, 472], {
 }
 text.html.smarty;meta.embedded.line.tag.smarty;source.smarty;punctuation.section.embedded.begin.smarty: [472, 473], {{}
 text.html.smarty;meta.embedded.line.tag.smarty;source.smarty: [473, 478], {menu }

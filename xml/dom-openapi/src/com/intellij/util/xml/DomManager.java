@@ -76,7 +76,7 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @param aClass Desired DOM element class
    * @param module One may wish the result to think that it is in a particular module
    * @param physical see {@link com.intellij.psi.PsiFile#isPhysical()}
-   * @return DOM element which doesn't have any real file under itself. A mock file is created for it. See
+   * @return DOM element, which doesn't have any real file under itself. A mock file is created for it. See
    * {@link com.intellij.psi.PsiFileFactory#createFileFromText(String, com.intellij.openapi.fileTypes.FileType, CharSequence, long, boolean, boolean)}
    */
   public abstract <T extends DomElement> T createMockElement(Class<T> aClass, final Module module, final boolean physical);
@@ -88,9 +88,10 @@ public abstract class DomManager extends CompositeModificationTracker implements
   public abstract boolean isMockElement(DomElement element);
 
   /**
-   * Creates DOM element of needed type, that is wrapper around real DOM element. Once the wrapped element
-   * becomes invalid, a new value is requested from provider parameter, so there's a possibility to
-   * restore the functionality. The resulting element will also implement StableElement interface.
+   * Creates a DOM element of a needed type, that is wrapper around a real DOM element.
+   * Once the wrapped element becomes invalid, a new value is requested from provider parameter, so there's a possibility to
+   * restore the functionality.
+   * The resulting element will also implement StableElement interface.
    *
    * @param provider provides values to be wrapped
    * @return stable DOM element
@@ -107,7 +108,6 @@ public abstract class DomManager extends CompositeModificationTracker implements
   public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();
-
 
   /**
    * @param element reference element

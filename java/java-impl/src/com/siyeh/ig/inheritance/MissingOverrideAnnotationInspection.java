@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -55,8 +55,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
   }
 
   @Override
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return "override";
   }
 
@@ -220,13 +219,11 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
       }
   }
 
-  @NotNull
-  private static LocalQuickFix createAnnotateFix(boolean annotateMethod, boolean annotateHierarchy) {
+  private static @NotNull LocalQuickFix createAnnotateFix(boolean annotateMethod, boolean annotateHierarchy) {
     return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE, annotateHierarchy, annotateMethod);
   }
 
-  @Nullable
-  private static GlobalSearchScope getLanguageLevelScope(@NotNull LanguageLevel _minimal, @NotNull Project project) {
+  private static @Nullable GlobalSearchScope getLanguageLevelScope(@NotNull LanguageLevel _minimal, @NotNull Project project) {
     Map<LanguageLevel, GlobalSearchScope> map = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Map<LanguageLevel, GlobalSearchScope> result = ConcurrentFactoryMap.createMap(minimal -> {
         Set<Module> modules = StreamEx

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.openapi.util.TextRange;
@@ -26,14 +26,12 @@ public final class StringLiteralManipulator extends AbstractElementManipulator<P
     return (PsiLiteralExpression)expr.replace(newExpr);
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull final PsiLiteralExpression element) {
+  public @NotNull TextRange getRangeInElement(final @NotNull PsiLiteralExpression element) {
     return getValueRange(element);
   }
 
-  @NotNull
-  public static TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
+  public static @NotNull TextRange getValueRange(@NotNull PsiLiteralExpression expression) {
     if (expression instanceof PsiLanguageInjectionHost) {
       return ((PsiLanguageInjectionHost)expression).createLiteralTextEscaper().getRelevantTextRange();
     }

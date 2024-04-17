@@ -14,7 +14,7 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
 import java.beans.PropertyChangeEvent
 
-open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
+internal open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
   VcsLogSpeedSearch(component) {
 
   private val userRegistry: VcsUserRegistry = project.getService(VcsUserRegistry::class.java)

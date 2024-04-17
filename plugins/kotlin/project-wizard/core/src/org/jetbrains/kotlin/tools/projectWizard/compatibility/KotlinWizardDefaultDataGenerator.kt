@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.compatibility
 
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.KotlinLibraryCompatibilityParser
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.generateDefaultData
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
 import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
 import org.jetbrains.plugins.gradle.jvmcompat.readAppVersion
@@ -32,6 +34,12 @@ class WizardDefaultDataGeneratorSettings<T : IdeVersionedDataState>(
                 ktFileName = "KotlinWizardVersionDefaultData.kt",
                 parser = KotlinWizardVersionParser,
                 generator = KotlinWizardVersionState::generateDefaultData
+            ),
+            WizardDefaultDataGeneratorSettings(
+                jsonPath = "/compatibility/libraries/coroutines.json",
+                ktFileName = "libraries/CoroutinesLibraryCompatibilityDefaultData.kt",
+                parser = KotlinLibraryCompatibilityParser,
+                generator = { generateDefaultData("COROUTINES_LIBRARY_COMPATIBILITY_DEFAULT_DATA") }
             )
         )
     }
@@ -55,7 +63,8 @@ internal fun main(args: Array<String>) {
 
     WizardDefaultDataGeneratorSettings.getGenerators().forEach { settings ->
         val generatedData = settings.generateDefaultData(applicationVersion)
-        val outputFile = generatedFolder.resolve(settings.ktFileName)
-        outputFile.toFile().writeText(generatedData, Charsets.UTF_8)
+        val outputFile = generatedFolder.resolve(settings.ktFileName).toFile()
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(generatedData, Charsets.UTF_8)
     }
 }

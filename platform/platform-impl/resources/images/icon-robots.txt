@@ -1,1 +1,1 @@
-skip: gradientBackground.svg
+skip: gradientBackground*

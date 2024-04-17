@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -32,7 +32,7 @@ public final class JavaInheritanceWeigher extends ProximityWeigher {
                                                                                                                   });
 
   @Override
-  public Comparable weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+  public Comparable weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {
     if (location.getPosition() == null || !(element instanceof PsiClass)) {
       return null;
     }
@@ -58,8 +58,7 @@ public final class JavaInheritanceWeigher extends ProximityWeigher {
     return false;
   }
 
-  @Nullable
-  private static PsiClass findPlaceClass(PsiElement element, PsiElement position) {
+  private static @Nullable PsiClass findPlaceClass(PsiElement element, PsiElement position) {
     if (position.getParent() instanceof PsiReferenceExpression) {
       final PsiExpression qualifierExpression = ((PsiReferenceExpression)position.getParent()).getQualifierExpression();
       if (qualifierExpression != null) {
@@ -75,10 +74,10 @@ public final class JavaInheritanceWeigher extends ProximityWeigher {
     return PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
   }
 
-  private static boolean isTooGeneral(@Nullable final PsiClass element) {
+  private static boolean isTooGeneral(final @Nullable PsiClass element) {
     if (element == null) return true;
 
-    @NonNls final String qname = element.getQualifiedName();
+    final @NonNls String qname = element.getQualifiedName();
     return qname == null || qname.startsWith("java.lang.");
   }
 }

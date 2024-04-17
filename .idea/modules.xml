@@ -855,7 +855,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" filepath="$PROJECT_DIR$/plugins/kotlin/intellij.kotlin.plugin.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" filepath="$PROJECT_DIR$/plugins/laf/macos/intellij.laf.macos.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/libraries/grpc/intellij.libraries.grpc.iml" filepath="$PROJECT_DIR$/platform/libraries/grpc/intellij.libraries.grpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/libraries/cglib/intellij.libraries.cglib.iml" filepath="$PROJECT_DIR$/platform/libraries/cglib/intellij.libraries.cglib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/grpc/intellij.libraries.grpc.iml" filepath="$PROJECT_DIR$/libraries/grpc/intellij.libraries.grpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/ktor-client/intellij.libraries.ktor.client.iml" filepath="$PROJECT_DIR$/libraries/ktor-client/intellij.libraries.ktor.client.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" filepath="$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" filepath="$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/core/intellij.markdown.iml" filepath="$PROJECT_DIR$/plugins/markdown/core/intellij.markdown.iml" />
@@ -965,14 +967,12 @@
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-api/testFramework/intellij.platform.externalSystem.testFramework.iml" filepath="$PROJECT_DIR$/platform/external-system-api/testFramework/intellij.platform.externalSystem.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.tests.iml" filepath="$PROJECT_DIR$/platform/external-system-impl/intellij.platform.externalSystem.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/feedback/intellij.platform.feedback.iml" filepath="$PROJECT_DIR$/platform/feedback/intellij.platform.feedback.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" filepath="$PROJECT_DIR$/platform/intellij.platform.frontend.main/intellij.platform.frontend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/icons/intellij.platform.icons.iml" filepath="$PROJECT_DIR$/platform/icons/intellij.platform.icons.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-api/intellij.platform.ide.iml" filepath="$PROJECT_DIR$/platform/platform-api/intellij.platform.ide.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/intellij.platform.ide.backend.main/intellij.platform.ide.backend.main.iml" filepath="$PROJECT_DIR$/platform/intellij.platform.ide.backend.main/intellij.platform.ide.backend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core/intellij.platform.ide.core.iml" filepath="$PROJECT_DIR$/platform/ide-core/intellij.platform.ide.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" filepath="$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/intellij.platform.ide.frontend.main/intellij.platform.ide.frontend.main.iml" filepath="$PROJECT_DIR$/platform/intellij.platform.ide.frontend.main/intellij.platform.ide.frontend.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/intellij.platform.ide.impl.iml" filepath="$PROJECT_DIR$/platform/platform-impl/intellij.platform.ide.impl.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/intellij.platform.ide.monolith.main/intellij.platform.ide.monolith.main.iml" filepath="$PROJECT_DIR$/platform/intellij.platform.ide.monolith.main/intellij.platform.ide.monolith.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" filepath="$PROJECT_DIR$/platform/new-ui-onboarding/intellij.platform.ide.newUiOnboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide/progress/intellij.platform.ide.progress.iml" filepath="$PROJECT_DIR$/platform/ide/progress/intellij.platform.ide.progress.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-util-io/intellij.platform.ide.util.io.iml" filepath="$PROJECT_DIR$/platform/platform-util-io/intellij.platform.ide.util.io.iml" />
@@ -1015,14 +1015,15 @@
       <module fileurl="file://$PROJECT_DIR$/platform/ml-embeddings/intellij.platform.ml.embeddings.iml" filepath="$PROJECT_DIR$/platform/ml-embeddings/intellij.platform.ml.embeddings.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-embeddings/tests/intellij.platform.ml.embeddings.tests.iml" filepath="$PROJECT_DIR$/platform/ml-embeddings/tests/intellij.platform.ml.embeddings.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" filepath="$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/intellij.platform.monolith.main/intellij.platform.monolith.main.iml" filepath="$PROJECT_DIR$/platform/intellij.platform.monolith.main/intellij.platform.monolith.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/shared/intellij.platform.navbar.iml" filepath="$PROJECT_DIR$/platform/navbar/shared/intellij.platform.navbar.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/navbar/backend/intellij.platform.navbar.backend.iml" filepath="$PROJECT_DIR$/platform/navbar/backend/intellij.platform.navbar.backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar.compatibility/shared/intellij.platform.navbar.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar.compatibility/shared/intellij.platform.navbar.compatibility.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar.compatibility/backend/intellij.platform.navbar.compatibility.backend.iml" filepath="$PROJECT_DIR$/platform/navbar.compatibility/backend/intellij.platform.navbar.compatibility.backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar.compatibility/ide/intellij.platform.navbar.compatibility.ide.iml" filepath="$PROJECT_DIR$/platform/navbar.compatibility/ide/intellij.platform.navbar.compatibility.ide.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar.compatibility/monolith/intellij.platform.navbar.compatibility.monolith.iml" filepath="$PROJECT_DIR$/platform/navbar.compatibility/monolith/intellij.platform.navbar.compatibility.monolith.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar.compatibility/testFramework/intellij.platform.navbar.compatibility.testFramework.iml" filepath="$PROJECT_DIR$/platform/navbar.compatibility/testFramework/intellij.platform.navbar.compatibility.testFramework.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/navbar/ide/intellij.platform.navbar.ide.iml" filepath="$PROJECT_DIR$/platform/navbar/ide/intellij.platform.navbar.ide.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/backend/compatibility/intellij.platform.navbar.backend.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/backend/compatibility/intellij.platform.navbar.backend.compatibility.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/shared/compatibility/intellij.platform.navbar.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/shared/compatibility/intellij.platform.navbar.compatibility.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/frontend/intellij.platform.navbar.frontend.iml" filepath="$PROJECT_DIR$/platform/navbar/frontend/intellij.platform.navbar.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/frontend/compatibility/intellij.platform.navbar.frontend.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/frontend/compatibility/intellij.platform.navbar.frontend.compatibility.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/monolith/compatibility/intellij.platform.navbar.monolith.compatibility.iml" filepath="$PROJECT_DIR$/platform/navbar/monolith/compatibility/intellij.platform.navbar.monolith.compatibility.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/navbar/testFramework/intellij.platform.navbar.testFramework.iml" filepath="$PROJECT_DIR$/platform/navbar/testFramework/intellij.platform.navbar.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.annotations.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" filepath="$PROJECT_DIR$/platform/object-serializer/intellij.platform.objectSerializer.tests.iml" />
@@ -1135,6 +1136,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.customization.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.customization.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.ide.impl.iml" filepath="$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.ide.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.ide.impl.promotion/intellij.pycharm.community.ide.impl.promotion.iml" filepath="$PROJECT_DIR$/python/ide/impl/intellij.pycharm.community.ide.impl.promotion/intellij.pycharm.community.ide.impl.promotion.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/ide/implTraining/intellij.pycharm.community.ide.implTraining/intellij.pycharm.community.ide.implTraining.iml" filepath="$PROJECT_DIR$/python/ide/implTraining/intellij.pycharm.community.ide.implTraining/intellij.pycharm.community.ide.implTraining.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.main.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-ast/intellij.python.ast.iml" filepath="$PROJECT_DIR$/python/python-ast/intellij.python.ast.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-common-tests/intellij.python.commonTests.iml" filepath="$PROJECT_DIR$/python/python-common-tests/intellij.python.commonTests.iml" />
@@ -1456,6 +1458,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/util/kotlin.jvm-debugger.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/util/kotlin.jvm-debugger.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/k2-fe10-bindings/kotlin.k2.fe10-bindings.iml" filepath="$PROJECT_DIR$/plugins/kotlin/k2-fe10-bindings/kotlin.k2.fe10-bindings.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/kotlin.k2.lombok.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/kotlin.k2.lombok.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/maven/kotlin.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/maven/kotlin.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/maven/tests/kotlin.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/maven/tests/kotlin.maven.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/migration/kotlin.migration.iml" filepath="$PROJECT_DIR$/plugins/kotlin/migration/kotlin.migration.iml" />

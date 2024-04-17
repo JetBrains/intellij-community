@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -34,8 +34,7 @@ public final class ConcatenationToMessageFormatAction extends PsiUpdateModComman
   }
   
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
@@ -94,8 +93,7 @@ public final class ConcatenationToMessageFormatAction extends PsiUpdateModComman
     return Presentation.of(JavaBundle.message("intention.replace.concatenation.with.formatted.output.text"));
   }
 
-  @Nullable
-  private static PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement element) {
+  private static @Nullable PsiPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement element) {
     PsiPolyadicExpression binaryExpression = PsiTreeUtil.getParentOfType(element, PsiPolyadicExpression.class, false, PsiMember.class);
     if (binaryExpression == null) return null;
     final PsiClassType stringType = PsiType.getJavaLangString(element.getManager(), element.getResolveScope());

@@ -93,10 +93,6 @@ class TerminalPromptView(
     })
   }
 
-  override fun promptVisibilityChanged(visible: Boolean) {
-    component.isVisible = visible
-  }
-
   override fun promptContentUpdated(renderingInfo: PromptRenderingInfo) {
     updatePrompt(renderingInfo)
   }

@@ -630,6 +630,8 @@
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
 
+    <group id="LocalChangesView.TabActions"/>
+
     <group id="Vcs.Show.Toolwindow.Tab">
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
       <action id="Vcs.Show.Local.Changes" class="com.intellij.vcs.VcsShowLocalChangesAction"/>

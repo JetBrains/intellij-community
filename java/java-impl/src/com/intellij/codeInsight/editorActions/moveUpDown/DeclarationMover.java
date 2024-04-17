@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -35,7 +35,7 @@ final class DeclarationMover extends LineMover {
   private boolean moveEnumConstant;
 
   @Override
-  public void beforeMove(@NotNull final Editor editor, @NotNull final MoveInfo info, final boolean down) {
+  public void beforeMove(final @NotNull Editor editor, final @NotNull MoveInfo info, final boolean down) {
     super.beforeMove(editor, info, down);
 
     if (myEnumToInsertSemicolonAfter != null) {
@@ -97,7 +97,7 @@ final class DeclarationMover extends LineMover {
   }
 
   @Override
-  public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
+  public boolean checkAvailable(final @NotNull Editor editor, final @NotNull PsiFile file, final @NotNull MoveInfo info, final boolean down) {
     if (!(file instanceof PsiJavaFile)) {
       return false;
     }
@@ -243,7 +243,7 @@ final class DeclarationMover extends LineMover {
     }
   }
 
-  private static boolean isInsideDeclaration(@NotNull final PsiElement member,
+  private static boolean isInsideDeclaration(final @NotNull PsiElement member,
                                              final int startLine,
                                              final int endLine,
                                              final LineRange lineRange,
@@ -286,8 +286,7 @@ final class DeclarationMover extends LineMover {
 
   // null means we are not crossing class border
   // throws IllegalMoveException when corresponding movement has no sense
-  @Nullable
-  private LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
+  private @Nullable LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
     if (sibling == null || sibling instanceof PsiImportList) throw new IllegalMoveException();
     if (PsiUtil.isJavaToken(sibling, (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE)) && sibling.getParent() instanceof PsiClass) {
       // moving outside class

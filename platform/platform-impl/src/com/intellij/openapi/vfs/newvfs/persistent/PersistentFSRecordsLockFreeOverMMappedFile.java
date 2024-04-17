@@ -19,7 +19,6 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
@@ -41,22 +40,43 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    */
   private static final int UNALLOCATED_RECORDS_TO_CHECK_ZEROED = getIntProperty("vfs.check-unallocated-records-zeroed", 4);
 
-  /* ================ FILE HEADER FIELDS LAYOUT ======================================================= */
-  /**
-   * For mmapped implementation file size is page-aligned, we can't calculate records size from it.
-   * Instead, we store allocated records count in header, in a reserved field (HEADER_RESERVED_OFFSET_1)
-   */
-  private static final int HEADER_RECORDS_ALLOCATED = HEADER_RESERVED_OFFSET_1;
-  /**
-   * ConnectionStatus header field re-purposed to keep owner process pid instead of magic numbers in {@link PersistentFSHeaders},
-   * renamed to emphasise that new purpose.
-   */
-  private static final int OWNER_PROCESS_ID_OFFSET = HEADER_CONNECTION_STATUS_OFFSET;
+  @VisibleForTesting
+  static final class FileHeader {
+    //Forked from PersistentFSHeaders since mmapped impl gained more and more pecularities
+
+    //@formatter:off
+
+    static final int VERSION_OFFSET                         =  0;  // int32
+    /**
+     * For mmapped implementation file size is page-aligned, we can't calculate records size from it.
+     * Instead, we store allocated records count in header, in a reserved field (HEADER_RESERVED_OFFSET_1)
+     */
+    static final int RECORDS_ALLOCATED_OFFSET               =  4;  // int32
+    static final int GLOBAL_MOD_COUNT_OFFSET                =  8;  // int32
+    /** Keeps owner process pid */
+    static final int OWNER_PROCESS_ID_OFFSET                = 12;  // int32
+
+    //int64 fields must be int64-aligned, so int64 fields are grouped together:
+
+    static final int CREATION_TIMESTAMP_OFFSET              = 16;  // int64
+    /** Timestamp of ownership acquisition (ms, unix origin) */
+    static final int OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET    = 24;  // int64
+
+    static final int ERRORS_ACCUMULATED_OFFSET              = 32;  // int32
+
+
+    //reserve couple int32 header fields for the generations to come
+    //Header size must be int64-aligned, so records start on int64-aligned offset
+    static final int HEADER_SIZE                            = 40;
+
+    //@formatter:on
+  }
+
+
+
 
   public static final int NULL_OWNER_PID = 0;
 
-  @VisibleForTesting
-  static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
 
 
   @VisibleForTesting
@@ -91,13 +111,13 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   /**
    * Incremented on each update of anything in the storage -- header, record. Hence be seen as 'version'
    * of storage content -- not a storage _format_ version, but current storage _content_.
-   * Stored in {@link PersistentFSHeaders#HEADER_GLOBAL_MOD_COUNT_OFFSET} header field.
+   * Stored in {@link FileHeader#GLOBAL_MOD_COUNT_OFFSET} header field.
    * If a record is updated -> current value of globalModCount is 'stamped' into a record MOD_COUNT field.
    * <p>
    * In the current implementation almost all fields are read/write straight from/to the mmapped buffer -- which means
    * they are always 'saved', and no need to flush them explicitly => no need to update .dirty status. The only exception
    * is globalModCount which _should_ be flushed explicitly -- which is why difference between globalModCount and apt
-   * header field {@link PersistentFSHeaders#HEADER_GLOBAL_MOD_COUNT_OFFSET} is used as sign of storage being 'dirty',
+   * header field {@link FileHeader#GLOBAL_MOD_COUNT_OFFSET} is used as sign of storage being 'dirty',
    * i.e. ask for {@link #force()}
    */
   private final AtomicInteger globalModCount = new AtomicInteger(0);
@@ -137,18 +157,18 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   public PersistentFSRecordsLockFreeOverMMappedFile(@NotNull MMappedFileStorage storage) throws IOException {
     int pageSize = storage.pageSize();
-    if (pageSize < HEADER_SIZE) {
-      throw new IllegalArgumentException("pageSize(=" + pageSize + ") must fit header(=" + HEADER_SIZE + " b)");
+    if (pageSize < FileHeader.HEADER_SIZE) {
+      throw new IllegalArgumentException("pageSize(=" + pageSize + ") must fit header(=" + FileHeader.HEADER_SIZE + " b)");
     }
     this.storage = storage;
 
     this.pageSize = pageSize;
     recordsPerPage = pageSize / RecordLayout.RECORD_SIZE_IN_BYTES;
-    recordsOnHeaderPage = (pageSize - HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
+    recordsOnHeaderPage = (pageSize - FileHeader.HEADER_SIZE) / RecordLayout.RECORD_SIZE_IN_BYTES;
 
     headerPage = this.storage.pageByOffset(0);
 
-    int modCount = getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);
+    int modCount = getIntHeaderField(FileHeader.GLOBAL_MOD_COUNT_OFFSET);
     globalModCount.set(modCount);
 
     if (UNALLOCATED_RECORDS_TO_CHECK_ZEROED > 0) {
@@ -159,7 +179,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     cachedMaxAllocatedId = maxAllocatedID();
 
-    int ownerProcessId = getIntHeaderField(OWNER_PROCESS_ID_OFFSET);
+    int ownerProcessId = getIntHeaderField(FileHeader.OWNER_PROCESS_ID_OFFSET);
     wasClosedProperly = (ownerProcessId == NULL_OWNER_PID);
   }
 
@@ -377,9 +397,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     Page headerPage = headerPage();
     ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
     while (true) {// CAS loop:
-      int allocatedRecords = (int)INT_HANDLE.getVolatile(headerPageBuffer, HEADER_RECORDS_ALLOCATED);
+      int allocatedRecords = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET);
       int newAllocatedRecords = allocatedRecords + 1;
-      if (INT_HANDLE.compareAndSet(headerPageBuffer, HEADER_RECORDS_ALLOCATED, allocatedRecords, newAllocatedRecords)) {
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET, allocatedRecords, newAllocatedRecords)) {
         return newAllocatedRecords;
       }
     }
@@ -579,7 +599,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public long getTimestamp() {
-    return getLongHeaderField(HEADER_TIMESTAMP_OFFSET);
+    return getLongHeaderField(FileHeader.CREATION_TIMESTAMP_OFFSET);
   }
 
   @Override
@@ -602,48 +622,54 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    * another process.
    *
    * @param acquiringProcessId must be != 0
-   * @return pid of the exclusive owner after the call.
-   * If [returned pid == acquiringProcessId] => acquiring has succeeded, and acquiringProcessId is the new exclusive owner.
-   * Otherwise: returned pid provides an information about who is the storage exclusive owner now.
+   * @return OwnershipInfo(pid, timestamp) of the exclusive owner after the call.
+   * If [returned info.pid == acquiringProcessId] => acquiring has succeeded, and acquiringProcessId is the new exclusive owner.
+   * Otherwise: returned OwnershipInfo provides an information about who is the storage exclusive owner now.
    */
-  public int tryAcquireExclusiveAccess(int acquiringProcessId,
-                                       boolean forcibly) {
+  public @NotNull OwnershipInfo tryAcquireExclusiveAccess(int acquiringProcessId,
+                                                          long acquiringTimestampMs,
+                                                          boolean forcibly) {
     if (acquiringProcessId == NULL_OWNER_PID) {
       throw new IllegalArgumentException("acquiringPid(=" + acquiringProcessId + ") must be !=0");
     }
     ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
     while (true) {//CAS loop
-      int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, OWNER_PROCESS_ID_OFFSET);
+      int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.OWNER_PROCESS_ID_OFFSET);
       if (currentOwnerProcessId == acquiringProcessId) {
+        //already acquired => nothing to do
         owningProcessId = acquiringProcessId;
-        return acquiringProcessId; //already acquired => nothing to do
+        long ownershipAcquiredMs = (long)LONG_HANDLE.getVolatile(headerPageBuffer, FileHeader.OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET);
+        return new OwnershipInfo(acquiringProcessId, ownershipAcquiredMs);
       }
       if (currentOwnerProcessId != NULL_OWNER_PID && !forcibly) {
         //already acquired by other process => return owner's pid as an indication of failure
-        return currentOwnerProcessId;
+        long ownershipAcquiredMs = (long)LONG_HANDLE.getVolatile(headerPageBuffer, FileHeader.OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET);
+        return new OwnershipInfo(currentOwnerProcessId, ownershipAcquiredMs);
       }
-      if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, acquiringProcessId)) {
         owningProcessId = acquiringProcessId;
-        return acquiringProcessId;
+        LONG_HANDLE.setVolatile(headerPageBuffer, FileHeader.OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET, acquiringTimestampMs);
+        return new OwnershipInfo(acquiringProcessId, acquiringTimestampMs);
       }
     }
   }
 
   /**
-   * Releases the ownership acquired by {@link #tryAcquireExclusiveAccess(int, boolean)}.
+   * Releases the ownership acquired by {@link #tryAcquireExclusiveAccess(int, long, boolean)}.
    * If {@code tryAcquireExclusiveAccess(pid)} has succeeded, than following {@code tryReleaseExclusiveAccess(pid)} must
-   * also succeed (given nobody forcibly overwrites the ownership by calling {@link #tryAcquireExclusiveAccess(int, boolean)}
+   * also succeed (given nobody forcibly overwrites the ownership by calling {@link #tryAcquireExclusiveAccess(int, long, boolean)}
    * with forcible=true).
    *
    * @param ownerProcessId pid of current storage owner. Could be 0 if there is no current owner
    * @return pid of exclusive owner after the call.
    * If returned pid=0 => there is no owner, i.e. ownership was released successfully.
    * Otherwise: returned pid provides an information about who is currently owning the storage.
+   * MAYBE RC: return OwnershipInfo, as in {@link #tryAcquireExclusiveAccess(int, long, boolean)}?
    */
   private int tryReleaseExclusiveAccess(int ownerProcessId) {
     ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
     while (true) {//CAS loop
-      int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, OWNER_PROCESS_ID_OFFSET);
+      int currentOwnerProcessId = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.OWNER_PROCESS_ID_OFFSET);
       if (currentOwnerProcessId == NULL_OWNER_PID) {
         return NULL_OWNER_PID;//nothing to do (method expected to be idempotent)
       }
@@ -651,33 +677,34 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
         //acquired by another process => return its pid as an indication of failure
         return currentOwnerProcessId;
       }
-      if (INT_HANDLE.compareAndSet(headerPageBuffer, OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, NULL_OWNER_PID)) {
-        return 0;
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.OWNER_PROCESS_ID_OFFSET, currentOwnerProcessId, NULL_OWNER_PID)) {
+        LONG_HANDLE.setVolatile(headerPageBuffer, FileHeader.OWNERSHIP_ACQUIRED_TIMESTAMP_OFFSET, 0L);
+        return NULL_OWNER_PID;
       }
     }
   }
 
   @Override
   public int getErrorsAccumulated() {
-    return getIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET);
+    return getIntHeaderField(FileHeader.ERRORS_ACCUMULATED_OFFSET);
   }
 
   @Override
   public void setErrorsAccumulated(int errors) {
-    setIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
+    setIntHeaderField(FileHeader.ERRORS_ACCUMULATED_OFFSET, errors);
     incrementGlobalModCount();
   }
 
   @Override
   public void setVersion(int version) {
-    setIntHeaderField(HEADER_VERSION_OFFSET, version);
-    setLongHeaderField(HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());
+    setIntHeaderField(FileHeader.VERSION_OFFSET, version);
+    setLongHeaderField(FileHeader.CREATION_TIMESTAMP_OFFSET, System.currentTimeMillis());
     incrementGlobalModCount();
   }
 
   @Override
   public int getVersion() throws IOException {
-    return getIntHeaderField(HEADER_VERSION_OFFSET);
+    return getIntHeaderField(FileHeader.VERSION_OFFSET);
   }
 
   @Override
@@ -726,7 +753,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   @Override
   public boolean isDirty() {
-    return globalModCount.get() != getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET);
+    return globalModCount.get() != getIntHeaderField(FileHeader.GLOBAL_MOD_COUNT_OFFSET);
   }
 
   @Override
@@ -735,13 +762,13 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     ByteBuffer headerPageBuffer = headerPage().rawPageBuffer();
     while (true) {//CAS loop:
       int currentModCount = globalModCount.get();
-      int storedModCount = (int)INT_HANDLE.getVolatile(headerPageBuffer, HEADER_GLOBAL_MOD_COUNT_OFFSET);
+      int storedModCount = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.GLOBAL_MOD_COUNT_OFFSET);
       if (currentModCount <= storedModCount) {
         //Stored modCount is already ahead => we're quite late, someone else is already stored 'fresher' value
         //(modCount always increases => larger value implies 'later' in happens-before sequence)
         break;
       }
-      if (INT_HANDLE.compareAndSet(headerPageBuffer, HEADER_GLOBAL_MOD_COUNT_OFFSET, storedModCount, currentModCount)) {
+      if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.GLOBAL_MOD_COUNT_OFFSET, storedModCount, currentModCount)) {
         break;
       }
     }
@@ -791,7 +818,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     int recordNo = recordId - 1;
 
     if (recordNo < recordsOnHeaderPage) {
-      return HEADER_SIZE + recordNo * (long)RecordLayout.RECORD_SIZE_IN_BYTES;
+      return FileHeader.HEADER_SIZE + recordNo * (long)RecordLayout.RECORD_SIZE_IN_BYTES;
     }
 
     //as-if there were no header:
@@ -846,7 +873,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
    * and hence (last record id == allocatedRecordsCount)
    */
   private int allocatedRecordsCount() {
-    return getIntHeaderField(HEADER_RECORDS_ALLOCATED);
+    return getIntHeaderField(FileHeader.RECORDS_ALLOCATED_OFFSET);
   }
 
   private void setLongField(int recordId,
@@ -948,25 +975,25 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   //============ header fields access: ============================================================ //
 
-  private void setLongHeaderField(@HeaderOffset int headerRelativeOffsetBytes,
+  private void setLongHeaderField(int headerRelativeOffsetBytes,
                                   long headerValue) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     setLongVolatile(headerPage().rawPageBuffer(), headerRelativeOffsetBytes, headerValue);
   }
 
-  private long getLongHeaderField(@HeaderOffset int headerRelativeOffsetBytes) {
+  private long getLongHeaderField(int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     return (long)LONG_HANDLE.getVolatile(headerPage().rawPageBuffer(), headerRelativeOffsetBytes);
   }
 
-  private void setIntHeaderField(@HeaderOffset int headerRelativeOffsetBytes,
+  private void setIntHeaderField(int headerRelativeOffsetBytes,
                                  int headerValue) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     setIntVolatile(headerPage().rawPageBuffer(), headerRelativeOffsetBytes, headerValue);
   }
 
 
-  private int getIntHeaderField(@HeaderOffset int headerRelativeOffsetBytes) {
+  private int getIntHeaderField(int headerRelativeOffsetBytes) {
     checkHeaderOffset(headerRelativeOffsetBytes);
     return (int)INT_HANDLE.getVolatile(headerPage().rawPageBuffer(), headerRelativeOffsetBytes);
   }
@@ -980,9 +1007,9 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   private static void checkHeaderOffset(int headerRelativeOffset) {
-    if (!(0 <= headerRelativeOffset && headerRelativeOffset < HEADER_SIZE)) {
+    if (!(0 <= headerRelativeOffset && headerRelativeOffset < FileHeader.HEADER_SIZE)) {
       throw new IndexOutOfBoundsException(
-        "headerFieldOffset(=" + headerRelativeOffset + ") is outside of header [0, " + HEADER_SIZE + ") ");
+        "headerFieldOffset(=" + headerRelativeOffset + ") is outside of header [0, " + FileHeader.HEADER_SIZE + ") ");
     }
   }
 
@@ -1125,5 +1152,40 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   @MagicConstant(flagsFromClass = RecordLayout.class)
   @Target(ElementType.TYPE_USE)
   public @interface FieldOffset {
+  }
+
+  public static final class OwnershipInfo {
+    public final int ownerProcessPid;
+    public final long ownershipAcquiredAtMs;
+
+    public OwnershipInfo(int ownerProcessPid,
+                         long ownershipAcquiredAtMs) {
+      if (ownerProcessPid < 0) {
+        throw new IllegalArgumentException("pid(=" + ownerProcessPid + ") must be positive");
+      }
+      this.ownerProcessPid = ownerProcessPid;
+      this.ownershipAcquiredAtMs = ownershipAcquiredAtMs;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      OwnershipInfo info = (OwnershipInfo)o;
+      return ownerProcessPid == info.ownerProcessPid && ownershipAcquiredAtMs == info.ownershipAcquiredAtMs;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = ownerProcessPid;
+      result = 31 * result + Long.hashCode(ownershipAcquiredAtMs);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "OwnershipInfo{owner pid: " + ownerProcessPid + ", acquired at: " + ownershipAcquiredAtMs + '}';
+    }
   }
 }

@@ -31,11 +31,6 @@ public abstract class K2GradleBuildFileHighlightingTestGenerated extends Abstrac
             super.setUp();
         }
 
-        @TestMetadata("gradleSampleAndroidApps")
-        public void testGradleSampleAndroidApps() throws Exception {
-            runTest("../../../idea/tests/testData/gradle/highlighting/gradle8/gradleSampleAndroidApps/");
-        }
-
         @TestMetadata("gradleSampleMultiProject")
         public void testGradleSampleMultiProject() throws Exception {
             runTest("../../../idea/tests/testData/gradle/highlighting/gradle8/gradleSampleMultiProject/");
@@ -78,11 +73,6 @@ public abstract class K2GradleBuildFileHighlightingTestGenerated extends Abstrac
         protected void setUp() {
             gradleVersion = "7.6.4";
             super.setUp();
-        }
-
-        @TestMetadata("gradleSampleAndroidApps")
-        public void testGradleSampleAndroidApps() throws Exception {
-            runTest("../../../idea/tests/testData/gradle/highlighting/gradle7/gradleSampleAndroidApps/");
         }
 
         @TestMetadata("gradleSampleMultiProject")

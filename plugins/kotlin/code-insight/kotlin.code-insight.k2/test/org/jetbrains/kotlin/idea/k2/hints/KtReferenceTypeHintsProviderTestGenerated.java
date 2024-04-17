@@ -128,6 +128,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/JavaFQName.kt");
     }
 
+    @TestMetadata("JavaNonNullableArray.kt")
+    public void testJavaNonNullableArray() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/JavaNonNullableArray.kt");
+    }
+
     @TestMetadata("LambdaReturnType.kt")
     public void testLambdaReturnType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/LambdaReturnType.kt");

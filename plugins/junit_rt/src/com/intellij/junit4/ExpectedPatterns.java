@@ -22,10 +22,6 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     "expecting:\\s+<(.*)> to be equal to:\\s+<(.*)>\\s+but was not"
   };
 
-  private static final String JUNIT_FRAMEWORK_COMPARISON_NAME = "junit.framework.ComparisonFailure";
-
-  private static final String ORG_JUNIT_COMPARISON_NAME = "org.junit.ComparisonFailure";
-
   static {
     registerPatterns(PATTERN_STRINGS, PATTERNS);
   }
@@ -56,17 +52,6 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
 
   private static boolean isComparisonFailure(Throwable throwable) {
     if (throwable == null) return false;
-    return isComparisonFailure(throwable.getClass());
-  }
-
-  private static boolean isComparisonFailure(Class<?> aClass) {
-    if (aClass == null) return false;
-    final String throwableClassName = aClass.getName();
-    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) ||
-        throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME) ||
-        throwableClassName.equals(ComparisonFailureData.OPENTEST4J_ASSERTION)) {
-      return true;
-    }
-    return isComparisonFailure(aClass.getSuperclass());
+    return ComparisonFailureData.isComparisonFailure(throwable.getClass());
   }
 }

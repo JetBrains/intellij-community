@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -58,8 +58,7 @@ public final class CreateCastExpressionFromInstanceofAction implements ModComman
     updater.moveCaretTo(decl.getTextRange().getEndOffset());
   }
 
-  @Nullable
-  private static PsiElement createAndInsertCast(int caretOffset, @NotNull PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
+  private static @Nullable PsiElement createAndInsertCast(int caretOffset, @NotNull PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
 
@@ -80,8 +79,7 @@ public final class CreateCastExpressionFromInstanceofAction implements ModComman
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("cast.expression");
   }
 }

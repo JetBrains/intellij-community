@@ -8,7 +8,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 import java.util.List;
 
-import static com.intellij.platform.navbar.compatibility.testFramework.TestFrameworkKt.contextNavBarPathStrings;
+import static com.intellij.platform.navbar.testFramework.TestFrameworkKt.contextNavBarPathStrings;
 
 public class JavaNavBarTest extends LightJavaCodeInsightFixtureTestCase {
   @Override

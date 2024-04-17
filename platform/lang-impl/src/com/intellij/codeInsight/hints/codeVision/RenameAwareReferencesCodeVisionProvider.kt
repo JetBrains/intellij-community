@@ -8,7 +8,9 @@ import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -41,7 +43,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
   override fun computeCodeVision(editor: Editor, uiData: Nothing?): CodeVisionState {
     val project = editor.project ?: return CodeVisionState.READY_EMPTY
     if (DumbService.isDumb(project)) return CodeVisionState.NotReady
-    val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
+    val cacheService = project.service<CodeVisionCacheService>()
     val cached = cacheService.getVisionDataForEditor(editor, id)
     val stamp = ModificationStampUtil.getModificationStamp(editor)
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
@@ -55,8 +57,8 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
   private fun recomputeLenses(editor: Editor,
                               project: Project,
                               stamp: Long?,
-                              cacheService: DaemonBoundCodeVisionCacheService): CodeVisionState {
-    val file = editor.virtualFile?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
+                              cacheService: CodeVisionCacheService): CodeVisionState {
+    val file = FileDocumentManager.getInstance().getFile(editor.document)?.findPsiFile(project) ?: return CodeVisionState.READY_EMPTY
 
     if (file.project.isDefault) return CodeVisionState.READY_EMPTY
     if (!acceptsFile(file)) return CodeVisionState.READY_EMPTY
@@ -87,7 +89,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     }
 
     if (stamp != null) {
-      cacheService.storeVisionDataForEditor(editor, id, DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(lenses, stamp))
+      cacheService.storeVisionDataForEditor(editor, id, CodeVisionCacheService.CodeVisionWithStamp(lenses, stamp))
     }
     return CodeVisionState.Ready(lenses)
   }

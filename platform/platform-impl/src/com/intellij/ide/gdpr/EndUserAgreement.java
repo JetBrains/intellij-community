@@ -5,8 +5,10 @@ import com.intellij.ide.Prefs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -50,8 +53,8 @@ public final class EndUserAgreement {
     return getDocumentContentFile(getDocumentName());
   }
 
-  private static @NotNull Path getDocumentContentFile(String docName) {
-    return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)? PRIVACY_POLICY_CONTENT_FILE_NAME : docName + ".cached");
+  private static @NotNull Path getDocumentContentFile(@NotNull String docName) {
+    return getDataRoot().resolve(PRIVACY_POLICY_DOCUMENT_NAME.equals(docName) ? PRIVACY_POLICY_CONTENT_FILE_NAME : (docName + ".cached"));
   }
 
   private static @NotNull Path getDocumentNameFile() {
@@ -73,16 +76,18 @@ public final class EndUserAgreement {
 
   public static void setAccepted(@NotNull Document doc) {
     final Version version = doc.getVersion();
+    String versionKey = getAcceptedVersionKey(doc.getName());
     if (version.isUnknown()) {
-      Prefs.remove(getAcceptedVersionKey(doc.getName()));
+      Prefs.remove(versionKey);
     }
     else {
-      Prefs.put(getAcceptedVersionKey(doc.getName()), version.toString());
+      Prefs.put(versionKey, version.toString());
     }
   }
 
-  private static @NotNull Version getAcceptedVersion(String docName) {
-    return Version.fromString(Prefs.get(getAcceptedVersionKey(docName), null));
+  public static @NotNull Version getAcceptedVersion(@NotNull String docName) {
+    String versionKey = getAcceptedVersionKey(docName);
+    return Version.fromString(Prefs.get(versionKey, null));
   }
 
   public static @NotNull Document getLatestDocument() {
@@ -113,17 +118,9 @@ public final class EndUserAgreement {
 
       Document bundled = loadContent(docName, getBundledResourcePath(docName));
       if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
-        try {
-          // update content only and not the active document name
-          // active document name can be changed by JBA only
-          writeToFile(getDocumentContentFile(docName), bundled.getText());
-        }
-        catch (NoSuchFileException e) {
-          LOG.info(e.getMessage());
-        }
-        catch (IOException e) {
-          LOG.info(e);
-        }
+        // update content only and not the active document name
+        // active document name can be changed by JBA only
+        writeToFile(getDocumentContentFile(docName), bundled.getText());
         return true;
       }
     }
@@ -132,15 +129,10 @@ public final class EndUserAgreement {
     return false;
   }
 
-  private static void writeToFile(@NotNull Path file, @NotNull String text) throws IOException {
-    Files.createDirectories(file.getParent());
-    Files.writeString(file, text);
-  }
-
-  public static void update(@NotNull String docName, @NotNull String text) {
+  private static void writeToFile(@NotNull Path file, @NotNull String text) {
     try {
-      writeToFile(getDocumentContentFile(docName), text);
-      writeToFile(getDocumentNameFile(), docName);
+      Files.createDirectories(file.getParent());
+      Files.writeString(file, text);
     }
     catch (NoSuchFileException e) {
       LOG.info(e.getMessage());
@@ -148,6 +140,14 @@ public final class EndUserAgreement {
     catch (IOException e) {
       LOG.info(e);
     }
+  }
+
+  public static void updateContent(@NotNull String docName, @NotNull String text) {
+    writeToFile(getDocumentContentFile(docName), text);
+  }
+
+  public static void updateActiveDocumentName(@NotNull String docName) {
+    writeToFile(getDocumentNameFile(), docName);
   }
 
   private static @NotNull Document loadContent(String docName, String resourcePath) {
@@ -202,7 +202,7 @@ public final class EndUserAgreement {
     return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
-  private static @NotNull String getAcceptedVersionKey(String docName) {
+  private static @NotNull String getAcceptedVersionKey(@NotNull String docName) {
     if (PRIVACY_POLICY_DOCUMENT_NAME.equals(docName)) {
       return "JetBrains.privacy_policy.accepted_version";
     }
@@ -267,6 +267,19 @@ public final class EndUserAgreement {
         }
       }
       return Version.UNKNOWN;
+    }
+  }
+
+  public static final class PluginAgreementUpdateDescriptor {
+    private static final ExtensionPointName<PluginAgreementUpdateDescriptor> EP_NAME = ExtensionPointName.create("com.intellij.endUserAgreementUpdater");
+
+    @Attribute("productCode")
+    public String productCode;
+    @Attribute("documentName")
+    public String documentName;
+
+    public static @NotNull List<PluginAgreementUpdateDescriptor> getDescriptors() {
+      return EP_NAME.getExtensionList();
     }
   }
 }

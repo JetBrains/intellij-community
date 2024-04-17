@@ -269,14 +269,25 @@ com.intellij.vcs.log.graph.impl.facade.LinearGraphController
 com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAction
 - com.intellij.vcs.log.graph.actions.GraphAction
 - a:getAffectedElement():com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
-c:com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
+f:com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
 - <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges):V
-- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set):V
+- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,java.lang.Runnable):V
+- <init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.lang.Runnable):V
+- b:<init>(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.lang.Runnable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.awt.Cursor,java.util.Set):V
-- getCursorToSet():java.awt.Cursor
-- getGraphChanges():com.intellij.vcs.log.graph.impl.facade.GraphChanges
-- getGraphUpdater():java.lang.Runnable
-- getSelectedNodeIds():java.util.Set
+- f:component1():com.intellij.vcs.log.graph.impl.facade.GraphChanges
+- f:component2():java.awt.Cursor
+- f:component3():java.util.Set
+- f:component4():java.lang.Runnable
+- f:copy(com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,java.lang.Runnable):com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
+- bs:copy$default(com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer,com.intellij.vcs.log.graph.impl.facade.GraphChanges,java.awt.Cursor,java.util.Set,java.lang.Runnable,I,java.lang.Object):com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAnswer
+- equals(java.lang.Object):Z
+- f:getCursorToSet():java.awt.Cursor
+- f:getGraphChanges():com.intellij.vcs.log.graph.impl.facade.GraphChanges
+- f:getGraphUpdater():java.lang.Runnable
+- f:getSelectedNodeIds():java.util.Set
+- hashCode():I
+- toString():java.lang.String
 c:com.intellij.vcs.log.graph.impl.facade.LinearGraphWrapper
 - com.intellij.vcs.log.graph.api.LinearGraph
 - <init>(com.intellij.vcs.log.graph.api.LinearGraph):V
@@ -336,8 +347,15 @@ f:com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl
 f:com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl$LinearGraphActionImpl
 - com.intellij.vcs.log.graph.impl.facade.LinearGraphController$LinearGraphAction
 - <init>(com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement,com.intellij.vcs.log.graph.actions.GraphAction$Type):V
+- f:component1():com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+- f:component2():com.intellij.vcs.log.graph.actions.GraphAction$Type
+- f:copy(com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement,com.intellij.vcs.log.graph.actions.GraphAction$Type):com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl$LinearGraphActionImpl
+- bs:copy$default(com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl$LinearGraphActionImpl,com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement,com.intellij.vcs.log.graph.actions.GraphAction$Type,I,java.lang.Object):com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl$LinearGraphActionImpl
+- equals(java.lang.Object):Z
 - getAffectedElement():com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 - getType():com.intellij.vcs.log.graph.actions.GraphAction$Type
+- hashCode():I
+- toString():java.lang.String
 f:com.intellij.vcs.log.graph.impl.facade.sort.SortChecker
 - <init>():V
 - s:checkLinearGraph(com.intellij.vcs.log.graph.api.LinearGraph):V
@@ -459,7 +477,7 @@ f:com.intellij.vcs.log.graph.linearBek.LinearBekController
 - com.intellij.vcs.log.graph.impl.facade.CascadeController
 - sf:Companion:com.intellij.vcs.log.graph.linearBek.LinearBekController$Companion
 - <init>(com.intellij.vcs.log.graph.impl.facade.sort.SortedBaseController,com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo):V
-- getCompiledGraph():com.intellij.vcs.log.graph.api.LinearGraph
+- getCompiledGraph():com.intellij.vcs.log.graph.linearBek.LinearBekGraph
 f:com.intellij.vcs.log.graph.linearBek.LinearBekController$Companion
 c:com.intellij.vcs.log.graph.linearBek.LinearBekGraph
 - com.intellij.vcs.log.graph.impl.facade.LinearGraphWrapper

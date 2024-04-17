@@ -124,16 +124,6 @@ class KtClassDef(
             classKind, (this as? KtSymbolWithModality)?.modality
         )
 
-        fun fromJvmClassName(context: KtElement, jvmClassName: String): KtClassDef? {
-            var fqName = FqName.fromSegments(jvmClassName.split(Regex("[$/]")))
-            if (jvmClassName.startsWith("java/")) {
-                fqName = JavaToKotlinClassMap.mapJavaToKotlin(fqName)?.asSingleFqName() ?: fqName
-            }
-            return analyze(context) {
-                getClassOrObjectSymbolByClassId(ClassId.fromString(fqName.asString()))?.classDef()
-            }
-        }
-
         fun typeConstraintFactory(context: KtElement): TypeConstraints.TypeConstraintFactory {
             return object : TypeConstraints.TypeConstraintFactory {
                 override fun create(def: TypeConstraints.ClassDef): TypeConstraint.Exact = if (def !is KtClassDef) {

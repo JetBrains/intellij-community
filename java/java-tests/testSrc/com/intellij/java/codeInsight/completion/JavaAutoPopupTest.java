@@ -1785,8 +1785,9 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     type(" ");
     assertNotNull(getLookup());
     List<LookupElement> firstItems = Arrays.asList(myFixture.getLookupElements()).subList(0, 4);
-    assert ContainerUtil.all(
-      firstItems, it -> InheritanceUtil.isInheritor((PsiClass)it.getObject(), CommonClassNames.JAVA_UTIL_LIST));
+    boolean inheritors = ReadAction.compute(() -> ContainerUtil.all(
+      firstItems, it -> InheritanceUtil.isInheritor((PsiClass)it.getObject(), CommonClassNames.JAVA_UTIL_LIST)));
+    assertTrue(inheritors);
   }
 
   public void test_prefer_previously_selected_despite_many_namesakes() {
@@ -1803,8 +1804,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.assertPreferredCompletionItems(0, ArrayUtil.toStringArray(Collections.nCopies(count, "MyClass")));
 
     edt(() -> {
-      assert NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(toSelect)).getTailText()
-        .equals(" p" + toSelect);
+      assertEquals(" p" + toSelect, NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(toSelect)).getTailText());
       CompletionSortingTestCase.imitateItemSelection(myFixture.getLookup(), toSelect);
       myFixture.getLookup().hideLookup(true);
     });
@@ -1812,8 +1812,7 @@ public class JavaAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     type("s");
     myFixture.assertPreferredCompletionItems(0, ArrayUtil.toStringArray(Collections.nCopies(count, "MyClass")));
     edt(() -> {
-      assert NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0)).getTailText()
-        .equals(" p" + toSelect);
+      assertEquals(" p" + toSelect, NormalCompletionTestCase.renderElement(myFixture.getLookup().getItems().get(0)).getTailText());
     });
   }
 

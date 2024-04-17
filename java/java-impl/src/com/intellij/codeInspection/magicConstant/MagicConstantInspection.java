@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.util.Key;
@@ -56,24 +55,20 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
               MagicConstantInspection::getCalendarGetValues);
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.probable.bugs");
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "MagicConstant";
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(@NotNull PsiJavaFile file) {
@@ -327,8 +322,8 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     holder.registerProblem(argument, message, LocalQuickFix.notNullElements(suggestMagicConstant(argument, allowedValues)));
   }
 
-  @Nullable // null means no quickfix available
-  private static LocalQuickFix suggestMagicConstant(@NotNull PsiExpression argument,
+  // null means no quickfix available
+  private static @Nullable LocalQuickFix suggestMagicConstant(@NotNull PsiExpression argument,
                                                     @NotNull AllowedValues allowedValues) {
     Object argumentValue = JavaConstantExpressionEvaluator.computeConstantExpression(argument, null, false);
     if (argumentValue == null) return null;
@@ -393,9 +388,9 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  private static boolean isAllowed(@NotNull final PsiExpression argument, @NotNull final PsiElement scope,
-                                   @NotNull final AllowedValues allowedValues,
-                                   @NotNull final PsiManager manager,
+  private static boolean isAllowed(final @NotNull PsiExpression argument, final @NotNull PsiElement scope,
+                                   final @NotNull AllowedValues allowedValues,
+                                   final @NotNull PsiManager manager,
                                    @Nullable Set<PsiExpression> visited) {
     if (isGoodExpression(argument, allowedValues, scope, manager, visited)) return true;
 
@@ -470,8 +465,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static final Key<Map<String, PsiExpression>> LITERAL_EXPRESSION_CACHE = Key.create("LITERAL_EXPRESSION_CACHE");
-  @NotNull
-  private static PsiExpression getLiteralExpression(@NotNull PsiExpression context, @NotNull PsiManager manager, @NotNull String text) {
+  private static @NotNull PsiExpression getLiteralExpression(@NotNull PsiExpression context, @NotNull PsiManager manager, @NotNull String text) {
     Map<String, PsiExpression> cache = LITERAL_EXPRESSION_CACHE.get(manager);
     if (cache == null) {
       cache = ContainerUtil.createConcurrentSoftValueMap();
@@ -489,10 +483,10 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     return ContainerUtil.exists(allowedValues.getValues(), e -> MagicConstantUtils.same(e, expression, manager));
   }
 
-  static boolean processValuesFlownTo(@NotNull final PsiExpression argument,
+  static boolean processValuesFlownTo(final @NotNull PsiExpression argument,
                                       @NotNull PsiElement scope,
                                       @NotNull PsiManager manager,
-                                      @NotNull final Processor<? super PsiExpression> processor) {
+                                      final @NotNull Processor<? super PsiExpression> processor) {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.dataFlowToThis = true;
     params.scope = new AnalysisScope(new LocalSearchScope(scope), manager.getProject());
@@ -520,10 +514,8 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         ContainerUtil.map(values, SmartPointerManager.getInstance(argument.getProject())::createSmartPsiElementPointer);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.magic.constant");
     }
 

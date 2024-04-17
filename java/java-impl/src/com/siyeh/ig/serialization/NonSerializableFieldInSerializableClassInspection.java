@@ -43,8 +43,7 @@ public final class NonSerializableFieldInSerializableClassInspection extends Ser
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     boolean isRecord = (boolean)infos[1];
     return isRecord
            ? InspectionGadgetsBundle.message("non.serializable.component.in.serializable.record.problem.descriptor")

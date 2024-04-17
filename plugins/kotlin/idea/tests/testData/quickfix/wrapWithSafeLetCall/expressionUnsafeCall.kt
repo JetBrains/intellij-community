@@ -1,6 +1,6 @@
 // "Wrap with '?.let { ... }' call" "false"
 // WITH_STDLIB
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (arg!!) call
 // ACTION: Convert to block body
 // ACTION: Enable option 'Function return types' for 'Types' inlay hints
 // ACTION: Introduce local variable

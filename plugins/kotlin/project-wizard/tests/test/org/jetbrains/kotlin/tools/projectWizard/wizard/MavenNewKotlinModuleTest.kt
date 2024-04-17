@@ -345,7 +345,7 @@ class MavenNewKotlinModuleTest : MavenNewProjectWizardTestCase(), NewKotlinProje
         result = substituteVersionForArtifact(result, "kotlin-stdlib")
         result = substituteVersionForArtifact(result, "maven-surefire-plugin", needMoreSpaces = true)
         result = substituteVersionForArtifact(result, "maven-failsafe-plugin", needMoreSpaces = true)
-        result = substituteVersionForArtifact(result, "junit-jupiter-engine")
+        result = substituteVersionForArtifact(result, "junit-jupiter")
         result = substituteVersionForArtifact(result, "exec-maven-plugin", needMoreSpaces = true)
 
         return result

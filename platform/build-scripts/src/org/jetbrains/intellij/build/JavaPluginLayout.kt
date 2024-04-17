@@ -78,10 +78,7 @@ object JavaPluginLayout {
         "intellij.java.impl.refactorings",
         "intellij.jsp.spi",
         "intellij.java.uast",
-        "intellij.java.structuralSearch",
         "intellij.java.typeMigration",
-        "intellij.java.featuresTrainer",
-        "intellij.java.performancePlugin"
       ))
 
       spec.withModuleLibrary("debugger-agent", "intellij.java.debugger.agent.holder", "rt")
@@ -106,7 +103,6 @@ object JavaPluginLayout {
       spec.excludeProjectLibrary("jetbrains-annotations-java5")
     }
   }
-
 
   /**
    * A special plugin for JetBrains Client

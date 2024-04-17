@@ -4,7 +4,7 @@
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
 
 class A<T>(val n: T) {
-    fun foo(p0: Any, i: Int): Int {
+    fun foo(value: Any, i: Int): Int {
         TODO("Not yet implemented")
     }
 }

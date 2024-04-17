@@ -8,7 +8,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.idea.debugger.core.stepping.ContinuationFilter
+import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 
 interface StackFrameInterceptor {
     fun createStackFrame(
@@ -23,6 +23,6 @@ interface StackFrameInterceptor {
     }
 
     // TODO: find better place for these methods
-    fun extractContinuationFilter(suspendContext: SuspendContextImpl): ContinuationFilter? = null
+    fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? = null
     fun callerLocation(suspendContext: SuspendContextImpl): Location? = null
 }

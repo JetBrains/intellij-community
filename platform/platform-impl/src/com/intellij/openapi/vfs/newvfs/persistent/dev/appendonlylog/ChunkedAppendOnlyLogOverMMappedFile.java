@@ -31,15 +31,15 @@ import static java.nio.ByteOrder.nativeOrder;
  * Thead-safe, partially-non-blocking -- {@link #append(int)} is blocking, but writing chunk content is non-blocking, and
  * so the chunk reading (leaving aside the fact that OS page management is not non-blocking).
  * <p>
- * Chunk capacity is limited {@link #MAX_PAYLOAD_SIZE}
+ * Chunk capacity is limited {@link #MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK}
  * <p>
- * Durability relies on OS: written data is durable if OS not crash (i.e. not loosing mmapped file content).
+ * Durability relies on OS: written data is durable if OS not crash (i.e. not losing mmapped file content).
  */
 @ApiStatus.Internal
 public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendOnlyLog, Unmappable {
   //@formatter:off
-  private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("AppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
-  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("AppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
+  private static final boolean MORE_DIAGNOSTIC_INFORMATION = getBooleanProperty("ChunkedAppendOnlyLogOverMMappedFile.MORE_DIAGNOSTIC_INFORMATION", true);
+  private static final boolean ADD_LOG_CONTENT = getBooleanProperty("ChunkedAppendOnlyLogOverMMappedFile.ADD_LOG_CONTENT", true);
   /** How wide region around questionable chunk to dump for debug diagnostics (see {@link #dumpContentAroundId(long, int)}) */
   private static final int DEBUG_DUMP_REGION_WIDTH = 128;
   //@formatter:on
@@ -56,7 +56,10 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
 
   public static final int CURRENT_IMPLEMENTATION_VERSION = 1;
 
-  public static final int MAX_PAYLOAD_SIZE = LogChunkImpl.CHUNK_LENGTH_MAX - LogChunkImpl.HEADER_SIZE;
+  /** Max size for payload for chunk with nextChunkId field reserved */
+  public static final int MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK = LogChunkImpl.CHUNK_LENGTH_MAX - LogChunkImpl.HEADER_SIZE - LogChunkImpl.NEXT_CHUNK_ID_SIZE;
+  /** Max size for payload for chunk without nextChunkId field reserved */
+  public static final int MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK = LogChunkImpl.CHUNK_LENGTH_MAX - LogChunkImpl.HEADER_SIZE - LogChunkImpl.NEXT_CHUNK_ID_SIZE;
 
 
   //Implementation details:
@@ -89,7 +92,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
   //
   //    3) Recovery: if app crashes, append-only log is able to keep its state, because OS is responsible for flushing
   //       memory-mapped file content regardless of app status.
-  //       FIXME RC: below desciription is not correct with chunks being append-only logs themselves
+  //       FIXME RC: below description is not correct with chunks being append-only logs themselves
   //       Chunks < committed cursor are fully written, so no problems with them.
   //       Chunks in [committed..allocated] range could be fully of partially written, so we need to sort them out: if we
   //       see (committed < allocated) on log opening => we execute 'recovery' protocol to find out which chunks from that
@@ -118,8 +121,9 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
   /** New chunk allocation path is guarded by this lock */
   private final Object allocationLock = new Object();
 
-  /** file (storage) header. Public to use from StorageFactory */
+  /** file (storage) header. Made public to use from StorageFactory */
   public static final class FileHeader {
+    /** Magic word is an integer identifying file format -- so storage could quickly check is it asked to open a wrong file */
     public static final int MAGIC_WORD_OFFSET = 0;
     public static final int IMPLEMENTATION_VERSION_OFFSET = MAGIC_WORD_OFFSET + Integer.BYTES;
 
@@ -139,10 +143,10 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     public static final int NEXT_CHUNK_TO_BE_COMMITTED_OFFSET = NEXT_CHUNK_TO_BE_ALLOCATED_OFFSET + Long.BYTES;
 
     /**
-     * int32: total number of data records committed to the log.
-     * Only data records counted, padding records are not counted here -- they considered to be an implementation detail
+     * int32: total number of data chunks committed to the log.
+     * Only data chunks counted, padding chunks are not counted here -- they considered to be an implementation detail
      * which should not be visible outside.
-     * Only committed records counted -- i.e. those < commited cursor
+     * Only committed chunks counted -- i.e. those < commited cursor
      */
     public static final int CHUNKS_COUNT_OFFSET = NEXT_CHUNK_TO_BE_COMMITTED_OFFSET + Long.BYTES;
 
@@ -162,9 +166,9 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     }
 
     //FileHeader fields below are accessed only in ctor, hence do not require volatile/VarHandle. And they're
-    // also accessed from the AppendOnlyLogFactory for eager file type/param check. So they are here, while
-    // more 'private' header fields constantly modified during AOLog lifetime are accessed in a different way
-    // see set/getHeaderField()
+    // also accessed from the AppendOnlyLogFactory for eager file type/param check. This is why they are here,
+    // while more 'private' header fields constantly modified during AOLog lifetime are accessed in a different
+    // way, see set/getHeaderField()
 
     private final ByteBuffer headerPageBuffer;
 
@@ -256,21 +260,23 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
   }
 
   private static class LogChunkImpl implements LogChunk {
-    //Record = (header) + (payload)
-    //FileHeader: 4 bytes
-    //        1 bit type (data/padding)
-    //        1 bit size kind (reserved for future)
-    //        8 bits: size (in 8byte-buckets => up to 2^11=2k)
-    //        11+11 bits: allocated/committed cursors
-    //
-    //MAYBE RC: nextChunkId -- a part of standard header, or it is a client's responsibility to store it?
-    //          It is more convenient to reserve the field in a header, but the downside is: most of the chunks don't need
-    //          that pointer -- only a minor subset of values are large enough to occupy >1 chunk, so this is 90% waste
-    //          of space.
-    //          Possible solution: nextChunkId is allocated by client (i.e. not a part of standard header). Initial chunk
-    //          is allocated without nextChunkId, because in most of cases value fits into the initial chunk. If value
-    //          doesn't fit -- client allocated new, larger chunk, with reserved space for nextChunkId, and copy current
-    //          chunk's content into the new one.
+    //Chunk   =    (header) + (payload) + (nextChunkId)?
+    //FileHeader:  4 bytes
+    //             1 bit: type (data/padding)
+    //             1 bit: has nextChunkId field?
+    //             8 bits: size (in 8byte-buckets => up to 2^11=2k)
+    //             11+11 bits: allocated/committed cursors
+    //Payload:     (header.size * 8) bytes
+    //NextChunkId: 8 bytes (present if header.nextChunkId is set)
+
+    //MAYBE RC: nextChunkId -- is it a part of standard header, or it is a client's responsibility to store it?
+    //          It's more convenient to reserve the field in a header, but the downside is: most of the chunks don't need
+    //          that field -- usually only a minor subset of values are large enough to occupy >1 chunk, so this is 90%
+    //          waste of space.
+    //          Possible solution: nextChunkId is asked to be allocated by client (i.e. _optional_ part of standard header).
+    //          Small chunks are allocated without nextChunkId, because in most of cases value fits into the small chunk.
+    //          If value doesn't fit -- client allocates new, larger chunk, with reserved space for nextChunkId, and copy
+    //          current chunk's content into the new one.
     //          Why it is good solution: is hard to find optimal tradeoff between reserving/not reserving .nextChunkId
     //          without knowledge of value's size distribution -- which is not available in log implementation. Depending
     //          on the nature of values to be stored in the log, clients could use chunk-allocation-strategies with
@@ -288,24 +294,26 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     //@formatter:off
 
     /** 0==regular chunk, 1==padding chunk */
-    protected static final int RECORD_TYPE_MASK    = 1 << 31;
-    protected static final int RECORD_TYPE_DATA    = 0;
-    protected static final int RECORD_TYPE_PADDING = 1 << 31;
+    protected static final int RECORD_TYPE_MASK        = 1 << 31;
+    protected static final int RECORD_TYPE_DATA        = 0;
+    protected static final int RECORD_TYPE_PADDING     = 1 << 31;
 
-    /** Reserved for future, currently unused */
-    protected static final int SIZE_KIND_MASK      = 1 << 30;
-    protected static final int SIZE_KIND_TINY      = 1 << 30;
-    protected static final int SIZE_KIND_REGULAR   = 0;
+    /** Has nextChunkId? */
+    protected static final int NEXT_CHUNK_ID_MASK      = 1 << 30;
+    protected static final int NEXT_CHUNK_ID_PRESENT   = 1 << 30;
+    protected static final int NEXT_CHUNK_ID_ABSENT    = 0;
 
-    protected static final int CHUNK_LENGTH_MAX           = roundDownToInt64( (1 << 11) - 1 );
-    protected static final int CHUNK_LENGTH_MASK          = 0b00111111_11000000_00000000_00000000;
-    protected static final int CHUNK_LENGTH_MASK_SHR      = 22;
+    protected static final int CHUNK_LENGTH_MAX        = roundDownToInt64( (1 << 11) - 1 );
+    protected static final int CHUNK_LENGTH_MASK       = 0b00111111_11000000_00000000_00000000;
+    protected static final int CHUNK_LENGTH_MASK_SHR   = 22;
 
 
-    protected static final int OFFSET_HEADER       = 0;
-    protected static final int HEADER_SIZE = 4;
+    protected static final int OFFSET_HEADER           = 0;
+    protected static final int HEADER_SIZE             = 4;
 
-    protected static final int OFFSET_PAYLOAD   = OFFSET_HEADER + HEADER_SIZE;
+    protected static final int NEXT_CHUNK_ID_SIZE      = 8;
+
+    protected static final int OFFSET_PAYLOAD          = OFFSET_HEADER + HEADER_SIZE;
 
     //@formatter:on
 
@@ -313,17 +321,19 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     protected final int offsetInBuffer;
     protected final long offsetInFile;
 
-    //chunkLength, chunk type (data/padding) -- are unmodifiable chunk properties, set once, at chunk allocation,
-    //and never changed => they could be read once, and kept in object fields for faster access
+    //chunkLength, chunk type (data/padding), hasNextChunkId -- are unmodifiable chunk properties, set once, at the chunk
+    // allocation, and never changed => they could be read once, and kept in object fields for faster access
 
     protected final int chunkLength;
     protected final boolean padding;
+    protected final boolean hasNextChunkId;
 
     protected LogChunkImpl(long chunkOffsetInFile,
                            @NotNull ByteBuffer pageBuffer,
                            int chunkOffsetInBuffer,
                            int totalChunkLength,
-                           boolean padding) {
+                           boolean padding,
+                           boolean hasNextChunkId) {
       assert64bAligned(totalChunkLength, "totalChunkLength");
       if (totalChunkLength <= 0 || totalChunkLength > CHUNK_LENGTH_MAX) {
         throw new IllegalArgumentException("totalChunkLength(=" + totalChunkLength + ") must be in (0, " + CHUNK_LENGTH_MAX + "]");
@@ -336,6 +346,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
 
       this.chunkLength = totalChunkLength;
       this.padding = padding;
+      this.hasNextChunkId = hasNextChunkId;
     }
 
     @Override
@@ -361,6 +372,29 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       return !isPadding();
     }
 
+    @Override
+    public boolean hasNextChunkIdField() {
+      return hasNextChunkId;
+    }
+
+    @Override
+    public long nextChunkId() {
+      if (!hasNextChunkIdField()) {
+        throw new IllegalStateException("Chunk doesn't have .nextChunkId field reserved at creation");
+      }
+      int nextChunkFieldOffset = offsetInBuffer + chunkLength - NEXT_CHUNK_ID_SIZE;
+      return (long)INT64_OVER_BYTE_BUFFER.getVolatile(pageBuffer, nextChunkFieldOffset);
+    }
+
+    @Override
+    public boolean nextChunkId(long nextChunkId) {
+      if (!hasNextChunkIdField()) {
+        throw new IllegalStateException("Chunk doesn't have .nextChunkId field reserved at creation");
+      }
+      int offset = offsetInBuffer + chunkLength - NEXT_CHUNK_ID_SIZE;
+      return INT64_OVER_BYTE_BUFFER.compareAndSet(pageBuffer, offset, 0L, nextChunkId);
+    }
+
     public boolean isFitIntoPage() {
       return isFitIntoPage(pageBuffer, offsetInBuffer, chunkLength());
     }
@@ -377,6 +411,12 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       int header = readHeader();
       int allocatedCursor = unpackAllocatedCursor(header);
       return capacity() - allocatedCursor;
+    }
+
+    @Override
+    public boolean isAppendable() {
+      //TODO RC: 'fixed' chunks (data is immutable, no appending, but size is much larger) is not implemented yet.
+      return true;
     }
 
 
@@ -442,11 +482,18 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
              "{inFile: @" + offsetInFile + ", inPage: @" + offsetInBuffer + "}";
     }
 
-    private static LogChunkImpl putRegularChunk(int chunkSize,
-                                                @NotNull ByteBuffer pageBuffer,
+    private static LogChunkImpl putRegularChunk(@NotNull ByteBuffer pageBuffer, int totalChunkSize,
                                                 int chunkOffsetInBuffer,
-                                                long chunkOffsetInFile) {
-      LogChunkImpl chunk = new LogChunkImpl(chunkOffsetInFile, pageBuffer, chunkOffsetInBuffer, chunkSize, /*isPadding: */ false);
+                                                long chunkOffsetInFile,
+                                                boolean reserveNextChunkIdField) {
+      LogChunkImpl chunk = new LogChunkImpl(
+        chunkOffsetInFile,
+        pageBuffer,
+        chunkOffsetInBuffer,
+        totalChunkSize,
+        /* isPadding: */ false,
+        reserveNextChunkIdField
+      );
       chunk.writeHeaderInitial();
       return chunk;
     }
@@ -455,7 +502,14 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
                                         @NotNull ByteBuffer pageBuffer,
                                         int chunkOffsetInBuffer,
                                         long chunkOffsetInFile) {
-      LogChunkImpl chunk = new LogChunkImpl(chunkOffsetInFile, pageBuffer, chunkOffsetInBuffer, remainsToPad, /*isPadding: */ true);
+      LogChunkImpl chunk = new LogChunkImpl(
+        chunkOffsetInFile,
+        pageBuffer,
+        chunkOffsetInBuffer,
+        remainsToPad,
+        /* isPadding: */ true,
+        /* hasNextChunkIdField: */ false
+      );
       chunk.writeHeaderInitial();
     }
 
@@ -467,10 +521,14 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       return (header & RECORD_TYPE_MASK) == RECORD_TYPE_DATA;
     }
 
+    protected static boolean hasNextChunkIdField(int header) {
+      return (header & NEXT_CHUNK_ID_MASK) == NEXT_CHUNK_ID_PRESENT;
+    }
+
     protected static boolean isHeaderSet(int header) {
       // a) un-allocated log area expected to be zeroed
       // b) valid header is always != 0 (because at least totalChunkSize > 0)
-      return header != 0;
+      return header != UNSET_VALUE;
     }
 
     protected static int readHeader(ByteBuffer buffer,
@@ -483,14 +541,14 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     }
 
     protected void writeHeaderInitial() {
-      int chunkHeader = packChunkHeader(chunkLength(), isPadding(), 0, 0);
+      int chunkHeader = packChunkHeader(chunkLength(), hasNextChunkId, isPadding(), 0, 0);
       INT32_OVER_BYTE_BUFFER.setVolatile(pageBuffer, offsetInBuffer + OFFSET_HEADER, chunkHeader);
     }
 
 
     /** generates chunk header given chunk length and chunk type (padding/data) */
     private static int packChunkHeader(int chunkLength,
-                                       boolean isPadding,
+                                       boolean reserveNextChunkIdField, boolean isPadding,
                                        int allocatedCursor,
                                        int committedCursor) {
       assert64bAligned(chunkLength, "chunkLength");
@@ -505,6 +563,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       }
 
       int typeComponent = isPadding ? RECORD_TYPE_PADDING : RECORD_TYPE_DATA;
+      int nextChunkIdComponent = reserveNextChunkIdField ? NEXT_CHUNK_ID_PRESENT : NEXT_CHUNK_ID_ABSENT;
       int lengthComponent = (chunkLength >> 3) << CHUNK_LENGTH_MASK_SHR;
       int committedCursorComponent = (committedCursor & 0b111_11111111) << 11;
       int allocatedCursorComponent = allocatedCursor & 0b111_11111111;
@@ -512,6 +571,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
         throw new AssertionError("chunkLength=" + chunkLength + " => lengthComponent is 0");
       }
       return typeComponent
+             | nextChunkIdComponent
              | lengthComponent
              | committedCursorComponent
              | allocatedCursorComponent;
@@ -519,7 +579,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
 
     private int packChunkHeader(int allocatedCursor,
                                 int committedCursor) {
-      return packChunkHeader(chunkLength, padding, allocatedCursor, committedCursor);
+      return packChunkHeader(chunkLength, hasNextChunkId, padding, allocatedCursor, committedCursor);
     }
 
     /** @return total chunk length (including header) */
@@ -543,8 +603,14 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     }
 
 
-    protected static int chunkLengthForPayload(int payloadSize) {
-      return roundUpToInt64(payloadSize + HEADER_SIZE);
+    protected static int chunkLengthForPayload(int payloadSize,
+                                               boolean reserveNextChunkIdField) {
+      if (reserveNextChunkIdField) {
+        return roundUpToInt64(payloadSize + HEADER_SIZE + NEXT_CHUNK_ID_SIZE);
+      }
+      else {
+        return roundUpToInt64(payloadSize + HEADER_SIZE);
+      }
     }
 
     /**
@@ -702,28 +768,26 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
   }
 
   @Override
-  public LogChunk append(int chunkPayloadCapacity) throws IOException {
-    if (chunkPayloadCapacity <= 0) {
-      throw new IllegalArgumentException("Can't append chunk with payloadCapacity(=" + chunkPayloadCapacity + ") <= 0");
-    }
-    if (chunkPayloadCapacity > MAX_PAYLOAD_SIZE) {
-      throw new IllegalArgumentException("payloadCapacity(=" + chunkPayloadCapacity + ") > MAX(" + MAX_PAYLOAD_SIZE + ")");
-    }
+  public LogChunk append(int chunkPayloadCapacity,
+                         boolean reserveNextChunkIdField) throws IOException {
+    checkPayloadCapacity(chunkPayloadCapacity, reserveNextChunkIdField);
 
     int pageSize = storage.pageSize();
-    if (chunkPayloadCapacity > pageSize - LogChunkImpl.HEADER_SIZE) {
+
+    int totalChunkLength = LogChunkImpl.chunkLengthForPayload(chunkPayloadCapacity, reserveNextChunkIdField);
+    if (totalChunkLength > pageSize) {
       throw new IllegalArgumentException("Requested chunkPayloadCapacity(=" + chunkPayloadCapacity + ") is too big: " +
-                                         "chunk with header must fit pageSize(=" + pageSize + ")");
+                                         "chunk with header (=" + totalChunkLength + ") must fit pageSize(=" + pageSize + ")");
     }
 
     //RC: It is teasing to 'pre-touch' the mmapped buffer before acquiring the lock to trigger page-fault (if any) outside
     //    the lock, thus reducing the chance of getting stuck on page-fault while keeping the lock.
-    //    But it seems it gives no additional parallelism, since even with page-fault moved out of lock -- any other thread
-    //    that comes here needs to access the same pages (header + current data page) => will get stuck on exactly the
-    //    same page-fault anyway. 'Pre-touching' provides no additional parallelism, the only difference is _how_ the threads
-    //    will wait: either one thread waits on the page-fault, and others waiting on lock, OR all the threads are waiting on
-    //    page-fault. 
-    int totalChunkLength = LogChunkImpl.chunkLengthForPayload(chunkPayloadCapacity);
+    //    But it seems to me, it provides no additional parallelism, since even with page-fault moved out of lock -- any
+    //    other thread that comes here needs to access the same pages (header + current data page) => will get stuck on
+    //    exactly the same page-fault interrupt anyway. 'Pre-touching' provides no additional parallelism, it only changes
+    //    _how_ the threads will wait: without pre-touch one thread waits on the page-fault, and others waiting on lock,
+    //    with pre-touch -- all the threads will wait on page-fault interrupt before lock.
+
     synchronized (allocationLock) {
       long chunkOffsetInFile = allocateSpaceForChunk(totalChunkLength);
       assert64bAligned(chunkOffsetInFile, "chunkOffsetInFile");
@@ -731,7 +795,12 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       Page page = storage.pageByOffset(chunkOffsetInFile);
       int offsetInPage = storage.toOffsetInPage(chunkOffsetInFile);
 
-      LogChunkImpl chunk = LogChunkImpl.putRegularChunk(totalChunkLength, page.rawPageBuffer(), offsetInPage, chunkOffsetInFile);
+
+      LogChunkImpl chunk = LogChunkImpl.putRegularChunk(
+        page.rawPageBuffer(),
+        totalChunkLength, offsetInPage, chunkOffsetInFile,
+        reserveNextChunkIdField
+      );
 
       header.addToDataRecordsCount(1);
       header.updateFirstUnCommittedOffset(chunkOffsetInFile + totalChunkLength);
@@ -952,7 +1021,8 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
     }
     int chunkLength = LogChunkImpl.unpackChunkLength(header);
     boolean isPadding = LogChunkImpl.isPaddingChunk(header);
-    return new LogChunkImpl(chunkOffsetInFile, pageBuffer, chunkOffsetInBuffer, chunkLength, isPadding);
+    boolean hasNextChunkIdField = LogChunkImpl.hasNextChunkIdField(header);
+    return new LogChunkImpl(chunkOffsetInFile, pageBuffer, chunkOffsetInBuffer, chunkLength, isPadding, hasNextChunkIdField);
   }
 
   //@GuardedBy(allocationLock)
@@ -1047,7 +1117,7 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       }
 
       int chunkHeader = LogChunkImpl.readHeader(pageBuffer, chunkOffsetInPage);
-      if (chunkHeader == 0) {
+      if (!LogChunkImpl.isHeaderSet(chunkHeader)) {
         //the chunk wasn't even started to be written
         // -> can't read the following records since we don't know there they are
         return true;
@@ -1059,9 +1129,9 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
         long chunkId = chunkOffsetToId(chunkOffsetInFile);
 
         if (!LogChunkImpl.isFitIntoPage(pageBuffer, chunkOffsetInPage, chunkLength)) {
-          throw new IOException("chunk[" + chunkId + "][@" + chunkOffsetInFile + "].chunkLength(=" + chunkLength + "): " +
-                                " is incorrect: page[0.." + pageBuffer.limit() + "]" +
-                                moreDiagnosticInfo(chunkOffsetInFile));
+          throw new CorruptedException("chunk[" + chunkId + "][@" + chunkOffsetInFile + "].chunkLength(=" + chunkLength + "): " +
+                                       " is incorrect: page[0.." + pageBuffer.limit() + "]" +
+                                       moreDiagnosticInfo(chunkOffsetInFile));
         }
 
         LogChunkImpl chunk = readChunkAt(pageBuffer, chunkOffsetInPage, chunkOffsetInFile);
@@ -1152,5 +1222,21 @@ public final class ChunkedAppendOnlyLogOverMMappedFile implements ChunkedAppendO
       throw new IllegalArgumentException("chunkId(=" + chunkId + ") is invalid: chunkOffsetInFile(=" + offset + ") is not 64b-aligned");
     }
     return offset;
+  }
+
+  private static void checkPayloadCapacity(int chunkPayloadCapacity,
+                                           boolean reserveNextChunkIdField) {
+    if (chunkPayloadCapacity <= 0) {
+      throw new IllegalArgumentException("Can't append chunk with payloadCapacity(=" + chunkPayloadCapacity + ") <= 0");
+    }
+
+    int maxPayloadSize = reserveNextChunkIdField ?
+                         MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK :
+                         MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK;
+    if (chunkPayloadCapacity > maxPayloadSize) {
+      throw new IllegalArgumentException(
+        "payloadCapacity(=" + chunkPayloadCapacity + ") > MAX(" + maxPayloadSize + ")"
+      );
+    }
   }
 }

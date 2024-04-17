@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.switchbranches;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -82,8 +82,7 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
     return Presentation.of(CreateSwitchBranchesUtil.getActionName(ContainerUtil.map(missingValues, v -> v.myPresentationName)));
   }
 
-  @NotNull
-  private static List<Value> getPossibleValues(PsiExpression expression, PsiType type) {
+  private static @NotNull List<Value> getPossibleValues(PsiExpression expression, PsiType type) {
     CommonDataflow.DataflowResult dfr = CommonDataflow.getDataflowResult(expression);
     if (dfr != null) {
       LongRangeSet range = DfIntType.extractRange(dfr.getDfType(expression));
@@ -135,8 +134,7 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
     return null;
   }
 
-  @NotNull
-  private static List<Value> getMissingValues(PsiSwitchBlock block, List<Value> allValues) {
+  private static @NotNull List<Value> getMissingValues(PsiSwitchBlock block, List<Value> allValues) {
     List<Value> missingValues = new ArrayList<>(allValues);
     PsiCodeBlock body = block.getBody();
     if (body != null) {
@@ -148,15 +146,12 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
     return missingValues;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return IntentionPowerPackBundle.message("create.missing.switch.branches.family.name");
   }
 
-  @NotNull
-  private static Set<Object> getLabelConstants(@NotNull PsiSwitchLabelStatementBase label) {
+  private static @NotNull Set<Object> getLabelConstants(@NotNull PsiSwitchLabelStatementBase label) {
     final PsiCaseLabelElementList list = label.getCaseLabelElementList();
     if (list == null) {
       return Collections.emptySet();
@@ -191,8 +186,7 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
       myValue = value;
     }
 
-    @NotNull
-    static Value fromConstant(Object value) {
+    static @NotNull Value fromConstant(Object value) {
       Object normalized = value;
       if (value instanceof Byte || value instanceof Short) {
         normalized = ((Number)value).intValue();
@@ -209,8 +203,7 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
       throw new IllegalArgumentException("Unexpected constant supplied: " + value);
     }
 
-    @Nullable
-    static Value fromField(@NotNull PsiField field) {
+    static @Nullable Value fromField(@NotNull PsiField field) {
       String name = field.getName();
       PsiClass aClass = field.getContainingClass();
       if (aClass == null) return null;
@@ -221,8 +214,7 @@ public final class CreateMissingSwitchBranchesAction extends PsiUpdateModCommand
       return new Value(className + "." + field.getName(), name, value);
     }
 
-    @Nullable
-    static String getPresentation(Object constant) {
+    static @Nullable String getPresentation(Object constant) {
       if (constant instanceof Integer || constant instanceof Byte || constant instanceof Short) {
         return constant.toString();
       }

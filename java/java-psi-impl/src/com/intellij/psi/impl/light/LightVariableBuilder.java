@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -58,27 +58,23 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return "LightVariableBuilder:" + getName();
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return myType;
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     return myModifierList;
   }
 
-  @NotNull
-  public T setModifiers(@NotNull String @NotNull ... modifiers) {
+  public @NotNull T setModifiers(@NotNull String @NotNull ... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
     //noinspection unchecked
     return (T)this;
   }
 
-  @NotNull
-  public T setModifierList(LightModifierList modifierList) {
+  public @NotNull T setModifierList(LightModifierList modifierList) {
     myModifierList = modifierList;
     //noinspection unchecked
     return (T)this;
@@ -89,9 +85,8 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return myModifierList.hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -146,9 +141,8 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return (T)this;
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 

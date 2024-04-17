@@ -261,7 +261,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/ben-manes/caffeine")
       .apache("https://github.com/ben-manes/caffeine/blob/master/LICENSE")
       .suppliedByPersons("Ben Manes"),
-    LibraryLicense(name = "CGLib", libraryName = "CGLIB", url = "https://github.com/cglib/cglib/")
+    LibraryLicense(name = "CGLib", libraryName = "cglib", url = "https://github.com/cglib/cglib/")
       .apache("https://github.com/cglib/cglib/blob/master/LICENSE")
       .suppliedByPersons("cglib project contributors"),
     LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",
@@ -792,7 +792,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
-    LibraryLicense(libraryName = "ktor-client-jvm",
+    LibraryLicense(libraryName = "ktor-client-java-engine",
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -875,7 +875,7 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd()
       .suppliedByPersons("Michael Baranov"),
     LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
-                   url = "https://www.miglayout.com/", licenseUrl = "https://www.miglayout.com/mavensite/license.html").newBsd()
+                   url = "https://www.miglayout.com/", licenseUrl = "https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt").newBsd()
       .suppliedByOrganizations("MiG InfoCom AB"),
     LibraryLicense(name = "morfologik-fsa", libraryName = "org.carrot2:morfologik-fsa",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd()
@@ -1194,13 +1194,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "zstd-jni", libraryName = "zstd-jni",
                    url = "https://github.com/luben/zstd-jni")
       .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE"),
-    LibraryLicense(name = "zstd-jni-windows-aarch64", libraryName = "zstd-jni-windows-aarch64",
-                   url = "https://github.com/VladRassokhin/zstd-jni")
-      .simplifiedBsd("https://github.com/luben/zstd-jni/blob/master/LICENSE")
-      .forkedFrom(sourceCodeUrl = "https://github.com/luben/zstd-jni",
-                  mavenRepositoryUrl = "https://repo1.maven.org/maven2",
-                  groupId = "com.github.luben", artifactId = "zstd-jni",
-                  version = "1.5.2-5"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("completion-log-events"),

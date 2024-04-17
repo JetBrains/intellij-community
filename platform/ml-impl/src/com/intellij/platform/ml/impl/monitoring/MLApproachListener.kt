@@ -11,7 +11,7 @@ import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLApproachInitializationListener.Companion.asJoinedListener
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener.Companion.asJoinedListener
 import com.intellij.platform.ml.impl.monitoring.MLSessionListener.Companion.asJoinedListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy
+import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy
 import com.intellij.platform.ml.impl.session.DescribedRootContainer
 import org.jetbrains.annotations.ApiStatus
 
@@ -28,24 +28,24 @@ interface MLTaskGroupListener {
    * [MLApproachInitializationListener]
    *
    * The comfortable way to create this accordance would be by using
-   * [com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy] infix function.
+   * [com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy] infix function.
    */
-  val approachListeners: Collection<ApproachListeners<*, *>>
+  val approachListeners: Collection<ApproachToListener<*, *>>
 
   /**
    * A type-safe pair of approach's class and a set of listeners
    *
    * A proper way to create it is to use [monitoredBy]
    */
-  data class ApproachListeners<M : MLModel<P>, P : Any> internal constructor(
+  data class ApproachToListener<M : MLModel<P>, P : Any> internal constructor(
     val taskApproachBuilder: Class<out MLTaskApproachBuilder<P>>,
     val approachListener: Collection<MLApproachInitializationListener<M, P>>
   ) {
     companion object {
-      infix fun <M : MLModel<P>, P : Any> Class<out MLTaskApproachBuilder<P>>.monitoredBy(approachListener: MLApproachInitializationListener<M, P>) = ApproachListeners(
+      infix fun <M : MLModel<P>, P : Any> Class<out MLTaskApproachBuilder<P>>.monitoredBy(approachListener: MLApproachInitializationListener<M, P>) = ApproachToListener(
         this, listOf(approachListener))
 
-      infix fun <M : MLModel<P>, P : Any> Class<out MLTaskApproachBuilder<P>>.monitoredBy(approachListeners: Collection<MLApproachInitializationListener<M, P>>) = ApproachListeners(
+      infix fun <M : MLModel<P>, P : Any> Class<out MLTaskApproachBuilder<P>>.monitoredBy(approachListeners: Collection<MLApproachInitializationListener<M, P>>) = ApproachToListener(
         this, approachListeners)
     }
   }
@@ -77,7 +77,7 @@ interface MLTaskGroupListener {
 
 /**
  * Listens to the attempt of starting new [Session] of the [MLTaskApproach], that this listener was put
- * into correspondence to via [com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy]
+ * into correspondence to via [com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy]
  *
  * @param M Type of the [com.intellij.platform.ml.impl.model.MLModel]
  * @param P Prediction's type
@@ -89,7 +89,7 @@ fun interface MLApproachInitializationListener<M : MLModel<P>, P : Any> {
    *
    * @return A listener, that will be monitoring how successful the start was. If it is not needed, null is returned.
    */
-  fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, callParameters: Environment): MLApproachListener<M, P>?
+  fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, permanentCallParameters: Environment): MLApproachListener<M, P>?
 
   companion object {
     fun <M : MLModel<P>, P : Any> Collection<MLApproachInitializationListener<M, P>>.asJoinedListener(): MLApproachInitializationListener<M, P> =
@@ -109,12 +109,16 @@ interface MLApproachListener<M : MLModel<P>, P : Any> {
    * Called if the session was not started,
    * on exceptionally rare occasions,
    * when the [com.intellij.platform.ml.impl.LogDrivenModelInference.startSession] failed with an exception
+   *
+   * This callback is finishing the session listening: [onStartedSession] won't be called.
    */
   fun onFailedToStartSessionWithException(exception: Throwable) {}
 
   /**
    * Called if the session was not started,
    * but the failure is 'ordinary'.
+   *
+   * This callback is finishing the session listening: [onStartedSession] won't be called.
    */
   fun onFailedToStartSession(failure: Session.StartOutcome.Failure<P>) {}
 
@@ -124,6 +128,14 @@ interface MLApproachListener<M : MLModel<P>, P : Any> {
    * @return A listener for tracking the session's progress, null if the session will not be tracked.
    */
   fun onStartedSession(session: Session<P>, mlModel: M): MLSessionListener<M, P>? = null
+
+  open class Default<M : MLModel<P>, P : Any>(taskApproachBuilder: Class<out MLTaskApproachBuilder<P>>) : MLApproachListener<M, P>, MLTaskGroupListener {
+    override val approachListeners: Collection<MLTaskGroupListener.ApproachToListener<*, *>> = listOf(
+      taskApproachBuilder monitoredBy MLApproachInitializationListener { _, _, _ ->
+        this@Default
+      }
+    )
+  }
 
   companion object {
     fun <M : MLModel<P>, P : Any> Collection<MLApproachListener<M, P>>.asJoinedListener(): MLApproachListener<M, P> {
@@ -155,15 +167,21 @@ interface MLSessionListener<R, P : Any> {
    * All tier instances were established (the tree will not be growing further),
    * described, and predictions in the [sessionTree] were finished.
    */
-  fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<R, P>) {}
+  fun onSessionFinishedSuccessfully(sessionTree: DescribedRootContainer<R, P>) {}
+
+  open class Default<M : MLModel<P>, P : Any>(taskApproachBuilder: Class<out MLTaskApproachBuilder<P>>) : MLSessionListener<M, P>, MLApproachListener.Default<M, P>(taskApproachBuilder) {
+    override fun onStartedSession(session: Session<P>, mlModel: M): MLSessionListener<M, P>? {
+      return this
+    }
+  }
 
   companion object {
     fun <R, P : Any> Collection<MLSessionListener<R, P>>.asJoinedListener(): MLSessionListener<R, P> {
       val sessionListeners = this@asJoinedListener
 
       return object : MLSessionListener<R, P> {
-        override fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<R, P>) = sessionListeners.forEach {
-          it.onSessionDescriptionFinished(sessionTree)
+        override fun onSessionFinishedSuccessfully(sessionTree: DescribedRootContainer<R, P>) = sessionListeners.forEach {
+          it.onSessionFinishedSuccessfully(sessionTree)
         }
       }
     }

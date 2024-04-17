@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
@@ -70,10 +70,8 @@ public class SameErasureButDifferentMethodsFix extends PsiUpdateModCommandAction
     return Presentation.of(JavaBundle.message("intention.text.fix.method.0.parameters.with.bounded.wildcards", method.getName()));
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.fix.bounded.wildcards");
   }
 }

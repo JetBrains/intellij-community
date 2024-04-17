@@ -54,8 +54,7 @@ public final class OverridableMethodCallDuringObjectConstructionInspection exten
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
   }
 

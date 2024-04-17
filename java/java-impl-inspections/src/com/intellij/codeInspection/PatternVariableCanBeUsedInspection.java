@@ -33,11 +33,11 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
-  public boolean reportOnCastOnly = false;
+  public boolean reportAlsoCastWithIntroducingNewVariable = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return OptPane.pane(checkbox("reportOnCastOnly",
+    return OptPane.pane(checkbox("reportAlsoCastWithIntroducingNewVariable",
                                  InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.report.cast.only")));
   }
 
@@ -151,7 +151,7 @@ public final class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLo
                                    new ExistingPatternVariableCanBeUsedFix(null, existingPatternVariable));
           }
           else {
-            if (!reportOnCastOnly) {
+            if (!reportAlsoCastWithIntroducingNewVariable) {
               if (isOnTheFly) {
                 holder.registerProblem(expression,
                                        InspectionGadgetsBundle.message("inspection.pattern.variable.can.be.used.instead.of.cast.message"),

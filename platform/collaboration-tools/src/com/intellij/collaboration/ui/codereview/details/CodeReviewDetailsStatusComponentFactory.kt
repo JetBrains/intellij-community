@@ -3,10 +3,10 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.Avatar
-import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
 import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
@@ -15,6 +15,7 @@ import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.codereview.list.search.ShowDirection
 import com.intellij.collaboration.ui.icon.CIBuildStatusIcons
+import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindIconIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
@@ -37,6 +38,7 @@ import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JTextPane
 
 object CodeReviewDetailsStatusComponentFactory {
   private const val STATUS_COMPONENT_BORDER = 5
@@ -59,6 +61,19 @@ object CodeReviewDetailsStatusComponentFactory {
       icon = CIBuildStatusIcons.failed
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
       bindVisibilityIn(scope, hasConflicts)
+    }
+  }
+
+  fun createMergeClarificationComponent(scope: CoroutineScope, clarification: Flow<String>): JComponent {
+    val panel = JTextPane().apply {
+      name = "Code review status: merge clarification"
+      isOpaque = false
+
+      bindTextIn(scope, clarification)
+      bindVisibilityIn(scope, clarification.map { it.isNotEmpty() })
+    }
+    return CollaborationToolsUIUtil.wrapWithLimitedSize(panel, DimensionRestrictions.LinesHeight(panel, 2)).apply {
+      border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
     }
   }
 

@@ -3,15 +3,16 @@ package com.intellij.ui;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class LicensingFacade {
   public String platformProductCode;
@@ -23,6 +24,7 @@ public final class LicensingFacade {
   public Date perpetualFallbackDate;
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
+  public Map<String, ProductLicenseData> productLicenses;
   public String metadata;
   public boolean ai_enabled;
   public static volatile boolean isUnusedSignalled;
@@ -31,6 +33,13 @@ public final class LicensingFacade {
 
   public static @Nullable LicensingFacade getInstance() {
     return INSTANCE;
+  }
+
+  @ApiStatus.Internal
+  public static void setInstance(@Nullable LicensingFacade instance) {
+    INSTANCE = instance;
+    final MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
+    messageBus.syncPublisher(LicenseStateListener.TOPIC).licenseStateChanged(instance);
   }
 
   public @Nullable String getLicensedToMessage() {
@@ -125,4 +134,15 @@ public final class LicensingFacade {
     isUnusedSignalled = value;
   }
 
+  public static final class ProductLicenseData {
+    public String productCode;
+    public @Nullable String confirmationStamp;
+    public @Nullable Date expirationDate;
+    public boolean isPersonal;
+  }
+
+  public interface LicenseStateListener extends EventListener {
+    @NotNull Topic<LicenseStateListener> TOPIC = new Topic<>(LicenseStateListener.class);
+    void licenseStateChanged(@Nullable LicensingFacade newState);
+  }
 }

@@ -787,7 +787,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerSession session = debugProcess.getSession();
-        DebuggerContextImpl debuggerContext = DebuggerContextUtil.createDebuggerContext(session, suspendContext);
+        DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(session, suspendContext, suspendContext.getEventThread(), null);
         DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
                                            () -> session.getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null));
       }

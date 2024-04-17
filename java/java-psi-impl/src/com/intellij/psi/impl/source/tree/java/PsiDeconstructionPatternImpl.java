@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
@@ -53,8 +53,7 @@ public class PsiDeconstructionPatternImpl extends CompositePsiElement implements
            : identifier.getText();
   }
 
-  @Nullable
-  private PsiElement getNameIdentifier() {
+  private @Nullable PsiElement getNameIdentifier() {
     return findPsiChildByType(JavaTokenType.IDENTIFIER);
   }
 

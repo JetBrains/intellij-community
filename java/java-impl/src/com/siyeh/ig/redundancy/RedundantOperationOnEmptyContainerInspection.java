@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
@@ -50,9 +50,8 @@ public final class RedundantOperationOnEmptyContainerInspection extends Abstract
   );
   private static final CallMatcher COLLECTIONS_EMPTY = staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -97,8 +96,7 @@ public final class RedundantOperationOnEmptyContainerInspection extends Abstract
         return new FindDfaProblemCauseFix(false, value, new TrackingRunner.ZeroSizeDfaProblemType(field));
       }
 
-      @Nullable
-      public @InspectionMessage String getProblemMessage(PsiExpression value) {
+      public @Nullable @InspectionMessage String getProblemMessage(PsiExpression value) {
         SpecialField lengthField;
         PsiType type = value.getType();
         String message;

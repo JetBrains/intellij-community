@@ -30,12 +30,6 @@ final class UpdatePluginsApp implements ApplicationStarter {
   private static final String OLD_CONFIG_DIR_PROPERTY = "idea.plugin.migration.config.dir";
 
   @Override
-  @SuppressWarnings("deprecation")
-  public String getCommandName() {
-    return "update";
-  }
-
-  @Override
   public void premain(@NotNull List<String> args) {
     System.setProperty("idea.skip.indices.initialization", "true");
 

@@ -42,7 +42,7 @@ public final class ReplaceAssertLiteralWithAssertEqualsIntention extends MCInten
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     assert methodName != null;
     final String postfix = methodName.substring("assert".length());
     final PsiExpression lastArgument = arguments[arguments.length - 1];
@@ -63,8 +63,7 @@ public final class ReplaceAssertLiteralWithAssertEqualsIntention extends MCInten
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new AssertLiteralPredicate();
   }
 
@@ -72,11 +71,11 @@ public final class ReplaceAssertLiteralWithAssertEqualsIntention extends MCInten
   public void invoke(@NotNull PsiElement element) {
     final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (methodName == null) {
       return;
     }
-    @NonNls final StringBuilder newExpression = new StringBuilder();
+    final @NonNls StringBuilder newExpression = new StringBuilder();
     final PsiElement qualifier = methodExpression.getQualifier();
     if (qualifier == null) {
       final PsiMethod method = call.resolveMethod();

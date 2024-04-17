@@ -14,6 +14,7 @@ import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.*
+import org.jetbrains.kotlin.idea.codeInsight.handlers.fixers.LanguageSmartEnterProcessorFixer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -29,9 +29,8 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -84,8 +83,7 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
     }
   }
 
-  @Nullable
-  private static Problem doCheckLambda(@NotNull PsiLambdaExpression expression) {
+  private static @Nullable Problem doCheckLambda(@NotNull PsiLambdaExpression expression) {
     final PsiElement body = expression.getBody();
     if (body == null) return null;
 
@@ -305,10 +303,8 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
 
   private static class ReplaceWithLambdaBodyFix extends ReplaceFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.lambda.body.fix.family.name");
     }
 
@@ -324,10 +320,8 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
   }
 
   private static class ReplaceWithMethodReferenceFix extends ReplaceFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.method.reference.fix.family.name");
     }
 
@@ -348,10 +342,8 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
 
   private static class ReplaceAnonymousWithLambdaBodyFix extends ReplaceFix {
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.anonymous.with.lambda.body.fix.family.name");
     }
 
@@ -367,11 +359,9 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
     }
   }
 
-  private static abstract class ReplaceFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
+  private abstract static class ReplaceFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return getFamilyName();
     }
 

@@ -6,61 +6,63 @@ project.appleMain
     apiLevel = 1.7
 
 project.appleTest
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 project.commonMain
     languageLevel = 1.7
     apiLevel = 1.7
 
 project.commonTest
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 project.iosArm64Main
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -nostdlib
 
 project.iosArm64Test
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
+    compilerSettings = -nostdlib
 
 project.iosMain
     languageLevel = 1.7
     apiLevel = 1.7
 
 project.iosTest
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 project.iosX64Main
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -opt-in IosAllOptInAnnotation
+    compilerSettings = -nostdlib -opt-in IosAllOptInAnnotation
 
 project.iosX64Test
     languageLevel = 1.8
     apiLevel = 1.8
-    compilerSettings = -opt-in IosAllOptInAnnotation
+    compilerSettings = -nostdlib -opt-in IosAllOptInAnnotation
 
 project.jsMain
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
     compilerSettings = -main call
 
 project.jsTest
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
     compilerSettings = -main call
 
 project.jvmMain
-    languageLevel = {{LATEST_STABLE}}
-    apiLevel = {{LATEST_STABLE}}
+    languageLevel = 1.9
+    apiLevel = 1.9
     compilerSettings = -opt-in JvmMainOptInAnnotation
 
 project.jvmTest
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 project.main
 
@@ -69,8 +71,8 @@ project.nativeMain
     apiLevel = 1.7
 
 project.nativeTest
-    languageLevel = 1.7
-    apiLevel = 1.7
+    languageLevel = {{LATEST_STABLE}}
+    apiLevel = {{LATEST_STABLE}}
 
 project.test
 

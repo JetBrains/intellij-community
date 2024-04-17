@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
-import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.dev.StorageFactory;
 import com.intellij.util.io.dev.appendonlylog.ChunkedAppendOnlyLog.LogChunk;
 import com.intellij.util.io.dev.mmapped.MMappedFileStorageFactory;
@@ -24,12 +23,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK;
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK;
+import static com.intellij.util.io.dev.appendonlylog.ChunkedAppendOnlyLog.NULL_ID;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
-  private static final int MAX_CAPACITY = ChunkedAppendOnlyLogOverMMappedFile.MAX_PAYLOAD_SIZE;
   private static final int ENOUGH_CHUNKS_TO_CHECK = 500_000;
 
   private static final @NotNull StorageFactory<ChunkedAppendOnlyLogOverMMappedFile> LOG_FACTORY = MMappedFileStorageFactory
@@ -45,7 +46,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
   void exampleOfUse() throws IOException {
     int requestedCapacity = 1024;
 
-    LogChunk chunk = log.append(requestedCapacity);
+    LogChunk chunk = log.append(requestedCapacity, /* hasNextChunkIdField: */ true);
     assertTrue(chunk.id() > 0, "chunk.id must be >0");
 
     int actualCapacity = chunk.capacity();
@@ -96,13 +97,35 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
       assertEquals(42, buffer.getInt(), "Chunk content is untouched: 2x int32 written before remains as-is");
       assertEquals(43, buffer.getInt(), "Chunk content is untouched: 2x int32 written before remains as-is");
     }
+
+    {//nextChunkId:
+      assertTrue(chunk.hasNextChunkIdField(),
+                 "Chunk must have nextChunkId field, since we requested it on chunk allocation");
+      assertEquals(NULL_ID,
+                   chunk.nextChunkId(),
+                   "nextChunkId is not yet set");
+
+      int nextChunkId = 47;
+      assertTrue(chunk.nextChunkId(nextChunkId),
+                 "first nextChunkId call must succeed");
+      assertEquals(nextChunkId,
+                   chunk.nextChunkId(),
+                   "nextChunkId is indeed set to the value");
+
+      int anotherNextChunkId = 48;
+      assertFalse(chunk.nextChunkId(anotherNextChunkId),
+                  "nextChunkId could be set only once -- following attempts must fail");
+      assertEquals(nextChunkId,
+                   chunk.nextChunkId(),
+                   "nextChunkId must remains unchanged after failed attempt");
+    }
   }
 
   @Test
   void appendedChunkCapacity_IsNotLessThanRequested() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(1, MAX_CAPACITY);
+      int capacity = rnd.nextInt(1, MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK);
       LogChunk chunk = log.append(capacity);
       assertTrue(
         chunk.capacity() >= capacity,
@@ -119,7 +142,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     long lastId = 0;
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(1, MAX_CAPACITY);
+      int capacity = rnd.nextInt(1, MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK);
       LogChunk chunk = log.append(capacity);
       long id = chunk.id();
       assertTrue(
@@ -137,7 +160,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
   void valuesAppendedToChunks_CouldBeReadBack_Immediately() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(Long.BYTES, MAX_CAPACITY);
+      int capacity = rnd.nextInt(Long.BYTES, MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK);
       LogChunk chunk = log.append(capacity);
 
       long valueWritten = chunk.id();
@@ -160,11 +183,11 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
   }
 
   @Test
-  void valuesAppendedToChunks_CouldBeReadBack_AfterAWhile() throws IOException {
+  void valuesAppendedToChunks_CouldBeReadBack_AfterOtherOperations() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     long[] chunkIds = new long[ENOUGH_CHUNKS_TO_CHECK];
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(Long.BYTES, MAX_CAPACITY);
+      int capacity = rnd.nextInt(Long.BYTES, MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK);
       LogChunk chunk = log.append(capacity);
 
       chunkIds[i] = chunk.id();
@@ -194,19 +217,23 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
     }
   }
 
+
   @Test
   void valuesAppendedToChunks_CouldBeReadBack_AfterReopen() throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     long[] chunkIds = new long[ENOUGH_CHUNKS_TO_CHECK];
+    long nextChunkId = Long.MAX_VALUE;
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(Long.BYTES, MAX_CAPACITY);
-      LogChunk chunk = log.append(capacity);
+      int capacity = rnd.nextInt(Long.BYTES, MAX_PAYLOAD_SIZE_WITH_NEXT_CHUNK);
+      LogChunk chunk = log.append(capacity, /*reserveNextChunkIdField: */ true);
 
       chunkIds[i] = chunk.id();
 
       long valueWritten = chunk.id();
       boolean appended = chunk.append(buffer -> buffer.putLong(valueWritten), Long.BYTES);
       assertTrue(appended, ".append() must succeed because capacity is > size appended");
+      boolean set = chunk.nextChunkId(nextChunkId);
+      assertTrue(set);
     }
 
     assertEquals(ENOUGH_CHUNKS_TO_CHECK, log.chunksCount(),
@@ -231,9 +258,10 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
       long valueReadBack = readBuffer.getLong();
       assertEquals(valueWritten, valueReadBack,
                    "Value readBack must be the same as was just written");
+      assertEquals(nextChunkId, chunk.nextChunkId(),
+                   "[" + chunk.id() + "].nextChunkId must be restored as stored");
     }
   }
-
 
   @Test
   void filledUpChunks_CouldBeReadBack_AfterReopen() throws IOException {
@@ -241,7 +269,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
     long[] chunkIds = new long[ENOUGH_CHUNKS_TO_CHECK];
     byte[][] chunkValues = new byte[ENOUGH_CHUNKS_TO_CHECK][];
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(Long.BYTES, MAX_CAPACITY);
+      int capacity = rnd.nextInt(1, MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK);
       LogChunk chunk = log.append(capacity);
 
       byte[] value = new byte[capacity];
@@ -280,7 +308,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     Long2ObjectMap<byte[]> idToValue = new Long2ObjectOpenHashMap<>(ENOUGH_CHUNKS_TO_CHECK);
     for (int i = 0; i < ENOUGH_CHUNKS_TO_CHECK; i++) {
-      int capacity = rnd.nextInt(Long.BYTES, MAX_CAPACITY);
+      int capacity = rnd.nextInt(1, MAX_PAYLOAD_SIZE_WITHOUT_NEXT_CHUNK);
       LogChunk chunk = log.append(capacity);
 
       byte[] value = new byte[capacity];
@@ -316,9 +344,10 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
     assertTrue(
       idToValue.isEmpty(),
-      "All chunks written must be reported by .forEach, but following was missed: \n" + idToValue
+      "All chunks written must be reported by .forEach, but following " + idToValue.size() + " was missed: \n" + idToValue
     );
   }
+
 
   @Test
   void chunksFilledUp_MultiThreaded_CouldBeReadBack_AfterReopen() throws Exception {
@@ -346,10 +375,13 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
         new IntArraySet(chunk.itemsToAppend)
       );
     }
-
-
   }
 
+
+  //@Test
+  //void name() {
+  //
+  //}
 
   // =========================== infrastructure: ============================================================================= //
 
@@ -399,7 +431,7 @@ public class ChunkedAppendOnlyLogOverMMappedFileTest {
 
   private static class Chunk {
     private long chunkId;
-    private int[] itemsToAppend;
+    private final int[] itemsToAppend;
 
     private Chunk(long chunkId, int[] itemsToAppend) {
       this.chunkId = chunkId;

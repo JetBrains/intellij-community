@@ -12797,21 +12797,6 @@ c:com.intellij.formatting.service.FormattingUiNotificationService
 - reportError(java.lang.String,java.lang.String,java.lang.String):V
 - reportError(java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.AnAction[]):V
 - reportErrorAndNavigate(java.lang.String,java.lang.String,java.lang.String,com.intellij.formatting.FormattingContext,I):V
-f:com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPass
-- com.intellij.codeHighlighting.EditorBoundHighlightingPass
-- <init>(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
-- doApplyInformationToEditor():V
-- doCollectInformation(com.intellij.openapi.progress.ProgressIndicator):V
-- f:getService():com.intellij.formatting.visualLayer.VisualFormattingLayerService
-f:com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPassFactory
-- com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
-- <init>(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar):V
-- createHighlightingPass(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPass
-- getPassId():I
-f:com.intellij.formatting.visualLayer.VisualFormattingLayerHighlightingPassFactory$Registrar
-- com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
-- <init>():V
-- registerHighlightingPassFactory(com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar,com.intellij.openapi.project.Project):V
 f:com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl
 - com.intellij.formatting.visualLayer.VisualFormattingLayerService
 - <init>():V
@@ -18273,7 +18258,6 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 f:com.intellij.ide.ui.search.TraverseUIStarter
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
-- getCommandName():java.lang.String
 - getRequiredModality():I
 - main(java.util.List):V
 - premain(java.util.List):V
@@ -27110,6 +27094,7 @@ c:com.intellij.refactoring.rename.inplace.MemberInplaceRenamer
 - p:collectRefs(com.intellij.psi.search.SearchScope):java.util.Collection
 - p:createInplaceRenamerToRestart(com.intellij.psi.PsiNamedElement,com.intellij.openapi.editor.Editor,java.lang.String):com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:createRenameProcessor(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.rename.RenameProcessor
+- p:findCollision():com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 - p:getNameIdentifier():com.intellij.psi.PsiElement
 - p:getRefactoringId():java.lang.String
 - p:getReferencesSearchScope(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.search.SearchScope
@@ -27215,6 +27200,7 @@ c:com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:collectAdditionalElementsToRename(java.util.List):V
 - p:createInplaceRenamerToRestart(com.intellij.psi.PsiNamedElement,com.intellij.openapi.editor.Editor,java.lang.String):com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 - p:createLookupExpression(com.intellij.psi.PsiElement):com.intellij.refactoring.rename.inplace.MyLookupExpression
+- p:findCollision():com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 - finish(Z):V
 - p:getCommandName():java.lang.String
 - p:getRefactoringId():java.lang.String
@@ -29019,15 +29005,6 @@ f:com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl
 *:com.intellij.util.indexing.CustomizingIndexingPresentationContributor
 - com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 - a:customizeIteratorPresentation(com.intellij.platform.workspace.storage.WorkspaceEntity):com.intellij.util.indexing.roots.IndexableIteratorPresentation
-f:com.intellij.util.indexing.DirtyFilesIndexableFilesIterator
-- com.intellij.util.indexing.roots.IndexableFilesIterator
-- <init>(kotlinx.coroutines.Deferred):V
-- getDebugName():java.lang.String
-- getIndexingProgressText():java.lang.String
-- getOrigin():com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-- getRootUrls(com.intellij.openapi.project.Project):java.util.Set
-- getRootsScanningProgressText():java.lang.String
-- iterateFiles(com.intellij.openapi.project.Project,com.intellij.openapi.roots.ContentIterator,com.intellij.openapi.vfs.VirtualFileFilter):Z
 f:com.intellij.util.indexing.DirtyFilesOrigin
 - com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 - sf:INSTANCE:com.intellij.util.indexing.DirtyFilesOrigin
@@ -29267,17 +29244,6 @@ com.intellij.util.indexing.PerProjectIndexingQueue$PerProviderSink
 f:com.intellij.util.indexing.PerProjectIndexingQueue$TestCompanion
 - <init>(com.intellij.util.indexing.PerProjectIndexingQueue):V
 - f:getAndResetQueuedFiles():kotlin.Pair
-f:com.intellij.util.indexing.PersistentDirtyFilesQueue
-- sf:INSTANCE:com.intellij.util.indexing.PersistentDirtyFilesQueue
-- f:getCurrentVersion():J
-- sf:getQueueFile():java.nio.file.Path
-- sf:getQueueFile(com.intellij.openapi.project.Project):java.nio.file.Path
-- sf:getQueuesDir():java.nio.file.Path
-- f:getQueuesDirName():java.lang.String
-- sf:readIndexingQueue(java.nio.file.Path,java.lang.Long):it.unimi.dsi.fastutil.ints.IntList
-- sf:removeCurrentFile(java.nio.file.Path):V
-- sf:storeIndexingQueue(java.nio.file.Path,it.unimi.dsi.fastutil.ints.IntCollection,J):V
-- sf:storeIndexingQueue(java.nio.file.Path,it.unimi.dsi.fastutil.ints.IntCollection,J,J):V
 f:com.intellij.util.indexing.PersistentIndexingStampEnumeratorKt
 e:com.intellij.util.indexing.RebuildStatus
 - java.lang.Enum
@@ -29311,14 +29277,6 @@ f:com.intellij.util.indexing.TimestampsKeyDescriptor
 - isEqual(com.intellij.util.indexing.TimestampsImmutable,com.intellij.util.indexing.TimestampsImmutable):Z
 - read(java.io.DataInput):com.intellij.util.indexing.TimestampsImmutable
 - save(java.io.DataOutput,com.intellij.util.indexing.TimestampsImmutable):V
-f:com.intellij.util.indexing.TimestampsKeyDescriptorEx
-- com.intellij.util.containers.hash.EqualityPolicy
-- com.intellij.util.io.dev.enumerator.DataExternalizerEx
-- <init>():V
-- getHashCode(com.intellij.util.indexing.TimestampsImmutable):I
-- isEqual(com.intellij.util.indexing.TimestampsImmutable,com.intellij.util.indexing.TimestampsImmutable):Z
-- read(java.nio.ByteBuffer):com.intellij.util.indexing.TimestampsImmutable
-- writerFor(com.intellij.util.indexing.TimestampsImmutable):com.intellij.util.io.dev.enumerator.DataExternalizerEx$KnownSizeRecordWriter
 f:com.intellij.util.indexing.UnindexedFilesIndexer
 - com.intellij.openapi.project.DumbModeTask
 - <init>(com.intellij.openapi.project.Project,java.util.Map,java.lang.String,it.unimi.dsi.fastutil.longs.LongSet):V
@@ -29327,8 +29285,6 @@ f:com.intellij.util.indexing.UnindexedFilesIndexer
 - toString():java.lang.String
 - tryMergeWith(com.intellij.openapi.project.DumbModeTask):com.intellij.util.indexing.UnindexedFilesIndexer
 f:com.intellij.util.indexing.UnindexedFilesScannerStartupKt
-- sf:getPERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED():com.intellij.openapi.util.Key
-- sf:invalidatePersistentIndexableFilesFilter(com.intellij.openapi.project.Project):V
 f:com.intellij.util.indexing.UnindexedFilesUpdater
 - s:getAvailablePhysicalCoresNumber():I
 - s:getMaxNumberOfIndexingThreads():I

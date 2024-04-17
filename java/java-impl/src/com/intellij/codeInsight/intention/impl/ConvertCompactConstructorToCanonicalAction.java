@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -43,8 +43,7 @@ public final class ConvertCompactConstructorToCanonicalAction extends PsiUpdateM
    * @param compactConstructor compact constructor
    * @return non-physical canonical constructor
    */
-  @NotNull
-  public static PsiMethod generateCanonicalConstructor(@NotNull PsiMethod compactConstructor) {
+  public static @NotNull PsiMethod generateCanonicalConstructor(@NotNull PsiMethod compactConstructor) {
     if (!JavaPsiRecordUtil.isCompactConstructor(compactConstructor)) {
       throw new IllegalArgumentException("Compact constructor required");
     }
@@ -82,9 +81,8 @@ public final class ConvertCompactConstructorToCanonicalAction extends PsiUpdateM
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiLambdaExpression.class, PsiMember.class);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Override
-  public @NotNull String getFamilyName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
     return JavaBundle.message("intention.convert.compact.constructor.to.canonical");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -78,8 +78,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return false;
   }
 
-  @Nullable
-  private static TextRange importListRange(@NotNull PsiImportList list) {
+  private static @Nullable TextRange importListRange(@NotNull PsiImportList list) {
     PsiImportStatementBase[] statements = list.getAllImportStatements();
     if (statements.length == 0) return null;
     final PsiElement importKeyword = statements[0].getFirstChild();
@@ -89,20 +88,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return hasErrorElementsNearby(list.getContainingFile(), startOffset, endOffset) ? null : new TextRange(startOffset, endOffset);
   }
 
-  @Nullable
-  private static TextRange lambdaRange(@NotNull PsiLambdaExpression lambdaExpression) {
+  private static @Nullable TextRange lambdaRange(@NotNull PsiLambdaExpression lambdaExpression) {
     PsiElement body = lambdaExpression.getBody();
     return body instanceof PsiCodeBlock ? body.getTextRange() : null;
   }
 
-  @Nullable
-  private static TextRange methodRange(@NotNull PsiMethod element) {
+  private static @Nullable TextRange methodRange(@NotNull PsiMethod element) {
     PsiCodeBlock body = element.getBody();
     return body == null ? null : body.getTextRange();
   }
 
-  @Nullable
-  private static TextRange classRange(@NotNull PsiClass aClass) {
+  private static @Nullable TextRange classRange(@NotNull PsiClass aClass) {
     PsiElement lBrace = aClass.getLBrace();
     if (lBrace == null) return null;
     PsiElement rBrace = aClass.getRBrace();
@@ -110,15 +106,13 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return new TextRange(lBrace.getTextOffset(), rBrace.getTextOffset() + 1);
   }
 
-  @Nullable
-  private static TextRange moduleRange(@NotNull PsiJavaModule element) {
+  private static @Nullable TextRange moduleRange(@NotNull PsiJavaModule element) {
     PsiElement left = SyntaxTraverser.psiTraverser().children(element).find(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACE));
     PsiElement right = SyntaxTraverser.psiTraverser().children(element).find(e -> PsiUtil.isJavaToken(e, JavaTokenType.RBRACE));
     return left != null && right != null ? new TextRange(left.getTextOffset(), right.getTextOffset() + 1) : null;
   }
 
-  @NotNull
-  private static TextRange annotationRange(@NotNull PsiAnnotation annotation) {
+  private static @NotNull TextRange annotationRange(@NotNull PsiAnnotation annotation) {
     PsiElement element = annotation;
     int startOffset = element.getTextRange().getStartOffset();
     PsiElement last = element;
@@ -140,8 +134,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return false;
   }
 
-  @Nullable
-  private static TextRange fileHeaderRange(@NotNull PsiJavaFile file) {
+  private static @Nullable TextRange fileHeaderRange(@NotNull PsiJavaFile file) {
     PsiElement first = file.getFirstChild();
     if (first instanceof PsiWhiteSpace) first = first.getNextSibling();
     PsiElement element = first;
@@ -636,9 +629,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return settings.isCollapseMethods();
   }
 
-  private void addCodeBlockFolds(@NotNull final List<? super FoldingDescriptor> list, @NotNull PsiElement scope,
-                                 @NotNull final Set<? super PsiElement> processedComments,
-                                 @NotNull final Document document,
+  private void addCodeBlockFolds(final @NotNull List<? super FoldingDescriptor> list, @NotNull PsiElement scope,
+                                 final @NotNull Set<? super PsiElement> processedComments,
+                                 final @NotNull Document document,
                                  final boolean quick) {
     final boolean dumb = DumbService.isDumb(scope.getProject());
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -725,8 +718,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return false;
   }
 
-  @NotNull
-  protected String rightArrow() {
+  protected @NotNull String rightArrow() {
     return "->";
   }
 

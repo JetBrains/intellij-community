@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (foo?.bar!!) call" "true"
 class Foo {
     val bar = Bar()
 }

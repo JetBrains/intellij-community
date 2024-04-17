@@ -1,4 +1,4 @@
-// "Replace with 'Collection.size()'" "true"
+// "Replace with 'Collection.size()'" "true-preview"
 
 import java.util.ArrayList;
 import java.util.List;

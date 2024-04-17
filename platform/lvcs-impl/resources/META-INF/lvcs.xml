@@ -1,19 +1,29 @@
 <idea-plugin>
   <actions resource-bundle="messages.LocalHistoryBundle">
+    <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction">
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction">
+      <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.method.text"/>
+      <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.class.text"/>
+      <override-text place="GoToAction"/>
+    </action>
+    <action id="LocalHistory.ShowProjectHistory" class="com.intellij.history.integration.ui.actions.ShowProjectHistoryAction">
+      <override-text place="GoToAction"/>
+      <override-text place="Vcs.Toolbar.Widget"/>
+    </action>
+    <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
+      <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
+      <add-to-group group-id="ViewRecentActions" anchor="last"/>
+    </action>
+    <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
+
     <group id="LocalHistory" class="com.intellij.history.integration.ui.actions.LocalHistoryGroup" popup="true">
-      <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction">
-        <override-text place="GoToAction"/>
-        <override-text place="Vcs.Toolbar.Widget"/>
-      </action>
-      <action id="LocalHistory.ShowSelectionHistory" class="com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction">
-        <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.method.text"/>
-        <synonym key="action.synonym.LocalHistory.ShowSelectionHistory.class.text"/>
-        <override-text place="GoToAction"/>
-      </action>
-      <action id="LocalHistory.ShowProjectHistory" class="com.intellij.history.integration.ui.actions.ShowProjectHistoryAction">
-        <override-text place="GoToAction"/>
-      </action>
-      <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
+      <reference ref="LocalHistory.ShowHistory"/>
+      <reference ref="LocalHistory.ShowSelectionHistory"/>
+      <reference ref="LocalHistory.ShowProjectHistory"/>
+      <reference ref="RecentChanges"/>
+      <reference ref="LocalHistory.PutLabel"/>
 
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>
     </group>
@@ -24,11 +34,6 @@
       <separator/>
       <add-to-group group-id="FileMenu" relative-to-action="SaveAll" anchor="before"/>
     </group>
-
-    <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">
-      <keyboard-shortcut first-keystroke="alt shift C" keymap="$default"/>
-      <add-to-group group-id="ViewRecentActions" anchor="last"/>
-    </action>
 
     <group id="LocalHistory.Vcs.Operations.Popup.Group">
       <separator key="separator.Local.History.text"/>
@@ -43,7 +48,8 @@
 
     <!--Activity View-->
     <action id="ActivityView.Revert" class="com.intellij.platform.lvcs.impl.actions.RevertAction" icon="AllIcons.Actions.Rollback"/>
-    <action id="ActivityView.RevertDifferences" class="com.intellij.platform.lvcs.impl.actions.RevertDifferencesAction" icon="AllIcons.Actions.Rollback"/>
+    <action id="ActivityView.RevertDifferences" class="com.intellij.platform.lvcs.impl.actions.RevertDifferencesAction"
+            icon="AllIcons.Actions.Rollback"/>
     <action id="ActivityView.CreatePatch" class="com.intellij.platform.lvcs.impl.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
 
     <group id="ActivityView.Toolbar">

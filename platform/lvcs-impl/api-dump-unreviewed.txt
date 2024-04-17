@@ -85,7 +85,6 @@ c:com.intellij.history.core.LocalHistoryFacade
 - bs:endChangeSet$default(com.intellij.history.core.LocalHistoryFacade,java.lang.String,com.intellij.history.ActivityId,I,java.lang.Object):V
 - f:forceBeginChangeSet():V
 - f:getChangeListInTests():com.intellij.history.core.ChangeList
-- f:getRecentChanges(com.intellij.history.core.tree.RootEntry):java.util.List
 - f:moved(java.lang.String,java.lang.String):V
 - f:putLabelInTests(com.intellij.history.core.changes.PutLabelChange):V
 - f:putSystemLabel(java.lang.String,java.lang.String,I):com.intellij.history.core.LabelImpl
@@ -358,13 +357,6 @@ f:com.intellij.history.core.revisions.Difference
 - getRight():com.intellij.history.core.tree.Entry
 - getRightContentRevision(com.intellij.history.integration.IdeaGateway):com.intellij.openapi.vcs.changes.ContentRevision
 - isFile():Z
-f:com.intellij.history.core.revisions.RecentChange
-- <init>(com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision):V
-- getChangeName():java.lang.String
-- getRevisionAfter():com.intellij.history.core.revisions.Revision
-- getRevisionBefore():com.intellij.history.core.revisions.Revision
-- getTimestamp():J
-- toString():java.lang.String
 a:com.intellij.history.core.revisions.Revision
 - <init>():V
 - a:findEntry():com.intellij.history.core.tree.Entry
@@ -676,10 +668,6 @@ c:com.intellij.history.integration.ui.models.Progress$Empty
 - com.intellij.history.integration.ui.models.Progress
 - <init>():V
 - processed(I):V
-f:com.intellij.history.integration.ui.models.RecentChangeDialogModel
-- com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
-- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.revisions.RecentChange):V
-- getTitle():java.lang.String
 f:com.intellij.history.integration.ui.models.RevisionData
 - <init>(com.intellij.history.core.revisions.Revision,java.util.List):V
 - f:component1():com.intellij.history.core.revisions.Revision
@@ -714,15 +702,19 @@ f:com.intellij.history.integration.ui.models.RevisionSelectionCalculator
 - com.intellij.history.integration.ui.models.SelectionCalculator
 - <init>(com.intellij.history.integration.IdeaGateway,java.util.List,I,I):V
 - f:canCalculateFor(com.intellij.history.core.revisions.Revision,com.intellij.history.integration.ui.models.Progress):Z
-- f:getSelectionFor(com.intellij.history.core.revisions.Revision,com.intellij.history.integration.ui.models.Progress):com.intellij.diff.Block
 a:com.intellij.history.integration.ui.models.SelectionCalculator
 - sf:Companion:com.intellij.history.integration.ui.models.SelectionCalculator$Companion
 - <init>(com.intellij.history.integration.IdeaGateway,java.util.List,I,I):V
 - f:canCalculateFor(com.intellij.platform.lvcs.impl.RevisionId,com.intellij.history.integration.ui.models.Progress):Z
+- sf:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I):com.intellij.history.integration.ui.models.SelectionCalculator
+- sf:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I,Z):com.intellij.history.integration.ui.models.SelectionCalculator
 - pa:getEntry(com.intellij.platform.lvcs.impl.RevisionId):com.intellij.history.core.tree.Entry
 - f:getSelectionFor(com.intellij.platform.lvcs.impl.RevisionId,com.intellij.history.integration.ui.models.Progress):com.intellij.diff.Block
 - f:processContents(kotlin.jvm.functions.Function2):V
 f:com.intellij.history.integration.ui.models.SelectionCalculator$Companion
+- f:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I):com.intellij.history.integration.ui.models.SelectionCalculator
+- f:create(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I,Z):com.intellij.history.integration.ui.models.SelectionCalculator
+- bs:create$default(com.intellij.history.integration.ui.models.SelectionCalculator$Companion,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.tree.RootEntry,java.lang.String,java.util.List,I,I,Z,I,java.lang.Object):com.intellij.history.integration.ui.models.SelectionCalculator
 f:com.intellij.history.integration.ui.models.SelectionDifferenceModel
 - com.intellij.history.integration.ui.models.FileDifferenceModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.integration.ui.models.RevisionSelectionCalculator,com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision,I,I,Z):V
@@ -793,12 +785,6 @@ pa:com.intellij.history.integration.ui.views.HistoryDialog$MyAction
 - pa:isEnabled(com.intellij.history.integration.ui.models.HistoryDialogModel):Z
 - performIfEnabled():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.history.integration.ui.views.RecentChangeDialog
-- com.intellij.history.integration.ui.views.DirectoryHistoryDialog
-- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.revisions.RecentChange):V
-f:com.intellij.history.integration.ui.views.RecentChangesPopup
-- <init>():V
-- s:show(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade):V
 f:com.intellij.history.integration.ui.views.RevisionsList
 - sf:RECENT_PERIOD:I
 - <init>(com.intellij.history.integration.ui.views.RevisionsList$SelectionListener):V

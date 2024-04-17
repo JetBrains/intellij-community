@@ -113,14 +113,15 @@ fun useExpression(
     val useSymbol = symbolProvider.provideMethodSymbol("kotlin.io.use")
     val lambdaParameter = if (variableIdentifier != null) JKParameter(JKTypeElement(JKNoType), variableIdentifier) else null
     val lambda = JKLambdaExpression(body, listOfNotNull(lambdaParameter))
-    val methodCall = JKCallExpressionImpl(useSymbol, listOf(lambda).toArgumentList())
+    val methodCall = JKCallExpressionImpl(useSymbol, listOf(lambda).toArgumentList(), canMoveLambdaOutsideParentheses = true)
     return JKQualifiedExpression(receiver, methodCall)
 }
 
 fun kotlinAssert(assertion: JKExpression, message: JKExpression?, symbolProvider: JKSymbolProvider): JKCallExpressionImpl =
     JKCallExpressionImpl(
         symbolProvider.provideMethodSymbol("kotlin.assert"),
-        listOfNotNull(assertion, message).toArgumentList()
+        listOfNotNull(assertion, message).toArgumentList(),
+        canMoveLambdaOutsideParentheses = true
     )
 
 fun jvmAnnotation(name: String, symbolProvider: JKSymbolProvider): JKAnnotation =
@@ -235,7 +236,11 @@ fun JKClass.getOrCreateCompanionObject(): JKClass =
 
 fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpression {
     val lambda = JKLambdaExpression(body)
-    return JKCallExpressionImpl(symbolProvider.provideMethodSymbol("kotlin.run"), JKArgumentList(lambda))
+    return JKCallExpressionImpl(
+        symbolProvider.provideMethodSymbol("kotlin.run"),
+        JKArgumentList(lambda),
+        canMoveLambdaOutsideParentheses = true
+    )
 }
 
 fun assignmentStatement(target: JKVariable, expression: JKExpression, symbolProvider: JKSymbolProvider): JKKtAssignmentStatement =
@@ -320,13 +325,15 @@ fun JKExpression.qualified(qualifier: JKExpression?) =
 fun JKExpression.callOn(
     symbol: JKMethodSymbol,
     arguments: List<JKExpression> = emptyList(),
-    typeArguments: List<JKTypeElement> = emptyList()
-) = JKQualifiedExpression(
+    typeArguments: List<JKTypeElement> = emptyList(),
+    canMoveLambdaOutsideParentheses: Boolean = false
+): JKQualifiedExpression = JKQualifiedExpression(
     this,
     JKCallExpressionImpl(
         symbol,
         JKArgumentList(arguments.map { JKArgumentImpl(it) }),
-        JKTypeArgumentList(typeArguments)
+        JKTypeArgumentList(typeArguments),
+        canMoveLambdaOutsideParentheses = canMoveLambdaOutsideParentheses
     )
 )
 
@@ -342,7 +349,7 @@ val JKElement.psi: PsiElement?
 inline fun <reified Elem : PsiElement> JKElement.psi(): Elem? =
     (this as? PsiOwner)?.psi as? Elem
 
-fun JKTypeElement.present(): Boolean = type != JKNoType
+fun JKTypeElement.isPresent(): Boolean = type != JKNoType
 
 fun JKStatement.isEmpty(): Boolean = when (this) {
     is JKEmptyStatement -> true
@@ -351,7 +358,7 @@ fun JKStatement.isEmpty(): Boolean = when (this) {
     else -> false
 }
 
-fun JKInheritanceInfo.present(): Boolean =
+fun JKInheritanceInfo.isPresent(): Boolean =
     extends.isNotEmpty() || implements.isNotEmpty()
 
 fun JKInheritanceInfo.supertypeCount(): Int =

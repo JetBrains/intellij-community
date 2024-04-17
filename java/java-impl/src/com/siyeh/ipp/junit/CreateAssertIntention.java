@@ -49,8 +49,7 @@ public final class CreateAssertIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new CreateAssertPredicate();
   }
 
@@ -120,8 +119,7 @@ public final class CreateAssertIntention extends MCIntention {
     PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement);
   }
 
-  @NonNls
-  private static String buildNewStatement(@NonNls String memberName, PsiElement context, String... argumentTexts) {
+  private static @NonNls String buildNewStatement(@NonNls String memberName, PsiElement context, String... argumentTexts) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final StringBuilder builder = new StringBuilder(memberName).append('(');
     boolean comma = false;
@@ -187,7 +185,7 @@ public final class CreateAssertIntention extends MCIntention {
       return false;
     }
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    @NonNls final String methodName = methodExpression.getReferenceName();
+    final @NonNls String methodName = methodExpression.getReferenceName();
     if (!"equals".equals(methodName)) {
       return false;
     }

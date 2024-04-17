@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -175,7 +175,7 @@ public final class ContentUtilEx extends ContentsUtil {
    */
   public static boolean closeContentTab(@NotNull ContentManager manager, @NotNull Condition<? super JComponent> condition) {
     for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent tabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
+      if (content instanceof TabbedContent tabbedContent && tabbedContent.hasMultipleTabs()) {
         JComponent component = findContentComponent(tabbedContent, condition);
         if (component != null) {
           tabbedContent.removeContent(component);

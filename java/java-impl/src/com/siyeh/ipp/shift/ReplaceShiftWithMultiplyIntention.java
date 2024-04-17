@@ -66,8 +66,7 @@ public final class ReplaceShiftWithMultiplyIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new ShiftByLiteralPredicate();
   }
 

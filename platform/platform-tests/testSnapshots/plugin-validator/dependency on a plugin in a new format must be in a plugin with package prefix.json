@@ -1,6 +1,0 @@
-1 errors:
-[1]: ------------------------------
-`dependencies` must be specified only for plugin in a new format: package prefix is not specified (
-  referencingDescriptorFile=/dependent/META-INF/plugin.xml
-)
------------------------------------

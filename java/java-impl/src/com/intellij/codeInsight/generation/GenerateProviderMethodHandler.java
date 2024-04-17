@@ -40,8 +40,7 @@ public class GenerateProviderMethodHandler implements CodeInsightActionHandler {
    * @param context the initial PsiElement
    * @return the context PsiElement, or null if no context is found
    */
-  @Nullable
-  private static PsiElement getContext(@Nullable PsiElement context) {
+  private static @Nullable PsiElement getContext(@Nullable PsiElement context) {
     while (context != null && !(context.getParent() instanceof PsiClass)) {
       context = context.getParent();
     }

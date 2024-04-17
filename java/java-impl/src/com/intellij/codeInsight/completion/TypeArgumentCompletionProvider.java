@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -28,7 +28,7 @@ class TypeArgumentCompletionProvider {
   static final ElementPattern<PsiElement> IN_TYPE_ARGS = psiElement().inside(PsiReferenceParameterList.class);
   private static final Logger LOG = Logger.getInstance(TypeArgumentCompletionProvider.class);
   private final boolean mySmart;
-  @Nullable private final JavaCompletionSession mySession;
+  private final @Nullable JavaCompletionSession mySession;
 
   TypeArgumentCompletionProvider(boolean smart, @Nullable JavaCompletionSession session) {
     mySmart = smart;
@@ -115,8 +115,7 @@ class TypeArgumentCompletionProvider {
     return last ? TailTypes.charType('>') : CommaTailType.INSTANCE;
   }
 
-  @Nullable
-  static Pair<PsiTypeParameterListOwner, Integer> getTypeParameterInfo(PsiElement context) {
+  static @Nullable Pair<PsiTypeParameterListOwner, Integer> getTypeParameterInfo(PsiElement context) {
     final PsiReferenceParameterList parameterList = PsiTreeUtil.getContextOfType(context, PsiReferenceParameterList.class, true);
     if (parameterList == null) return null;
 
@@ -160,9 +159,8 @@ class TypeArgumentCompletionProvider {
       myLookupString = StringUtil.join(myTypeItems, item -> item.getType().getPresentableText(), ", ");
     }
 
-    @NotNull
     @Override
-    public Object getObject() {
+    public @NotNull Object getObject() {
       return myTypeItems.get(0).getObject();
     }
 
@@ -177,9 +175,8 @@ class TypeArgumentCompletionProvider {
       }
     }
 
-    @NotNull
     @Override
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
       return myLookupString;
     }
 

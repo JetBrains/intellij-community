@@ -17,11 +17,11 @@ import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 import kotlin.math.roundToInt
 
-abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
-                                mainComponent: JComponent,
-                                @NonNls splitterProportionKey: String,
-                                defaultProportion: Float = 0.7f,
-                                parentDisposable: Disposable) : Disposable {
+internal abstract class FrameDiffPreview(uiProperties: VcsLogUiProperties,
+                                         mainComponent: JComponent,
+                                         @NonNls splitterProportionKey: String,
+                                         defaultProportion: Float = 0.7f,
+                                         parentDisposable: Disposable) : Disposable {
   private val previewDiffSplitter: Splitter = OnePixelSplitter(uiProperties[MainVcsLogUiProperties.DIFF_PREVIEW_VERTICAL_SPLIT],
                                                                splitterProportionKey, defaultProportion)
 

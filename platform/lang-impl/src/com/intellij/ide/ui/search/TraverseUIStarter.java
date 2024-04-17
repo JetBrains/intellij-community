@@ -67,11 +67,6 @@ public final class TraverseUIStarter implements ApplicationStarter {
   private boolean I18N_OPTION;
 
   @Override
-  public String getCommandName() {
-    return "traverseUI";
-  }
-
-  @Override
   public int getRequiredModality() {
     return NOT_IN_EDT;
   }

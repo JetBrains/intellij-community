@@ -62,11 +62,6 @@ open class IdeStarter : ModernApplicationStarter() {
   override val isHeadless: Boolean
     get() = false
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
-  override val commandName: String?
-    get() = null
-
   @OptIn(IntellijInternalApi::class)
   override suspend fun start(args: List<String>) {
     coroutineScope {

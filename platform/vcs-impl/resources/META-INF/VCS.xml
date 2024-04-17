@@ -7,12 +7,6 @@
   <xi:include href="/META-INF/VcsExtensions.xml"/>
   <xi:include href="/META-INF/VcsActions.xml"/>
 
-  <xi:include href="/META-INF/vcs-log.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/dvcs.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/smart-update.xml">
     <xi:fallback/>
   </xi:include>

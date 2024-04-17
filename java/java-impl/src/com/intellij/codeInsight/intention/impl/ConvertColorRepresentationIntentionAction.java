@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -66,10 +66,9 @@ public final class ConvertColorRepresentationIntentionAction extends PsiUpdateMo
     arguments.replace(newArguments);
   }
 
-  @Nullable
-  private static PsiExpressionList createNewArguments(@NotNull PsiElementFactory factory,
-                                                      PsiParameter @NotNull [] parameters,
-                                                      PsiExpression @NotNull [] arguments) {
+  private static @Nullable PsiExpressionList createNewArguments(@NotNull PsiElementFactory factory,
+                                                                PsiParameter @NotNull [] parameters,
+                                                                PsiExpression @NotNull [] arguments) {
     final String[] newValues = createArguments(parameters, arguments);
     if (newValues == null) return null;
 
@@ -146,8 +145,7 @@ public final class ConvertColorRepresentationIntentionAction extends PsiUpdateMo
     return result;
   }
 
-  @Nullable
-  private static Integer createInt(Integer... ints) {
+  private static @Nullable Integer createInt(Integer... ints) {
     int result = 0;
     for (Integer i : ints) {
       if (i == null) return null;
@@ -156,26 +154,22 @@ public final class ConvertColorRepresentationIntentionAction extends PsiUpdateMo
     return result;
   }
 
-  @Nullable
-  private static Integer computeInteger(@NotNull PsiExpression expr) {
+  private static @Nullable Integer computeInteger(@NotNull PsiExpression expr) {
     final Object result = compute(expr);
     return result instanceof Integer ? (Integer)result : null;
   }
 
-  @Nullable
-  private static Boolean computeBoolean(@NotNull PsiExpression expr) {
+  private static @Nullable Boolean computeBoolean(@NotNull PsiExpression expr) {
     final Object result = compute(expr);
     return result instanceof Boolean ? (Boolean)result : null;
   }
 
-  @Nullable
-  private static Object compute(@NotNull PsiExpression expr) {
+  private static @Nullable Object compute(@NotNull PsiExpression expr) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expr, true);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.convert.color.representation.family");
   }
 
@@ -184,8 +178,7 @@ public final class ConvertColorRepresentationIntentionAction extends PsiUpdateMo
     return JAVA_AWT_COLOR.equals(fqn) || COLOR_UI_RESOURCE.equals(fqn);
   }
 
-  @Nullable
-  private static String getFqn(@Nullable PsiJavaCodeReferenceElement ref) {
+  private static @Nullable String getFqn(@Nullable PsiJavaCodeReferenceElement ref) {
     if (ref != null) {
       final PsiReference reference = ref.getReference();
       if (reference != null && reference.resolve() instanceof PsiClass cls) {

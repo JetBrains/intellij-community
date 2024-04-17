@@ -6,9 +6,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.ide.util.EditorHelper
-import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
@@ -55,11 +53,11 @@ internal class CreateKotlinCallablePsiEditor(
     private val pointerToContainer: SmartPsiElementPointer<*>,
     private val callableInfo: NewCallableInfo,
 ) {
-    fun execute(anchor: PsiElement, request: CreateMethodRequest) {
+    fun execute(anchor: PsiElement, isExtension: Boolean, targetClass: PsiElement?) {
         val factory = KtPsiFactory(project)
         var function = factory.createFunction(callableInfo.definitionAsString)
         val passedContainerElement = pointerToContainer.element ?: return
-        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && (request as? CreateMethodFromKotlinUsageRequest)?.isExtension != true
+        val shouldComputeContainerFromAnchor = if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension
             else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             (anchor.getExtractionContainers().firstOrNull() ?: return)
@@ -71,12 +69,11 @@ internal class CreateKotlinCallablePsiEditor(
             if (insertContainer is KtClass) {
                 insertContainer.getOrCreateCompanionObject()
             } else {
-                val targetClass = (request as? CreateMethodFromKotlinUsageRequest)?.targetClass
                 val ktClass = targetClass as? KtClass
                 if (ktClass != null) {
                     val hasCompanionObject = ktClass.companionObjects.isNotEmpty()
                     val companion = ktClass.getOrCreateCompanionObject()
-                    if (!hasCompanionObject && request.isExtension) {
+                    if (!hasCompanionObject && isExtension) {
                         companion.body?.delete()
                     }
                 }
@@ -103,12 +100,11 @@ internal class CreateKotlinCallablePsiEditor(
         val editor = EditorHelper.openInEditor(file)
         val functionMarker = editor.document.createRangeMarker(function.textRange)
         moveCaretToCallable(editor, function)
-        val templateImpl = setupTemplate(function)
-        TemplateManager.getInstance(project)
-            .startTemplate(editor, templateImpl, buildTemplateListener(editor, file, functionMarker))
+        val template = setupTemplate(function)
+        TemplateManager.getInstance(project).startTemplate(editor, template, buildTemplateListener(editor, file, functionMarker))
     }
 
-    private fun setupTemplate(function: KtNamedFunction): TemplateImpl {
+    private fun setupTemplate(function: KtNamedFunction): Template {
         val builder = TemplateBuilderImpl(function)
         function.valueParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
 
@@ -116,7 +112,7 @@ internal class CreateKotlinCallablePsiEditor(
         val returnType = function.typeReference
         if (returnType != null) builder.replaceElement(returnType, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedReturnType))
 
-        return builder.buildInlineTemplate() as TemplateImpl
+        return builder.buildInlineTemplate()
     }
 
     private fun TemplateBuilderImpl.setupParameter(parameterIndex: Int, parameter: KtParameter) {

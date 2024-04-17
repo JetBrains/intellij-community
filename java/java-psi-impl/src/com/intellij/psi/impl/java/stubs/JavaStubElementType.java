@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -21,11 +21,11 @@ public abstract class JavaStubElementType<StubT extends StubElement<?>, PsiT ext
   private final boolean myLeftBound;
 
   private final Set<IElementType> myParentElementTypes;
-  protected JavaStubElementType(@NotNull @NonNls final String debugName, @NotNull IElementType parentElementType) {
+  protected JavaStubElementType(final @NotNull @NonNls String debugName, @NotNull IElementType parentElementType) {
     this(debugName, false, parentElementType);
   }
 
-  protected JavaStubElementType(@NotNull @NonNls final String debugName, final boolean leftBound, @NotNull IElementType parentElementType) {
+  protected JavaStubElementType(final @NotNull @NonNls String debugName, final boolean leftBound, @NotNull IElementType parentElementType) {
     super(debugName, JavaLanguage.INSTANCE);
     myLeftBound = leftBound;
     myParentElementTypes = Collections.singleton(parentElementType);
@@ -36,9 +36,8 @@ public abstract class JavaStubElementType<StubT extends StubElement<?>, PsiT ext
     return myParentElementTypes;
   }
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "java." + toString();
   }
 

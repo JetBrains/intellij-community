@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.google.common.collect.Comparators;
@@ -55,10 +55,8 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
     super(PsiElement.class);
   }
   
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.sort.content");
   }
 
@@ -100,9 +98,8 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return element instanceof PsiExpression && ExpressionUtils.computeConstantExpression((PsiExpression)element) instanceof String;
     }
 
-    @NotNull
     @Override
-    public Comparator<PsiElement> getComparator() {
+    public @NotNull Comparator<PsiElement> getComparator() {
       return Comparator.comparing(element -> (String)ExpressionUtils.computeConstantExpression((PsiExpression)element));
     }
   }
@@ -115,9 +112,8 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return ExpressionUtils.computeConstantExpression(expression) instanceof Integer;
     }
 
-    @NotNull
     @Override
-    public Comparator<PsiElement> getComparator() {
+    public @NotNull Comparator<PsiElement> getComparator() {
       return Comparator.comparing(element -> (Integer)ExpressionUtils.computeConstantExpression((PsiExpression)element));
     }
   }
@@ -137,9 +133,8 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return extractType(element) != null;
     }
 
-    @NotNull
     @Override
-    public Comparator<PsiElement> getComparator() {
+    public @NotNull Comparator<PsiElement> getComparator() {
       return Comparator.comparing(el -> {
         PsiExpression expr = (PsiExpression)el;
         return ((PsiReferenceExpression)Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(expr))).getReferenceName();
@@ -163,9 +158,8 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return element instanceof PsiEnumConstant;
     }
 
-    @NotNull
     @Override
-    public Comparator<PsiElement> getComparator() {
+    public @NotNull Comparator<PsiElement> getComparator() {
       return Comparator.comparing(el -> ((PsiEnumConstant)el).getName());
     }
 
@@ -280,7 +274,7 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
    *
    * @param <C> context type
    */
-  private static abstract class Sortable<C> {
+  private abstract static class Sortable<C> {
     abstract boolean isEnd(@NotNull PsiElement element);
 
     abstract SortingStrategy @NotNull [] sortStrategies();
@@ -289,14 +283,12 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
      * Extract context to use in consequent calls
      * @param origin element at which intention was invoked
      */
-    @Nullable
-    abstract C getContext(@NotNull PsiElement origin);
+    abstract @Nullable C getContext(@NotNull PsiElement origin);
 
     /**
      * @return list of elements that should be used in comparisons
      */
-    @NotNull
-    abstract List<PsiElement> getElements(@NotNull C context);
+    abstract @NotNull List<PsiElement> getElements(@NotNull C context);
 
     abstract PsiElement getFirst(C context);
 
@@ -350,8 +342,7 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return sortingStrategy.isSuitableElements(elements) && !Comparators.isInOrder(elements, comparator);
     }
 
-    @Nullable
-    private SortingStrategy findSortingStrategy(List<? extends PsiElement> elements) {
+    private @Nullable SortingStrategy findSortingStrategy(List<? extends PsiElement> elements) {
       return ContainerUtil.find(sortStrategies(), strategy -> ContainerUtil.and(elements, strategy::isSuitableEntryElement));
     }
 
@@ -550,7 +541,7 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
     }
   }
 
-  static abstract class ElementBasedSortable<T extends PsiElement> extends Sortable<ElementBasedSortable.ElementContext<T>> {
+  abstract static class ElementBasedSortable<T extends PsiElement> extends Sortable<ElementBasedSortable.ElementContext<T>> {
     static class ElementContext<T extends PsiElement> {
       private final @NotNull T myElement;
 
@@ -591,8 +582,7 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
     /**
      * Return element, which children will be sorted. This element will be replaced with new one.
      */
-    @Nullable
-    abstract T getElementToSort(@NotNull PsiElement origin);
+    abstract @Nullable T getElementToSort(@NotNull PsiElement origin);
 
     @Nullable
     @Override
@@ -774,8 +764,7 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return argumentList.getExpressionCount() >= MIN_ELEMENTS_COUNT;
     }
 
-    @Nullable
-    private static PsiExpression getTopmostExpression(@Nullable final PsiExpression expression) {
+    private static @Nullable PsiExpression getTopmostExpression(final @Nullable PsiExpression expression) {
       if (expression == null) return null;
       @NotNull PsiExpression current = expression;
       while (true) {
@@ -786,8 +775,7 @@ public final class SortContentAction extends PsiUpdateModCommandAction<PsiElemen
       return current;
     }
 
-    @Nullable
-    private static PsiExpression getClosestExpression(@NotNull PsiElement element) {
+    private static @Nullable PsiExpression getClosestExpression(@NotNull PsiElement element) {
       while (element != null) {
         if (element instanceof PsiWhiteSpace) {
           element = element.getNextSibling();

@@ -143,6 +143,7 @@ f:org.jetbrains.jps.javac.Iterators
 - s:asIterator(java.lang.Object):java.util.Iterator
 - s:collect(java.lang.Iterable,java.util.Collection):java.util.Collection
 - s:contains(java.lang.Iterable,java.lang.Object):Z
+- s:count(java.lang.Iterable):I
 - s:equals(java.lang.Iterable,java.lang.Iterable):Z
 - s:equals(java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.javac.Iterators$BiFunction):Z
 - s:filter(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$BooleanFunction):java.lang.Iterable
@@ -164,6 +165,7 @@ f:org.jetbrains.jps.javac.Iterators
 - s:notNullFilter():org.jetbrains.jps.javac.Iterators$BooleanFunction
 - s:recurse(java.lang.Object,org.jetbrains.jps.javac.Iterators$Function,Z):java.lang.Iterable
 - s:recurseDepth(java.lang.Object,org.jetbrains.jps.javac.Iterators$Function,Z):java.lang.Iterable
+- s:reverse(java.util.List):java.lang.Iterable
 - s:unique(java.lang.Iterable):java.lang.Iterable
 - s:unique(java.util.Iterator):java.util.Iterator
 - s:uniqueBy(java.lang.Iterable,org.jetbrains.jps.javac.Iterators$Provider):java.lang.Iterable

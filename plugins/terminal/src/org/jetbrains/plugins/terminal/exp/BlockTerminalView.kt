@@ -68,16 +68,15 @@ class BlockTerminalView(
 
     promptView.controller.addListener(object : PromptStateListener {
       override fun promptVisibilityChanged(visible: Boolean) {
+        val wasActive = focusModel.isActive
+        promptView.component.isVisible = visible
         component.revalidate()
-        invokeLater(getDisposed(), ModalityState.any()) {
-          // do not focus the terminal if something outside the terminal is focused now
-          // it can be the case when long command is finished and prompt becomes shown
-          if (focusModel.isActive) {
-            IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
-          }
+        if (wasActive) {
+          IdeFocusManager.getInstance(project).requestFocus(preferredFocusableComponent, true)
         }
       }
     })
+    promptView.controller.promptIsVisible = false
 
     promptView.controller.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {

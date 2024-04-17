@@ -63,6 +63,10 @@ public abstract class AbstractSurroundWithTest extends KotlinLightCodeInsightFix
         doTest(path, new KotlinTryExpressionSurrounder.TryCatch());
     }
 
+    public void doTestWithTryFinallyExpressionSurrounder(String path) throws Exception {
+        doTest(path, new KotlinTryExpressionSurrounder.TryFinally());
+    }
+
     public void doTestWithTryCatchFinallySurrounder(String path) throws Exception {
         doTest(path, new KotlinTryCatchFinallySurrounder());
     }

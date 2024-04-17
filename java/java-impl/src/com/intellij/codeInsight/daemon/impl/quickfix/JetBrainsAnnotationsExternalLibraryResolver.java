@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -24,9 +24,8 @@ public final class JetBrainsAnnotationsExternalLibraryResolver extends ExternalL
   private static final ExternalLibraryDescriptor JAVA8 = new ExternalLibraryDescriptor("org.jetbrains", "annotations",
                                                                                        null, null, VERSION);
 
-  @Nullable
   @Override
-  public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
+  public @Nullable ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
     if (AnnotationUtil.isJetbrainsAnnotation(shortClassName)) {
       ExternalLibraryDescriptor libraryDescriptor = getAnnotationsLibraryDescriptor(contextModule);
       return new ExternalClassResolveResult("org.jetbrains.annotations." + shortClassName, libraryDescriptor);
@@ -34,8 +33,7 @@ public final class JetBrainsAnnotationsExternalLibraryResolver extends ExternalL
     return null;
   }
 
-  @NotNull
-  public static ExternalLibraryDescriptor getAnnotationsLibraryDescriptor(@NotNull Module contextModule) {
+  public static @NotNull ExternalLibraryDescriptor getAnnotationsLibraryDescriptor(@NotNull Module contextModule) {
     boolean java8 = JavaFeature.TYPE_ANNOTATIONS.isSufficient(LanguageLevelUtil.getEffectiveLanguageLevel(contextModule));
     return java8 ? JAVA8 : JAVA5;
   }

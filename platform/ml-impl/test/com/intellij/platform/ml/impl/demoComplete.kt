@@ -3,6 +3,7 @@ package com.intellij.platform.ml.impl
 
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.IntEventField
@@ -16,14 +17,14 @@ import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
 import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
 import com.intellij.platform.ml.impl.logs.AnalysisMethods
-import com.intellij.platform.ml.impl.logs.EntireSessionLoggingScheme
-import com.intellij.platform.ml.impl.logs.registerEventSessionFinished
+import com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy
+import com.intellij.platform.ml.impl.logs.registerMLTaskLogging
 import com.intellij.platform.ml.impl.model.MLModel
 import com.intellij.platform.ml.impl.monitoring.MLApproachInitializationListener
 import com.intellij.platform.ml.impl.monitoring.MLApproachListener
 import com.intellij.platform.ml.impl.monitoring.MLSessionListener
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
-import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachListeners.Companion.monitoredBy
+import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener.ApproachToListener.Companion.monitoredBy
 import com.intellij.platform.ml.impl.session.*
 import com.intellij.platform.ml.impl.session.analysis.LanguageSpecific
 import com.intellij.platform.ml.impl.session.analysis.SessionAnalyser
@@ -67,9 +68,12 @@ class RandomModel(val seed: Int) : MLModel<Double>, Versioned, LanguageSpecific 
 private class MockTaskFusLogger : CounterUsagesCollector() {
   companion object {
     val GROUP = EventLogGroup("mock-task", 1).also {
-      it.registerEventSessionFinished("finished", MockTask, EntireSessionLoggingScheme.DOUBLE,
-                                      AnalysisMethods(
-                                        sessionAnalysers = listOf(FailureLogger(), ExceptionLogger(), RandomModelSeedAnalyser),
+      it.registerMLTaskLogging("finished", MockTask, EntireSessionLoggingStrategy.DOUBLE,
+                               AnalysisMethods(
+                                        sessionAnalysers = listOf(FailureLogger(),
+                                                                  ExceptionLogger(),
+                                                                  RandomModelSeedAnalyser,
+                                                                  VeryUselessSessionAnalyser()),
                                         structureAnalysers = listOf(SomeStructureAnalyser())
                                       ))
     }
@@ -140,8 +144,8 @@ class SomeStructureAnalyser<M : MLModel<Double>> : StructureAnalyser<M, Double> 
 
   private class LookupAnalyser<M : MLModel<Double>>(
     private val analysis: MutableMap<DescribedSessionTree<M, Double>, PerTier<Set<Feature>>>
-  ) : SessionTree.LevelVisitor<M, Double>(levelIndex = 1) {
-    override fun visitLevel(level: DescribedLevel, levelRoot: DescribedSessionTree<M, Double>) {
+  ) : SessionTree.LevelVisitor<M, DescribedTierData, Double>(levelIndex = 1) {
+    override fun visitLevel(level: LevelData<DescribedTierData>, levelRoot: SessionTree<M, DescribedTierData, Double>) {
       val lookup = level.environment[TierLookup]
       analysis[levelRoot] = mapOf(TierLookup to setOf(LOOKUP_INDEX with lookup.index))
     }
@@ -172,7 +176,7 @@ class SomeListener(private val name: String) : MLTaskGroupListener {
   private fun log(message: String) = println("[Listener $name says] $message")
 
   inner class InitializationListener : MLApproachInitializationListener<RandomModel, Double> {
-    override fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, callParameters: Environment): MLApproachListener<RandomModel, Double> {
+    override fun onAttemptedToStartSession(apiPlatform: MLApiPlatform, permanentSessionEnvironment: Environment, permanentCallParameters: Environment): MLApproachListener<RandomModel, Double> {
       log("attempted to initialize session")
       return ApproachListener()
     }
@@ -194,7 +198,7 @@ class SomeListener(private val name: String) : MLTaskGroupListener {
   }
 
   inner class SessionListener : MLSessionListener<RandomModel, Double> {
-    override fun onSessionDescriptionFinished(sessionTree: DescribedRootContainer<RandomModel, Double>) {
+    override fun onSessionFinishedSuccessfully(sessionTree: DescribedRootContainer<RandomModel, Double>) {
       log("session successfully described: $sessionTree")
     }
   }
@@ -227,6 +231,30 @@ class MockTaskApproachDetails : LogDrivenModelInference.SessionDetails<RandomMod
 
 private class MockTaskApproachBuilder : LogDrivenModelInference.Builder<RandomModel, Double>(MockTask, MockTaskApproachDetails.Builder())
 
+
+private class VeryUselessSessionAnalyser : SessionAnalyser.Default<RandomModel, Double>() {
+  companion object {
+    val ON_BEFORE_STARTED = BooleanEventField("on_before_started")
+    val ON_SESSION_STARTED = BooleanEventField("on_session_started")
+    val ON_SESSION_FINISHED = BooleanEventField("on_session_finished")
+  }
+
+  override val declaration: List<EventField<*>> = listOf(
+    ON_BEFORE_STARTED, ON_SESSION_STARTED, ON_SESSION_FINISHED
+  )
+
+  override suspend fun onBeforeSessionStarted(callParameters: Environment, sessionEnvironment: Environment): List<EventPair<*>> {
+    return listOf(ON_BEFORE_STARTED with true)
+  }
+
+  override suspend fun onSessionStarted(callParameters: Environment, sessionEnvironment: Environment, session: Session<Double>, mlModel: RandomModel): List<EventPair<*>> {
+    return listOf(ON_SESSION_STARTED with true)
+  }
+
+  override suspend fun onSessionFinished(callParameters: Environment, sessionEnvironment: Environment, sessionTreeRoot: DescribedRootContainer<RandomModel, Double>): List<EventPair<*>> {
+    return listOf(ON_SESSION_FINISHED with true)
+  }
+}
 
 class MockTaskTaskTest : MLApiLogsTestCase() {
   fun `test demo ml task`() {

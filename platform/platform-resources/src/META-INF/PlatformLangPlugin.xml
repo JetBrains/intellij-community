@@ -7,14 +7,7 @@
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
-  <!-- should be here, otherwise not loaded in tests (in unit test mode, the platform prefix is `PlatformLangXml) -->
-  <content>
-    <module name="intellij.platform.navbar.compatibility"/>
-    <module name="intellij.platform.navbar.compatibility.backend"/>
-    <module name="intellij.platform.navbar.compatibility.ide"/>
-    <module name="intellij.platform.navbar.compatibility.monolith"/>
-    <module name="intellij.platform.settings.local"/>
-  </content>
+  <xi:include href="/META-INF/essential-modules.xml"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
   <xi:include href="/idea/PlatformLangActionManager.xml"/>
@@ -82,6 +75,7 @@
     <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
 
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
+    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkHeadlessActivity"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
@@ -161,9 +155,6 @@
   <xi:include href="/META-INF/lvcs.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/collaboration-tools.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>
@@ -202,5 +193,5 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="intellij.platform.navbar.backend.xml"/>
-  <xi:include href="intellij.platform.navbar.ide.xml"/>
+  <xi:include href="intellij.platform.navbar.frontend.xml"/>
 </idea-plugin>

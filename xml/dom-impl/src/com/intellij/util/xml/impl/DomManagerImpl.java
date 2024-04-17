@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
@@ -42,6 +42,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
@@ -69,27 +70,26 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   private static final Key<CachedValue<DomInvocationHandler>> HANDLER_KEY = Key.create("DomInvocationHandler");
   private static final Key<CachedValue<DomInvocationHandler>> HANDLER_KEY_FOR_INDEX = Key.create("DomInvocationHandlerForIndex");
 
-  private final EventDispatcher<DomEventListener> myListeners = EventDispatcher.create(DomEventListener.class);
+  private final EventDispatcher<DomEventListener> listeners = EventDispatcher.create(DomEventListener.class);
 
-  private final Project myProject;
-  private final DomApplicationComponent myApplicationComponent;
+  private final Project project;
+  private final DomApplicationComponent applicationComponent;
 
-  private boolean myChanging;
-  private boolean myBulkChange;
+  private boolean isChanging;
+  private boolean isBulkChange;
 
   public DomManagerImpl(Project project) {
     super(project);
-    myProject = project;
-    myApplicationComponent = DomApplicationComponent.getInstance();
-
-    final PomModel pomModel = PomManager.getModel(project);
+    this.project = project;
+    applicationComponent = DomApplicationComponent.getInstance();
 
     Disposable parent = project.getService(DomDisposable.class);
 
+    PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       @Override
       public void modelChanged(@NotNull PomModelEvent event) {
-        if (myChanging) return;
+        if (isChanging) return;
 
         TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(pomModel.getModelAspect(TreeAspect.class));
         if (changeSet != null) {
@@ -153,11 +153,11 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
-    if (!(file instanceof NewVirtualFile) || myProject.isDisposed()) {
+    if (!(file instanceof NewVirtualFile) || project.isDisposed()) {
       return Collections.emptyList();
     }
 
-    FileManager fileManager = PsiManagerEx.getInstanceEx(myProject).getFileManager();
+    FileManager fileManager = PsiManagerEx.getInstanceEx(project).getFileManager();
 
     final List<DomEvent> events = new ArrayList<>();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
@@ -182,7 +182,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   boolean isInsideAtomicChange() {
-    return myBulkChange;
+    return isBulkChange;
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
@@ -192,7 +192,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @Override
   public void addDomEventListener(DomEventListener listener, Disposable parentDisposable) {
-    myListeners.addListener(listener, parentDisposable);
+    listeners.addListener(listener, parentDisposable);
   }
 
   @Override
@@ -208,7 +208,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   void fireEvent(@NotNull DomEvent event) {
     if (isInsideAtomicChange()) return;
     clearCache();
-    myListeners.getMulticaster().eventOccured(event);
+    listeners.getMulticaster().eventOccured(event);
   }
 
   private void fireEvents(@NotNull Collection<? extends DomEvent> events) {
@@ -219,26 +219,32 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @Override
   public DomGenericInfo getGenericInfo(final Type type) {
-    return myApplicationComponent.getStaticGenericInfo(type);
+    return applicationComponent.getStaticGenericInfo(type);
   }
 
   public static @Nullable DomInvocationHandler getDomInvocationHandler(DomElement proxy) {
     if (proxy instanceof DomFileElement) {
       return null;
     }
-    if (proxy instanceof DomInvocationHandler) {
-      return (DomInvocationHandler)proxy;
+    if (proxy instanceof DomInvocationHandler h) {
+      return h;
     }
-    final InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
+
+    InvocationHandler handler = AdvancedProxy.getInvocationHandler(proxy);
     if (handler instanceof StableInvocationHandler) {
       //noinspection unchecked
-      final DomElement element = ((StableInvocationHandler<DomElement>)handler).getWrappedElement();
+      DomElement element = ((StableInvocationHandler<DomElement>)handler).getWrappedElement();
       return element == null ? null : getDomInvocationHandler(element);
     }
-    if (handler instanceof DomInvocationHandler) {
+    else if (handler instanceof DomInvocationHandler) {
       return (DomInvocationHandler)handler;
     }
-    return null;
+    else if (handler instanceof DomInvocationHandler.MyInvocationHandler h) {
+      return h.getDomInvocationHandler();
+    }
+    else {
+      return null;
+    }
   }
 
   public static @NotNull DomInvocationHandler getNotNullHandler(DomElement proxy) {
@@ -249,17 +255,17 @@ public final class DomManagerImpl extends DomManager implements Disposable {
     return handler;
   }
 
-  public static StableInvocationHandler<?> getStableInvocationHandler(Object proxy) {
+  static StableInvocationHandler<?> getStableInvocationHandler(Object proxy) {
     return (StableInvocationHandler<?>)AdvancedProxy.getInvocationHandler(proxy);
   }
 
   public DomApplicationComponent getApplicationComponent() {
-    return myApplicationComponent;
+    return applicationComponent;
   }
 
   @Override
   public Project getProject() {
-    return myProject;
+    return project;
   }
 
   @Override
@@ -268,17 +274,10 @@ public final class DomManagerImpl extends DomManager implements Disposable {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       clearCache();
     }
-    final DomFileElementImpl<T> fileElement = getFileElement(file);
+
+    DomFileElementImpl<T> fileElement = getFileElement(file);
     assert fileElement != null;
     return fileElement;
-  }
-
-  public Set<DomFileDescription<?>> getFileDescriptions(String rootTagName) {
-    return myApplicationComponent.getFileDescriptions(rootTagName);
-  }
-
-  public Set<DomFileDescription<?>> getAcceptingOtherRootTagNameDescriptions() {
-    return myApplicationComponent.getAcceptingOtherRootTagNameDescriptions();
   }
 
   public @NotNull @NonNls String getComponentName() {
@@ -296,11 +295,11 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   }
 
   boolean setChanging(final boolean changing) {
-    boolean oldChanging = myChanging;
+    boolean oldChanging = isChanging;
     if (changing) {
       assert !oldChanging;
     }
-    myChanging = changing;
+    isChanging = changing;
     return oldChanging;
   }
 
@@ -324,7 +323,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   @Override
   public @Nullable <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file, Class<T> domClass) {
     DomFileDescription<?> description = getDomFileDescription(file);
-    if (description != null && myApplicationComponent.assignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
+    if (description != null && applicationComponent.assignabilityCache.isAssignable(domClass, description.getRootElementClass())) {
       return getFileElement(file);
     }
     return null;
@@ -332,7 +331,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @Override
   public @Nullable DomElement getDomElement(final XmlTag element) {
-    if (myChanging) return null;
+    if (isChanging) return null;
 
     final DomInvocationHandler handler = getDomHandler(element);
     return handler != null ? handler.getProxy() : null;
@@ -340,7 +339,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @Override
   public @Nullable GenericAttributeValue<?> getDomElement(final XmlAttribute attribute) {
-    if (myChanging) return null;
+    if (isChanging) return null;
 
     DomInvocationHandler handler = getDomHandler(attribute);
     return handler == null ? null : (GenericAttributeValue<?>)handler.getProxy();
@@ -388,7 +387,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @Override
   public <T extends DomElement> T createMockElement(final Class<T> aClass, final Module module, final boolean physical) {
-    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.xml", XmlFileType.INSTANCE, "", 0, physical);
+    final XmlFile file = (XmlFile)PsiFileFactory.getInstance(project).createFileFromText("a.xml", XmlFileType.INSTANCE, "", 0, physical);
     file.putUserData(MOCK_ELEMENT_MODULE, module);
     file.putUserData(MOCK, new Object());
     return getFileElement(file, aClass, "I_sincerely_hope_that_nobody_will_have_such_a_root_tag_name").getRootElement();
@@ -422,8 +421,8 @@ public final class DomManagerImpl extends DomManager implements Disposable {
   @TestOnly
   public <T extends DomElement> void registerFileDescription(final DomFileDescription<T> description, Disposable parentDisposable) {
     clearCache();
-    myApplicationComponent.registerFileDescription(description);
-    Disposer.register(parentDisposable, () -> myApplicationComponent.removeDescription(description));
+    applicationComponent.registerFileDescription(description);
+    Disposer.register(parentDisposable, () -> applicationComponent.removeDescription(description));
   }
 
   @Override
@@ -440,19 +439,19 @@ public final class DomManagerImpl extends DomManager implements Disposable {
 
   @Override
   public TypeChooserManager getTypeChooserManager() {
-    return myApplicationComponent.getTypeChooserManager();
+    return applicationComponent.getTypeChooserManager();
   }
 
   void performAtomicChange(@NotNull Runnable change) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ThreadingAssertions.assertWriteAccess();
 
-    final boolean oldValue = myBulkChange;
-    myBulkChange = true;
+    boolean oldValue = isBulkChange;
+    isBulkChange = true;
     try {
       change.run();
     }
     finally {
-      myBulkChange = oldValue;
+      isBulkChange = oldValue;
       if (!oldValue) {
         clearCache();
       }

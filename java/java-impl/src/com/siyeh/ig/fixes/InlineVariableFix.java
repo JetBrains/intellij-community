@@ -31,8 +31,7 @@ import java.util.Collection;
 public class InlineVariableFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("inline.variable.quickfix");
   }
 

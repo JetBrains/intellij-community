@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,9 +38,8 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
     return new LocalQuickFix[]{new ThrowToReturnQuickFix()};
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.problem.descriptor");
   }
 
@@ -98,8 +97,7 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
     }
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambdaSupplier(@NotNull PsiMethodCallExpression expression) {
+  private static @Nullable PsiLambdaExpression getLambdaSupplier(@NotNull PsiMethodCallExpression expression) {
     PsiExpression[] expressions = expression.getArgumentList().getExpressions();
     if (expressions.length != 1) {
       return null;
@@ -111,8 +109,7 @@ public final class ThrowableSupplierOnlyThrowExceptionInspection extends BaseIns
     return lambdaSupplier;
   }
 
-  @NotNull
-  private static List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
+  private static @NotNull List<PsiThrowStatement> getThrowStatements(@Nullable PsiLambdaExpression psiLambdaExpression) {
     if (psiLambdaExpression == null) {
       return List.of();
     }

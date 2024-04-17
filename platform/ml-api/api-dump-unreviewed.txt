@@ -3,12 +3,6 @@ f:com.intellij.platform.ml.EnvironmentKt
 f:com.intellij.platform.ml.MutableEnvironmentKt
 - sf:putTierInstance(com.intellij.platform.ml.MutableEnvironment,com.intellij.platform.ml.TierInstance):V
 - sf:set(com.intellij.platform.ml.MutableEnvironment,com.intellij.platform.ml.Tier,java.lang.Object):V
-com.intellij.platform.ml.NestableMLSession
-- a:createNestedSession(com.intellij.platform.ml.Environment,com.intellij.platform.ml.Environment,kotlin.coroutines.Continuation):java.lang.Object
-- a:onLastNestedSessionCreated(kotlin.coroutines.Continuation):java.lang.Object
-com.intellij.platform.ml.SinglePrediction
-- a:cancelPrediction(kotlin.coroutines.Continuation):java.lang.Object
-- a:predict(kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.ml.TierInstance
 - <init>(com.intellij.platform.ml.Tier,java.lang.Object):V
 - f:component1():com.intellij.platform.ml.Tier

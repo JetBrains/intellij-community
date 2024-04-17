@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +42,7 @@ public final class RefactoringChangeUtil {
 
   public static PsiReferenceExpression qualifyReference(@NotNull PsiReferenceExpression referenceExpression,
                                                         @NotNull PsiMember member,
-                                                        @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
+                                                        final @Nullable PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
     while (methodCallExpression != null) {
@@ -109,8 +109,7 @@ public final class RefactoringChangeUtil {
    * @return class based on the type of the qualifier expression,
    *         or containing class, if {@code expression} is not qualified
    */
-  @Nullable
-  public static PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
+  public static @Nullable PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression != null) {
       PsiType expressionType = qualifierExpression.getType();

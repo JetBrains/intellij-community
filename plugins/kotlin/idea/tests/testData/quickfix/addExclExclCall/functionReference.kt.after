@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (foo!!) call" "true"
 class Foo {
     fun f() = 1
 }

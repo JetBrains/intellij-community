@@ -30,8 +30,13 @@ class PluginContentDescriptor(@JvmField val modules: List<ModuleItem>) {
   }
 
   @ApiStatus.Internal
-  class ModuleItem(@JvmField val name: String, @JvmField val configFile: String?) {
-    @JvmField internal var descriptor: IdeaPluginDescriptorImpl? = null
+  class ModuleItem(
+    @JvmField val name: String,
+    @JvmField val configFile: String?,
+    @JvmField internal val descriptorContent: String?,
+  ) {
+    @JvmField
+    internal var descriptor: IdeaPluginDescriptorImpl? = null
 
     fun requireDescriptor(): IdeaPluginDescriptorImpl = descriptor ?: throw IllegalStateException("Descriptor is not set for $this")
 

@@ -40,8 +40,7 @@ public final class FlipConditionalIntention extends MCIntention {
   }
 
   @Override
-  @NotNull
-  public PsiElementPredicate getElementPredicate() {
+  public @NotNull PsiElementPredicate getElementPredicate() {
     return new FlipConditionalPredicate();
   }
 

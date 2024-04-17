@@ -4,7 +4,6 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
@@ -23,19 +22,37 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.IntPredicate;
 
-@ApiStatus.Internal
-public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
-  static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
-  private static final boolean DO_EXPENSIVE_CHECKS = (IndexDebugProperties.IS_UNIT_TEST_MODE ||
-                                                     IndexDebugProperties.EXTRA_SANITY_CHECKS) && !IndexDebugProperties.IS_IN_STRESS_TESTS;
-  private static final boolean USE_SYNCHRONIZED_VALUE_CONTAINER =
-    SystemProperties.getBooleanProperty("idea.use.synchronized.value.container", false);
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
-  // there is no volatile as we modify under write lock and read under read lock
-  // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
-  // when there are several value mapped, myInputIdMapping is ValueToInputMap<Value, Data> (it's actually just THashMap), myInputIdMappingValue = null
+@ApiStatus.Internal
+public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable {
+  static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
+
+  private static final boolean DO_EXPENSIVE_CHECKS = (IndexDebugProperties.IS_UNIT_TEST_MODE ||
+                                                      IndexDebugProperties.EXTRA_SANITY_CHECKS) && !IndexDebugProperties.IS_IN_STRESS_TESTS;
+  private static final boolean USE_SYNCHRONIZED_VALUE_CONTAINER = getBooleanProperty("idea.use.synchronized.value.container", false);
+
+  /**
+   * There is no volatile as we modify under write lock and read under read lock
+   * <p>
+   * Storage is optimized for 0 or 1 (value, inputId*) entry, which is the most often (80%) case:
+   * <pre>
+   * 0 entries:  (myInputIdMapping, myInputIdMappingValue) = (null, null)
+   * 1 entry:    (myInputIdMapping, myInputIdMappingValue) = (value, inputId*)
+   * >1 entries: (myInputIdMapping, myInputIdMappingValue) = (ValueToInputMap[ Value -> inputId*], null)
+   * </pre>
+   *
+   * inputId* (=set of inputId, also mentioned as FileSet in code) is also stored to optimize for the most
+   * frequent case of 0-1 inputIds: it is either null (empty set), Integer (1-element set) or {@link ChangeBufferingList}
+   * for a >1 inputIds.
+   * See e.g. {@link #addValue(int, Object)} for decoding code.
+   *
+   * @see ValueToInputMap
+   */
   private Object myInputIdMapping;
   private Object myInputIdMappingValue;
+
+  //fields below are for expensiveSelfChecks, they are null if expensiveSelfChecks=false
   private Int2ObjectMap<Object> myPresentInputIds;
   private List<UpdateOp> myUpdateOps;
 
@@ -82,6 +99,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     private final int myInputId;
     private final Object myValue;
   }
+
   @Override
   public void addValue(int inputId, Value value) {
     //TODO RC: should we check inputId > 0 here? Storage format assumes positive ids, and it's better
@@ -117,13 +135,19 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       }
     }
   }
+
   private void ensureInputIdAssociatedWithValue(int inputId, Value value) {
     if (myPresentInputIds != null) {
       Object normalizedValue = wrapValue(value);
       Object previousValue = myPresentInputIds.remove(inputId);
       myUpdateOps.add(new UpdateOp(UpdateOp.Type.REMOVE, inputId, normalizedValue));
       if (previousValue != null && !previousValue.equals(normalizedValue)) {
-        LOG.error("Can't remove value '" + normalizedValue + "'; input id " + inputId + " is not present for the specified value in:\n" + getDebugMessage());
+        LOG.error("Can't remove value '" +
+                  normalizedValue +
+                  "'; input id " +
+                  inputId +
+                  " is not present for the specified value in:\n" +
+                  getDebugMessage());
       }
     }
   }
@@ -151,12 +175,12 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
   @Override
   public int size() {
-    return myInputIdMapping != null ? myInputIdMapping instanceof ValueToInputMap ? ((ValueToInputMap<?>)myInputIdMapping).size(): 1 : 0;
+    return myInputIdMapping != null ? myInputIdMapping instanceof ValueToInputMap ? ((ValueToInputMap<?>)myInputIdMapping).size() : 1 : 0;
   }
 
   @Override
   public boolean removeAssociatedValue(int inputId) {
-    for (InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       Value value = valueIterator.next();
       if (valueIterator.getValueAssociationPredicate().test(inputId)) {
         removeValue(inputId, valueIterator.getFileSetObject(), value);
@@ -453,7 +477,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
                      final @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
-    for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
+    for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       final Value value = valueIterator.next();
       externalizer.save(out, value);
 
@@ -470,7 +494,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       final int singleFileId = (Integer)fileSetObject;
       checkFileIdSanity(singleFileId);
       DataInputOutputUtil.writeINT(out, singleFileId); // most common 90% case during index building
-    } else {
+    }
+    else {
       // serialize positive file ids with delta encoding
       final ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
       final IntIdsIterator intIterator = originalInput.sortedIntIterator();
@@ -480,7 +505,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
         final int singleFileId = intIterator.next();
         checkFileIdSanity(singleFileId);
         DataInputOutputUtil.writeINT(out, singleFileId);
-      } else {
+      }
+      else {
         DataInputOutputUtil.writeINT(out, -intIterator.size());
 
         int prev = 0;
@@ -587,7 +613,10 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  private void associateValueOptimizely(FileId2ValueMapping<Value> mapping, Value value, ChangeBufferingList changeBufferingList, int inputId) {
+  private void associateValueOptimizely(FileId2ValueMapping<Value> mapping,
+                                        Value value,
+                                        ChangeBufferingList changeBufferingList,
+                                        int inputId) {
     if (changeBufferingList != null) {
       ensureInputIdIsntAssociatedWithAnotherValue(inputId, value, true);
       changeBufferingList.add(inputId);
@@ -646,7 +675,9 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
-  // a class to distinguish a difference between user-value with Object2ObjectOpenHashMap type and internal value container
+  /**
+   * Dedicated class to distinguish a difference between user-value with Object2ObjectOpenHashMap type and internal value container.
+   */
   private static final class ValueToInputMap<Value> extends Object2ObjectOpenHashMap<Value, Object> {
     ValueToInputMap(int size) {
       super(size);

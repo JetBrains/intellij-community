@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "false"
+// "Add non-null asserted (arg!!) call" "false"
 
 fun foo(arg: String?) {
     if (arg == null) {

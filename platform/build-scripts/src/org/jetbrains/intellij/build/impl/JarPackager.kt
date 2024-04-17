@@ -32,7 +32,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.*
 import java.util.*
-import kotlin.collections.LinkedHashSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readLines
 
@@ -303,10 +302,13 @@ class JarPackager private constructor(
           continue
         }
 
+        val descriptor = readXmlAsModel(context.findFileInModuleSources(moduleName, "$moduleName.xml")!!)
+
         computeSourcesForModule(
           item = ModuleItem(
             moduleName = moduleName,
-            relativeOutputFile = layout.getMainJarName(),
+            // relative path with `/` is always packed by dev-mode, so, we don't need to fix resolving for now and can imporove it later
+            relativeOutputFile = if (descriptor.getAttributeValue("package") == null) "modules/$moduleName.jar" else layout.getMainJarName(),
             reason = "<- ${layout.mainModule} (plugin content)",
           ),
           moduleOutputPatcher = moduleOutputPatcher,
@@ -444,6 +446,9 @@ class JarPackager private constructor(
         val libName = libRef.libraryName
         if (includeProjectLib) {
           if (platformLayout!!.hasLibrary(libName) || layout.hasLibrary(libName)) {
+            //if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+            //  Span.current().addEvent("$libName is not included into module $moduleName as explicitly included into platform layout")
+            //}
             continue
           }
 
@@ -803,11 +808,19 @@ private fun getLibraryFiles(
 ): MutableList<Path> {
   val files = library.getPaths(JpsOrderRootType.COMPILED)
   val libName = library.name
+  if (libName == "ktor-client-jvm") {
+    return files
+  }
 
   // allow duplication if packed into the same target file and have the same common prefix
   files.removeIf {
     val alreadyCopiedFor = copiedFiles.get(it) ?: return@removeIf false
     val alreadyCopiedLibraryName = alreadyCopiedFor.library.name
+
+    if (alreadyCopiedFor.library.name.startsWith("ktor-") && libName.startsWith("ktor-")) {
+      return@removeIf true
+    }
+
     alreadyCopiedFor.targetFile == targetFile &&
     (alreadyCopiedLibraryName.startsWith("ktor-") ||
      alreadyCopiedLibraryName.startsWith("commons-") ||

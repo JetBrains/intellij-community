@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.AbstractToolbarCombo
-import com.intellij.openapi.wm.impl.DefaultCutStrategy
 import com.intellij.ui.JBColor
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.ui.UIUtil
@@ -57,7 +56,7 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     g.color = if (c.isEnabled) c.getForeground() else UIUtil.getLabelDisabledForeground()
 
     val baseline = c.getBaseline(c.width, c.height)
-    val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width)
+    val text = c.textCutStrategy.calcShownText(fullText, metrics, textRect.width, g)
     val strBounds = metrics.getStringBounds(text, g).getBounds()
     strBounds.setLocation(max(0, (textRect.centerX - strBounds.centerX).toInt()), baseline)
 
@@ -137,7 +136,7 @@ open class AbstractToolbarComboUI : ComponentUI(), PropertyChangeListener {
     val preferredSize = c.preferredSize
     val metrics = c.getFontMetrics(c.getFont())
     val currentTextWidth = metrics.stringWidth(c.text ?: "")
-    val minTextWidth = DefaultCutStrategy().calcMinTextWidth(c.text ?: "", metrics)
+    val minTextWidth = c.textCutStrategy.calcMinTextWidth(c.text ?: "", metrics)
     return Dimension(preferredSize.width - currentTextWidth + minTextWidth, preferredSize.height)
   }
 }

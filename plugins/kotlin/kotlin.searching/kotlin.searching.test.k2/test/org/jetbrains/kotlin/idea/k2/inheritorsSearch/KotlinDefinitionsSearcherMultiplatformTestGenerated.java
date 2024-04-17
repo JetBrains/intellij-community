@@ -25,6 +25,11 @@ public abstract class KotlinDefinitionsSearcherMultiplatformTestGenerated extend
             KotlinTestUtils.runTest(this::doTestKotlinClass, this, testDataFilePath);
         }
 
+        @TestMetadata("obj.kt")
+        public void testObj() throws Exception {
+            runTest("../testData/multiplatform/definitionsSearch/kotlinClass/obj.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("../testData/multiplatform/definitionsSearch/kotlinClass/simple.kt");

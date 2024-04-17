@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -40,9 +40,8 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
     }
   }
 
-  @NotNull
   @Override
-  public Role getRole() {
+  public @NotNull Role getRole() {
     return JavaPackageAccessibilityStatementElementType.typeToRole(getStub().getStubType());
   }
 
@@ -56,15 +55,13 @@ public final class ClsPackageAccessibilityStatementImpl extends ClsRepositoryPsi
     return nullize(getStub().getPackageName());
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
+  public @NotNull Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
     return myModuleReferences.getValue();
   }
 
-  @NotNull
   @Override
-  public List<String> getModuleNames() {
+  public @NotNull List<String> getModuleNames() {
     return getStub().getTargets();
   }
 

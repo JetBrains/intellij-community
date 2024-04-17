@@ -5,7 +5,7 @@ import kotlinx.coroutines.*
 fun main() {
     runBlocking  {
         for (i in 0..100) {
-            launch {
+            launch(Dispatchers.Default) {
                 val x = funWithSuspendLast(i)
                 println("x = $x")
                 delay(1)

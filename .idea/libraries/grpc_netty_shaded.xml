@@ -1,18 +1,31 @@
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-netty-shaded:1.61.0">
+    <properties maven-id="io.grpc:grpc-netty-shaded:1.63.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.61.0/grpc-netty-shaded-1.61.0.jar">
-          <sha256sum>41a8f5d3731a1871ee4a13837a17e9562447b233ffb694945950b8d3a59ee5ac</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.63.0/grpc-netty-shaded-1.63.0.jar">
+          <sha256sum>4d170c599e47214f35c8955cda3edd7cdb8171229b45795d4d61eb43dfa76402</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.63.0/grpc-util-1.63.0.jar">
+          <sha256sum>b15006f22e76a6631dfb137a6930aaf9e0cb3a797499ec42394d79641fb770ee</sha256sum>
         </artifact>
       </verification>
+      <exclude>
+        <dependency maven-id="io.grpc:grpc-api" />
+        <dependency maven-id="io.grpc:grpc-core" />
+        <dependency maven-id="org.codehaus.mojo:animal-sniffer-annotations" />
+        <dependency maven-id="com.google.guava:guava" />
+        <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+        <dependency maven-id="io.perfmark:perfmark-api" />
+      </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.61.0/grpc-netty-shaded-1.61.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.63.0/grpc-netty-shaded-1.63.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.63.0/grpc-util-1.63.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.61.0/grpc-netty-shaded-1.61.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.63.0/grpc-netty-shaded-1.63.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.63.0/grpc-util-1.63.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

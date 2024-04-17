@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -323,20 +323,20 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         appendHeading(buf, JavaBundle.message("inspection.export.results.callees"));
         buf.append("<div class=\"problem-description\">");
       }
-      @NonNls final String ul = "<ul>";
+      final @NonNls String ul = "<ul>";
       buf.append(ul);
       for (RefElement refElement : possibleChildren) {
         if (!mentionedElements.contains(refElement)) {
           mentionedElements.add(refElement);
-          @NonNls final String li = "<li>";
+          final @NonNls String li = "<li>";
           buf.append(li);
           appendElementReference(buf, refElement, true);
-          @NonNls final String closeLi = "</li>";
+          final @NonNls String closeLi = "</li>";
           buf.append(closeLi);
           appendCallersList(refElement, buf, mentionedElements, false);
         }
       }
-      @NonNls final String closeUl = "</ul>";
+      final @NonNls String closeUl = "</ul>";
       buf.append(closeUl);
       if (appendCallees) {
         buf.append("</div>");

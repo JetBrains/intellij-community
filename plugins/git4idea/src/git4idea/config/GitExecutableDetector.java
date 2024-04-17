@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,7 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,6 +46,13 @@ public class GitExecutableDetector {
     "/opt/bin",
     "/usr/local/git/bin"};
 
+  private static final @NonNls String[] APPLEGIT_PATHS = {
+    "/usr/bin/git"
+  };
+  private static final @NonNls String[] APPLEGIT_DEPENDENCY_PATHS = {
+    "/Library/Developer/CommandLineTools/usr/bin/git",
+    "/Library/Preferences/com.apple.dt.Xcode"
+  };
 
   private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
   private static final List<String> WIN_BIN_DIRS = Arrays.asList("cmd", "bin");
@@ -174,7 +184,8 @@ public class GitExecutableDetector {
 
     @Override
     public void runDetection() {
-      File executableFromEnv = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE, getPathEnv(), null);
+      String executableName = SystemInfo.isWindows ? WIN_EXECUTABLE : UNIX_EXECUTABLE;
+      File executableFromEnv = PathEnvironmentVariableUtil.findInPath(executableName, getPathEnv(), null);
       String path = executableFromEnv != null ? executableFromEnv.getAbsolutePath() : null;
       myEnvExecutable.set(new DetectedPath(path));
     }
@@ -398,6 +409,18 @@ public class GitExecutableDetector {
       if (bashFile.exists()) return bashFile.getPath();
     }
     return null;
+  }
+
+  public static @NotNull List<Path> getDependencyPaths(@NotNull Path executablePath) {
+    try {
+      if (SystemInfo.isMac && ArrayUtil.contains(executablePath.toString(), APPLEGIT_PATHS)) {
+        return ContainerUtil.map(APPLEGIT_DEPENDENCY_PATHS, path -> Paths.get(path));
+      }
+    }
+    catch (InvalidPathException e) {
+      LOG.warn(e);
+    }
+    return Collections.emptyList();
   }
 
   // Compare strategy: greater is better (if v1 > v2, then v1 is a better candidate for the Git executable)

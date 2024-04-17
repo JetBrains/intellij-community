@@ -8,8 +8,8 @@ class Foo<T> {
     val map = HashMap<String, T>()
 
     fun test(l: String): T {
-        return __dummyTestFun__(l)
+        return t(l)
     }
 
-    private fun __dummyTestFun__(l: String): T? = map[l]
+    private fun t(l: String): T? = map[l]
 }

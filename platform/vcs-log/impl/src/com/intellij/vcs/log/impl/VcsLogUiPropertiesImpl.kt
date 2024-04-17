@@ -41,7 +41,8 @@ abstract class VcsLogUiPropertiesImpl<S : VcsLogUiPropertiesImpl.State>(private 
           state.graphOptions = migratedOptions.toStringList()
           state.bekSortType = 0
           migratedOptions
-        } else {
+        }
+        else {
           state.graphOptions.toGraphOptions() ?: PermanentGraph.Options.Default
         }
       }

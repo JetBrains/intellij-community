@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.dev.intmultimaps;
 
 import com.intellij.util.io.DataEnumerator;
@@ -30,7 +30,7 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
   /**
    * Method <b>adds</b> a value into a set of values for the key.
    * BEWARE: it is multi-value map -- new values do not overwrite previous ones, but appended to the set of values for the key.
-   * To overwrite previous value: remove and add new one, or use (to be implemented) replace method
+   * To overwrite previous value: remove and add new one, or use {@link #replace(int, int, int)}  method
    *
    * @return true if (key,value) pair was really put into the map -- i.e., wasn't there before
    */
@@ -93,6 +93,7 @@ public interface DurableIntToMultiIntMap extends Flushable, Closeable, Cleanable
    */
   boolean forEach(@NotNull KeyValueProcessor processor) throws IOException;
 
+  boolean isClosed();
 
   @FunctionalInterface
   interface ValueAcceptor {

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.dev.StorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
@@ -8,35 +9,69 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntFunction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- *
+ * The issue with property-based tests of durable Maps is: because Map is durable, small and large worksets
+ * may trigger different code paths. So to really stress most of branches in the code one need to generate
+ * quite a lot of key-values -- ideally, more than fit into a heap. But so many key-values trigger OutOfMemory
+ * quite quickly -- especially because we have not very big -Xmx in TeamCity runs.
+ * <p>
+ * So the trick: generate not key-values, but a memory-frugal 'substrate' -- an int. Introduce a 'substrate decoder',
+ * function [int->Entry(key, value)]. Keep only the substrate in memory (=frugal) and convert the substrate to
+ * the Entry as-needed -- don't keep the generated Entry in memory.
  */
-public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, String>> {
+public abstract class KeyValueStoreTestBase<K, V, S extends KeyValueStore<K, V>> {
 
   private static final int ENOUGH_KEY_VALUES = 1_000_000;
 
+  /** Simplest key-value substrate decoder */
+  public static final IntFunction<Entry<String, String>> STRING_SUBSTRATE_DECODER = substrate -> {
+    String key = String.valueOf(substrate);
+    if(substrate % 1024 == 1023){
+      String veryLongKey = StringUtil.repeat(key, 1024);
+      return Map.entry(
+        veryLongKey,
+        String.valueOf(substrate) + '.' + veryLongKey
+      );
+    }
+
+    return Map.entry(
+      key,
+      String.valueOf(substrate) + '.' + substrate
+    );
+  };
+
   protected static int[] keyValuesSubstrate;
 
-  protected abstract @NotNull StorageFactory<S> factory();
+  protected abstract @NotNull StorageFactory<? extends S> factory();
 
   private Path storagePath;
+
   protected S storage;
+
+  /**
+   * Converts int (substrate) into a Entry(key, value).
+   * Property: for different input substrate (int) function must return both Key and Value different
+   */
+  private final IntFunction<Entry<K, V>> keyValueSubstrateDecoder;
 
   @BeforeAll
   static void beforeAll() {
     keyValuesSubstrate = generateDataSubstrate(ThreadLocalRandom.current(), ENOUGH_KEY_VALUES);
   }
 
+
+  protected KeyValueStoreTestBase(@NotNull IntFunction<Entry<K, V>> decoder) { keyValueSubstrateDecoder = decoder; }
+
   @BeforeEach
   void setUp(@TempDir Path tempDir) throws IOException {
-    StorageFactory<S> factory = factory();
+    StorageFactory<? extends S> factory = factory();
     storagePath = tempDir.resolve("storage");
     storage = factory.open(storagePath);
   }
@@ -59,8 +94,10 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
 
   @Test
   public void singleKeyValuePut_returnedByGet() throws IOException {
-    String key = "testKey";
-    String value = "testValue";
+    Entry<K, V> entry = keyValue(42);
+
+    K key = entry.getKey();
+    V value = entry.getValue();
 
     assertNull(storage.get(key),
                "Empty store contains no keys");
@@ -74,8 +111,10 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
   @Test
   @Disabled("Null is not supported now")
   public void nullKeyValuePut_returnedByGet() throws IOException {
-    String key = null;
-    String value = "testValue";
+    Entry<K, V> entry = keyValue(42);
+
+    K key = null;
+    V value = entry.getValue();
 
     assertNull(storage.get(key),
                "Empty store contains no keys");
@@ -86,28 +125,13 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
                  storage.get(key));
   }
 
-  @Test
-  public void emptyKeyValuePut_returnedByGet() throws IOException {
-    //I want to check key with serialized length=0 is treated normally by the map
-    // I implicitly assume empty string is serialized to the byte[0]
-    String key = "";
-    String value = "testValue";
-
-    assertNull(storage.get(key),
-               "Empty store contains no keys");
-
-    storage.put(key, value);
-
-    assertEquals(value,
-                 storage.get(key));
-  }
 
   @Test
   public void manyKeysValuesPut_returnedByGet() throws IOException {
     for (int substrate : keyValuesSubstrate) {
-      Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String value = entry.getValue();
+      Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V value = entry.getValue();
 
       storage.put(key, value);
 
@@ -117,9 +141,9 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
     }
 
     for (int substrate : keyValuesSubstrate) {
-      Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String value = entry.getValue();
+      Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V value = entry.getValue();
       assertEquals(value,
                    storage.get(key),
                    "store[" + key + "] must be == [" + value + "]");
@@ -129,40 +153,22 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
   @Test
   public void manyKeysValuesPut_returnedByGet_afterReopen() throws IOException {
     for (int substrate : keyValuesSubstrate) {
-      Entry<String, String> entry = keyValue(substrate);
+      Entry<K, V> entry = keyValue(substrate);
       storage.put(entry.getKey(), entry.getValue());
     }
 
     reopenStorage();
 
     for (int substrate : keyValuesSubstrate) {
-      Entry<String, String> entry = keyValue(substrate);
-      String key = entry.getKey();
-      String value = entry.getValue();
+      Entry<K, V> entry = keyValue(substrate);
+      K key = entry.getKey();
+      V value = entry.getValue();
       assertEquals(value,
                    storage.get(key),
                    "store[" + key + "] must be == [" + value + "] even after reopen");
     }
   }
 
-  @Test
-  public void keysWithCollidingHashes_AreStillPutAndGetDifferently() throws IOException {
-    String key = "testKey";
-    List<String> collidingKeys = generateHashCollisions(key);
-
-    storage.put(key, key);
-    for (String collidingKey : collidingKeys) {
-      storage.put(collidingKey, collidingKey);
-    }
-
-
-    assertEquals(key,
-                 storage.get(key));
-    for (String collidingKey : collidingKeys) {
-      assertEquals(collidingKey,
-                   storage.get(collidingKey));
-    }
-  }
 
   // ============================= infrastructure: ========================================================== //
 
@@ -174,15 +180,10 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
       .toArray();
   }
 
-  protected static Entry<String, String> keyValue(int substrate) {
+  protected Entry<K, V> keyValue(int substrate) {
     //We need quite a lot of data to test persistent map, so it is taxing to actually store all key-values in memory.
     // Instead, we keep in memory just a single int32, and generate key & value from that int with bijection:
-    String key = String.valueOf(substrate);
-    String value = key + '.' + key;
-    return Map.entry(
-      key,
-      value
-    );
+    return keyValueSubstrateDecoder.apply(substrate);
   }
 
   protected S reopenStorage() throws IOException {
@@ -191,30 +192,5 @@ public abstract class KeyValueStoreTestBase<S extends KeyValueStore<String, Stri
     }
     storage = factory().open(storagePath);
     return storage;
-  }
-
-  /** @return >1 strings with same hash-code as sample */
-  protected static List<String> generateHashCollisions(@NotNull String sample) {
-    if (sample.length() <= 1) {
-      //just too hard
-      throw new IllegalArgumentException("Can't generate hash-collisions for empty and 1-char strings");
-    }
-
-    char ch1 = sample.charAt(0);
-    char ch2 = sample.charAt(1);
-    String suffix = sample.substring(2);
-
-    //31*ch1 + ch2 == 31*x + y
-    List<String> hashCollisions = List.of(
-      Character.toString(ch1 - 1) + Character.toString(ch2 + 31) + suffix,
-      Character.toString(ch1 - 2) + Character.toString(ch2 + 31 * 2) + suffix,
-      Character.toString(ch1 - 3) + Character.toString(ch2 + 31 * 3) + suffix
-    );
-    for (String collision : hashCollisions) {
-      if (collision.hashCode() != sample.hashCode()) {
-        throw new AssertionError("[" + collision + "].hash=" + collision.hashCode() + " != [" + sample + "].hash=" + sample.hashCode());
-      }
-    }
-    return hashCollisions;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -56,9 +56,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     return result;
   });
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     VirtualFile file = holder.getFile().getVirtualFile();
     if (file == null || !ProjectFileIndex.getInstance(holder.getProject()).isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES)) {
       return PsiElementVisitor.EMPTY_VISITOR;
@@ -112,8 +111,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       }
     }
 
-    @Nullable
-    private static PsiClass getAccessObjectType(@Nullable UExpression qualifier) {
+    private static @Nullable PsiClass getAccessObjectType(@Nullable UExpression qualifier) {
       if (qualifier == null || qualifier instanceof UThisExpression || qualifier instanceof USuperExpression) {
         return null;
       }
@@ -228,8 +226,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     return false;
   }
 
-  @Nullable
-  private static PsiClass getContextClass(@NotNull UElement sourceNode, boolean forClassReference) {
+  private static @Nullable PsiClass getContextClass(@NotNull UElement sourceNode, boolean forClassReference) {
     PsiElement sourcePsi = sourceNode.getSourcePsi();
     UClass sourceClass = UastUtils.findContaining(sourcePsi, UClass.class);
     if (sourceClass == null) return null;
@@ -297,17 +294,13 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
       myModule2 = module2;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.text", myModule1, myModule2);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.family.name");
     }
 

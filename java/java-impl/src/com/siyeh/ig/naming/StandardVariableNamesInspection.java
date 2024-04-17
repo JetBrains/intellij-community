@@ -34,7 +34,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public final class StandardVariableNamesInspection extends BaseInspection {
 
 
-  @NonNls static final Map<String, String> s_expectedTypes = Map.ofEntries(
+  static final @NonNls Map<String, String> s_expectedTypes = Map.ofEntries(
     Map.entry("b", "byte"),
     Map.entry("c", "char"),
     Map.entry("ch", "char"),
@@ -50,7 +50,7 @@ public final class StandardVariableNamesInspection extends BaseInspection {
     Map.entry("str", CommonClassNames.JAVA_LANG_STRING)
   );
 
-  @NonNls static final Map<String, String> s_boxingClasses = Map.of(
+  static final @NonNls Map<String, String> s_boxingClasses = Map.of(
     "int", CommonClassNames.JAVA_LANG_INTEGER,
     "short", CommonClassNames.JAVA_LANG_SHORT,
     "boolean", CommonClassNames.JAVA_LANG_BOOLEAN,
@@ -82,8 +82,7 @@ public final class StandardVariableNamesInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     final PsiVariable variable = (PsiVariable)infos[0];
     final String name = variable.getName();
     final String expectedType = s_expectedTypes.get(name);

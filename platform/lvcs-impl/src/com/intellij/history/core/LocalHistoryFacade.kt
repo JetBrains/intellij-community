@@ -18,8 +18,6 @@ package com.intellij.history.core
 import com.intellij.history.ActivityId
 import com.intellij.history.ByteContent
 import com.intellij.history.core.changes.*
-import com.intellij.history.core.revisions.ChangeRevision
-import com.intellij.history.core.revisions.RecentChange
 import com.intellij.history.core.tree.Entry
 import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
@@ -126,23 +124,6 @@ open class LocalHistoryFacade(private val changeList: ChangeList) {
     if (entry.isDirectory) return ByteContent(true, null)
 
     return ByteContent(false, entry.content.bytesIfAvailable)
-  }
-
-  fun getRecentChanges(root: RootEntry): List<RecentChange> {
-    val result = mutableListOf<RecentChange>()
-
-    for (c in changeList.iterChanges()) {
-      if (c.isContentChangeOnly) continue
-      if (c.isLabelOnly) continue
-      if (c.name == null) continue
-
-      val before = ChangeRevision(this, root, "", c, true)
-      val after = ChangeRevision(this, root, "", c, false)
-      result.add(RecentChange(before, after))
-      if (result.size >= 20) break
-    }
-
-    return result
   }
 
   fun accept(v: ChangeVisitor) = changeList.accept(v)

@@ -123,8 +123,8 @@ public final class WhileCanBeDoWhileInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static class Block {
-    private @NotNull final List<PsiStatement> statements;
-    private @NotNull final List<PsiComment> comments;
+    private final @NotNull List<PsiStatement> statements;
+    private final @NotNull List<PsiComment> comments;
     private final @Nullable PsiStatement block;
 
     Block(@NotNull PsiBlockStatement block) {

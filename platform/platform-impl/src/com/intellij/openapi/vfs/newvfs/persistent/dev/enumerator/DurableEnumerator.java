@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -11,6 +11,7 @@ import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.dev.enumerator.DataExternalizerEx.KnownSizeRecordWriter;
 import com.intellij.util.io.dev.enumerator.KeyDescriptorEx;
 import com.intellij.util.io.dev.intmultimaps.DurableIntToMultiIntMap;
+import com.intellij.util.io.dev.intmultimaps.HashUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +169,8 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   }
 
   private int lookupIdForValue(@NotNull V value) throws IOException {
-    int valueHash = adjustHash(valueDescriptor.getHashCode(value));
+    int hash = valueDescriptor.getHashCode(value);
+    int valueHash = HashUtils.adjustHash(hash);
     return valueHashToId.lookup(valueHash, candidateId -> {
       V candidateKey = valuesLog.read(candidateId, valueDescriptor::read);
       return valueDescriptor.isEqual(candidateKey, value);
@@ -176,7 +178,8 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
   }
 
   private int lookupOrCreateIdForValue(@NotNull V value) throws IOException {
-    int valueHash = adjustHash(valueDescriptor.getHashCode(value));
+    int hash = valueDescriptor.getHashCode(value);
+    int valueHash = HashUtils.adjustHash(hash);
     return valueHashToId.lookupOrInsert(
       valueHash,
       candidateId -> {
@@ -190,24 +193,14 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
       });
   }
 
-  private static int adjustHash(int hash) {
-    if (hash == DurableIntToMultiIntMap.NO_VALUE) {
-      //DurableIntToMultiIntMap doesn't allow 0 keys/values, hence replace 0 key with just anything !=0.
-      // Key (=hash) doesn't identify value uniquely anyway, hence this replacement just adds another
-      // collision -- basically, we replaced original Key.hash with our own hash, which avoids 0 at
-      // the cost of slightly higher collision chances
-      return -1;// anything !=0 will do
-    }
-    return hash;
-  }
-
   static <K> @NotNull DurableIntToMultiIntMap fillValueHashToIdMap(@NotNull AppendOnlyLog valuesLog,
                                                                    @NotNull KeyDescriptorEx<K> valueDescriptor,
                                                                    @NotNull DurableIntToMultiIntMap valueHashToId) throws IOException {
     valuesLog.forEachRecord((logId, buffer) -> {
       K value = valueDescriptor.read(buffer);
 
-      int valueHash = adjustHash(valueDescriptor.getHashCode(value));
+      int hash = valueDescriptor.getHashCode(value);
+      int valueHash = HashUtils.adjustHash(hash);
       int id = convertLogIdToEnumeratorId(logId);
 
       valueHashToId.put(valueHash, id);

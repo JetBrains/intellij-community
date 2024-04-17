@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -77,11 +77,11 @@ public class MyTestInjector {
   }
 
   private static void registerForStringVarInitializer(@NotNull Disposable parent,
-                                                      @NotNull final Project project,
+                                                      final @NotNull Project project,
                                                       final Language language,
-                                                      @NotNull @NonNls final String varName,
-                                                      @NonNls final String prefix,
-                                                      @NonNls final String suffix) {
+                                                      final @NotNull @NonNls String varName,
+                                                      final @NonNls String prefix,
+                                                      final @NonNls String suffix) {
     if (language == null) return;
     final ConcatenationAwareInjector injector = (injectionPlacesRegistrar, operands) -> {
       if (operands[0].getParent() instanceof PsiNameValuePair) return; // do not inject into @SupressWarnings
@@ -146,8 +146,7 @@ public class MyTestInjector {
       }
 
       @Override
-      @NotNull
-      public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
+      public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
         return Collections.singletonList(XmlAttributeValue.class);
       }
     }, parent);

@@ -101,6 +101,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" />
-    <orderEntry type="module" module-name="intellij.platform.navbar.ide" />
+    <orderEntry type="module" module-name="intellij.platform.navbar.frontend" />
   </component>
 </module>

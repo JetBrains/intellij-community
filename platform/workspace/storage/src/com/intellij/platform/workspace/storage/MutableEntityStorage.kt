@@ -236,6 +236,11 @@ public sealed class EntityChange<T : WorkspaceEntity> {
       get() = null
     override val newEntity: T
       get() = entity
+
+    override fun toString(): String {
+      val newEntityId = (newEntity as? WorkspaceEntityWithSymbolicId)?.symbolicId
+      return "Added(newEntity=${newEntityId ?: newEntity})"
+    }
   }
 
   /**
@@ -248,13 +253,24 @@ public sealed class EntityChange<T : WorkspaceEntity> {
       get() = entity
     override val newEntity: T?
       get() = null
+
+    override fun toString(): String {
+      val oldEntityId = (oldEntity as? WorkspaceEntityWithSymbolicId)?.symbolicId
+      return "Removed(oldEntity=${oldEntityId ?: oldEntity})"
+    }
   }
 
   /**
    * Describes changes in properties of an entity.
    * Old values of the properties can be obtained via [oldEntity], new values can be obtained via [newEntity].
    */
-  public data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
+  public data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>() {
+    override fun toString(): String {
+      val oldEntityId = (oldEntity as? WorkspaceEntityWithSymbolicId)?.symbolicId
+      val newEntityId = (newEntity as? WorkspaceEntityWithSymbolicId)?.symbolicId
+      return "Replaced(oldEntity=${oldEntityId ?: oldEntity}, newEntity=${newEntityId ?: newEntity})"
+    }
+  }
 }
 
 /**

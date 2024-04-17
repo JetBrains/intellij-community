@@ -7,6 +7,14 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Result};
 use log::debug;
 
+#[cfg(target_os = "windows")]
+use {
+    std::os::windows::ffi::OsStrExt,
+    windows::Win32::Globalization::{GetACP, WC_ERR_INVALID_CHARS, WC_NO_BEST_FIT_CHARS, WideCharToMultiByte},
+    windows::core::PCSTR,
+    windows::core::imp::GetLastError,
+};
+
 use crate::*;
 
 const IDE_HOME_LOOKUP_DEPTH: usize = 5;
@@ -223,7 +231,63 @@ impl DefaultLaunchConfiguration {
         if !java_executable.is_executable()? {
             bail!("Not an executable file: {java_executable:?}");
         }
+
+        #[cfg(target_os = "windows")] {
+            Self::assert_valid_in_system_default_ansi_codepage(&adjusted_home)?;
+        }
+
         Ok(adjusted_home)
+    }
+
+    #[cfg(target_os = "windows")]
+    fn assert_valid_in_system_default_ansi_codepage(path: &Path) -> Result<()> {
+        let path_wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+        let mut used_default_char: i32 = -1;
+
+        let acp = unsafe {
+            GetACP()
+        };
+
+        let flags = match acp {
+            50220..=50222 |
+            50225 |
+            50227 |
+            50229 |
+            57002..=57011 |
+            65000 |
+            42 => 0,
+
+            65001 | 54936 => WC_ERR_INVALID_CHARS,
+            _ => WC_NO_BEST_FIT_CHARS
+        };
+
+
+        let result = unsafe {
+            WideCharToMultiByte(
+                acp,
+                flags,
+                &path_wide,
+                None,
+                PCSTR(std::ptr::null_mut::<u8>()),
+                Some(&mut used_default_char)
+            )
+        };
+
+        if result == 0 {
+            let error = unsafe {
+                GetLastError()
+            };
+
+            let path = path.to_string_checked()?;
+            bail!("Failed to determined if path can be represented using the system default ANSI codepage. Win32 error: {error}, ACP: {acp}, Path: {path}")
+        }
+
+        if used_default_char > 0 {
+            let path = path.to_string_checked()?;
+            bail!("Path cannot be represented using the system default ANSI codepage. ACP: {acp}, Path: {path}")
+        }
+
+        Ok(())
     }
 
     /// Reads VM options from both distribution and user-specific files and puts them into the given vector.

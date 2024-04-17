@@ -2,39 +2,65 @@ package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.*
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
+import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import java.awt.Dimension
+import java.awt.Point
 
-internal class EditorCellInput(
+class EditorCellInput(
   private val editor: EditorEx,
-  private val inputControllerFactory: ((NotebookCellInlayController?) -> NotebookCellInlayController?)?,
+  private val componentFactory: (EditorCellViewComponent?) -> EditorCellViewComponent,
   private val intervalPointer: NotebookIntervalPointer
 ) {
 
-  private val folding: EditorCellFolding = EditorCellFolding(editor) {
-    if (inputControllerFactory == null) {
-      toggleTextFolding()
+  private val cellEventListeners = EventDispatcher.create(EditorCellViewComponentListener::class.java)
+
+  val location: Point
+    get() = _component.location
+  val size: Dimension
+    get() = _component.size
+
+  private var _component: EditorCellViewComponent = componentFactory(null).also { bind(it) }
+    set(value) {
+      if (value != field) {
+        field.dispose()
+        field = value
+        bind(value)
+      }
     }
-    else {
-      toggleFolding(inputControllerFactory)
-    }
+
+  private fun bind(value: EditorCellViewComponent) {
+    value.addViewComponentListener(object : EditorCellViewComponentListener {
+      override fun componentBoundaryChanged(location: Point, size: Dimension) {
+        cellEventListeners.multicaster.componentBoundaryChanged(location, size)
+      }
+    })
   }
 
-  private fun toggleFolding(inputControllerFactory: (NotebookCellInlayController?) -> NotebookCellInlayController?) {
-    val controller = inputController
-    inputController = if (controller != null) {
-      Disposer.dispose(controller.inlay)
+  val component: EditorCellViewComponent
+    get() = _component
+
+  private val folding: EditorCellFolding = EditorCellFolding(editor) {
+    toggleFolding(componentFactory)
+  }.also {
+    cellEventListeners.addListener(object : EditorCellViewComponentListener {
+      override fun componentBoundaryChanged(location: Point, size: Dimension) {
+        it.updatePosition(location.y, size.height)
+      }
+    })
+  }
+
+  private fun toggleFolding(inputComponentFactory: (EditorCellViewComponent) -> EditorCellViewComponent) {
+    _component = if (_component is ControllerEditorCellViewComponent) {
+      _component.dispose()
       toggleTextFolding()
-      null
+      TextEditorCellViewComponent(editor, intervalPointer)
     }
     else {
       toggleTextFolding()
-      inputControllerFactory.invoke(inputController)
+      inputComponentFactory(_component)
     }
-    folding.bindTo(inputController)
   }
 
   private fun toggleTextFolding() {
@@ -57,91 +83,61 @@ internal class EditorCellInput(
     }
   }
 
-  internal var inputController: NotebookCellInlayController? = createOrUpdateController()
-
-  private var highlighters: List<RangeHighlighter>? = null
-
   private var gutterAction: AnAction? = null
-
-  init {
-    folding.bindTo(inputController)
-    folding.bindTo(intervalPointer)
-  }
 
   fun dispose() {
     folding.dispose()
-    inputController?.let { controller -> Disposer.dispose(controller.inlay) }
-    disposeExistingHighlighter()
+    _component.dispose()
   }
 
   fun update() {
-    inputController = createOrUpdateController()
+    _component = componentFactory(_component)
     updateGutterIcons()
   }
 
-  private fun createOrUpdateController(): NotebookCellInlayController? {
-    val actualController = inputControllerFactory?.invoke(inputController)
-    if (actualController != inputController) {
-      inputController?.let { controller -> Disposer.dispose(controller.inlay) }
-      folding.bindTo(actualController)
-    }
-    return actualController
-  }
-
   private fun updateGutterIcons() {
-    val actualController = inputController
-    if (actualController != null) {
-      val inlay = actualController.inlay
-      inlay.putUserData(NotebookCellInlayController.gutterActionKey, gutterAction)
-      inlay.update()
-    }
-    else {
-      disposeExistingHighlighter()
-      val action = gutterAction
-      if (action != null) {
-        val markupModel = editor.markupModel
-        val interval = intervalPointer.get()!!
-        val startOffset = editor.document.getLineStartOffset(interval.lines.first)
-        val endOffset = editor.document.getLineEndOffset(interval.lines.last)
-        val highlighter = markupModel.addRangeHighlighter(
-          startOffset,
-          endOffset,
-          HighlighterLayer.FIRST - 100,
-          TextAttributes(),
-          HighlighterTargetArea.LINES_IN_RANGE
-        )
-        highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(action)
-        this.highlighters = listOf(highlighter)
-      }
-    }
-  }
-
-  private fun disposeExistingHighlighter() {
-    if (highlighters != null) {
-      highlighters?.forEach {
-        it.dispose()
-      }
-      highlighters = null
-    }
+    _component.updateGutterIcons(gutterAction)
   }
 
   fun updatePositions() {
-    folding.updatePosition()
+    _component.updatePositions()
   }
 
   fun onViewportChange() {
-    inputController?.onViewportChange()
+    _component.onViewportChange()
   }
 
   fun setGutterAction(action: AnAction) {
     gutterAction = action
     updateGutterIcons()
   }
+
+  fun hideFolding() {
+    folding.hide()
+  }
+
+  fun showFolding() {
+    folding.show()
+  }
+
+  fun addViewComponentListener(listener: EditorCellViewComponentListener) {
+    cellEventListeners.addListener(listener)
+  }
+
+  fun updatePresentation(view: EditorCellViewComponent) {
+    _component.dispose()
+    _component = view
+  }
+
+  fun updateSelection(value: Boolean) {
+    folding.updateSelection(value)
+  }
 }
+
 
 private fun String.ellipsis(length: Int): String {
   return if (this.length > length) {
-    substring(0, length - 3) + "..."
+    substring(0, length - 1) + "\u2026"
   }
   else {
     this

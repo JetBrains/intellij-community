@@ -1,10 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
-import org.jetbrains.plugins.notebooks.visualization.notebookCellEditorScrollingPositionKeeper
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory
 import java.awt.Component
 import java.awt.Dimension
@@ -13,7 +11,7 @@ import javax.swing.JPanel
 import kotlin.math.max
 import kotlin.math.min
 
-internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
+internal class InnerComponent : JPanel() {
   data class Constraint(val widthStretching: NotebookOutputComponentFactory.WidthStretching, val limitedHeight: Boolean)
 
   var maxHeight: Int = Int.MAX_VALUE
@@ -55,8 +53,6 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
     foldSize { maximumSize }
 
   override fun doLayout() {
-    val oldComponentHeights = components.sumOf { it.height }
-
     var totalY = insets.top
     forEveryComponent(Component::getPreferredSize) { component, newWidth, newHeight ->
       component.setBounds(
@@ -68,10 +64,6 @@ internal class InnerComponent(private val editor: EditorImpl) : JPanel() {
       totalY += newHeight
     }
 
-    val newComponentHeights = components.sumOf { it.height }
-    if (oldComponentHeights != newComponentHeights) {
-      editor.notebookCellEditorScrollingPositionKeeper?.adjustScrollingPosition()
-    }
     if (GraphicsUtil.isRemoteEnvironment()) {
       (parent as SurroundingComponent).fireResize()
     }

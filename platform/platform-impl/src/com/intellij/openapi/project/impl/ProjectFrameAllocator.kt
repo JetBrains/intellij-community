@@ -4,6 +4,7 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -57,6 +58,7 @@ import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Frame
@@ -204,25 +206,29 @@ internal class ProjectUiFrameAllocator(
       launch {
         val project = rawProjectDeferred.await()
         val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
+
+        val onNoEditorsLeft = blockingContext {
+          captureThreadContext(Runnable { FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime()) })
+        }
+
         @Suppress("UsagesOfObsoleteApi")
         (project as ComponentManagerEx).getCoroutineScope().launch(startUpContextElementToPass + rootTask()) {
-          try {
-            launch {
-              val frameHelper = deferredProjectFrameHelper.await()
-              frameHelper.installDefaultProjectStatusBarWidgets(project)
-              frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
-            }
-
-            reopeningEditorJob.join()
-            postOpenEditors(
-              deferredProjectFrameHelper = deferredProjectFrameHelper,
-              fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
-              toolWindowInitJob = toolWindowInitJob,
-              project = project,
-            )
+          launch {
+            val frameHelper = deferredProjectFrameHelper.await()
+            frameHelper.installDefaultProjectStatusBarWidgets(project)
+            frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
           }
-          finally {
-            FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
+
+          reopeningEditorJob.join()
+          postOpenEditors(
+            deferredProjectFrameHelper = deferredProjectFrameHelper,
+            fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl,
+            toolWindowInitJob = toolWindowInitJob,
+            project = project,
+          )
+        }.invokeOnCompletion { throwable ->
+          if (throwable != null) {
+            onNoEditorsLeft.run()
           }
         }
       }
@@ -426,6 +432,9 @@ private suspend fun postOpenEditors(
     if (!isNotificationSilentMode(project)) {
       openProjectViewIfNeeded(project, toolWindowInitJob)
       findAndOpenReadmeIfNeeded(project)
+    }
+    blockingContext {
+      FUSProjectHotStartUpMeasurer.reportNoMoreEditorsOnStartup(System.nanoTime())
     }
   }
 }

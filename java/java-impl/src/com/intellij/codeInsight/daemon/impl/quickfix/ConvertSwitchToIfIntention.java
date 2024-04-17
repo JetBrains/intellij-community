@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -37,9 +37,8 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
     super(switchStatement);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
   }
 
@@ -215,9 +214,8 @@ public class ConvertSwitchToIfIntention extends PsiUpdateModCommandAction<PsiSwi
                                                                                             ExpressionUtils.isNullLiteral(expr)));
   }
 
-  @NotNull
-  private static List<SwitchStatementBranch> extractBranches(PsiCodeBlock body,
-                                                             Set<PsiSwitchLabelStatementBase> fallThroughTargets) {
+  private static @NotNull List<SwitchStatementBranch> extractBranches(PsiCodeBlock body,
+                                                                      Set<PsiSwitchLabelStatementBase> fallThroughTargets) {
     final List<SwitchStatementBranch> openBranches = new ArrayList<>();
     final Set<PsiElement> declaredElements = new HashSet<>();
     final List<SwitchStatementBranch> allBranches = new ArrayList<>();

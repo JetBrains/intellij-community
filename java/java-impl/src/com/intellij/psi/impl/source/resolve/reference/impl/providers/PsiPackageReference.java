@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -23,8 +23,7 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     myIndex = index;
   }
 
-  @NotNull
-  protected Set<PsiPackage> getContext() {
+  protected @NotNull Set<PsiPackage> getContext() {
     if (myIndex == 0) return myReferenceSet.getInitialContext();
     Set<PsiPackage> psiPackages = new HashSet<>();
     for (ResolveResult resolveResult : myReferenceSet.getReference(myIndex - 1).doMultiResolve()) {
@@ -45,9 +44,8 @@ public class PsiPackageReference extends PsiPolyVariantReferenceBase<PsiElement>
     return subPackages.toArray();
   }
 
-  @NotNull
   @Override
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
     return JavaErrorBundle.message("cannot.resolve.package");
   }

@@ -6,5 +6,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.navbar.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.navbar.backend.compatibility" scope="RUNTIME" />
   </component>
 </module>

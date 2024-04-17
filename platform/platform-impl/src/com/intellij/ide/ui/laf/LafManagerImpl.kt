@@ -9,6 +9,7 @@ import com.intellij.diagnostic.runActivity
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.*
 import com.intellij.ide.ui.laf.SystemDarkThemeDetector.Companion.createParametrizedDetector
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
@@ -29,7 +30,11 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -872,7 +877,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
 
       return (createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLaFs, isDark = true) +
-              createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLaFs, isDark = false)).toTypedArray()
+              createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLaFs, isDark = false) +
+              listOf( Separator(), GetMoreLafAction())).toTypedArray()
     }
 
     private fun createThemeActions(separatorText: @NlsContexts.Separator String,
@@ -889,6 +895,24 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
       }
       return result
     }
+  }
+
+  private inner class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
+    override fun actionPerformed(e: AnActionEvent) {
+      val themeTag = "/tag:Theme"
+      val settings = Settings.KEY.getData(e.dataContext)
+
+      if (settings == null) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(ProjectManager.getInstance().defaultProject,
+                                                          PluginManagerConfigurable::class.java) { c: PluginManagerConfigurable ->
+          c.enableSearch(themeTag)
+        }
+      }
+      else {
+        settings.select(settings.find("preferences.pluginManager"), themeTag)
+      }
+    }
+
   }
 
   private inner class PreferredEditorColorSchemeAction : DefaultActionGroup(PreferredDarkEditorColorSchemeAction(),

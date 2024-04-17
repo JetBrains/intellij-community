@@ -7,9 +7,11 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.LanguageInjector;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.NeedsIndex;
@@ -120,6 +122,18 @@ public class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     });
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "abc");
+  }
+
+  @NeedsIndex.Full
+  public void testDotAutoPopupInCodeFragment() {
+    PsiClass psiClass = myFixture.addClass("package foo; public final class Foo { public static final int ANSWER = 42; }");
+    PsiClassType psiType = ReadAction.compute(() -> PsiTypesUtil.getClassType(psiClass));
+    PsiExpressionCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("Foo<caret>", null, psiType, true);
+    fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    type(".");
+    assertNotNull(getLookup());
   }
 
   public static class CountingContributor extends CompletionContributor {

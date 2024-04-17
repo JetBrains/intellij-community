@@ -51,8 +51,7 @@ public abstract class ConventionInspection extends BaseInspection {
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
   @Override
-  @NotNull
-  protected final String buildErrorString(Object... infos) {
+  protected final @NotNull String buildErrorString(Object... infos) {
     final String name = (String)infos[0];
     final int length = name.length();
     if (length < getMinLength()) {
@@ -68,8 +67,7 @@ public abstract class ConventionInspection extends BaseInspection {
 
   protected abstract String getElementDescription();
 
-  @NonNls
-  protected abstract String getDefaultRegex();
+  protected abstract @NonNls String getDefaultRegex();
 
   protected abstract int getDefaultMinLength();
 

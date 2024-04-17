@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -38,8 +36,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return false;
   }
 
-  @NotNull
-  protected static PsiJavaCodeReferenceElement findTopmostReference(@NotNull PsiJavaCodeReferenceElement referenceElement){
+  protected static @NotNull PsiJavaCodeReferenceElement findTopmostReference(@NotNull PsiJavaCodeReferenceElement referenceElement){
     PsiElement parent = referenceElement.getParent();
     while (parent instanceof PsiJavaCodeReferenceElement) {
       referenceElement = (PsiJavaCodeReferenceElement)parent;
@@ -66,8 +63,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return false;
   }
 
-  @NotNull
-  protected static PsiClass createClassInOuterImpl(@NotNull String name, @NotNull PsiClass outerClass, @Nullable String superClassName) {
+  protected static @NotNull PsiClass createClassInOuterImpl(@NotNull String name, @NotNull PsiClass outerClass, @Nullable String superClassName) {
     Project project = outerClass.getProject();
     PsiClass psiClass = JavaPsiFacade.getElementFactory(project).createClass(name);
     psiClass = (PsiClass)outerClass.addBefore(psiClass, outerClass.getRBrace());
@@ -79,8 +75,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return psiClass;
   }
 
-  @Nullable
-  public static PsiDirectory getOrCreatePackageDirInRoot(@NotNull String packageName, @NotNull PsiDirectory rootDir) {
+  public static @Nullable PsiDirectory getOrCreatePackageDirInRoot(@NotNull String packageName, @NotNull PsiDirectory rootDir) {
     if (packageName.isEmpty()) {
       return rootDir;
     }
@@ -104,12 +99,11 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
     return directory;
   }
 
-  @Nullable
-  protected static PsiClass createClassInRoot(@NotNull String classFQN,
-                                              @NotNull CreateClassKind classKind,
-                                              @NotNull PsiDirectory rootDir,
-                                              @NotNull PsiElement contextElement,
-                                              @Nullable String superClassName) {
+  protected static @Nullable PsiClass createClassInRoot(@NotNull String classFQN,
+                                                        @NotNull CreateClassKind classKind,
+                                                        @NotNull PsiDirectory rootDir,
+                                                        @NotNull PsiElement contextElement,
+                                                        @Nullable String superClassName) {
     String packageName = StringUtil.getPackageName(classFQN);
     int lastDot = classFQN.lastIndexOf('.');
     String className = lastDot >= 0 ? classFQN.substring(lastDot + 1) : classFQN;

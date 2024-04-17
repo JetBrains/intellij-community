@@ -26,7 +26,8 @@ internal fun LinearGraph.getReachableMatchingNodes(startNodes: Set<Int>?, matche
   if (startNodes == null) {
     if (matchedNodes == null) {
       visibility.set(0, nodesCount() - 1, true)
-    } else {
+    }
+    else {
       for (matchedId in matchedNodes) visibility[matchedId] = true
     }
     return visibility

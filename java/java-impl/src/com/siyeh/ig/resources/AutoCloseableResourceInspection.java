@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -102,23 +102,20 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
     );
   }
 
-  @NotNull
   @Override
-  public String getID() {
+  public @NotNull String getID() {
     return "resource"; // matches Eclipse inspection
   }
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
     final String text = type.getPresentableText();
     return InspectionGadgetsBundle.message("auto.closeable.resource.problem.descriptor", text);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final boolean buildQuickfix = ((Boolean)infos[1]).booleanValue();
     if (!buildQuickfix) {
       return null;
@@ -191,10 +188,8 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   private class AutoCloseableResourceFix extends ModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("auto.closeable.resource.quickfix");
     }
 

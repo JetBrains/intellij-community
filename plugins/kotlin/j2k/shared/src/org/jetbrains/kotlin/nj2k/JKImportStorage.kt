@@ -36,9 +36,11 @@ class JKImportStorage(languageSettings: LanguageVersionSettings) {
     fun getImports(): Set<FqName> = imports
 
     private fun isImportNeeded(fqName: FqName, allowSingleIdentifierImport: Boolean = false): Boolean {
-        if (!allowSingleIdentifierImport && fqName.asString().count { it == '.' } < 1) return false
+        val fqNameString = fqName.asString()
+        if (!allowSingleIdentifierImport && fqNameString.count { it == '.' } < 1) return false
         if (fqName in NULLABILITY_ANNOTATIONS) return false
         if (fqName in defaultImports) return false
+        if (PLATFORM_CLASSES_MAPPED_TO_KOTLIN.any { it.matches(fqNameString) }) return false
         return true
     }
 
@@ -46,6 +48,12 @@ class JKImportStorage(languageSettings: LanguageVersionSettings) {
         isImportNeeded(FqName(fqName), allowSingleIdentifierImport)
 
     companion object {
+        internal val PLATFORM_CLASSES_MAPPED_TO_KOTLIN: Set<Regex> = setOf(
+            Regex("kotlin\\.jvm\\.functions\\.Function[0-9]"),
+            Regex("java\\.util\\.((Set)|(Collection)|(List)|(Map)|(Iterator))"),
+            Regex("java\\.lang\\.((Throwable)|(Cloneable)|(Integer)|(String)|(Comparable)|(Object)|(CharSequence))")
+        )
+
         private val JAVA_TYPE_WRAPPERS_WHICH_HAVE_CONFLICTS_WITH_KOTLIN_ONES = setOf(
             FqName(CommonClassNames.JAVA_LANG_BOOLEAN),
             FqName(CommonClassNames.JAVA_LANG_BYTE),

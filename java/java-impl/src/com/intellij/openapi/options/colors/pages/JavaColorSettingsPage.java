@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -24,14 +24,12 @@ public final class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsP
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return new JavaFileHighlighter(LanguageLevel.HIGHEST);
   }
 
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return
       "/* Block comment */\n" +
       "import <class>java.util.Date</class>;\n" +
@@ -98,9 +96,8 @@ public final class JavaColorSettingsPage extends AbstractBasicJavaColorSettingsP
         || JavaHighlightingColors.DOC_COMMENT_TAG_VALUE.equals(type);
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 }

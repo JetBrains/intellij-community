@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -148,13 +148,11 @@ public class PsiLiteralExpressionImpl
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  @Nullable
-  public String getInnerText() {
+  public @Nullable String getInnerText() {
     return PsiLiteralUtil.getStringLiteralContent(this);
   }
 
-  @Nullable
-  private static String internedParseStringCharacters(final String chars) {
+  private static @Nullable String internedParseStringCharacters(final String chars) {
     if (chars == null) return null;
     final CharSequence outChars = CodeInsightUtilCore.parseStringCharacters(chars, null);
     return outChars == null ? null : outChars.toString();
@@ -193,16 +191,15 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  public PsiLanguageInjectionHost updateText(@NotNull final String text) {
+  public PsiLanguageInjectionHost updateText(final @NotNull String text) {
     ASTNode valueNode = getNode().getFirstChildNode();
     assert valueNode instanceof LeafElement;
     ((LeafElement)valueNode).replaceWithText(text);
     return this;
   }
 
-  @NotNull
   @Override
-  public LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<PsiLiteralExpressionImpl> createLiteralTextEscaper() {
     return new StringLiteralEscaper<>(this);
   }
 }

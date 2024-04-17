@@ -45,8 +45,8 @@ class EnumSourceReference(element: PsiLanguageInjectionHost) : PsiReferenceBase<
     val expressionToFind = literal.toUElementOfType<UInjectionHost>()
       ?.getParentOfType<UAnnotation>()
       ?.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
-      as UClassLiteralExpression
-
+      as? UClassLiteralExpression
+    if (expressionToFind == null) return null
     return PsiUtil.resolveClassInClassTypeOnly(expressionToFind.type)
   }
 }

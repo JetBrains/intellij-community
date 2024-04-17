@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -109,9 +109,8 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
         return getHelpTopic();
       }
 
-      @Nls
       @Override
-      public @NotNull String getOKButtonText() {
+      public @Nls @NotNull String getOKButtonText() {
         return JavaBundle.message("javadoc.generate.ok");
       }
     };

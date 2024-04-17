@@ -89,8 +89,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     return false;
   }
 
-  @Nullable
-  private static Branched extractInitMode(@NotNull PsiLocalVariable var) {
+  private static @Nullable Branched extractInitMode(@NotNull PsiLocalVariable var) {
     List<PsiExpressionStatement> initializers = initializers(var);
     if (initializers.isEmpty()) return null;
     if (!(var.getParent() instanceof PsiDeclarationStatement decl)) return null;
@@ -105,8 +104,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     return branched;
   }
 
-  @Nullable
-  private static PsiIfStatement getTopLevelIfStatement(PsiCodeBlock block, PsiElement commonParent) {
+  private static @Nullable PsiIfStatement getTopLevelIfStatement(PsiCodeBlock block, PsiElement commonParent) {
     while (true) {
       PsiIfStatement ifStatement = PsiTreeUtil.getNonStrictParentOfType(commonParent, PsiIfStatement.class);
       if (ifStatement == null) return null;

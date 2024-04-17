@@ -11,4 +11,5 @@ object HuggingFaceConstants {
   const val API_FETCH_SORT_KEY = "likes"
   const val DATASET_FAKE_PIPELINE_TAG = "dataset"
   const val UNDEFINED_PIPELINE_TAG = "undefined"
+  const val NO_PIPELINE_TAG = "none"
 }

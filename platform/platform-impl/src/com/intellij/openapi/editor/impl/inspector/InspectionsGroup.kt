@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.inspector
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.PowerSaveMode
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -10,6 +11,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.AnalyzerStatus
@@ -17,17 +21,25 @@ import com.intellij.openapi.editor.markup.InspectionsFUS
 import com.intellij.openapi.editor.markup.StatusItem
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.awt.Insets
+import java.awt.event.HierarchyEvent
+import java.awt.event.HierarchyListener
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
+import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -55,8 +67,6 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
 
     val newStatus: List<StatusItem> = analyzerStatus.expandedStatus
     val newIcon: Icon = analyzerStatus.icon
-
-    //TODO  PowerSaveMode.isEnabled()
 
     if (!analyzerStatus.showNavigation) {
       val item = if (newStatus.isEmpty()) StatusItem("", newIcon) else newStatus.first()
@@ -203,6 +213,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
   private class InspectionAction(item: StatusItem, editor: EditorImpl, actionLink: Link? = null, fusTabId: Int) : InspectionsBaseAction(item, editor, actionLink = actionLink, fusTabId = fusTabId) {
     companion object {
       private val leftRight = DaemonBundle.message("iw.inspection.next.previous", convertSC("Left Click"), convertSC("Right Click"))
+      private val url: String = "https://surveys.jetbrains.com/s3/inspection-widget-feedback-form"
 
       private const val PREVIOUS_ACTION_ID = "GotoPreviousError"
       private const val NEXT_ACTION_ID = "GotoNextError"
@@ -211,7 +222,11 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
         return "<span style=\"color: ${ColorUtil.toHex(UIUtil.getToolTipForeground())};\"><b>$str</b></span>"
       }
 
-      private val fusActionNotFound = InspectionsFUS.group.registerEvent("inspections_action_not_found", EventFields.Int("tabId"), EventFields.String("actionId", listOf(PREVIOUS_ACTION_ID, NEXT_ACTION_ID)))
+      private fun isGotItAvailable(): Boolean {
+        return ApplicationInfoEx.getInstanceEx().isEAP
+      }
+
+      private val fusActionNotFound = InspectionsFUS.group.registerEvent("inspection_action_not_found", EventFields.Int("tabId"), EventFields.String("actionId", listOf(PREVIOUS_ACTION_ID, NEXT_ACTION_ID)))
     }
 
     init {
@@ -224,10 +239,61 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       return e is MouseEvent && e.button == MouseEvent.BUTTON3
     }
 
+    @com.intellij.openapi.components.Service(com.intellij.openapi.components.Service.Level.PROJECT)
+    private class MyService(val project: Project, scope: CoroutineScope) {
+      companion object {
+        fun getInstance(project: Project): MyService = project.service()
+      }
+
+      val scope = scope.childScope(supervisor = true, context = Dispatchers.EDT)
+      private var currentJob: Job? = null
+
+      @Suppress("DEPRECATION")
+      fun startGotIt(component: JComponent) {
+        ThreadingAssertions.assertEventDispatchThread()
+        if (currentJob?.isActive == true || !scope.isActive)
+          return
+
+        val job = scope.launch(Dispatchers.EDT) {
+          delay(20000)
+          val tooltip = GotItTooltip(
+            "redesigned.inspections.tooltip",
+            DaemonBundle.message("iw.inspection.got.it.text"),
+            project
+          ).withShowCount(1)
+            .withContrastColors(true)
+            .withButtonLabel(DaemonBundle.message("iw.inspection.got.it.yes"))
+            .withGotItButtonAction {
+              BrowserUtil.open(url)
+            }
+            .withSecondaryButton(DaemonBundle.message("iw.inspection.got.it.no"))
+
+          tooltip.show(component, GotItTooltip.BOTTOM_MIDDLE)
+          scope.cancel()
+        }
+
+        currentJob = job
+
+        val hierarchyListener = HierarchyListener { e ->
+          if (e.changeFlags and HierarchyEvent.DISPLAYABILITY_CHANGED.toLong() != 0L) {
+            if (!component.isDisplayable) {
+              job.cancel()
+            }
+          }
+        }
+        component.addHierarchyListener(hierarchyListener)
+
+        job.invokeOnCompletion {
+          component.removeHierarchyListener(hierarchyListener)
+        }
+      }
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       val actionId = if (isSecondActionEvent(e.inputEvent)) {
         PREVIOUS_ACTION_ID
-      } else {
+      }
+      else {
         NEXT_ACTION_ID
       }
 
@@ -246,13 +312,23 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       val wrapped = delegateEvent.withDataContext(wrapDataContext(delegateEvent.dataContext))
       InspectionsFUS.performAction(e.project, fusTabId, actionId)
 
+      val project = e.project ?: return
+
+      val performAction = Runnable {
+        action.actionPerformed(wrapped)
+        GotItTooltip
+        e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY)?.let {
+          if(isGotItAvailable()) {
+            MyService.getInstance(project = project).startGotIt(component = it)
+          }
+        }
+      }
+
       if (focusManager.focusOwner !== editor.contentComponent) {
-        focusManager.requestFocus(editor.contentComponent, true).doWhenDone(Runnable {
-          action.actionPerformed(wrapped)
-        })
+        focusManager.requestFocus(editor.contentComponent, true).doWhenDone(performAction)
       }
       else {
-        action.actionPerformed(wrapped)
+        performAction.run()
       }
     }
 
@@ -272,6 +348,7 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
       val prevKey = getShortcut(PREVIOUS_ACTION_ID)
       val allTypes = DaemonBundle.message("iw.inspection.all.types", convertSC(nextKey), convertSC(prevKey))
 
+      @Suppress("HardCodedStringLiteral")
       description = "<html>$leftRight<p>${allTypes}</html><p>"
     }
 

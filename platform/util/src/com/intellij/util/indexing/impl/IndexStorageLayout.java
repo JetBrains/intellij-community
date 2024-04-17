@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
@@ -11,6 +11,9 @@ import java.io.IOException;
 
 /**
  * A main interface to provide custom inverted index implementation.
+ * <p>
+ * 'Layout' means that it knows (among other things) where do index data located and how do index data organized:
+ * in-memory, on disk, in some database, etc..
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal

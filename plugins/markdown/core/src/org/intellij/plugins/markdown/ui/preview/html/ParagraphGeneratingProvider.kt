@@ -8,6 +8,7 @@ import org.intellij.markdown.ast.accept
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.TrimmingInlineHolderProvider
+import org.intellij.markdown.html.entities.EntityConverter
 
 internal class ParagraphGeneratingProvider : TrimmingInlineHolderProvider() {
   override fun openTag(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
@@ -28,7 +29,7 @@ internal class ParagraphGeneratingProvider : TrimmingInlineHolderProvider() {
             for (line in child.getTextInNode(text).split("\n")) {
               val right = left + line.length
               visitor.consumeHtml(
-                "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..$right'>${DefaultCodeFenceGeneratingProvider.escape(line)}</span>"
+                "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..$right'>${EntityConverter.replaceEntities(line, true, true)}</span>"
               )
               left += right + 1
             }

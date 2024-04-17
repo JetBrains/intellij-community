@@ -54,8 +54,7 @@ public final class ConditionalExpressionInspection extends BaseInspection {
   public boolean ignoreExpressionContext = true;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "conditional.expression.problem.descriptor");
   }
@@ -67,9 +66,8 @@ public final class ConditionalExpressionInspection extends BaseInspection {
       checkbox("ignoreExpressionContext", InspectionGadgetsBundle.message("conditional.expression.expression.context.option")));
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final boolean quickFix = ((Boolean)infos[0]).booleanValue();
     if (!quickFix) {
       return null;
@@ -78,10 +76,8 @@ public final class ConditionalExpressionInspection extends BaseInspection {
   }
 
   private static class ReplaceWithIfFix extends PsiUpdateModCommandQuickFix {
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("conditional.expression.quickfix");
     }
 

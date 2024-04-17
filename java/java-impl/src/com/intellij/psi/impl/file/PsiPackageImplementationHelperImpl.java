@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -34,9 +34,8 @@ import java.util.List;
 
 
 public final class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
-  @NotNull
   @Override
-  public GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
+  public @NotNull GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
     return NonClasspathClassFinder.addNonClasspathScope(psiPackage.getProject(), globalSearchScope);
   }
 
@@ -65,7 +64,7 @@ public final class PsiPackageImplementationHelperImpl extends PsiPackageImplemen
   }
 
   @Override
-  public void handleQualifiedNameChange(@NotNull final PsiPackage psiPackage, @NotNull final String newQualifiedName) {
+  public void handleQualifiedNameChange(final @NotNull PsiPackage psiPackage, final @NotNull String newQualifiedName) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final String oldQualifedName = psiPackage.getQualifiedName();
     final boolean anyChanged = changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
@@ -118,7 +117,7 @@ public final class PsiPackageImplementationHelperImpl extends PsiPackageImplemen
   }
 
   @Override
-  public void navigate(@NotNull final PsiPackage psiPackage, final boolean requestFocus) {
+  public void navigate(final @NotNull PsiPackage psiPackage, final boolean requestFocus) {
     final Project project = psiPackage.getProject();
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (window != null) {

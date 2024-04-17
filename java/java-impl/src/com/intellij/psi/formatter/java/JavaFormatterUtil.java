@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.ASTBlock;
@@ -22,7 +22,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.List;
 
 public final class JavaFormatterUtil {
   /**
@@ -63,8 +64,7 @@ public final class JavaFormatterUtil {
            expression1.getOperationTokenType() == expression2.getOperationTokenType();
   }
 
-  @NotNull
-  public static WrapType getWrapType(int wrap) {
+  public static @NotNull WrapType getWrapType(int wrap) {
     return switch (wrap) {
       case CommonCodeStyleSettings.WRAP_ALWAYS -> WrapType.ALWAYS;
       case CommonCodeStyleSettings.WRAP_AS_NEEDED -> WrapType.NORMAL;
@@ -121,8 +121,7 @@ public final class JavaFormatterUtil {
    *                              soon as formatting code refactoring is done
    * @return wrap to use for the sub-blocks of the given block
    */
-  @Nullable
-  static Wrap createDefaultWrap(ASTBlock block,
+  static @Nullable Wrap createDefaultWrap(ASTBlock block,
                                 CommonCodeStyleSettings settings,
                                 JavaCodeStyleSettings javaSettings,
                                 ReservedWrapsProvider reservedWrapsProvider) {
@@ -206,8 +205,7 @@ public final class JavaFormatterUtil {
    * @return wrap to use for the given {@code 'child'} node if it's possible to define the one;
    * {@code null} otherwise
    */
-  @Nullable
-  static Wrap arrangeChildWrap(ASTNode child,
+  static @Nullable Wrap arrangeChildWrap(ASTNode child,
                                       ASTNode parent,
                                       CommonCodeStyleSettings settings,
                                       JavaCodeStyleSettings javaSettings,

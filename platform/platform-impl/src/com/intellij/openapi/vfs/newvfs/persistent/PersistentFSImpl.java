@@ -1208,7 +1208,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static String getAlternativePath(@NotNull VFileEvent event) {
     if (event instanceof VFilePropertyChangeEvent pce
-        && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
+        && pce.getPropertyName().equals(VirtualFile.PROP_NAME)) {
       VirtualFile parent = pce.getFile().getParent();
       String newName = (String)pce.getNewValue();
       return parent == null ? newName : parent.getPath() + "/" + newName;

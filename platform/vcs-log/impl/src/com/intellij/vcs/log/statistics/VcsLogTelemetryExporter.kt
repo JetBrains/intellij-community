@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LIST
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERS_LIST
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTER_KIND
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_GRAPH_OPTIONS_TYPE
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_NAME
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter

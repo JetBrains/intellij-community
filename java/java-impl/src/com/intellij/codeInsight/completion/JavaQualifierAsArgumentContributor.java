@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -42,7 +42,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
   private static final int MAX_SIZE = 50;
 
   @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     result.runRemainingContributors(parameters, true);
     fillQualifierAsArgumentContributor(parameters, result);
   }
@@ -187,17 +187,13 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
 
   static final class JavaQualifierAsArgumentStaticMembersProcessor extends JavaStaticMemberProcessor {
 
-    @NotNull
-    private final PsiExpression myOldQualifiedExpression;
-    @Nullable
-    private final PsiElement myOriginalPosition;
+    private final @NotNull PsiExpression myOldQualifiedExpression;
+    private final @Nullable PsiElement myOriginalPosition;
     private final boolean isSmart;
 
-    @NotNull
-    private final NotNullLazyValue<Collection<PsiType>> myExpectedTypes;
+    private final @NotNull NotNullLazyValue<Collection<PsiType>> myExpectedTypes;
 
-    @NotNull
-    private static final CallMatcher MY_SKIP_METHODS =
+    private static final @NotNull CallMatcher MY_SKIP_METHODS =
       CallMatcher.anyOf(
         //See FormatPostfixTemplate. It can be called with first invocation
         CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "format")

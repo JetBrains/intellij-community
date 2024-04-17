@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -67,8 +67,7 @@ public final class CommentedOutCodeInspection extends BaseInspection {
     private DeleteCommentedOutCodeFix() {}
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("commented.out.code.delete.quickfix");
     }
 
@@ -98,8 +97,7 @@ public final class CommentedOutCodeInspection extends BaseInspection {
     private UncommentCodeFix() {}
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix");
     }
 
@@ -253,8 +251,7 @@ public final class CommentedOutCodeInspection extends BaseInspection {
     return StringUtil.trimEnd(StringUtil.trimStart(text, "/*"), "*/").trim();
   }
 
-  @Nullable
-  private static String getEndOfLineCommentText(PsiComment comment) {
+  private static @Nullable String getEndOfLineCommentText(PsiComment comment) {
     return (comment.getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) ? StringUtil.trimStart(comment.getText(), "//") : null;
   }
 

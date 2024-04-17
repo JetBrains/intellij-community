@@ -18,16 +18,16 @@ object InspectionsFUS : CounterUsagesCollector() {
     SHOW_POPUP
   }
 
-  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 1)
+  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 2)
 
   private val actionIdField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
-  private val startAction = eventLogGroup.registerEvent("start_action", EventFields.Int("tabId"), actionIdField)
+  private val startAction = eventLogGroup.registerEvent("action_started", EventFields.Int("tabId"), actionIdField)
 
-  private val infoState = eventLogGroup.registerEvent("inspections_info_state", EventFields.Int("tabId"), EventFields.Enum(("type"), InspectionsState::class.java))
-  private val hints = eventLogGroup.registerEvent("is.hints.enabled", EventFields.Int("tabId"), EventFields.Enabled)
-  private val currentFileLevelChanged = eventLogGroup.registerEvent("inspections_current_file_level_changed", EventFields.Int("tabId"), EventFields.Enum(("level"), InspectionsLevel::class.java))
+  private val infoState = eventLogGroup.registerEvent("info_state_changed", EventFields.Int("tabId"), EventFields.Enum(("type"), InspectionsState::class.java))
+  private val hints = eventLogGroup.registerEvent("hints_availability_changed", EventFields.Int("tabId"), EventFields.Enabled)
+  private val currentFileLevelChanged = eventLogGroup.registerEvent("current_file_level_changed", EventFields.Int("tabId"), EventFields.Enum(("level"), InspectionsLevel::class.java))
 
-  private val event = eventLogGroup.registerEvent("inspections_event", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsEvent::class.java))
+  private val event = eventLogGroup.registerEvent("action_occurred", EventFields.Int("tabId"), EventFields.Enum(("event"), InspectionsEvent::class.java))
 
 
   fun infoStateDetected(project: Project?, id: Int, state: InspectionsState) {

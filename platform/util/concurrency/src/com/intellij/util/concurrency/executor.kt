@@ -4,6 +4,7 @@
 
 package com.intellij.util.concurrency
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -38,7 +39,7 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
 
   fun schedule(it: Runnable) {
-    childScope.launch {
+    childScope.launch(ClientId.coroutineContext()) {
       // `blockingContext` is not used by intention - low-level tasks are expected in such executors
       try {
         it.run()

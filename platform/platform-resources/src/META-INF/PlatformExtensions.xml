@@ -549,6 +549,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.project.IncompleteDependenciesService"
+                    serviceImplementation="com.intellij.openapi.project.IncompleteDependenciesServiceImpl"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"

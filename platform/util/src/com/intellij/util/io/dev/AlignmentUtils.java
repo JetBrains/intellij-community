@@ -4,7 +4,8 @@ package com.intellij.util.io.dev;
 import org.jetbrains.annotations.NotNull;
 
 /**
- *
+ * int32-aligned value =(def)= lowest 2 bits are 0
+ * int64-aligned value =(def)= lowest 3 bits are 0
  */
 public final class AlignmentUtils {
   private AlignmentUtils() {
@@ -13,6 +14,7 @@ public final class AlignmentUtils {
 
   //================== 32b alignment methods: ==========================================
 
+  /** @return smallest x >= value and x is int32-aligned */
   public static int roundUpToInt32(int value) {
     if (is32bAligned(value)) {
       return value;
@@ -51,6 +53,7 @@ public final class AlignmentUtils {
 
   //================== 64b alignment methods: ==========================================
 
+  /** @return smallest x: x >= value AND x is int64-aligned */
   public static int roundUpToInt64(int value) {
     if (is64bAligned(value)) {
       return value;
@@ -58,15 +61,16 @@ public final class AlignmentUtils {
     return ((value >> 3) + 1) << 3;
   }
 
-  public static int roundDownToInt64(int value) {
-    return (value & (~0b111));
-  }
-
   public static long roundUpToInt64(long value) {
     if (is64bAligned(value)) {
       return value;
     }
     return ((value >> 3) + 1) << 3;
+  }
+
+  /** @return biggest x: x <= value AND x is int64-aligned */
+  public static int roundDownToInt64(int value) {
+    return (value & (~0b111));
   }
 
   public static boolean is64bAligned(int value) {

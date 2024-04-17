@@ -13,9 +13,9 @@ import com.intellij.platform.ml.ObsoleteTierDescriptor
 import com.intellij.platform.ml.impl.MLTaskApproach.Companion.startMLSession
 import com.intellij.platform.ml.impl.apiPlatform.CodeLikePrinter
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform
-import com.intellij.platform.ml.impl.logs.EntireSessionLoggingScheme
+import com.intellij.platform.ml.impl.logs.EntireSessionLoggingStrategy
 import com.intellij.platform.ml.impl.logs.MLEventLoggerProvider.Companion.ML_RECORDER_ID
-import com.intellij.platform.ml.impl.logs.registerEventSessionFinished
+import com.intellij.platform.ml.impl.logs.registerMLTaskLogging
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.platform.ml.with
 import com.intellij.util.application
@@ -68,7 +68,7 @@ private object DumbModeApiPlatform : TestApiPlatform() {
 private class DumbTaskFusLogger : CounterUsagesCollector() {
   companion object {
     val GROUP = EventLogGroup("dumb-task", 1, ML_RECORDER_ID).also {
-      it.registerEventSessionFinished<DumbMLModel, Unit>("finished", MockDumbTask, EntireSessionLoggingScheme.UNIT)
+      it.registerMLTaskLogging<DumbMLModel, Unit>("finished", MockDumbTask, EntireSessionLoggingStrategy.UNIT)
     }
   }
 

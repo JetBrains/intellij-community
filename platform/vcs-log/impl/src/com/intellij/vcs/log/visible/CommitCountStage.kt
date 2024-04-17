@@ -11,7 +11,7 @@ open class CommitCountStage(val count: Int) {
     @JvmField
     val SECOND_STEP = CommitCountStage(2000)
     @JvmField
-    val FIRST_STEP = object: CommitCountStage(100) {
+    val FIRST_STEP = object : CommitCountStage(100) {
       override fun next() = SECOND_STEP
     }
     @JvmField

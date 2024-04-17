@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -413,6 +414,86 @@ public class CustomizableActionsPanel {
       schema.addIconCustomization(actionId, path);
     }
     return true;
+  }
+
+  private static void changePathInActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    int actionType = url.getActionType();
+    if (actionType == ADDED) {
+      addPathToActionsTree(tree, url);
+    }
+    else if (actionType == DELETED) {
+      removePathFromActionsTree(tree, url);
+    }
+    else if (actionType == MOVE) {
+      movePathInActionsTree(tree, url);
+    }
+  }
+
+  private static @Nullable DefaultMutableTreeNode addPathToActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    TreePath treePath = CustomizationUtil.getTreePath(tree, url);
+    if (treePath == null) return null;
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+    int absolutePosition = url.getAbsolutePosition();
+    if (node.getChildCount() >= absolutePosition && absolutePosition >= 0) {
+      DefaultMutableTreeNode newNode;
+      if (url.getComponent() instanceof Group o) {
+        newNode = ActionsTreeUtil.createNode(o);
+      }
+      else {
+        newNode = new DefaultMutableTreeNode(url.getComponent());
+      }
+      node.insert(newNode, absolutePosition);
+      return newNode;
+    }
+    return null;
+  }
+
+  private static void removePathFromActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    Object component = url.getComponent();
+    if (component == null) return;
+    TreePath treePath = CustomizationUtil.getTreePath(tree, url);
+    if (treePath == null) return;
+    DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+    int absolutePosition = url.getAbsolutePosition();
+    if (node.getChildCount() > absolutePosition && absolutePosition >= 0) {
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)node.getChildAt(absolutePosition);
+      Object userObj = child.getUserObject();
+      if (component.equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
+        node.remove(child);
+      }
+    }
+  }
+
+  private static void movePathInActionsTree(@NotNull JTree tree, @NotNull ActionUrl url) {
+    TreePath treePath = CustomizationUtil.getTreePath(tree, url);
+    Object pathComponent = treePath == null ? null : treePath.getLastPathComponent();
+    DefaultMutableTreeNode parent = pathComponent instanceof DefaultMutableTreeNode o ? o : null;
+    if (parent == null) return;
+    int absolutePosition = url.getAbsolutePosition();
+    int initialPosition = url.getInitialPosition();
+    Object component = url.getComponent();
+    if (parent.getChildCount() > absolutePosition && absolutePosition >= 0) {
+      if (parent.getChildCount() > initialPosition && initialPosition >= 0) {
+        final DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(initialPosition);
+        Object userObj = child.getUserObject();
+        if (component != null && component.equals(userObj instanceof Pair<?, ?> pair ? pair.first : userObj)) {
+          parent.remove(child);
+          parent.insert(child, absolutePosition);
+        }
+      }
+    }
+  }
+
+  private static @NotNull ArrayList<String> getGroupPath(final TreePath treePath, boolean includeSelf) {
+    ArrayList<String> result = new ArrayList<>();
+    int length = treePath.getPath().length - (includeSelf ? 0 : 1);
+    for (int i = 0; i < length; i++) {
+      Object o = ((DefaultMutableTreeNode)treePath.getPath()[i]).getUserObject();
+      if (o instanceof Group) {
+        result.add(((Group)o).getName());
+      }
+    }
+    return result;
   }
 
   private final class EditIconDialog extends DialogWrapper {

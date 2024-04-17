@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -32,8 +32,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -70,11 +69,9 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
     return false;
   }
 
-  @IntentionName
-  protected abstract String getText();
+  protected abstract @IntentionName String getText();
 
-  @NotNull
-  protected abstract Collection<String> getUnsuitableModifiers();
+  protected abstract @NotNull Collection<String> getUnsuitableModifiers();
 
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
@@ -99,8 +96,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
     }
   }
 
-  @NotNull
-  private static List<PsiExpressionStatement> addFieldAssignments(@NotNull PsiField field, @NotNull Collection<? extends PsiMethod> methods) {
+  private static @NotNull List<PsiExpressionStatement> addFieldAssignments(@NotNull PsiField field, @NotNull Collection<? extends PsiMethod> methods) {
     final List<PsiExpressionStatement> assignments = new ArrayList<>();
     for (PsiMethod method : methods) {
       assignments.add(addAssignment(getOrCreateMethodBody(method), field));
@@ -108,8 +104,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
     return assignments;
   }
 
-  @NotNull
-  private static PsiCodeBlock getOrCreateMethodBody(@NotNull PsiMethod method) {
+  private static @NotNull PsiCodeBlock getOrCreateMethodBody(@NotNull PsiMethod method) {
     PsiCodeBlock codeBlock = method.getBody();
     if (codeBlock == null) {
       CreateFromUsageUtils.setupMethodBody(method);
@@ -118,11 +113,9 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
     return codeBlock;
   }
 
-  @NotNull
-  protected abstract Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass);
+  protected abstract @NotNull Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass);
 
-  @NotNull
-  private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
+  private static @NotNull PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(codeBlock.getProject());
 
     final PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + " = y;", codeBlock);
@@ -138,8 +131,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModComm
     return (PsiExpressionStatement)newStatement;
   }
 
-  @Nullable
-  private static PsiElement findFirstFieldUsage(PsiStatement @NotNull [] statements, @NotNull PsiField field) {
+  private static @Nullable PsiElement findFirstFieldUsage(PsiStatement @NotNull [] statements, @NotNull PsiField field) {
     for (PsiStatement blockStatement : statements) {
       if (!isSuperOrThisMethodCall(blockStatement) && containsReference(blockStatement, field)) {
         return blockStatement;

@@ -21,8 +21,8 @@ import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>, private val roots: Set<VirtualFile>,
-                              vcsLogProgress: VcsLogProgress) : Disposable {
+internal class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>, private val roots: Set<VirtualFile>,
+                                       vcsLogProgress: VcsLogProgress) : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val vcsName = VcsLogUtil.getVcsDisplayName(project, roots.mapNotNull { logProviders[it] })
   private val statusBar: StatusBarEx by lazy {
@@ -103,7 +103,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }
   }
 
-  inner class MyTaskInfo : TaskInfo {
+  internal inner class MyTaskInfo : TaskInfo {
     override fun getTitle(): String = VcsLogBundle.message("vcs.log.status.bar.indexing", vcsName.capitalize())
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()

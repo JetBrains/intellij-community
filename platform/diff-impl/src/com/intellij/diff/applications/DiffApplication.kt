@@ -34,10 +34,6 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 
 internal class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCount = */ 0, 2, 3) {
-  @Suppress("OVERRIDE_DEPRECATION")
-  override val commandName: String
-    get() = "diff"
-
   override val usageMessage: String
     get() {
       val scriptName = ApplicationNamesInfo.getInstance().scriptName

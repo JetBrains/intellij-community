@@ -11,6 +11,7 @@ import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -19,8 +20,11 @@ import com.sun.jdi.ClassNotPreparedException
 import com.sun.jdi.ClassType
 import com.sun.jdi.ReferenceType
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -58,15 +62,23 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(place) ?: return null
         val codeFragment = KtPsiFactory(context.project).createExpressionCodeFragment(descriptor.name, contextElement)
         val localReferenceExpression = codeFragment.getContentElement()
-        if (localReferenceExpression is KtSimpleNameExpression) {
-            analyze(localReferenceExpression) {
-                for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
-                    if (symbol !is KtVariableLikeSymbol) {
-                        continue
+
+        if (localReferenceExpression !is KtSimpleNameExpression) return null
+
+        analyze(localReferenceExpression) {
+            for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
+                if (symbol !is KtVariableLikeSymbol) continue
+
+                if (symbol is KtValueParameterSymbol && symbol.isImplicitLambdaParameter) {
+                    // symbol.psi is null or lambda, so we need a bit more work to find nearest position.
+                    val lambda = symbol.getFunctionLiteralByImplicitLambdaParameterSymbol() ?: continue
+                    return when {
+                        nearest -> DebuggerContextUtil.findNearest(context, lambda.containingFile) { _ -> implicitLambdaParameterUsages(lambda) }
+                        else -> SourcePosition.createFromOffset(lambda.containingFile, lambda.lBrace.textOffset)
                     }
+                }
 
-                    val element = symbol.psi ?: continue
-
+                symbol.psi?.let { element ->
                     return when {
                         nearest -> DebuggerContextUtil.findNearest(context, element, element.containingFile)
                         else -> SourcePosition.createFromOffset(element.containingFile, element.textOffset)
@@ -76,6 +88,20 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         }
 
         return null
+    }
+
+    private fun implicitLambdaParameterUsages(lambda: KtFunctionLiteral): List<TextRange> {
+        return buildList {
+            lambda.accept(
+                object : KtTreeVisitorVoid() {
+                    override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                        if (expression is KtNameReferenceExpression && expression.getFunctionLiteralByImplicitLambdaParameter() == lambda) {
+                            add(expression.textRange)
+                        }
+                    }
+                }
+            )
+        }
     }
 
     private fun computeSourcePositionForPropertyDeclaration(

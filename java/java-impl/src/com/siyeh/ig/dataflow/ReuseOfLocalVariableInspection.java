@@ -54,8 +54,7 @@ public final class ReuseOfLocalVariableInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
+  public @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "reuse.of.local.variable.problem.descriptor");
   }
@@ -68,8 +67,7 @@ public final class ReuseOfLocalVariableInspection extends BaseInspection {
   private static class ReuseOfLocalVariableFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("reuse.of.local.variable.split.quickfix");
     }
 
@@ -105,7 +103,7 @@ public final class ReuseOfLocalVariableInspection extends BaseInspection {
       }
       CommentTracker commentTracker = new CommentTracker();
       final String rhsText = rhs == null ? "" : commentTracker.text(rhs);
-      @NonNls final String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
+      final @NonNls String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
 
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)BlockUtils.addAfter(assignmentStatement, factory.createStatementFromText(newStatementText, assignmentStatement));
       assignmentStatement = PsiTreeUtil.getPrevSiblingOfType(declarationStatement, PsiExpressionStatement.class);

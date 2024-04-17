@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -89,9 +89,8 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     return StringUtil.trimEnd(className, ".java");
   }
 
-  @NotNull
   @Override
-  protected String getErrorTitle() {
+  protected @NotNull String getErrorTitle() {
     return JavaBundle.message("title.cannot.create.class");
   }
 

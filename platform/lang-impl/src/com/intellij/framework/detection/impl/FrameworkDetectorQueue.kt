@@ -60,7 +60,7 @@ internal class FrameworkDetectorQueue(
   fun queueDetection(detectors: Set<String>) {
     if (isSuspended) return
 
-    frameworkRequests.tryEmit(detectors)
+    frameworkRequests.tryEmit(LinkedHashSet(detectors))
   }
 
   fun suspend() {

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.util.ui.StatusText
 import java.util.function.Supplier
 
@@ -38,6 +39,8 @@ private class ChangeViewToolWindowFactory : VcsToolWindowFactory() {
       // to show id label
       rebuildContentUi(toolWindow)
     }
+
+    (toolWindow as? ToolWindowEx)?.setTabActions(ActionManager.getInstance().getAction("LocalChangesView.TabActions"))
   }
 
   override fun updateState(toolWindow: ToolWindow) {

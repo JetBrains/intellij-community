@@ -57,6 +57,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.JPanel
@@ -82,7 +83,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
-  private var diffPreviewProcessor: GitStageDiffPreview? = null
+  private var splitPreview: GitStageDiffRequestProcessor? = null
   private var editorTabPreview: GitStageEditorDiffPreview? = null
 
   private val state: GitStageTracker.State
@@ -221,32 +222,58 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     val needUpdatePreviews = isInEditor != (editorTabPreview != null)
     if (!isInitial && !needUpdatePreviews) return
 
-    if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, isInEditor, this)
-    diffPreviewProcessor!!.setToolbarVerticalSizeReferent(toolbar.component)
-
     if (isInEditor) {
-      editorTabPreview = GitStageEditorDiffPreview(diffPreviewProcessor!!, tree).apply { setup() }
+      editorTabPreview = GitStageEditorDiffPreview(_tree, tracker, toolbar.component, activate)
+
       commitDiffSplitter.secondComponent = null
+      splitPreview?.let { Disposer.dispose(it) }
+      splitPreview = null
     }
     else {
+      editorTabPreview?.let { Disposer.dispose(it) }
       editorTabPreview = null
-      commitDiffSplitter.secondComponent = diffPreviewProcessor!!.component
+
+      val processor = GitStageDiffRequestProcessor(_tree, tracker, false)
+      processor.setToolbarVerticalSizeReferent(toolbar.component)
+      commitDiffSplitter.secondComponent = processor.component
+      splitPreview = processor
+    }
+
+    // Override the handlers registered by editorTabPreview
+    tree.doubleClickHandler = Processor { e ->
+      if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
+      processDoubleClickEvent(e)
+      true
+    }
+    tree.enterKeyHandler = Processor {
+      processEnterEvent()
+      true
     }
   }
 
-  private fun GitStageEditorDiffPreview.setup() {
-    escapeHandler = Runnable {
-      closePreview()
-      activate()
-    }
+  private fun processDoubleClickEvent(e: MouseEvent) {
+    if (performMergeAction(project, _tree.selectedStatusNodes())) return
 
-    installSelectionHandler(tree, false)
-    installNextDiffActionOn(this@GitStagePanel)
-    tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+    if (editorTabPreview?.handleDoubleClick(e) == true) return
+
+    val dataContext = DataManager.getInstance().getDataContext(tree)
+    OpenSourceUtil.openSourcesFrom(dataContext, true)
+  }
+
+  private fun processEnterEvent() {
+    if (performMergeAction(project, _tree.selectedStatusNodes())) return
+
+    if (editorTabPreview?.handleEnterKey() == true) return
+
+    val dataContext = DataManager.getInstance().getDataContext(tree)
+    OpenSourceUtil.openSourcesFrom(dataContext, true)
   }
 
   override fun dispose() {
+    splitPreview?.let { Disposer.dispose(it) }
+    splitPreview = null
+    editorTabPreview?.let { Disposer.dispose(it) }
+    editorTabPreview = null
   }
 
   private fun ChangesTree.setDefaultEmptyText() {
@@ -287,24 +314,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
           includedRootsListeners.multicaster.includedRootsChanged()
         }
       }, this@GitStagePanel)
-
-      doubleClickHandler = Processor { e ->
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
-        processDoubleClickOrEnter(true)
-        true
-      }
-      enterKeyHandler = Processor {
-        processDoubleClickOrEnter(false)
-        true
-      }
-    }
-
-    private fun processDoubleClickOrEnter(isDoubleClick: Boolean) {
-      if (performMergeAction(project, selectedStatusNodes())) return
-      if (editorTabPreview?.processDoubleClickOrEnter(isDoubleClick) == true) return
-
-      val dataContext = DataManager.getInstance().getDataContext(tree)
-      OpenSourceUtil.openSourcesFrom(dataContext, true)
     }
 
     fun editedCommitChanged() {

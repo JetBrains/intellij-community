@@ -1,8 +1,9 @@
-LineBreakpoint created at stepOutTailCallOptimization.kt:9
+LineBreakpoint created at stepOutTailCallOptimization.kt:17
 Run Java
 Connected to the target VM
-stepOutTailCallOptimization.kt:9
-stepOutTailCallOptimization.kt:13
+stepOutTailCallOptimization.kt:17
+stepOutTailCallOptimization.kt:29
+stepOutTailCallOptimization.kt:35
 Disconnected from the target VM
 
 Process finished with exit code 0

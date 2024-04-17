@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView;
 
 import com.intellij.core.JavaPsiBundle;
@@ -21,7 +21,7 @@ public final class JavaUsageViewDescriptionProvider implements ElementDescriptio
   private static final @NlsSafe String INIT = "<init>";
 
   @Override
-  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+  public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
     if (location instanceof UsageViewShortNameLocation) {
       if (element instanceof PsiThrowStatement) {
         return JavaBundle.message("usage.target.exception");
@@ -69,9 +69,7 @@ public final class JavaUsageViewDescriptionProvider implements ElementDescriptio
     return null;
   }
 
-  @NotNull
-  @Nls
-  private static String getAnonymousClassName(@Nls String name) {
+  private static @NotNull @Nls String getAnonymousClassName(@Nls String name) {
     return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name)
                         : JavaElementKind.ANONYMOUS_CLASS.subject();
   }

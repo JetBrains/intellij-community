@@ -326,9 +326,9 @@ public class PluginManagerTest {
 
       @Override
       public @NotNull RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
-                                                            @NotNull DataLoader dataLoader,
-                                                            @NotNull String path,
-                                                            @Nullable RawPluginDescriptor readInto) {
+                                                                              @NotNull DataLoader dataLoader,
+                                                                              @NotNull String path,
+                                                                              @Nullable RawPluginDescriptor readInto) {
         if (autoGenerateModuleDescriptor.get() && path.startsWith("intellij.")) {
           var element = moduleMap.get(path);
           if (element != null) {

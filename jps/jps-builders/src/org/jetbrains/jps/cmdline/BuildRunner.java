@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+import static org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isCompilerReferenceFSCaseSensitive;
 
 public final class BuildRunner {
   private static final Logger LOG = Logger.getInstance(BuildRunner.class);
@@ -73,7 +74,7 @@ public final class BuildRunner {
     BuildTargetIndexImpl targetIndex = new BuildTargetIndexImpl(targetRegistry, buildRootIndex);
     BuildTargetsState targetsState = new BuildTargetsState(dataPaths, jpsModel, buildRootIndex);
 
-    PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject());
+    PathRelativizerService relativizer = new PathRelativizerService(jpsModel.getProject(), isCompilerReferenceFSCaseSensitive());
 
     ProjectStamps projectStamps = null;
     BuildDataManager dataManager = null;

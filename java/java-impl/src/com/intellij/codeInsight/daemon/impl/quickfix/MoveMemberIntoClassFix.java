@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.MemberModel;
@@ -51,8 +51,7 @@ public class MoveMemberIntoClassFix extends PsiUpdateModCommandAction<PsiErrorEl
     psiClass.addBefore(member, rBrace);
   }
 
-  @Nullable
-  private static PsiClass getPsiClass(@NotNull PsiFile file, @NotNull PsiMember member) {
+  private static @Nullable PsiClass getPsiClass(@NotNull PsiFile file, @NotNull PsiMember member) {
     String className = FileUtilRt.getNameWithoutExtension(file.getName());
     if (!StringUtil.isJavaIdentifier(className)) return null;
     PsiJavaFile javaFile = ObjectUtils.tryCast(file, PsiJavaFile.class);

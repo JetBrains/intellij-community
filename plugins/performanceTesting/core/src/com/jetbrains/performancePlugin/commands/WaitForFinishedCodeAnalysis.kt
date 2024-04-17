@@ -61,7 +61,7 @@ class WaitForFinishedCodeAnalysis(text: String, line: Int) : PerformanceCommandC
 @Service(Service.Level.PROJECT)
 class ListenerState(val project: Project, val cs: CoroutineScope) {
 
-  private companion object {
+  internal companion object {
     val LOG = logger<WaitForFinishedCodeAnalysis>()
   }
 
@@ -143,7 +143,12 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
     }
 
     if (errors.isEmpty()) return
-    cs.launch { errors.forEach { LOG.error(it) } }
+    cs.launch {
+      errors.forEach {
+        LOG.error(it)
+        it.suppressed.forEach { suppressed -> LOG.error("   Suppressed exception: ", suppressed) }
+      }
+    }
   }
 
   interface HighlightedEditor {
@@ -233,6 +238,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
+    ListenerState.LOG.info("daemon starting with ${fileEditors.size} unfiltered editors")
     project.service<ListenerState>().registerAnalysisStarted(fileEditors.getWorthy())
   }
 
@@ -245,6 +251,7 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   private fun daemonStopped(fileEditors: Collection<FileEditor>, isCancelled: Boolean) {
+    ListenerState.LOG.info("daemon stopped with ${fileEditors.size} unfiltered editors")
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 

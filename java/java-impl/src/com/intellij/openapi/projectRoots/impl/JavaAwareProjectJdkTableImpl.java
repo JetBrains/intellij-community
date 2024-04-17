@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -67,9 +67,8 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   /**
    * @deprecated Bundled JDK must not be used. See IDEA-225960"
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public Sdk getInternalJdk() {
+  public @NotNull Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       Path javaHome = Paths.get(SystemProperties.getJavaHome());
       if (JdkUtil.checkForJre(javaHome) && !JdkUtil.checkForJdk(javaHome)) {
@@ -94,9 +93,8 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
     }
   }
 
-  @NotNull
   @Override
-  public SdkTypeId getDefaultSdkType() {
+  public @NotNull SdkTypeId getDefaultSdkType() {
     return JavaSdk.getInstance();
   }
 

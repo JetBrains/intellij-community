@@ -257,6 +257,32 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    fun `test moving declarations from multiple files should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFun = (myFixture.addFileToProject("Foo.kt", """
+            fun foo { }
+        """.trimIndent()) as KtFile).declarations.single()
+        val barFun = (myFixture.addFileToProject("Bar.kt", """
+            fun bar { }
+        """.trimIndent()) as KtFile).declarations.single()
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(fooFun, barFun), null)
+        }
+    }
+
+    fun `test moving file with declaration from different file should fail`() {
+        PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
+        val fooFile = myFixture.addFileToProject("Foo.kt", """
+            fun foo { }
+        """.trimIndent()) as KtFile
+        val barFun = (myFixture.addFileToProject("Bar.kt", """
+            fun bar { }
+        """.trimIndent()) as KtFile).declarations.single()
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(fooFile, barFun), null)
+        }
+    }
+
     fun `test move declaration and containing file`() {
         PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         val fooFile = myFixture.addFileToProject("Foo.kt", """

@@ -88,8 +88,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     }
   }
 
-  @NotNull
-  static List<LookupElement> create(@NotNull PsiElement position) {
+  static @NotNull List<LookupElement> create(@NotNull PsiElement position) {
     PsiElement parent = PsiTreeUtil.getParentOfType(position, false, PsiTryStatement.class);
     if (!(parent instanceof PsiTryStatement tryStatement)) {
       return List.of();
@@ -165,8 +164,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     return lookupElements;
   }
 
-  @NotNull
-  private static List<String> getHardcodedExceptions(@NotNull Set<PsiType> existedExceptions) {
+  private static @NotNull List<String> getHardcodedExceptions(@NotNull Set<PsiType> existedExceptions) {
     ArrayList<String> exceptions = new ArrayList<>();
     for (String defaultException : DEFAULT_EXCEPTIONS) {
       if (ContainerUtil.exists(existedExceptions, t -> defaultException.equals(t.getCanonicalText()))) {
@@ -178,8 +176,7 @@ final class CatchLookupElement extends LookupItem<PsiCatchSection> {
     return exceptions;
   }
 
-  @NotNull
-  private static List<PsiClassType> getUnhandledExceptionTypes(PsiElement @NotNull [] statements) {
+  private static @NotNull List<PsiClassType> getUnhandledExceptionTypes(PsiElement @NotNull [] statements) {
     List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(statements);
     if (exceptions.isEmpty()) {
       exceptions = ExceptionUtil.getThrownExceptions(statements);

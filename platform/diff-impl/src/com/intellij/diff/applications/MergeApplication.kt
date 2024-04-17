@@ -27,9 +27,6 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
 internal class MergeApplication : ApplicationStarterBase(3, 4) {
-  override val commandName: String
-    get() = "merge"
-
   override val usageMessage: String
     get() {
       val scriptName = ApplicationNamesInfo.getInstance().scriptName

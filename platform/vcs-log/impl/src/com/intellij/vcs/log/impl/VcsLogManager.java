@@ -61,8 +61,8 @@ public class VcsLogManager implements Disposable {
   }
 
   private VcsLogManager(@NotNull Project project,
-                       @NotNull VcsLogTabsProperties uiProperties,
-                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+                        @NotNull VcsLogTabsProperties uiProperties,
+                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     this(project, uiProperties, logProviders, "Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders), true, false, null);
   }
 

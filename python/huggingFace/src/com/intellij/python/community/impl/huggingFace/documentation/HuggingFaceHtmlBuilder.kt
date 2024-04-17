@@ -44,8 +44,14 @@ class HuggingFaceHtmlBuilder(
 
     val htmlContent = HtmlChunk.tag("html").child(bodyChunk)
     val htmlString = htmlContent.toString()
-    return htmlString
+    val fixedCodeBlocksString = fixCodeBlocks(htmlString)
+    return fixedCodeBlocksString
   }
+
+  // todo: delete once IJPL-970 is fixed
+  // This is a temporary patch to fix copy-paste ability of the HF cards code blocks
+  // in general, must be fixed platform-wide in the IJPL-970
+  private fun fixCodeBlocks(htmlText: String) = PRE_TAG_REGEX.replace(htmlText) { it.value.replace("<br>", BR_TAG_REPLACEMENT) }
 
   private fun generateCardHeader(modelInfo: HuggingFaceEntityBasicApiData): HtmlChunk {
     val cardTitle = modelInfo.itemId.replace("-", NBHP)
@@ -96,5 +102,7 @@ class HuggingFaceHtmlBuilder(
       .attr("src", "AllIcons.Plugins.Downloads")
     private val LIKES_ICON = HtmlChunk.tag("icon")
       .attr(".src", "AllIcons.Plugins.Rating")
+    private val PRE_TAG_REGEX = Regex("<pre><code>(.*?)</code></pre>", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.MULTILINE))
+    private val BR_TAG_REPLACEMENT = "<wbr>${System.lineSeparator()}"
   }
 }

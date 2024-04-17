@@ -24,11 +24,6 @@ import java.util.List;
 
 final class InspectionDump implements ApplicationStarter {
   @Override
-  public String getCommandName() {
-    return "inspections";
-  }
-
-  @Override
   public void main(@NotNull List<String> args) {
     try {
       DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();

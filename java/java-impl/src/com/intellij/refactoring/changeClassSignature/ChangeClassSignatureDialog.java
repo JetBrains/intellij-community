@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
@@ -62,8 +62,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     );
   }
 
-  @NotNull
-  private static List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
+  private static @NotNull List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
     final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
       new ArrayList<>();
     for (int i = 0; i < length; i++) {
@@ -169,8 +168,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       .createChangeClassSignatureProcessor(myClass.getProject(), myClass, myTypeParameterInfos.toArray(new TypeParameterInfo[0])));
   }
 
-  @NlsContexts.DialogMessage
-  private String validateAndCommitData() {
+  private @NlsContexts.DialogMessage String validateAndCommitData() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
@@ -198,8 +196,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return null;
   }
 
-  @NlsContexts.DialogMessage
-  private static String updateInfo(PsiTypeCodeFragment source, New info, InfoUpdater updater) {
+  private static @NlsContexts.DialogMessage String updateInfo(PsiTypeCodeFragment source, New info, InfoUpdater updater) {
     PsiType valueType;
     try {
       valueType = source.getType();
@@ -232,8 +229,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
 
     @Override
-    @Nullable
-    public Class getColumnClass(int columnIndex) {
+    public @Nullable Class getColumnClass(int columnIndex) {
       return columnIndex == NAME_COLUMN ? String.class : null;
     }
 

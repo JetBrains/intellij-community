@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
@@ -50,9 +50,8 @@ public final class ShortenToStaticImportProcessor implements TemplateOptionalPro
       () -> doStaticImport(project, editor, file, getStaticImportTargets(templateRange, file)));
   }
 
-  @NotNull
-  private static List<Pair<PsiElement, StaticImporter>> getStaticImportTargets(RangeMarker templateRange,
-                                                                               PsiFile file) {
+  private static @NotNull List<Pair<PsiElement, StaticImporter>> getStaticImportTargets(RangeMarker templateRange,
+                                                                                        PsiFile file) {
     List<Pair<PsiElement, StaticImporter>> staticImportTargets = new ArrayList<>();
     for (
       PsiElement element = PsiUtilCore.getElementAtOffset(file, templateRange.getStartOffset());
@@ -81,9 +80,8 @@ public final class ShortenToStaticImportProcessor implements TemplateOptionalPro
     }
   }
 
-  @Nls
   @Override
-  public String getOptionName() {
+  public @Nls String getOptionName() {
     return JavaBundle.message("dialog.edit.template.checkbox.use.static.import");
   }
 

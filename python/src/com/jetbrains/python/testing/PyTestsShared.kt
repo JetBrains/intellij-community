@@ -775,7 +775,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       // asking configuration about each element if it is supported or not
       // If element is supported -- set it as configuration target
       do {
-        if (configuration.couldBeTestTarget(element)) {
+        if (configuration.couldBeTestTarget(element) || checkDoctest(element, configuration, configuration.module)) {
           when (element) {
             is PyQualifiedNameOwner -> { // Function, class, method
 
@@ -826,11 +826,28 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       return elementFolder
     }
 
-    private fun checkDoctest(element: PsiElement, configuration: PyAbstractTestConfiguration, module: Module) {
-      if (TestRunnerService.getInstance(module).selectedFactory !is PyTestFactory) return
-      val tests = (element.containingFile as? PyFile)?.let { PythonDocTestUtil.getDocTestCasesFromFile(it) } ?: return
-      if (element is PyFile && tests.isNotEmpty() || tests.contains(element)) {
+    private fun checkDoctest(element: PsiElement, configuration: PyAbstractTestConfiguration, module: Module?): Boolean {
+      if (!Registry.`is`("python.run.doctest.via.pytest.configuration") ||
+          TestRunnerService.getInstance(module).selectedFactory !is PyTestFactory) return false
+      if (hasDoctestExpression(element)) {
         configuration.additionalArguments += DOCTEST_MODULES_ARG
+        return true
+      }
+      return false
+    }
+
+    private fun hasDoctestExpression(element: PsiElement): Boolean {
+      return when (element) {
+        is PyFunction -> {
+          PythonDocTestUtil.isDocTestFunction(element)
+        }
+        is PyClass -> {
+          PythonDocTestUtil.isDocTestClass(element)
+        }
+        is PyFile -> {
+          PythonDocTestUtil.getDocTestCasesFromFile(element).isNotEmpty()
+        }
+        else -> false
       }
     }
 
@@ -914,10 +931,6 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
             }
           }
         }
-      }
-
-      if (Registry.`is`("python.run.doctest.via.pytest.configuration")) {
-        configuration.module?.let { checkDoctest(targetForConfig.targetElement, configuration, it) }
       }
     }
     configuration.setGeneratedName()

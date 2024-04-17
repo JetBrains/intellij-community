@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
@@ -831,6 +832,7 @@ public class PyQuickFixTest extends PyTestCase {
       }
       if (applyFix) {
         myFixture.launchAction(intentionActions.get(0));
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"), true);
       }
     }

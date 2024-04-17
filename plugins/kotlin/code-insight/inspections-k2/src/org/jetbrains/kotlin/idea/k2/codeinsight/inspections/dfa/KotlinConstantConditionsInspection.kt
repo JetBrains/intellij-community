@@ -13,7 +13,6 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
-import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
@@ -62,7 +61,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         TRUE, FALSE, NULL, ZERO, UNKNOWN
     }
 
-    var warnOnConstantRefs = true
+    var warnOnConstantRefs: Boolean = true
 
     private class KotlinDfaListener : DfaListener {
         val constantConditions = hashMapOf<KotlinAnchor, ConstantValue>()
@@ -515,17 +514,6 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 curExpression = curExpression.nextSibling
             }
             return true
-        }
-
-        fun shouldSuppress(value: DfType, expression: KtExpression): Boolean {
-            val constant = when (value) {
-                DfTypes.NULL -> ConstantValue.NULL
-                DfTypes.TRUE -> ConstantValue.TRUE
-                DfTypes.FALSE -> ConstantValue.FALSE
-                DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
-                else -> ConstantValue.UNKNOWN
-            }
-            return analyze(expression) { shouldSuppress(constant, expression) }
         }
 
         context(KtAnalysisSession)

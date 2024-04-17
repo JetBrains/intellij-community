@@ -5,7 +5,6 @@ import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,20 +29,15 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
       "intellij.platform.main",
       "intellij.pycharm.community",
     )
-    productLayout.bundledPluginModules.add("intellij.python.community.plugin")
-    productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
-    productLayout.bundledPluginModules.add("intellij.vcs.github.community")
-    productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
+    productLayout.bundledPluginModules.addAll(
+      listOf(
+        "intellij.python.community.plugin", // Python language
+        "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
+        "intellij.vcs.github.community") +
+      Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
+    )
 
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
-      PluginLayout.plugin(listOf(
-        "intellij.pycharm.community.customization",
-        "intellij.pycharm.community.ide.impl",
-        "intellij.pycharm.community.ide.impl.promotion",
-        "intellij.jupyter.viewOnly",
-        "intellij.jupyter.core"
-      )
-      ),
       CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community")
     )
     )

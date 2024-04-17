@@ -5,8 +5,13 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import org.intellij.lang.annotations.Language
 
+/** Locates JList element */
 fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JList']",
                                                               JListUiComponent::class.java)
+
+/** Locates JBList element */
+fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JBList']",
+                                                                JListUiComponent::class.java)
 
 class JListUiComponent(data: ComponentData) : UiComponent(data) {
   private val fixture by lazy { driver.new(JListFixtureRef::class, robotService.robot, component) }
@@ -20,7 +25,7 @@ class JListUiComponent(data: ComponentData) : UiComponent(data) {
   fun clickItem(itemText: String, fullMatch: Boolean = true) {
     findItemIndex(itemText, fullMatch)?.let {
       fixture.clickItemAtIndex(it)
-    } ?: throw IllegalArgumentException("item with text $itemText not found")
+    } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
 
   private fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =

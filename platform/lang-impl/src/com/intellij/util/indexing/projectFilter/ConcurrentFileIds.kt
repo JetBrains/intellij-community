@@ -13,7 +13,12 @@ class ConcurrentFileIds(private val fileIds: ConcurrentBitSet = ConcurrentBitSet
   operator fun get(fileId: Int): Boolean = fileIds.get(fileId)
   operator fun set(fileId: Int, v: Boolean) = fileIds.set(fileId, v)
   fun clear() = fileIds.clear()
-  fun writeTo(outputStream: DataOutputStream) = fileIds.writeTo(outputStream)
+  fun writeTo(outputStream: DataOutputStream) {
+    val words = fileIds.toIntArray()
+    for (word in words) {
+      outputStream.writeInt(word)
+    }
+  }
 
   companion object {
     fun readFrom(stream: DataInputStream) = ConcurrentFileIds(ConcurrentBitSet.readFrom(stream))

@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.exceptions;
 
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,9 +21,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class TryStatementWithMultipleResourcesInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return getDisplayName();
   }
 
@@ -32,9 +31,8 @@ public final class TryStatementWithMultipleResourcesInspection extends BaseInspe
     return new SplitTryWithResourcesVisitor();
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
     return new SplitTryWithResourcesFix();
   }
 
@@ -45,7 +43,7 @@ public final class TryStatementWithMultipleResourcesInspection extends BaseInspe
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    @NonNls final StringBuilder newTryStatementText = new StringBuilder();
+    final @NonNls StringBuilder newTryStatementText = new StringBuilder();
     int count = 0;
     for (PsiResourceListElement resource : resourceList) {
       if (count > 0) {
@@ -113,10 +111,8 @@ public final class TryStatementWithMultipleResourcesInspection extends BaseInspe
       doFixImpl(startElement);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("try.statement.with.multiple.resources.quickfix");
     }
   }

@@ -1,11 +1,11 @@
 open class T
 
 fun foo(): T {
-    val o = anonymous()
+    val o = t()
     return o
 }
 
-private fun anonymous(): T {
+private fun t(): T {
     val o = object : T() {}
     return o
 }

@@ -29,11 +29,6 @@ import java.util.List;
 
 final class IntentionDump implements ApplicationStarter {
   @Override
-  public String getCommandName() {
-    return "intentions";
-  }
-
-  @Override
   public void main(@NotNull List<String> args) {
     try {
       DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();

@@ -196,6 +196,15 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         }
       }
 
+      for (KmFunction func : flat(metaDiff.functions().removed(), metaDiff.functions().added())) {
+        Visibility visibility = Attributes.getVisibility(func);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS || find(func.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
+          continue;
+        }
+        debug("Removed or added function declares default values: ", changedClass.getName());
+        affectMemberLookupUsages(context, changedClass, func.getName(), future);
+      }
+
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
         KmFunction changedKmFunction = funChange.getPast();
         Visibility visibility = Attributes.getVisibility(changedKmFunction);
@@ -221,14 +230,35 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
             affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
           }
         }
-        if (funDiff.receiverParameterChanged()) {
-          debug("Function's receiver parameter changed: ", changedKmFunction.getName());
+        if (funDiff.receiverParameterChanged() || funDiff.hasDefaultDeclarationChanges()) {
+          debug("Function's receiver parameter changed or function has breaking changes in default value declarations: ", changedKmFunction.getName());
           affectMemberLookupUsages(context, changedClass, changedKmFunction.getName(), future);
         }
       }
 
-      for (KmProperty removedProp : metaDiff.properties().removed()) {
+      for (KmConstructor con : flat(metaDiff.constructors().removed(), metaDiff.constructors().added())) {
+        Visibility visibility = Attributes.getVisibility(con);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS || find(con.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
+          continue;
+        }
+        debug("Removed or added constructor declares default values: ", changedClass.getName());
+        affectClassLookupUsages(context, changedClass);
+      }
+      
+      for (Difference.Change<KmConstructor, KotlinMeta.KmConstructorsDiff> conChange : metaDiff.constructors().changed()) {
+        KmConstructor changedCons = conChange.getPast();
+        Visibility visibility = Attributes.getVisibility(changedCons);
+        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+          continue;
+        }
+        KotlinMeta.KmConstructorsDiff conDiff = conChange.getDiff();
+        if (conDiff.argsBecameNotNull() || conDiff.accessRestricted() || conDiff.hasDefaultDeclarationChanges()) {
+          debug("Constructor's args became non-nullable; or the constructor has become less accessible or has breaking changes in default value declarations: ", changedClass.getName());
+          affectClassLookupUsages(context, changedClass);
+        }
+      }
 
+      for (KmProperty removedProp : metaDiff.properties().removed()) {
         if (Attributes.isInline(removedProp.getGetter()) || (removedProp.getSetter() != null && Attributes.isInline(removedProp.getSetter()))) {
           debug("Removed property was inlineable, affecting property usages ", removedProp.getName());
           affectMemberLookupUsages(context, changedClass, removedProp.getName(), present);
@@ -271,6 +301,23 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           }
         }
       }
+
+      for (KmTypeAlias alias : flat(metaDiff.typeAliases().removed(), metaDiff.typeAliases().added())) {
+        Visibility visibility = Attributes.getVisibility(alias);
+        if (visibility != Visibility.PRIVATE && visibility != Visibility.PRIVATE_TO_THIS) {
+          debug("A type alias declaration was added/removed; affecting lookup usages ", alias.getName());
+          affectMemberLookupUsages(context, changedClass, alias.getName(), future);
+        }
+      }
+      for (Difference.Change<KmTypeAlias, KotlinMeta.KmTypeAliasDiff> aChange : metaDiff.typeAliases().changed()) {
+        KotlinMeta.KmTypeAliasDiff aDiff = aChange.getDiff();
+        if (aDiff.accessRestricted() || aDiff.underlyingTypeChanged()) {
+          KmTypeAlias changedAlias = aChange.getPast();
+          debug("A type alias declaration has access restricted or underlying type has changed; affecting lookup usages ", changedAlias.getName());
+          affectMemberLookupUsages(context, changedClass, changedAlias.getName(), future);
+        }
+      }
+
     }
 
     return true;

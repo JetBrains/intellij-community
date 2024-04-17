@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
@@ -27,7 +27,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   private static final ResolveCache.PolyVariantResolver<AbstractQualifiedReference> MY_RESOLVER =
     (expression, incompleteCode) -> expression.resolveInner();
 
-  protected AbstractQualifiedReference(@NotNull final ASTNode node) {
+  protected AbstractQualifiedReference(final @NotNull ASTNode node) {
     super(node);
   }
 
@@ -36,9 +36,8 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
-  @NotNull
   @Override
-  public final PsiElement getElement() {
+  public final @NotNull PsiElement getElement() {
     return this;
   }
 
@@ -51,8 +50,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   @Override
-  @Nullable
-  public final PsiElement resolve() {
+  public final @Nullable PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
     return results.length == 1 ? results[0].getElement() : null;
   }
@@ -73,20 +71,18 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
 
 
   @Override
-  @NotNull
-  public  String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getText();
   }
 
   @Override
   @SuppressWarnings({"unchecked"})
-  @Nullable
-  public T getQualifier() {
+  public @Nullable T getQualifier() {
     return (T)findChildByClass(getClass());
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(final @NotNull String newElementName) throws IncorrectOperationException {
     CheckUtil.checkWritable(this);
     final PsiElement firstChildNode = Objects.requireNonNull(getFirstChild());
     final PsiElement firstInIdentifier = getClass().isInstance(firstChildNode) ? Objects.requireNonNull(firstChildNode.getNextSibling()).getNextSibling() : firstChildNode;
@@ -148,8 +144,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return (AbstractQualifiedReference)newNode.getPsi();
   }
 
-  @NotNull
-  protected abstract T parseReference(String newText);
+  protected abstract @NotNull T parseReference(String newText);
 
   protected boolean isAccessible(final PsiElement element) {
     if (element instanceof PsiMember member) {
@@ -158,8 +153,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return true;
   }
 
-  @NotNull
-  protected AbstractQualifiedReference shortenReferences() {
+  protected @NotNull AbstractQualifiedReference shortenReferences() {
     final PsiElement refElement = resolve();
     if (refElement instanceof PsiClass) {
       final PsiQualifiedReference reference = JavaReferenceAdjuster.getClassReferenceToShorten((PsiClass)refElement, false, this);
@@ -185,7 +179,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     final PsiManager manager = getManager();
     for (final ResolveResult result : multiResolve(false)) {
       if (manager.areElementsEquivalent(result.getElement(), element)) return true;
@@ -193,24 +187,19 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return false;
   }
 
-  @Nullable
-  protected abstract PsiElement getSeparator();
+  protected abstract @Nullable PsiElement getSeparator();
 
-  @Nullable
-  protected abstract PsiElement getReferenceNameElement();
+  protected abstract @Nullable PsiElement getReferenceNameElement();
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final PsiElement element = getSeparator();
     final int length = getTextLength();
     return element == null ? TextRange.from(0, length) : new TextRange(element.getStartOffsetInParent() + element.getTextLength(), length);
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getReferenceName() {
+  public @Nullable @NonNls String getReferenceName() {
     final PsiElement element = getReferenceNameElement();
     return element == null ? null : element.getText().trim();
   }
@@ -225,7 +214,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     private final Set<ResolveResult> myResults = new LinkedHashSet<>();
 
     @Override
-    public boolean execute(@NotNull final PsiElement element, @NotNull final ResolveState state) {
+    public boolean execute(final @NotNull PsiElement element, final @NotNull ResolveState state) {
       if (isFound()) return false;
       process(element);
       return true;
@@ -240,7 +229,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     }
 
     @Override
-    public void handleEvent(@NotNull final Event event, final Object associated) {
+    public void handleEvent(final @NotNull Event event, final Object associated) {
       if ((event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT || event == Event.SET_DECLARATION_HOLDER) && !myResults.isEmpty()) {
         setFound();
       }

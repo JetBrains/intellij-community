@@ -6398,7 +6398,6 @@ f:com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator
 - sf:COMMAND_NAME:java.lang.String
 - sf:Companion:com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator$Companion
 - <init>():V
-- getCommandName():java.lang.String
 - f:performGeneration(java.util.List,com.intellij.ide.environment.impl.EnvironmentConfiguration,kotlin.coroutines.Continuation):java.lang.Object
 - bs:performGeneration$default(com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator,java.util.List,com.intellij.ide.environment.impl.EnvironmentConfiguration,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
@@ -6733,12 +6732,14 @@ f:com.intellij.ide.gdpr.DataSharingSettingsChangeListener$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
 f:com.intellij.ide.gdpr.EndUserAgreement
 - <init>():V
+- s:getAcceptedVersion(java.lang.String):com.intellij.ide.gdpr.Version
 - s:getDocumentContentFile():java.nio.file.Path
 - s:getLatestDocument():com.intellij.ide.gdpr.EndUserAgreement$Document
 - s:loadContent(java.lang.String,java.nio.file.Path):com.intellij.ide.gdpr.EndUserAgreement$Document
 - s:setAccepted(com.intellij.ide.gdpr.EndUserAgreement$Document):V
-- s:update(java.lang.String,java.lang.String):V
+- s:updateActiveDocumentName(java.lang.String):V
 - s:updateCachedContentToLatestBundledVersion():Z
+- s:updateContent(java.lang.String,java.lang.String):V
 f:com.intellij.ide.gdpr.EndUserAgreement$Document
 - <init>(java.lang.String,java.lang.String):V
 - getName():java.lang.String
@@ -6746,6 +6747,11 @@ f:com.intellij.ide.gdpr.EndUserAgreement$Document
 - getVersion():com.intellij.ide.gdpr.Version
 - isAccepted():Z
 - isPrivacyPolicy():Z
+f:com.intellij.ide.gdpr.EndUserAgreement$PluginAgreementUpdateDescriptor
+- documentName:java.lang.String
+- productCode:java.lang.String
+- <init>():V
+- s:getDescriptors():java.util.List
 f:com.intellij.ide.gdpr.Version
 - java.lang.Comparable
 - sf:UNKNOWN:com.intellij.ide.gdpr.Version
@@ -7518,7 +7524,6 @@ f:com.intellij.ide.plugins.DynamicPluginsKt
 f:com.intellij.ide.plugins.HeadlessPluginsInstaller
 - com.intellij.openapi.application.ApplicationStarter
 - <init>():V
-- getCommandName():java.lang.String
 - getRequiredModality():I
 - s:installPlugins(java.util.Set):java.util.Collection
 - main(java.util.List):V
@@ -7708,7 +7713,6 @@ f:com.intellij.ide.plugins.PluginManagerConfigurable
 - s:showRestartDialog():I
 - s:showRestartDialog(java.lang.String):I
 - s:showRestartDialog(java.lang.String,java.util.function.Function):I
-- s:showSuggestedPlugins(com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource):V
 - s:shutdownOrRestartApp():V
 - s:shutdownOrRestartApp(java.lang.String):V
 f:com.intellij.ide.plugins.PluginManagerConfigurableTreeRenderer
@@ -9330,19 +9334,16 @@ f:com.intellij.ide.ui.customization.ActionUrl
 - sf:ADDED:I
 - sf:DELETED:I
 - sf:MOVE:I
-- myInitialPosition:I
 - <init>():V
 - <init>(java.util.ArrayList,java.lang.Object,I,I):V
-- s:addPathToActionsTree(javax.swing.JTree,com.intellij.ide.ui.customization.ActionUrl):javax.swing.tree.DefaultMutableTreeNode
-- s:changePathInActionsTree(javax.swing.JTree,com.intellij.ide.ui.customization.ActionUrl):V
 - copy():com.intellij.ide.ui.customization.ActionUrl
 - equals(java.lang.Object):Z
 - getAbsolutePosition():I
 - getActionType():I
 - getComponent():java.lang.Object
 - getComponentAction():com.intellij.openapi.actionSystem.AnAction
+- getComponentId():java.lang.String
 - getGroupPath():java.util.ArrayList
-- s:getGroupPath(javax.swing.tree.TreePath,Z):java.util.ArrayList
 - getInitialPosition():I
 - getInverted():com.intellij.ide.ui.customization.ActionUrl
 - getParentGroup():java.lang.String
@@ -10960,7 +10961,6 @@ c:com.intellij.idea.IdeStarter
 - com.intellij.openapi.application.ApplicationStarter
 - sf:Companion:com.intellij.idea.IdeStarter$Companion
 - <init>():V
-- getCommandName():java.lang.String
 - isHeadless():Z
 - p:openProjectIfNeeded(java.util.List,com.intellij.openapi.application.Application,kotlinx.coroutines.CoroutineScope,com.intellij.ide.AppLifecycleListener,kotlin.coroutines.Continuation):java.lang.Object
 - start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
@@ -15988,8 +15988,6 @@ f:com.intellij.openapi.fileEditor.TextEditorWithPreview$MyFileEditorState
 - getPolicy():com.intellij.openapi.fileEditor.FileEditorPolicy
 - readState(org.jdom.Element,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditorState
 - writeState(com.intellij.openapi.fileEditor.FileEditorState,com.intellij.openapi.project.Project,org.jdom.Element):V
-*bc:com.intellij.openapi.fileEditor.TextEditorWithPreviewProvider$EntriesMappings
-- bsf:entries$0:kotlin.enums.EnumEntries
 f:com.intellij.openapi.fileEditor.TextEditorWithPreviewProviderKt
 a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - com.intellij.openapi.fileEditor.FileEditorManager
@@ -16699,6 +16697,7 @@ f:com.intellij.openapi.fileEditor.impl.JComponentFileEditor
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.fileEditor.FileEditor
 - <init>(com.intellij.openapi.vfs.VirtualFile,javax.swing.JComponent):V
+- <init>(com.intellij.openapi.vfs.VirtualFile,javax.swing.JComponent,java.lang.String):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - dispose():V
 - getComponent():javax.swing.JComponent
@@ -17643,7 +17642,6 @@ f:com.intellij.openapi.options.advanced.AdvancedSettingBean
 - f:description():java.lang.String
 - f:getAccessor():com.intellij.serialization.MutableAccessor
 - f:getDefaultValueObject():java.lang.Object
-- f:getEnumKlass():java.lang.Class
 - getInstance():com.intellij.openapi.options.advanced.AdvancedSettingBean
 - getKey():java.lang.String
 - f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
@@ -18218,9 +18216,11 @@ com.intellij.openapi.project.FilesScanningTask
 *c:com.intellij.openapi.project.MergingQueueGuiExecutor
 - *sf:Companion:com.intellij.openapi.project.MergingQueueGuiExecutor$Companion
 - p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.project.MergingTaskQueue,com.intellij.openapi.project.MergingQueueGuiExecutor$ExecutorStateListener,java.lang.String,java.lang.String):V
+- f:cancelAllTasks():V
 - f:getBackgroundTasksSubmittedCount():I
 - pf:getGuiSuspender():com.intellij.openapi.project.MergingQueueGuiSuspender
 - f:getProject():com.intellij.openapi.project.Project
+- f:getStartedOrStoppedEvent():kotlinx.coroutines.flow.Flow
 - p:getTaskId():java.lang.Object
 - f:getTaskQueue():com.intellij.openapi.project.MergingTaskQueue
 - f:isRunning():kotlinx.coroutines.flow.StateFlow
@@ -18229,6 +18229,7 @@ com.intellij.openapi.project.FilesScanningTask
 - runSingleTask(com.intellij.openapi.project.MergingTaskQueue$QueuedTask,com.intellij.internal.statistic.StructuredIdeActivity):V
 - shouldShowProgressIndicator():Z
 - f:startBackgroundProcess(kotlin.jvm.functions.Function0):V
+- f:suspendAndRun(java.lang.String,java.lang.Runnable):V
 - f:suspendQueue():V
 *f:com.intellij.openapi.project.MergingQueueGuiExecutor$Companion
 *:com.intellij.openapi.project.MergingQueueGuiExecutor$ExecutorStateListener
@@ -19147,102 +19148,8 @@ f:com.intellij.openapi.updateSettings.impl.UpdateStrategy
 - <init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product,com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.updateSettings.UpdateStrategyCustomization):V
 - b:<init>(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.updateSettings.impl.Product,com.intellij.openapi.updateSettings.impl.UpdateSettings,com.intellij.openapi.updateSettings.UpdateStrategyCustomization,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:checkForUpdates():com.intellij.openapi.updateSettings.impl.PlatformUpdates
-e:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- java.lang.Enum
-- sf:ACTIONS:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:EDITOR:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:NEW_PROJECT_WIZARD:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:NOTIFICATION:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:PLUGINS_SEARCH:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:PLUGINS_SUGGESTED_GROUP:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:SEARCH:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- sf:SETTINGS:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- f:doIgnoreUltimateAndLog(com.intellij.openapi.project.Project):V
-- bs:doIgnoreUltimateAndLog$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- s:getEntries():kotlin.enums.EnumEntries
-- f:learnMoreAndLog():V
-- f:learnMoreAndLog(com.intellij.openapi.project.Project):V
-- f:learnMoreAndLog(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.extensions.PluginId):V
-- f:learnMoreAndLog(java.lang.String,com.intellij.openapi.extensions.PluginId):V
-- bs:learnMoreAndLog$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- bs:learnMoreAndLog$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- f:logConfigurePlugins():V
-- f:logConfigurePlugins(com.intellij.openapi.project.Project):V
-- bs:logConfigurePlugins$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:logEnablePlugins(java.util.List):V
-- f:logEnablePlugins(java.util.List,com.intellij.openapi.project.Project):V
-- bs:logEnablePlugins$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,java.util.List,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:logIgnoreExtension():V
-- f:logIgnoreExtension(com.intellij.openapi.project.Project):V
-- bs:logIgnoreExtension$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:logIgnoreUnknownFeatures():V
-- f:logIgnoreUnknownFeatures(com.intellij.openapi.project.Project):V
-- bs:logIgnoreUnknownFeatures$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:logInstallPlugins(java.util.List):V
-- f:logInstallPlugins(java.util.List,com.intellij.openapi.project.Project):V
-- bs:logInstallPlugins$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,java.util.List,com.intellij.openapi.project.Project,I,java.lang.Object):V
-- f:logPluginSuggested(com.intellij.openapi.extensions.PluginId):V
-- f:logPluginSuggested(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):V
-- bs:logPluginSuggested$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- f:logTryUltimate():V
-- f:logTryUltimate(com.intellij.openapi.project.Project):V
-- f:logTryUltimate(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):V
-- bs:logTryUltimate$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- f:logTryUltimateCancelled():V
-- f:logTryUltimateCancelled(com.intellij.openapi.project.Project):V
-- f:logTryUltimateCancelled(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):V
-- bs:logTryUltimateCancelled$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- f:logTryUltimateDownloadStarted():com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateDownloadStarted(com.intellij.openapi.project.Project):com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateDownloadStarted(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):com.intellij.internal.statistic.StructuredIdeActivity
-- bs:logTryUltimateDownloadStarted$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateFallback(com.intellij.openapi.project.Project,java.lang.String):V
-- f:logTryUltimateFallback(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.extensions.PluginId):V
-- f:logTryUltimateFallback(java.lang.String):V
-- bs:logTryUltimateFallback$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- f:logTryUltimateIdeOpened():com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateIdeOpened(com.intellij.openapi.project.Project):com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateIdeOpened(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):com.intellij.internal.statistic.StructuredIdeActivity
-- bs:logTryUltimateIdeOpened$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateInstallationStarted():com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateInstallationStarted(com.intellij.openapi.project.Project):com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateInstallationStarted(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):com.intellij.internal.statistic.StructuredIdeActivity
-- bs:logTryUltimateInstallationStarted$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):com.intellij.internal.statistic.StructuredIdeActivity
-- f:logTryUltimateToolboxUsed():V
-- f:logTryUltimateToolboxUsed(com.intellij.openapi.project.Project):V
-- f:logTryUltimateToolboxUsed(com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId):V
-- bs:logTryUltimateToolboxUsed$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- f:openDownloadPageAndLog(com.intellij.openapi.project.Project,java.lang.String):V
-- f:openDownloadPageAndLog(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.extensions.PluginId):V
-- f:openDownloadPageAndLog(java.lang.String):V
-- bs:openDownloadPageAndLog$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.extensions.PluginId,I,java.lang.Object):V
-- s:valueOf(java.lang.String):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
-- s:values():com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource[]
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSourceKt
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
-- com.intellij.DynamicBundle
-- sf:INSTANCE:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundle
-- sf:message(java.lang.String,java.lang.Object[]):java.lang.String
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FeaturePromoBundleKt
-c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.HeadlessPluginAdvertiserServiceImpl
-- <init>():V
-- f:collectDependencyUnknownFeatures(Z):V
-- fetch(java.util.List,java.util.Collection,Z,kotlin.coroutines.Continuation):java.lang.Object
-- f:rescanDependencies(kotlin.jvm.functions.Function2):V
-- f:run(java.util.List,java.util.Collection,Z,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider
-- com.intellij.openapi.project.DumbAware
-- com.intellij.ui.EditorNotificationProvider
-- <init>():V
-- collectNotificationData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Function
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider$AdvertiserSuggestion
-- java.util.function.Function
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Set,java.util.Set,java.util.List):V
-- apply(com.intellij.openapi.fileEditor.FileEditor):com.intellij.ui.EditorNotificationPanel
-- f:getSuggestedIdes():java.util.List
-- f:getThirdParty():java.util.Set
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProviderKt
-- sf:getSuggestionData(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider$AdvertiserSuggestion
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService
 - sf:Companion:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService$Companion
 - <init>():V
@@ -19268,19 +19175,7 @@ c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiser
 - run(java.util.List,java.util.Collection,Z,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceImpl$Companion
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserServiceKt
-- sf:createTryUltimateActionLabel(com.intellij.ui.EditorNotificationPanel,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,kotlin.jvm.functions.Function0):V
-- bs:createTryUltimateActionLabel$default(com.intellij.ui.EditorNotificationPanel,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,com.intellij.openapi.project.Project,com.intellij.openapi.extensions.PluginId,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- sf:disableTryUltimate(com.intellij.openapi.project.Project):V
-- sf:enableTryUltimate(com.intellij.openapi.project.Project):V
-- sf:tryUltimate(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,kotlin.jvm.functions.Function0):V
-- bs:tryUltimate$default(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,com.intellij.openapi.project.Project,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- sf:tryUltimateIsDisabled():Z
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserUsageCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProviderKt
-- sf:buildSuggestionIfNeeded(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):java.util.function.Function
-- sf:buildSuggestionIfNeeded(com.intellij.openapi.project.Project,java.util.List,java.lang.String,java.lang.String,java.lang.String):java.util.function.Function
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 - sf:getInstallAndEnableTask(com.intellij.openapi.project.Project,java.util.Set,java.lang.Runnable):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTask
 - sf:getInstallAndEnableTask(com.intellij.openapi.project.Project,java.util.Set,Z,java.lang.Runnable):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnableTask
@@ -19307,45 +19202,7 @@ c:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertise
 - doInstallPlugins(java.util.function.Predicate,com.intellij.openapi.application.ModalityState):Z
 - downloadPlugins(java.util.List,java.util.Collection,java.lang.Runnable,com.intellij.openapi.application.ModalityState,java.util.function.Consumer):V
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivityKt
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeatureListItem
-- <init>(javax.swing.Icon,java.lang.String):V
-- f:getIcon():javax.swing.Icon
-- f:getTitle():java.lang.String
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage
-- <init>(javax.swing.Icon,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,java.lang.String,java.util.List,java.lang.String,java.lang.String):V
-- f:getDescriptionHtml():java.lang.String
-- f:getFeatures():java.util.List
-- f:getPluginId():java.lang.String
-- f:getProductIcon():javax.swing.Icon
-- f:getSuggestedIde():com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-- f:getTrialLabel():java.lang.String
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
-- sf:INSTANCE:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages
-- f:build(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage):com.intellij.openapi.ui.DialogPanel
-- f:build(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource):com.intellij.openapi.ui.DialogPanel
-- f:build(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
-- f:buildWithTryUltimate(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource):com.intellij.openapi.ui.DialogPanel
-- bs:buildWithTryUltimate$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoPages,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PromoFeaturePage,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.StateKt
-f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:component3():java.lang.String
-- f:component4():java.lang.String
-- f:component5():java.lang.String
-- f:copy(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-- bs:copy$default(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-- equals(java.lang.Object):Z
-- f:getBaseDownloadUrl():java.lang.String
-- f:getDefaultDownloadUrl():java.lang.String
-- f:getDownloadUrl():java.lang.String
-- f:getName():java.lang.String
-- f:getPlatformSpecificDownloadUrlTemplate():java.lang.String
-- f:getProductCode():java.lang.String
-- hashCode():I
-- toString():java.lang.String
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 - <init>(java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
@@ -19369,15 +19226,6 @@ f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesC
 - isIgnored(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature):Z
 - loadState(org.jdom.Element):V
 - *:unregisterUnknownFeature(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature):Z
-c:com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationInfo
-- <init>(com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde):V
-- f:getSuggestedIde():com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde
-f:com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationService
-- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
-- f:install(com.intellij.openapi.extensions.PluginId,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde):V
-- bs:install$default(com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationService,com.intellij.openapi.extensions.PluginId,com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.SuggestedIde,I,java.lang.Object):V
-f:com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallationServiceKt
-f:com.intellij.openapi.updateSettings.impl.upgradeToUltimate.installation.install.UltimateInstallerKt
 c:com.intellij.openapi.util.MultiValuesMap
 - <init>():V
 - <init>(Z):V
@@ -20510,28 +20358,6 @@ c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo$ZipAlgo
 - decompress(java.nio.ByteBuffer,B[]):V
 - shouldCompress(com.intellij.openapi.util.io.ByteArraySequence):Z
 - toString():java.lang.String
-c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator
-- com.intellij.util.hash.ContentHashEnumerator
-- com.intellij.util.io.CleanableStorage
-- close():V
-- closeAndClean():V
-- enumerate(B[]):I
-- enumerateEx(B[]):I
-- forEach(com.intellij.util.io.ScannableDataEnumeratorEx$ValueReader):Z
-- force():V
-- isDirty():Z
-- s:open(java.nio.file.Path):com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator
-- recordsCount():I
-- tryEnumerate(B[]):I
-- valueOf(I):B[]
-c:com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator$ContentHashKeyDescriptor
-- com.intellij.util.containers.hash.EqualityPolicy
-- com.intellij.util.io.dev.enumerator.DataExternalizerEx
-- sf:INSTANCE:com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator$ContentHashKeyDescriptor
-- getHashCode(B[]):I
-- isEqual(B[],B[]):Z
-- read(java.nio.ByteBuffer):B[]
-- writerFor(B[]):com.intellij.util.io.dev.enumerator.DataExternalizerEx$KnownSizeRecordWriter
 f:com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter
 - com.intellij.openapi.Forceable
 - com.intellij.util.io.CleanableStorage
@@ -22072,7 +21898,7 @@ f:com.intellij.openapi.wm.impl.DefaultCutStrategy
 - com.intellij.openapi.wm.impl.TextCutStrategy
 - <init>():V
 - calcMinTextWidth(java.lang.String,java.awt.FontMetrics):I
-- calcShownText(java.lang.String,java.awt.FontMetrics,I):java.lang.String
+- calcShownText(java.lang.String,java.awt.FontMetrics,I,java.awt.Graphics):java.lang.String
 c:com.intellij.openapi.wm.impl.DefaultToolbarComboButtonModel
 - com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 - <init>():V
@@ -22418,7 +22244,7 @@ f:com.intellij.openapi.wm.impl.TestWindowManager
 - suggestParentWindow(com.intellij.openapi.project.Project):java.awt.Window
 com.intellij.openapi.wm.impl.TextCutStrategy
 - a:calcMinTextWidth(java.lang.String,java.awt.FontMetrics):I
-- a:calcShownText(java.lang.String,java.awt.FontMetrics,I):java.lang.String
+- a:calcShownText(java.lang.String,java.awt.FontMetrics,I,java.awt.Graphics):java.lang.String
 com.intellij.openapi.wm.impl.TitleInfoProvider
 - sf:Companion:com.intellij.openapi.wm.impl.TitleInfoProvider$Companion
 - a:addUpdateListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
@@ -26295,6 +26121,7 @@ f:com.intellij.ui.LicensingFacade
 - metadata:java.lang.String
 - perpetualFallbackDate:java.util.Date
 - platformProductCode:java.lang.String
+- productLicenses:java.util.Map
 - restrictions:java.util.List
 - <init>():V
 - s:fromJson(java.lang.String):com.intellij.ui.LicensingFacade
@@ -26310,6 +26137,16 @@ f:com.intellij.ui.LicensingFacade
 - isPerpetualForProduct(java.util.Date):Z
 - s:signalUnused(Z):V
 - toJson():java.lang.String
+com.intellij.ui.LicensingFacade$LicenseStateListener
+- java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:licenseStateChanged(com.intellij.ui.LicensingFacade):V
+f:com.intellij.ui.LicensingFacade$ProductLicenseData
+- confirmationStamp:java.lang.String
+- expirationDate:java.util.Date
+- isPersonal:Z
+- productCode:java.lang.String
+- <init>():V
 c:com.intellij.ui.LightweightHint
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.ui.Hint
@@ -29547,7 +29384,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - getConsumedScreenBounds():java.awt.Rectangle
 - getContent():javax.swing.JComponent
 - f:getContentSize():java.awt.Dimension
-- ps:getCurrentWindow(com.intellij.openapi.project.Project):java.awt.Window
+- s:getCurrentWindow(com.intellij.openapi.project.Project):java.awt.Window
 - getDimensionServiceKey():java.lang.String
 - getFooterPreferredSize():java.awt.Dimension
 - getHeaderPreferredSize():java.awt.Dimension
@@ -29599,6 +29436,7 @@ c:com.intellij.ui.popup.AbstractPopup
 - setRequestFocus(Z):V
 - setShowHints(Z):V
 - setSize(java.awt.Dimension):V
+- setSize(java.awt.Point,java.awt.Dimension):V
 - p:setSpeedSearchAlwaysShown():V
 - setStretchToOwnerHeight(Z):V
 - setStretchToOwnerWidth(Z):V

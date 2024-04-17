@@ -1,5 +1,5 @@
 // "Let 'Foo?' extend interface 'Foo'" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (foo!!) call
 // ACTION: Change type of 'x' to 'Foo?'
 // ERROR: Type mismatch: inferred type is Foo? but Foo was expected
 interface Foo

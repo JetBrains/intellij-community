@@ -21,6 +21,7 @@ use {
     winresource::WindowsResource,
 };
 
+#[cfg(target_os = "windows")]
 macro_rules! trace {
     ($($arg:tt)*) => {
         println!("TRACE: {}", format_args!($($arg)*));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.scope.util;
 
@@ -40,10 +40,10 @@ public final class PsiScopesUtil {
     return treeWalkUp(processor, entrance, maxScope, ResolveState.initial());
   }
 
-  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor,
-                                   @NotNull final PsiElement entrance,
-                                   @Nullable final PsiElement maxScope,
-                                   @NotNull final ResolveState state) {
+  public static boolean treeWalkUp(final @NotNull PsiScopeProcessor processor,
+                                   final @NotNull PsiElement entrance,
+                                   final @Nullable PsiElement maxScope,
+                                   final @NotNull ResolveState state) {
     if (!entrance.isValid()) {
       LOG.error(new PsiInvalidElementAccessException(entrance));
     }
@@ -422,7 +422,7 @@ public final class PsiScopesUtil {
     return false;
   }
 
-  private static boolean processQualifierType(@NotNull final PsiType type,
+  private static boolean processQualifierType(final @NotNull PsiType type,
                                               final MethodsProcessor processor,
                                               PsiManager manager,
                                               PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {

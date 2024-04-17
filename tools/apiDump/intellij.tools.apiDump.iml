@@ -11,37 +11,38 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module-library">
       <library name="kotlinx-bcv" type="repository">
-        <properties maven-id="org.jetbrains.kotlinx:binary-compatibility-validator:0.13.2">
+        <properties maven-id="org.jetbrains.kotlinx:binary-compatibility-validator:0.14.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.13.2/binary-compatibility-validator-0.13.2.jar">
-              <sha256sum>e7b0819759c1281ac0d0aa51d40cd1d65413932b29085ae05e85aa77e2cfc89b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0.jar">
+              <sha256sum>bc4224bdfd69330aa9d3f90914f0bd41fa3bb8eb7741d7f65a925404c0e55807</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2.jar">
               <sha256sum>8f5759b435fcbcfdf06c80295013ba953db4ec817b04d7809c61a739a483527b</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.2/asm-9.2.jar">
-              <sha256sum>b9d4fe4d71938df38839f0eca42aaaa64cf8b313d678da036f0cb3ca199b47f5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar">
+              <sha256sum>3c6fac2424db3d4a853b669f4e3d1d9c3c552235e19a319673f887083c2303a1</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.2/asm-tree-9.2.jar">
-              <sha256sum>aabf9bd23091a4ebfc109c1f3ee7cf3e4b89f6ba2d3f51c5243f16b3cffae011</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar">
+              <sha256sum>c43ecf17b539c777e15da7b5b86553b377e2d39a683de6285567d5283888e7ef</sha256sum>
             </artifact>
           </verification>
           <exclude>
-            <dependency maven-id="com.googlecode.java-diff-utils:diffutils" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.13.2/binary-compatibility-validator-0.13.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.2/asm-9.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.2/asm-tree-9.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.13.2/binary-compatibility-validator-0.13.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.2/asm-9.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.2/asm-tree-9.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

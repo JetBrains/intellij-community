@@ -9,6 +9,7 @@ import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageUtil.getExpectedParameterInfo
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 

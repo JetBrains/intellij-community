@@ -2,6 +2,7 @@
 @file:JvmName("FuzzyTypeUtils")
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.openapi.progress.ProgressIndicatorProvider
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -9,10 +10,9 @@ import org.jetbrains.kotlin.resolve.calls.inference.CallHandle
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilderImpl
 import org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPositionKind
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.checker.StrictEqualityTypeChecker
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.*
-import java.util.*
 
 fun CallableDescriptor.fuzzyReturnType() = returnType?.toFuzzyType(typeParameters)
 fun CallableDescriptor.fuzzyExtensionReceiverType() = extensionReceiverParameter?.type?.toFuzzyType(typeParameters)
@@ -111,6 +111,7 @@ class FuzzyType(val type: KotlinType, freeParameters: Collection<TypeParameterDe
         if (type.isError) return null
         if (otherType.type.isError) return null
         if (otherType.type.isUnit() && matchKind == MatchKind.IS_SUBTYPE) return TypeSubstitutor.EMPTY
+        ProgressIndicatorProvider.checkCanceled()
 
         fun KotlinType.checkInheritance(otherType: KotlinType): Boolean {
             return when (matchKind) {

@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunFirst;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,27 +63,22 @@ public class ApplicationImplTest extends LightPlatformTestCase {
   private volatile Throwable exception;
 
   public void testRead50Write50LockPerformance() throws NoSuchMethodException {
-    Method m = this.getClass().getMethod("testRead50Write50LockPerformance");
-    ApplicationManager.getApplication().executeOnPooledThread(() -> runReadWrites(m, 500_000, 500_000));
+    runReadWrites(500_000, 500_000);
   }
 
   public void testRead100Write0LockPerformance() throws NoSuchMethodException {
-    Method m = this.getClass().getMethod("testRead50Write50LockPerformance");
-    ApplicationManager.getApplication().executeOnPooledThread(() -> runReadWrites(m,50_000_000, 0));
+    runReadWrites(5_000_000, 0);
   }
 
-  private void runReadWrites(Method test, final int readIterations, final int writeIterations) {
+  private void runReadWrites(final int readIterations, final int writeIterations) {
     final ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
     Disposable disposable = Disposer.newDisposable();
-    EdtTestUtil.runInEdtAndWait(() -> {
-      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-      application.disableEventsUntil(disposable);
-      ThreadingAssertions.assertEventDispatchThread();
-    }); // someone might've submitted a task depending on app events which we disable now
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    application.disableEventsUntil(disposable);
+    ThreadingAssertions.assertEventDispatchThread();
 
-    final String launchName = "lock/unlock " + getTestName(false);
     try {
-      PlatformTestUtil.newPerformanceTest(launchName, () -> {
+      PlatformTestUtil.newPerformanceTest("lock/unlock " + getTestName(false), () -> {
         final int numOfThreads = JobSchedulerImpl.getJobPoolParallelism();
         List<Job<Void>> threads = new ArrayList<>(numOfThreads);
         for (int i = 0; i < numOfThreads; i++) {
@@ -98,13 +91,25 @@ public class ApplicationImplTest extends LightPlatformTestCase {
           threads.add(thread);
         }
 
-        EdtTestUtil.runInEdtAndWait(() -> {
-          for (int i = 0; i < writeIterations; i++) {
-            ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+        for (int i = 0; i < writeIterations; i++) {
+          ApplicationManager.getApplication().runWriteAction(EmptyRunnable.getInstance());
+        }
+
+        // Waiting for a read job could provoke ForkJoinPool.awaitQuiescence() in Job implementation.
+        // It leads to running read job on EDT, which causes assertion to fail.
+        // So, run this waiting on background thread
+        Throwable ex = application.executeOnPooledThread(() -> {
+          try {
+            waitWithTimeout(threads);
+            return null;
+          } catch (Throwable t) {
+            return t;
           }
-        });
-        waitWithTimeout(threads);
-      }).start(test, launchName);
+        }).get();
+        if (ex != null) {
+          throw ex;
+        }
+      }).start();
     }
     finally {
       Disposer.dispose(disposable);

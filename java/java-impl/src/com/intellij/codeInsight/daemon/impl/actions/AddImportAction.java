@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -145,9 +145,8 @@ public class AddImportAction implements QuestionAction {
           return true;
         }
 
-        @NotNull
         @Override
-        public String getTextFor(PsiClass value) {
+        public @NotNull String getTextFor(PsiClass value) {
           return names.getOrDefault(value, "");
         }
 
@@ -182,16 +181,14 @@ public class AddImportAction implements QuestionAction {
     popup.showInBestPositionFor(myEditor);
   }
 
-  @Nullable
-  public static PopupStep<?> getExcludesStep(@NotNull Project project, @Nullable String qname) {
+  public static @Nullable PopupStep<?> getExcludesStep(@NotNull Project project, @Nullable String qname) {
     if (qname == null) return PopupStep.FINAL_CHOICE;
 
     List<String> toExclude = getAllExcludableStrings(qname);
 
     return new BaseListPopupStep<>(null, toExclude) {
-      @NotNull
       @Override
-      public String getTextFor(String value) {
+      public @NotNull String getTextFor(String value) {
         return JavaBundle.message("exclude.0.from.auto.import", value);
       }
 
@@ -218,8 +215,7 @@ public class AddImportAction implements QuestionAction {
     });
   }
 
-  @NotNull
-  public static List<String> getAllExcludableStrings(@NotNull String qname) {
+  public static @NotNull List<String> getAllExcludableStrings(@NotNull String qname) {
     List<String> toExclude = new ArrayList<>();
     while (true) {
       toExclude.add(qname);

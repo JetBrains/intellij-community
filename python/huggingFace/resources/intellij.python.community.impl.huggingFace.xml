@@ -10,7 +10,7 @@
                                                       implementation="com.intellij.python.community.impl.huggingFace.documentation.HuggingFaceDocumentationTargetProvider"/>
     <lang.inspectionSuppressor language="Python" implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceTypoInspectionSuppressor"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector$HuggingFacePipelineTagWhitelistRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.python.community.impl.huggingFace.service.HuggingFaceCardsUsageCollector$PipelineTagValidationRule"/>
     <registryKey defaultValue="true"
                  description="Enable Hugging Face model and dataset cards, see PY-63670"
                  key="python.enable.hugging.face.cards"/>

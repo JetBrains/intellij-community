@@ -86,7 +86,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
    */
-  private static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
+  static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
@@ -447,13 +447,13 @@ public class WSLDistribution implements AbstractWslDistribution {
     StringBuilder builder = new StringBuilder();
     commandLine.getEnvironment().keySet().stream().sorted().forEach((envName) -> {
       if (StringUtil.isNotEmpty(envName)) {
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append(":");
         }
         builder.append(envName).append("/u");
       }
     });
-    if (builder.length() > 0) {
+    if (!builder.isEmpty()) {
       String prevValue = commandLine.getEnvironment().get(WslConstants.WSLENV);
       if (prevValue == null) {
         prevValue = commandLine.getParentEnvironment().get(WslConstants.WSLENV);

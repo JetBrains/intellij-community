@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -23,8 +23,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public PsiExpression getLExpression() {
+  public @NotNull PsiExpression getLExpression() {
     return (PsiExpression)findChildByRoleAsPsiElement(ChildRole.LOPERAND);
   }
 
@@ -34,14 +33,12 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  @NotNull
-  public PsiJavaToken getOperationSign() {
+  public @NotNull PsiJavaToken getOperationSign() {
     return (PsiJavaToken)findChildByRoleAsPsiElement(ChildRole.OPERATION_SIGN);
   }
 
   @Override
-  @NotNull
-  public IElementType getOperationTokenType() {
+  public @NotNull IElementType getOperationTokenType() {
     return getOperationSign().getTokenType();
   }
 

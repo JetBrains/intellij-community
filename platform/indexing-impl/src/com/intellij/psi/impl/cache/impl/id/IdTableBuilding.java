@@ -18,7 +18,6 @@ import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +86,6 @@ public final class IdTableBuilding {
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
                                                    CustomHighlighterTokenType.MULTI_LINE_COMMENT),
                                    TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
-
   }
 
   public static void scanWords(final ScanWordProcessor processor, final CharSequence chars, final int startOffset, final int endOffset) {
@@ -120,18 +118,15 @@ public final class IdTableBuilding {
                                final IntPredicate isWordCodePoint) {
     int index = startOffset;
     boolean hasArray = charArray != null;
-    if (!hasArray) {
-      // Workaround lack of overload to specify endOffset for Character.codePointAt
-      // with CharSequence as a parameter
-      chars = new CharSequenceSubSequence(chars, 0, endOffset);
-    }
     ScanWordsLoop:
     while (true) {
       int startIndex = index;
       while (true) {
         if (index >= endOffset) break ScanWordsLoop;
-        int codePoint = hasArray ? Character.codePointAt(charArray, index, endOffset)
-                                 : Character.codePointAt(chars, index);
+        int codePoint = hasArray
+                        ? Character.codePointAt(charArray, index, endOffset)
+                        // no overload with endOffset, but it is highly unlikely that we go beyond it
+                        : Character.codePointAt(chars, index);
         index += Character.charCount(codePoint);
         if (isWordCodePoint.test(codePoint)) {
           break;
@@ -155,5 +150,4 @@ public final class IdTableBuilding {
       processor.run(chars, charArray, startIndex, endIndex);
     }
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,7 +18,10 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.*;
+import com.intellij.lang.documentation.CodeDocumentationProvider;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
+import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
@@ -97,8 +100,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                        getQuickNavigationInfoInner(element, originalElement));
   }
 
-  @Nullable
-  private static @Nls String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
+  private static @Nullable @Nls String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }
@@ -452,8 +454,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return buffer.toString();
   }
 
-  @Nls
-  private static String generateModuleInfo(PsiJavaModule module) {
+  private static @Nls String generateModuleInfo(PsiJavaModule module) {
     @Nls StringBuilder sb = new StringBuilder();
 
     VirtualFile file = PsiImplUtil.getModuleVirtualFile(module);
@@ -477,9 +478,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  @Nullable
   @Override
-  public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
+  public @Nullable Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
     PsiElement current = startPoint;
     while (current != null) {
       if (current instanceof PsiJavaDocumentedElement &&
@@ -671,8 +671,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  @NotNull
-  private static Map<Integer, String> collectParentParameterDescriptions(PsiMethod psiMethod, PsiParameter[] parameters) {
+  private static @NotNull Map<Integer, String> collectParentParameterDescriptions(PsiMethod psiMethod, PsiParameter[] parameters) {
     final Map<Integer, String> index2Description = new HashMap<>();
 
     for (int i = 0; i < parameters.length; i++) {
@@ -852,33 +851,28 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  public static String generateExternalJavadoc(@Nullable final PsiElement element) {
+  public static @Nullable String generateExternalJavadoc(final @Nullable PsiElement element) {
     if (element == null) return null;
 
     List<String> docURLs = getExternalJavaDocUrl(element);
     return generateExternalJavadoc(element, docURLs);
   }
 
-  @Nullable
-  public static String generateExternalJavadoc(@NotNull final PsiElement element, @Nullable List<String> docURLs) {
+  public static @Nullable String generateExternalJavadoc(final @NotNull PsiElement element, @Nullable List<String> docURLs) {
     final JavaDocInfoGenerator javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
     return generateExternalJavadoc(javaDocInfoGenerator, docURLs);
   }
 
-  @Nullable
-  public static @Nls String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
+  public static @Nullable @Nls String generateExternalJavadoc(final @NotNull PsiElement element, @NotNull JavaDocInfoGenerator generator) {
     final List<String> docURLs = getExternalJavaDocUrl(element);
     return generateExternalJavadoc(generator, docURLs);
   }
 
-  @Nullable
-  private static @Nls String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
+  private static @Nullable @Nls String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 
-  @Nls
-  private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
+  private @Nls String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
 
@@ -922,8 +916,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     sb.append("<br>");
   }
 
-  @Nullable
-  public static List<String> getExternalJavaDocUrl(final PsiElement element) {
+  public static @Nullable List<String> getExternalJavaDocUrl(final PsiElement element) {
     List<String> urls = null;
 
     if (element instanceof PsiClass) {
@@ -1006,13 +999,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return signature;
   }
 
-  @Nullable
-  public static PsiDocComment getPackageInfoComment(@NotNull PsiElement packageInfoFile) {
+  public static @Nullable PsiDocComment getPackageInfoComment(@NotNull PsiElement packageInfoFile) {
     return PsiTreeUtil.getChildOfType(packageInfoFile, PsiDocComment.class);
   }
 
-  @Nullable
-  public static List<String> findUrlForClass(@NotNull PsiClass aClass) {
+  public static @Nullable List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
     if (qName != null) {
       PsiFile file = aClass.getContainingFile();
@@ -1030,8 +1021,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  @Nullable
-  public static List<String> findUrlForPackage(@NotNull PsiPackage aPackage) {
+  public static @Nullable List<String> findUrlForPackage(@NotNull PsiPackage aPackage) {
     String qName = aPackage.getQualifiedName().replace('.', '/') + '/' + PACKAGE_SUMMARY_FILE;
     for (PsiDirectory directory : aPackage.getDirectories()) {
       List<String> url = findUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
@@ -1043,8 +1033,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return null;
   }
 
-  @Nullable
-  public static List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+  public static @Nullable List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     Module module = fileIndex.getModuleForFile(virtualFile);
@@ -1125,10 +1114,9 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @Override
   public void promptToConfigureDocumentation(PsiElement element) { }
 
-  @Nullable
   @Override
-  public PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
-                                                  int targetOffset) {
+  public @Nullable PsiElement getCustomDocumentationElement(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement contextElement,
+                                                            int targetOffset) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(contextElement, PsiDocComment.class, false);
     if (docComment != null && JavaDocUtil.isInsidePackageInfo(docComment)) {
       PsiDirectory directory = file.getContainingDirectory();
@@ -1149,8 +1137,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
    * null otherwise
    */
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  private static PsiJavaDocumentedElement getDocumentedElementOfKeyword(@Nullable final PsiElement contextElement) {
+  private static @Nullable PsiJavaDocumentedElement getDocumentedElementOfKeyword(final @Nullable PsiElement contextElement) {
     if (!(contextElement instanceof PsiKeyword)) return null;
 
     final PsiElement element =

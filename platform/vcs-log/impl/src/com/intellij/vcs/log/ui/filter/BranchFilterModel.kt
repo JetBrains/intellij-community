@@ -22,7 +22,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: Suppl
                                          VcsLogFilterCollection.RANGE_FILTER), properties, filters) {
 
   var visibleRoots: Collection<VirtualFile>? = null
-    private set
+    internal set
 
   override fun createFilter(key: VcsLogFilterCollection.FilterKey<*>, values: List<String>): VcsLogFilter? {
     return when (key) {

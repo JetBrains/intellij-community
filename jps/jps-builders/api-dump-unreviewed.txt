@@ -1760,9 +1760,11 @@ f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder
 - getPresentableName():java.lang.String
 f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 - org.jetbrains.jps.backwardRefs.CompilerReferenceWriter
+- sf:FS_KEY:java.lang.String
 - sf:PROP_KEY:java.lang.String
 - s:closeIfNeeded(Z):V
 - s:initialize(org.jetbrains.jps.incremental.CompileContext):V
+- *s:isCompilerReferenceFSCaseSensitive():Z
 - s:isEnabled():Z
 f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceRegistrar
 - org.jetbrains.jps.javac.JavacFileReferencesRegistrar
@@ -1773,6 +1775,7 @@ f:org.jetbrains.jps.backwardRefs.JavaBackwardReferenceRegistrar
 f:org.jetbrains.jps.backwardRefs.JavaCompilerBackwardReferenceIndex
 - org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 - <init>(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z):V
+- <init>(java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z,Z):V
 f:org.jetbrains.jps.backwardRefs.NameEnumerator
 - com.intellij.util.io.PersistentStringEnumerator
 - <init>(java.io.File):V
@@ -1798,6 +1801,7 @@ f:org.jetbrains.jps.backwardRefs.index.CompiledFileData
 - getSignatureData():java.util.Map
 c:org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
 - <init>(java.util.Collection,java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z,I):V
+- <init>(java.util.Collection,java.io.File,org.jetbrains.jps.incremental.relativizer.PathRelativizerService,Z,I,Z):V
 - <init>(java.util.Collection,java.io.File,Z,I):V
 - close():V
 - s:exists(java.io.File):Z
@@ -2779,6 +2783,7 @@ f:org.jetbrains.jps.dependency.AffectionScopeMetaUsage
 - hashCode():I
 - write(org.jetbrains.jps.dependency.GraphDataOutput):V
 org.jetbrains.jps.dependency.BackDependencyIndex
+- s:createEmpty(java.lang.String):org.jetbrains.jps.dependency.BackDependencyIndex
 - a:getDependencies(org.jetbrains.jps.dependency.ReferenceID):java.lang.Iterable
 - a:getKeys():java.lang.Iterable
 - a:getName():java.lang.String
@@ -2804,10 +2809,11 @@ org.jetbrains.jps.dependency.Delta
 - a:associate(org.jetbrains.jps.dependency.Node,java.lang.Iterable):V
 - a:getBaseSources():java.util.Set
 - a:getDeletedSources():java.util.Set
+- a:isSourceOnly():Z
 org.jetbrains.jps.dependency.DependencyGraph
 - java.io.Closeable
 - org.jetbrains.jps.dependency.Graph
-- a:createDelta(java.lang.Iterable,java.lang.Iterable):org.jetbrains.jps.dependency.Delta
+- a:createDelta(java.lang.Iterable,java.lang.Iterable,Z):org.jetbrains.jps.dependency.Delta
 - a:differentiate(org.jetbrains.jps.dependency.Delta,org.jetbrains.jps.dependency.DifferentiateParameters):org.jetbrains.jps.dependency.DifferentiateResult
 - a:integrate(org.jetbrains.jps.dependency.DifferentiateResult):V
 org.jetbrains.jps.dependency.DifferentiateContext
@@ -3757,7 +3763,9 @@ org.jetbrains.jps.incremental.relativizer.PathRelativizer
 f:org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 - <init>():V
 - <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Boolean):V
 - <init>(org.jetbrains.jps.model.JpsProject):V
+- <init>(org.jetbrains.jps.model.JpsProject,java.lang.Boolean):V
 - reportUnhandledPaths():V
 - toFull(java.lang.String):java.lang.String
 - toRelative(java.lang.String):java.lang.String

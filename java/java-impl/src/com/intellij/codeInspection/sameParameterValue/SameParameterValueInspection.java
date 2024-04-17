@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -102,9 +102,8 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Contract("null -> null; !null -> !null")
-  private static List<Object> valueToList(@Nullable Object rootValue) {
+  private static @Nullable List<Object> valueToList(@Nullable Object rootValue) {
     //noinspection unchecked
     return rootValue == null || rootValue instanceof List<?> ? (List<Object>)rootValue : new SmartList<>(rootValue);
   }
@@ -131,20 +130,17 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "SameParameterValue";
   }
 
   @Override
-  @Nullable
-  public LocalQuickFix getQuickFix(String hint) {
+  public @Nullable LocalQuickFix getQuickFix(String hint) {
     if (hint == null) return null;
     final int spaceIdx = hint.indexOf(' ');
     if (spaceIdx == -1 || spaceIdx >= hint.length() - 1) return null; //invalid hint
@@ -152,14 +148,12 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
   }
 
   @Override
-  @Nullable
-  public String getHint(@NotNull QuickFix fix) {
+  public @Nullable String getHint(@NotNull QuickFix fix) {
     return fix.toString();
   }
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalSameParameterValueInspection(this);
   }
 
@@ -220,14 +214,12 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.same.parameter.fix.family.name");
     }
 
@@ -374,20 +366,17 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     }
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
       return myGlobal.getGroupDisplayName();
     }
 
     @Override
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return myGlobal.getShortName();
     }
 
-    @NotNull
     @Override
-    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
         private final UnusedDeclarationInspectionBase
           myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());

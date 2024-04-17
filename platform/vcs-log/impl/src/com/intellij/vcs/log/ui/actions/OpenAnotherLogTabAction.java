@@ -1,12 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -15,20 +15,20 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogTabLocation;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
+import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class OpenAnotherLogTabAction extends DumbAwareAction {
-  private final @NotNull VcsLogTabLocation myLocation;
+import java.util.Collection;
 
-  protected OpenAnotherLogTabAction(@NotNull VcsLogTabLocation location) {
-    super(AllIcons.Actions.OpenNewTab);
+public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
+
+  protected OpenAnotherLogTabAction() {
     getTemplatePresentation().setText(() -> getText(VcsLogBundle.message("vcs")));
     getTemplatePresentation().setDescription(() -> getDescription(VcsLogBundle.message("vcs")));
-    myLocation = location;
   }
 
   @Override
@@ -68,27 +68,24 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
 
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
-    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
 
     VcsLogFilterCollection filters;
-    if (Registry.is("vcs.log.copy.filters.to.new.tab") && logUi != null) {
-      filters = logUi.getFilterUi().getFilters();
+    if (Registry.is("vcs.log.copy.filters.to.new.tab")) {
+      filters = getFilters(project, e);
     }
     else {
       filters = VcsLogFilterObject.collection();
     }
-
     VcsProjectLog.getInstance(project).openLogTab(filters, getLocation(e));
   }
 
-  private @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
-    if (!ActionPlaces.VCS_LOG_TOOLBAR_PLACE.equals(e.getPlace())) return myLocation;
-
-    if (e.getData(PlatformDataKeys.TOOL_WINDOW) == null) {
-      return VcsLogTabLocation.EDITOR;
-    }
-    return VcsLogTabLocation.TOOL_WINDOW;
+  protected @NotNull VcsLogFilterCollection getFilters(@NotNull Project project, @NotNull AnActionEvent e) {
+    VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
+    if (logUi == null) return VcsLogFilterObject.collection();
+    return logUi.getFilterUi().getFilters();
   }
+
+  protected abstract @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e);
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -96,14 +93,30 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   }
 
   public static class InToolWindow extends OpenAnotherLogTabAction {
-    protected InToolWindow() {
-      super(VcsLogTabLocation.TOOL_WINDOW);
+    @Override
+    protected @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
+      return VcsLogTabLocation.TOOL_WINDOW;
+    }
+
+    @Override
+    protected @NotNull VcsLogFilterCollection getFilters(@NotNull Project project, @NotNull AnActionEvent e) {
+      VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+      if (logManager == null) return VcsLogFilterObject.collection();
+
+      Collection<? extends VcsLogUi> uis = ContainerUtil.filterIsInstance(logManager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW),
+                                                                          MainVcsLogUi.class);
+      if (uis.isEmpty()) return VcsLogFilterObject.collection();
+      return ContainerUtil.getFirstItem(uis).getFilterUi().getFilters();
     }
   }
 
   public static class InEditor extends OpenAnotherLogTabAction {
-    protected InEditor() {
-      super(VcsLogTabLocation.EDITOR);
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getData(PlatformDataKeys.TOOL_WINDOW) != null && ActionPlaces.VCS_LOG_TOOLBAR_PLACE.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
     }
 
     @Override
@@ -114,6 +127,11 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     @Override
     protected @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
       return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log.in.editor", vcsName);
+    }
+
+    @Override
+    protected @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
+      return VcsLogTabLocation.EDITOR;
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
@@ -16,8 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
-  @NonNls static final String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
-  @NonNls private static final String ARRAY_PREFIX = "[L";
+  static final @NonNls String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
+  private static final @NonNls String ARRAY_PREFIX = "[L";
 
   @Override
   public PsiType fromString(final String s, final ConvertContext context) {
@@ -47,7 +47,7 @@ public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConvert
     return getReferences(genericDomValue.getValue(), typeText, 0, element);
   }
 
-  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, @NotNull final PsiElement element) {
+  public PsiReference[] getReferences(@Nullable PsiType type, String typeText, int startOffsetInText, final @NotNull PsiElement element) {
     String trimmed = typeText.trim();
     int offset = ElementManipulators.getValueTextRange(element).getStartOffset() + startOffsetInText + typeText.indexOf(trimmed);
     if (trimmed.startsWith(ARRAY_PREFIX)) {
@@ -66,8 +66,7 @@ public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConvert
 
     return new JavaClassReferenceSet(trimmed, element, offset, false, new JavaClassReferenceProvider()) {
       @Override
-      @NotNull
-      protected JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
+      protected @NotNull JavaClassReference createReference(int refIndex, @NotNull String subRefText, @NotNull TextRange textRange, boolean staticImport) {
         return new JavaClassReference(this, textRange, refIndex, subRefText, staticImport) {
           @Override
           public boolean isSoft() {
@@ -75,8 +74,7 @@ public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConvert
           }
 
           @Override
-          @NotNull
-          public JavaResolveResult advancedResolve(final boolean incompleteCode) {
+          public @NotNull JavaResolveResult advancedResolve(final boolean incompleteCode) {
             if (isPrimitiveType) {
               return new CandidateInfo(element, PsiSubstitutor.EMPTY, false, false, element);
             }
@@ -85,7 +83,7 @@ public final class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConvert
           }
 
           @Override
-          public void processVariants(@NotNull final PsiScopeProcessor processor) {
+          public void processVariants(final @NotNull PsiScopeProcessor processor) {
             if (processor instanceof JavaCompletionProcessor) {
               ((JavaCompletionProcessor)processor).setCompletionElements(getVariants());
             } else {

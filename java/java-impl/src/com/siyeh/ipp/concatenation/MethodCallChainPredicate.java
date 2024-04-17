@@ -77,8 +77,7 @@ class MethodCallChainPredicate implements PsiElementPredicate {
     }
   }
 
-  @Nullable
-  private static PsiClassType getQualifierExpressionType(PsiElement element) {
+  private static @Nullable PsiClassType getQualifierExpressionType(PsiElement element) {
     if (!(element instanceof PsiMethodCallExpression methodCallExpression)) {
       return null;
     }

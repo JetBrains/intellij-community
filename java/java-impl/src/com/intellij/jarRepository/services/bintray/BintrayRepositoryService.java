@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services.bintray;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -15,7 +15,6 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 
 /**
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
@@ -24,15 +23,13 @@ import static java.util.Collections.singletonList;
 @Deprecated(forRemoval = true)
 public class BintrayRepositoryService extends MavenRepositoryService {
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "Bintray";
   }
 
-  @NotNull
   @Override
-  public List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
+  public @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException {
     BintrayModel.Repository info = parseInfo(url);
     if (info != null) {
       BintrayEndpoint bintrayEndpoint = new BintrayEndpoint();
@@ -46,9 +43,8 @@ public class BintrayRepositoryService extends MavenRepositoryService {
     return emptyList();
   }
 
-  @NotNull
   @Override
-  public List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  public @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
       throws IOException {
     if (template.getPackaging() == null || template.getPackaging().equals("jar")) {
       BintrayModel.Repository info = parseInfo(url);
@@ -71,8 +67,7 @@ public class BintrayRepositoryService extends MavenRepositoryService {
     return emptyList();
   }
 
-  @Nullable
-  public static BintrayModel.Repository parseInfo(String url) {
+  public static @Nullable BintrayModel.Repository parseInfo(String url) {
     try {
       URL theUrl = new URL(url);
 

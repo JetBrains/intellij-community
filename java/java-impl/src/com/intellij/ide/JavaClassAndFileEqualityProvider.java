@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.actions.searcheverywhere.*;
+import com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider;
+import com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,8 +46,7 @@ public final class JavaClassAndFileEqualityProvider extends AbstractEqualityProv
     return newItemFile != null && newItemFile.equals(foundItemFile);
   }
 
-  @Nullable
-  private static VirtualFile convertToFileIsPossible(@NotNull PsiElement element) {
+  private static @Nullable VirtualFile convertToFileIsPossible(@NotNull PsiElement element) {
     if (element instanceof VirtualFile) {
       return  (VirtualFile) element;
     } else if (element instanceof PsiFile) {

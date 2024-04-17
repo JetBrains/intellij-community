@@ -585,10 +585,9 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   }
 
   private static int extractFileId(@NotNull VirtualFile vFile) {
-    if (!(vFile instanceof VirtualFileWithId)) {
+    if (!(vFile instanceof VirtualFileWithId fileWithId)) {
       throw new IllegalArgumentException(vFile + " must be VirtualFileWithId");
     }
-    VirtualFileWithId fileWithId = (VirtualFileWithId)vFile;
 
     return fileWithId.getId();
   }

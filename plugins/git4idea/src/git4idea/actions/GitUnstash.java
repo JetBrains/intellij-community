@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,6 +13,9 @@ import git4idea.ui.GitUnstashDialog;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabAvailable;
+import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabVisible;
 
 /**
  * Git unstash action
@@ -30,7 +33,7 @@ public class GitUnstash extends GitRepositoryAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project != null && ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME) != null) {
+    if (project != null && isStashTabAvailable() && ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME) != null) {
       VcsShowToolWindowTabAction.activateVcsTab(project, GitStashContentProvider.TAB_NAME, false);
       return;
     }
@@ -48,5 +51,14 @@ public class GitUnstash extends GitRepositoryAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification(GitBundle.message("unstash.error.can.not.unstash.changes.now"))) return;
     GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Project project = e.getProject();
+    if (project != null && isStashTabAvailable() && !isStashTabVisible(project)) {
+      e.getPresentation().setEnabled(false);
+    }
   }
 }

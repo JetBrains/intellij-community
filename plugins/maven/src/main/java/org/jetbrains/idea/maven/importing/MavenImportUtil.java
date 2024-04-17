@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.compareVersionNumbers;
+import static com.intellij.util.ObjectUtils.notNull;
 
 public final class MavenImportUtil {
   public static final String TEST_SUFFIX = ".test";
@@ -178,25 +179,32 @@ public final class MavenImportUtil {
   }
 
   private static LanguageLevel adjustPreviewLanguageLevel(MavenProject mavenProject, LanguageLevel level) {
+    String enablePreviewProperty = mavenProject.getProperties().getProperty("maven.compiler.enablePreview");
+    if (Boolean.parseBoolean(enablePreviewProperty)) {
+      return notNull(level.getPreviewLevel(), level);
+    }
+
     Element compilerConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
     if (compilerConfiguration != null) {
+      String enablePreviewParameter = compilerConfiguration.getChildTextTrim("enablePreview");
+      if (Boolean.parseBoolean(enablePreviewParameter)) {
+        return notNull(level.getPreviewLevel(), level);
+      }
+
       Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
       if (compilerArgs != null) {
         if (isPreviewText(compilerArgs) ||
             ContainerUtil.exists(compilerArgs.getChildren("arg"), MavenImportUtil::isPreviewText) ||
             ContainerUtil.exists(compilerArgs.getChildren("compilerArg"), MavenImportUtil::isPreviewText)) {
-          try {
-            return LanguageLevel.valueOf(level.name() + "_PREVIEW");
-          }
-          catch (IllegalArgumentException ignored) {
-          }
+          return notNull(level.getPreviewLevel(), level);
         }
       }
     }
+
     return level;
   }
 
-  private static boolean isPreviewText(Element child) {
+  public static boolean isPreviewText(Element child) {
     return JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY.equals(child.getTextTrim());
   }
 

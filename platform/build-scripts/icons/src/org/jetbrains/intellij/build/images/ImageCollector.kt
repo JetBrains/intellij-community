@@ -1,6 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "LiftReturnOrAssignment")
-
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
@@ -10,25 +8,24 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
 import java.util.regex.Pattern
-import java.util.stream.Stream
-import java.util.stream.StreamSupport
+import kotlin.io.path.listDirectoryEntries
 
 internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
 private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, deprecation = null)
 
-internal class ImageInfo(@JvmField val id: String,
-                         @JvmField val sourceRoot: JpsModuleSourceRoot,
-                         @JvmField val phantom: Boolean) {
+internal class ImageInfo(
+  @JvmField val id: String,
+  @JvmField val sourceRoot: JpsModuleSourceRoot,
+  @JvmField val phantom: Boolean
+) {
   private var flags = EMPTY_IMAGE_FLAGS
   private val images = ArrayList<Path>()
 
@@ -73,9 +70,7 @@ internal class ImageInfo(@JvmField val id: String,
   }
 
   val basicFile: Path?
-    get() {
-      return getFiles(ImageType.BASIC).minByOrNull { ImageExtension.fromFile(it)!! }
-    }
+    get() = getFiles(ImageType.BASIC).minByOrNull { ImageExtension.fromFile(it)!! }
 
   val presentablePath: Path
     get() = basicFile ?: files.first()
@@ -87,24 +82,28 @@ internal class ImageInfo(@JvmField val id: String,
   val deprecation: DeprecationData?
     get() = flags.deprecation
 
-  val scheduledForRemoval by lazy {
+  val scheduledForRemoval: Boolean by lazy {
     flags.deprecation?.comment?.contains("to be removed") == true
   }
 }
 
 internal data class ImageFlags(@JvmField val used: Boolean, @JvmField val deprecation: DeprecationData?)
 
-internal class ImageSyncFlags(@JvmField val skipSync: Boolean, @JvmField val forceSync: Boolean)
+internal data class ImageSyncFlags(@JvmField val skipSync: Boolean, @JvmField val forceSync: Boolean)
 
-internal data class DeprecationData(@JvmField val comment: String?,
-                                    @JvmField val replacement: String?,
-                                    @JvmField val replacementContextClazz: String?,
-                                    @JvmField val replacementReference: String?)
+internal data class DeprecationData(
+  @JvmField val comment: String?,
+  @JvmField val replacement: String?,
+  @JvmField val replacementContextClazz: String?,
+  @JvmField val replacementReference: String?
+)
 
-internal class ImageCollector(private val projectHome: Path,
-                              private val iconsOnly: Boolean = true,
-                              private val ignoreSkipTag: Boolean = false,
-                              private val moduleConfig: IntellijIconClassGeneratorModuleConfig?) {
+internal class ImageCollector(
+  private val projectHome: Path,
+  private val iconsOnly: Boolean = true,
+  private val ignoreSkipTag: Boolean = false,
+  private val moduleConfig: IntellijIconClassGeneratorModuleConfig?
+) {
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
@@ -135,17 +134,11 @@ internal class ImageCollector(private val projectHome: Path,
         try {
           Files.delete(rootDir.resolve(ROBOTS_FILE_NAME))
         }
-        catch (ignored: NoSuchFileException) {
-        }
+        catch (_: NoSuchFileException) { }
       }
     }
 
-    if (includePhantom) {
-      return icons.values + phantomIcons.values
-    }
-    else {
-      return icons.values
-    }
+    return if (includePhantom) icons.values + phantomIcons.values else icons.values
   }
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
@@ -172,30 +165,34 @@ internal class ImageCollector(private val projectHome: Path,
     val attributes = try {
       Files.readAttributes(rootDir, BasicFileAttributes::class.java)
     }
-    catch (ignored: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       return
     }
 
-    val iconRoot = downToRoot(root = rootDir,
-                              file = rootDir,
-                              isDirectory = attributes.isDirectory,
-                              common = null,
-                              robotData = IconRobotsData(null, ignoreSkipTag, usedIconRobots),
-                              level = 0) ?: return
+    val iconRoot = downToRoot(
+      root = rootDir,
+      file = rootDir,
+      isDirectory = attributes.isDirectory,
+      common = null,
+      robotData = IconRobotsData(null, ignoreSkipTag, usedIconRobots),
+      level = 0
+    ) ?: return
     val robotData = rootRobotData.fork(iconRoot, rootDir)
 
     processDirectory(dir = iconRoot, rootDir = rootDir, sourceRoot = sourceRoot, robotData = robotData, prefix = "", level = 0)
     processPhantomIcons(root = iconRoot, sourceRoot = sourceRoot, robotData = robotData, prefix = "")
   }
 
-  private fun processDirectory(dir: Path,
-                               rootDir: Path,
-                               sourceRoot: JpsModuleSourceRoot,
-                               robotData: IconRobotsData,
-                               prefix: String,
-                               level: Int) {
+  private fun processDirectory(
+    dir: Path,
+    rootDir: Path,
+    sourceRoot: JpsModuleSourceRoot,
+    robotData: IconRobotsData,
+    prefix: String,
+    level: Int
+  ) {
     // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
-    processChildren(dir, level < 3) { file ->
+    processChildren(dir, isParallel = level < 3) { file ->
       if (robotData.isSkipped(file)) {
         return@processChildren
       }
@@ -281,14 +278,19 @@ internal class ImageCollector(private val projectHome: Path,
       return common
     }
   }
+
+  private fun isBlacklistedTopDirectory(name: String): Boolean =
+    name == "META-INF" || name == "intentionDescriptions" || name == "inspectionDescriptions" || name == "fileTemplates"
 }
 
 private data class DeprecatedEntry(val matcher: Pattern, val data: DeprecationData)
 private data class OwnDeprecatedIcon(val relativeFile: String, val data: DeprecationData)
 
-internal class IconRobotsData(private val parent: IconRobotsData? = null,
-                              private val ignoreSkipTag: Boolean,
-                              private val usedIconRobots: MutableSet<Path>?) {
+internal class IconRobotsData(
+  private val parent: IconRobotsData? = null,
+  private val ignoreSkipTag: Boolean,
+  private val usedIconRobots: MutableSet<Path>?
+) {
   private val skip = ArrayList<Pattern>()
   private val used = ArrayList<Pattern>()
   private val deprecated = ArrayList<DeprecatedEntry>()
@@ -305,11 +307,11 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
     return mergeImageFlags(flags, parentFlags, file)
   }
 
-  fun getImageSyncFlags(file: Path): ImageSyncFlags = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
+  fun getImageSyncFlags(file: Path): ImageSyncFlags =
+    ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
 
-  fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> {
-    return ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, deprecation = it.data)) }
-  }
+  fun getOwnDeprecatedIcons(): List<Pair<String, ImageFlags>> =
+    ownDeprecatedIcons.map { Pair(it.relativeFile, ImageFlags(used = false, deprecation = it.data)) }
 
   fun isSkipped(file: Path): Boolean {
     if (!ignoreSkipTag && matches(file, skip)) {
@@ -356,10 +358,9 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
     return answer
   }
 
-  private fun computeReplacementReference(comment: String?): String? {
+  private fun computeReplacementReference(comment: String?): String? =
     // allow only the same class fields (IDEA-218345)
-    return comment?.substringAfter("use {@link #", "")?.substringBefore('}')?.trim()?.takeIf { it.isNotEmpty() }
-  }
+    comment?.substringAfter("use {@link #", "")?.substringBefore('}')?.trim()?.takeIf { it.isNotEmpty() }
 
   private fun parse(robots: Path, vararg handlers: RobotFileHandler) {
     Files.lines(robots).forEach { line ->
@@ -387,7 +388,7 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
     try {
       return Pattern.compile(regExp)
     }
-    catch (e: Exception) {
+    catch (_: Exception) {
       throw Exception("Cannot compile pattern: $pattern. Built on based in $dir/$ROBOTS_FILE_NAME")
     }
   }
@@ -429,77 +430,22 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
 
 private data class RobotFileHandler(val start: String, val handler: (String) -> Unit)
 
-private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: Path): ImageFlags {
-  return ImageFlags(used = flags1.used || flags2.used,
-                    deprecation = mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
-}
+private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: Path): ImageFlags =
+  ImageFlags(used = flags1.used || flags2.used, deprecation = mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
 
-private fun mergeDeprecations(data1: DeprecationData?,
-                              data2: DeprecationData?,
-                              comment: Path): DeprecationData? {
+private fun mergeDeprecations(data1: DeprecationData?, data2: DeprecationData?, comment: Path): DeprecationData? {
   if (data1 == null) {
     return data2
   }
   if (data2 == null || data1 == data2) {
     return data1
   }
-
   throw AssertionError("Different deprecation statements found for icon: $comment\n$data1\n$data2")
 }
 
+@Suppress("SSBasedInspection")
 internal fun processChildren(path: Path, isParallel: Boolean = true, consumer: (Path) -> Unit) {
-  DirectorySpliterator.list(path, isParallel).use {
-    it.forEach(consumer)
-  }
-}
-
-// https://stackoverflow.com/a/34351591/1910191
-private class DirectorySpliterator private constructor(iterator: Iterator<Path>, private var estimation: Long) : Spliterator<Path> {
-  private var iterator: Iterator<Path>? = iterator
-
-  companion object {
-    // opposite to JDK, you don't need to close
-    @Throws(IOException::class)
-    fun list(parent: Path, isParallel: Boolean = true): Stream<Path> {
-      val directoryStream = Files.newDirectoryStream(parent)
-      val splitSize = Runtime.getRuntime().availableProcessors() + 1
-      return StreamSupport.stream(DirectorySpliterator(directoryStream.iterator(), splitSize.toLong()), isParallel)
-        .onClose {
-          directoryStream.close()
-        }
-    }
-  }
-
-  override fun tryAdvance(action: Consumer<in Path>): Boolean {
-    val iterator = iterator ?: return false
-    val path = synchronized(iterator) {
-      if (!iterator.hasNext()) {
-        this.iterator = null
-        return false
-      }
-      iterator.next()
-    }
-
-    action.accept(path)
-    return true
-  }
-
-  override fun trySplit(): Spliterator<Path>? {
-    val iterator = iterator
-    if (iterator == null || estimation == 1L) {
-      return null
-    }
-
-    val e = this.estimation.ushr(1)
-    this.estimation -= e
-    return DirectorySpliterator(iterator, e)
-  }
-
-  override fun estimateSize() = estimation
-
-  override fun characteristics() = Spliterator.DISTINCT or Spliterator.NONNULL or Spliterator.IMMUTABLE
-}
-
-internal fun isBlacklistedTopDirectory(name: String): Boolean {
-  return name == "META-INF" || name == "intentionDescriptions"  || name == "inspectionDescriptions" || name == "fileTemplates"
+  path.listDirectoryEntries().stream()
+    .apply { if (isParallel) parallel() }
+    .forEach(consumer)
 }

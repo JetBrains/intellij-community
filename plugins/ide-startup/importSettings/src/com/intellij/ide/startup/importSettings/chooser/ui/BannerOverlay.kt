@@ -3,8 +3,10 @@ package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.NotificationData
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.InlineBanner
+import com.intellij.ui.PlainInlineBanner
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -21,10 +23,15 @@ internal class BannerOverlay(comp: JComponent) {
     }
 
 
-  fun showError(notification: NotificationData) {
+  fun showError(notification: NotificationData, isPlain: Boolean) {
     clearNotifications()
 
-    val banner = InlineBanner(notification.message, getBannerStatus(notification.status))
+    val banner =
+      if (isPlain) PlainInlineBanner(notification.message, getBannerStatus(notification.status)).apply {
+        background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
+      }
+      else InlineBanner(notification.message, getBannerStatus(notification.status))
+
     notification.customActionList.forEach {
       banner.addAction(it.name) {
         it.action()

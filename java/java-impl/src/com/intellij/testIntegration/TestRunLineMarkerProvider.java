@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -32,9 +32,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
   private static final Logger LOG = Logger.getInstance(TestRunLineMarkerProvider.class);
 
 
-  @Nullable
   @Override
-  public Info getInfo(@NotNull PsiElement e) {
+  public @Nullable Info getInfo(@NotNull PsiElement e) {
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
       if (element instanceof PsiClass psiClass) {
@@ -92,8 +91,7 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor implemen
     return framework != null && framework.isTestMethod(method, false);
   }
 
-  @NotNull
-  private static Info getInfo(TestStateStorage.Record state, boolean isClass, int order) {
+  private static @NotNull Info getInfo(TestStateStorage.Record state, boolean isClass, int order) {
     AnAction[] actions = ExecutorAction.getActions(order);
     return new Info(getTestStateIcon(state, isClass), actions, element -> ExecutionBundle.message("run.text"));
   }

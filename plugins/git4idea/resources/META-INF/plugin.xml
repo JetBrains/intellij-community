@@ -19,6 +19,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
+    <module name="intellij.platform.collaborationTools"/>
   </dependencies>
   <depends optional="true" config-file="git-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
@@ -488,7 +489,7 @@
       </group>
       <reference id="Git.Init"/>
       <separator/>
-      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.ShowProjectHistory"/>
     </group>
 
     <group id="MainToolbarVCSGroup">

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -211,8 +211,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> implements FileNo
     return false;
   }
 
-  @Nullable
-  private static PsiFile parentFileOf(final PsiClass psiClass) {
+  private static @Nullable PsiFile parentFileOf(final PsiClass psiClass) {
     return psiClass.getContainingClass() == null ? psiClass.getContainingFile() : null;
   }
 }

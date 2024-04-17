@@ -1,11 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui.models
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diff.Block
+import com.intellij.history.core.LocalHistoryFacade
 import com.intellij.history.core.tree.Entry
+import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.platform.lvcs.impl.RevisionId
+import com.intellij.platform.lvcs.impl.diff.findEntry
 
 abstract class SelectionCalculator(private val gateway: IdeaGateway,
                                    internal val revisions: List<RevisionId>,
@@ -86,5 +89,22 @@ abstract class SelectionCalculator(private val gateway: IdeaGateway,
 
   companion object {
     private val EMPTY_BLOCK = Block("", 0, 0)
+
+    @JvmOverloads
+    @JvmStatic
+    fun create(facade: LocalHistoryFacade,
+               gateway: IdeaGateway,
+               rootEntry: RootEntry,
+               entryPath: String,
+               revisions: List<RevisionId>,
+               fromLine: Int,
+               toLine: Int,
+               isOldContentUsed: Boolean = true): SelectionCalculator {
+      return object : SelectionCalculator(gateway, revisions, fromLine, toLine) {
+        override fun getEntry(revision: RevisionId): Entry? {
+          return facade.findEntry(rootEntry, revision, entryPath, isOldContentUsed)
+        }
+      }
+    }
   }
 }

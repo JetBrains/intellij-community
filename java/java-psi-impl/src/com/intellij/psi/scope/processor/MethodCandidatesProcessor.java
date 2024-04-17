@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.processor;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -85,9 +85,8 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     return false;
   }
 
-  @NotNull
-  protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
-                                                    final boolean staticProblem, final boolean accessible, final boolean varargs) {
+  protected @NotNull MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
+                                                             final boolean staticProblem, final boolean accessible, final boolean varargs) {
     return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
                                                getTypeArguments(), getLanguageLevel(), varargs);
   }

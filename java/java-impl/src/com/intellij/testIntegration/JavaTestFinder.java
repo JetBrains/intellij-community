@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -35,8 +35,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
@@ -77,8 +76,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
@@ -119,8 +117,7 @@ public class JavaTestFinder implements TestFinder {
     return eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || eachClass != klass && frameworks.isPotentialTestClass(eachClass));
   }
 
-  @Nullable
-  private static Module getModule(PsiElement element) {
+  private static @Nullable Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
     VirtualFile file = PsiUtilCore.getVirtualFile(element);
     return file == null ? null : index.getModuleForFile(file);

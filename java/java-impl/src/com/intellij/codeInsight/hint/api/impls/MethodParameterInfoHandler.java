@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -72,8 +72,7 @@ public final class MethodParameterInfoHandler
   );
 
   @Override
-  @Nullable
-  public PsiExpressionList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
+  public @Nullable PsiExpressionList findElementForParameterInfo(final @NotNull CreateParameterInfoContext context) {
     PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(), true);
 
     if (argumentList != null) {
@@ -102,7 +101,7 @@ public final class MethodParameterInfoHandler
   }
 
   private static PsiExpressionList findMethodsForArgumentList(final CreateParameterInfoContext context,
-                                                              @NotNull final PsiExpressionList argumentList) {
+                                                              final @NotNull PsiExpressionList argumentList) {
 
     CandidateInfo[] candidates = getMethods(argumentList);
     if (candidates.length == 0) {
@@ -118,7 +117,7 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  public void showParameterInfo(@NotNull final PsiExpressionList element, @NotNull final CreateParameterInfoContext context) {
+  public void showParameterInfo(final @NotNull PsiExpressionList element, final @NotNull CreateParameterInfoContext context) {
     int offset = element.getTextRange().getStartOffset();
     if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
       ParameterInfoControllerBase controller = ParameterInfoControllerBase.findControllerAtOffset(context.getEditor(), offset);
@@ -140,7 +139,7 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  public PsiExpressionList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
+  public PsiExpressionList findElementForUpdatingParameterInfo(final @NotNull UpdateParameterInfoContext context) {
     if (context.isPreservedOnHintHidden() && isOutsideOfCompletedInvocation(context)) {
       context.setPreservedOnHintHidden(false);
       return null;
@@ -282,7 +281,7 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  public void updateParameterInfo(@NotNull final PsiExpressionList o, @NotNull final UpdateParameterInfoContext context) {
+  public void updateParameterInfo(final @NotNull PsiExpressionList o, final @NotNull UpdateParameterInfoContext context) {
     int offset = context.getOffset();
     TextRange elRange = o.getTextRange();
     int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()
@@ -550,32 +549,27 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  @NotNull
-  public Class<PsiExpressionList> getArgumentListClass() {
+  public @NotNull Class<PsiExpressionList> getArgumentListClass() {
     return PsiExpressionList.class;
   }
 
   @Override
-  @NotNull
-  public IElementType getActualParametersRBraceType() {
+  public @NotNull IElementType getActualParametersRBraceType() {
     return JavaTokenType.RBRACE;
   }
 
   @Override
-  @NotNull
-  public Set<Class<?>> getArgumentListAllowedParentClasses() {
+  public @NotNull Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ourArgumentListAllowedParentClassesSet;
   }
 
-  @NotNull
   @Override
-  public Set<? extends Class<?>> getArgListStopSearchClasses() {
+  public @NotNull Set<? extends Class<?>> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
   @Override
-  @NotNull
-  public IElementType getActualParameterDelimiterType() {
+  public @NotNull IElementType getActualParameterDelimiterType() {
     return JavaTokenType.COMMA;
   }
 
@@ -821,7 +815,7 @@ public final class MethodParameterInfoHandler
   }
 
   @Override
-  public void updateUI(@NotNull final Object p, @NotNull final ParameterInfoUIContext context) {
+  public void updateUI(final @NotNull Object p, final @NotNull ParameterInfoUIContext context) {
     updateMethodPresentation(context, ((CandidateWithPresentation)p).presentation);
   }
 

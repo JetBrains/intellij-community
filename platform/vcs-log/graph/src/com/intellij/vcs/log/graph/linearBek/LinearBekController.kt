@@ -25,11 +25,11 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.*
 
 class LinearBekController(controller: SortedBaseController, permanentGraphInfo: PermanentGraphInfo<*>) : CascadeController(controller,
-                                                                                                                                                                                          permanentGraphInfo) {
+                                                                                                                           permanentGraphInfo) {
   private val delegateGraph: LinearGraph
     get() = delegateController.compiledGraph
 
-  private val compiledGraph: LinearBekGraph = LinearBekGraph(delegateGraph)
+  override val compiledGraph: LinearBekGraph = LinearBekGraph(delegateGraph)
   private val bekGraphLayout: BekGraphLayout = BekGraphLayout(permanentGraphInfo.permanentGraphLayout, controller.bekIntMap)
   private val linearBekGraphBuilder: LinearBekGraphBuilder = LinearBekGraphBuilder(compiledGraph, bekGraphLayout)
 
@@ -92,23 +92,17 @@ class LinearBekController(controller: SortedBaseController, permanentGraphInfo: 
   }
 
   private fun expandAll(): LinearGraphAnswer {
-    return object : LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES) {
-      override fun getGraphUpdater(): Runnable {
-        return Runnable {
-          compiledGraph.dottedEdges.removeAll()
-          compiledGraph.hiddenEdges.removeAll()
-        }
-      }
-    }
+    return LinearGraphAnswer(GraphChangesUtil.SOME_CHANGES, graphUpdater = Runnable {
+      compiledGraph.dottedEdges.removeAll()
+      compiledGraph.hiddenEdges.removeAll()
+    })
   }
 
   private fun collapseAll(): LinearGraphAnswer {
     val workingGraph = WorkingLinearBekGraph(compiledGraph)
     LinearBekGraphBuilder(workingGraph, bekGraphLayout).collapseAll()
-    return object : LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
-      override fun getGraphUpdater(): Runnable {
-        return Runnable { workingGraph.applyChanges() }
-      }
+    return LinearGraphAnswer(GraphChangesUtil.edgesReplaced(workingGraph.removedEdges, workingGraph.addedEdges, delegateGraph)) {
+      workingGraph.applyChanges()
     }
   }
 
@@ -178,8 +172,6 @@ class LinearBekController(controller: SortedBaseController, permanentGraphInfo: 
     if (edge.type != GraphEdgeType.DOTTED) return null
     return LinearGraphAnswer(GraphChangesUtil.edgesReplaced(setOf(edge), compiledGraph.expandEdge(edge), delegateGraph))
   }
-
-  override fun getCompiledGraph(): LinearGraph = compiledGraph
 
   private class BekGraphLayout(private val graphLayout: GraphLayout,
                                private val sortIndexMap: SortIndexMap) : GraphLayout {

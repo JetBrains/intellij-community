@@ -19,7 +19,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
             if (callExpression == null) {
                 listOf()
             } else {
-                buildRequestsAndActions(callExpression)
+                K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
     private val createFunctionFromTooManyArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.TooManyArguments> =
@@ -29,7 +29,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
             if (callExpression == null) {
                 listOf()
             } else {
-                buildRequestsAndActions(callExpression)
+                K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
         }
     private val createFunctionFromMissingArguments: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.NoValueForParameter> =
@@ -40,13 +40,19 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
             if (callExpression == null) {
                 listOf()
             } else {
-                buildRequestsAndActions(callExpression)
+                K2CreateFunctionFromUsageBuilder.buildRequestsAndActions(callExpression)
             }
+        }
+    private val createVariableInsteadOfPackageReference: KotlinQuickFixFactory.IntentionBased<KtFirDiagnostic.ExpressionExpectedPackageFound> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KtFirDiagnostic.ExpressionExpectedPackageFound ->
+            val psi = diagnostic.psi
+            listOfNotNull(K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(psi))
         }
 
     override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(createFunctionFromArgumentTypeMismatch)
         registerFactory(createFunctionFromTooManyArguments)
         registerFactory(createFunctionFromMissingArguments)
+        registerFactory(createVariableInsteadOfPackageReference)
     }
 }

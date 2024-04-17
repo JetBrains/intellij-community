@@ -12,31 +12,25 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.DiffPreview
-import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.StatusText
-import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
 class SavedPatchesChangesBrowser(project: Project,
-                                 private val focusMainUi: (Component?) -> Unit,
                                  parentDisposable: Disposable)
   : AsyncChangesBrowserBase(project, false, false), Disposable {
 
   var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
     private set
 
-  private var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
-  private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
-
-  private var diffPreviewProcessor: SavedPatchesDiffPreview? = null
-  var editorTabPreview: EditorTabPreview? = null
+  var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
     private set
+
+  private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
 
   init {
     init()
@@ -108,10 +102,6 @@ class SavedPatchesChangesBrowser(project: Project,
     viewer.rebuildTree()
   }
 
-  override fun getShowDiffActionPreview(): DiffPreview? {
-    return editorTabPreview
-  }
-
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
     return userObject.createDiffRequestProducer(myProject)
@@ -120,24 +110,6 @@ class SavedPatchesChangesBrowser(project: Project,
   fun getDiffWithLocalRequestProducer(userObject: Any, useBeforeVersion: Boolean): ChangeDiffRequestChain.Producer? {
     if (userObject !is SavedPatchesProvider.ChangeObject) return null
     return userObject.createDiffWithLocalRequestProducer(myProject, useBeforeVersion)
-  }
-
-  fun installDiffPreview(isInEditor: Boolean): SavedPatchesDiffPreview {
-    if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = SavedPatchesDiffPreview(myProject, viewer, isInEditor, this)
-    diffPreviewProcessor = newProcessor
-
-    editorTabPreview = if (isInEditor) {
-      object : SavedPatchesEditorDiffPreview(newProcessor, viewer, this@SavedPatchesChangesBrowser, focusMainUi) {
-        override fun getCurrentName(): String {
-          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName)
-                 ?: VcsBundle.message("saved.patch.editor.diff.preview.empty.title")
-        }
-      }
-    }
-    else null
-
-    return newProcessor
   }
 
   private fun VcsTreeModelData.mapToChange(): JBIterable<Change> {

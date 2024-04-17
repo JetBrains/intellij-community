@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -34,8 +34,7 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     PsiElement startElement = getStartElement();
     String text = startElement == null
                ? ""
@@ -45,8 +44,7 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("safe.delete.family");
   }
 
@@ -94,13 +92,11 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return false;
   }
 
-  @NotNull
-  public static List<PsiElement> computeReferencedCodeSafeToDelete(@Nullable PsiMember psiMember) {
+  public static @NotNull List<PsiElement> computeReferencedCodeSafeToDelete(@Nullable PsiMember psiMember) {
     return computeReferencedCodeSafeToDelete(psiMember, Predicates.alwaysTrue());
   }
 
-  @NotNull
-  public static List<PsiElement> computeReferencedCodeSafeToDelete(
+  public static @NotNull List<PsiElement> computeReferencedCodeSafeToDelete(
     @Nullable PsiMember psiMember,
     @NotNull Predicate<? super PsiElement> additionalFilter) {
     final PsiElement body;

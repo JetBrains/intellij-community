@@ -1,15 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ml.impl.apiPlatform
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.platform.ml.EnvironmentExtender
 import com.intellij.platform.ml.Feature
 import com.intellij.platform.ml.ObsoleteTierDescriptor
 import com.intellij.platform.ml.TierDescriptor
 import com.intellij.platform.ml.impl.MLTaskApproachBuilder
-import com.intellij.platform.ml.impl.apiPlatform.MLApiPlatform.ExtensionController
 import com.intellij.platform.ml.impl.apiPlatform.ReplaceableIJPlatform.replacingWith
 import com.intellij.platform.ml.impl.monitoring.MLTaskGroupListener
 import com.intellij.util.application
@@ -63,10 +64,9 @@ private data object IJPlatform : MLApiPlatform() {
   override val taskListeners: List<MLTaskGroupListener>
     get() = MessagingProvider.collect(MLTaskGroupListenerProvider.TOPIC)
 
-  override fun addTaskListener(taskListener: MLTaskGroupListener): ExtensionController {
-    val connection = application.messageBus.connect()
+  override fun addTaskListener(taskListener: MLTaskGroupListener, parentDisposable: Disposable) {
+    val connection = application.messageBus.connect(parentDisposable)
     connection.subscribe(MLTaskGroupListenerProvider.TOPIC, MLTaskGroupListenerProvider { it(taskListener) })
-    return ExtensionController { connection.disconnect() }
   }
 
   override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) {
@@ -115,8 +115,8 @@ object ReplaceableIJPlatform : MLApiPlatform() {
   override val taskListeners: List<MLTaskGroupListener>
     get() = platform.taskListeners
 
-  override fun addTaskListener(taskListener: MLTaskGroupListener): ExtensionController {
-    return extend(taskListener) { platform -> platform.addTaskListener(taskListener) }
+  override fun addTaskListener(taskListener: MLTaskGroupListener, parentDisposable: Disposable) {
+    extend(taskListener, parentDisposable) { platform -> platform.addTaskListener(taskListener, parentDisposable) }
   }
 
   override fun manageNonDeclaredFeatures(descriptor: ObsoleteTierDescriptor, nonDeclaredFeatures: Set<Feature>) =
@@ -125,10 +125,10 @@ object ReplaceableIJPlatform : MLApiPlatform() {
   override val coroutineScope: CoroutineScope
     get() = platform.coroutineScope
 
-  private fun <T> extend(obj: T, method: (MLApiPlatform) -> ExtensionController): ExtensionController {
+  private fun <T> extend(obj: T, parentDisposable: Disposable, method: (MLApiPlatform) -> Unit) {
     val initialPlatform = platform
     method(initialPlatform)
-    return ExtensionController {
+    return parentDisposable.whenDisposed {
       require(initialPlatform == platform) {
         "$obj should be removed within the same platform it was added in." +
         "It was added in $initialPlatform, but removed from $platform"

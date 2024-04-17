@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -44,7 +45,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     return if (myProjectsTree.isIgnored(project)) false else !project.isAggregator || myImportingSettings.isCreateModulesForAggregators
   }
 
-  protected class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
+  private class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
                          indicator: ProgressIndicator) {
@@ -103,6 +104,8 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
     @JvmStatic
     fun scheduleRefreshResolvedArtifacts(postTasks: MutableList<MavenProjectsProcessorTask>,
                                          projectsToRefresh: Iterable<MavenProject>) {
+      if (!Registry.`is`("maven.sync.refresh.resolved.artifacts", false)) return
+
       // We have to refresh all the resolved artifacts manually in order to
       // update all the VirtualFilePointers. It is not enough to call
       // VirtualFileManager.refresh() since the newly created files will be only
@@ -134,7 +137,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
       javacOptions.ADDITIONAL_OPTIONS_STRING = options
     }
 
-    protected fun doRefreshFiles(files: Set<File>) {
+    private fun doRefreshFiles(files: Set<File>) {
       LocalFileSystem.getInstance().refreshIoFiles(files)
     }
   }

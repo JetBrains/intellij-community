@@ -27,7 +27,7 @@ import java.util.function.Function
 
 internal class WireMockSuggestionProvider : PluginSuggestionProvider {
 
-  override fun getSuggestion(project: Project, file: VirtualFile): Function<FileEditor, EditorNotificationPanel?>? {
+  override fun getSuggestion(project: Project, file: VirtualFile): PluginSuggestion? {
     if (!FileTypeManager.getInstance().isFileOfType(file, JsonFileType.INSTANCE)) return null
 
     if (isPluginSuggestionDismissed() || tryUltimateIsDisabled()) return null
@@ -45,7 +45,9 @@ internal class WireMockSuggestionProvider : PluginSuggestionProvider {
 }
 
 private class WireMockPluginSuggestion(val project: Project,
-                                       val thisProductCode: String) : Function<FileEditor, EditorNotificationPanel?> {
+                                       val thisProductCode: String) : PluginSuggestion {
+  override val pluginIds: List<String> = listOf(WIREMOCK_PLUGIN_ID)
+
   override fun apply(fileEditor: FileEditor): EditorNotificationPanel {
     val status = if (PluginAdvertiserService.isCommunityIde()) Status.Promo else Status.Info
     val panel = EditorNotificationPanel(fileEditor, status)

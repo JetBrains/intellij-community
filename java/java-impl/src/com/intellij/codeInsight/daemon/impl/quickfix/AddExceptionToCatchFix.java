@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -75,8 +75,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     }
   }
 
-  @NotNull
-  protected Collection<PsiClassType> getExceptions(PsiElement element, PsiElement topElement) {
+  protected @NotNull Collection<PsiClassType> getExceptions(PsiElement element, PsiElement topElement) {
     Collection<PsiClassType> exceptions = ExceptionUtil.collectUnhandledExceptions(element, topElement);
     if(!myUncaughtOnly && exceptions.isEmpty()) {
       exceptions = ExceptionUtil.getThrownExceptions(element);
@@ -162,8 +161,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     return Presentation.of(QuickFixBundle.message("add.catch.clause.text"));
   }
 
-  @Nullable
-  private PsiElement findElement(final PsiFile file, final int offset) {
+  private @Nullable PsiElement findElement(final PsiFile file, final int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
@@ -200,8 +198,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.catch.clause.family");
   }
 }

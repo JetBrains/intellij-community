@@ -110,6 +110,8 @@ class LibraryInfoVariantsService(project: Project): Disposable {
             Common("common", setOf(
                 "org.jetbrains.kotlin:kotlin-test-common",
                 "org.jetbrains.kotlin:kotlin-test-annotations-common",
+                "org.jetbrains.kotlin:kotlin-test:annotationsCommonMain",
+                "org.jetbrains.kotlin:kotlin-test:assertionsCommonMain",
                 "org.jetbrains.kotlin:kotlin-stdlib:commonMain",
             ))
         }

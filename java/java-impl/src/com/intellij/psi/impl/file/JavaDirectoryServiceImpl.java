@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -50,9 +50,8 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
     return JavaPsiFacade.getInstance(project).findPackage(packageName);
   }
 
-  @Nullable
   @Override
-  public PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
+  public @Nullable PsiPackage getPackageInSources(@NotNull PsiDirectory dir) {
     PsiPackage aPackage = getPackage(dir);
     if (aPackage != null) {
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(dir.getProject()).getFileIndex();
@@ -66,14 +65,12 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, JavaTemplateUtil.INTERNAL_CLASS_TEMPLATE_NAME);
   }
 
   @Override
-  @NotNull
-  public PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
+  public @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, templateName);
   }
 
@@ -89,13 +86,12 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   public PsiClass createClass(@NotNull PsiDirectory dir,
                               @NotNull String name,
                               @NotNull String templateName,
-                              boolean askForUndefinedVariables, @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException {
+                              boolean askForUndefinedVariables, final @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException {
     return createClassFromTemplate(dir, name, templateName, askForUndefinedVariables, additionalProperties);
   }
 
   @Override
-  @NotNull
-  public PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_INTERFACE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isInterface()) {
@@ -105,8 +101,7 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isEnum()) {
@@ -116,8 +111,7 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_RECORD_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isRecord()) {
@@ -127,8 +121,7 @@ public final class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
   }
 
   @Override
-  @NotNull
-  public PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
+  public @NotNull PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException {
     String templateName = JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME;
     PsiClass someClass = createClassFromTemplate(dir, name, templateName);
     if (!someClass.isAnnotationType()) {

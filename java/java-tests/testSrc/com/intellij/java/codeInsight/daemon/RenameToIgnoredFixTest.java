@@ -63,4 +63,40 @@ public final class RenameToIgnoredFixTest extends LightJavaCodeInsightFixtureTes
                               }""");
     });
   }
+
+  public void testRenameToIgnoredSwitch2() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByText("Test.java", """
+       class Scratch {
+         void test(Object obj) {
+           int a = 1;
+           int ignored = 1;
+           int b = 1;
+       
+           switch (obj) {
+             case String ignored1: System.out.println("String"); break;
+             case Integer a<caret> :System.out.println("Integer"); break;
+             default: System.out.println("Other");break;
+           }
+         }
+       }""");
+      myFixture.enableInspections(new UnusedDeclarationInspection());
+      IntentionAction intention = myFixture.findSingleIntention("Rename 'a' to 'ignored1'");
+      myFixture.launchAction(intention);
+      myFixture.checkResult("""
+                              class Scratch {
+                                void test(Object obj) {
+                                  int a = 1;
+                                  int ignored = 1;
+                                  int b = 1;
+
+                                  switch (obj) {
+                                    case String ignored1: System.out.println("String"); break;
+                                    case Integer ignored1:System.out.println("Integer"); break;
+                                    default: System.out.println("Other");break;
+                                  }
+                                }
+                              }""");
+    });
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
@@ -37,9 +37,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return type != null && InheritanceUtil.isInheritor(type, myFqn);
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
@@ -77,9 +76,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return type != null && PsiTypes.voidType().equals(type);
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
@@ -109,9 +107,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return JavaPostfixTemplatesUtils.isNonVoid(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
@@ -140,9 +137,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return JavaPostfixTemplatesUtils.isBoolean(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
@@ -171,9 +167,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return JavaPostfixTemplatesUtils.isNumber(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
@@ -202,9 +197,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(element);
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 
@@ -233,9 +227,8 @@ public interface JavaPostfixTemplateExpressionCondition extends PostfixTemplateE
       return JavaPostfixTemplatesUtils.isArray(element.getType());
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return ID;
     }
 

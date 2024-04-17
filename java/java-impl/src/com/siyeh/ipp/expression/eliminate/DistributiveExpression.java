@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression.eliminate;
 
 import com.intellij.psi.*;
@@ -97,8 +97,7 @@ class DistributiveExpression extends EliminableExpression {
     return true;
   }
 
-  @Nullable
-  static DistributiveExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
+  static @Nullable DistributiveExpression create(@NotNull PsiParenthesizedExpression parenthesized) {
     DistributiveExpression expression = EliminateUtils.createExpression(parenthesized, DistributiveExpression::new, OUTER_OPERATORS);
     if (expression == null) return null;
     PsiPolyadicExpression polyadicExpression = expression.getExpression();
@@ -122,9 +121,8 @@ class DistributiveExpression extends EliminableExpression {
       myAfterText = afterText;
     }
 
-    @NotNull
     @Contract(pure = true)
-    private String format(String operandText) {
+    private @NotNull String format(String operandText) {
       return myBeforeText + operandText + myAfterText;
     }
 

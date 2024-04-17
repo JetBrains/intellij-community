@@ -268,8 +268,6 @@ a:com.intellij.execution.Executor
 - isApplicable(com.intellij.openapi.project.Project):Z
 - *:isSupportedOnTarget():Z
 - s:shortenNameIfNeeded(java.lang.String):java.lang.String
-com.intellij.execution.Executor$ActionWrapper
-- a:wrap(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.AnAction
 a:com.intellij.execution.ExecutorRegistry
 - <init>():V
 - a:getExecutorById(java.lang.String):com.intellij.execution.Executor

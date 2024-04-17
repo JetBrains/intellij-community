@@ -51,15 +51,13 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
     m_searchInNonJavaFiles = searchInNonJavaFiles;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return InspectionGadgetsBundle.message("rename.quickfix");
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     if (m_targetName == null) {
       return InspectionGadgetsBundle.message("rename.quickfix");
     }
@@ -72,15 +70,13 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
     return m_targetName;
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler() {
+  public @NotNull RefactoringActionHandler getHandler() {
     return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
   }
 
-  @NotNull
   @Override
-  public RefactoringActionHandler getHandler(@NotNull DataContext context) {
+  public @NotNull RefactoringActionHandler getHandler(@NotNull DataContext context) {
     RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     return renameHandler != null ? renameHandler : getHandler();
   }

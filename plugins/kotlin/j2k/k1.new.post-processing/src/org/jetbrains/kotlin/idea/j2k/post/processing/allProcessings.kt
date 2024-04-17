@@ -29,10 +29,6 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
     diagnosticBasedProcessing(AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD), Errors.VIRTUAL_MEMBER_HIDDEN),
     invisibleMemberDiagnosticBasedProcessing(MakeVisibleFactory, Errors.INVISIBLE_MEMBER),
 
-    diagnosticBasedProcessing(Errors.PLATFORM_CLASS_MAPPED_TO_KOTLIN) { element: KtDotQualifiedExpression, _ ->
-        val parent = element.parent as? KtImportDirective ?: return@diagnosticBasedProcessing
-        parent.delete()
-    },
     diagnosticBasedProcessing(
         UnsafeCallExclExclFixFactory,
         Errors.UNSAFE_CALL,
@@ -93,7 +89,9 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     inspectionBasedProcessing(IfThenToElvisInspection(highlightStatement = true, inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },
-    inspectionBasedProcessing(ReplaceGetOrSetInspection()),
+    // ReplaceGetOrSetInspection should always be applied, because as a side effect
+    // it fixes red code of the form `array.get(0) = 42`
+    inspectionBasedProcessing(ReplaceGetOrSetInspection(), checkInspectionIsEnabled = false),
     intentionBasedProcessing(ObjectLiteralToLambdaIntention(), writeActionNeeded = true),
     intentionBasedProcessing(RemoveUnnecessaryParenthesesIntention()) {
         // skip parentheses that were originally present in Java code

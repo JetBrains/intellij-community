@@ -11,8 +11,8 @@ internal class Foo<T> {
     val map = HashMap<String, T>()
 
     fun test(l: String): T {
-        return __dummyTestFun__(l)
+        return t(l)
     }
 }
 
-private fun <T> Foo<T>.__dummyTestFun__(l: String): T? = map[l]
+private fun <T> Foo<T>.t(l: String): T? = map[l]

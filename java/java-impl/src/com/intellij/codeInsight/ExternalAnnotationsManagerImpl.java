@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.CommonBundle;
@@ -820,8 +820,7 @@ public final class ExternalAnnotationsManagerImpl extends ModCommandAwareExterna
     FileDocumentManager.getInstance().saveDocument(doc);
   }
 
-  @NonNls
-  private static @NotNull String createItemTag(@NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
+  private static @NonNls @NotNull String createItemTag(@NotNull String ownerName, @NotNull ExternalAnnotation annotation) {
     String annotationTag = createAnnotationTag(annotation.getAnnotationFQName(), annotation.getValues());
     return String.format("<item name='%s'>%s</item>", ownerName, annotationTag);
   }

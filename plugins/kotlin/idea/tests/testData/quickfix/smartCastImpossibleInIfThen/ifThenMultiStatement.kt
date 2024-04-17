@@ -1,5 +1,5 @@
 // "Replace 'if' expression with safe access expression" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (x!!) call
 // ACTION: Introduce local variable
 // DISABLE-ERRORS
 class Test {

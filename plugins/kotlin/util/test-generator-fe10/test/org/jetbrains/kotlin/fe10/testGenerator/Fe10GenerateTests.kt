@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTes
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractK1PostfixTemplateTest
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
+import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractMultiModuleLineMarkerCodeMetaInfoTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationPluginIdeDiagnosticTest
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.AbstractSerializationQuickFixTest
 import org.jetbrains.kotlin.idea.completion.test.*
@@ -540,6 +541,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("codeInsight/surroundWith/tryCatchFinally", testMethodName = "doTestWithTryCatchFinallySurrounder")
             model("codeInsight/surroundWith/tryCatchFinallyExpression", testMethodName = "doTestWithTryCatchFinallyExpressionSurrounder")
             model("codeInsight/surroundWith/tryFinally", testMethodName = "doTestWithTryFinallySurrounder")
+            model("codeInsight/surroundWith/tryFinallyExpression", testMethodName = "doTestWithTryFinallyExpressionSurrounder")
             model("codeInsight/surroundWith/functionLiteral", testMethodName = "doTestWithFunctionLiteralSurrounder")
             model("codeInsight/surroundWith/withIfExpression", testMethodName = "doTestWithSurroundWithIfExpression")
             model("codeInsight/surroundWith/withIfElseExpression", testMethodName = "doTestWithSurroundWithIfElseExpression")
@@ -1539,6 +1541,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("idea/tests",  testDataPath = "../../code-insight/postfix-templates/testData", category = COMPLETION) {
         testClass<AbstractK1PostfixTemplateTest>(indexingMode = listOf(IndexingMode.DUMB_EMPTY_INDEX, IndexingMode.SMART)) {
             model("expansion/oldTestData", pattern = KT_WITHOUT_DOTS, passTestDataPath = false)
+        }
+    }
+
+    testGroup("idea/tests",  testDataPath = "../../code-insight/testData", category = HIGHLIGHTING) {
+        testClass<AbstractMultiModuleLineMarkerCodeMetaInfoTest> {
+            model("linemarkers", isRecursive = false, pattern = DIRECTORY)
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -34,12 +34,12 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
   }
 
   @Override
-  public PsiField createPsi(@NotNull final PsiFieldStub stub) {
+  public PsiField createPsi(final @NotNull PsiFieldStub stub) {
     return getPsiFactory(stub).createField(stub);
   }
 
   @Override
-  public PsiField createPsi(@NotNull final ASTNode node) {
+  public PsiField createPsi(final @NotNull ASTNode node) {
     if (node instanceof EnumConstantElement) {
       return new PsiEnumConstantImpl(node);
     }
@@ -48,9 +48,8 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     }
   }
 
-  @NotNull
   @Override
-  public PsiFieldStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiFieldStub createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     final TypeInfo typeInfo = TypeInfo.create(tree, node, parentStub);
 
     boolean isDeprecatedByComment = false;
@@ -108,9 +107,8 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
     dataStream.writeByte(((PsiFieldStubImpl)stub).getFlags());
   }
 
-  @NotNull
   @Override
-  public PsiFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PsiFieldStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     TypeInfo type = TypeInfo.readTYPE(dataStream);
     String initializerText = dataStream.readNameString();

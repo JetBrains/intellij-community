@@ -10,11 +10,9 @@ import java.nio.file.Files
 object PythonCommunityPluginModules {
   @JvmStatic
   val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
-    "intellij.python.ast",
     "intellij.python.community",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
-    "intellij.python.parser",
     "intellij.python.psi",
     "intellij.python.psi.impl",
     "intellij.python.community.core.impl",
@@ -32,9 +30,18 @@ object PythonCommunityPluginModules {
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",
     "intellij.jupyter.core",
-    "intellij.python.syntax",
-    "intellij.python.syntax.core",
     "intellij.python.community.deprecated.extensions"
+  )
+
+  /**
+   * List of modules used in both Python plugin and Python Frontend plugin
+   */
+  @JvmStatic
+  val PYTHON_COMMON_MODULES: PersistentList<String> = persistentListOf(
+    "intellij.python.parser",
+    "intellij.python.ast",
+    "intellij.python.syntax",
+    "intellij.python.syntax.core"
   )
 
   const val pythonCommunityName: String = "python-ce"
@@ -59,6 +66,9 @@ object PythonCommunityPluginModules {
       spec.directoryName = name
       spec.mainJarName = "${name}.jar"
       spec.withModules(modules)
+      PYTHON_COMMON_MODULES.forEach { 
+        spec.withModule(it, "python-common.jar")
+      }
       spec.withGeneratedResources { targetDir, context ->
         val output = targetDir.resolve("helpers")
         Files.createDirectories(output)
