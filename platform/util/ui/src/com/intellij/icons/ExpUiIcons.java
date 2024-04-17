@@ -481,7 +481,7 @@ public final class ExpUiIcons {
 
   public static final class Language {
     /** 16x16 */ public static final @NotNull Icon Php = load("expui/language/php.svg", 1115780116, 2);
-    /** 16x16 */ public static final @NotNull Icon Scala = load("expui/language/scala.svg", 570395828, 2);
+    /** 16x16 */ public static final @NotNull Icon Scala = load("expui/language/scala.svg", -745330940, 2);
   }
 
   public static final class MeetNewUi {
