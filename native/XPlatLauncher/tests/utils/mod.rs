@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, fs, thread, time};
 use std::collections::HashMap;
@@ -190,17 +190,13 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
         bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
     }
 
-    let gradle_build_dir = Path::new("./resources/TestProject/build").canonicalize()?.strip_ns_prefix()?;
+    let gradle_build_dir = Path::new("./resources/TestProject/build");
+    if !gradle_build_dir.is_dir() {
+        bail!("Missing: {:?}; please run `gradlew :downloadJbr :fatJar` first", gradle_build_dir);
+    }
+    let gradle_build_dir = gradle_build_dir.canonicalize()?.strip_ns_prefix()?;
     let jbr_root = gradle_build_dir.join("jbr");
-    if !jbr_root.is_dir() {
-        bail!("Missing: {:?}; please run `gradlew :downloadJbr` first", jbr_root);
-    }
-
-    let app_jar_path = gradle_build_dir.join("libs").join("app.jar");
-    if !app_jar_path.is_file() {
-        bail!("Missing: {:?}; please run `gradlew :fatJar` first", app_jar_path);
-    }
-
+    let app_jar_path = gradle_build_dir.join("libs/app.jar");
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
     let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
@@ -570,8 +566,8 @@ fn run_launcher_impl(test_env: &TestEnvironment, run_spec: &LauncherRunSpec) -> 
         if let Some(es) = launcher_process.try_wait()? {
             return Ok(LauncherRunResult {
                 exit_status: es,
-                stdout: fs::read_to_string(&stdout_file_path).context("Cannot open stdout file")?,
-                stderr: fs::read_to_string(&stderr_file_path).context("Cannot open stderr file")?,
+                stdout: fs::read_to_string(stdout_file_path).context("Cannot open stdout file")?,
+                stderr: fs::read_to_string(stderr_file_path).context("Cannot open stderr file")?,
                 dump: if run_spec.dump { Some(read_launcher_run_result(&dump_file_path)) } else { None }
             });
         }
