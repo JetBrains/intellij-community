@@ -6,10 +6,12 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotationsByClassId
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddAnnotationFix
@@ -98,10 +100,15 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
                 val typeReference = it.typeReference
                 val resolvedClass = typeReference?.getKtType()?.expandedClassSymbol ?: return false
                 val classAnnotation = resolvedClass.annotationsByClassId(OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID).firstOrNull()
-                val annotationMarkerClass = classAnnotation?.arguments?.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS }
-                val apiClassId = (annotationMarkerClass?.expression as? KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue)?.classId
-                apiClassId?.asSingleFqName() == annotationFqName
+                classAnnotation != null && findMarkerClassId(classAnnotation)?.asSingleFqName() == annotationFqName
             }
         }
+    }
+
+    private fun findMarkerClassId(annotation: KtAnnotationApplicationWithArgumentsInfo): ClassId? {
+        val argument = annotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return null
+        val value = argument.expression as? KtKClassAnnotationValue ?: return null
+        val type = value.type as? KtNonErrorClassType ?: return null
+        return type.classId.takeUnless { it.isLocal }
     }
 }

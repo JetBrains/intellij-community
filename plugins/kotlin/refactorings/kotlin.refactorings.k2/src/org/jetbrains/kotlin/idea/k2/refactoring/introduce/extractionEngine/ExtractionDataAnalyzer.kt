@@ -12,10 +12,7 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisNonPublicApi
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
-import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
@@ -272,15 +269,24 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
         val fqName = annotationEntry.classId?.asSingleFqName() ?: continue
 
         if (fqName in FqNames.OptInFqNames.OPT_IN_FQ_NAMES) {
-            for (argument in annotationEntry.arguments) {
-                val expression = argument.expression
-                if (expression is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue) {
-                    optInMarkerNames.add(expression.classId.asSingleFqName())
-                } else if (expression is KtArrayAnnotationValue) {
-                    expression.values.filterIsInstance<KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue>()
-                        .forEach { optInMarkerNames.add(it.classId.asSingleFqName()) }
+            fun processValue(value: KtAnnotationValue, isRecursive: Boolean) {
+                when (value) {
+                    is KtKClassAnnotationValue -> {
+                        val classId = (value.type as? KtNonErrorClassType)?.classId?.takeUnless { it.isLocal }
+                        if (classId != null) {
+                            optInMarkerNames.add(classId.asSingleFqName())
+                        }
+                    }
+                    is KtArrayAnnotationValue -> {
+                        if (isRecursive) {
+                            value.values.forEach { processValue(it, isRecursive = false) }
+                        }
+                    }
+                    else -> {}
                 }
             }
+
+            annotationEntry.arguments.forEach { processValue(it.expression, isRecursive = true) }
         } else if (annotationEntry.isExperimentalMarker()) {
             propagatingMarkerDescriptors.add(annotationEntry)
         }
