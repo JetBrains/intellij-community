@@ -158,11 +158,11 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
     taskLauncher.launch {
       val newData = try {
         if (resolved) {
-          reviewData.unresolveThread(EmptyProgressIndicator(), id)
+          reviewData.unresolveThread(id)
         }
         else {
-          reviewData.resolveThread(EmptyProgressIndicator(), id)
-        }.asDeferred().await()
+          reviewData.resolveThread(id)
+        }
       }
       catch (e: Exception) {
         if (e is ProcessCanceledException || e is CancellationException) return@launch
@@ -254,7 +254,7 @@ class UpdateableGHPRTimelineThreadViewModel internal constructor(
     override fun submit() {
       val replyId = dataState.value.comments.firstOrNull()?.id ?: return
       submit {
-        reviewData.addComment(EmptyProgressIndicator(), replyId, it).await()
+        reviewData.addComment(replyId, it)
         text.value = ""
       }
     }

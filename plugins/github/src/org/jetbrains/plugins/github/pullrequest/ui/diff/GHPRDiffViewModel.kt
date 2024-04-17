@@ -26,12 +26,13 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.fetchedChangesFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.pullrequest.ui.review.DelegatingGHPRReviewViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.review.GHPRReviewViewModel
@@ -80,7 +81,7 @@ internal class GHPRDiffViewModelImpl(
   private val changeVmsMap = mutableMapOf<RefComparisonChange, StateFlow<GHPRDiffChangeViewModelImpl?>>()
 
   private val threads: StateFlow<ComputedResult<List<GHPullRequestReviewThread>>> =
-    reviewDataProvider.createThreadsRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
+    reviewDataProvider.threadsComputationFlow.stateInNow(cs, ComputedResult.loading())
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
   override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
@@ -94,8 +95,10 @@ internal class GHPRDiffViewModelImpl(
   }
 
   override fun reloadReview() {
-    reviewDataProvider.resetPendingReview()
-    reviewDataProvider.resetReviewThreads()
+    cs.launch {
+      reviewDataProvider.signalPendingReviewNeedsReload()
+      reviewDataProvider.signalThreadsNeedReload()
+    }
   }
 
   override val diffVm: StateFlow<ComputedResult<DiffProducersViewModel?>> =

@@ -112,9 +112,7 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
     val changesData = GHPRChangesDataProviderImpl(providerCs, repositoryDataService, changesService, id, detailsData).also {
       Disposer.register(parentDisposable, it)
     }
-    val reviewData = GHPRReviewDataProviderImpl(reviewService, changesData, id, messageBus).also {
-      Disposer.register(parentDisposable, it)
-    }
+    val reviewData = GHPRReviewDataProviderImpl(providerCs, reviewService, changesData, id, messageBus)
     val viewedStateData = GHPRViewedStateDataProviderImpl(filesService, id).also {
       Disposer.register(parentDisposable, it)
     }

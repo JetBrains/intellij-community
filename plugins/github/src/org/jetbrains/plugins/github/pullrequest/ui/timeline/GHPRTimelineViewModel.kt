@@ -223,7 +223,7 @@ internal class GHPRTimelineViewModelImpl(
     cs.launch {
       detailsData.signalDetailsNeedReload()
       timelineLoader.loadMore(true)
-      reviewData.resetReviewThreads()
+      reviewData.signalThreadsNeedReload()
     }
   }
 

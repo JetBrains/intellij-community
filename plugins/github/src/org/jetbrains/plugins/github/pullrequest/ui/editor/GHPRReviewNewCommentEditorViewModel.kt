@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTex
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.filePath
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.asSafely
 import com.intellij.vcsUtil.VcsFileUtil.relativePath
@@ -18,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
@@ -26,7 +24,7 @@ import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProject
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.changesRequestFlow
-import org.jetbrains.plugins.github.pullrequest.data.provider.createPendingReviewRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.pendingReviewComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel.SubmitAction
@@ -65,7 +63,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     dataProvider.changesData.changesRequestFlow().computationState().stateInNow(cs, ComputedResult.loading())
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
-    reviewDataProvider.createPendingReviewRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
+    reviewDataProvider.pendingReviewComputationFlow.stateInNow(cs, ComputedResult.loading())
 
   private val reviewCommentPreferred = settings.reviewCommentsPreferredState
 
@@ -96,7 +94,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     submit {
       val thread = createThreadDTO(it)
       val commitSha = position.change.revisionNumberAfter.asString()
-      reviewDataProvider.createReview(EmptyProgressIndicator(), GHPullRequestReviewEvent.COMMENT, null, commitSha, listOf(thread)).asDeferred().await()
+      reviewDataProvider.createReview(GHPullRequestReviewEvent.COMMENT, null, commitSha, listOf(thread))
       settings.reviewCommentsPreferred = false
       cancel()
     }
@@ -106,7 +104,7 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
     submit {
       val thread = createThreadDTO(it)
       val commitSha = position.change.revisionNumberAfter.asString()
-      reviewDataProvider.createReview(EmptyProgressIndicator(), null, null, commitSha, listOf(thread)).asDeferred().await()
+      reviewDataProvider.createReview(null, null, commitSha, listOf(thread))
       settings.reviewCommentsPreferred = true
       cancel()
     }
@@ -119,12 +117,12 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
       val line = location.lineIdx.inc()
       if (isCumulative) {
         val startLine = location.asSafely<GHPRReviewCommentLocation.MultiLine>()?.startLineIdx?.inc() ?: line
-        reviewDataProvider.createThread(EmptyProgressIndicator(), reviewId, it, line, location.side, startLine, filePath)
+        reviewDataProvider.createThread(reviewId, it, line, location.side, startLine, filePath)
       }
       else {
         val commitSha = position.change.revisionNumberAfter.asString()
-        reviewDataProvider.addComment(EmptyProgressIndicator(), reviewId, it, commitSha, filePath, location.side, line)
-      }.asDeferred().await()
+        reviewDataProvider.addComment(reviewId, it, commitSha, filePath, location.side, line)
+      }
       cancel()
     }
   }

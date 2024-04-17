@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.openapi.actionSystem.DataKey
@@ -14,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createPendingReviewRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.pendingReviewComputationFlow
 
 interface GHPRReviewViewModel {
   /**
@@ -55,7 +54,7 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
   private val reviewData = dataProvider.reviewData
 
   val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =
-    reviewData.createPendingReviewRequestsFlow().computationState().stateInNow(cs, ComputedResult.loading())
+    reviewData.pendingReviewComputationFlow.stateInNow(cs, ComputedResult.loading())
 
   fun submitReview(handler: (suspend (GHPRSubmitReviewViewModel) -> Unit)) {
     val pendingReviewResult = pendingReviewState.value.result ?: return
@@ -76,7 +75,9 @@ internal class GHPRReviewViewModelHelper(parentCs: CoroutineScope, private val d
   }
 
   init {
-    reviewData.resetPendingReview()
+    cs.launch {
+      reviewData.signalPendingReviewNeedsReload()
+    }
   }
 
   companion object {

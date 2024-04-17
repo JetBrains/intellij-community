@@ -80,8 +80,8 @@ class GHPRInfoViewModel internal constructor(
   override fun requestReload() {
     cs.launch {
       dataProvider.detailsData.signalDetailsNeedReload()
-      dataProvider.reviewData.resetPendingReview()
-      dataProvider.reviewData.resetReviewThreads()
+      dataProvider.reviewData.signalPendingReviewNeedsReload()
+      dataProvider.reviewData.signalThreadsNeedReload()
       dataProvider.changesData.reloadChanges()
       dataProvider.viewedStateData.reset()
     }

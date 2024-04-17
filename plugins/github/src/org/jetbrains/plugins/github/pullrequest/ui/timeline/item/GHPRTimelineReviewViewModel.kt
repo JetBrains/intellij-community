@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
@@ -10,11 +9,9 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingVie
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.SingleCoroutineLauncher
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.io.await
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -28,7 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.comment.convertToHtml
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import java.util.*
 
 interface GHPRTimelineReviewViewModel {
@@ -105,11 +102,9 @@ class UpdateableGHPRTimelineReviewViewModel internal constructor(
   }
 
   private fun GHPRReviewDataProvider.createThreadsVmsFlow() =
-    createThreadsRequestsFlow()
-      .computationState()
-      .transformConsecutiveSuccesses {
-        map { threads -> threads.filter { it.reviewId == id } }.mapDataToModel({ it.id }, { createThread(it) }, { update(it) })
-      }
+    threadsComputationFlow.transformConsecutiveSuccesses {
+      map { threads -> threads.filter { it.reviewId == id } }.mapDataToModel({ it.id }, { createThread(it) }, { update(it) })
+    }
 
   private fun CoroutineScope.createThread(data: GHPullRequestReviewThread): UpdateableGHPRTimelineThreadViewModel {
     val threadVm = UpdateableGHPRTimelineThreadViewModel(project, this, dataContext, dataProvider, data)
@@ -123,7 +118,7 @@ class UpdateableGHPRTimelineReviewViewModel internal constructor(
     : CodeReviewSubmittableTextViewModelBase(project, cs, initialText), CodeReviewTextEditingViewModel {
     override fun save() {
       submit { text ->
-        val updated = reviewData.updateReviewBody(EmptyProgressIndicator(), id, text).await()
+        val updated = reviewData.updateReviewBody(id, text)
         dataState.update {
           it.copy(body = updated)
         }

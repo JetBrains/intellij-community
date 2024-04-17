@@ -33,13 +33,26 @@ internal class LoaderWithMutableCache<T>(private val cs: CoroutineScope, private
     }
   }
 
+  suspend fun overrideResult(result: T) {
+    dataGuard.withLock {
+      doOverrideResult(result)
+    }
+  }
+
   private fun doUpdateLoaded(updater: (T) -> T) {
     val loaded = lastLoaded
     if (loaded != null) {
-      val updated = updater(loaded.get())
-      lastLoaded = Ref.create(updated)
-      request.update { CompletableDeferred(updated) }
+      val loadedValue = loaded.get()
+      val updatedValue = updater(loadedValue)
+      if (loadedValue != updatedValue) {
+        doOverrideResult(updatedValue)
+      }
     }
+  }
+
+  private fun doOverrideResult(result: T) {
+    lastLoaded = Ref.create(result)
+    request.update { CompletableDeferred(result) }
   }
 
   private fun loadAsync(): Deferred<T> = cs.async(start = CoroutineStart.LAZY) {

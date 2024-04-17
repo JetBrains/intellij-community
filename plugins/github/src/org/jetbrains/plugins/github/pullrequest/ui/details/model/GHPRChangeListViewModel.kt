@@ -1,10 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model
 
+import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.values
 import com.intellij.collaboration.ui.codereview.details.model.*
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -17,8 +19,8 @@ import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.provider.createThreadsRequestsFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.createViewedStateRequestsFlow
+import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, CodeReviewChangeListViewModel.WithGrouping {
@@ -94,7 +96,8 @@ internal class GHPRChangeListViewModelImpl(
   }
 
   private fun createDetailsByChangeFlow(): Flow<Map<RefComparisonChange, CodeReviewChangeDetails>> {
-    val threadsFlow = dataProvider.reviewData.createThreadsRequestsFlow().values()
+    val threadsFlow = dataProvider.reviewData.threadsComputationFlow
+      .filter { !it.isInProgress }.mapNotNull { it.getOrNull() }
     val viewedStateFlow = viewedStateData.createViewedStateRequestsFlow().values()
     return combine(threadsFlow, viewedStateFlow) { threads, viewedStateByPath ->
       val unresolvedThreadsByPath = threads.asSequence().filter { !it.isResolved }.groupingBy { it.path }.eachCount()
