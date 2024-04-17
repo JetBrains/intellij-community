@@ -165,7 +165,8 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     }
 
     override fun onChange(event: InlineCompletionEventType.Change) {
-      showTracker!!.lengthChanged(event.variantIndex, event.lengthChange)
+      val newText = event.elements.joinToString("") { it.text }
+      showTracker!!.suggestionChanged(event.variantIndex, event.lengthChange, newText)
     }
 
     override fun onInsert(event: InlineCompletionEventType.Insert): Unit = lock.withLock {

@@ -420,9 +420,11 @@ class InlineCompletionHandler(
         traceBlocking(InlineCompletionEventType.VariantSwitched(fromVariantIndex, toVariantIndex, explicit))
       }
 
-      override fun variantChanged(variantIndex: Int, oldText: String, newText: String) {
+      override fun variantChanged(variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>) {
         ThreadingAssertions.assertEventDispatchThread()
-        traceBlocking(InlineCompletionEventType.Change(variantIndex, oldText.length - newText.length))
+        val oldText = old.joinToString("") { it.text }
+        val newText = new.joinToString("") { it.text }
+        traceBlocking(InlineCompletionEventType.Change(variantIndex, new, oldText.length - newText.length))
       }
 
       override fun variantInvalidated(variantIndex: Int) {
