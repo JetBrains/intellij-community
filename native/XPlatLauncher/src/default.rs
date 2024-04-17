@@ -290,32 +290,17 @@ impl DefaultLaunchConfiguration {
         Ok(())
     }
 
-    /// Reads VM options from both distribution and user-specific files and puts them into the given vector.
-    ///
-    /// When `<product>_VM_OPTIONS` environment variable points to an existing file, only its content is used;
-    /// otherwise, the launcher merges the distribution and user-specific files.
+    /// Reads VM options from both distribution and user-specific files and merges them into the given vector.
     ///
     /// Distribution options come first, so users can override default options with their own ones.
     /// This works because JVM processes arguments first-to-last, so the last one wins.
     /// The only exception is setting a garbage collector, so when a user sets one,
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
-        debug!("[1] Looking for custom VM options environment variable");
-        let env_var_name = self.env_var_base_name.to_owned() + "_VM_OPTIONS";
-        match get_path_from_env_var(&env_var_name, Some(false)) {
-            Ok(path) => {
-                debug!("Custom VM options file: {:?}", path);
-                vm_options.extend(read_vm_options(&path)?);
-                vm_options.push(jvm_property!("jb.vmOptionsFile", path.to_string_checked()?));
-                return Ok(());
-            }
-            Err(e) => { debug!("Failed: {}", e.to_string()); }
-        }
-
-        debug!("[2] Reading main VM options file: {:?}", self.vm_options_path);
+        debug!("[1] Reading main VM options file: {:?}", self.vm_options_path);
         let dist_vm_options = read_vm_options(&self.vm_options_path)?;
 
-        debug!("[3] Looking for user VM options file");
+        debug!("[2] Looking for user VM options file");
         let (user_vm_options, vm_options_path) = match self.get_user_vm_options_file() {
             Ok(path) => {
                 debug!("Reading user VM options file: {:?}", path);
@@ -341,9 +326,16 @@ impl DefaultLaunchConfiguration {
         Ok(())
     }
 
-    /// Looks for user-editable config files near the installation (Toolbox-style)
-    /// or under the OS standard configuration directory.
+    /// Looks for user-editable config files in `<product>_VM_OPTIONS` environment variable,
+    /// near the installation (Toolbox-style), or under the OS standard configuration directory.
     fn get_user_vm_options_file(&self) -> Result<PathBuf> {
+        let env_var_name = self.env_var_base_name.to_owned() + "_VM_OPTIONS";
+        debug!("Checking ${:?}", env_var_name);
+        match get_path_from_env_var(&env_var_name, Some(false)) {
+            Ok(env_file_path) => { return Ok(env_file_path); }
+            Err(e) => { debug!("Failed: {}", e.to_string()); }
+        }
+
         let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().unwrap() } else { &self.ide_home };
         let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
         let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
