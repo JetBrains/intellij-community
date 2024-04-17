@@ -17,10 +17,7 @@ import training.util.isToStringContains
 // store as global const to not load the JavaOnboardingTourLesson class in onboarding promoter on Welcome Screen
 const val ideaOnboardingLessonId: String = "idea.onboarding"
 
-class JavaOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId) {
-  override val demoFileExtension: String = "java"
-  override val learningProjectName: String = "IdeaLearningProject"
-  override val sample: LessonSample = parseLessonSample("""
+internal val javaOnboardingTourSample get() = parseLessonSample("""
     import java.util.Arrays;
     import java.util.List;
     
@@ -40,69 +37,76 @@ class JavaOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId
     }
     """.trimIndent())
 
+internal fun LessonContext.contextActionsForJavaOnboarding(sample: LessonSample) {
+  val quickFixMessage = InspectionGadgetsBundle.message("foreach.replace.quickfix")
+  caret(sample.getPosition(3))
+
+  task {
+    triggerOnEditorText("for", highlightBorder = true)
+  }
+
+  task("ShowIntentionActions") {
+    text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.1"))
+    text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.2", action(it)))
+    text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.balloon", action(it)),
+         LearningBalloonConfig(Balloon.Position.above, width = 0, cornerToPointerDistance = 80))
+    triggerAndBorderHighlight().listItem { item ->
+      item.isToStringContains(quickFixMessage)
+    }
+    restoreIfModifiedOrMoved()
+  }
+
+  task {
+    text(JavaLessonsBundle.message("java.onboarding.select.fix", strong(quickFixMessage)))
+    stateCheck {
+      editor.document.text.contains("for (int value : values)")
+    }
+    restoreByUi(delayMillis = defaultRestoreDelay)
+  }
+
+  fun getIntentionMessage(project: Project): @Nls String {
+    val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: error("Not found modules in project '${project.name}'")
+    val langLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module)
+    val messageKey = if (JavaFeature.TEXT_BLOCKS.isSufficient(langLevel)) {
+      "replace.concatenation.with.format.string.intention.name.formatted"
+    }
+    else "replace.concatenation.with.format.string.intention.name"
+    return IntentionPowerPackBundle.message(messageKey)
+  }
+
+  caret("RAGE")
+
+  task {
+    triggerOnEditorText("AVERAGE")
+  }
+
+  task("ShowIntentionActions") {
+    text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.code", action(it)))
+    text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.code.balloon", action(it)),
+         LearningBalloonConfig(Balloon.Position.below, width = 0))
+    val intentionMessage = getIntentionMessage(project)
+    triggerAndBorderHighlight().listItem { item ->
+      item.isToStringContains(intentionMessage)
+    }
+    restoreIfModifiedOrMoved()
+  }
+
+  task {
+    text(JavaLessonsBundle.message("java.onboarding.apply.intention", strong(getIntentionMessage(project)), LessonUtil.rawEnter()))
+    stateCheck {
+      val text = editor.document.text
+      text.contains("System.out.printf") || text.contains("MessageFormat.format")
+    }
+    restoreByUi(delayMillis = defaultRestoreDelay)
+  }
+}
+
+class JavaOnboardingTourLesson : OnboardingTourLessonBase(ideaOnboardingLessonId) {
+  override val demoFileExtension: String = "java"
+  override val learningProjectName: String = "IdeaLearningProject"
+  override val sample = javaOnboardingTourSample
+
   override val completionStepExpectedCompletion: String = "length"
 
-  override fun LessonContext.contextActions() {
-    val quickFixMessage = InspectionGadgetsBundle.message("foreach.replace.quickfix")
-    caret(sample.getPosition(3))
-
-    task {
-      triggerOnEditorText("for", highlightBorder = true)
-    }
-
-    task("ShowIntentionActions") {
-      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.1"))
-      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.2", action(it)))
-      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.warning.balloon", action(it)),
-           LearningBalloonConfig(Balloon.Position.above, width = 0, cornerToPointerDistance = 80))
-      triggerAndBorderHighlight().listItem { item ->
-        item.isToStringContains(quickFixMessage)
-      }
-      restoreIfModifiedOrMoved()
-    }
-
-    task {
-      text(JavaLessonsBundle.message("java.onboarding.select.fix", strong(quickFixMessage)))
-      stateCheck {
-        editor.document.text.contains("for (int value : values)")
-      }
-      restoreByUi(delayMillis = defaultRestoreDelay)
-    }
-
-    fun getIntentionMessage(project: Project): @Nls String {
-      val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: error("Not found modules in project '${project.name}'")
-      val langLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module)
-      val messageKey = if (JavaFeature.TEXT_BLOCKS.isSufficient(langLevel)) {
-        "replace.concatenation.with.format.string.intention.name.formatted"
-      }
-      else "replace.concatenation.with.format.string.intention.name"
-      return IntentionPowerPackBundle.message(messageKey)
-    }
-
-    caret("RAGE")
-
-    task {
-      triggerOnEditorText("AVERAGE")
-    }
-
-    task("ShowIntentionActions") {
-      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.code", action(it)))
-      text(JavaLessonsBundle.message("java.onboarding.invoke.intention.for.code.balloon", action(it)),
-           LearningBalloonConfig(Balloon.Position.below, width = 0))
-      val intentionMessage = getIntentionMessage(project)
-      triggerAndBorderHighlight().listItem { item ->
-        item.isToStringContains(intentionMessage)
-      }
-      restoreIfModifiedOrMoved()
-    }
-
-    task {
-      text(JavaLessonsBundle.message("java.onboarding.apply.intention", strong(getIntentionMessage(project)), LessonUtil.rawEnter()))
-      stateCheck {
-        val text = editor.document.text
-        text.contains("System.out.printf") || text.contains("MessageFormat.format")
-      }
-      restoreByUi(delayMillis = defaultRestoreDelay)
-    }
-  }
+  override fun LessonContext.contextActions() = contextActionsForJavaOnboarding(sample)
 }
