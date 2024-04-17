@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-public class RefFieldImpl extends RefJavaElementImpl implements RefField {
+public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK             = 0b1_00000000_00000000; // 17th bit
   private static final int USED_FOR_WRITING_MASK             = 0b10_00000000_00000000; // 18th bit
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000; // 19th bit
