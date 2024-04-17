@@ -225,7 +225,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon ChangedFile = load("expui/fileTypes/changedFile.svg", -726198123, 2);
     /** 16x16 */ public static final @NotNull Icon ChangedFiles = load("expui/fileTypes/changedFiles.svg", -1385878907, 2);
     /** 16x16 */ public static final @NotNull Icon Config = load("expui/fileTypes/config.svg", 704244194, 2);
-    /** 16x16 */ public static final @NotNull Icon Css = load("expui/fileTypes/css.svg", -516235191, 0);
+    /** 16x16 */ public static final @NotNull Icon Css = load("expui/fileTypes/css.svg", 577330500, 2);
     /** 16x16 */ public static final @NotNull Icon Csv = load("expui/fileTypes/csv.svg", -1498141192, 2);
     /** 16x16 */ public static final @NotNull Icon Cucumber = load("expui/fileTypes/cucumber.svg", -374073568, 0);
     /** 16x16 */ public static final @NotNull Icon Diagram = load("expui/fileTypes/diagram.svg", 273722886, 2);
