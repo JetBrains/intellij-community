@@ -27935,7 +27935,7 @@ f:com.intellij.ui.components.BasicOptionButtonUI$OptionButtonPopup
 - <init>(com.intellij.ui.components.BasicOptionButtonUI,com.intellij.ui.popup.ActionPopupStep,com.intellij.openapi.actionSystem.DataContext,Z):V
 c:com.intellij.ui.components.BasicOptionButtonUI$OptionButtonPopupStep
 - com.intellij.ui.popup.ActionPopupStep
-- <init>(com.intellij.ui.components.BasicOptionButtonUI,java.util.List,java.lang.String,com.intellij.openapi.util.Condition):V
+- <init>(com.intellij.ui.components.BasicOptionButtonUI,java.util.List,java.lang.String,com.intellij.openapi.util.Condition,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.impl.PresentationFactory):V
 - getDefaultOptionIndex():I
 - isSpeedSearchEnabled():Z
 f:com.intellij.ui.components.ComponentsKt
@@ -29467,11 +29467,14 @@ c:com.intellij.ui.popup.ActionPopupStep
 - com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 - com.intellij.openapi.ui.popup.SpeedSearchFilter
+- <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,com.intellij.openapi.util.Condition,Z,Z):V
 - <init>(java.util.List,java.lang.String,java.util.function.Supplier,java.lang.String,Z,com.intellij.openapi.util.Condition,Z,Z,com.intellij.openapi.actionSystem.impl.PresentationFactory):V
 - canceled():V
+- s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,Z):java.util.List
 - s:createActionItems(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory):java.util.List
 - s:createActionsStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,java.lang.String,com.intellij.openapi.util.Condition,I,com.intellij.openapi.actionSystem.impl.PresentationFactory):com.intellij.openapi.ui.popup.ListPopupStep
 - createAnActionEvent(com.intellij.openapi.actionSystem.AnAction,java.awt.event.InputEvent):com.intellij.openapi.actionSystem.AnActionEvent
+- getActionPlace():java.lang.String
 - getDefaultOptionIndex():I
 - getFinalRunnable():java.lang.Runnable
 - getIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
@@ -29480,11 +29483,12 @@ c:com.intellij.ui.popup.ActionPopupStep
 - getMnemonicNavigationFilter():com.intellij.openapi.ui.popup.MnemonicNavigationFilter
 - getMnemonicPos(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):I
 - getMnemonicString(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
+- getPresentationFactory():com.intellij.openapi.actionSystem.impl.PresentationFactory
 - getSecondaryTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getSelectedIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
 - getSeparatorAbove(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):com.intellij.openapi.ui.popup.ListSeparator
 - getSpeedSearchFilter():com.intellij.openapi.ui.popup.SpeedSearchFilter
-- p:getSubStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,java.lang.String,com.intellij.openapi.util.Condition,I,com.intellij.openapi.actionSystem.impl.PresentationFactory):com.intellij.openapi.ui.popup.ListPopupStep
+- p:getSubStep(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,java.lang.String,Z,Z,java.util.function.Supplier,com.intellij.openapi.util.Condition,I):com.intellij.openapi.ui.popup.ListPopupStep
 - getTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getTitle():java.lang.String
 - getTooltipTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
@@ -29697,7 +29701,7 @@ c:com.intellij.ui.popup.PopupFactoryImpl$ActionGroupPopup
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):V
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,java.lang.Runnable,I,com.intellij.openapi.util.Condition,java.lang.String,Z):V
-- ps:createStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,Z,Z,Z,Z,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z):com.intellij.openapi.ui.popup.ListPopupStep
+- ps:createStep(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.String,com.intellij.openapi.actionSystem.impl.PresentationFactory,Z,Z,Z,Z,com.intellij.openapi.util.Condition,Z):com.intellij.openapi.ui.popup.ListPopupStep
 - dispose():V
 - p:handleLeftKeyPressed(java.awt.event.KeyEvent):V
 - p:handleRightKeyPressed(java.awt.event.KeyEvent):V
