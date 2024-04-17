@@ -34,7 +34,15 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerE
    * <p/>
    * Still, one could do better by using more 'idiomatic' API -- but it takes more effort.
    */
-  static <K> KeyDescriptorEx<K> adapt(KeyDescriptor<K> oldSchoolDescriptor) {
+  static <K> KeyDescriptorEx<K> adapt(@NotNull KeyDescriptor<K> oldSchoolDescriptor) {
+    //Do not wrap, if oldSchoolDescriptor already implements new interface
+    // -> allows for 'bilingual' implementation (that implements both old&new
+    // ifaces) to work efficiently
+    if (oldSchoolDescriptor instanceof KeyDescriptorEx<?>) {
+      //noinspection unchecked
+      return (KeyDescriptorEx<K>)oldSchoolDescriptor;
+    }
+
     return new KeyDescriptorEx<>() {
       @Override
       public int getHashCode(K value) { return oldSchoolDescriptor.getHashCode(value); }
