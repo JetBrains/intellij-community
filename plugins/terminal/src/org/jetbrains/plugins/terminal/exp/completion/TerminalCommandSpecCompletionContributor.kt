@@ -12,9 +12,9 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.completion.CommandSpecCompletion
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.getNextSuggestionsString
-import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.jetbrains.terminal.completion.BaseSuggestion
 import java.io.File
@@ -23,7 +23,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val runtimeDataProvider = parameters.editor.getUserData(IJShellRuntimeDataProvider.KEY)
-    val promptModel = parameters.editor.getUserData(TerminalPromptModel.KEY)
+    val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||
         runtimeDataProvider == null || promptModel == null ||

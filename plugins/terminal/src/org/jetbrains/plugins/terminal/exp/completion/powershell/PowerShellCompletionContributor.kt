@@ -13,9 +13,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentUtil
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil
-import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
 import javax.swing.Icon
@@ -25,7 +25,7 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
     val shellCommandExecutor = parameters.editor.getUserData(ShellCommandExecutor.KEY)
-    val promptModel = parameters.editor.getUserData(TerminalPromptModel.KEY)
+    val promptModel = parameters.editor.terminalPromptModel
     if (session == null ||
         session.model.isCommandRunning ||
         shellCommandExecutor == null || promptModel == null ||

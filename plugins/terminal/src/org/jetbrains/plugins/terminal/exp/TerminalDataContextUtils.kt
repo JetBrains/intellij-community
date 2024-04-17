@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptController
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 
 object TerminalDataContextUtils {
   val IS_PROMPT_EDITOR_KEY: Key<Boolean> = Key.create("PromptEditor")
@@ -19,6 +20,8 @@ object TerminalDataContextUtils {
     get() = getUserData(IS_OUTPUT_EDITOR_KEY) == true
   val Editor.isAlternateBufferEditor: Boolean
     get() = getUserData(IS_ALTERNATE_BUFFER_EDITOR_KEY) == true
+  val Editor.terminalPromptModel: TerminalPromptModel?
+    get() = getUserData(TerminalPromptModel.KEY)
 
   val DataContext.editor: Editor?
     get() = getData(CommonDataKeys.EDITOR)

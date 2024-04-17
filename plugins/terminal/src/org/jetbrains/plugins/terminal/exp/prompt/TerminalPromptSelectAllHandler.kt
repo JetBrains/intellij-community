@@ -9,11 +9,11 @@ import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 
 class TerminalPromptSelectAllHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    val promptModel = dataContext.promptController?.model
+    val promptModel = editor.terminalPromptModel
     if (editor.isPromptEditor && promptModel != null) {
       executeCommand(CommonDataKeys.PROJECT.getData(dataContext), IdeBundle.message("command.select.all")) {
         editor.selectionModel.setSelection(promptModel.commandStartOffset, editor.document.textLength)

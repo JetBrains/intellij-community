@@ -6,16 +6,16 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
-import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import kotlin.math.max
 
 private class TerminalMoveCaretActionHandler(private val moveToStart: Boolean) : TerminalPromptEditorActionHandler() {
   override fun executeAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
-    val promptModel = dataContext.promptController?.model ?: error("Prompt controller should be in the context")
+    val promptModel = editor.terminalPromptModel ?: error("TerminalPromptModel should be in the context")
     val lineIndex = editor.offsetToLogicalPosition(editor.caretModel.offset).line
     val newOffset = if (moveToStart) {
       max(editor.document.getLineStartOffset(lineIndex), promptModel.commandStartOffset)
