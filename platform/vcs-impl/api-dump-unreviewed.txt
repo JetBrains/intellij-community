@@ -1619,6 +1619,7 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - clear():V
 - collectDiffProducers(Z):com.intellij.openapi.ListSelection
 - p:createGoToChangeAction():com.intellij.openapi.actionSystem.AnAction
+- forceKeepCurrentFileWhileFocused():Z
 - getAllChanges():java.util.stream.Stream
 - getCurrentChange():com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor$Wrapper
 - getCurrentChangeName():java.lang.String
