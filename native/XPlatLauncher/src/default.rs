@@ -72,7 +72,7 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
     fn get_properties_file(&self) -> Result<PathBuf> {
         let env_var_name = self.env_var_base_name.to_owned() + "_PROPERTIES";
-        get_path_from_env_var(&env_var_name, Some(false))
+        get_path_from_env_var(&env_var_name, false)
     }
 
     fn get_class_path(&self) -> Result<Vec<String>> {
@@ -200,7 +200,7 @@ impl DefaultLaunchConfiguration {
     }
 
     fn get_runtime_from_env_var(&self, env_var_name: &str) -> Result<PathBuf> {
-        let path = get_path_from_env_var(env_var_name, Some(true))?;
+        let path = get_path_from_env_var(env_var_name, true)?;
         Self::check_runtime_dir(&path)
     }
 
@@ -212,7 +212,7 @@ impl DefaultLaunchConfiguration {
         let mut config_raw = String::new();
         let n = BufReader::new(File::open(&config_path)?).read_line(&mut config_raw)?;
         debug!("  {n} bytes");
-        let path = get_path_from_user_config(&config_raw, Some(true))?;
+        let path = get_path_from_user_config(&config_raw, true)?;
         Self::check_runtime_dir(&path)
     }
 
@@ -331,7 +331,7 @@ impl DefaultLaunchConfiguration {
     fn get_user_vm_options_file(&self) -> Result<PathBuf> {
         let env_var_name = self.env_var_base_name.to_owned() + "_VM_OPTIONS";
         debug!("Checking ${:?}", env_var_name);
-        match get_path_from_env_var(&env_var_name, Some(false)) {
+        match get_path_from_env_var(&env_var_name, false) {
             Ok(env_file_path) => { return Ok(env_file_path); }
             Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
