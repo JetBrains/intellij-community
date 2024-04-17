@@ -1,9 +1,11 @@
-package com.jetbrains.performancePlugin.commands
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.performanceTesting
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
