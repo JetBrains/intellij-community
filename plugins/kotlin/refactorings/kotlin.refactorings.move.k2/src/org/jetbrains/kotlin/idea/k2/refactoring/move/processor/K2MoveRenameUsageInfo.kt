@@ -134,7 +134,8 @@ sealed class K2MoveRenameUsageInfo(
     companion object {
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
             markInternalUsages(declaration)
-            return preProcessUsages(findExternalUsages(declaration))
+            val allDeclarations = listOf(declaration) + declaration.collectDescendantsOfType<KtNamedDeclaration>()
+            return preProcessUsages(allDeclarations.flatMap { findExternalUsages(it) })
         }
 
         /**
@@ -270,9 +271,14 @@ sealed class K2MoveRenameUsageInfo(
             shortenUsages(retargetMoveUsages(internalUsages, oldToNewMap))
         }
 
+        private fun List<K2MoveRenameUsageInfo>.filterUpdatableExternalUsages(movedElements: Set<KtNamedDeclaration>) = filter { usage ->
+            usage.referencedElement in movedElements
+        }
+
         private fun retargetExternalUsages(usages: List<UsageInfo>, oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>) {
             val externalUsages = usages
                 .filterIsInstance<K2MoveRenameUsageInfo>()
+                .filterUpdatableExternalUsages(oldToNewMap.keys.toSet())
                 .filter { it.element != null } // if the element is null, it means that this external usage was moved
                 .sortedByFile()
             shortenUsages(retargetMoveUsages(externalUsages, oldToNewMap))
