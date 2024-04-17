@@ -12,10 +12,12 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+@ApiStatus.Internal
 abstract class PartiallyExcludedFilesStateHolder<T>(
   project: Project,
   private val hashingStrategy: HashingStrategy<T>
