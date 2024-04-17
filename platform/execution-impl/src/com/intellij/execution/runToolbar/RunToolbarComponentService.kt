@@ -118,6 +118,7 @@ private class MyActionConfigurationCustomizer : ActionConfigurationCustomizer, A
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     if (ExperimentalUI.isNewUI()) {
       actionRegistrar.unregisterAction("RunToolbarWidgetAction")
+      actionRegistrar.unregisterAction("SegmentedVcsControlAction")
     }
   }
 }
