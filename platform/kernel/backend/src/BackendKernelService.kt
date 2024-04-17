@@ -57,7 +57,7 @@ internal class BackendKernelService(coroutineScope: CoroutineScope) : KernelServ
         }
       }
     }
-    kernel = kernelDeferred.getCompleted()
-    rete = reteDeferred.getCompleted()
+    kernel = runBlocking { kernelDeferred.await() }
+    rete = runBlocking { reteDeferred.await() }
   }
 }
