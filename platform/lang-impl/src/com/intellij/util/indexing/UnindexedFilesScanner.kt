@@ -410,37 +410,43 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
               }
 
               scanningStatistics.startVfsIterationAndScanningApplication()
-              provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
-              scanningStatistics.tryFinishVfsIterationAndScanningApplication()
+              try {
+                provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
+              } finally {
+                scanningStatistics.tryFinishVfsIterationAndScanningApplication()
+              }
 
               myProject.getService(PerProjectIndexingQueue::class.java)
                 .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
                   scanningStatistics.startFileChecking()
-                  ReadAction.nonBlocking {
-                    while (!rootsAndFiles.isEmpty()) {
-                      val (first, second) = rootsAndFiles.removeLast()
-                      try {
-                        if (first?.isValid == false) continue
-                        val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
-                                                          first, scanningRequest, myFilterHandler)
-                        val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
-                                                                  scanningStatistics, perProviderSink)
-                        if (!rootIterator.mayBeUsed()) {
-                          LOG.warn("Iterator based on $provider can't be used.")
-                          continue
+                  try {
+                    ReadAction.nonBlocking {
+                      while (!rootsAndFiles.isEmpty()) {
+                        val (first, second) = rootsAndFiles.removeLast()
+                        try {
+                          if (first?.isValid == false) continue
+                          val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
+                                                            first, scanningRequest, myFilterHandler)
+                          val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
+                                                                    scanningStatistics, perProviderSink)
+                          if (!rootIterator.mayBeUsed()) {
+                            LOG.warn("Iterator based on $provider can't be used.")
+                            continue
+                          }
+                          second.forEach {
+                            if (it.isValid)
+                              rootIterator.processFile(it)
+                          }
                         }
-                        second.forEach {
-                          if (it.isValid)
-                            rootIterator.processFile(it)
+                        catch (e: ProcessCanceledException) {
+                          rootsAndFiles.add(first to second)
+                          throw e
                         }
                       }
-                      catch (e: ProcessCanceledException) {
-                        rootsAndFiles.add(first to second)
-                        throw e
-                      }
-                    }
-                  }.executeSynchronously()
-                  scanningStatistics.tryFinishFilesChecking()
+                    }.executeSynchronously()
+                  } finally {
+                    scanningStatistics.tryFinishFilesChecking()
+                  }
                   perProviderSink.commit()
                 }
               }
@@ -456,8 +462,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
             LOG.error("Error while scanning files of ${provider.debugName}. To reindex files under this origin IDEA has to be restarted", e)
           }
           finally {
-            scanningStatistics.tryFinishVfsIterationAndScanningApplication()
-            scanningStatistics.tryFinishFilesChecking()
             scanningStatistics.totalOneThreadTimeWithPauses = System.nanoTime() - providerScanningStartTime
             scanningStatistics.numberOfSkippedFiles = thisProviderDeduplicateFilter.numberOfSkippedFiles
             scanningHistory.addScanningStatistics(scanningStatistics)
