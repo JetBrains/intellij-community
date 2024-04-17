@@ -12,9 +12,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.python.reStructuredText.RestFile;
 import com.intellij.python.reStructuredText.run.RestRunConfiguration;
 import com.intellij.python.reStructuredText.run.RestRunConfigurationType;
-import com.intellij.python.reStructuredText.RestFile;
 import org.jetbrains.annotations.NotNull;
 
 public final class SphinxConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
@@ -46,7 +46,7 @@ public final class SphinxConfigurationProducer extends LazyRunConfigurationProdu
     final VirtualFile vFile = directory.getVirtualFile();
     configuration.setInputFile(vFile.getPath());
 
-    configuration.setName(((PsiDirectory)element).getName());
+    configuration.setName(directory.getName());
     if (configuration.getTask().isEmpty()) {
       configuration.setTask("html");
     }
