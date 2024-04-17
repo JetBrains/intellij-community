@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -6,7 +8,6 @@ import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jdom.Namespace
 import java.io.IOException
-import java.net.URL
 import java.nio.file.Path
 import java.util.*
 
@@ -15,8 +16,8 @@ import java.util.*
  */
 internal fun resolveNonXIncludeElement(original: Element, base: Path, pathResolver: XIncludePathResolver) {
   check(!isIncludeElement(original))
-  val bases = ArrayDeque<URL>()
-  bases.push(base.toUri().toURL())
+  val bases = ArrayDeque<Path>()
+  bases.push(base)
   doResolveNonXIncludeElement(original = original, bases = bases, pathResolver = pathResolver)
 }
 
@@ -24,8 +25,8 @@ private fun isIncludeElement(element: Element): Boolean {
   return element.name == "include" && element.namespace == JDOMUtil.XINCLUDE_NAMESPACE
 }
 
-private fun resolveXIncludeElement(element: Element, bases: Deque<URL>, pathResolver: XIncludePathResolver): MutableList<Element> {
-  var base: URL? = null
+private fun resolveXIncludeElement(element: Element, bases: Deque<Path>, pathResolver: XIncludePathResolver): MutableList<Element> {
+  var base: Path? = null
   if (!bases.isEmpty()) {
     base = bases.peek()
   }
@@ -35,14 +36,14 @@ private fun resolveXIncludeElement(element: Element, bases: Deque<URL>, pathReso
 
   val baseAttribute = element.getAttributeValue("base", Namespace.XML_NAMESPACE)
   if (baseAttribute != null) {
-    base = URL(baseAttribute)
+    throw UnsupportedOperationException("`base` attribute is not supported")
   }
 
   val remote = pathResolver.resolvePath(href, base)
-  assert(!bases.contains(remote)) { "Circular XInclude Reference to ${remote.toExternalForm()}" }
+  assert(!bases.contains(remote)) { "Circular XInclude Reference to $remote" }
 
   val fallbackElement = element.getChild("fallback", element.namespace)
-  var remoteParsed = parseRemote(bases, remote, fallbackElement, pathResolver)
+  var remoteParsed = parseRemote(bases = bases, remote = remote, fallbackElement = fallbackElement, pathResolver = pathResolver)
   if (!remoteParsed.isEmpty()) {
     remoteParsed = extractNeededChildren(element, remoteParsed)
   }
@@ -103,14 +104,14 @@ private fun extractNeededChildren(element: Element, remoteElements: List<Element
 }
 
 private fun parseRemote(
-  bases: Deque<URL>,
-  remote: URL,
+  bases: Deque<Path>,
+  remote: Path,
   fallbackElement: Element?,
   pathResolver: XIncludePathResolver
 ): MutableList<Element> {
   try {
     bases.push(remote)
-    val root = JDOMUtil.load(remote.openStream())
+    val root = JDOMUtil.load(remote)
     return if (isIncludeElement(root)) {
       resolveXIncludeElement(root, bases, pathResolver)
     }
@@ -123,7 +124,7 @@ private fun parseRemote(
     if (fallbackElement != null) {
       return mutableListOf()
     }
-    Span.current().addEvent("${remote.toExternalForm()} include ignored: ${e.message}")
+    Span.current().addEvent("$remote include ignored: ${e.message}")
     return mutableListOf()
   }
   finally {
@@ -131,7 +132,7 @@ private fun parseRemote(
   }
 }
 
-private fun doResolveNonXIncludeElement(original: Element, bases: Deque<URL>, pathResolver: XIncludePathResolver) {
+private fun doResolveNonXIncludeElement(original: Element, bases: Deque<Path>, pathResolver: XIncludePathResolver) {
   val contentList = original.content
   for (i in contentList.size - 1 downTo 0) {
     val content = contentList.get(i)
@@ -148,5 +149,5 @@ private fun doResolveNonXIncludeElement(original: Element, bases: Deque<URL>, pa
 }
 
 interface XIncludePathResolver {
-  fun resolvePath(relativePath: String, base: URL?): URL
+  fun resolvePath(relativePath: String, base: Path?): Path
 }

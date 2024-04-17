@@ -11,7 +11,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import java.net.URL
+import java.nio.file.Path
 
 internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, context: BuildContext, result: MutableSet<PluginLayout>) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
@@ -255,14 +255,11 @@ private class SourcesBasedXIncludeResolver(
   private val pluginLayout: PluginLayout,
   private val context: BuildContext,
 ) : XIncludePathResolver {
-  override fun resolvePath(relativePath: String, base: URL?): URL {
-    var result: URL? = null
+  override fun resolvePath(relativePath: String, base: Path?): Path {
+    var result: Path? = null
     for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue).toUri().toURL()
+      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue)
     }
-    if (result == null) {
-      result = if (base == null) URL(relativePath) else URL(base, relativePath)
-    }
-    return result
+    return result ?: (if (base == null) Path.of(relativePath) else base.resolveSibling(relativePath))
   }
 }
