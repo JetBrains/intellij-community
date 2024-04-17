@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.DocumentUtil
-import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 import kotlin.math.max
 
 /**
@@ -30,7 +30,7 @@ class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler())
         text.indexOfLastBefore(letterOrDigitIndex) { !it.isLetterOrDigit() }
       }
 
-      val promptModel = dataContext.promptController?.model ?: error("Prompt controller should be in the context")
+      val promptModel = editor.getUserData(TerminalPromptModel.KEY) ?: error("TerminalPromptModel should be in the context")
       DocumentUtil.writeInRunUndoTransparentAction {
         val startOffset = max(delimiterIndex + 1, promptModel.commandStartOffset)
         editor.document.deleteString(startOffset, caretOffset)
