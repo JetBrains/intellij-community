@@ -18,6 +18,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -247,7 +248,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       actionGroup.addAll(taskState.createCustomActions(processHandler, consoleView, executor));
     }
 
-    DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actionGroup.getChildren(null));
+    DefaultExecutionResult executionResult = new DefaultExecutionResult(
+      executionConsole, processHandler, actionGroup.getChildren(ActionManager.getInstance()));
     executionResult.setRestartActions(restartActions);
     return executionResult;
   }

@@ -690,7 +690,7 @@ public final class PluginManagerConfigurable
           MarketplaceSortByAction addAction = null;
 
           if (updateAction.myState) {
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
               if (sortByAction != updateAction && sortByAction.myState) {
                 sortByAction.myState = false;
@@ -706,7 +706,7 @@ public final class PluginManagerConfigurable
               return;
             }
 
-            for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+            for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
               if (sortByAction.myOption == SortBy.RELEVANCE) {
                 sortByAction.myState = true;
@@ -844,7 +844,7 @@ public final class PluginManagerConfigurable
                   if (!result.descriptors.isEmpty()) {
                     String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
-                    for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+                    for (AnAction action : myMarketplaceSortByGroup.getChildren(ActionManager.getInstance())) {
                       MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
                       sortByAction.setState(parser);
                       if (sortByAction.myState) {
@@ -1043,7 +1043,7 @@ public final class PluginManagerConfigurable
       public void hideSearchPanel() {
         super.hideSearchPanel();
         if (myInstalledSearchSetState) {
-          for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+          for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
             ((InstalledSearchOptionAction)action).setState(null);
           }
         }
@@ -1119,7 +1119,7 @@ public final class PluginManagerConfigurable
           };
 
           if (updateAction.myState) {
-            for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+            for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
               if (action != updateAction) {
                 ((InstalledSearchOptionAction)action).myState = false;
               }
@@ -1169,7 +1169,7 @@ public final class PluginManagerConfigurable
             SearchQueryParser.Installed parser = new SearchQueryParser.Installed(query);
 
             if (myInstalledSearchSetState) {
-              for (AnAction action : myInstalledSearchGroup.getChildren(null)) {
+              for (AnAction action : myInstalledSearchGroup.getChildren(ActionManager.getInstance())) {
                 ((InstalledSearchOptionAction)action).setState(parser);
               }
             }

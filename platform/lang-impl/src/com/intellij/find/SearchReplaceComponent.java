@@ -145,7 +145,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     findActionShortcutSet = actionManager.getAction(IdeActions.ACTION_FIND).getShortcutSet();
     replaceActionShortcutSet = actionManager.getAction(IdeActions.ACTION_REPLACE).getShortcutSet();
 
-    for (AnAction child : searchToolbar2Actions.getChildren(null)) {
+    for (AnAction child : searchToolbar2Actions.getChildren(actionManager)) {
       if (child instanceof Embeddable) {
         myEmbeddedSearchActions.add(child);
         ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(child);
@@ -155,7 +155,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     for (AnAction action : myEmbeddedSearchActions) {
       searchToolbar2Actions.remove(action);
     }
-    for (AnAction child : replaceToolbar2Actions.getChildren(null)) {
+    for (AnAction child : replaceToolbar2Actions.getChildren(actionManager)) {
       if (child instanceof Embeddable) {
         myEmbeddedReplaceActions.add(child);
         ShortcutSet shortcutSet = ActionUtil.getMnemonicAsShortcut(child);
@@ -198,8 +198,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       leftPanel.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1));
     }
 
-    searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(null));
-    replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(null));
+    searchToolbar1Actions.addAll(searchToolbar2Actions.getChildren(actionManager));
+    replaceToolbar1Actions.addAll(replaceToolbar2Actions.getChildren(actionManager));
 
     mySearchToolbarWrapper = new NonOpaquePanel(new BorderLayout());
 

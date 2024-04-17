@@ -464,7 +464,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       }
     }
     if (myViewActions.getChildrenCount() > 0) {
-      DefaultActionGroup layoutGroup = new DefaultActionGroup(myViewActions.getChildren(null));
+      DefaultActionGroup layoutGroup = new DefaultActionGroup(myViewActions.getChildren(myActionManager));
       layoutGroup.getTemplatePresentation().setText(ExecutionBundle.messagePointer("action.presentation.RunnerContentUi.text"));
       layoutGroup.setPopup(true);
       group.addSeparator();
@@ -486,7 +486,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   public @NotNull JBTabs getTabs() { return myTabs; }
 
   public AnAction @NotNull[] getViewActions() {
-    return myViewActions.getChildren(null);
+    return myViewActions.getChildren(ActionManager.getInstance());
   }
 
   @Override
@@ -838,7 +838,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         event.getContent().addPropertyChangeListener(RunnerContentUi.this);
         fireContentOpened(event.getContent());
         if (myMinimizeActionEnabled) {
-          AnAction[] actions = myViewActions.getChildren(null);
+          AnAction[] actions = myViewActions.getChildren(ActionManager.getInstance());
           for (AnAction action : actions) {
             if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == event.getContent()) return;
           }
@@ -855,7 +855,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
           }
 
           List<AnAction> toAdd = new ArrayList<>();
-          for (AnAction anAction : myViewActions.getChildren(null)) {
+          for (AnAction anAction : myViewActions.getChildren(ActionManager.getInstance())) {
             if (!(anAction instanceof ViewLayoutModificationAction)) {
               myViewActions.remove(anAction);
               toAdd.add(anAction);
@@ -884,7 +884,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         fireContentClosed(content);
         ApplicationManager.getApplication().invokeLater(() -> {
           if (Disposer.isDisposed(content)) {
-            AnAction[] actions = myViewActions.getChildren(null);
+            AnAction[] actions = myViewActions.getChildren(ActionManager.getInstance());
             for (AnAction action : actions) {
               if (action instanceof ViewLayoutModificationAction && ((ViewLayoutModificationAction)action).getContent() == content) {
                 myViewActions.remove(action);
@@ -1068,7 +1068,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       if (myTopLeftActionsVisible) {
         leftGroupToBuild.addAll(myTopLeftActions);
       }
-      final AnAction[] leftActions = leftGroupToBuild.getChildren(null);
+      final AnAction[] leftActions = leftGroupToBuild.getChildren(ActionManager.getInstance());
 
       if (topToolbarContextActions == null ||
           !Arrays.equals(leftActions, topToolbarContextActions.left) ||
@@ -1087,7 +1087,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
       DefaultActionGroup middleGroupToBuild = new DefaultActionGroup();
       middleGroupToBuild.addAll(myTopMiddleActions);
-      final AnAction[] middleActions = middleGroupToBuild.getChildren(null);
+      final AnAction[] middleActions = middleGroupToBuild.getChildren(ActionManager.getInstance());
 
       if (topToolbarContextActions == null || !Arrays.equals(middleActions, topToolbarContextActions.middle)) {
         setActions(middlePlaceHolder, myTopMiddleActionsPlace, middleGroupToBuild, true);
@@ -1095,7 +1095,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
       DefaultActionGroup rightGroupToBuild = new DefaultActionGroup();
       rightGroupToBuild.addAll(myTopRightActions);
-      final AnAction[] rightActions = rightGroupToBuild.getChildren(null);
+      final AnAction[] rightActions = rightGroupToBuild.getChildren(ActionManager.getInstance());
 
       if (topToolbarContextActions == null || !Arrays.equals(rightActions, topToolbarContextActions.right)) {
         setActions(rightPlaceHolder, myTopRightActionsPlace, rightGroupToBuild, true);
@@ -1414,7 +1414,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     for (RunnerContentUi child : children) {
       Collections.addAll(contents, child.myManager.getContents());
     }
-    for (AnAction action : myViewActions.getChildren(null)) {
+    for (AnAction action : myViewActions.getChildren(ActionManager.getInstance())) {
       if (!(action instanceof ViewLayoutModificationAction)) continue;
       contents.add(((ViewLayoutModificationAction)action).getContent());
     }
@@ -1482,7 +1482,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private void updateRestoreLayoutActionVisibility() {
     List<AnAction> specialActions = new ArrayList<>();
-    for (AnAction action : myViewActions.getChildren(null)) {
+    for (AnAction action : myViewActions.getChildren(ActionManager.getInstance())) {
       if (!(action instanceof ViewLayoutModificationAction)) specialActions.add(action);
     }
     if (myMinimizeActionEnabled) {
@@ -1552,7 +1552,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   private @Nullable Content findMinimizedContent(@NotNull String key) {
-    for (AnAction action : myViewActions.getChildren(null)) {
+    for (AnAction action : myViewActions.getChildren(ActionManager.getInstance())) {
       if (!(action instanceof ViewLayoutModificationAction)) continue;
 
       Content content = ((ViewLayoutModificationAction)action).getContent();

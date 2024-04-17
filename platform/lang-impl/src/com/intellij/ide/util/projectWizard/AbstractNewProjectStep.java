@@ -100,7 +100,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   protected void addProjectSpecificAction(final @NotNull ProjectSpecificAction projectSpecificAction) {
-    addAll(projectSpecificAction.getChildren(null));
+    addAll(projectSpecificAction.getChildren(ActionManager.getInstance()));
   }
 
   protected abstract static class Customization<T> {
@@ -153,7 +153,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       step.setProjectStep(Objects.requireNonNull(myProjectStep));
 
       ProjectSpecificAction projectSpecificAction = new ProjectSpecificAction(generator, step);
-      return projectSpecificAction.getChildren(null);
+      return projectSpecificAction.getChildren(ActionManager.getInstance());
     }
 
     protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {

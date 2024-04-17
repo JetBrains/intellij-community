@@ -735,7 +735,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @Override
     public @NotNull List<AnAction> getActions(boolean originalProvider) {
-      return asList(myChangesPanel.getToolbarActionGroup().getChildren(null));
+      return asList(myChangesPanel.getToolbarActionGroup().getChildren(ActionManager.getInstance()));
     }
 
     @Override

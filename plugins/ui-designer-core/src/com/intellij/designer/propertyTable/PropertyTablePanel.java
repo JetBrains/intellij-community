@@ -89,7 +89,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                new Insets(2, 0, 2, 2), 0, 0)
     );
 
-    myActions = actionGroup.getChildren(null);
+    myActions = actionGroup.getChildren(actionManager);
     for (AnAction action : myActions) {
       if (action instanceof Separator) {
         continue;

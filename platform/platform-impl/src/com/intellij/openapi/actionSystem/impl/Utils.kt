@@ -709,7 +709,7 @@ object Utils {
       return true
     }
     if (actionGroup.javaClass == DefaultActionGroup::class.java) {
-      for (child in actionGroup.getChildren(null)) {
+      for (child in (actionGroup as DefaultActionGroup).getChildren(ActionManager.getInstance())) {
         if (child is Separator) continue
         if (child !is Toggleable) return false
       }
