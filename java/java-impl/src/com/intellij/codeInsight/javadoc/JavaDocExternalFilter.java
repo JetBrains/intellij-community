@@ -60,7 +60,7 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
             if (scheme == null) return href;
             String[] parts = href.substring(2).split("/", 2);
             if (parts.length != 2) return href;
-            Url relativeUrl = Urls.newUrl(scheme, parts[0], parts[1]);
+            Url relativeUrl = Urls.newUrl(scheme, parts[0], '/' + parts[1]);
             return relativeUrl.toDecodedForm();
           }
           else if (href.startsWith("/")) {
