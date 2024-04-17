@@ -20,6 +20,10 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
+/**
+ * When you call a process which requires "alternative buffer" (less, vim, htop, mc, etc.)
+ * We drop our terminal editor and create a new editor for this alternative buffer.
+ */
 internal class SimpleTerminalView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,

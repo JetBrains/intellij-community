@@ -18,15 +18,29 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * Prevents sending shell generator concurrently with other generator or other shell command.
+ */
 internal class ShellCommandExecutionManager(private val session: BlockTerminalSession, commandManager: ShellCommandManager) {
 
+  /**
+   * Used to synchronize access to several private fields of this object.
+   */
   private val lock: Lock = Lock()
 
-  // these fields are guarded by `lock`
+  /** Access to this field is synchronized using `lock` */
   private val scheduledGenerators: Queue<Generator> = LinkedList()
+
+  /** Access to this field is synchronized using `lock` */
   private var runningGenerator: Generator? = null
+
+  /** Access to this field is synchronized using `lock` */
   private val scheduledCommands: Queue<String> = LinkedList()
+
+  /** Access to this field is synchronized using `lock` */
   private var isInitialized: Boolean = false
+
+  /** Access to this field is synchronized using `lock` */
   private var isCommandRunning: Boolean = false
 
   private val commandSentListeners: MutableList<(String) -> Unit> = CopyOnWriteArrayList()
@@ -97,6 +111,9 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }
   }
 
+  /**
+   * If the command could not be executed right now, then we add it to the queue.
+   */
   fun sendCommandToExecute(shellCommand: String) {
     // in the IDE we use '\n' line separator, but Windows requires '\r\n'
     val command = shellCommand.replace("\n", System.lineSeparator())
@@ -112,6 +129,13 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     processQueueIfReady()
   }
 
+  /**
+   * This is similar to sendCommandToExecute with the difference in termination signal.
+   * This sends "GENERATOR_FINISHED" instead of "Command finished" event.
+   *
+   * This does not execute command immediately, rather adds it to queue to be
+   * executed when other commands\generators are finished and the shell is free.
+   */
   fun runGeneratorAsync(generatorName: String, generatorParameters: List<String>): Deferred<String> {
     val generator = Generator(generatorName, generatorParameters)
     lock.withLock { withoutLock ->
@@ -168,6 +192,9 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     return generator
   }
 
+  /**
+   * Polls all the elements of the queue and collects them to a new list.
+   */
   private fun <T> Queue<T>.drainToList(): List<T> = ArrayList<T>(size).also {
     while (isNotEmpty()) {
       it.add(poll()!!)
@@ -191,6 +218,16 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }
   }
 
+  /**
+   * This is a shell command.
+   * User does not type this in prompt.
+   * It is the command created for Shell Integration
+   * to gain some data from shell.
+   * Usually, generators are implemented as shell functions reporting
+   * back to IDE information wrapped in a custom OSC escape sequence.
+   *
+   * @see org.jetbrains.plugins.terminal.exp.completion.DataProviderCommand
+   */
   private inner class Generator(val name: String, val parameters: List<String>) {
     val requestId: Int = NEXT_REQUEST_ID.incrementAndGet()
     val deferred: CompletableDeferred<String> = CompletableDeferred()
@@ -206,6 +243,11 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     override fun toString(): String = "Generator($name, parameters=$parameters, requestId=$requestId)"
   }
 
+  /**
+   * A wrapper for invoking code in synchronized section.
+   * Allows executing a lambda under the lock.
+   * Allows collecting the tasks to be executed after the lock is released.
+   */
   private class Lock {
     private val lock: Any = Any()
 
