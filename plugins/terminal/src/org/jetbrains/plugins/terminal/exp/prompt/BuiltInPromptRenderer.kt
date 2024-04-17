@@ -7,7 +7,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.terminal.exp.*
 
-internal class BuiltInPromptRenderer(private val session: BlockTerminalSession) : TerminalPromptRenderer {
+internal class BuiltInPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
   override fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {
     val content: TextWithHighlightings = getPromptComponents(state).toTextWithHighlightings()
     return PromptRenderingInfo(content.text, content.highlightings)
@@ -51,6 +51,6 @@ internal class BuiltInPromptRenderer(private val session: BlockTerminalSession) 
   }
 
   private fun plainAttributes(colorIndex: Int): TextAttributesProvider {
-    return TerminalUiUtils.plainAttributesProvider(colorIndex, session.colorPalette)
+    return TerminalUiUtils.plainAttributesProvider(colorIndex, sessionInfo.colorPalette)
   }
 }

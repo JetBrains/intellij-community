@@ -20,15 +20,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.HighlightingInfo
-import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.ShellPromptRenderer
 
-class TerminalPromptModel(private val editor: EditorEx, private val session: BlockTerminalSession) {
+/**
+ * Shell session agnostic prompt model that is managing the prompt and input command positions in the Prompt editor.
+ * Should know nothing about shell session except the things provided in [sessionInfo].
+ */
+class TerminalPromptModel(private val editor: EditorEx, private val sessionInfo: TerminalSessionInfo) : Disposable {
   private val document: DocumentEx
     get() = editor.document
 
@@ -55,25 +60,15 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
     }
 
   init {
-    session.addCommandListener(object : ShellCommandListener {
-      override fun promptStateUpdated(newState: TerminalPromptState) {
-        calculateAndUpdatePrompt(newState)
-      }
-    })
-
-    // Used in TerminalPromptFileViewProvider
-    editor.virtualFile.putUserData(KEY, this)
-    editor.virtualFile.putUserData(BlockTerminalSession.KEY, session)
-
-    editor.caretModel.addCaretListener(PreventMoveToPromptListener())
+    editor.caretModel.addCaretListener(PreventMoveToPromptListener(), this)
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document) { /* do nothing */ }
 
-    editor.project!!.messageBus.connect(session).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-      updatePrompt(promptRenderingInfo)
+    editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
+      doUpdatePrompt(promptRenderingInfo)
     })
-    TerminalOptionsProvider.instance.addListener(session) {
+    TerminalOptionsProvider.instance.addListener(this) {
       renderer = createPromptRenderer()
-      calculateAndUpdatePrompt(curPromptState)
+      updatePrompt(curPromptState)
     }
   }
 
@@ -86,16 +81,17 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
     undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
   }
 
-  private fun calculateAndUpdatePrompt(state: TerminalPromptState) {
+  fun updatePrompt(state: TerminalPromptState) {
     val updatedInfo = renderer.calculateRenderingInfo(state)
     runInEdt {
-      updatePrompt(updatedInfo)
+      doUpdatePrompt(updatedInfo)
       curPromptState = state
       promptRenderingInfo = updatedInfo
     }
   }
 
-  private fun updatePrompt(renderingInfo: PromptRenderingInfo) {
+  @RequiresEdt
+  private fun doUpdatePrompt(renderingInfo: PromptRenderingInfo) {
     DocumentUtil.writeInRunUndoTransparentAction {
       document.guardedBlocks.clear()
       document.replaceString(0, commandStartOffset, renderingInfo.text)
@@ -120,14 +116,14 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
 
   private fun getOrCreateRightPromptManager(): RightPromptManager {
     rightPromptManager?.let { return it }
-    val manager = RightPromptManager(editor, session.settings)
-    Disposer.register(session, manager)
+    val manager = RightPromptManager(editor, sessionInfo.settings)
+    Disposer.register(this, manager)
     rightPromptManager = manager
     return manager
   }
 
   private fun createPromptRenderer(): TerminalPromptRenderer {
-    return if (TerminalOptionsProvider.instance.useShellPrompt) ShellPromptRenderer(session) else BuiltInPromptRenderer(session)
+    return if (TerminalOptionsProvider.instance.useShellPrompt) ShellPromptRenderer(sessionInfo) else BuiltInPromptRenderer(sessionInfo)
   }
 
   fun addDocumentListener(listener: DocumentListener, disposable: Disposable? = null) {
@@ -136,6 +132,8 @@ class TerminalPromptModel(private val editor: EditorEx, private val session: Blo
     }
     else document.addDocumentListener(listener)
   }
+
+  override fun dispose() {}
 
   /**
    * Listener that prevents the caret from moving to a position inside the prompt.
@@ -168,4 +166,11 @@ data class PromptRenderingInfo(val text: @NlsSafe String,
                                val highlightings: List<HighlightingInfo>,
                                val rightText: @NlsSafe String = "",
                                val rightHighlightings: List<HighlightingInfo> = emptyList())
+
+/** The information about the terminal session required for [TerminalPromptModel] */
+interface TerminalSessionInfo {
+  val settings: JBTerminalSystemSettingsProviderBase
+  val colorPalette: TerminalColorPalette
+  val terminalSize: TermSize
+}
 
