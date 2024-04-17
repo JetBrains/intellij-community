@@ -5,9 +5,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.App
 import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
 import com.intellij.openapi.vfs.newvfs.persistent.ExecuteOnThreadPool
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator
+import com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory
 import com.intellij.util.io.DurableDataEnumerator
-import com.intellij.platform.util.io.storages.enumerator.StringAsUTF8
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import kotlin.io.path.absolute
@@ -30,12 +30,12 @@ class DurableEnumeratorOfStringsApp : App {
       }
       "durable-enumerator-map-in-memory" -> { storagePath ->
         DurableEnumeratorFactory
-          .defaultWithInMemoryMap(StringAsUTF8.INSTANCE)
+          .defaultWithInMemoryMap(stringAsUTF8())
           .open(storagePath)
       }
       else -> { storagePath -> //"durable-enumerator"
         DurableEnumeratorFactory
-          .defaultWithDurableMap(StringAsUTF8.INSTANCE)
+          .defaultWithDurableMap(stringAsUTF8())
           .open(storagePath)
       }
     }

@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,7 +56,7 @@ public class DurableEnumeratorOfStringsWithDurableMapTest extends StringEnumerat
 
   @Override
   protected DurableEnumerator<String> openEnumeratorImpl(@NotNull Path storagePath) throws IOException {
-    return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
+    return DurableEnumeratorFactory.defaultWithDurableMap(stringAsUTF8())
       .open(storagePath);
   }
 }

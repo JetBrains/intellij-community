@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.durablemap.dev;
 
+import com.intellij.platform.util.io.storages.CommonKeyDescriptors;
 import com.intellij.platform.util.io.storages.appendonlylog.dev.ChunkedAppendOnlyLogOverMMappedFile;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapTestBase;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.util.io.storages.StorageFactory;
-import com.intellij.platform.util.io.storages.enumerator.StringAsUTF8;
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Disabled;
@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntFunction;
+
+import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 
 public class DurableMapWithAppendableValuesTest
   extends DurableMapTestBase<String, Set<Integer>, DurableMapWithAppendableValues<String, Integer>> {
@@ -79,8 +81,8 @@ public class DurableMapWithAppendableValuesTest
       return new DurableMapWithAppendableValues<>(
         chunkedLog,
         map,
-        StringAsUTF8.INSTANCE,
-        INT_DESCRIPTOR
+        stringAsUTF8(),
+        CommonKeyDescriptors.integer()
       );
     };
   }

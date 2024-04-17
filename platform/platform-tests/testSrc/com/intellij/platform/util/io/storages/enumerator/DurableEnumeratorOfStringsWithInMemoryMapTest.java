@@ -10,6 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
+
 
 //TODO RC: move to platform.util.storage module's tests
 public class DurableEnumeratorOfStringsWithInMemoryMapTest extends StringEnumeratorTestBase<DurableEnumerator<String>> {
@@ -20,7 +22,7 @@ public class DurableEnumeratorOfStringsWithInMemoryMapTest extends StringEnumera
 
   @Override
   protected DurableEnumerator<String> openEnumeratorImpl(@NotNull Path storagePath) throws IOException {
-    return DurableEnumeratorFactory.defaultWithDurableMap(StringAsUTF8.INSTANCE)
+    return DurableEnumeratorFactory.defaultWithDurableMap(stringAsUTF8())
       .valuesLogFactory(DurableEnumeratorFactory.DEFAULT_VALUES_LOG_FACTORY)
       .mapFactory((StorageFactory<? extends DurableIntToMultiIntMap>)path -> new NonDurableNonParallelIntToMultiIntMap())
       .rebuildMapIfInconsistent(true)

@@ -6,7 +6,6 @@ import com.intellij.platform.util.io.storages.durablemap.DurableMap;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapFactory;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.io.*;
-import com.intellij.platform.util.io.storages.enumerator.StringAsUTF8;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
@@ -19,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -80,7 +80,7 @@ public class PersistentMapsBenchmark {
       Path storagePath = tempDir.resolve("map");
       if (newImplementation) {
         return DurableMapFactory
-          .withDefaults(StringAsUTF8.INSTANCE, StringAsUTF8.INSTANCE)
+          .withDefaults(stringAsUTF8(), stringAsUTF8())
           .mapFactory(ExtendibleMapFactory.largeSize())
           .open(storagePath);
       }

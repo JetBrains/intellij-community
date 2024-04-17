@@ -2,7 +2,6 @@
 package com.intellij.platform.util.io.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.StorageFactory;
-import com.intellij.platform.util.io.storages.enumerator.StringAsUTF8;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.platform.util.io.storages.CommonKeyDescriptors.stringAsUTF8;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, String, DurableMapOverAppendOnlyLog<String, String>> {
@@ -23,7 +23,7 @@ public class DurableMapOverAppendOnlyLogTest extends DurableMapTestBase<String, 
 
   @Override
   protected @NotNull StorageFactory<DurableMapOverAppendOnlyLog<String, String>> factory() {
-    return DurableMapFactory.withDefaults(StringAsUTF8.INSTANCE, StringAsUTF8.INSTANCE);
+    return DurableMapFactory.withDefaults(stringAsUTF8(), stringAsUTF8());
   }
 
 
