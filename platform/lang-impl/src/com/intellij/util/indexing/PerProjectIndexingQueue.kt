@@ -4,14 +4,11 @@ package com.intellij.util.indexing
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
-import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
@@ -188,27 +185,6 @@ class PerProjectIndexingQueue(private val project: Project) {
     if (totalFiles > 0) {
       // note that DumbModeWhileScanningTrigger will not finish dumb mode until scanning is finished
       UnindexedFilesIndexer(project, filesInQueue, reason, scanningIds).queue(project)
-    }
-    else {
-      LOG.info("Finished for " + project.name + ". No files to index with loading content.")
-    }
-  }
-
-  fun flushNowSync(indexingReason: String?, indicator: ProgressIndicator) {
-    val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
-    if (totalFiles > 0) {
-      val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project)
-      try {
-        UnindexedFilesIndexer(project, filesInQueue, indexingReason ?: "Flushing queue of project ${project.name}",
-                              scanningIds).indexFiles(
-          projectDumbIndexingHistory, indicator)
-      }
-      catch (e: Throwable) {
-        projectDumbIndexingHistory.setWasInterrupted()
-        throw e
-      } finally {
-        IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory)
-      }
     }
     else {
       LOG.info("Finished for " + project.name + ". No files to index with loading content.")
