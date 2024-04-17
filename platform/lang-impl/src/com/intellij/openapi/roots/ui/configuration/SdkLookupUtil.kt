@@ -23,7 +23,8 @@ fun lookupSdkBlocking(configure: (SdkLookupBuilder) -> SdkLookupBuilder): Sdk? {
   var builder = provider.newLookupBuilder()
   builder = configure(builder)
   builder.executeLookup()
-  return provider.blockingGetSdk()
+  provider.waitForLookup()
+  return provider.getSdk()
 }
 
 /**

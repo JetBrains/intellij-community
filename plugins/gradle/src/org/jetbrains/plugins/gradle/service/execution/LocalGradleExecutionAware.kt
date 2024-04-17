@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.registry.Registry
@@ -178,7 +177,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     lookupProvider: SdkLookupProvider,
     task: ExternalSystemTask,
     taskNotificationListener: ExternalSystemTaskNotificationListener
-  ): Sdk? {
+  ) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       LOG.error("Do not perform synchronous wait for sdk downloading in EDT - causes deadlock.")
       throw jdkConfigurationException("gradle.jvm.is.being.resolved.error")
@@ -190,9 +189,8 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       submitProgressStatus(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.is.being.resolved"))
     }
     whenTaskCanceled(task) { progressIndicator.cancel() }
-    val result = lookupProvider.blockingGetSdk()
+    lookupProvider.waitForLookup()
     submitProgressFinished(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.has.been.resolved"))
-    return result
   }
 
 
