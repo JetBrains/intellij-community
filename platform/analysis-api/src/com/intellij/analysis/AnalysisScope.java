@@ -675,6 +675,10 @@ public class AnalysisScope {
     myFilter = filter;
   }
 
+  public @Nullable GlobalSearchScope getFilter() {
+    return myFilter;
+  }
+
   @Override
   public String toString() {
     return ReadAction.compute(() -> toSearchScope().toString());
