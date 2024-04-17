@@ -63,6 +63,7 @@ internal suspend fun startSystemHealthMonitor() {
   checkReservedCodeCacheSize()
   checkEnvironment()
   withContext(Dispatchers.IO) {
+    checkLauncher()
     checkSignalBlocking()
     checkTempDirSanity()
     checkTempDirEnvVars()
@@ -244,6 +245,17 @@ private suspend fun checkEnvironment() {
   }
   catch (e: Exception) {
     LOG.error(e)
+  }
+}
+
+private fun checkLauncher() {
+  if ((SystemInfo.isWindows || SystemInfo.isLinux) && !System.getProperty("ide.native.launcher").toBoolean()) {
+    val baseName = ApplicationNamesInfo.getInstance().scriptName
+    val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
+    val scriptName = baseName + if (SystemInfo.isWindows) ".bat" else ".sh"
+    if (Files.isRegularFile(Path.of(PathManager.getBinPath(), binName))) {
+      showNotification("ide.script.launcher.used", suppressable = true, action = null, scriptName, binName)
+    }
   }
 }
 
