@@ -1411,22 +1411,11 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - a:getShowJobsDetailsRequests():kotlinx.coroutines.flow.SharedFlow
 - a:showJobsDetails():V
 *a:com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRenderer
-- com.intellij.openapi.editor.markup.GutterIconRenderer
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.project.DumbAware
+- com.intellij.collaboration.ui.codereview.diff.LineGutterIconRenderer
 - <init>():V
-- dispose():V
-- a:disposeInlay():V
-- equals(java.lang.Object):Z
-- getAlignment():com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment
-- getIcon():javax.swing.Icon
-- f:getIconVisible():Z
-- a:getLine():I
-- p:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 - getTooltipText():java.lang.String
-- hashCode():I
-- isNavigateAction():Z
-- f:setIconVisible(Z):V
+- getVisibleIcon():javax.swing.Icon
+- setVisibleIcon(javax.swing.Icon):V
 *f:com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffHandlerHelper
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - f:createCombinedDiffModel(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
@@ -1489,6 +1478,24 @@ e:com.intellij.collaboration.ui.codereview.details.data.ReviewState
 - <init>(java.util.Set):V
 - mouseExited(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
+*a:com.intellij.collaboration.ui.codereview.diff.LineGutterIconRenderer
+- com.intellij.openapi.editor.markup.GutterIconRenderer
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- dispose():V
+- a:disposeInlay():V
+- equals(java.lang.Object):Z
+- getAlignment():com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment
+- getIcon():javax.swing.Icon
+- f:getIconVisible():Z
+- a:getLine():I
+- p:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
+- a:getVisibleIcon():javax.swing.Icon
+- hashCode():I
+- isNavigateAction():Z
+- f:setIconVisible(Z):V
+- a:setVisibleIcon(javax.swing.Icon):V
 *:com.intellij.collaboration.ui.codereview.diff.ScrollableDiffRequestProducer
 - com.intellij.diff.chains.DiffRequestProducer
 - a:getScrollRequests():kotlinx.coroutines.flow.Flow
