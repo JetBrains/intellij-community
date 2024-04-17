@@ -20,9 +20,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class TerminalWidgetImpl(private val project: Project,
-                                  private val settings: JBTerminalSystemSettingsProvider,
-                                  parent: Disposable) : TerminalWidget {
+internal class TerminalWidgetImpl(
+  private val project: Project,
+  private val settings: JBTerminalSystemSettingsProvider,
+  parent: Disposable
+) : TerminalWidget {
   private val wrapper: Wrapper = Wrapper()
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
