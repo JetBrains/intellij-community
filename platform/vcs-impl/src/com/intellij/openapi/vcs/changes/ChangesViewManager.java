@@ -510,12 +510,12 @@ public class ChangesViewManager implements ChangesViewEx,
       myView.setDoubleClickHandler(e -> {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(myView, e)) return false;
         if (myEditorDiffPreview.handleDoubleClick(e)) return true;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true);
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myView), true);
         return true;
       });
       myView.setEnterKeyHandler(e -> {
         if (myEditorDiffPreview.handleEnterKey()) return true;
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(myView), false);
         return true;
       });
 
