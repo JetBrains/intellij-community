@@ -23,7 +23,8 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private val idMap = HashMap<PluginId, IdeaPluginDescriptorImpl>()
   @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
-  private val pluginErrors = HashMap<PluginId, PluginLoadingError>()
+  // the order of errors matters
+  private val pluginErrors = LinkedHashMap<PluginId, PluginLoadingError>()
 
   @VisibleForTesting
   @JvmField val shadowedBundledIds: MutableSet<PluginId> = HashSet()
@@ -36,7 +37,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
   val enabledPlugins: List<IdeaPluginDescriptorImpl>
     get() = enabledPluginsById.entries.sortedBy { it.key }.map { it.value }
 
-  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = HashMap(pluginErrors)
+  internal fun copyPluginErrors(): MutableMap<PluginId, PluginLoadingError> = LinkedHashMap(pluginErrors)
 
   fun getIncompleteIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> = incompletePlugins
 
