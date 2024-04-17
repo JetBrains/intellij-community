@@ -192,7 +192,8 @@ public final class RngParser {
             return CachedValueProvider.Result.createSingleDependency(schema, descriptorFile);
           }
         } catch (Exception e) {
-          LOG.info(e);
+          VirtualFile vf = descriptorFile.getVirtualFile();
+          LOG.info("For descriptor file: " + (vf != null ? vf.getPath() : descriptorFile.getName()), e);
           return CachedValueProvider.Result.createSingleDependency(null, descriptorFile);
         }
       };
