@@ -23009,7 +23009,9 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
 - sf:INSTANCE:com.intellij.openapi.roots.ui.configuration.SdkLookupProvider$SdkInfo$Unresolved
 f:com.intellij.openapi.roots.ui.configuration.SdkLookupUtil
 - sf:findAndSetupSdk(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.projectRoots.SdkType,kotlin.jvm.functions.Function1):V
+- sf:lookupAndSetupSdkBlocking(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.projectRoots.SdkType,java.util.function.Consumer):V
 - sf:lookupSdk(kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.Sdk
+- sf:lookupSdkBlocking(kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.Sdk
 com.intellij.openapi.roots.ui.configuration.SdkPopup
 - com.intellij.openapi.ui.popup.JBPopup
 - a:showPopup(com.intellij.openapi.actionSystem.AnActionEvent):V

@@ -31,7 +31,7 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-import com.intellij.openapi.roots.ui.configuration.findAndSetupSdk
+import com.intellij.openapi.roots.ui.configuration.lookupAndSetupSdkBlocking
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
@@ -210,7 +210,7 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
   val modules = ModuleManager.getInstance(project).modules
   if (modules.any { ModuleType.get(it) is JavaModuleType }) {
     coroutineToIndicator {
-      findAndSetupSdk(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
+      lookupAndSetupSdkBlocking(project, ProgressManager.getGlobalProgressIndicator(), JavaSdk.getInstance()) {
         JavaSdkUtil.applyJdkToProject(project, it)
       }
     }
