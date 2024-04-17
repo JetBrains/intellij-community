@@ -13,10 +13,10 @@ import kotlinx.datetime.LocalDate
 class KotlinDebuggerFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override val surveyId: String = "kotlin_debugger_feedback_survey"
-  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 5, 8)
+  override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 6, 5)
   override val requireIdeEAP: Boolean = false
 
-  private val suitableIdeVersion = "2024.1.1"
+  private val suitableIdeVersion = "2024.1.2"
   private val minimalNumberOfDebuggerUsage = 5
 
   override fun checkIdeIsSuitable(): Boolean {
