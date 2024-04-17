@@ -116,7 +116,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
         frame.lock();
         if (!FORCE_USE_SOFTWARE_RENDERING && JBR.isNativeRasterLoaderSupported()) {
           JBR.getNativeRasterLoader().loadNativeRaster(vi, frame.getPtr(), frame.getWidth(), frame.getHeight(),
-                                                       frame.getPtr() + frame.getWidth() * frame.getHeight() * 4,
+                                                       frame.getPtr() + 4L * frame.getWidth() * frame.getHeight(),
                                                        frame.getDirtyRectsCount());
           return;
         }

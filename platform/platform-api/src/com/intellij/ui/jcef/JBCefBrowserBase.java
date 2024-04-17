@@ -549,11 +549,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       Method m = cefBrowser.getClass().getMethod("isNativeBrowserCreated");
       return (boolean)m.invoke(cefBrowser);
     }
-    catch (NoSuchMethodException e) {
-    }
-    catch (InvocationTargetException e) {
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException ignored) {
     }
     return false;
   }
@@ -565,11 +561,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       Method m = browser.getClass().getMethod("isNativeBrowserCreationStarted");
       return (boolean)m.invoke(browser);
     }
-    catch (NoSuchMethodException e) {
-    }
-    catch (InvocationTargetException e) {
-    }
-    catch (IllegalAccessException e) {
+    catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
     }
 
     // Fallback to old logic (incorrect in general, since creation is always started before native ref obtained)

@@ -176,7 +176,7 @@ public final class AboutDialog extends DialogWrapper {
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
     String jcefSuffix = getJcefVersion();
-    if (jcefSuffix != null && !jcefSuffix.isEmpty())
+    if (!jcefSuffix.isEmpty())
       jcefSuffix = " (" + jcefSuffix + ")";
     String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch) + jcefSuffix;
     lines.add(jreInfo);
@@ -394,7 +394,7 @@ public final class AboutDialog extends DialogWrapper {
     return IdeBundle.message("dialog.message.jetbrains.client.for.ide", ApplicationNamesInfo.getInstance().getFullProductName());
   }
 
-  private static String getJcefVersion() {
+  private static @NotNull String getJcefVersion() {
     if (JBCefApp.isSupported()) {
       try {
         JCefVersionDetails version = JCefAppConfig.getVersionDetails();
