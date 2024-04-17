@@ -10,9 +10,9 @@ import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.LazyParseablePsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.IFileElementType
-import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
+import org.jetbrains.plugins.terminal.util.ShellType
 import kotlin.math.min
 
 internal class TerminalPromptFileViewProviderFactory : FileViewProviderFactory {
@@ -26,8 +26,8 @@ internal class TerminalPromptFileViewProvider(
   virtualFile: VirtualFile,
   eventSystemEnabled: Boolean
 ) : SingleRootFileViewProvider(psiManager, virtualFile, eventSystemEnabled, TerminalPromptLanguage) {
-  private val session: BlockTerminalSession
-    get() = virtualFile.getUserData(BlockTerminalSession.KEY)!!
+  private val shellType: ShellType
+    get() = virtualFile.getUserData(ShellType.KEY)!!
   private val promptModel: TerminalPromptModel
     get() = virtualFile.getUserData(TerminalPromptModel.KEY)!!
 
@@ -36,7 +36,7 @@ internal class TerminalPromptFileViewProvider(
   }
 
   override fun createCopy(copy: VirtualFile): SingleRootFileViewProvider {
-    copy.putUserData(BlockTerminalSession.KEY, session)
+    copy.putUserData(ShellType.KEY, shellType)
     copy.putUserData(TerminalPromptModel.KEY, promptModel)
     return TerminalPromptFileViewProvider(manager, copy, false)
   }
@@ -54,7 +54,7 @@ internal class TerminalPromptFileViewProvider(
   private inner class TerminalPromptFileElementType : IFileElementType("TERMINAL_PROMPT_FILE", TerminalPromptLanguage, false) {
     override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode {
       val inputOffset = min(promptModel.commandStartOffset, chameleon.chars.length)
-      val inputElementType = TerminalShellSupport.findByShellType(session.shellIntegration.shellType)?.promptContentElementType
+      val inputElementType = TerminalShellSupport.findByShellType(shellType)?.promptContentElementType
                              ?: PlainTextTokenTypes.PLAIN_TEXT_FILE
       val promptNode = LazyParseablePsiElement(PlainTextTokenTypes.PLAIN_TEXT_FILE, chameleon.chars.subSequence(0, inputOffset))
       val inputNode = LazyParseablePsiElement(inputElementType, chameleon.chars.subSequence(inputOffset, chameleon.chars.length))

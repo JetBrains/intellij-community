@@ -17,6 +17,7 @@ import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutor
 import org.jetbrains.plugins.terminal.exp.completion.ShellCommandExecutorImpl
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryManager
+import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
@@ -44,7 +45,7 @@ class TerminalPromptController(
     editor.putUserData(BlockTerminalSession.KEY, session)
     // Used in TerminalPromptFileViewProvider
     editor.virtualFile.putUserData(TerminalPromptModel.KEY, model)
-    editor.virtualFile.putUserData(BlockTerminalSession.KEY, session)
+    editor.virtualFile.putUserData(ShellType.KEY, session.shellIntegration.shellType)
 
     val shellCommandExecutor = ShellCommandExecutorImpl(session)
     editor.putUserData(ShellCommandExecutor.KEY, shellCommandExecutor)
