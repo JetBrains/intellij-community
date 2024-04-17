@@ -212,8 +212,8 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
           continue;
         }
         KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
-        if (funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.accessRestricted()) {
-          debug("One of function's parameters or return value has become non-nullable, or the function has become less accessible ", changedKmFunction.getName());
+        if (funDiff.accessRestricted() || funDiff.becameNullable() || funDiff.argsBecameNotNull() || funDiff.parameterArgumentsChanged()) {
+          debug("One of function's parameters or return value has become non-nullable, or the function has become less accessible or type parameter's arguments changed ", changedKmFunction.getName());
           JvmMethod jvmMethod = getJvmMethod(changedClass, JvmExtensionsKt.getSignature(changedKmFunction));
           if (jvmMethod != null) {
             // this will affect all usages from both java and kotlin code
