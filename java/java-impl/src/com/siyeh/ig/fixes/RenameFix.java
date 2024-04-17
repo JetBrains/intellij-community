@@ -105,7 +105,7 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
         String message = RefactoringBundle.message("rename.0.and.its.usages.preview.text", what);
         return new IntentionPreviewInfo.Html(HtmlChunk.text(message));
       }
-      ((PsiNamedElement)element).setName(m_targetName);
+      namedElement.setName(m_targetName);
       return IntentionPreviewInfo.DIFF;
     }
     return IntentionPreviewInfo.EMPTY;

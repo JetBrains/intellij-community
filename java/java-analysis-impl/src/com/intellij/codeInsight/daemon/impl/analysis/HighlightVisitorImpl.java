@@ -1317,7 +1317,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiMethodCallExpression methodCallExpression &&
-        ((PsiMethodCallExpression)parent).getMethodExpression() == expression &&
+        methodCallExpression.getMethodExpression() == expression &&
         (!result.isAccessible() || !result.isStaticsScopeCorrect())) {
       PsiExpressionList list = methodCallExpression.getArgumentList();
       PsiResolveHelper resolveHelper = getResolveHelper(getProject());

@@ -38,7 +38,7 @@ public final class InstanceOfUtils {
     if (!(castType instanceof PsiClassType classType)) {
       return null;
     }
-    if (((PsiClassType)castType).resolve() instanceof PsiTypeParameter) {
+    if (classType.resolve() instanceof PsiTypeParameter) {
       return null;
     }
     final PsiClassType rawType = classType.rawType();

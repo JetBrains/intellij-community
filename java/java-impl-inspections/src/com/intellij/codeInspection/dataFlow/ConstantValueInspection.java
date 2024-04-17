@@ -563,7 +563,7 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
     final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
     // simplify intention already active
     if (!fix.isAvailable(expression) ||
-        (SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element) && expression instanceof PsiLiteralExpression)) {
+        (SimplifyBooleanExpressionFix.canBeSimplified(expression) && expression instanceof PsiLiteralExpression)) {
       return null;
     }
     return fix;

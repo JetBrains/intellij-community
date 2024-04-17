@@ -385,7 +385,8 @@ final class SliceUtil {
             }
           }
         }
-        if (parentExpr instanceof PsiUnaryExpression unaryExpression && ((PsiUnaryExpression)parentExpr).getOperand() == referenceExpression && (((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+        if (parentExpr instanceof PsiUnaryExpression unaryExpression && unaryExpression.getOperand() == referenceExpression && (
+          unaryExpression.getOperationTokenType() == JavaTokenType.PLUSPLUS || unaryExpression.getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
           return builder.process(unaryExpression, processor);
         }
       }
