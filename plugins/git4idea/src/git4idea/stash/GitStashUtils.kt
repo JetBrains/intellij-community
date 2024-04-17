@@ -162,7 +162,7 @@ object GitStashOperations {
     if (!completed) return false
 
     VcsNotifier.getInstance(project).notifySuccess(GitNotificationIdsHolder.UNSTASH_PATCH_APPLIED, "",
-                                                   VcsBundle.message("patch.apply.success.applied.text"))
+                                                   GitBundle.message("unstash.stash.applied"))
     return true
   }
 
