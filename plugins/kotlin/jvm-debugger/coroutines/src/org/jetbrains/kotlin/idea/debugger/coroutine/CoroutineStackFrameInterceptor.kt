@@ -172,7 +172,9 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         context: DefaultExecutionContext,
         debugProbesImpl: DebugProbesImpl
     ): Set<Long>? {
-        val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", listOf(debugProbesImpl.getObject()))
+        val threadReferenceProxyImpl = context.suspendContext.thread ?: return null
+        val args = listOf(debugProbesImpl.getObject(), threadReferenceProxyImpl.threadReference)
+        val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", args)
         result ?: return null
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
     }

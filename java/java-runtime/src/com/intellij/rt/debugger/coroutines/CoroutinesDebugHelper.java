@@ -14,8 +14,7 @@ public final class CoroutinesDebugHelper {
   private static final String DEBUG_COROUTINE_INFO_FIELD = "info";
   private static final String SEQUENCE_NUMBER_FIELD = "sequenceNumber";
 
-  public static long[] getCoroutinesRunningOnCurrentThread(Object debugProbes) throws ReflectiveOperationException {
-    Thread currentThread = Thread.currentThread();
+  public static long[] getCoroutinesRunningOnCurrentThread(Object debugProbes, Thread currentThread) throws ReflectiveOperationException {
     List<Long> coroutinesIds = new ArrayList<>();
     List infos = (List)invoke(debugProbes, DUMP_COROUTINES_INFO_METHOD);
     for (Object info : infos) {
