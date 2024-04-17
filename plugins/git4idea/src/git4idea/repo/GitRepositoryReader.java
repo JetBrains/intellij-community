@@ -151,7 +151,7 @@ public class GitRepositoryReader {
 
   private @Nullable GitLocalBranch findCurrentBranch(@NotNull HeadInfo headInfo,
                                                      @NotNull Repository.State state,
-                                                     @NotNull Set<? extends GitLocalBranch> localBranches) {
+                                                     @NotNull Set<GitLocalBranch> localBranches) {
     final String currentBranchName = findCurrentBranchName(state, headInfo);
     if (currentBranchName == null) {
       return null;
@@ -224,7 +224,7 @@ public class GitRepositoryReader {
     }
     try {
       String content = DvcsUtil.tryLoadFile(myPackedRefsFile, CharsetToolkit.UTF8);
-      return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), GitRefUtil::parseRefsLine);
+      return ContainerUtil.map2MapNotNull(LineTokenizer.tokenize(content, false), GitRefUtil::parseBranchesLine);
     }
     catch (RepoStateException e) {
       return emptyMap();
