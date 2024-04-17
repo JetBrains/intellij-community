@@ -56,8 +56,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = java.util.List.of(
   "intellij.platform.editor.ex",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.inspect",
-  // lvcs.xml - convert into product module
-  "intellij.platform.lvcs.impl",
+  "intellij.platform.lvcs",
   "intellij.platform.macro",
   "intellij.platform.scriptDebugger.protocolReaderRuntime",
   "intellij.regexp",

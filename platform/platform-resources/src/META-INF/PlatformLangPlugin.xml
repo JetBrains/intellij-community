@@ -149,9 +149,6 @@
   <xi:include href="/META-INF/diff-impl.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/lvcs.xml">
-    <xi:fallback/>
-  </xi:include>
 
   <xi:include href="/META-INF/ml.xml">
     <xi:fallback/>

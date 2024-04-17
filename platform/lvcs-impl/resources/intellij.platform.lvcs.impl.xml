@@ -1,4 +1,8 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
+
   <actions resource-bundle="messages.LocalHistoryBundle">
     <action id="LocalHistory.ShowHistory" class="com.intellij.history.integration.ui.actions.ShowHistoryAction">
       <override-text place="GoToAction"/>
