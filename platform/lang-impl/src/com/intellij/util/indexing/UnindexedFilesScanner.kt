@@ -394,26 +394,26 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
           val providerScanningStartTime = System.nanoTime()
           try {
-            myProject.getService(PerProjectIndexingQueue::class.java)
-              .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
-                progressReporter.getSubTaskReporter().use { subTaskReporter ->
-                  subTaskReporter.setText(provider.rootsScanningProgressText)
-                  val rootsAndFiles: MutableList<Pair<VirtualFile?, List<VirtualFile>>> = ArrayList()
-                  val singleProviderIteratorFactory = Function<VirtualFile?, ContentIterator> { root: VirtualFile? ->
-                    val files: MutableList<VirtualFile> = ArrayList(1024)
-                    rootsAndFiles.add(Pair<VirtualFile?, List<VirtualFile>>(root, files))
-                    ContentIterator { fileOrDir: VirtualFile ->
-                      // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
-                      // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
-                      PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
-                      files.add(fileOrDir)
-                    }
-                  }
+            progressReporter.getSubTaskReporter().use { subTaskReporter ->
+              subTaskReporter.setText(provider.rootsScanningProgressText)
+              val rootsAndFiles: MutableList<Pair<VirtualFile?, List<VirtualFile>>> = ArrayList()
+              val singleProviderIteratorFactory = Function<VirtualFile?, ContentIterator> { root: VirtualFile? ->
+                val files: MutableList<VirtualFile> = ArrayList(1024)
+                rootsAndFiles.add(Pair<VirtualFile?, List<VirtualFile>>(root, files))
+                ContentIterator { fileOrDir: VirtualFile ->
+                  // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
+                  // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
+                  PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
+                  files.add(fileOrDir)
+                }
+              }
 
-                  scanningStatistics.startVfsIterationAndScanningApplication()
-                  provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
-                  scanningStatistics.tryFinishVfsIterationAndScanningApplication()
+              scanningStatistics.startVfsIterationAndScanningApplication()
+              provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
+              scanningStatistics.tryFinishVfsIterationAndScanningApplication()
 
+              myProject.getService(PerProjectIndexingQueue::class.java)
+                .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
                   scanningStatistics.startFileChecking()
                   ReadAction.nonBlocking {
                     while (!rootsAndFiles.isEmpty()) {
