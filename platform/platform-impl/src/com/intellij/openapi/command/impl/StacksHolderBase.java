@@ -10,38 +10,34 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public abstract class UndoRedoStacksHolderBase<E> {
-  protected static final Logger LOG = Logger.getInstance(UndoRedoStacksHolderBase.class);
+@ApiStatus.Internal
+public abstract class StacksHolderBase<E, ECollection extends Collection<E>>  {
+  protected static final Logger LOG = Logger.getInstance(StacksHolderBase.class);
 
-  private final Key<LinkedList<E>> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
-
-  final boolean myUndo;
+  private final Key<ECollection> STACK_IN_DOCUMENT_KEY = Key.create("STACK_IN_DOCUMENT_KEY");
 
   // strongly reference local files for which we can undo file removal
   // document without files and nonlocal files are stored without strong reference
-  final Map<DocumentReference, LinkedList<E>> myDocumentStacks = CollectionFactory.createSmallMemoryFootprintMap();
+  final Map<DocumentReference, ECollection> myDocumentStacks = CollectionFactory.createSmallMemoryFootprintMap();
   final Collection<Document> myDocumentsWithStacks = new WeakList<>();
   final Collection<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
 
-  UndoRedoStacksHolderBase(boolean isUndo) {
-    myUndo = isUndo;
-  }
-
   @NotNull
-  LinkedList<E> getStack(@NotNull DocumentReference r) {
+  ECollection getStack(@NotNull DocumentReference r) {
     return r.getFile() != null ? doGetStackForFile(r) : doGetStackForDocument(r);
   }
 
-  private @NotNull LinkedList<E> doGetStackForFile(@NotNull DocumentReference r) {
-    LinkedList<E> result;
+  private @NotNull ECollection doGetStackForFile(@NotNull DocumentReference r) {
+    ECollection result;
     VirtualFile file = r.getFile();
 
     if (file.isInLocalFileSystem()) {
-      result = myDocumentStacks.computeIfAbsent(r, __ -> new LinkedList<>());
+      result = myDocumentStacks.computeIfAbsent(r, __ -> newCollection());
     }
     else {
       result = addWeaklyTrackedEmptyStack(file, myNonlocalVirtualFilesWithStacks);
@@ -50,7 +46,9 @@ public abstract class UndoRedoStacksHolderBase<E> {
     return result;
   }
 
-  private @NotNull LinkedList<E> doGetStackForDocument(@NotNull DocumentReference r) {
+  protected abstract ECollection newCollection();
+
+  private @NotNull ECollection doGetStackForDocument(@NotNull DocumentReference r) {
     // If document is not associated with file, we have to store its stack in document
     // itself to avoid memory leaks caused by holding stacks of all documents, ever created, here.
     // And to know, what documents do exist now, we have to maintain weak reference list of them.
@@ -58,18 +56,13 @@ public abstract class UndoRedoStacksHolderBase<E> {
     return addWeaklyTrackedEmptyStack(r.getDocument(), myDocumentsWithStacks);
   }
 
-  private @NotNull <T extends UserDataHolder> LinkedList<E> addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<? super T> allHolders) {
-    LinkedList<E> result = holder.getUserData(STACK_IN_DOCUMENT_KEY);
+  private @NotNull <T extends UserDataHolder> ECollection addWeaklyTrackedEmptyStack(@NotNull T holder, @NotNull Collection<? super T> allHolders) {
+    ECollection result = holder.getUserData(STACK_IN_DOCUMENT_KEY);
     if (result == null) {
-      holder.putUserData(STACK_IN_DOCUMENT_KEY, result = new LinkedList<>());
+      holder.putUserData(STACK_IN_DOCUMENT_KEY, result = newCollection());
       allHolders.add(holder);
     }
     return result;
-  }
-
-  @NotNull
-  String getStacksDescription() {
-    return myUndo ? "undo stacks" : "redo stacks";
   }
 
   void removeEmptyStacks() {
@@ -94,7 +87,7 @@ public abstract class UndoRedoStacksHolderBase<E> {
   private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(@NotNull Collection<T> stackHolders) {
     Set<T> holdersToDrop = new HashSet<>();
     for (T holder : stackHolders) {
-      List<E> stack = holder.getUserData(STACK_IN_DOCUMENT_KEY);
+      Collection<E> stack = holder.getUserData(STACK_IN_DOCUMENT_KEY);
       if (stack != null && stack.isEmpty()) {
         holder.putUserData(STACK_IN_DOCUMENT_KEY, null);
         holdersToDrop.add(holder);

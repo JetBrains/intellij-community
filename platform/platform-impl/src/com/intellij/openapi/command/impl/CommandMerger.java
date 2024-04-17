@@ -32,7 +32,7 @@ public final class CommandMerger {
   private boolean myTransparent;
   private @NlsContexts.Command String myCommandName;
   private boolean myValid = true;
-  private @NotNull List<UndoableAction> myCurrentActions = new ArrayList<>();
+  private @NotNull UndoRedoList<UndoableAction> myCurrentActions = new UndoRedoList<>();
   private @NotNull Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
   private @NotNull Set<DocumentReference> myAdditionalAffectedDocuments = new HashSet<>();
   private EditorAndState myStateBefore;
@@ -70,10 +70,14 @@ public final class CommandMerger {
       if (affected == null) {
         return;
       }
+
+      SharedAdjustableUndoableActionsHolder actionsHolder = myManager.getAdjustableUndoableActionHolder();
+      actionsHolder.addAction(adjustable);
+
       for (DocumentReference reference : affected) {
-        for (ActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
-          myManager.getSharedUndoStacksHolder().addToStack(reference, changeRange);
-          myManager.getSharedRedoStacksHolder().addToStack(reference, changeRange.createIndependentCopy(true));
+        for (MutableActionChangeRange changeRange : adjustable.getChangeRanges(reference)) {
+          myManager.getSharedUndoStacksHolder().addToStack(reference, changeRange.toImmutable(false));
+          myManager.getSharedRedoStacksHolder().addToStack(reference, changeRange.toImmutable(true));
         }
       }
     }
@@ -108,6 +112,59 @@ public final class CommandMerger {
 
     if ((myForcedGlobal || nextCommandToMerge.myForcedGlobal) && !isMergeGlobalCommandsAllowed()) return false;
     return canMergeGroup(groupId, SoftReference.dereference(myLastGroupId));
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  LocalCommandMergerSnapshot getSnapshot(DocumentReference reference) {
+    if (isGlobal() || !myAdditionalAffectedDocuments.isEmpty())
+      return null;
+
+    if (myAllAffectedDocuments.size() > 1)
+      return null;
+
+    if (myAllAffectedDocuments.size() == 1) {
+      DocumentReference currentReference = myAllAffectedDocuments.iterator().next();
+      if (currentReference != reference)
+        return null;
+    }
+
+    return new LocalCommandMergerSnapshot(
+      myAllAffectedDocuments.stream().findFirst().orElse(null),
+      myCurrentActions.snapshot(),
+      myLastGroupId,
+      myTransparent,
+      myCommandName,
+      myStateBefore,
+      myStateAfter,
+      myUndoConfirmationPolicy
+    );
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  boolean resetLocalHistory(LocalCommandMergerSnapshot snapshot) {
+    HashSet<DocumentReference> references = new HashSet<>();
+    DocumentReference reference = snapshot.getDocumentReferences();
+    if (reference != null) {
+      references.add(reference);
+    }
+
+    reset(
+      snapshot.getActions().toList(),
+      references,
+      new HashSet<>(),
+      snapshot.getLastGroupId(),
+      false,
+      snapshot.getTransparent(),
+      snapshot.getCommandName(),
+      true,
+      snapshot.getStateBefore(),
+      snapshot.getStateAfter(),
+      snapshot.getUndoConfirmationPolicy()
+    );
+
+    return true;
   }
 
   private static boolean isMergeGlobalCommandsAllowed() {
@@ -214,18 +271,48 @@ public final class CommandMerger {
     reset();
   }
 
+
+
   private void reset() {
-    myCurrentActions = new ArrayList<>();
-    myAllAffectedDocuments = new HashSet<>();
-    myAdditionalAffectedDocuments = new HashSet<>();
-    myLastGroupId = null;
-    myForcedGlobal = false;
-    myTransparent = false;
-    myCommandName = null;
-    myValid = true;
-    myStateAfter = null;
-    myStateBefore = null;
-    myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
+    reset(
+      new UndoRedoList<>(),
+      new HashSet<>(),
+      new HashSet<>(),
+      null,
+      false,
+      false,
+      null,
+      true,
+      null,
+      null,
+      UndoConfirmationPolicy.DEFAULT
+    );
+  }
+
+  private void reset(
+    UndoRedoList<UndoableAction> currentActions,
+    HashSet<DocumentReference> allAffectedDocuments,
+    HashSet<DocumentReference> additionalAffectedDocuments,
+    Reference<Object> lastGroupId,
+    boolean forcedGlobal,
+    boolean transparent,
+    String commandName,
+    boolean valid,
+    EditorAndState stateBefore,
+    EditorAndState stateAfter,
+    UndoConfirmationPolicy policy
+  ) {
+    myCurrentActions = currentActions;
+    myAllAffectedDocuments = allAffectedDocuments;
+    myAdditionalAffectedDocuments = additionalAffectedDocuments;
+    myLastGroupId = lastGroupId;
+    myForcedGlobal = forcedGlobal;
+    myTransparent = transparent;
+    myCommandName = commandName;
+    myValid = valid;
+    myStateAfter = stateAfter;
+    myStateBefore = stateBefore;
+    myUndoConfirmationPolicy = policy;
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {

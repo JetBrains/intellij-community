@@ -3015,20 +3015,19 @@ com.intellij.openapi.actionSystem.ShortcutProvider
 - a:getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 com.intellij.openapi.application.WriteActionAware
 - startInWriteAction():Z
-com.intellij.openapi.command.undo.ActionChangeRange
+*:com.intellij.openapi.command.undo.ActionChangeRange
 - a:asInverted():com.intellij.openapi.command.undo.ActionChangeRange
-- a:createIndependentCopy(Z):com.intellij.openapi.command.undo.ActionChangeRange
 - a:getId():I
+- a:getNewDocumentLength():I
 - a:getNewLength():I
 - a:getOffset():I
+- a:getOldDocumentLength():I
 - a:getOldLength():I
-- a:getOriginatorId():I
-- a:isValid():Z
-- a:moveAfter(com.intellij.openapi.command.undo.ActionChangeRange,Z):Z
-com.intellij.openapi.command.undo.AdjustableUndoableAction
+- a:getTimestamp():I
+- a:toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+*:com.intellij.openapi.command.undo.AdjustableUndoableAction
 - com.intellij.openapi.command.undo.UndoableAction
 - a:getChangeRanges(com.intellij.openapi.command.undo.DocumentReference):java.util.List
-- a:invalidateChangeRanges():V
 a:com.intellij.openapi.command.undo.BasicUndoableAction
 - com.intellij.openapi.command.undo.UndoableAction
 - <init>():V
@@ -3057,6 +3056,48 @@ a:com.intellij.openapi.command.undo.GlobalUndoableAction
 - <init>(com.intellij.openapi.editor.Document[]):V
 - <init>(com.intellij.openapi.vfs.VirtualFile[]):V
 - isGlobal():Z
+*f:com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- com.intellij.openapi.command.undo.ActionChangeRange
+- *sf:Companion:com.intellij.openapi.command.undo.ImmutableActionChangeRange$Companion
+- asInverted():com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- f:getActionReference():java.lang.ref.WeakReference
+- getId():I
+- getNewDocumentLength():I
+- getNewLength():I
+- getOffset():I
+- getOldDocumentLength():I
+- getOldLength():I
+- getTimestamp():I
+- f:hasTheSameOrigin(com.intellij.openapi.command.undo.ImmutableActionChangeRange):Z
+- f:isSymmetricTo(com.intellij.openapi.command.undo.ImmutableActionChangeRange):Z
+- f:moveAfter(com.intellij.openapi.command.undo.ImmutableActionChangeRange,Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- toString():java.lang.String
+*f:com.intellij.openapi.command.undo.ImmutableActionChangeRange$Companion
+- f:createNew(I,I,I,I,I,com.intellij.openapi.command.undo.AdjustableUndoableAction):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+*:com.intellij.openapi.command.undo.MutableActionChangeRange
+- com.intellij.openapi.command.undo.ActionChangeRange
+- a:asInverted():com.intellij.openapi.command.undo.MutableActionChangeRange
+- a:getOriginalTimestamp():I
+- a:getState():com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- isMoved():Z
+- a:setState(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
+*f:com.intellij.openapi.command.undo.MutableActionChangeRangeImpl
+- com.intellij.openapi.command.undo.MutableActionChangeRange
+- <init>(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
+- asInverted():com.intellij.openapi.command.undo.MutableActionChangeRange
+- getId():I
+- getNewDocumentLength():I
+- getNewLength():I
+- getOffset():I
+- getOldDocumentLength():I
+- getOldLength():I
+- getOriginalTimestamp():I
+- getState():com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- getTimestamp():I
+- setState(com.intellij.openapi.command.undo.ImmutableActionChangeRange):V
+- toImmutable(Z):com.intellij.openapi.command.undo.ImmutableActionChangeRange
+- toString():java.lang.String
 a:com.intellij.openapi.command.undo.UndoManager
 - sf:ORIGINAL_DOCUMENT:com.intellij.openapi.util.Key
 - <init>():V

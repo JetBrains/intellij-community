@@ -19,7 +19,7 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
   private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
-  private final ActionChangeRangeImpl myChangeRange;
+  private final MutableActionChangeRange myChangeRange;
 
   EditorChangeAction(@NotNull DocumentEvent e) {
     this((DocumentImpl)e.getDocument(), e.getOffset(), e.getMoveOffset(), e.getOldFragment(), e.getNewFragment(), e.getOldTimeStamp());
@@ -39,19 +39,22 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     myNewTimeStamp = document.getModificationStamp();
     int newDocumentLength = document.getTextLength();
     int oldDocumentLength = newDocumentLength - newString.length() + oldString.length();
-    myChangeRange = new ActionChangeRangeImpl(offset, oldString.length(), newString.length(), oldDocumentLength, newDocumentLength, this);
+    ImmutableActionChangeRange immutableActionChangeRange = ImmutableActionChangeRange.Companion.createNew(offset, oldString.length(), newString.length(), oldDocumentLength, newDocumentLength, this);
+    myChangeRange = new MutableActionChangeRangeImpl(immutableActionChangeRange);
   }
 
   @Override
   public void undo() throws UnexpectedUndoException {
     long timeStamp = myChangeRange.isMoved() ? createNextTimeStamp() : myOldTimeStamp;
-    doChange(myChangeRange.getNewDocumentLength(), myOldString, myChangeRange.getOldDocumentLength(), timeStamp);
+    ImmutableActionChangeRange range = myChangeRange.getState();
+    doChange(range.getNewDocumentLength(), myOldString, range.getOldDocumentLength(), timeStamp);
   }
 
   @Override
   public void redo() throws UnexpectedUndoException {
     long timeStamp = myChangeRange.isMoved() ? createNextTimeStamp() : myNewTimeStamp;
-    doChange(myChangeRange.getOldDocumentLength(), myNewString, myChangeRange.getNewDocumentLength(), timeStamp);
+    ImmutableActionChangeRange range = myChangeRange.getState();
+    doChange(range.getOldDocumentLength(), myNewString, range.getNewDocumentLength(), timeStamp);
   }
 
   private static long createNextTimeStamp() {
@@ -68,7 +71,7 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     try {
       CharSequence toString = CompressionUtil.uncompressStringRawBytes(to);
       int fromStringLength = toString.length() - toLength + fromLength;
-      int offset = myChangeRange.getOffset();
+      int offset = myChangeRange.getState().getOffset();
       int moveOffset = myChangeRange.isMoved() ? offset : myMoveOffset;
       document.replaceString(offset, offset + fromStringLength, moveOffset, toString, toTimeStamp, false);
     }
@@ -78,7 +81,7 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
   }
 
   @Override
-  public @NotNull List<ActionChangeRange> getChangeRanges(@NotNull DocumentReference reference) {
+  public @NotNull List<MutableActionChangeRange> getChangeRanges(@NotNull DocumentReference reference) {
     return isAffected(reference) ? Collections.singletonList(myChangeRange) : Collections.emptyList();
   }
 
@@ -93,11 +96,6 @@ final class EditorChangeAction extends BasicUndoableAction implements Adjustable
     } else {
       return affected.getDocument() == reference.getDocument();
     }
-  }
-
-  @Override
-  public void invalidateChangeRanges() {
-    myChangeRange.invalidate();
   }
 
   @Override

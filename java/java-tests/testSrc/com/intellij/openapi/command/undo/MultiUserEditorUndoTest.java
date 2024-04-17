@@ -31,7 +31,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.function.Predicate;
 
-public class MultiUserEditorUndoTest extends EditorUndoTestCase {
+public class MultiUserEditorUndoTest extends MultiUserEditorUndoTestCase {
   private Disposable myDisposable;
 
   @Override
@@ -211,6 +211,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
       checkEditorText("te1st", getFirstEditor());
     });
 
+    checkEditorText("te1st", getFirstEditor());
     try {
       redoFirstEditor();
       fail("Exception expected");
@@ -287,7 +288,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     }
   }
 
-  private void typeWithFlush(char c) {
+  protected void typeWithFlush(char c) {
     executeCommand(() -> typeInChar(c));
   }
 
