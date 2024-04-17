@@ -7,7 +7,21 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 
 enum class BuildSystemType {
-    JPS, Gradle, AndroidGradle, Maven
+    JPS,
+    Gradle,
+    AndroidGradle,
+    Maven,
+    /** 
+     * Standalone Amper build tool (without Gradle).
+     */
+    Amper,
+    /**
+     * Gradle-based Amper, where Amper just acts as a configuration facade over Gradle via a settings plugin.
+     * 
+     * It is necessary to distinguish this case from [Gradle], because we don't want multiple project configurators
+     * to match the same module, so we need to prevent the Gradle one from kicking in for Amper modules.
+     */
+    AmperGradle,
 }
 
 interface BuildSystemTypeDetector {
