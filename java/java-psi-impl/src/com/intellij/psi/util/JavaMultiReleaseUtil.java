@@ -109,7 +109,9 @@ public final class JavaMultiReleaseUtil {
     if (!(root.getFileType() instanceof ArchiveFileType)) return file;
     String relativePath = VfsUtilCore.getRelativePath(file, root);
     if (relativePath == null) return file;
-    VirtualFile versions = root.findFileByRelativePath("META-INF/versions");
+    VirtualFile metaInf = root.findChild("META-INF");
+    if (metaInf == null) return file;
+    VirtualFile versions = metaInf.findChild("versions");
     if (versions == null) return file;
     int feature = level.feature();
     int minFeature = MIN_MULTI_RELEASE_VERSION.feature();
@@ -137,7 +139,9 @@ public final class JavaMultiReleaseUtil {
     if (!(root.getFileType() instanceof ArchiveFileType)) return Collections.emptyList();
     String relativePath = VfsUtilCore.getRelativePath(file, root);
     if (relativePath == null) return Collections.emptyList();
-    VirtualFile versions = root.findFileByRelativePath("META-INF/versions");
+    VirtualFile metaInf = root.findChild("META-INF");
+    if (metaInf == null) return Collections.emptyList();
+    VirtualFile versions = metaInf.findChild("versions");
     if (versions == null || !versions.isDirectory()) return Collections.emptyList();
     List<VirtualFile> versionSpecificRoots = new ArrayList<>();
     for (VirtualFile versionRoot : versions.getChildren()) {
