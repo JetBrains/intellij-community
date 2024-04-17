@@ -93,6 +93,8 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
         // resetting stack overflow protection handler set by the runtime (`std/src/sys/unix/stack_overflow.rs`)
         reset_signal_handler(libc::SIGBUS)?;
         reset_signal_handler(libc::SIGSEGV)?;
+        // resetting interrupt handler masked when an IDE is launched in a particularly perverse way
+        reset_signal_handler(libc::SIGINT)?;
     }
 
     let jre_home = jre_home.to_owned();
