@@ -257,7 +257,7 @@ private class SourcesBasedXIncludeResolver(
   private val pluginLayout: PluginLayout,
   private val context: BuildContext,
 ) : XIncludePathResolver {
-  override fun resolvePath(relativePath: String, base: Path?): Path {
+  override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path {
     var result: Path? = null
     for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
       result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue)

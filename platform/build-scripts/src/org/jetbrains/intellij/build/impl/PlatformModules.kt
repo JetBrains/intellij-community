@@ -4,15 +4,16 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.xml.dom.XmlElement
-import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jdom.CDATA
+import org.jdom.Element
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_CLIENT_JAR
@@ -23,6 +24,7 @@ import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -163,10 +165,10 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
   // used only in modules that packed into Java
   layout.withoutProjectLibrary("jps-javac-extension")
   layout.withoutProjectLibrary("Eclipse")
-  
+
   // this library is used in some modules compatible with Java 7, it's replaced by its superset 'jetbrains-annotations' in the distribution
   layout.withoutProjectLibrary("jetbrains-annotations-java5")
-  
+
   for (customizer in productLayout.platformLayoutSpec) {
     customizer(layout, context)
   }
@@ -250,13 +252,6 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
     "intellij.platform.objectSerializer.annotations"
   ), productLayout = productLayout, layout = layout)
   addModule("cds/classesLogAgent.jar", listOf("intellij.platform.cdsAgent"), productLayout = productLayout, layout = layout)
-  val productPluginSourceModuleName = context.productProperties.productPluginSourceModuleName
-                                      ?: context.productProperties.applicationInfoModule
-  val productPluginContentModules = getProductPluginContentModules(
-    context = context,
-    layout = layout,
-    productPluginSourceModuleName = productPluginSourceModuleName,
-  )
   val explicit = mutableListOf<ModuleItem>()
   for (moduleName in productLayout.productImplementationModules) {
     if (productLayout.excludedModuleNames.contains(moduleName)) {
@@ -267,56 +262,57 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
       ModuleItem(
         moduleName = moduleName,
         relativeOutputFile = when {
-          isModuleCloseSource(moduleName, context = context) -> {
-            if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
-          }
+          isModuleCloseSource(moduleName, context = context) -> if (jetBrainsClientModuleFilter.isModuleIncluded(moduleName)) PRODUCT_CLIENT_JAR else PRODUCT_JAR
           else -> PlatformJarNames.getPlatformModuleJarName(moduleName, context)
         },
         reason = "productImplementationModules",
       )
     )
   }
-  explicit.addAll(
-    toModuleItemSequence(
-      list = PLATFORM_API_MODULES,
-      productLayout = productLayout,
-      reason = "PLATFORM_API_MODULES",
-      context = context,
-    )
-  )
-  explicit.addAll(
-    toModuleItemSequence(
-      list = PLATFORM_IMPLEMENTATION_MODULES,
-      productLayout = productLayout,
-      reason = "PLATFORM_IMPLEMENTATION_MODULES",
-      context = context
-    )
-  )
-  explicit.addAll(
-    toModuleItemSequence(
-      list = productLayout.productApiModules,
-      productLayout = productLayout,
-      reason = "productApiModules",
-      context = context,
-    )
-  )
+  explicit.addAll(toModuleItemSequence(list = PLATFORM_API_MODULES, productLayout = productLayout, reason = "PLATFORM_API_MODULES", context = context))
+  explicit.addAll(toModuleItemSequence(list = PLATFORM_IMPLEMENTATION_MODULES, productLayout = productLayout, reason = "PLATFORM_IMPLEMENTATION_MODULES", context = context))
+  explicit.addAll(toModuleItemSequence(list = productLayout.productApiModules, productLayout = productLayout, reason = "productApiModules", context = context))
   if (addPlatformCoverage) {
     explicit.add(ModuleItem(moduleName = "intellij.platform.coverage", relativeOutputFile = APP_JAR, reason = "coverage"))
   }
+
+  val explicitModuleNames = explicit.map { it.moduleName }.toList()
+
+  val productPluginContentModules = getProductPluginContentModules(
+    context = context,
+    layout = layout,
+    includedPlatformModulesPartialList = (layout.includedModules.asSequence().map { it.moduleName } + computeImplicitRequiredModules(
+      explicit = explicitModuleNames,
+      layout = layout,
+      productPluginContentModules = emptySet(),
+      productLayout = productLayout,
+      context = context,
+      validateImplicitPlatformModule = false,
+    ).asSequence().map { it.first } + explicitModuleNames).toList(),
+    productPluginSourceModuleName = context.productProperties.productPluginSourceModuleName ?: context.productProperties.applicationInfoModule,
+  )
+
   val implicit = computeImplicitRequiredModules(
-    explicit = explicit.map { it.moduleName }.toList(),
+    explicit = explicitModuleNames,
     layout = layout,
     productPluginContentModules = productPluginContentModules.mapTo(HashSet()) { it.moduleName },
     productLayout = productLayout,
     context = context,
+    validateImplicitPlatformModule = context.options.validateImplicitPlatformModule,
   )
-  layout.withModules((explicit +
-                      productPluginContentModules +
-                      implicit.asSequence().map {
-                        ModuleItem(moduleName = it.first,
-                                   relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it.first, context),
-                                   reason = "<- " + it.second.asReversed().joinToString(separator = " <- "))
-                      }).sortedBy { it.moduleName }.toList())
+  layout.withModules(
+    (explicit.asSequence() +
+     productPluginContentModules +
+     implicit.asSequence().map {
+       ModuleItem(
+         moduleName = it.first,
+         relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it.first, context),
+         reason = "<- " + it.second.asReversed().joinToString(separator = " <- ")
+       )
+     })
+      .sortedBy { it.moduleName }
+      .toList(),
+  )
   for (item in projectLibrariesUsedByPlugins) {
     if (!layout.excludedProjectLibraries.contains(item.libraryName)) {
       layout.includedProjectLibraries.add(item)
@@ -343,7 +339,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean, projectL
        loaded when the IDE is started in the regular mode */
     layout.withModule(platformMainModule, "ext/platform-main.jar")
   }
-  
+
   return layout
 }
 
@@ -415,11 +411,14 @@ private fun toModuleItemSequence(list: Collection<String>, productLayout: Produc
     .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, context), reason = reason) }
 }
 
-private suspend fun computeImplicitRequiredModules(explicit: List<String>,
-                                                   layout: PlatformLayout,
-                                                   productPluginContentModules: Set<String>,
-                                                   productLayout: ProductModulesLayout,
-                                                   context: BuildContext): List<Pair<String, PersistentList<String>>> {
+private suspend fun computeImplicitRequiredModules(
+  explicit: List<String>,
+  layout: PlatformLayout,
+  productPluginContentModules: Set<String>,
+  productLayout: ProductModulesLayout,
+  context: BuildContext,
+  validateImplicitPlatformModule: Boolean,
+): List<Pair<String, PersistentList<String>>> {
   val rootChain = persistentListOf<String>()
   val rootList = layout.filteredIncludedModuleNames(TEST_FRAMEWORK_JAR, includeFromSubdirectories = false)
     .plus(explicit)
@@ -454,9 +453,9 @@ private suspend fun computeImplicitRequiredModules(explicit: List<String>,
   unique.add("intellij.pycharm.ds")
 
   val result = mutableListOf<Pair<String, PersistentList<String>>>()
-  compute(list = rootList, context = context, unique = unique, result = result)
+  computeTransitive(list = rootList, context = context, unique = unique, result = result)
 
-  if (context.options.validateImplicitPlatformModule) {
+  if (validateImplicitPlatformModule) {
     withContext(Dispatchers.IO) {
       for ((name, chain) in result) {
         launch {
@@ -472,10 +471,12 @@ private suspend fun computeImplicitRequiredModules(explicit: List<String>,
   return result
 }
 
-private fun compute(list: List<Pair<String, PersistentList<String>>>,
-                    context: BuildContext,
-                    unique: HashSet<String>,
-                    result: MutableList<Pair<String, PersistentList<String>>>) {
+private fun computeTransitive(
+  list: List<Pair<String, PersistentList<String>>>,
+  context: BuildContext,
+  unique: HashSet<String>,
+  result: MutableList<Pair<String, PersistentList<String>>>,
+) {
   val oldSize = result.size
   for ((dependentName, dependentChain) in list) {
     val dependentModule = context.findRequiredModule(dependentName)
@@ -489,7 +490,7 @@ private fun compute(list: List<Pair<String, PersistentList<String>>>,
   }
 
   if (oldSize != result.size) {
-    compute(list = result.subList(oldSize, result.size).sortedBy { it.first }, context = context, unique = unique, result = result)
+    computeTransitive(list = result.subList(oldSize, result.size).sortedBy { it.first }, context = context, unique = unique, result = result)
   }
 }
 
@@ -500,105 +501,112 @@ private suspend fun getProductPluginContentModules(
   context: BuildContext,
   productPluginSourceModuleName: String,
   layout: PlatformLayout,
+  includedPlatformModulesPartialList: List<String>,
 ): Set<ModuleItem> {
-  val result = LinkedHashSet<ModuleItem>()
-
-  withContext(Dispatchers.IO) {
-    var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
-    if (file == null) {
-      file = context.findFileInModuleSources(
-        moduleName = productPluginSourceModuleName,
-        relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml",
-      )
-      if (file == null) {
-        Span.current().addEvent("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
-        return@withContext null
+  val xIncludePathResolver = object : XIncludePathResolver {
+    override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path? {
+      if (isOptional) {
+        // It isn't safe to resolve includes at build time if they're optional.
+        // This could lead to issues when running another product using this distribution.
+        // E.g., if the corresponding module is somehow being excluded on runtime.
+        return null
       }
+
+      val loadPath = toLoadPath(relativePath)
+      if (base != null) {
+        base.resolveSibling(loadPath).takeIf { Files.exists(it) }?.let {
+          return it
+        }
+      }
+
+      for (module in includedPlatformModulesPartialList) {
+        context.findFileInModuleSources(module, loadPath)?.let {
+          return it
+        }
+      }
+      return null
     }
-
-    readXmlAsModel(file)
-  }?.let { root ->
-    collectProductModules(root = root, result = result)
-    checkCommonModuleSetIncludes(root = root, layout = layout, result = result, context = context)
   }
 
-  withContext(Dispatchers.IO) {
-    val root = readXmlAsModel(context.findFileInModuleSources(INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME, "META-INF/PlatformLangPlugin.xml")!!)
-    collectProductModules(root = root, result = result)
-    checkCommonModuleSetIncludes(root = root, layout = layout, result = result, context = context)
-  }
+  return withContext(Dispatchers.IO) {
+    listOf(
+      async {
+        var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
+        if (file == null) {
+          file = context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+          if (file == null) {
+            Span.current().addEvent("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
+            return@async emptySet()
+          }
+        }
 
+        processProductXmlDescriptor(file, productPluginSourceModuleName, layout, xIncludePathResolver, context)
+      },
+      async {
+        val file = context.findFileInModuleSources(INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME, "META-INF/PlatformLangPlugin.xml")!!
+        processProductXmlDescriptor(file, INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME, layout, xIncludePathResolver, context)
+      },
+    )
+  }.flatMapTo(LinkedHashSet()) { it.getCompleted() }
+}
+
+private fun processProductXmlDescriptor(
+  file: Path,
+  moduleName: String,
+  layout: PlatformLayout,
+  xIncludePathResolver: XIncludePathResolver,
+  context: BuildContext,
+): Set<ModuleItem> {
+  val xml = JDOMUtil.load(file)
+  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
+  val result = collectAndEmbedProductModules(root = xml, context = context)
+  val data = JDOMUtil.write(xml)
+  layout.withPatch { moduleOutputPatcher, _ ->
+    moduleOutputPatcher.patchModuleOutput(moduleName, "META-INF/${file.fileName}", data)
+  }
   return result
 }
 
-// we don't want to allow providing product modules in any x-include, check only specific ones
-private fun checkCommonModuleSetIncludes(
-  root: XmlElement,
-  layout: PlatformLayout,
-  result: LinkedHashSet<ModuleItem>,
-  context: BuildContext
-) {
-  for (tag in root.children("include")) {
-    val href = tag.getAttributeValue("href")
-    if (href != null && href.endsWith("-modules.xml") && href.endsWith("-modules.xml") && href.startsWith("/META-INF/")) {
-      handleCommonModules(layout = layout, result = result, context = context, relativePath = href.substring(1))
-    }
+// see PluginXmlPathResolver.toLoadPath
+private fun toLoadPath(relativePath: String): String {
+  return when {
+    relativePath[0] == '/' -> relativePath.substring(1)
+    relativePath.startsWith("intellij.") -> relativePath
+    else -> "META-INF/$relativePath"
   }
 }
 
-private fun handleCommonModules(layout: PlatformLayout, result: LinkedHashSet<ModuleItem>, context: BuildContext, relativePath: String) {
-  val data = readXmlAsModel(context.findFileInModuleSources(INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME, relativePath)!!)
-  collectProductModules(root = data, result = result)
-
-  @Suppress("NAME_SHADOWING")
-  layout.withPatch { moduleOutputPatcher, context ->
-    val modules = data.getChild("content")!!.children("module").joinToString(separator = "") {
-      val moduleName = it.getAttributeValue("name")!!
-      val descriptorFile = "$moduleName.xml"
-      val file = requireNotNull(context.findFileInModuleSources(moduleName, descriptorFile)) {
-        "Cannot find file $descriptorFile in module $moduleName"
-      }
-      val xml = JDOMUtil.load(file)
-      resolveNonXIncludeElement(original = xml, base = file, pathResolver = object : XIncludePathResolver {
-        override fun resolvePath(relativePath: String, base: Path?): Path {
-          val p = relativePath.removePrefix("/")
-          return requireNotNull(context.findFileInModuleSources(moduleName, p)) { "Cannot find $p in module $moduleName" }
-        }
-      })
-
-      val moduleContent = JDOMUtil.write(xml)
-      require(!moduleContent.contains("<![CDATA["))
-      """<module name="$moduleName"><![CDATA[$moduleContent]]></module>"""
-    }
-    val content = """
-        <idea>
-          <content>
-            $modules
-          </content>
-        </idea>           
-      """.trimIndent()
-    moduleOutputPatcher.patchModuleOutput(
-      moduleName = INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME,
-      path = relativePath,
-      content = content,
-      overwrite = true
-    )
+private fun getModuleDescriptor(moduleName: String, context: BuildContext): CDATA {
+  val descriptorFile = "$moduleName.xml"
+  val file = requireNotNull(context.findFileInModuleSources(moduleName, descriptorFile)) {
+    "Cannot find file $descriptorFile in module $moduleName"
   }
+  val xml = JDOMUtil.load(file)
+  resolveNonXIncludeElement(original = xml, base = file, pathResolver = object : XIncludePathResolver {
+    override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path {
+      val loadPath = relativePath.removePrefix("/")
+      return requireNotNull(context.findFileInModuleSources(moduleName, loadPath)) { "Cannot find $loadPath in module $moduleName" }
+    }
+  })
+  return CDATA(JDOMUtil.write(xml))
 }
 
-private fun collectProductModules(root: XmlElement, result: LinkedHashSet<ModuleItem>) {
-  for (module in (root.getChild("content")?.children("module") ?: emptySequence())) {
-    val moduleName = module.attributes.get("name") ?: continue
+private fun collectAndEmbedProductModules(root: Element, context: BuildContext): Set<ModuleItem> {
+  val result = LinkedHashSet<ModuleItem>()
+  for (moduleElement in (root.getChildren("content").asSequence().flatMap { it.getChildren("module") })) {
+    val moduleName = moduleElement.getAttributeValue("name") ?: continue
     val relativeOutFile = "modules/$moduleName.jar"
-    result.add(
-      ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES),
-    )
+    result.add(ModuleItem(moduleName = moduleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES))
     PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let {
       it.mapTo(result) { subModuleName ->
         ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES)
       }
     }
+
+    check(moduleElement.content.isEmpty())
+    moduleElement.setContent(getModuleDescriptor(moduleName = moduleName, context = context))
   }
+  return result
 }
 
 // Contrary to what it looks like, this is not a step back.

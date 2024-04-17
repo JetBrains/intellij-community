@@ -337,3 +337,29 @@ private class MixedDirAndJarDataLoader(
 
   override fun toString(): String = "plugin-classpath.txt based data loader"
 }
+
+private fun loadModuleFromSeparateJar(
+  pool: ZipFilePool,
+  jarFile: Path,
+  subDescriptorFile: String,
+  context: DescriptorListLoadingContext,
+  dataLoader: DataLoader,
+): RawPluginDescriptor {
+  val resolver = pool.load(jarFile)
+  try {
+    val entry = resolver.loadZipEntry(subDescriptorFile) ?: throw IllegalStateException("Module descriptor $subDescriptorFile not found in $jarFile")
+    return readModuleDescriptor(
+      input = entry,
+      readContext = context,
+      // product module is always fully resolved and do not contain `xi:include`
+      pathResolver = null,
+      dataLoader = dataLoader,
+      includeBase = null,
+      readInto = null,
+      locationSource = jarFile.toString(),
+    )
+  }
+  finally {
+    (resolver as? Closeable)?.close()
+  }
+}

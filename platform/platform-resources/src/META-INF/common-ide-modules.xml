@@ -1,4 +1,4 @@
-<idea>
+<idea-plugin>
   <content>
     <module name="intellij.platform.images.copyright"/>
 
@@ -10,4 +10,4 @@
 
     <module name="intellij.platform.collaborationTools"/>
   </content>
-</idea>
+</idea-plugin>
