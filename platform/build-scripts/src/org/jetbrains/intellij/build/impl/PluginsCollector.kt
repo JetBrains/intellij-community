@@ -43,7 +43,7 @@ internal fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModules
 
   val errors = ArrayList<List<PluginLayout>>()
   for (descriptor in descriptorMap.values) {
-    if (isPluginCompatible(descriptor, availableModulesAndPlugins, descriptorMapWithBundled)) {
+    if (isPluginCompatible(plugin = descriptor, availableModulesAndPlugins = availableModulesAndPlugins, nonCheckedModules = descriptorMapWithBundled)) {
       val layout = descriptor.pluginLayout
       val suspicious = moreThanOneLayoutMap.values.filter { it.contains(layout) }
       if (suspicious.isNotEmpty()) {
@@ -85,6 +85,8 @@ private fun isPluginCompatible(
     if (requiredPlugin != null && isPluginCompatible(requiredPlugin, availableModulesAndPlugins, nonCheckedModules)) {
       continue
     }
+
+    Span.current().addEvent("${plugin.id} is not compatible because no required dependency is available: $requiredDependency")
     return false
   }
   for (incompatiblePlugin in plugin.incompatiblePlugins) {
@@ -197,7 +199,7 @@ fun collectPluginDescriptors(
     val optionalDependencies = ArrayList<Pair<String, String>>()
     for (dependency in xml.getChildren("depends")) {
       if (dependency.getAttributeValue("optional") != "true") {
-        requiredDependencies += dependency.textTrim
+        requiredDependencies.add(dependency.textTrim)
       }
       else {
         optionalDependencies.add(Pair(dependency.textTrim, dependency.getAttributeValue("config-file")))

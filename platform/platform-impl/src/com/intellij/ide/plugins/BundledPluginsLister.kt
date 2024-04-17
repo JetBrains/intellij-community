@@ -43,6 +43,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
         val layout = HashSet<LayoutItemDescriptor>()
         val pluginIds = ArrayList<String>(plugins.size)
         val homeDir = Path.of(PathManager.getHomePath())
+
         for (plugin in plugins) {
           var jarFiles = plugin.jarFiles
           if (jarFiles == null && plugin.pluginId == PluginManagerCore.CORE_ID) {
@@ -59,22 +60,29 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           plugin.pluginAliases.mapTo(layout) {
             LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
           }
-          plugin.content.modules.mapTo(layout) {
-            LayoutItemDescriptor(
-              name = it.name,
+          for (module in plugin.content.modules) {
+            val descriptor = module.requireDescriptor()
+            layout.add(LayoutItemDescriptor(
+              name = module.name,
               kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
                 ProductInfoLayoutItemKind.productModuleV2
               }
               else {
                 ProductInfoLayoutItemKind.moduleV2
               },
-              classPath = it.requireDescriptor().jarFiles?.map {
-                file -> file.relativeTo(homeDir).invariantSeparatorsPathString
+              classPath = descriptor.jarFiles?.map { file ->
+                file.relativeTo(homeDir).invariantSeparatorsPathString
               } ?: emptyList(),
-            )
+            ))
+
+            descriptor.pluginAliases.mapTo(layout) {
+              LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
+            }
           }
         }
+
         pluginIds.sort()
+
         val fileTypeManager = FileTypeManager.getInstance()
         val extensions = ArrayList<String>()
         for (type in fileTypeManager.registeredFileTypes) {
@@ -116,10 +124,10 @@ private class BundledPluginsLister : ModernApplicationStarter() {
   }
 }
 
-private class LayoutItemDescriptor(
+private data class LayoutItemDescriptor(
   @JvmField val name: String,
   @JvmField val kind: ProductInfoLayoutItemKind,
-  @JvmField val classPath: List<String> = emptyList(),
+  @JvmField val classPath: List<String>,
 )
 
 @Suppress("EnumEntryName")

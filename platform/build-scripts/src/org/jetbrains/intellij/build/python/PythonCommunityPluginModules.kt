@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
 import kotlinx.collections.immutable.PersistentList
@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.io.copyDir
 import java.nio.file.Files
 
 object PythonCommunityPluginModules {
-  @JvmStatic
+  @JvmField
   val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
     "intellij.python.community",
     "intellij.python.community.plugin.impl",
@@ -57,14 +57,10 @@ object PythonCommunityPluginModules {
     }
   }
 
-  @JvmStatic
-  fun pythonPlugin(mainModuleName: String,
-                   name: String,
-                   modules: List<String>,
-                   body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
-    return PluginLayout.plugin(mainModuleName) { spec ->
+  fun pythonPlugin(mainModuleName: String, name: String, modules: List<String>, body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
+    return PluginLayout.plugin(mainModuleName, auto = true) { spec ->
       spec.directoryName = name
-      spec.mainJarName = "${name}.jar"
+      spec.mainJarName = "$name.jar"
       spec.withModules(modules)
       PYTHON_COMMON_MODULES.forEach { 
         spec.withModule(it, "python-common.jar")
@@ -87,10 +83,10 @@ object PythonCommunityPluginModules {
       // required for "Python Console" in intellij.python.community.impl module
       @Suppress("SpellCheckingInspection")
       spec.withProjectLibrary("libthrift")
+      spec.excludeProjectLibrary("Gradle")
       body(spec)
     }
   }
 
-  @JvmStatic
   fun getPluginBuildNumber(): String = System.getProperty("build.number", "SNAPSHOT")
 }
