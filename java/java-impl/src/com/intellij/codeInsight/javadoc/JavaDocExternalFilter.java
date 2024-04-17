@@ -18,6 +18,7 @@ import com.intellij.util.Urls;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager;
 
@@ -151,5 +152,10 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
   @Override
   protected @NotNull ParseSettings getParseSettings(@NotNull String url) {
     return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
+  }
+
+  @TestOnly
+  public void setElement(PsiElement element) {
+    myElement = element;
   }
 }
