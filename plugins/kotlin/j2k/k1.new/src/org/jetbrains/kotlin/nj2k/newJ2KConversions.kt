@@ -64,6 +64,5 @@ fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = li
     FilterImportsConversion(context),
     AddElementsInfoConversion(context),
     AddConstModifierConversion(context),
-    RedundantModifiersInOverrideConversion(context),
     EnumSyntheticValuesMethodConversion(context)
 )

@@ -1,4 +1,3 @@
-// IGNORE_K2
 interface A {
     default void foo() {
     }

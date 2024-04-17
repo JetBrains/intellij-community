@@ -11,9 +11,11 @@ import org.jetbrains.kotlin.nj2k.symbols.getDisplayFqName
 import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
-import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitorWithCommentsPrinting
-import org.jetbrains.kotlin.nj2k.types.*
+import org.jetbrains.kotlin.nj2k.types.JKContextType
+import org.jetbrains.kotlin.nj2k.types.isAnnotationMethod
+import org.jetbrains.kotlin.nj2k.types.isInterface
+import org.jetbrains.kotlin.nj2k.types.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JKCodeBuilder(context: NewJ2kConverterContext) {
@@ -61,17 +63,19 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             }
         }
 
-        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner) {
-            val defaultRedundant = modifiersListOwner is JKMethod && modifiersListOwner.isRedundantVisibility
+        private fun renderModifiersList(modifiersListOwner: JKModifiersListOwner): Int {
+            var renderedModifiers = 0
             modifiersListOwner.forEachModifier { modifierElement ->
-                if (defaultRedundant || modifierElement.isRedundant()) {
+                if (modifierElement.isRedundant()) {
                     printLeftNonCodeElements(modifierElement)
                     printRightNonCodeElements(modifierElement)
                 } else {
+                    ++renderedModifiers
                     modifierElement.accept(this)
                     printer.print(" ")
                 }
             }
+            return renderedModifiers
         }
 
         override fun visitTreeElementRaw(treeElement: JKElement) {
@@ -769,22 +773,10 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
             renderTokenElement(method.rightParen)
         }
 
-        private fun redundantModifiersForConstructor(constructor: JKConstructor): Boolean {
-            val parentClass = constructor.parentOfType<JKClass>()
-            val enumClass = parentClass?.classKind == ENUM
-            val privateClass = parentClass?.visibility == PRIVATE
-            val constructorPrivateOrInternal = (constructor.visibility == PRIVATE || constructor.visibility == INTERNAL)
-            return (enumClass && constructorPrivateOrInternal) ||
-                    (constructorPrivateOrInternal && privateClass && parentClass?.parentOfType<JKClass>() != null
-                            && constructor is JKKtPrimaryConstructor)
-        }
-
         override fun visitConstructorRaw(constructor: JKConstructor) {
             constructor.annotationList.accept(this)
             if (constructor.hasAnnotations) ensureLineBreak()
-            if (!redundantModifiersForConstructor(constructor)) {
-                renderModifiersList(constructor)
-            }
+            renderModifiersList(constructor)
             printer.print("constructor")
             renderParameterList(constructor)
 
@@ -799,13 +791,9 @@ class JKCodeBuilder(context: NewJ2kConverterContext) {
 
         override fun visitKtPrimaryConstructorRaw(ktPrimaryConstructor: JKKtPrimaryConstructor) {
             ktPrimaryConstructor.annotationList.accept(this)
-            val redundantConstructor = redundantModifiersForConstructor(ktPrimaryConstructor)
-            if (!redundantConstructor) {
-                renderModifiersList(ktPrimaryConstructor)
-            }
+            val renderedModifiersCount = renderModifiersList(ktPrimaryConstructor)
 
-            val needConstructorKeyword =
-                (ktPrimaryConstructor.hasAnnotations || ktPrimaryConstructor.visibility != PUBLIC) && !redundantConstructor
+            val needConstructorKeyword = ktPrimaryConstructor.hasAnnotations || renderedModifiersCount > 0
             if (needConstructorKeyword) {
                 printer.print("constructor")
             }

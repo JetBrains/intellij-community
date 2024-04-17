@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.nj2k.tree.Modality.*
 import org.jetbrains.kotlin.nj2k.tree.OtherModifier.OVERRIDE
 import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
+import org.jetbrains.kotlin.nj2k.types.fqName
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 interface Modifier {
@@ -151,11 +152,27 @@ internal fun JKModifierElement.isRedundant(): Boolean {
     }
     val parentClass = owner.parentOfType<JKClass>()
     val parentIsPrivate = parentClass?.visibility == PRIVATE || owner.parentOfType<JKMethod>()?.visibility == PRIVATE
+    val hasParentEnumClass = parentClass?.classKind == JKClass.ClassKind.ENUM
+    val hasNestedPrivateParentClass = parentClass?.visibility == PRIVATE && parentClass.parentOfType<JKClass>() != null
 
     return when (modifier) {
-        PUBLIC, FINAL -> !hasOverrideModifier
-        INTERNAL, PRIVATE -> parentIsPrivate && owner is JKMethod && owner !is JKConstructor
+        PUBLIC -> !hasOverrideModifier || (owner is JKMethod && (owner.isRedundantVisibility || owner.isRedundantPublicBuiltIn()))
+        FINAL -> !hasOverrideModifier
+        INTERNAL, PRIVATE -> (parentIsPrivate && owner is JKMethod && owner !is JKConstructor)
+                || (owner is JKConstructor && hasParentEnumClass)
+                || (owner is JKKtPrimaryConstructor && hasNestedPrivateParentClass)
+                || (owner is JKMethod && owner.isRedundantVisibility)
+
         OPEN, ABSTRACT -> isOpenAndAbstractByDefault
+        PROTECTED -> owner is JKMethod && owner.name.value == "clone"
+                && owner.parameters.isEmpty() && owner.returnType.type.fqName == "kotlin.Any"
         else -> false
     }
+}
+
+private fun JKMethod.isRedundantPublicBuiltIn() = when {
+    name.value == "toString" && parameters.isEmpty() && returnType.type.fqName == "kotlin.String" -> true
+    name.value == "equals" && parameters.size == 1 && returnType.type.fqName == "kotlin.Boolean" -> true
+    name.value == "hashCode" && parameters.isEmpty() && returnType.type.fqName == "kotlin.Int" -> true
+    else -> false
 }
