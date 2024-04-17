@@ -62,10 +62,81 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
       |   doLast { println 'taskFromPlugin is available in build.gradle' }
       |}""".trimMargin()
     testEmptyProject(gradleVersion) {
-      val pluginFile = writeText("buildSrc/src/main/groovy/my-plugin.gradle.kts", pluginOnKotlin)
+      val pluginFile = writeText("buildSrc/src/main/kotlin/my-plugin.gradle.kts", pluginOnKotlin)
       writeText("buildSrc/build.gradle", buildScriptForPluginModule)
       testBuildscript(buildScript) {
         assertPluginReferenceNavigatesTo(pluginFile.path)
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `Kotlin Precompiled plugin with a package in buildSrc is navigatable`(gradleVersion: GradleVersion) {
+    val pluginOnKotlin = """
+      |package com.example
+      |
+      |tasks.register(\"taskFromPlugin\"){}
+      |""".trimIndent()
+    // A module containing precompiled plugin requires including a corresponding language support plugin in a module build script
+    val buildScriptForPluginModule = """
+      |plugins {
+      |    id "org.gradle.kotlin.kotlin-dsl" version "$KOTLIN_DSL_PLUGIN_VERSION"
+      |}
+      |repositories {
+      |    mavenCentral()
+      |}""".trimIndent()
+    val buildScript = """
+      |plugins {
+      |   id '<caret>com.example.my-plugin'
+      |}
+      |tasks.named('taskFromPlugin') {
+      |   doLast { println 'taskFromPlugin is available in build.gradle' }
+      |}""".trimMargin()
+    testEmptyProject(gradleVersion) {
+      val pluginFile = writeText("buildSrc/src/main/kotlin/com/example/my-plugin.gradle.kts", pluginOnKotlin)
+      writeText("buildSrc/build.gradle", buildScriptForPluginModule)
+      testBuildscript(buildScript) {
+        assertPluginReferenceNavigatesTo(pluginFile.path)
+      }
+    }
+  }
+
+  /**
+   * Precompiled plugins on Groovy (with .gradle extension) should contain "/src/main/groovy" in a path.
+   * Precompiled plugins on Kotlin (with .gradle.kts extension) should contain "/src/main/kotlin" in a path.
+   */
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `Precompiled plugin from wrong directory is not navigatable`(gradleVersion: GradleVersion) {
+    val pluginOnGroovy = "tasks.register('taskFromPlugin') {}"
+     val buildScript = """
+      |plugins {
+      |   id '<caret>my-plugin'
+      |}""".trimMargin()
+    testEmptyProject(gradleVersion) {
+      writeText("buildSrc/wrong-directory/my-plugin.gradle", pluginOnGroovy)
+      testBuildscript(buildScript) {
+        assertPluginIdIsNotNavigatable()
+      }
+    }
+  }
+
+  /**
+   * Precompiled script plugin file should have `.gradle` or `.gradle.kts` extension. If there is a file with name = plugin ID, and path
+   * matching to precompiled plugin conditions, it could not be a navigation target.
+   */
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `file with wrong extension could not be a navigation target`(gradleVersion: GradleVersion) {
+    val buildScript = """
+      |plugins {
+      |   id '<caret>my-plugin'
+      |}""".trimMargin()
+    testEmptyProject(gradleVersion) {
+      writeText("buildSrc/src/main/groovy/my-plugin.groovy", "any file content")
+      testBuildscript(buildScript) {
+        assertPluginIdIsNotNavigatable()
       }
     }
   }
@@ -87,5 +158,12 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
     val pluginPsiFile = navigationRequest.navigatable as? PsiFile
     assertNotNull(pluginPsiFile, "Unable to find PsiFile for a target plugin")
     assertEquals(expectedPluginPath, pluginPsiFile!!.virtualFile.path)
+  }
+
+  private fun assertPluginIdIsNotNavigatable() {
+    val pluginReference = fixture.findSingleReferenceAtCaret()
+    assertNotNull(pluginReference, "A string literal with plugin ID should have a reference")
+    val pluginSymbol = pluginReference.resolveReference().filterIsInstance<GradlePluginSymbol>().firstOrNull()
+    assertNull(pluginSymbol, "The plugin reference should not be resolved because plugin file is located in a wrong directory")
   }
 }
