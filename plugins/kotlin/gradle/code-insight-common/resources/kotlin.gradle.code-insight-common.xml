@@ -5,6 +5,7 @@
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.project-wizard.idea"/>
+    <module name="kotlin.code-insight.inspections.shared"/>
   </dependencies>
 
   <extensionPoints>
@@ -29,6 +30,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleKotlinBuildSystemDependencyManager"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeGradleConfigurator"/>
   </extensions>
 </idea-plugin>

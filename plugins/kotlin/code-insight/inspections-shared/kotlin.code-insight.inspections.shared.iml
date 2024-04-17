@@ -48,5 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" />
   </component>
 </module>

@@ -76,6 +76,13 @@
             qualifiedName="org.jetbrains.kotlin.j2kConverterExtension"
             interface="org.jetbrains.kotlin.j2k.J2kConverterExtension"
             dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.buildSystemDependencyManager"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.libraryVersionProvider"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinLibraryVersionProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -320,6 +327,7 @@
 
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsModuleConfigurator"/>
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.configuration.JpsKotlinBuildSystemDependencyManager"/>
   </extensions>
 
   <!-- Line markers -->
