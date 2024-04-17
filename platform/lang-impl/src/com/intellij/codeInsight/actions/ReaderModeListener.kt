@@ -5,6 +5,7 @@ import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -81,7 +82,8 @@ private class ReaderModeEditorSettingsListener : ProjectActivity {
         }
       }
     }
-    serviceAsync<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
+    // TODO change to serviceAsync<...> when it is fixed for per-client services
+    service<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
 
     val fontPreferences = serviceAsync<AppEditorFontOptions>().fontPreferences as FontPreferencesImpl
     fontPreferences.addChangeListener({

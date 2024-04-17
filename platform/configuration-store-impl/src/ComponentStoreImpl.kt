@@ -4,6 +4,7 @@
 
 package com.intellij.configurationStore
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -465,7 +466,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     sessionProducer.setState(component = info.component, componentName = effectiveComponentName, pluginId = info.pluginId, state = state)
   }
 
-  private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
+  private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo? {
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      // Don't register components under remote clientId
+      return null
+    }
+
     val existing = components.putIfAbsent(name, info)
     if (existing != null && existing.component !== info.component) {
       LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
