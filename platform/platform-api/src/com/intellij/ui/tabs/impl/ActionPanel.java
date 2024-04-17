@@ -35,8 +35,7 @@ public final class ActionPanel extends NonOpaquePanel {
     ActionManager actionManager = ActionManager.getInstance();
     // TODO replace with a regular toolbar
     List<AnAction> children = JBTreeTraverser.<AnAction>of(
-        o -> !(o instanceof DefaultActionGroup) ? AnAction.EMPTY_ARRAY :
-             ((DefaultActionGroup)o).getChildren(null, actionManager))
+        o -> o instanceof DefaultActionGroup g ? g.getChildren(actionManager) : AnAction.EMPTY_ARRAY)
       .withRoot(group)
       .filter(o -> o.getActionUpdateThread() == ActionUpdateThread.EDT)
       .toList();

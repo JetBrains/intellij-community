@@ -410,8 +410,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
     if (actionGroups.containsKey(group)) return;
-    AnAction[] actions = group instanceof DefaultActionGroup ?
-                         group.getChildren(null, ActionManager.getInstance()) : AnAction.EMPTY_ARRAY;
+    AnAction[] actions = group instanceof DefaultActionGroup g ?
+                         g.getChildren(myActionManager) : AnAction.EMPTY_ARRAY;
 
     boolean hasRegisteredChild = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasRegisteredChild) {
