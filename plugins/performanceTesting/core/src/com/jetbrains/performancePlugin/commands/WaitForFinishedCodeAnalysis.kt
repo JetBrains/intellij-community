@@ -238,7 +238,8 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
-    ListenerState.LOG.info("daemon starting with ${fileEditors.size} unfiltered editors")
+    ListenerState.LOG.info("daemon starting with ${fileEditors.size} unfiltered editors: " +
+                           fileEditors.joinToString(separator = "\n") { it.description })
     project.service<ListenerState>().registerAnalysisStarted(fileEditors.getWorthy())
   }
 
@@ -290,7 +291,7 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
 
   companion object {
     private class DaemonAnalysisStarted(editor: TextEditor, override val wasStartedInLimitedSetup: Boolean) :
-      ExceptionWithTime(message = "Previous daemon start trace (editor = $editor)") {
+      ExceptionWithTime(message = "Previous daemon start trace (editor = ${editor.description})") {
       private var analysisFinished = false
 
       fun markAnalysisFinished() {
@@ -300,12 +301,12 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
       fun isNotFinished() = !analysisFinished
     }
 
-    private class EditorOpened(editor: TextEditor) : ExceptionWithTime(message = "Previous editor opening trace (editor = $editor)") {
+    private class EditorOpened(editor: TextEditor) : ExceptionWithTime(message = "Previous editor opening trace (editor = ${editor.description})") {
       override val wasStartedInLimitedSetup: Boolean
         get() = true //because it's unknown
     }
 
-    private class EditorEdited(editor: TextEditor) : ExceptionWithTime(message = "Previous editor edited trace (editor = $editor)") {
+    private class EditorEdited(editor: TextEditor) : ExceptionWithTime(message = "Previous editor edited trace (editor = ${editor.description})") {
       override val wasStartedInLimitedSetup: Boolean
         get() = true //because it's unknown
     }
@@ -350,4 +351,4 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
 }
 
 private val FileEditor.description: String
-  get() = "${hashCode()} ${toString()}"
+  get() = "${hashCode()} ${javaClass} ${toString()}"
