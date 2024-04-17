@@ -11,11 +11,11 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
-import icons.DvcsImplIcons
 
-private open class GetFromVersionControlAction : DumbAwareAction() {
+open class GetFromVersionControlAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions()
     val presentation = e.presentation
@@ -35,7 +35,7 @@ private open class GetFromVersionControlAction : DumbAwareAction() {
       }
     }
     else {
-      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) DvcsImplIcons.New.Vcs else null
+      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) PlatformVcsImplIcons.Vcs else null
     }
   }
 
@@ -50,6 +50,6 @@ private open class GetFromVersionControlAction : DumbAwareAction() {
   }
 }
 
-private class ProjectFromVersionControlAction : GetFromVersionControlAction()
+class ProjectFromVersionControlAction : GetFromVersionControlAction()
 
 

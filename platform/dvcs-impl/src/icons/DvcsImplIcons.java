@@ -47,7 +47,6 @@ public final class DvcsImplIcons {
     /** 16x16 */ public static final @NotNull Icon Stash = load("icons/new/stash.svg", -380414361, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("icons/new/unshelve.svg", 2111312416, 2);
     /** 16x16 */ public static final @NotNull Icon Update = load("icons/new/update.svg", -127818827, 2);
-    /** 16x16 */ public static final @NotNull Icon Vcs = load("icons/new/vcs.svg", 1023462254, 2);
   }
 
   /** 16x16 */ public static final @NotNull Icon Outgoing = load("icons/outgoing.svg", -1956407103, 2);

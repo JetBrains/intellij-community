@@ -901,5 +901,4 @@ f:icons.DvcsImplIcons$New
 - sf:Stash:javax.swing.Icon
 - sf:Unshelve:javax.swing.Icon
 - sf:Update:javax.swing.Icon
-- sf:Vcs:javax.swing.Icon
 - <init>():V

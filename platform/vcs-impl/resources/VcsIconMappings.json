@@ -1,0 +1,10 @@
+{
+  "icons": {
+    "new": {
+      "vcs.svg": [
+        "vcs/branchNode.svg",
+        "vcs/branch.svg"
+      ]
+    }
+  }
+}

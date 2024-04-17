@@ -8129,6 +8129,15 @@ c:com.intellij.openapi.vcs.vfs.VcsVirtualFolder
 - contentsToByteArray():B[]
 - getChildren():com.intellij.openapi.vfs.VirtualFile[]
 - isDirectory():Z
+c:com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction
+- com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction
+- <init>():V
 f:com.intellij.options.VcsGeneralEditorOptionsExtension
 - com.intellij.openapi.options.UiDslUnnamedConfigurable$Simple
 - <init>():V
@@ -8148,6 +8157,9 @@ c:com.intellij.peer.impl.VcsContextFactoryImpl
 - createFilePathOn(java.io.File,Z):com.intellij.openapi.vcs.FilePath
 - createFilePathOnNonLocal(java.lang.String,Z):com.intellij.openapi.vcs.FilePath
 - createLocalChangeList(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeList
+f:com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
+- sf:Vcs:javax.swing.Icon
+- <init>():V
 c:com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider
 - com.intellij.psi.PsiReferenceProvider
 - <init>():V

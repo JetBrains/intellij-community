@@ -8,6 +8,8 @@
   <xi:include href="/META-INF/VcsActions.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="VcsIconMappings.json"/>
+
     <fileType language="IgnoreLang" extensions="ignore" fieldName="INSTANCE" name="IgnoreLang file"
               implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType"/>
     <psi.referenceContributor language="IgnoreLang"
