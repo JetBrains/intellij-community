@@ -57,13 +57,8 @@ internal class GitVersionUpdateSettingsEntryProvider : SettingsEntryPointAction.
       val project = e.project ?: return
       val versionToUpdate = project.service<GitNewVersionChecker>().newAvailableVersion
       if (versionToUpdate.isNotNull) {
-        downloadAndInstallGit(project, onSuccess = ::onSuccessfulDownload)
+        downloadAndInstallGit(project, onSuccess = ::markAsRead)
       }
-    }
-
-    private fun onSuccessfulDownload() {
-      markAsRead()
-      GitExecutableManager.getInstance().dropVersionCache()
     }
   }
 }

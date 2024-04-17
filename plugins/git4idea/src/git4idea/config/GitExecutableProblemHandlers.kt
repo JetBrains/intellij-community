@@ -66,7 +66,9 @@ interface ErrorNotifier {
   @RequiresBackgroundThread
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
-    GitExecutableManager.getInstance().dropExecutableCache()
+    val gitExecutableManager = GitExecutableManager.getInstance()
+    gitExecutableManager.dropExecutableCache()
+    gitExecutableManager.dropVersionCache()
   }
 
   sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt val fix: () -> Unit) {
