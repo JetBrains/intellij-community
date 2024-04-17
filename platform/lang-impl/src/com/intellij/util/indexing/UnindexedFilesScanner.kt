@@ -28,6 +28,7 @@ import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilter
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
 import com.intellij.util.indexing.dependencies.FutureScanningRequestToken
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
+import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
 import com.intellij.util.indexing.diagnostic.*
@@ -245,13 +246,19 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true)
+    val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
+    val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen() else projectIndexingDependenciesService.newScanningToken()
     try {
-      collectIndexableFilesConcurrently(indicator, progressReporter, orderedProviders)
+      myFutureScanningRequestToken.markSuccessful()
+      projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
+
+      collectIndexableFilesConcurrently(indicator, progressReporter, orderedProviders, scanningRequest)
       if (isFullIndexUpdate() || myOnProjectOpen) {
         myProject.putUserData(CONTENT_SCANNED, true)
       }
     }
     finally {
+      projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate())
       markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false)
     }
     val scanningCompletedMessage = getLogScanningCompletedStageMessage()
@@ -348,16 +355,11 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   private fun collectIndexableFilesConcurrently(indicator: CheckPauseOnlyProgressIndicator,
                                                 progressReporter: IndexingProgressReporter,
-                                                providers: List<IndexableFilesIterator>) {
+                                                providers: List<IndexableFilesIterator>,
+                                                scanningRequest: ScanningRequestToken) {
     if (providers.isEmpty()) {
-      myFutureScanningRequestToken.markSuccessful()
       return
     }
-    val projectIndexingDependenciesService = myProject.getService(
-      ProjectIndexingDependenciesService::class.java)
-    val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen() else projectIndexingDependenciesService.newScanningToken()
-    myFutureScanningRequestToken.markSuccessful()
-    projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
 
     val sessions =
       IndexableFileScanner.EP_NAME.extensionList.map { scanner: IndexableFileScanner -> scanner.startSession(myProject) }
@@ -455,12 +457,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
     LOG.info("Scanning of " + myProject.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
-    try {
-      runTasksConcurrently(tasks)
-    }
-    finally {
-      projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate())
-    }
+    runTasksConcurrently(tasks)
   }
 
   private fun runTasksConcurrently(tasks: List<Runnable>) {
