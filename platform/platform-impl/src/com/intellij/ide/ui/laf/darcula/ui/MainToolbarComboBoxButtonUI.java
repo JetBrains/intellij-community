@@ -141,7 +141,7 @@ public final class MainToolbarComboBoxButtonUI extends DarculaButtonUI {
     Dimension size = super.getDarculaButtonSize(c, prefSize);
     if (!(c instanceof ComboBoxAction.ComboBoxButton button)) return size;
 
-    if (((ComboBoxAction.ComboBoxButton)c).isArrowVisible())
+    if (button.isArrowVisible())
       size.width += ((AbstractButton)c).getIconTextGap() + EXPAND_ICON.getIconWidth();
 
     JBInsets.addTo(size, button.getMargin());

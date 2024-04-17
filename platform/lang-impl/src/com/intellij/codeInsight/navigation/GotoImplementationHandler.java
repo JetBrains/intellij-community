@@ -112,7 +112,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     List<PsiElement> elementCandidates = new ArrayList<>();
     for (GutterMark renderer : renderers) {
       if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer) {
-        AnAction clickAction = ((LineMarkerInfo.LineMarkerGutterIconRenderer<?>)renderer).getClickAction();
+        AnAction clickAction = lineMarkerRenderer.getClickAction();
         if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction<?>)clickAction).getOriginalActionId())) {
           elementCandidates.add(lineMarkerRenderer.getLineMarkerInfo().getElement());
         }

@@ -223,7 +223,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
       if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (!libraryOrderEntry.isModuleLevel()) continue;
-        final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
+        final Set<String> entryPaths = ContainerUtil.map2Set(libraryOrderEntry.getRootUrls(OrderRootType.CLASSES),
                                                              s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
         LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
         if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {

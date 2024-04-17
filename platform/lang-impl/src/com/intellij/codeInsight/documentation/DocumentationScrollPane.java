@@ -73,7 +73,7 @@ public final class DocumentationScrollPane extends JBScrollPane {
     }
     else if (view instanceof JPanel panel) {
       Component[] components = panel.getComponents();
-      Insets viewInsets = ((JPanel)view).getInsets();
+      Insets viewInsets = panel.getInsets();
       insetWidth = viewInsets.left + viewInsets.right;
       Dimension editorPaneSize = ((DocumentationEditorPane)components[0]).getPackedSize(minWidth, maxWidth);
       int locationLabelSizeHeight = components.length > 1 && panel.getComponents()[1].isVisible()
