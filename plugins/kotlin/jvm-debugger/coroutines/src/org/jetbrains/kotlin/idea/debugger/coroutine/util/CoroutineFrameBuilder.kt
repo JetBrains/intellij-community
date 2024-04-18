@@ -53,19 +53,23 @@ class CoroutineFrameBuilder {
         /**
          * Used by CoroutineAsyncStackTraceProvider to build XFramesView
          */
-        fun build(preflightFrame: CoroutinePreflightFrame, suspendContext: SuspendContextImpl): CoroutineFrameItemLists {
+        fun build(
+            preflightFrame: CoroutinePreflightFrame,
+            suspendContext: SuspendContextImpl,
+            withPreFrames: Boolean = true
+        ): CoroutineFrameItemLists {
             val stackFrames = mutableListOf<CoroutineStackFrameItem>()
 
-            val (restoredStackTrace, _) = restoredStackTrace(
-                preflightFrame,
-            )
+            val (restoredStackTrace, _) = restoredStackTrace(preflightFrame)
             stackFrames.addAll(restoredStackTrace)
 
-            // @TODO perhaps we need to merge the dropped variables with the frame below...
-            val framesLeft = preflightFrame.threadPreCoroutineFrames
-            stackFrames.addAll(framesLeft.mapIndexedNotNull { _, stackFrameProxyImpl ->
-                suspendContext.invokeInManagerThread { buildRealStackFrameItem(stackFrameProxyImpl) }
-            })
+            if (withPreFrames) {
+                // @TODO perhaps we need to merge the dropped variables with the frame below...
+                val framesLeft = preflightFrame.threadPreCoroutineFrames
+                stackFrames.addAll(framesLeft.mapIndexedNotNull { _, stackFrameProxyImpl ->
+                    suspendContext.invokeInManagerThread { buildRealStackFrameItem(stackFrameProxyImpl) }
+                })
+            }
 
             return CoroutineFrameItemLists(stackFrames, preflightFrame.coroutineInfoData.creationStackFrames)
         }
@@ -100,10 +104,7 @@ class CoroutineFrameBuilder {
         data class CoroutineFrameItemLists(
             val frames: List<CoroutineStackFrameItem>,
             val creationFrames: List<CreationCoroutineStackFrameItem>
-        ) {
-            fun allFrames() =
-                frames + creationFrames
-        }
+        )
 
         private fun buildRealStackFrameItem(
             frame: StackFrameProxyImpl

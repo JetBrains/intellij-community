@@ -32,20 +32,26 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
-    override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): XStackFrame? {
+    override fun createStackFrames(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl): List<XStackFrame>? {
         if (debugProcess.xdebugProcess?.session is XDebugSessionImpl
             && frame !is SkipCoroutineStackFrameProxyImpl
             && AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
             val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
             val stackFrame = suspendContextImpl?.let {
                 CoroutineFrameBuilder.coroutineExitFrame(frame, it)
-            }
+            } ?: return null
 
-            if (stackFrame != null && Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
+            if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
                 showCoroutinePanel(debugProcess)
             }
 
-            return stackFrame
+            val resumeWithFrame = stackFrame.threadPreCoroutineFrames.firstOrNull()
+
+            if (threadAndContextSupportsEvaluation(suspendContextImpl, resumeWithFrame)) {
+                val frameItemLists = CoroutineFrameBuilder.build(stackFrame, suspendContextImpl, withPreFrames = false)
+                return listOf(stackFrame) + frameItemLists.frames.mapNotNull { it.createFrame(debugProcess) }
+            }
+            return listOf(stackFrame)
         }
         return null
     }

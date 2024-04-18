@@ -239,6 +239,9 @@
     <extensionPoint qualifiedName="com.intellij.debugger.asyncStackTraceProvider"
                     interface="com.intellij.debugger.engine.AsyncStackTraceProvider" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.debugger.creationStackTraceProvider"
+                    interface="com.intellij.debugger.engine.CreationStackTraceProvider" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider" dynamic="true"/>
 

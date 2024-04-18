@@ -105,9 +105,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet
-        val coroutineFrame = StackFrameInterceptor.instance?.createStackFrame(frameProxy, descriptor.debugProcess as DebugProcessImpl)
-        if (coroutineFrame != null) {
-            return listOf(coroutineFrame)
+        val coroutineFrames = StackFrameInterceptor.instance?.createStackFrames(frameProxy, descriptor.debugProcess as DebugProcessImpl)
+        if (coroutineFrames != null) {
+            return coroutineFrames
         }
 
         if (Registry.get("debugger.kotlin.inline.stack.trace.enabled").asBoolean()) {
