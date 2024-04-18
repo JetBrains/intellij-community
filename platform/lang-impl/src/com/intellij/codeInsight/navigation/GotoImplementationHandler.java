@@ -35,6 +35,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -114,12 +115,12 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer lineMarkerRenderer) {
         AnAction clickAction = lineMarkerRenderer.getClickAction();
         if (clickAction instanceof NavigateAction && actionId.equals(((NavigateAction<?>)clickAction).getOriginalActionId())) {
-          elementCandidates.add(lineMarkerRenderer.getLineMarkerInfo().getElement());
+          ContainerUtil.addIfNotNull(elementCandidates, lineMarkerRenderer.getLineMarkerInfo().getElement());
         }
       }
     }
     if (elementCandidates.size() == 1) {
-      return elementCandidates.iterator().next().getTextRange().getStartOffset();
+      return elementCandidates.get(0).getTextRange().getStartOffset();
     }
     return -1;
   }
