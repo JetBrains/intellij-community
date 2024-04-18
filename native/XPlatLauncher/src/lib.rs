@@ -35,7 +35,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Context, Result};
 use log::{debug, LevelFilter, warn};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
 use {
@@ -170,7 +170,7 @@ macro_rules! jvm_property {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
     pub productVendor: String,
@@ -179,7 +179,7 @@ pub struct ProductInfo {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
@@ -189,7 +189,7 @@ pub struct ProductInfoLaunchField {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProductInfoCustomCommandField {
     pub commands: Vec<String>,
     pub vmOptionsFilePath: Option<String>,

@@ -381,10 +381,8 @@ fn is_gc_vm_option(s: &str) -> bool {
 
 pub fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     let file = File::open(product_info_path)?;
-
     let product_info: ProductInfo = serde_json::from_reader(BufReader::new(file))?;
-    debug!("{:?}", serde_json::to_string(&product_info));
-
+    debug!("{:?}", product_info);
     Ok(product_info)
 }
 
