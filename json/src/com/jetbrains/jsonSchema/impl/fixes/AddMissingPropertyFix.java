@@ -138,7 +138,7 @@ public final class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix
       PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
                                                                                  ? myQuickFixAdapter
                                                                                    .getDefaultValueFromType(issue.propertyType)
-                                                                                 : defaultValue, processedElement);
+                                                                                 : defaultValue, processedElement.getProject());
       PsiElement adjusted = myQuickFixAdapter.addProperty(processedElement, property);
       processedElement = adjusted;
       if (isSingle) {

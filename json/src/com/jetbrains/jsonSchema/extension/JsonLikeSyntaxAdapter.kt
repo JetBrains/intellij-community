@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.extension
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -17,9 +18,9 @@ interface JsonLikeSyntaxAdapter {
    *
    * @param name the name of the property to create
    * @param value the value of the property to create (which can be any literal)
-   * @param element an existing element from the target PSI tree, which is just used for context (language, file type, etc.).
+   * @param project the project to use as context for PSI generation
    */
-  fun createProperty(name: String, value: String, element: PsiElement): PsiElement
+  fun createProperty(name: String, value: String, project: Project): PsiElement
   fun ensureComma(self: PsiElement?, newElement: PsiElement?)
   fun removeIfComma(forward: PsiElement?)
   fun fixWhitespaceBefore(initialElement: PsiElement?, element: PsiElement?): Boolean

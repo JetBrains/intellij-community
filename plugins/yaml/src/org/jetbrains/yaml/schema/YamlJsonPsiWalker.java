@@ -338,8 +338,8 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
 
     @Override
-    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull PsiElement element) {
-      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(element.getProject());
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull Project project) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(project);
       return generator.createYamlKeyValue(name, StringUtil.unquoteString(value));
     }
 

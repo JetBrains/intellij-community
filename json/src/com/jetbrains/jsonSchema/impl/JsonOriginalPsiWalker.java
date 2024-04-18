@@ -212,8 +212,8 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     private static final JsonOriginalSyntaxAdapter INSTANCE = new JsonOriginalSyntaxAdapter();
 
     @Override
-    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull PsiElement element) {
-      return new JsonElementGenerator(element.getProject()).createProperty(name, value);
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull Project project) {
+      return new JsonElementGenerator(project).createProperty(name, value);
     }
 
     @Override
