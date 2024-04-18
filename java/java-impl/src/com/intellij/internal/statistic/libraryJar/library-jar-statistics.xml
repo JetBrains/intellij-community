@@ -54,6 +54,7 @@
   <technology name="google-http-java-client" class="com.google.api.client.http.HttpResponse"/>
   <technology name="gorm" class="org.grails.datastore.gorm.GormInstanceApi"/>
   <technology name="grails" class="grails.core.GrailsClass"/>
+  <technology name="graphql-dgs" class="com.netflix.graphql.dgs.DgsQuery"/>
   <technology name="graphql-java" class="graphql.GraphQL"/>
   <technology name="groovy" class="groovy.lang.GroovyObject"/>
   <technology name="grpc" class="io.grpc.ManagedChannel"/>
