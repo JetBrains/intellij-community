@@ -142,7 +142,6 @@ final class UnindexedFilesFinder {
                        IndexingReasonExplanationLogger explanationLogger,
                        @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
-                       @Nullable VirtualFile root,
                        ScanningRequestToken indexingRequest,
                        @NotNull FilesFilterScanningHandler filterHandler) {
     this.explanationLogger = explanationLogger;

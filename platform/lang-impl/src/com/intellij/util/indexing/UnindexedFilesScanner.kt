@@ -52,7 +52,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.locks.LockSupport
 import java.util.function.Consumer
-import java.util.function.Function
 import java.util.function.Predicate
 import kotlin.concurrent.Volatile
 import kotlin.coroutines.CoroutineContext
@@ -397,21 +396,17 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           try {
             progressReporter.getSubTaskReporter().use { subTaskReporter ->
               subTaskReporter.setText(provider.rootsScanningProgressText)
-              val rootsAndFiles: ArrayDeque<Pair<VirtualFile?, ArrayDeque<VirtualFile>>> = ArrayDeque()
-              val singleProviderIteratorFactory = Function<VirtualFile?, ContentIterator> { root: VirtualFile? ->
-                val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
-                rootsAndFiles.add(Pair(root, files))
-                ContentIterator { fileOrDir: VirtualFile ->
-                  // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
-                  // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
-                  PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
-                  files.add(fileOrDir)
-                }
+              val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
+              val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
+                // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
+                // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
+                PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
+                files.add(fileOrDir)
               }
 
               scanningStatistics.startVfsIterationAndScanningApplication()
               try {
-                provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
+                provider.iterateFiles(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
               }
               finally {
                 scanningStatistics.tryFinishVfsIterationAndScanningApplication()
@@ -422,32 +417,22 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                   scanningStatistics.startFileChecking()
                   try {
                     ReadAction.nonBlocking {
-                      while (!rootsAndFiles.isEmpty()) {
-                        val (root, files) = rootsAndFiles.removeFirst()
+                      val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
+                                                        scanningRequest, myFilterHandler)
+                      val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
+                                                                scanningStatistics, perProviderSink)
+                      if (!rootIterator.mayBeUsed()) {
+                        LOG.warn("Iterator based on $provider can't be used.")
+                        return@nonBlocking
+                      }
+                      while (files.isNotEmpty()) {
+                        val file = files.removeFirst()
                         try {
-                          if (root?.isValid == false) continue
-                          val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
-                                                            root, scanningRequest, myFilterHandler)
-                          val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
-                                                                    scanningStatistics, perProviderSink)
-                          if (!rootIterator.mayBeUsed()) {
-                            LOG.warn("Iterator based on $provider can't be used.")
-                            continue
-                          }
-                          while (files.isNotEmpty()) {
-                            val file = files.removeFirst()
-                            try {
-                              if (file.isValid)
-                                rootIterator.processFile(file)
-                            }
-                            catch (e: ProcessCanceledException) {
-                              files.addFirst(file)
-                              throw e
-                            }
-                          }
+                          if (file.isValid)
+                            rootIterator.processFile(file)
                         }
                         catch (e: ProcessCanceledException) {
-                          rootsAndFiles.addFirst(root to files)
+                          files.addFirst(file)
                           throw e
                         }
                       }
