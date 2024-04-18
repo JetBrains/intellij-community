@@ -16,11 +16,13 @@ import java.awt.Graphics
 import javax.swing.BoxLayout
 import kotlin.math.min
 
-internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLinesPanel>() {
+internal class StickyLinesPanel(
+  private val editor: EditorEx,
+  private val shadowPainter: StickyLineShadowPainter,
+) : JBPanel<StickyLinesPanel>() {
 
   // ui
   private val layeredPane: JBLayeredPane = JBLayeredPane()
-  private val shadowPainter: StickyLineShadowPainter = StickyLineShadowPainter()
 
   // ui + state
   private val stickyLinesComp: MutableList<StickyLineComponent> = mutableListOf()
@@ -211,7 +213,7 @@ internal class StickyLinesPanel(private val editor: EditorEx) : JBPanel<StickyLi
 
   override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
     super.setBounds(x, y, width, height)
-    shadowPainter.updateShadow(this, width, height)
+    shadowPainter.updateShadow(width, height, editor.lineHeight)
   }
 
   override fun paintComponent(g: Graphics?) {
