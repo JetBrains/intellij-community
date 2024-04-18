@@ -167,9 +167,6 @@
   <xi:include href="/META-INF/smRunner.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/smRunnerVcs.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/duplicates-analysis.xml">
     <xi:fallback/>
   </xi:include>
