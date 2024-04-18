@@ -4,12 +4,10 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.CDATA
@@ -493,8 +491,6 @@ private fun computeTransitive(
   }
 }
 
-private const val INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME = "intellij.platform.resources"
-
 // result _must be_ consistent, do not use Set.of or HashSet here
 private suspend fun getProductPluginContentModules(
   context: BuildContext,
@@ -528,25 +524,13 @@ private suspend fun getProductPluginContentModules(
   }
 
   return withContext(Dispatchers.IO) {
-    listOf(
-      async {
-        var file = context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
-        if (file == null) {
-          file = context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
-          if (file == null) {
-            Span.current().addEvent("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
-            return@async emptySet()
-          }
-        }
+    val file = requireNotNull(
+      context.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
+      ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+    ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
-        processProductXmlDescriptor(file, productPluginSourceModuleName, layout, xIncludePathResolver, context)
-      },
-      async {
-        val file = context.findFileInModuleSources(INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME, "META-INF/PlatformLangPlugin.xml")!!
-        processProductXmlDescriptor(file, INTELLIJ_PLATFORM_RESOURCES_MODULE_NAME, layout, xIncludePathResolver, context)
-      },
-    )
-  }.flatMapTo(LinkedHashSet()) { it.getCompleted() }
+    processProductXmlDescriptor(file = file, moduleName = productPluginSourceModuleName, layout = layout, xIncludePathResolver = xIncludePathResolver, context = context)
+  }
 }
 
 private fun processProductXmlDescriptor(

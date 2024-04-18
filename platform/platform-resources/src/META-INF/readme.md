@@ -6,6 +6,8 @@ A set of product modules that are essential for any IDE based on IJ Platform.
 
 A set of product modules for regular IDE. For example, for WebStorm, but not for Fleet backend.
 
+This set includes [essential-modules](#essential-modulesxml) and [vcs-modules](#vcs-modulesxml-) sets.
+
 ## [vcs-modules.xml](common-ide-modules.xml) 
 
 A set of product modules for regular IDE with VCS support.
