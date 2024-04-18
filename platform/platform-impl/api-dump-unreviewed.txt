@@ -15157,7 +15157,6 @@ a:com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsing
 - onRecalculationEnd(com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent):V
 - recalculationEnds():V
 - reset():V
-f:com.intellij.openapi.editor.impl.stickyLines.StickyLineShadowPainterKt
 f:com.intellij.openapi.editor.impl.view.EditorPainter
 - com.intellij.openapi.editor.impl.TextDrawingCallback
 - sf:EDITOR_TAB_PAINTING:java.lang.String
