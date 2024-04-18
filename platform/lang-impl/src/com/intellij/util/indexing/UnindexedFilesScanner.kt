@@ -75,7 +75,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   private val myIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
   private val myFilterHandler: FilesFilterScanningHandler
-  private val myPusher: PushedFilePropertiesUpdater
   private val myProvidedStatusMark: StatusMark?
   private val myFutureScanningRequestToken: FutureScanningRequestToken
   private var flushQueueAfterScanning = true
@@ -125,7 +124,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     myFilterHandler = if (isIndexingFilesFilterUpToDate
     ) IdleFilesFilterScanningHandler(filterHolder)
     else UpdatingFilesFilterScanningHandler(filterHolder)
-    myPusher = PushedFilePropertiesUpdater.getInstance(myProject)
     myProvidedStatusMark = if (predefinedIndexableFilesIterators == null) null else mark
     LOG.assertTrue(this.predefinedIndexableFilesIterators == null || !predefinedIndexableFilesIterators.isEmpty())
     LOG.assertTrue( // doing partial scanning of only dirty files on startup
@@ -212,16 +210,17 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                    progressReporter: IndexingProgressReporter,
                    markRef: Ref<StatusMark>) {
     var snapshot = snapshot
+    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.name))
     markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
     try {
-      if (myPusher is PushedFilePropertiesUpdaterImpl) {
-        myPusher.performDelayedPushTasks()
+      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
+      if (pusher is PushedFilePropertiesUpdaterImpl) {
+        pusher.performDelayedPushTasks()
       }
     }
     finally {
       markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
     }
-    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.name))
 
     snapshot = PerformanceWatcher.takeSnapshot()
 
