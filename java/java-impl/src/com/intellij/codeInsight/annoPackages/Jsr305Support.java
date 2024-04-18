@@ -16,6 +16,7 @@ import java.util.Set;
 public final class Jsr305Support implements AnnotationPackageSupport {
   public static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   public static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
+  public static final String JAVAX_ANNOTATION_CHECK_FOR_NULL = "javax.annotation.CheckForNull";
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
 
   @Override
@@ -69,10 +70,18 @@ public final class Jsr305Support implements AnnotationPackageSupport {
    * @return nicknamed nullability declared by this annotation; null if this annotation is not a nullability nickname annotation
    */
   public static @Nullable Nullability getNickNamedNullability(@NotNull PsiClass psiClass) {
-    if (AnnotationUtil.findAnnotation(psiClass, TYPE_QUALIFIER_NICKNAME) == null) return null;
+    PsiModifierList modifierList = psiClass.getModifierList();
+    if (modifierList == null) return null;
+    if (!modifierList.hasAnnotation(TYPE_QUALIFIER_NICKNAME)) return null;
 
-    PsiAnnotation nonNull = AnnotationUtil.findAnnotation(psiClass, JAVAX_ANNOTATION_NONNULL);
-    return nonNull != null ? extractNullityFromWhenValue(nonNull) : null;
+    PsiAnnotation nonNull = modifierList.findAnnotation(JAVAX_ANNOTATION_NONNULL);
+    if (nonNull != null) {
+      return extractNullityFromWhenValue(nonNull);
+    }
+    if (modifierList.hasAnnotation(JAVAX_ANNOTATION_CHECK_FOR_NULL)) {
+      return Nullability.NULLABLE;
+    }
+    return null;
   }
 
   public static @Nullable Nullability extractNullityFromWhenValue(@NotNull PsiAnnotation nonNull) {
@@ -101,7 +110,7 @@ public final class Jsr305Support implements AnnotationPackageSupport {
   public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
       case NOT_NULL -> Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
-      case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");
+      case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, JAVAX_ANNOTATION_CHECK_FOR_NULL);
       case UNKNOWN -> Collections.emptyList();
     };
   }
