@@ -159,3 +159,15 @@ fun isResolvableInScope(typeToCheck: KtType, scope: KtElement, typeParameters: M
     }
     return true
 }
+
+
+context(KtAnalysisSession)
+fun approximateWithResolvableType(type: KtType?, scope: KtElement): KtType? {
+    if (type == null) return null
+    if (!(type is KtNonErrorClassType && type.classSymbol is KtAnonymousObjectSymbol)
+        && isResolvableInScope(type, scope, mutableSetOf())
+    ) return type
+    return type.getAllSuperTypes().firstOrNull {
+        isResolvableInScope(it, scope, mutableSetOf())
+    }
+}

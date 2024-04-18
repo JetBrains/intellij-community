@@ -49,11 +49,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction;
+import static org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducerKt.TYPE_REFERENCE_VARIABLE_NAME;
 
 public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> extends InplaceVariableIntroducer<KtExpression> {
     private static final Key<KotlinInplaceVariableIntroducer> ACTIVE_INTRODUCER = Key.create("ACTIVE_INTRODUCER");
-
-    public static final String TYPE_REFERENCE_VARIABLE_NAME = "TypeReferenceVariable";
 
     private static final Function0<Boolean> TRUE = new Function0<>() {
         @Override

@@ -12,6 +12,7 @@ import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
@@ -37,27 +38,27 @@ import javax.swing.JPanel
 class KotlinIntroduceParameterDialog private constructor(
   project: Project,
   val editor: Editor,
-  val descriptor: IntroduceParameterDescriptor,
+  val descriptor: IntroduceParameterDescriptor<FunctionDescriptor>,
   private val lambdaExtractionDescriptor: ExtractableCodeDescriptor?,
   nameSuggestions: Array<String>,
   typeSuggestions: List<KotlinType>,
-  val helper: KotlinIntroduceParameterHelper
+  val helper: KotlinIntroduceParameterHelper<FunctionDescriptor>
 ) : RefactoringDialog(project, true) {
     constructor(
         project: Project,
         editor: Editor,
-        descriptor: IntroduceParameterDescriptor,
+        descriptor: IntroduceParameterDescriptor<FunctionDescriptor>,
         nameSuggestions: Array<String>,
         typeSuggestions: List<KotlinType>,
-        helper: KotlinIntroduceParameterHelper
+        helper: KotlinIntroduceParameterHelper<FunctionDescriptor>
     ) : this(project, editor, descriptor, null, nameSuggestions, typeSuggestions, helper)
 
     constructor(
         project: Project,
         editor: Editor,
-        introduceParameterDescriptor: IntroduceParameterDescriptor,
+        introduceParameterDescriptor: IntroduceParameterDescriptor<FunctionDescriptor>,
         lambdaExtractionDescriptor: ExtractableCodeDescriptor,
-        helper: KotlinIntroduceParameterHelper
+        helper: KotlinIntroduceParameterHelper<FunctionDescriptor>
     ) : this(
         project,
         editor,

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.rename.ResolveSnapshotProvider
 import com.intellij.refactoring.rename.ResolveSnapshotProvider.ResolveSnapshot
@@ -120,6 +121,14 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 is KtSuperTypeCallEntry -> result.add(KotlinFunctionCallUsage(callElement, ktCallableDeclaration))
             }
             true
+        }
+
+        result.sortWith { u1, u2 ->
+            if (u1.javaClass == u2.javaClass) {
+                PsiUtilCore.compareElementsByPosition(u1.element, u2.element)
+            } else {
+                result.indexOf(u1) - result.indexOf(u2)
+            }
         }
 
         return result.toTypedArray()

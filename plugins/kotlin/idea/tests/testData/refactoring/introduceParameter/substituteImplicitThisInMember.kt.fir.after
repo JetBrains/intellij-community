@@ -5,18 +5,16 @@ class A(val a: Int) {
     fun foo(i: Int): Int {
         return i / 2
     }
-
-    fun test() {
-        val a1 = A(1)
-        foo(a + a1.a)
-    }
 }
 
 fun test() {
-    val t = with(A(1)) {
-        val a1 = A(2)
-        foo(a + a1.a)
+    val a = A(1)
+    val i = A(2)
+    a.foo(a.a + i.a)
+    with(A(1)) {
+        val i1 = A(2)
+        foo(this.a + i1.a)
+        val i2 = A(2)
+        this.foo(this.a + i2.a)
     }
 }
-
-// IGNORE_K2

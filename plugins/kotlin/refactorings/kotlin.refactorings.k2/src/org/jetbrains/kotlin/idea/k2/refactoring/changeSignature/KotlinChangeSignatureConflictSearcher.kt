@@ -63,7 +63,9 @@ class KotlinChangeSignatureConflictSearcher(
 
 
         val parametersToRemove = originalInfo.parametersToRemove
-        checkParametersToDelete(function, parametersToRemove)
+        if (originalInfo.checkUsedParameters) {
+            checkParametersToDelete(function, parametersToRemove)
+        }
 
         for (parameter in originalInfo.getNonReceiverParameters()) {
 
@@ -98,7 +100,9 @@ class KotlinChangeSignatureConflictSearcher(
         for (usageInfo in usageInfos) {
             when (usageInfo) {
                 is KotlinOverrideUsageInfo -> {
-                    checkParametersToDelete(usageInfo.element as KtCallableDeclaration, parametersToRemove)
+                    if (originalInfo.checkUsedParameters) {
+                        checkParametersToDelete(usageInfo.element as KtCallableDeclaration, parametersToRemove)
+                    }
                 }
                 is OverriderUsageInfo -> {
                     JavaChangeSignatureUsageProcessor.ConflictSearcher.checkParametersToDelete(usageInfo.overridingMethod, parametersToRemove, result)

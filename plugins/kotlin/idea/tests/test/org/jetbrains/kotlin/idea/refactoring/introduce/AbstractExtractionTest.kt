@@ -35,6 +35,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.*
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
@@ -190,8 +191,8 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
         doTest { file ->
             val fileText = file.text
 
-            open class HelperImpl : KotlinIntroduceParameterHelper {
-                override fun configure(descriptor: IntroduceParameterDescriptor): IntroduceParameterDescriptor = with(descriptor) {
+            open class HelperImpl : KotlinIntroduceParameterHelper<FunctionDescriptor> {
+                override fun configure(descriptor: IntroduceParameterDescriptor<FunctionDescriptor>): IntroduceParameterDescriptor<FunctionDescriptor> = with(descriptor) {
                     val singleReplace = InTextDirectivesUtils.isDirectiveDefined(fileText, "// SINGLE_REPLACE")
                     val withDefaultValue = InTextDirectivesUtils.getPrefixedBoolean(fileText, "// WITH_DEFAULT_VALUE:") ?: true
 
@@ -202,7 +203,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
                 }
             }
 
-            class LambdaHelperImpl : HelperImpl(), KotlinIntroduceLambdaParameterHelper {
+            class LambdaHelperImpl : HelperImpl(), KotlinIntroduceLambdaParameterHelper<FunctionDescriptor> {
                 override fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = with(descriptor) {
                     if (name.isEmpty()) copy(suggestedNames = listOf(DUMMY_FUN_NAME)) else this
                 }
@@ -216,7 +217,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
             with(handler) {
                 val target = (file as KtFile).findElementByCommentPrefix("// TARGET:") as? KtNamedDeclaration
                 if (target != null) {
-                    selectElement(fixture.editor, file, true, listOf(ElementKind.EXPRESSION)) { element ->
+                    selectElement(fixture.editor, file, false, listOf(ElementKind.EXPRESSION)) { element ->
                         invoke(fixture.project, fixture.editor, element as KtExpression, target)
                     }
                 } else {

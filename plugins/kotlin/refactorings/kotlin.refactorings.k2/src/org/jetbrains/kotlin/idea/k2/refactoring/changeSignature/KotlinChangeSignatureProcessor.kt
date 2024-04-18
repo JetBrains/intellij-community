@@ -14,7 +14,7 @@ import com.intellij.usageView.UsageViewUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinUsagesViewDescriptor
 
-class KotlinChangeSignatureProcessor(project: Project, changeInfo: KotlinChangeInfo) : ChangeSignatureProcessorBase(project, changeInfo) {
+open class KotlinChangeSignatureProcessor(project: Project, changeInfo: KotlinChangeInfo) : ChangeSignatureProcessorBase(project, changeInfo) {
     init {
         // we must force collecting references to other parameters now before the signature is changed
         changeInfo.newParameters.forEach { it.collectDefaultValueParameterReferences(changeInfo.method) }
