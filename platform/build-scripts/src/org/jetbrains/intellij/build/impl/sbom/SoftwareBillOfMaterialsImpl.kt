@@ -100,6 +100,7 @@ internal class SoftwareBillOfMaterialsImpl(
     val currentYear = Instant.ofEpochSecond(context.options.buildDateInSeconds)
       .let { ZonedDateTime.ofInstant(it, ZoneOffset.UTC) }
       .year
+    @Suppress("HardCodedStringLiteral")
     Options.DistributionLicense(
       name = "JetBrains User Agreement",
       text = Jsoup.parse(Files.readString(eula)).text(),
@@ -186,9 +187,8 @@ internal class SoftwareBillOfMaterialsImpl(
     }.flatMap { (distribution, filesWithChecksums) ->
       filesWithChecksums.map {
         val document = spdxDocument(it.path.name)
-        val rootPackage = spdxPackage(document, it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
+        val rootPackage = spdxPackageForFile(document, it.path.name, sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
           setVersionInfo(version)
-            .setSupplier(creator)
             .setDownloadLocation(baseDownloadUrl?.let { url ->
               "$url/${it.path.name}"
             } ?: SpdxConstants.NOASSERTION_VALUE)
@@ -213,15 +213,13 @@ internal class SoftwareBillOfMaterialsImpl(
   private suspend fun SpdxDocument.runtimePackage(os: OsFamily, arch: JvmArchitecture): SpdxPackage {
     val checksums = Checksums(context.bundledRuntime.findArchive(os = os, arch = arch))
     val version = context.bundledRuntime.build
-    val supplier = "Organization: ${Suppliers.JETBRAINS}"
-    val runtimeArchivePackage = spdxPackage(
+    val runtimeArchivePackage = spdxPackageForFile(
       this,
-      name = context.bundledRuntime.archiveName(os = os, arch = arch), licenseDeclared = jetBrainsOwnLicense,
+      name = context.bundledRuntime.archiveName(os = os, arch = arch),
       sha256sum = checksums.sha256sum,
       sha1sum = checksums.sha1sum
     ) {
       setVersionInfo(version)
-      setSupplier(supplier)
       setDownloadLocation(context.bundledRuntime.downloadUrlFor(os = os, arch = arch))
     }
     claimContainedFiles(spdxPackage = runtimeArchivePackage, document = this, license = license)
@@ -230,7 +228,7 @@ internal class SoftwareBillOfMaterialsImpl(
      */
     val extractedRuntimePackage = spdxPackage(this, name = "./jbr/**") {
       setVersionInfo(version)
-      setSupplier(supplier)
+      setSupplier(runtimeArchivePackage.supplier.get())
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
     extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.EXPANDED_FROM_ARCHIVE)
@@ -303,7 +301,7 @@ internal class SoftwareBillOfMaterialsImpl(
 
   /**
    * [org.jetbrains.intellij.build.BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP] step is skipped,
-   * but documents with all distributions content specified will be built anyway.
+   * but documents with every distribution content specified will be built anyway.
    */
   private suspend fun generateFromContentReport(): List<Path> {
     return SUPPORTED_DISTRIBUTIONS.asFlow().filter { (os, arch) ->
@@ -397,10 +395,9 @@ internal class SoftwareBillOfMaterialsImpl(
         it.path.startsWith(context.paths.distAllDir) -> context.paths.distAllDir.relativize(it.path)
         else -> return@associate it.path to null
       }
-      val filePackage = spdxPackage(document, "./$filePath", sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
+      val filePackage = spdxPackageForFile(document, "./$filePath", sha256sum = it.sha256sum, sha1sum = it.sha1sum) {
         setVersionInfo(version)
           .setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
-          .setSupplier(creator)
       }
       claimContainedFiles(spdxPackage = filePackage, document = document, license = license)
       validate(filePackage)
@@ -715,130 +712,135 @@ internal class SoftwareBillOfMaterialsImpl(
       }
     }
   }
-}
 
-private fun spdxPackage(
-  spdxDocument: SpdxDocument,
-  name: String,
-  licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(), sha256sum: String,
-  sha1sum: String,
-  init: SpdxPackageBuilder.() -> Unit
-): SpdxPackage {
-  return spdxPackage(spdxDocument, name, licenseDeclared) {
-    addFile(spdxDocument.createSpdxFile(
-      spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri),
-      name, licenseDeclared, null, SpdxConstants.NONE_VALUE,
-      spdxDocument.createChecksum(ChecksumAlgorithm.SHA1, sha1sum)
-    ).addChecksum(spdxDocument.createChecksum(ChecksumAlgorithm.SHA256, sha256sum)).build())
-    init()
-  }
-}
-
-private fun extractedLicenseInfo(spdxDocument: SpdxDocument, name: String, text: String, url: String?): ExtractedLicenseInfo {
-  // must only contain letters, numbers, "." and "-" and must begin with "LicenseRef-"
-  val licenseRefId = "LicenseRef-$name"
-    .replace(" ", "-")
-    .replace("/", "-")
-    .replace("+", "-")
-    .replace("_", "-")
-  val licenseInfo = ExtractedLicenseInfo(
-    spdxDocument.modelStore, spdxDocument.documentUri, licenseRefId,
-    spdxDocument.copyManager, true
-  )
-  licenseInfo.extractedText = text
-  if (url != null) licenseInfo.seeAlso.add(url)
-  validate(licenseInfo)
-  spdxDocument.addExtractedLicenseInfos(licenseInfo)
-  return licenseInfo
-}
-
-private fun claimContainedFiles(
-  spdxPackage: SpdxPackage,
-  files: Collection<SpdxFile> = spdxPackage.files,
-  document: SpdxDocument,
-  license: Options.DistributionLicense,
-) {
-  spdxPackage.copyrightText = license.copyrightText
-  spdxPackage.licenseDeclared = extractedLicenseInfo(
-    spdxDocument = document,
-    name = license.name,
-    text = license.text,
-    url = license.url
-  )
-  spdxPackage.setPackageVerificationCode(
-    document.createPackageVerificationCode(
-      packageVerificationCode(files),
-      emptyList()
-    )
-  )
-  spdxPackage.setFilesAnalyzed(true)
-}
-
-private fun validate(modelObject: ModelObject) {
-  val errors = modelObject.verify()
-  check(errors.none()) {
-    errors.joinToString(separator = "\n")
-  }
-}
-
-private fun spdxPackage(
-  spdxDocument: SpdxDocument,
-  name: String,
-  licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
-  copyrightText: String? = null,
-  init: SpdxPackageBuilder.() -> Unit
-): SpdxPackage {
-  return spdxDocument.createPackage(
-    spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri), name,
-    SpdxNoAssertionLicense(spdxDocument.modelStore, spdxDocument.documentUri),
-    copyrightText ?: SpdxConstants.NOASSERTION_VALUE,
-    licenseDeclared
-  ).setFilesAnalyzed(false).apply(init).build()
-}
-
-/**
- * See https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
- */
-private fun packageVerificationCode(files: Collection<SpdxFile>): String {
-  check(files.any())
-  return files.asSequence()
-    .map { it.sha1 }.sorted()
-    .joinToString(separator = "")
-    .let(DigestUtils::sha1Hex)
-}
-
-/**
- * See https://pypi.org/project/ntia-conformance-checker/
- */
-private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildContext) {
-  if (Docker.isAvailable && !SystemInfoRt.isWindows) {
-    val ntiaChecker = "ntia-checker"
-    suspendingRetryWithExponentialBackOff {
-      runProcess(
-        "docker", "build", ".", "--tag", ntiaChecker,
-        workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
-        inheritOut = true,
-      )
+  private fun spdxPackageForFile(
+    spdxDocument: SpdxDocument,
+    name: String,
+    sha256sum: String, sha1sum: String,
+    init: SpdxPackageBuilder.() -> Unit
+  ): SpdxPackage {
+    return spdxPackage(spdxDocument, name) {
+      addFile(spdxDocument.createSpdxFile(
+          spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri),
+          name, SpdxNoAssertionLicense(), null, SpdxConstants.NONE_VALUE,
+          spdxDocument.createChecksum(ChecksumAlgorithm.SHA1, sha1sum)
+        ).addChecksum(spdxDocument.createChecksum(ChecksumAlgorithm.SHA256, sha256sum)).build())
+      init()
     }
-    coroutineScope {
-      documents.forEach {
-        launch {
-          try {
-            runProcess(
-              "docker", "run", "--rm",
-              "--volume=${it.parent}:${it.parent}:ro",
-              ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose",
-              inheritOut = true,
-            )
-          }
-          catch (e: Exception) {
-            context.messages.error(
-              """
-               Generated SBOM $it is not NTIA-conformant. 
-               Please search for 'Components missing an supplier' error message and specify all missing suppliers.
-               You may use https://package-search.jetbrains.com/ to search for them.
-            """.trimIndent(), e
-            )
+  }
+
+  private fun extractedLicenseInfo(spdxDocument: SpdxDocument, name: String, text: String, url: String?): ExtractedLicenseInfo {
+    // must only contain letters, numbers, "." and "-" and must begin with "LicenseRef-"
+    val licenseRefId = "LicenseRef-$name"
+      .replace(" ", "-")
+      .replace("/", "-")
+      .replace("+", "-")
+      .replace("_", "-")
+    val licenseInfo = ExtractedLicenseInfo(
+      spdxDocument.modelStore, spdxDocument.documentUri, licenseRefId,
+      spdxDocument.copyManager, true
+    )
+    licenseInfo.extractedText = text
+    if (url != null) licenseInfo.seeAlso.add(url)
+    validate(licenseInfo)
+    spdxDocument.addExtractedLicenseInfos(licenseInfo)
+    return licenseInfo
+  }
+
+  private fun claimContainedFiles(
+    spdxPackage: SpdxPackage,
+    files: Collection<SpdxFile> = spdxPackage.files,
+    document: SpdxDocument,
+    license: Options.DistributionLicense,
+  ) {
+    spdxPackage.setSupplier(creator)
+    spdxPackage.copyrightText = license.copyrightText
+    spdxPackage.licenseDeclared = extractedLicenseInfo(
+      spdxDocument = document,
+      name = license.name,
+      text = license.text,
+      url = license.url
+    )
+    spdxPackage.licenseConcluded = spdxPackage.licenseDeclared
+    files.forEach {
+      it.copyrightText = license.copyrightText
+      it.licenseConcluded = spdxPackage.licenseConcluded
+    }
+    spdxPackage.setPackageVerificationCode(
+      document.createPackageVerificationCode(
+        packageVerificationCode(files),
+        emptyList()
+      )
+    )
+    spdxPackage.setFilesAnalyzed(true)
+  }
+
+  private fun validate(modelObject: ModelObject) {
+    val errors = modelObject.verify()
+    check(errors.none()) {
+      errors.joinToString(separator = "\n")
+    }
+  }
+
+  private fun spdxPackage(
+    spdxDocument: SpdxDocument,
+    name: String,
+    licenseDeclared: AnyLicenseInfo = SpdxNoAssertionLicense(),
+    copyrightText: String? = null,
+    init: SpdxPackageBuilder.() -> Unit
+  ): SpdxPackage {
+    return spdxDocument.createPackage(
+      spdxDocument.modelStore.getNextId(IdType.SpdxId, spdxDocument.documentUri), name,
+      SpdxNoAssertionLicense(spdxDocument.modelStore, spdxDocument.documentUri),
+      copyrightText ?: SpdxConstants.NOASSERTION_VALUE,
+      licenseDeclared
+    ).setFilesAnalyzed(false).apply(init).build()
+  }
+
+  /**
+   * See https://spdx.github.io/spdx-spec/v2.3/package-information/#79-package-verification-code-field
+   */
+  private fun packageVerificationCode(files: Collection<SpdxFile>): String {
+    check(files.any())
+    return files.asSequence()
+      .map { it.sha1 }.sorted()
+      .joinToString(separator = "")
+      .let(DigestUtils::sha1Hex)
+  }
+
+  /**
+   * See https://pypi.org/project/ntia-conformance-checker/
+   */
+  private suspend fun checkNtiaConformance(documents: List<Path>, context: BuildContext) {
+    if (Docker.isAvailable && !SystemInfoRt.isWindows) {
+      val ntiaChecker = "ntia-checker"
+      suspendingRetryWithExponentialBackOff {
+        runProcess(
+          "docker", "build", ".", "--tag", ntiaChecker,
+          workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
+          inheritOut = true,
+        )
+      }
+      coroutineScope {
+        documents.forEach {
+          launch {
+            try {
+              runProcess(
+                "docker", "run", "--rm",
+                "--volume=${it.parent}:${it.parent}:ro",
+                ntiaChecker, "--file", "${it.toAbsolutePath()}", "--verbose",
+                inheritOut = true,
+              )
+            }
+            catch (e: Exception) {
+              context.messages.error(
+                """
+                   Generated SBOM $it is not NTIA-conformant. 
+                   Please search for 'Components missing an supplier' error message and specify all missing suppliers.
+                   You may use https://package-search.jetbrains.com/ to search for them.
+                """.trimIndent(), e
+              )
+            }
           }
         }
       }
