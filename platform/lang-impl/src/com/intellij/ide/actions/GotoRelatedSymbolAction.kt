@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.getRelatedItemsPopup
 import com.intellij.lang.LangBundle
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.MessageType
@@ -61,7 +62,7 @@ class GotoRelatedSymbolAction : AnAction() {
   companion object {
     @TestOnly
     @JvmStatic
-    fun getItems(psiFile: PsiFile, editor: Editor?, dataContext: DataContext?): List<GotoRelatedItem> {
+    fun getItems(psiFile: PsiFile, editor: Editor?, dataContext: DataContext = SimpleDataContext.EMPTY_CONTEXT): List<GotoRelatedItem> {
       return collectRelatedItems(getContextElement(psiFile, editor), dataContext)
     }
 

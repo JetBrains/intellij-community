@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.codeInsight.navigation.collectRelatedItems
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.PsiDocumentManager
@@ -57,7 +58,7 @@ abstract class AbstractKotlinGotoRelatedSymbolMultiModuleTest : AbstractKotlinNa
 
     override fun doNavigate(editor: Editor, file: PsiFile): GotoTargetHandler.GotoData {
         val source = file.findElementAt(editor.caretModel.offset)!!
-        val relatedItems = collectRelatedItems(contextElement = source, dataContext = null)
+        val relatedItems = collectRelatedItems(contextElement = source, dataContext = SimpleDataContext.EMPTY_CONTEXT)
         return GotoTargetHandler.GotoData(source, relatedItems.map { it.element }.toTypedArray(), emptyList())
     }
 }
