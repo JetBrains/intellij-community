@@ -22,7 +22,6 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
-import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
@@ -167,8 +166,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
-    ProjectIndexingDependenciesService service = myProject.getService(ProjectIndexingDependenciesService.class);
-    ScanningRequestToken token = service.newScanningToken();
     trackSuspends(ProgressSuspender.getSuspender(indicator), this,
                   () -> projectDumbIndexingHistory.suspendStages(Instant.now()),
                   () -> projectDumbIndexingHistory.stopSuspendingStages(Instant.now()));
@@ -178,7 +175,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
         runWithMergingDependentCacheInvalidations(() -> indexFiles(projectDumbIndexingHistory, indicator));
     }
     catch (Throwable e) {
-      token.markUnsuccessful();
       projectDumbIndexingHistory.setWasInterrupted();
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
@@ -186,7 +182,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       throw e;
     }
     finally {
-      service.completeToken(token, token.isSuccessful());
       IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory);
     }
   }
