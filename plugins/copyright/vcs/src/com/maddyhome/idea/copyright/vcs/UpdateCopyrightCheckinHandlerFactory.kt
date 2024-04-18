@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.maddyhome.idea.copyright.actions
+package com.maddyhome.idea.copyright.vcs
 
 import com.intellij.copyright.CopyrightBundle
 import com.intellij.openapi.application.readAction
@@ -16,17 +16,18 @@ import com.intellij.platform.util.progress.withProgressText
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtilCore
+import com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerState
+import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
+private class UpdateCopyrightCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     return UpdateCopyrightCheckinHandler(panel.project)
   }
 }
 
-private class UpdateCopyrightCheckinHandler(val project: Project) : CheckinHandler(), CommitCheck {
-
+private class UpdateCopyrightCheckinHandler(private val project: Project) : CheckinHandler(), CommitCheck {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     return BooleanCommitOption.create(project, this, disableWhenDumb = false,
                                       CopyrightBundle.message("before.checkin.update.copyright"),

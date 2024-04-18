@@ -11,9 +11,14 @@
     To configure, open the <b>Settings / Preferences</b> dialog and select <b>Editor | Copyright</b>.
     ]]></description>
   <vendor>JetBrains</vendor>
-
-  <depends>com.intellij.modules.lang</depends>
-  <depends>com.intellij.modules.xml</depends>
+  
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
+  <content>
+    <module name="intellij.copyright.vcs"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectConfigurable groupId="editor" groupWeight="110" dynamic="true"
@@ -21,7 +26,6 @@
                          key="configurable.CopyrightProjectConfigurable.display.name"
                          id="copyright"
                          instance="com.maddyhome.idea.copyright.ui.CopyrightProjectConfigurable"/>
-    <checkinHandlerFactory implementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerFactory"/>
     <applicationService serviceImplementation="com.maddyhome.idea.copyright.util.FileTypeUtil"/>
     <projectService serviceImplementation="com.maddyhome.idea.copyright.actions.UpdateCopyrightCheckinHandlerState"/>
 
