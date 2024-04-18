@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES
 import com.intellij.openapi.vfs.VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS
 import com.intellij.openapi.vfs.findFile
+import com.intellij.openapi.vfs.isFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiDirectory
@@ -108,10 +109,11 @@ internal fun buildWebSymbolsContext(location: PsiElement): WebSymbolsContext {
   val contextInfo = project.contextInfo
 
   val contextMap = if (location is PsiDirectory) {
-    val rulesConfigInDir = getContextRulesConfigInDir(contextInfo, location.virtualFile)
-    val fileConfigInDir = getContextFileConfigInDir(contextInfo, location.virtualFile)
+    val dir = location.virtualFile
+    val rulesConfigInDir = getContextRulesConfigInDir(contextInfo, dir)
+    val fileConfigInDir = getContextFileConfigInDir(contextInfo, dir)
     allKinds(rulesConfigInDir, fileConfigInDir).mapNotNull { kind ->
-      withContextChangeCheck(kind, project, contextInfo, location.virtualFile, null, rulesConfigInDir, fileConfigInDir)
+      withContextChangeCheck(kind, project, contextInfo, dir, null, rulesConfigInDir, fileConfigInDir)
         ?.let { Pair(kind, it) }
     }
   }
@@ -119,32 +121,28 @@ internal fun buildWebSymbolsContext(location: PsiElement): WebSymbolsContext {
     val psiFile = InjectedLanguageManager.getInstance(project)
       .getTopLevelFile(location)
 
-    val virtualFile = findOriginalFile(psiFile.originalFile.virtualFile)
+    val virtualFile = findOriginalFile(psiFile.originalFile.virtualFile)?.takeIf { it.isInLocalFileSystem }
 
-    val psiDir = virtualFile
-      ?.parent
-      ?.takeIf { it.isValid }
-      ?.let { PsiManager.getInstance(project).findDirectory(it) }
+    val dir = if (virtualFile != null)
+      virtualFile.parent?.takeIf { it.isValid }
+    else
+      project.baseDir
 
-    val rulesConfigInDir = psiDir?.let { getContextRulesConfigInDir(contextInfo, psiDir.virtualFile) }
-    val fileConfigInDir = psiDir?.let { getContextFileConfigInDir(contextInfo, psiDir.virtualFile) }
+    if (dir == null) return WebSymbolsContext.empty()
 
-    @Suppress("DEPRECATION")
-    val checkLocation = if (virtualFile != null && virtualFile.isInLocalFileSystem) virtualFile else project.baseDir
+    val rulesConfigInDir = getContextRulesConfigInDir(contextInfo, dir)
+    val fileConfigInDir = getContextFileConfigInDir(contextInfo, dir)
 
     allKinds(rulesConfigInDir, fileConfigInDir).mapNotNull { kind ->
       findEnabledFromProviders(kind, psiFile)
         ?.let { return@mapNotNull Pair(kind, it) }
 
-      if (checkLocation?.isDirectory == false) {
-        findEnabledFromProviders(kind, checkLocation, project)
+      if (virtualFile != null) {
+        findEnabledFromProviders(kind, virtualFile, project)
           ?.let { return@mapNotNull Pair(kind, it) }
       }
 
-      if (checkLocation == null || psiDir == null || rulesConfigInDir == null || fileConfigInDir == null)
-        return@mapNotNull null
-
-      withContextChangeCheck(kind, project, contextInfo, psiDir.virtualFile, checkLocation, rulesConfigInDir, fileConfigInDir)
+      withContextChangeCheck(kind, project, contextInfo, dir, virtualFile, rulesConfigInDir, fileConfigInDir)
         ?.let { Pair(kind, it) }
     }
   }
@@ -161,6 +159,7 @@ private fun findContextInDirOrFileCached(kind: ContextKind,
                                          file: VirtualFile?,
                                          rulesConfigInDir: ContextRulesConfigInDir,
                                          fileConfigInDir: ContextFileConfigInDir): ContextName? {
+  assert(file == null || file.isFile) { "\'${file?.path}\' is not a file."}
   // File config overrides any automatic detection
   fileConfigInDir
     .findByFileName(kind, file?.name)
