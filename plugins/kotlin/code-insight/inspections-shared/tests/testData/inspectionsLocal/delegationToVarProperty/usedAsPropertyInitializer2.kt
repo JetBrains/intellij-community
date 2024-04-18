@@ -1,6 +1,5 @@
-// FIX: Change to 'val'
+// FIX: Remove 'var'
 class Foo(<caret>var text: CharSequence): CharSequence by text {
-    fun bar() {
-        text
-    }
+    val bar = text
 }
+
