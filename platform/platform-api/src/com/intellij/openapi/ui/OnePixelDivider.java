@@ -94,7 +94,7 @@ public class OnePixelDivider extends Divider {
   }
   private class MyMouseAdapter extends MouseAdapter implements Weighted {
     private boolean skipEventProcessing() {
-      if (isOneOfComponentsShowing()) {
+      if (isBothComponentsVisibleAndOneOfComponentsShowing()) {
         return false;
       }
       setDragging(false);
@@ -191,14 +191,15 @@ public class OnePixelDivider extends Divider {
     }
   }
 
-  private boolean isOneOfComponentsShowing() {
+  private boolean isBothComponentsVisibleAndOneOfComponentsShowing() {
     if (isShowing()) return true;
 
     if (mySplitter instanceof JBSplitter) {
       JComponent first = ((JBSplitter)mySplitter).getFirstComponent();
       JComponent second = ((JBSplitter)mySplitter).getSecondComponent();
-      if (first != null && first.isShowing()) return true;
-      if (second != null && second.isShowing()) return true;
+      if (first == null || second == null || !first.isVisible() || !second.isVisible()) return false;
+      if (first.isShowing()) return true;
+      if (second.isShowing()) return true;
     }
     return false;
   }
