@@ -511,6 +511,14 @@ public final class VariableAccessUtils {
         if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
           return false;
         }
+
+        PsiSwitchLabelStatementBase switchLabel = PsiTreeUtil.getParentOfType(refElement, PsiSwitchLabelStatementBase.class);
+        if (switchLabel != null &&
+            switchLabel.getGuardExpression() != null &&
+            PsiTreeUtil.isAncestor(switchLabel.getGuardExpression(), refElement, true) &&
+            PsiTreeUtil.isAncestor(containingScope, switchLabel, true)) {
+          return false;
+        }
       }
 
       if (resolveHelper.resolveReferencedVariable(initializationName, refElement) != initialization) {
