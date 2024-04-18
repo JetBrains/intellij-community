@@ -420,9 +420,12 @@ private fun reloadProject(kind: ContextKind, prevState: ContextName, newState: C
   ApplicationManager.getApplication().invokeLater(
     Runnable {
       WriteAction.run<RuntimeException> {
-        ProjectRootManagerEx.getInstanceEx(project)
-          .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED)
-        project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
+        try {
+          ProjectRootManagerEx.getInstanceEx(project)
+            .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED)
+        } finally {
+          project.putUserData(CONTEXT_RELOAD_MARKER_KEY, null)
+        }
       }
     },
     ModalityState.nonModal(),
