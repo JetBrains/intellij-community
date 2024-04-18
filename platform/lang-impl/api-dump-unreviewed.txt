@@ -13501,11 +13501,15 @@ c:com.intellij.ide.actions.GotoFileItemProvider
 - s:unitePaths(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.ide.actions.GotoRelatedSymbolAction
 - com.intellij.openapi.actionSystem.AnAction
+- sf:Companion:com.intellij.ide.actions.GotoRelatedSymbolAction$Companion
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getItems(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- sf:getItems(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ide.actions.GotoRelatedSymbolAction$Companion
+- f:getItems(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext):java.util.List
+- bs:getItems$default(com.intellij.ide.actions.GotoRelatedSymbolAction$Companion,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext,I,java.lang.Object):java.util.List
 f:com.intellij.ide.actions.GotoSymbolAction
 - com.intellij.ide.actions.SearchEverywhereBaseAction
 - com.intellij.openapi.project.DumbAware

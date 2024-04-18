@@ -3,10 +3,13 @@ package com.intellij.ide.actions
 
 import com.intellij.codeInsight.navigation.collectRelatedItems
 import com.intellij.codeInsight.navigation.getRelatedItemsPopup
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.lang.LangBundle
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.actionSystem.impl.Utils.computeWithProgressIcon
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.MessageType
@@ -14,7 +17,10 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import java.awt.Component
 
 /**
  * @author Dmitry Avdeev
@@ -29,34 +35,41 @@ class GotoRelatedSymbolAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
-
-    val element = getContextElement(dataContext) ?: return
+    val asyncDataContext = IdeUiService.getInstance().createAsyncDataContext(dataContext)
 
     // it's calculated in advance because `NavigationUtil.collectRelatedItems` might be
     // calculated under a cancellable progress, and we can't use the data context anymore,
     // since it can't be reused between swing events
     val popupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext)
 
-    val items = collectRelatedItems(element, dataContext)
+    val element = getContextElement(dataContext)
+    val contextComponent: Component? = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val items = if (element == null) emptyList() else
+    computeWithProgressIcon(e.dataContext, e.place) {
+      withContext(Dispatchers.Default) {
+        readAction {
+          collectRelatedItems(element, asyncDataContext)
+        }
+      }
+    }
+
     if (items.isEmpty()) {
-      val component: Any? = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
-      if (component is EditorComponentImpl) {
+      if (contextComponent is EditorComponentImpl) {
         val point = popupLocation.point
-        point.translate(0, -component.editor.lineHeight)
+        point.translate(0, -contextComponent.editor.lineHeight)
       }
 
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(LangBundle.message("hint.text.no.related.symbols"), MessageType.ERROR, null)
         .setFadeoutTime(3000)
         .createBalloon()
         .show(popupLocation, Balloon.Position.above)
-      return
     }
-
-    if (items.size == 1) {
+    else if (items.size == 1) {
       items[0].navigate()
-      return
     }
-    getRelatedItemsPopup(items, LangBundle.message("popup.title.choose.target")).show(popupLocation)
+    else {
+      getRelatedItemsPopup(items, LangBundle.message("popup.title.choose.target")).show(popupLocation)
+    }
   }
 
   companion object {
@@ -69,11 +82,10 @@ class GotoRelatedSymbolAction : AnAction() {
     private fun getContextElement(dataContext: DataContext): PsiElement? {
       val file = CommonDataKeys.PSI_FILE.getData(dataContext)
       val editor = CommonDataKeys.EDITOR.getData(dataContext)
-      val element = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
       if (file != null && editor != null) {
         return getContextElement(file, editor)
       }
-      return element ?: file
+      return CommonDataKeys.PSI_ELEMENT.getData(dataContext) ?: file
     }
 
     private fun getContextElement(psiFile: PsiFile, editor: Editor?): PsiElement {
