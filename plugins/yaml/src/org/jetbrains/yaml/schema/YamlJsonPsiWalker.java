@@ -103,8 +103,16 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
 
   @Override
   public @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element) {
-    return element instanceof YAMLValue ? YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element)
-                                        : (element instanceof YAMLDocument ? new YamlEmptyObjectAdapter(element) : null);
+    if (element instanceof YAMLValue) {
+      return YamlPropertyAdapter.createValueAdapterByType((YAMLValue)element);
+    }
+    if (element instanceof YAMLDocument) {
+      return new YamlEmptyObjectAdapter(element);
+    }
+    if (element instanceof LeafPsiElement && ((LeafPsiElement)element).getElementType() == YAMLTokenTypes.INDENT) {
+      return YamlPropertyAdapter.createEmptyValueAdapter(element, true);
+    }
+    return null;
   }
 
   @Override
@@ -332,10 +340,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     @Override
     public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull PsiElement element) {
       YAMLElementGenerator generator = YAMLElementGenerator.getInstance(element.getProject());
-      YAMLKeyValue keyValue = generator.createYamlKeyValue(name, StringUtil.unquoteString(value));
-      return element instanceof YAMLDocument || findPrecedingKeyValueWithNoValue(element) != null
-             ? generator.createDummyYamlWithText(keyValue.getText()).getDocuments().get(0).getFirstChild()
-             : keyValue;
+      return generator.createYamlKeyValue(name, StringUtil.unquoteString(value));
     }
 
     @Override

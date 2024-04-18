@@ -46,6 +46,11 @@ public class YamlEmptyValueAdapter implements JsonValueAdapter {
   }
 
   @Override
+  public boolean isEmptyAdapter() {
+    return true;
+  }
+
+  @Override
   public @NotNull PsiElement getDelegate() {
     return myElement;
   }

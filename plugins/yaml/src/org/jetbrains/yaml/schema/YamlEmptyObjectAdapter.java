@@ -45,6 +45,11 @@ public class YamlEmptyObjectAdapter implements JsonObjectValueAdapter {
   }
 
   @Override
+  public boolean isEmptyAdapter() {
+    return true;
+  }
+
+  @Override
   public @NotNull List<JsonPropertyAdapter> getPropertyList() {
     return ContainerUtil.emptyList();
   }

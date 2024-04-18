@@ -9,6 +9,16 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaType
 interface JsonLikeSyntaxAdapter {
   fun adjustValue(value: PsiElement): PsiElement = value
 
+  /**
+   * Creates a property element with the given name and value.
+   *
+   * The created element is in an independent PSI tree, and is meant to be inserted in the target tree through some mutating operation,
+   * such as [PsiElement.replace].
+   *
+   * @param name the name of the property to create
+   * @param value the value of the property to create (which can be any literal)
+   * @param element an existing element from the target PSI tree, which is just used for context (language, file type, etc.).
+   */
   fun createProperty(name: String, value: String, element: PsiElement): PsiElement
   fun ensureComma(self: PsiElement?, newElement: PsiElement?)
   fun removeIfComma(forward: PsiElement?)
@@ -19,10 +29,14 @@ interface JsonLikeSyntaxAdapter {
   fun adjustPropertyAnchor(element: LeafPsiElement): PsiElement
 
   /**
-   * Inserts a property into an existing object
-   * @param contextForInsertion either the object itself or the property before which the new property is inserted
-   * @param newProperty property to insert
-   * @return inserted property
+   * Inserts a property into a JSON-like object. If the given [contextForInsertion] is an empty value that can act as an object (such as an
+   * empty YAML Document or a simple indent in the position of a property value), the property is inserted as part of a new object.
+   *
+   * @param contextForInsertion either the object itself or the property before which the new property is inserted. It can also be an empty
+   * object value (such as an empty YAML Document or a simple indent in the position of a property value).
+   * @param newProperty the property element to insert
+   *
+   * @return the property element that was actually added (either [newProperty] or its copy).
    */
   fun addProperty(contextForInsertion: PsiElement, newProperty: PsiElement): PsiElement {
     val walker = JsonLikePsiWalker.getWalker(contextForInsertion)
@@ -30,20 +44,29 @@ interface JsonLikeSyntaxAdapter {
     val isProcessingProperty = parentPropertyAdapter != null && parentPropertyAdapter.delegate === contextForInsertion
 
     val newElement = when {
+      walker?.createValueAdapter(contextForInsertion)?.isEmptyAdapter == true -> {
+        val parent = if (contextForInsertion is LeafPsiElement) adjustPropertyAnchor(contextForInsertion) else contextForInsertion
+        // This newProperty.parent relies on the fact that the property was created within an object in its dummy environment.
+        // This might not always hold, so it would be better not to rely on it.
+        parent.addBefore(newProperty.parent, null)
+      }
       contextForInsertion is LeafPsiElement -> {
         adjustPropertyAnchor(contextForInsertion).addBefore(newProperty, null)
       }
       isProcessingProperty -> {
-        contextForInsertion.parent.addBefore(newProperty, contextForInsertion)
+        contextForInsertion.parent.addBefore(newProperty, contextForInsertion).also {
+          ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(it), it)
+        }
       }
       else -> {
-        contextForInsertion.addBefore(newProperty, contextForInsertion.lastChild)
+        contextForInsertion.addBefore(newProperty, contextForInsertion.lastChild).also {
+          ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(it), it)
+        }
       }
     }
     val adjusted = adjustNewProperty(newElement)
 
     ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement))
-    ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted)
 
     return adjusted
   }

@@ -58,7 +58,10 @@ public class YAMLElementGenerator {
     Collection<YAMLValue> values = PsiTreeUtil.collectElementsOfType(tempValueFile, YAMLValue.class);
 
     String text;
-    if (!values.isEmpty() && values.iterator().next() instanceof YAMLScalar && !valueText.contains("\n")) {
+    if (values.isEmpty()) {
+      text = keyName + ":";
+    }
+    else if (values.iterator().next() instanceof YAMLScalar && !valueText.contains("\n")) {
       text = keyName + ": " + valueText;
     }
     else {
