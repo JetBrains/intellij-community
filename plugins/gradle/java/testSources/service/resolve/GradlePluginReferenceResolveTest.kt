@@ -17,8 +17,13 @@ private const val KOTLIN_DSL_PLUGIN_VERSION = "4.2.1"
 class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
-  @AllGradleVersionsSource
-  fun `Groovy Precompiled plugin in buildSrc is navigatable`(gradleVersion: GradleVersion) {
+  @AllGradleVersionsSource("""
+    id '<caret>my-plugin',
+    id "<caret>my-plugin",
+    id ('<caret>my-plugin'),
+    id ("<caret>my-plugin")
+  """)
+  fun `Groovy Precompiled plugin in buildSrc is navigatable`(gradleVersion: GradleVersion, pluginIdStatement: String) {
     val pluginOnGroovy = "tasks.register('taskFromPlugin') {}"
     // A module containing precompiled plugin requires including a corresponding language support plugin in a module build script
     val buildScriptForPluginModule = """
@@ -28,7 +33,7 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
 
     val buildScript = """
       |plugins {
-      |   id '<caret>my-plugin'
+      |   $pluginIdStatement
       |}
       |tasks.named('taskFromPlugin') {
       |   doLast { println 'taskFromPlugin is available in build.gradle' }

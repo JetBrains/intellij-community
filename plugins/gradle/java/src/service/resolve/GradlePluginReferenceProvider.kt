@@ -10,7 +10,7 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.psi.ElementManipulators
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyMethodCallPattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
@@ -31,7 +31,7 @@ class GradlePluginReferenceProvider : PsiSymbolReferenceProvider {
 }
 
 private val myPattern = GroovyPatterns.stringLiteral().withParent(
-  groovyElement<GrCommandArgumentList>().withParent(
+  groovyElement<GrArgumentList>().withParent(
     GroovyMethodCallPattern.resolvesTo(psiMethod(GradleCommonClassNames.GRADLE_PLUGIN_USE_PLUGIN_DEPENDENCIES_SPEC, "id"))
   )
 )
