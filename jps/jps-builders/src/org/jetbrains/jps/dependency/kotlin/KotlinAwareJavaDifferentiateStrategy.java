@@ -38,9 +38,21 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
   @Override
   public boolean processAddedClass(DifferentiateContext context, JvmClass addedClass, Utils future, Utils present) {
     if (!addedClass.isPrivate()) {
-      // calls to newly added class' constructors may shadow calls to functions named similarly
-      debug("Affecting lookup usages for added class ", addedClass.getName());
-      affectClassLookupUsages(context, addedClass);
+      KmDeclarationContainer container = getDeclarationContainer(addedClass);
+      if (container == null || container instanceof KmClass) {
+        // calls to newly added class' constructors may shadow calls to functions named similarly
+        debug("Affecting lookup usages for added class ", addedClass.getName());
+        affectClassLookupUsages(context, addedClass);
+      }
+      else {
+        debug("Affecting lookup usages for top-level functions in a newly added file ", addedClass.getName());
+        for (KmFunction kmFunction : container.getFunctions()) {
+          Visibility visibility = Attributes.getVisibility(kmFunction);
+          if (visibility != Visibility.PRIVATE && visibility != Visibility.PRIVATE_TO_THIS) {
+            affectMemberLookupUsages(context, addedClass, kmFunction.getName(), future);
+          }
+        }
+      }
     }
 
     return true;
