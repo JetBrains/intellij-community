@@ -63,6 +63,7 @@
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
   <technology name="hazelcast-jet" class="com.hazelcast.jet.pipeline.Pipeline"/>
   <technology name="helidon" class="io.helidon.webserver.WebServer"/>
+  <technology name="helidon-mp" class="io.helidon.microprofile.server.Server"/>
   <technology name="hexagonkt" class="com.hexagonkt.http.Path"/>
   <technology name="hibernate" class="org.hibernate.Hibernate"/>
   <technology name="hibernate-envers" class="org.hibernate.envers.Audited"/>
@@ -186,6 +187,7 @@
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>
   <technology name="spring-boot" class="org.springframework.boot.SpringApplication"/>
+  <technology name="spring-boot-testjars" class="org.springframework.experimental.boot.test.context.DynamicProperty"/>
   <technology name="spring-cloud" class="org.springframework.cloud.client.SpringCloudApplication"/>
   <technology name="spring-cloud-gateway" class="org.springframework.cloud.gateway.route.RouteDefinition"/>
   <technology name="spring-cloud-kubernetes" class="org.springframework.cloud.kubernetes.commons.ConditionalOnKubernetesEnabled"/>
