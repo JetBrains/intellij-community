@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -103,11 +103,6 @@ abstract class MacDistributionCustomizer {
   var associateIpr = false
 
   /**
-   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of `Info.plist`).
-   */
-  var useXPlatLauncher = true
-
-  /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
    */
   var binFilesFilter: Predicate<Path> = Predicate { true }
@@ -125,10 +120,8 @@ abstract class MacDistributionCustomizer {
   /**
    * If `true`, a separate *-[org.jetbrains.intellij.build.impl.MacDistributionBuilder.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
    */
-  var buildArtifactWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME,
-                                                                        SystemProperties.getBooleanProperty(
-                                                                          "artifact.mac.no.jdk",
-                                                                          false))
+  var buildArtifactWithoutRuntime =
+    SystemProperties.getBooleanProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
 
   /**
    * Application bundle name (`<name>.app`).
