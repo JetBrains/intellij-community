@@ -8,8 +8,6 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.params.ParameterizedTest
 
-private const val KOTLIN_DSL_PLUGIN_VERSION = "4.2.1"
-
 /**
  * Tests for navigation to Gradle plugin source from a string literal with plugin ID in `plugins` closure.
  * @see <a href="https://docs.gradle.org/current/userguide/custom_plugins.html#sec:precompile_script_plugin">Gradle Precompiled plugins</a>
@@ -23,24 +21,14 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
     id ('<caret>my-plugin'),
     id ("<caret>my-plugin")
   """)
-  fun `Groovy Precompiled plugin in buildSrc is navigatable`(gradleVersion: GradleVersion, pluginIdStatement: String) {
+  fun `Groovy Precompiled plugin is navigatable`(gradleVersion: GradleVersion, pluginIdStatement: String) {
     val pluginOnGroovy = "tasks.register('taskFromPlugin') {}"
-    // A module containing precompiled plugin requires including a corresponding language support plugin in a module build script
-    val buildScriptForPluginModule = """
-      |plugins {
-      |   id 'groovy-gradle-plugin'
-      |}""".trimIndent()
-
     val buildScript = """
       |plugins {
       |   $pluginIdStatement
-      |}
-      |tasks.named('taskFromPlugin') {
-      |   doLast { println 'taskFromPlugin is available in build.gradle' }
       |}""".trimMargin()
     testEmptyProject(gradleVersion) {
       val pluginFile = writeText("buildSrc/src/main/groovy/my-plugin.gradle", pluginOnGroovy)
-      writeText("buildSrc/build.gradle", buildScriptForPluginModule)
       testBuildscript(buildScript) {
         assertPluginReferenceNavigatesTo(pluginFile.path)
       }
@@ -49,26 +37,14 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `Kotlin Precompiled plugin in buildSrc is navigatable`(gradleVersion: GradleVersion) {
+  fun `Kotlin Precompiled plugin is navigatable`(gradleVersion: GradleVersion) {
     val pluginOnKotlin = "tasks.register(\"taskFromPlugin\"){}"
-    // A module containing precompiled plugin requires including a corresponding language support plugin in a module build script
-    val buildScriptForPluginModule = """
-      |plugins {
-      |    id "org.gradle.kotlin.kotlin-dsl" version "$KOTLIN_DSL_PLUGIN_VERSION"
-      |}
-      |repositories {
-      |    mavenCentral()
-      |}""".trimIndent()
     val buildScript = """
       |plugins {
       |   id '<caret>my-plugin'
-      |}
-      |tasks.named('taskFromPlugin') {
-      |   doLast { println 'taskFromPlugin is available in build.gradle' }
       |}""".trimMargin()
     testEmptyProject(gradleVersion) {
       val pluginFile = writeText("buildSrc/src/main/kotlin/my-plugin.gradle.kts", pluginOnKotlin)
-      writeText("buildSrc/build.gradle", buildScriptForPluginModule)
       testBuildscript(buildScript) {
         assertPluginReferenceNavigatesTo(pluginFile.path)
       }
@@ -77,30 +53,18 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun `Kotlin Precompiled plugin with a package in buildSrc is navigatable`(gradleVersion: GradleVersion) {
+  fun `Kotlin Precompiled plugin with a package is navigatable`(gradleVersion: GradleVersion) {
     val pluginOnKotlin = """
       |package com.example
       |
       |tasks.register(\"taskFromPlugin\"){}
       |""".trimIndent()
-    // A module containing precompiled plugin requires including a corresponding language support plugin in a module build script
-    val buildScriptForPluginModule = """
-      |plugins {
-      |    id "org.gradle.kotlin.kotlin-dsl" version "$KOTLIN_DSL_PLUGIN_VERSION"
-      |}
-      |repositories {
-      |    mavenCentral()
-      |}""".trimIndent()
     val buildScript = """
       |plugins {
       |   id '<caret>com.example.my-plugin'
-      |}
-      |tasks.named('taskFromPlugin') {
-      |   doLast { println 'taskFromPlugin is available in build.gradle' }
       |}""".trimMargin()
     testEmptyProject(gradleVersion) {
       val pluginFile = writeText("buildSrc/src/main/kotlin/com/example/my-plugin.gradle.kts", pluginOnKotlin)
-      writeText("buildSrc/build.gradle", buildScriptForPluginModule)
       testBuildscript(buildScript) {
         assertPluginReferenceNavigatesTo(pluginFile.path)
       }
@@ -115,7 +79,7 @@ class GradlePluginReferenceResolveTest : GradleCodeInsightTestCase() {
   @AllGradleVersionsSource
   fun `Precompiled plugin from wrong directory is not navigatable`(gradleVersion: GradleVersion) {
     val pluginOnGroovy = "tasks.register('taskFromPlugin') {}"
-     val buildScript = """
+    val buildScript = """
       |plugins {
       |   id '<caret>my-plugin'
       |}""".trimMargin()
