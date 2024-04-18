@@ -14,7 +14,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
@@ -205,11 +204,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     )
   }
 
-  private fun scan(snapshot: PerformanceWatcher.Snapshot,
-                   indicator: CheckPauseOnlyProgressIndicator,
+  private fun scan(indicator: CheckPauseOnlyProgressIndicator,
                    progressReporter: IndexingProgressReporter,
                    markRef: Ref<StatusMark>) {
-    var snapshot = snapshot
+    var snapshot = PerformanceWatcher.takeSnapshot()
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.name))
     markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
     try {
@@ -305,18 +303,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     progressReporter.setIndeterminate(true)
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
 
-    val snapshot = PerformanceWatcher.takeSnapshot()
-    val scanningLifetime = Disposer.newDisposable()
-    try {
-      if (!UnindexedFilesScannerExecutor.shouldScanInSmartMode()) {
-        DumbModeProgressTitle.getInstance(myProject)
-          .attachProgressTitleText(IndexingBundle.message("progress.indexing.scanning.title"), scanningLifetime)
-      }
-      scan(snapshot, indicator, progressReporter, markRef)
-    }
-    finally {
-      Disposer.dispose(scanningLifetime)
-    }
+    scan(indicator, progressReporter, markRef)
 
     // the full VFS refresh makes sense only after it's loaded, i.e., after scanning files to index is finished
     val service = myProject.getService(InitialVfsRefreshService::class.java)
