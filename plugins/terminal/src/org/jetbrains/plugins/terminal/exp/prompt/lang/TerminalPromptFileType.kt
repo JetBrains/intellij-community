@@ -13,4 +13,7 @@ internal object TerminalPromptFileType : LanguageFileType(TerminalPromptLanguage
   override fun getDefaultExtension(): String = "prompt"
 
   override fun getIcon(): Icon? = null
+
+  // Do not show this file type in the File Types configurable
+  override fun isReadOnly(): Boolean = true
 }
