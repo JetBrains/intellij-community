@@ -61,15 +61,12 @@ f:com.intellij.UtilBundle
 - bs:installThreadContext$default(kotlin.coroutines.CoroutineContext,Z,I,java.lang.Object):com.intellij.openapi.application.AccessToken
 - sf:resetThreadContext():com.intellij.openapi.application.AccessToken
 f:com.intellij.concurrency.client.ClientIdPropagation
-- sf:decorateBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
-- sf:decorateCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
-- sf:decorateConsumer(java.util.function.Consumer):java.util.function.Consumer
-- sf:decorateFunction(java.util.function.Function):java.util.function.Function
-- sf:decorateFunction(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
-- sf:decorateFutureTask(java.util.concurrent.FutureTask):java.util.concurrent.FutureTask
-- sf:decorateProcessor(com.intellij.util.Processor):com.intellij.util.Processor
-- sf:decorateRunnable(java.lang.Runnable):java.lang.Runnable
-- sf:decorateSupplier(java.util.function.Supplier):java.util.function.Supplier
+- sf:captureClientId(kotlin.jvm.functions.Function0):kotlin.jvm.functions.Function0
+- sf:captureClientIdInBiConsumer(java.util.function.BiConsumer):java.util.function.BiConsumer
+- sf:captureClientIdInCallable(java.util.concurrent.Callable):java.util.concurrent.Callable
+- sf:captureClientIdInFunction(java.util.function.Function):java.util.function.Function
+- sf:captureClientIdInProcessor(com.intellij.util.Processor):com.intellij.util.Processor
+- sf:captureClientIdInRunnable(java.lang.Runnable):java.lang.Runnable
 c:com.intellij.diagnostic.tracing.MethodTracer
 - s:clearAll():V
 - s:getAllData():java.util.List
