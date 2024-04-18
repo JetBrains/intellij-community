@@ -25,12 +25,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -494,7 +497,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   // TODO Unify with LexerEditorHighlighter.documentChanged
-  private @NotNull List<IElementType> getTokenType(@NotNull CharSequence text, int offset) {
+  private @NotNull Lexer getLexerWrapper(@NotNull CharSequence text, int offset) {
     int startOffset = 0;
 
     int data = 0;
@@ -560,6 +563,13 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       lexerWrapper.advance();
     }
 
+    return lexerWrapper;
+  }
+
+  private @NotNull List<IElementType> getTokenType(@NotNull CharSequence text, int offset) {
+    var lexerWrapper = getLexerWrapper(text, offset);
+    int data;
+
     IElementType tokenType1 = null;
     IElementType tokenType2 = null;
 
@@ -577,6 +587,29 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     }
 
     return Arrays.asList(tokenType1, tokenType2);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(@NotNull Document document, int offset, @NotNull CharSequence s) {
+    var lexerWrapper = getLexerWrapper(StringUtil.replaceSubSequence(document.getImmutableCharSequence(), offset, offset, s), offset);
+    int data;
+
+    List<Pair<TextRange, TextAttributes>> result = new ArrayList<>();
+
+    while (lexerWrapper.getTokenType() != null) {
+      int lexerState = lexerWrapper.getState();
+      data = mySegments.packData(lexerWrapper.getTokenType(), lexerState, canRestart(lexerState));
+      if (lexerWrapper.getTokenEnd() > offset) {
+        int start = Math.max(offset, lexerWrapper.getTokenStart());
+        int end = Math.min(lexerWrapper.getTokenEnd(), offset + s.length());
+        TextAttributes attributes = getAttributes(mySegments.unpackTokenFromData(data));
+        result.add(Pair.create(TextRange.create(start, end), attributes));
+      }
+      if (lexerWrapper.getTokenEnd() >= offset + s.length()) break;
+      lexerWrapper.advance();
+    }
+
+    return result;
   }
 
   @NotNull

@@ -5,6 +5,8 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
+import com.intellij.codeInsight.inline.completion.elements.InlineCompletionTextElement
+import com.intellij.codeInsight.inline.completion.render.InlineCompletionLineRenderer.Companion.withAlpha
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -13,6 +15,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -248,7 +251,7 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
     withContext(Dispatchers.EDT) {
       val expected = ExpectedInlineCompletionElementsBuilderImpl().apply(builder).build()
       assertInlineRender(expected.joinToString("") { it.text })
-      val actual = assertContextExists().state.elements
+      val actual = merge(assertContextExists().state.elements)
       assertEquals(expected.size, actual.size) {
         "Unexpected number of inline elements. Expected: ${expected.map { it.text }}, found: ${actual.map { it.element.text }}."
       }
@@ -256,6 +259,34 @@ class InlineCompletionLifecycleTestDSL(val fixture: CodeInsightTestFixture) {
         elem1.assertMatches(elem2)
       }
     }
+  }
+
+  // TODO Improve the test cases
+  // Merges consecutive elements into plain text except for keywords, to match the test cases.
+  // Ideally, presentation and logic should be tested separately.
+  // E.g. InlineCompletionTextElement should support ranges, or tests should be tokenization-agnostic.
+  private fun merge(input: List<InlineCompletionElement.Presentable>): List<InlineCompletionElement.Presentable> {
+    val editor = fixture.editor
+    if (InlineCompletionSession.getOrNull(editor)?.provider?.javaClass?.simpleName != "CloudInlineCompletionProvider") return input
+    val keywordAttributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.KEYWORD).withAlpha(editor.colorsScheme)
+    val output = ArrayList<InlineCompletionElement>()
+    for (presentable in input) {
+      val element = presentable.element
+      if (element is InlineCompletionTextElement) {
+        if (element.text.all { it.isLetter() } && element.text != "None" && element.getAttributes(editor) == keywordAttributes) {
+          output.add(element)
+        } else {
+          if (output.isNotEmpty() && output.last() is InlineCompletionGrayTextElement) {
+            output[output.size - 1] = InlineCompletionGrayTextElement(output.last().text + element.text)
+          } else {
+            output.add(InlineCompletionGrayTextElement(element.text))
+          }
+        }
+      } else {
+        output.add(element)
+      }
+    }
+    return output.map { it.toPresentable() }
   }
 
   @RequiresEdt
