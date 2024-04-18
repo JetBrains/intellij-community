@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -363,15 +362,27 @@ public final class PsiTypesUtil {
      * @param context in which type should be checked
      * @return false if type is null or has no explicit canonical type representation (e. g. intersection type)
      */
+  @Contract("null, _ -> false")
   public static boolean isDenotableType(@Nullable PsiType type, @NotNull PsiElement context) {
-    if (type == null || type instanceof PsiWildcardType) return false;
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.getProject());
-    try {
-      PsiType typeAfterReplacement = elementFactory.createTypeElementFromText(type.getCanonicalText(), context).getType();
-      return type.equals(typeAfterReplacement);
-    } catch (IncorrectOperationException e) {
-      return false;
+    if (type == null || type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType || type instanceof PsiIntersectionType) return false;
+    type = type.getDeepComponentType();
+    if (type instanceof PsiPrimitiveType) {
+      return !PsiTypes.nullType().equals(type);
     }
+    if (type instanceof PsiClassType) {
+      String className = ((PsiClassType)type).getClassName();
+      if (className == null) return false;
+      LanguageLevel level = PsiUtil.getLanguageLevel(context);
+      if (PsiUtil.isKeyword(className, level) || PsiUtil.isSoftKeyword(className, level)) return false;
+      for (PsiType parameter : ((PsiClassType)type).getParameters()) {
+        if (parameter instanceof PsiWildcardType) {
+          parameter = ((PsiWildcardType)parameter).getBound();
+        }
+        if (parameter != null && !isDenotableType(parameter, context)) return false;
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
