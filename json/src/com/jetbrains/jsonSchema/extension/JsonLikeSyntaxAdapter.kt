@@ -11,16 +11,30 @@ interface JsonLikeSyntaxAdapter {
   fun adjustValue(value: PsiElement): PsiElement = value
 
   /**
-   * Creates a property element with the given name and value.
+   * Creates a property element with the given [name] and [value].
    *
    * The created element is in an independent PSI tree, and is meant to be inserted in the target tree through some mutating operation,
-   * such as [PsiElement.replace].
-   *
-   * @param name the name of the property to create
-   * @param value the value of the property to create (which can be any literal)
-   * @param project the project to use as context for PSI generation
+   * such as [PsiElement.replace]. The given [project] is used as context for PSI generation
    */
   fun createProperty(name: String, value: String, project: Project): PsiElement
+
+  /**
+   * Creates an empty array element.
+   * 
+   * In languages that support single-line and multi-line arrays, [preferInline] determines whether to use the single-line form.
+   *
+   * The created element is in an independent PSI tree, and is meant to be inserted in the target tree through some mutating operation,
+   * such as [PsiElement.replace]. The given [project] is used as context for PSI generation
+   */
+  fun createEmptyArray(project: Project, preferInline: Boolean = true): PsiElement
+
+  /**
+   * Adds the given [itemValue] to the given [array] element.
+   * 
+   * @return the [PsiElement] representing the item that was added.
+   */
+  fun addArrayItem(array: PsiElement, itemValue: String): PsiElement
+  
   fun ensureComma(self: PsiElement?, newElement: PsiElement?)
   fun removeIfComma(forward: PsiElement?)
   fun fixWhitespaceBefore(initialElement: PsiElement?, element: PsiElement?): Boolean

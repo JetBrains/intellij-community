@@ -30,6 +30,7 @@ import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
 import java.util.*;
@@ -341,6 +342,52 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull Project project) {
       YAMLElementGenerator generator = YAMLElementGenerator.getInstance(project);
       return generator.createYamlKeyValue(name, StringUtil.unquoteString(value));
+    }
+
+    @Override
+    public @NotNull PsiElement createEmptyArray(@NotNull Project project, boolean preferInline) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(project);
+      return preferInline ? generator.createEmptyArray() : generator.createEmptySequence();
+    }
+
+    @Override
+    public @NotNull PsiElement addArrayItem(@NotNull PsiElement array, @NotNull String itemValue) {
+      if (array instanceof YAMLArrayImpl) {
+        return addInlineArrayItem((YAMLSequence)array, itemValue);
+      }
+      else if (array instanceof YAMLSequence) {
+        return addSequenceItem((YAMLSequence)array, itemValue);
+      }
+      else {
+        throw new IllegalArgumentException("Cannot add item to a non-sequence element");
+      }
+    }
+
+    private static PsiElement addInlineArrayItem(@NotNull YAMLSequence array, @NotNull String itemValue) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(array.getProject());
+      YAMLSequenceItem sequenceItem = generator.createArrayItem(itemValue);
+
+      PsiElement addedItem = array.addBefore(sequenceItem, array.getLastChild()); // we insert before closing bracket ']'
+      if (array.getItems().size() > 1) {
+        array.addAfter(generator.createComma(), PsiTreeUtil.skipWhitespacesAndCommentsBackward(addedItem));
+      }
+      return addedItem;
+    }
+
+    private static PsiElement addSequenceItem(@NotNull YAMLSequence sequence, @NotNull String itemValue) {
+      YAMLElementGenerator generator = YAMLElementGenerator.getInstance(sequence.getProject());
+      YAMLSequenceItem sequenceItem = generator.createSequenceItem(itemValue);
+
+      PsiElement lastChild = sequence.getLastChild();
+      if (lastChild != null && lastChild.getNode().getElementType() != YAMLTokenTypes.EOL) {
+        sequence.add(generator.createEol());
+      }
+      List<YAMLSequenceItem> items = sequence.getItems();
+      YAMLSequenceItem lastItem = items.get(items.size() - 1);
+
+      int indent = lastChild != null ? YAMLUtil.getIndentToThisElement(lastItem) : YAMLUtil.getIndentToThisElement(sequence) + 2;
+      sequence.add(generator.createIndent(indent));
+      return sequence.add(sequenceItem);
     }
 
     @Override

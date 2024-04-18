@@ -217,6 +217,25 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     }
 
     @Override
+    public @NotNull PsiElement createEmptyArray(@NotNull Project project, boolean preferInline) {
+      return new JsonElementGenerator(project).createEmptyArray();
+    }
+
+    @Override
+    public @NotNull PsiElement addArrayItem(@NotNull PsiElement array, @NotNull String itemValue) {
+      if (!(array instanceof JsonArray)) throw new IllegalArgumentException("Cannot add item to a non-array element");
+
+      JsonElementGenerator generator = new JsonElementGenerator(array.getProject());
+      JsonValue arrayItem = generator.createArrayItemValue(itemValue);
+      
+      PsiElement addedItem = array.addBefore(arrayItem, array.getLastChild()); // we insert before closing bracket ']'
+      if (((JsonArray)array).getValueList().size() > 1) {
+        array.addBefore(generator.createComma(), addedItem);
+      }
+      return addedItem;
+    }
+
+    @Override
     public void ensureComma(PsiElement self, PsiElement newElement) {
       if (newElement instanceof JsonProperty && self instanceof JsonProperty) {
         PsiElement sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(self);
