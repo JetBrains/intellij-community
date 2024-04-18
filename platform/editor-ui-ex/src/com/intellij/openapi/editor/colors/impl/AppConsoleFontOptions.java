@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ClientSetting
 @ApiStatus.Internal
 @State(
   name = "ConsoleFont",

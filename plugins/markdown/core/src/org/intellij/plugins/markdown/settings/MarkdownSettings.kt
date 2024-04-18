@@ -10,6 +10,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 
 @Service(Service.Level.PROJECT)
+@RemoteSetting(direction = RemoteSettingDirection.FromClient)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
 class MarkdownSettings(internal val project: Project): SimplePersistentStateComponent<MarkdownSettingsState>(MarkdownSettingsState()) {
   var areInjectionsEnabled

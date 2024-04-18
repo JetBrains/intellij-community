@@ -10,7 +10,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
 
-@ClientSetting
 @State(name = "DaemonCodeAnalyzerSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), PersistentStateComponent<Element>, Cloneable {
   override fun isCodeHighlightingChanged(oldSettings: DaemonCodeAnalyzerSettings): Boolean {

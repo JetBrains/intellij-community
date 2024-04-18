@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@ClientSetting
+@RemoteSetting(direction = RemoteSettingDirection.FromClient)
 @State(name = "ConsoleFoldingSettings", storages = @Storage("consoleFolding.xml"), category = SettingsCategory.CODE)
 public final class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
   private final List<String> myPositivePatterns = new ArrayList<>();

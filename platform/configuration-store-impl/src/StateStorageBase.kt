@@ -216,10 +216,10 @@ internal fun serializeState(state: Any, component: Any?, componentName: String, 
   }
 }
 
-private inline fun <reified T: Annotation> hasAnnotationInSuperclass(value: Any): Boolean {
+private inline fun <reified T: Annotation> getAnnotationInSuperclass(value: Any): T? {
   return generateSequence(value.javaClass) { it.superclass }
-    .mapNotNull { it.annotations.find { annotation -> annotation is T } }
-    .any()
+    .mapNotNull { it.annotations.filterIsInstance<T>().firstOrNull() }
+    .firstOrNull()
 }
 
 private fun createTags(componentName: String, component: Any?, roamingType: RoamingType?, extraTag: SettingTag?): List<SettingTag> {
@@ -233,17 +233,19 @@ private fun createTags(componentName: String, component: Any?, roamingType: Roam
 
   // TODO move rdct-specific code to some extension
   if (component != null) {
-    if (hasAnnotationInSuperclass<HostOnlySetting>(component)) {
-      tags.add(HostOnlySettingTag)
-    }
-    if (hasAnnotationInSuperclass<ClientSetting>(component)) {
-      tags.add(ClientSettingTag)
-    }
-    if (hasAnnotationInSuperclass<DoNotSynchronizeSetting>(component)) {
-      tags.add(DoNotSynchronizeSettingTag)
+    getAnnotationInSuperclass<RemoteSetting>(component)?.let {
+      tags.add(RemoteSettingTag(it.direction.toString(), it.allowedInCwm))
     }
   }
   return tags
+}
+
+private fun createTagsForBinding(rootTags: List<SettingTag>, binding: NestedBinding): List<SettingTag> {
+  val remoteSetting = binding.accessor.getAnnotation(RemoteSetting::class.java)
+                      ?: return rootTags
+
+  val remoteSettingTag = RemoteSettingTag(remoteSetting.direction.toString(), remoteSetting.allowedInCwm)
+  return rootTags.filter { it !is RemoteSettingTag } + remoteSettingTag
 }
 
 private fun serializeWithController(
@@ -260,7 +262,7 @@ private fun serializeWithController(
   var element: Element? = null
   for (binding in rootBinding.bindings!!) {
     val isPropertySkipped = isPropertySkipped(filter = filter, binding = binding, bean = state, rootBinding = rootBinding, isFilterPropertyItself = true)
-    val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = keyTags, serializer = JsonElementSettingSerializerDescriptor)
+    val key = SettingDescriptor(key = createSettingKey(componentName, binding), pluginId = pluginId, tags = createTagsForBinding(keyTags, binding), serializer = JsonElementSettingSerializerDescriptor)
     val result = controller.doSetItem(key = key, value = if (isPropertySkipped) null else binding.toJson(state, filter))
     if (isPropertySkipped) {
       continue

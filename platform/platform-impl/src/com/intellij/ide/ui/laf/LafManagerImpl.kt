@@ -104,7 +104,6 @@ private const val INTER_NAME = "Inter"
 private const val INTER_SIZE = 13
 
 @Suppress("OVERRIDE_DEPRECATION")
-@ClientSetting
 @State(name = "LafManager",
        useLoadedStateAsExisting = false,
        storages = [Storage(value = "laf.xml", usePathMacroManager = false)],

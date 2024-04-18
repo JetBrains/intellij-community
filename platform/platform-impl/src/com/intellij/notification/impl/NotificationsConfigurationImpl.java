@@ -3,10 +3,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
@@ -15,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@RemoteSetting(direction = RemoteSettingDirection.FromClient)
 @State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = SettingsCategory.UI)
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(NotificationsConfigurationImpl.class);
