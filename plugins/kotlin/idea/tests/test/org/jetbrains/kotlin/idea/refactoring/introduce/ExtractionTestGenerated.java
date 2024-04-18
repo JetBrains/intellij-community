@@ -273,6 +273,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/brokenEscapeEntry.kt");
             }
 
+            @TestMetadata("duplicateOutsideTheBlock.kt")
+            public void testDuplicateOutsideTheBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/stringTemplates/duplicateOutsideTheBlock.kt");
+            }
+
             @TestMetadata("extractFalse.kt")
             public void testExtractFalse() throws Exception {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/extractFalse.kt");
@@ -321,6 +326,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             @TestMetadata("multipleEntriesWithSuffix.kt")
             public void testMultipleEntriesWithSuffix() throws Exception {
                 runTest("testData/refactoring/introduceVariable/stringTemplates/multipleEntriesWithSuffix.kt");
+            }
+
+            @TestMetadata("newBlock.kt")
+            public void testNewBlock() throws Exception {
+                runTest("testData/refactoring/introduceVariable/stringTemplates/newBlock.kt");
             }
 
             @TestMetadata("rawTemplateWithSubstring.kt")

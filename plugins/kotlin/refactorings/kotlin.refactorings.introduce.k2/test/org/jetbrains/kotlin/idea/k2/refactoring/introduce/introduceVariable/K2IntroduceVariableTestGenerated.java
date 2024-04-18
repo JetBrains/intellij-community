@@ -271,6 +271,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/brokenEscapeEntry.kt");
         }
 
+        @TestMetadata("duplicateOutsideTheBlock.kt")
+        public void testDuplicateOutsideTheBlock() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/duplicateOutsideTheBlock.kt");
+        }
+
         @TestMetadata("extractFalse.kt")
         public void testExtractFalse() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/extractFalse.kt");
@@ -319,6 +324,11 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
         @TestMetadata("multipleEntriesWithSuffix.kt")
         public void testMultipleEntriesWithSuffix() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/multipleEntriesWithSuffix.kt");
+        }
+
+        @TestMetadata("newBlock.kt")
+        public void testNewBlock() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/stringTemplates/newBlock.kt");
         }
 
         @TestMetadata("rawTemplateWithSubstring.kt")
