@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionCopiedShortcutsTracker
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
@@ -2652,7 +2653,7 @@ open class JBTabsImpl(
     init {
       @Suppress("LeakingThis")
       shadowAction = ShadowAction(this, copyFromId, tabs, parentDisposable)
-      copySourceActionId = copyFromId
+      ActionCopiedShortcutsTracker.getInstance().onActionCopiedFromId(this, copyFromId)
       isEnabledInModalContext = true
     }
 
