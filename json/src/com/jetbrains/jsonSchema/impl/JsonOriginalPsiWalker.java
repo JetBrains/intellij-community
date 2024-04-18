@@ -212,7 +212,7 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     private static final JsonOriginalSyntaxAdapter INSTANCE = new JsonOriginalSyntaxAdapter();
 
     @Override
-    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull PsiElement element) {
       return new JsonElementGenerator(element.getProject()).createProperty(name, value);
     }
 
@@ -238,12 +238,12 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
     }
 
     @Override
-    public PsiElement adjustNewProperty(PsiElement element) {
+    public @NotNull PsiElement adjustNewProperty(@NotNull PsiElement element) {
       return element;
     }
 
     @Override
-    public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
+    public @NotNull PsiElement adjustPropertyAnchor(@NotNull LeafPsiElement element) {
       throw new IncorrectOperationException("Shouldn't use leafs for insertion in pure JSON!");
     }
   }

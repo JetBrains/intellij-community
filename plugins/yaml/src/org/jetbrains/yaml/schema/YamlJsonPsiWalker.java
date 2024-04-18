@@ -330,7 +330,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
 
     @Override
-    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, PsiElement element) {
+    public @NotNull PsiElement createProperty(@NotNull String name, @NotNull String value, @NotNull PsiElement element) {
       YAMLElementGenerator generator = YAMLElementGenerator.getInstance(element.getProject());
       YAMLKeyValue keyValue = generator.createYamlKeyValue(name, StringUtil.unquoteString(value));
       return element instanceof YAMLDocument || findPrecedingKeyValueWithNoValue(element) != null
@@ -385,13 +385,13 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
     }
 
     @Override
-    public PsiElement adjustNewProperty(PsiElement element) {
+    public @NotNull PsiElement adjustNewProperty(@NotNull PsiElement element) {
       if (element instanceof YAMLMapping) return element.getFirstChild();
       return element;
     }
 
     @Override
-    public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
+    public @NotNull PsiElement adjustPropertyAnchor(@NotNull LeafPsiElement element) {
       YAMLElementGenerator generator = YAMLElementGenerator.getInstance(element.getProject());
       YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
       assert keyValue != null : "Should come here only for YAMLKeyValue with no value and a following indent";
