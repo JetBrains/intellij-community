@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.junit5Jimfs
 
 import com.google.common.jimfs.Jimfs
 import com.intellij.testFramework.junit5.impl.createTempDirectory
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AnnotatedElementContext
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -17,8 +18,9 @@ import java.nio.file.Path
 class JimfsTempDirFactory : TempDirFactory {
   private val fs = Jimfs.newFileSystem()
 
-  override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path =
+  override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path = runBlocking {
     createTempDirectory(fs)
+  }
 
   override fun close() {
     fs.close()
