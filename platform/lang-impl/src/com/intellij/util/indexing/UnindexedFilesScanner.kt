@@ -397,10 +397,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           try {
             progressReporter.getSubTaskReporter().use { subTaskReporter ->
               subTaskReporter.setText(provider.rootsScanningProgressText)
-              val rootsAndFiles: MutableList<Pair<VirtualFile?, List<VirtualFile>>> = ArrayList()
+              val rootsAndFiles: ArrayDeque<Pair<VirtualFile?, ArrayDeque<VirtualFile>>> = ArrayDeque()
               val singleProviderIteratorFactory = Function<VirtualFile?, ContentIterator> { root: VirtualFile? ->
-                val files: MutableList<VirtualFile> = ArrayList(1024)
-                rootsAndFiles.add(Pair<VirtualFile?, List<VirtualFile>>(root, files))
+                val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
+                rootsAndFiles.add(Pair(root, files))
                 ContentIterator { fileOrDir: VirtualFile ->
                   // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
                   // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
@@ -412,7 +412,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
               scanningStatistics.startVfsIterationAndScanningApplication()
               try {
                 provider.iterateFilesInRoots(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
-              } finally {
+              }
+              finally {
                 scanningStatistics.tryFinishVfsIterationAndScanningApplication()
               }
 
@@ -422,34 +423,42 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                   try {
                     ReadAction.nonBlocking {
                       while (!rootsAndFiles.isEmpty()) {
-                        val (first, second) = rootsAndFiles.removeLast()
+                        val (root, files) = rootsAndFiles.removeFirst()
                         try {
-                          if (first?.isValid == false) continue
+                          if (root?.isValid == false) continue
                           val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
-                                                            first, scanningRequest, myFilterHandler)
+                                                            root, scanningRequest, myFilterHandler)
                           val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
                                                                     scanningStatistics, perProviderSink)
                           if (!rootIterator.mayBeUsed()) {
                             LOG.warn("Iterator based on $provider can't be used.")
                             continue
                           }
-                          second.forEach {
-                            if (it.isValid)
-                              rootIterator.processFile(it)
+                          while (files.isNotEmpty()) {
+                            val file = files.removeFirst()
+                            try {
+                              if (file.isValid)
+                                rootIterator.processFile(file)
+                            }
+                            catch (e: ProcessCanceledException) {
+                              files.addFirst(file)
+                              throw e
+                            }
                           }
                         }
                         catch (e: ProcessCanceledException) {
-                          rootsAndFiles.add(first to second)
+                          rootsAndFiles.addFirst(root to files)
                           throw e
                         }
                       }
                     }.executeSynchronously()
-                  } finally {
+                  }
+                  finally {
                     scanningStatistics.tryFinishFilesChecking()
                   }
                   perProviderSink.commit()
                 }
-              }
+            }
           }
           catch (pce: ProcessCanceledException) {
             scanningRequest.markUnsuccessful()
@@ -522,7 +531,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       diagnosticDumper.onScanningStarted(scanningHistory)
       try {
         performScanningAndIndexing(indicator, progressReporter)
-      } finally {
+      }
+      finally {
         diagnosticDumper.onScanningFinished(scanningHistory)
       }
       futureScanningHistory.set(scanningHistory)
