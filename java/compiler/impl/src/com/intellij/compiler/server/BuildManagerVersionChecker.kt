@@ -6,11 +6,13 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
 import com.intellij.util.system.CpuArch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -53,10 +55,17 @@ internal class BuildManagerVersionChecker(val project: Project, val scope: Corou
     ProjectJdkTable.getInstance().allJdks.filter { it.homePath == home }.forEach { jdk ->
       val versionString = versionInfo.displayVersionString()
       if (jdk.versionString != versionString) {
-        writeAction {
-          val modificator = jdk.sdkModificator
-          modificator.versionString = versionString
-          modificator.commitChanges()
+
+        val sdkEntity = (project.workspaceModel.currentSnapshot.entities(SdkEntity::class.java)
+                           .firstOrNull { it.name == jdk.name && it.type == jdk.sdkType.name }
+                         ?: error("SDK entity for `${jdk.name}` `${jdk.sdkType.name}` doesn't exist"))
+
+        project.workspaceModel.update("Updating JDK versions string") {
+          it.modifyEntity(sdkEntity) {
+            this.apply {
+              version = versionString
+            }
+          }
         }
       }
     }
