@@ -30,6 +30,8 @@ public final class EditorScrollingPositionKeeper implements Disposable {
   }
 
   public void savePosition() {
+    if (myEditor instanceof ImaginaryEditor) return;
+
     disposeMarker();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleAreaOnScrollingFinished();
     int caretY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
@@ -45,6 +47,8 @@ public final class EditorScrollingPositionKeeper implements Disposable {
   }
 
   public void restorePosition(boolean stopAnimation) {
+    if (myEditor instanceof ImaginaryEditor) return;
+
     int newY;
     if (myTopLeftCornerMarker == null) {
       newY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);

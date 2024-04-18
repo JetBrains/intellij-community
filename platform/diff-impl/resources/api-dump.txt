@@ -1145,6 +1145,7 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - getEditors():java.util.List
 - getFoldingModel():com.intellij.diff.tools.util.FoldingModelSupport
 - getFoldingModelSettings():com.intellij.diff.tools.util.FoldingModelSupport$Settings
+- getHighlightEditors():java.util.List
 - getMasterSide():com.intellij.diff.util.Side
 - getNavigatable():com.intellij.pom.Navigatable
 - p:getNavigatable(com.intellij.diff.util.LineCol):com.intellij.pom.Navigatable

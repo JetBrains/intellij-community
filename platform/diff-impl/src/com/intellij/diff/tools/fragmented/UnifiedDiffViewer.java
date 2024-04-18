@@ -37,14 +37,17 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.textarea.EmptyInlayModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -55,7 +58,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -517,7 +522,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
   @NotNull
-  public Pair<int[], Side> transferLineFromOneside(int line) {
+  public Pair<int[], @NotNull Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
 
     ChangedBlockData blockData = myModel.getData();
@@ -1085,6 +1090,37 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     sink.set(DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER, new MyChangedRangeProvider());
   }
 
+  @Override
+  public @NotNull List<? extends Editor> getHighlightEditors() {
+    if (myProject == null) return Collections.emptyList();
+
+    return ReadAction.compute(() -> {
+      List<Editor> result = new ArrayList<>();
+      result.add(myEditor);
+      ContainerUtil.addIfNotNull(result, createImaginaryEditor(Side.LEFT));
+      ContainerUtil.addIfNotNull(result, createImaginaryEditor(Side.RIGHT));
+      return result;
+    });
+  }
+
+  private @Nullable Editor createImaginaryEditor(@NotNull Side side) {
+    if (myProject == null) return null;
+    if (UnifiedImaginaryEditor.ourDisableImaginaryEditor) return null;
+    if (!Registry.is("diff.unified.enable.imaginary.editor")) return null;
+
+    int caretOffset = myEditor.getCaretModel().getOffset();
+    LineCol caretPosition = LineCol.fromOffset(myDocument, caretOffset);
+
+    Document sideDocument = getDocument(side);
+    ImaginaryEditor editor = new UnifiedImaginaryEditor(myProject, sideDocument, side);
+
+    int sideLine = transferLineFromOnesideStrict(side, caretPosition.line);
+    if (sideLine != -1) {
+      editor.getCaretModel().moveToOffset(LineCol.toOffset(sideDocument, sideLine, caretPosition.column));
+    }
+    return editor;
+  }
+
   private class MyStatusPanel extends StatusPanel {
     @Nullable
     @Override
@@ -1571,6 +1607,98 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       return ContainerUtil.map(getNonSkippedDiffChanges(), change -> {
         return DiffUtil.getLinesRange(editor.getDocument(), change.getLine1(), change.getLine2());
       });
+    }
+  }
+
+  private class UnifiedImaginaryEditor extends ImaginaryEditor {
+    private static boolean ourDisableImaginaryEditor = false;
+
+    private final Side mySide;
+
+    private UnifiedImaginaryEditor(@NotNull Project project, @NotNull Document document, @NotNull Side side) {
+      super(project, document);
+      mySide = side;
+    }
+
+    @Override
+    protected RuntimeException notImplemented() {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourDisableImaginaryEditor = true;
+      return new UnsupportedOperationException("Not implemented. UnifiedDiffViewer.UnifiedImaginaryEditor will be disabled.");
+    }
+
+    @Override
+    public VirtualFile getVirtualFile() {
+      return FileDocumentManager.getInstance().getFile(getDocument());
+    }
+
+    @Override
+    public @NotNull EditorColorsScheme getColorsScheme() {
+      return myEditor.getColorsScheme();
+    }
+
+    @Override
+    public @NotNull ProperTextRange calculateVisibleRange() {
+      ChangedBlockData blockData = myModel.getData();
+      if (blockData == null) return new ProperTextRange(0, 0);
+
+      ProperTextRange range = myEditor.calculateVisibleRange();
+      Document oneSideDocument = UnifiedDiffViewer.this.myDocument;
+      int line1 = oneSideDocument.getLineNumber(range.getStartOffset());
+      int line2 = oneSideDocument.getLineNumber(range.getEndOffset());
+
+      Document sideDocument = UnifiedDiffViewer.this.getDocument(mySide);
+      LineNumberConvertor lineConvertor = blockData.getLineNumberConvertor(mySide);
+      int sideLine1 = lineConvertor.convertApproximate(Math.max(0, line1 - 1));
+      int sideLine2 = lineConvertor.convertApproximate(Math.min(DiffUtil.getLineCount(sideDocument), line2 + 1));
+
+      TextRange sideRange = DiffUtil.getLinesRange(sideDocument, sideLine1, sideLine2, false);
+      return new ProperTextRange(sideRange.getStartOffset(), sideRange.getEndOffset());
+    }
+
+    @Override
+    public boolean isOneLineMode() {
+      return false;
+    }
+
+    @Override
+    public boolean isViewer() {
+      return true;
+    }
+
+    @Override
+    public @NotNull EditorSettings getSettings() {
+      return myEditor.getSettings();
+    }
+
+    @Override
+    public @NotNull JComponent getComponent() {
+      return myEditor.getComponent(); // isShowing() checks
+    }
+
+    @Override
+    public @NotNull JComponent getContentComponent() {
+      return myEditor.getContentComponent(); // isShowing() checks
+    }
+
+    @Override
+    public @NotNull MarkupModel getMarkupModel() {
+      return new EmptyMarkupModel(getDocument());
+    }
+
+    @Override
+    public @NotNull IndentsModel getIndentsModel() {
+      return new EmptyIndentsModel();
+    }
+
+    @Override
+    public @NotNull InlayModel getInlayModel() {
+      return new EmptyInlayModel();
+    }
+
+    @Override
+    public @NotNull FoldingModel getFoldingModel() {
+      return new EmptyFoldingModel();
     }
   }
 }

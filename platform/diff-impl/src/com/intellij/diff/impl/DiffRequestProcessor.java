@@ -752,7 +752,7 @@ public abstract class DiffRequestProcessor
   public List<Editor> getEmbeddedEditors() {
     DiffViewer viewer = getActiveViewer();
     if (viewer instanceof EditorDiffViewer editorDiffViewer) {
-      return new ArrayList<>(editorDiffViewer.getEditors());
+      return new ArrayList<>(editorDiffViewer.getHighlightEditors());
     }
     return Collections.emptyList();
   }

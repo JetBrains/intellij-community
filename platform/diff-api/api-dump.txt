@@ -121,6 +121,7 @@ com.intellij.diff.EditorDiffViewer
 - com.intellij.diff.FrameDiffTool$DiffViewer
 - getCurrentEditor():com.intellij.openapi.editor.Editor
 - a:getEditors():java.util.List
+- getHighlightEditors():java.util.List
 com.intellij.diff.FocusableContext
 - a:isFocusedInWindow():Z
 - a:requestFocusInWindow():V
