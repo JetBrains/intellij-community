@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.concurrency.Promise
 
 /**
- * [See documentation](http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html)
+ * [See documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html)
  */
 abstract class PasswordSafe : PasswordStorage, CredentialStore {
   companion object {

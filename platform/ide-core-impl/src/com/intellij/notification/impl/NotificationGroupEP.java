@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.BundleBase;
@@ -27,7 +27,7 @@ import java.util.ResourceBundle;
  * <p>
  * Use {@link com.intellij.notification.NotificationGroupManager#getNotificationGroup(String)} to obtain instance via {@link #id}.
  * <p>
- * See <a href="https://jetbrains.org/intellij/sdk/docs/user_interface_components/notifications.html#top-level-notifications">Top-Level Notifications</a>.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/notifications.html#balloons">Top-Level Notifications (Balloons)</a>.
  */
 public final class NotificationGroupEP implements PluginAware {
   static final ExtensionPointName<NotificationGroupEP> EP_NAME = new ExtensionPointName<>("com.intellij.notificationGroup");
