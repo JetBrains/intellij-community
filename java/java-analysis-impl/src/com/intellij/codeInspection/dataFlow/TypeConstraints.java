@@ -193,7 +193,7 @@ public final class TypeConstraints {
       }
       return PsiType.getJavaLangObject(aClass.getManager(), aClass.getResolveScope());
     }
-    return psiType.rawType();
+    return psiType;
   }
 
   @NotNull
