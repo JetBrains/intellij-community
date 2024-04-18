@@ -7,13 +7,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.util.net.HttpConfigurable
-import java.util.HashSet
+import com.intellij.util.net.IdeaWideProxySelector
 
 private class ProxyTypeCollector : ApplicationUsagesCollector() {
 
-  private val GROUP: EventLogGroup = EventLogGroup("proxy.settings", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("proxy.settings", 2)
   private val TYPE: EventId1<String?> = GROUP.registerEvent(
-    "proxy.type", EventFields.String("name", ProxyType.values().map { type -> type.name }))
+    "proxy.type", EventFields.String("name", ProxyType.entries.map { type -> type.name }))
+  private val AUTO_DETECT_DURATION : EventId1<Long> = GROUP.registerEvent("auto.detect.duration", EventFields.DurationMs)
 
   enum class ProxyType { Auto, Socks, Http }
 
@@ -32,6 +33,10 @@ private class ProxyTypeCollector : ApplicationUsagesCollector() {
         /*httpConfigurable.USE_HTTP_PROXY && !httpConfigurable.PROXY_TYPE_IS_SOCKS*/else -> ProxyType.Http
       }
       result.add(TYPE.metric(type.name))
+      if (type == ProxyType.Auto) {
+        val autoDetectMs = IdeaWideProxySelector.getProxyAutoDetectDurationMs().takeIf { it != -1L }
+        if (autoDetectMs != null) result.add(AUTO_DETECT_DURATION.metric(autoDetectMs))
+      }
     }
 
     return result
