@@ -7,6 +7,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -236,7 +237,13 @@ public final class AboutDialog extends DialogWrapper {
     String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
     Date buildDate = appInfo.getBuildDate().getTime();
     String formattedBuildDate = DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(buildDate);
-    if (appInfo.getBuild().isSnapshot()) {
+
+    if (AppMode.isDevServer()) {
+      // Dev mode build date is not accurate, so we don't show it to avoid confusion
+      buildInfo += IdeBundle.message("about.box.build.date.omitted.in.dev.build.mode");
+      buildInfoNonLocalized += ", build date omitted in Dev build mode";
+    }
+    else if (appInfo.getBuild().isSnapshot()) {
       String buildTime = new SimpleDateFormat("HH:mm").format(buildDate);
       buildInfo += IdeBundle.message("about.box.build.date.time", NlsMessages.formatDateLong(buildDate), buildTime);
       buildInfoNonLocalized += MessageFormat.format(", built on {0} at {1}", formattedBuildDate, buildTime);
@@ -245,6 +252,7 @@ public final class AboutDialog extends DialogWrapper {
       buildInfo += IdeBundle.message("about.box.build.date", NlsMessages.formatDateLong(buildDate));
       buildInfoNonLocalized += MessageFormat.format(", built on {0}", formattedBuildDate);
     }
+
     return Pair.create(buildInfo, buildInfoNonLocalized);
   }
 
