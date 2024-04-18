@@ -9,8 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.net.IdeaWideProxySelector
 
-private class ProxyTypeCollector : ApplicationUsagesCollector() {
-
+private class ProxySettingsCollector : ApplicationUsagesCollector() {
   private val GROUP: EventLogGroup = EventLogGroup("proxy.settings", 2)
   private val TYPE: EventId1<String?> = GROUP.registerEvent(
     "proxy.type", EventFields.String("name", ProxyType.entries.map { type -> type.name }))
