@@ -47,7 +47,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     super.setUp()
   }
 
-  fun testAllFilesWithMemberNameReported() {
+  fun testStressAllFilesWithMemberNameReported() {
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     PropertyChecker.customized()
