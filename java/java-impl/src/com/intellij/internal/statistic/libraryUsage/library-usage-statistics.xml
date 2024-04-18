@@ -107,6 +107,7 @@
   <technology name="google-http-java-client" root="com.google.api.client.http"/>
   <technology name="gorm" root="org.grails.datastore.gorm"/>
   <technology name="grails" root="grails"/>
+  <technology name="graphql-dgs" root="com.netflix.graphql.dgs"/>
   <technology name="graphql-java" root="graphql"/>
   <technology name="graphql-kotlin" root="com.expediagroup.graphql"/>
   <technology name="groovy" root="groovy.lang"/>
