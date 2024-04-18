@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public final class VcsContentAnnotationExceptionFilterFactory implements ExceptionFilterFactory {
+final class VcsContentAnnotationExceptionFilterFactory implements ExceptionFilterFactory {
   @Override
   public @NotNull Filter create(@NotNull GlobalSearchScope searchScope) {
     return new VcsContentAnnotationExceptionFilter(Objects.requireNonNull(searchScope.getProject()), searchScope);

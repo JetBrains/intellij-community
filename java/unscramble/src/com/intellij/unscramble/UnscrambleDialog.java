@@ -40,14 +40,12 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.ar;
-
 public class UnscrambleDialog extends DialogWrapper {
   private static final @NonNls String PROPERTY_LOG_FILE_HISTORY_URLS = "UNSCRAMBLE_LOG_FILE_URL";
   private static final @NonNls String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   private static final @NonNls String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
   private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
-  private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
+  private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -275,7 +273,7 @@ public class UnscrambleDialog extends DialogWrapper {
   private final class NormalizeTextAction extends AbstractAction {
     NormalizeTextAction(){
       putValue(NAME, JavaBundle.message("unscramble.normalize.button"));
-      putValue(DEFAULT_ACTION, Boolean.FALSE);
+      putValue(DialogWrapper.DEFAULT_ACTION, Boolean.FALSE);
     }
 
     @Override
@@ -360,7 +358,7 @@ public class UnscrambleDialog extends DialogWrapper {
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       if (performUnscramble()) {
         myLogFile.addCurrentTextToHistory();
-        close(OK_EXIT_CODE);
+        close(DialogWrapper.OK_EXIT_CODE);
       }
     });
   }

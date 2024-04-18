@@ -38,7 +38,7 @@ import org.jetbrains.uast.UastContextKt;
 
 import java.util.*;
 
-class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
+final class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(VcsContentAnnotationExceptionFilter.class);
   private final VcsContentAnnotationSettings mySettings;
