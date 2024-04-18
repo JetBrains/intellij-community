@@ -98,10 +98,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return ThreeState.UNSURE
     }
 
-    override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame> {
-        val location = descriptor.location
-        if (location == null || !location.isInKotlinSources()) {
-            return emptyList()
+    override fun createStackFrames(descriptor: StackFrameDescriptorImpl): List<XStackFrame>? {
+        if (descriptor.location?.isInKotlinSources() != true) {
+            return null
         }
         val frameProxy = descriptor.frameProxy
         // Don't provide inline stack trace for coroutine frames yet

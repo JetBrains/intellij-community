@@ -41,6 +41,11 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
                 CoroutineFrameBuilder.coroutineExitFrame(frame, it)
             } ?: return null
 
+            // only leave the first suspend frame
+            if (!stackFrame.isFirstSuspendFrame) {
+                return emptyList() // skip
+            }
+
             if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
                 showCoroutinePanel(debugProcess)
             }

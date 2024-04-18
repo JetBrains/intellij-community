@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -93,7 +93,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         if (myInProgress) {
             val proxy = getFrameProxy(this) ?: return emptyList()
             return KotlinPositionManager(debugProcess)
-              .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker()))
+              .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker())).orEmpty()
               .filterIsInstance<KotlinStackFrame>()
         }
         return emptyList()
@@ -355,7 +355,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         val nodeManager = debugProcess.xdebugProcess!!.nodeManager
         val descriptor = nodeManager.getStackFrameDescriptor(null, frameProxy)
         val stackFrames = debugProcess.positionManager.createStackFrames(descriptor)
-        if (stackFrames.isEmpty()) {
+        if (stackFrames.isNullOrEmpty()) {
             error("Can't create stack frame for $descriptor")
         }
 

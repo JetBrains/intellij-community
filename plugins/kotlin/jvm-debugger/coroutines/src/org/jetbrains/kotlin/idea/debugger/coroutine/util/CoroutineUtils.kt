@@ -31,6 +31,10 @@ fun Method.isSuspendLambda() =
 fun Method.hasContinuationParameter() =
     signature().contains("Lkotlin/coroutines/Continuation;)")
 
+fun StackFrameProxyImpl.getSuspendExitMode(): SuspendExitMode {
+    return safeLocation()?.getSuspendExitMode() ?: return SuspendExitMode.NONE
+}
+
 fun Location.getSuspendExitMode(): SuspendExitMode {
     val method = safeMethod() ?: return SuspendExitMode.NONE
     if (method.isSuspendLambda())

@@ -172,7 +172,7 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     List<XStackFrame> customFrames = myDebugProcess.getPositionManager().createStackFrames(descriptor);
-    if (!customFrames.isEmpty()) {
+    if (customFrames != null) {
       return customFrames;
     }
 
