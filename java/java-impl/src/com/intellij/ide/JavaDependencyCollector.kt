@@ -2,7 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -13,8 +13,8 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 internal class JavaDependencyCollector : DependencyCollector {
 
-  override fun collectDependencies(project: Project): Set<String> {
-    return runReadAction {
+  override suspend fun collectDependencies(project: Project): Set<String> {
+    return readAction {
       val projectLibraries = LibraryTablesRegistrar.getInstance()
         .getLibraryTable(project)
         .libraries.asSequence()
@@ -29,7 +29,9 @@ internal class JavaDependencyCollector : DependencyCollector {
       (projectLibraries + moduleLibraries)
         .mapNotNull { it as? LibraryEx }
         .mapNotNull { it.properties as? RepositoryLibraryProperties }
-        .map { "${it.groupId}:${it.artifactId}" }
+        .map { it.groupId to it.artifactId }
+        .distinct()
+        .map { (g, a) -> "$g:$a" }
         .toSet()
     }
   }
