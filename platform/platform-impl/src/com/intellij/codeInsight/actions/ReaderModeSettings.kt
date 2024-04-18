@@ -32,7 +32,7 @@ interface ReaderModeSettings : Disposable {
     private val EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
     private val EP_READER_MODE_MATCHER = ExtensionPointName<ReaderModeMatcher>("com.intellij.readerModeMatcher")
 
-    fun getInstance(project: Project): ReaderModeSettings = project.getService(ReaderModeSettings::class.java)
+    fun getInstance(project: Project): ReaderModeSettings = project.getService(ReaderModeSettingsImpl::class.java)
 
     @RequiresEdt
     fun applyReaderMode(project: Project,

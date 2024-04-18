@@ -602,9 +602,7 @@
     <projectService serviceInterface="com.intellij.externalDependencies.ExternalDependenciesManager"
                     serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.actions.ReaderModeSettings"
-                    serviceImplementation="com.intellij.codeInsight.actions.ReaderModeSettingsImpl"
-                    client="local"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.actions.ReaderModeSettingsImpl" client="all"/>
 
     <applicationService serviceInterface="com.intellij.ide.PlatformIdeService"
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
