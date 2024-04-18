@@ -383,27 +383,27 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
       repeatTaskConcurrently(continueOnException = true, SCANNING_DISPATCHER, SCANNING_PARALLELISM) {
         val provider = providersToCheck.receiveCatching().getOrNull() ?: return@repeatTaskConcurrently false
-        blockingContext {
-          val scanningStatistics = ScanningStatistics(provider.debugName)
-          scanningStatistics.setProviderRoots(provider, myProject)
-          val origin = provider.origin
-          val fileScannerVisitors = sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) }
+        val scanningStatistics = ScanningStatistics(provider.debugName)
+        scanningStatistics.setProviderRoots(provider, myProject)
+        val origin = provider.origin
 
-          val thisProviderDeduplicateFilter =
-            IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter)
+        val fileScannerVisitors = blockingContext { sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) } }
+        val thisProviderDeduplicateFilter =
+          IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter)
 
-          val providerScanningStartTime = System.nanoTime()
-          try {
-            progressReporter.getSubTaskReporter().use { subTaskReporter ->
-              subTaskReporter.setText(provider.rootsScanningProgressText)
-              val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
-              val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
-                // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
-                // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
-                PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
-                files.add(fileOrDir)
-              }
+        val providerScanningStartTime = System.nanoTime()
+        try {
+          progressReporter.getSubTaskReporter().use { subTaskReporter ->
+            subTaskReporter.setText(provider.rootsScanningProgressText)
+            val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
+            val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
+              // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
+              // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
+              PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
+              files.add(fileOrDir)
+            }
 
+            blockingContext {
               scanningStatistics.startVfsIterationAndScanningApplication()
               try {
                 provider.iterateFiles(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
@@ -445,21 +445,21 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                 }
             }
           }
-          catch (pce: ProcessCanceledException) {
-            scanningRequest.markUnsuccessful()
-            throw pce
-          }
-          catch (e: Exception) {
-            scanningRequest.markUnsuccessful()
-            // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
-            // we want to ignore the whole origin and let other origins complete normally.
-            LOG.error("Error while scanning files of ${provider.debugName}. To reindex files under this origin IDEA has to be restarted", e)
-          }
-          finally {
-            scanningStatistics.totalOneThreadTimeWithPauses = System.nanoTime() - providerScanningStartTime
-            scanningStatistics.numberOfSkippedFiles = thisProviderDeduplicateFilter.numberOfSkippedFiles
-            scanningHistory.addScanningStatistics(scanningStatistics)
-          }
+        }
+        catch (e: Exception) {
+          scanningRequest.markUnsuccessful()
+
+          // "e" might be a CancellationException, or PCE. We don't care if the scope is not canceled.
+          checkCanceled()
+
+          // CollectingIterator should skip failing files by itself. But if provider.iterateFiles cannot iterate files and throws exception,
+          // we want to ignore the whole origin and let other origins complete normally.
+          LOG.error("Error while scanning files of ${provider.debugName}. To reindex files under this origin IDEA has to be restarted", e)
+        }
+        finally {
+          scanningStatistics.totalOneThreadTimeWithPauses = System.nanoTime() - providerScanningStartTime
+          scanningStatistics.numberOfSkippedFiles = thisProviderDeduplicateFilter.numberOfSkippedFiles
+          scanningHistory.addScanningStatistics(scanningStatistics)
         }
 
         return@repeatTaskConcurrently true
