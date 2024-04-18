@@ -1033,13 +1033,14 @@ f:com.intellij.vcs.log.impl.VcsLogSharedSettings$State
 - f:findLogUi(com.intellij.vcs.log.impl.VcsLogManager,com.intellij.vcs.log.impl.VcsLogTabLocation,java.lang.Class,Z,kotlin.jvm.functions.Function1):com.intellij.vcs.log.VcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager
 - sf:Companion:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- sf:generateDisplayName(com.intellij.vcs.log.VcsLogUi):java.lang.String
+- sf:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
 - f:getTabs():java.util.Collection
 - f:openAnotherLogTab(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.impl.VcsLogTabLocation):com.intellij.vcs.log.ui.MainVcsLogUi
 f:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
-- f:generateDisplayName(com.intellij.vcs.log.VcsLogUi):java.lang.String
+- f:generateDisplayName(com.intellij.vcs.log.ui.VcsLogUiEx):java.lang.String
 - f:getFullName(java.lang.String):java.lang.String
 - f:getTAB_GROUP_ID():com.intellij.ui.content.TabGroupId
+- f:onDisplayNameChange(com.intellij.vcs.log.ui.MainVcsLogUi,kotlin.jvm.functions.Function0):V
 com.intellij.vcs.log.impl.VcsLogTabsProperties
 - a:createProperties(java.lang.String):com.intellij.vcs.log.impl.MainVcsLogUiProperties
 f:com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener
@@ -1106,6 +1107,7 @@ f:com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl$TextFilterSettings
 - f:setMatchCase(Z):V
 - f:setRegex(Z):V
 f:com.intellij.vcs.log.impl.VcsLogUiPropertiesKt
+- sf:getOrNull(com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty):java.lang.Object
 - sf:onPropertyChange(com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 f:com.intellij.vcs.log.impl.VcsProjectLog
 - sf:Companion:com.intellij.vcs.log.impl.VcsProjectLog$Companion
@@ -2656,6 +2658,7 @@ f:com.intellij.vcs.log.util.GraphOptionsUtil
 - sf:getLocalizedName(com.intellij.vcs.log.graph.PermanentGraph$Options):java.lang.String
 - sf:getLocalizedName(com.intellij.vcs.log.graph.PermanentGraph$SortType):java.lang.String
 - sf:getOptionKindNames():java.util.List
+- sf:getPresentationForTabTitle(com.intellij.vcs.log.graph.PermanentGraph$Options):java.lang.String
 f:com.intellij.vcs.log.util.IntCollectionUtil
 - <init>():V
 - s:add(java.util.Map,java.lang.Object,I):V
@@ -2884,7 +2887,8 @@ f:com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 - sf:noMerges():com.intellij.vcs.log.VcsLogParentFilter
 f:com.intellij.vcs.log.visible.filters.VcsLogFiltersKt
 - sf:getKeysToSet(com.intellij.vcs.log.VcsLogFilterCollection):java.util.Set
-- sf:getPresentation(com.intellij.vcs.log.VcsLogFilterCollection):java.lang.String
+- sf:getPresentation(com.intellij.vcs.log.VcsLogFilterCollection,Z):java.lang.String
+- bs:getPresentation$default(com.intellij.vcs.log.VcsLogFilterCollection,Z,I,java.lang.Object):java.lang.String
 - sf:matches(com.intellij.vcs.log.VcsLogFilterCollection,java.util.Set):Z
 - sf:matches(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogFilterCollection$FilterKey[]):Z
 - sf:with(com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogFilter):com.intellij.vcs.log.VcsLogFilterCollection

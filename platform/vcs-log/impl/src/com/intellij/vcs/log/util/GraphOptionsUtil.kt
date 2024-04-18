@@ -4,6 +4,7 @@ package com.intellij.vcs.log.util
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.graph.PermanentGraph
+import org.jetbrains.annotations.Nls
 
 object GraphOptionsUtil {
 
@@ -35,6 +36,14 @@ object GraphOptionsUtil {
       is PermanentGraph.Options.Base -> sortType.localizedDescription
       PermanentGraph.Options.LinearBek -> VcsLogBundle.message("graph.options.linear.description")
       PermanentGraph.Options.FirstParent -> VcsLogBundle.message("graph.options.first.parent.description")
+    }
+
+  @JvmStatic
+  val PermanentGraph.Options.presentationForTabTitle: String
+    @Nls get() = when (this) {
+      is PermanentGraph.Options.FirstParent -> "--first-parent" // NON-NLS
+      is PermanentGraph.Options.LinearBek -> VcsLogBundle.message("graph.options.linear.presentation")
+      else -> ""
     }
 
   private const val BASE = "Base"

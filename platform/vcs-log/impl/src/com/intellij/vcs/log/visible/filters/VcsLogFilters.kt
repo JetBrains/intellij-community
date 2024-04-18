@@ -252,12 +252,12 @@ fun VcsLogFilterCollection.matches(filterKeys: Set<FilterKey<*>>): Boolean {
 }
 
 @Nls
-fun VcsLogFilterCollection.getPresentation(): String {
+fun VcsLogFilterCollection.getPresentation(withPrefix: Boolean = false): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
   return StringUtil.join(filters, { filter: VcsLogFilter ->
-    if (filters.size != 1) {
+    if (filters.size != 1 || withPrefix) {
       filter.withPrefix()
     }
     else filter.displayText

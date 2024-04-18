@@ -48,3 +48,8 @@ fun VcsLogUiProperties.onPropertyChange(disposable: Disposable, listener: (VcsLo
   }
   addChangeListener(propertiesChangeListener, disposable)
 }
+
+fun <T> VcsLogUiProperties.getOrNull(property: VcsLogUiProperties.VcsLogUiProperty<T>): T? {
+  if (!exists(property)) return null
+  return this[property]
+}
