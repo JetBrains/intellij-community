@@ -34,11 +34,11 @@ internal class IsUpToDateCheckStartupActivity : ProjectActivity {
       logger.info("suitable consumer is not found")
       return
     }
-    else {
-      logger.info("activity started")
-    }
+    // Triggering project save activity to ensure that we don't violate the contract of JPS execution (.idea folder has to be available)
+    project.save()
 
     coroutineContext.ensureActive()
+    logger.info("activity started")
     val isUpToDate = nonBlockingIsUpToDate(project)
 
     logger.info("isUpToDate = $isUpToDate")
