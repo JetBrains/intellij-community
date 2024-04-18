@@ -27,6 +27,7 @@ import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
 import com.intellij.util.proxy.PropertiesEncryptionSupport;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -55,9 +56,12 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   private static final Logger LOG = Logger.getInstance(HttpConfigurable.class);
   private static final Path PROXY_CREDENTIALS_FILE = Paths.get(PathManager.getOptionsPath(), "proxy.settings.pwd");
 
-  public boolean PROXY_TYPE_IS_SOCKS;
+  // only one out of these three should be true
   public boolean USE_HTTP_PROXY;
   public boolean USE_PROXY_PAC;
+  // USE_NO_PROXY = !USE_HTTP_PROXY && !USE_PROXY_PAC
+
+  public boolean PROXY_TYPE_IS_SOCKS;
   public transient volatile boolean AUTHENTICATION_CANCELLED;
   public String PROXY_HOST;
   public int PROXY_PORT = 80;
@@ -73,6 +77,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public String PROXY_EXCEPTIONS;
   public boolean USE_PAC_URL;
   public String PAC_URL;
+
+  /**
+   * Represents whether the default mode was already migrated from USE_NO_PROXY to USE_PROXY_PAC
+   */
+  @Property private boolean DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC;
 
   private transient IdeaWideProxySelector mySelector;
   private final transient Object myLock = new Object();
@@ -119,6 +128,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   @Override
   public void initializeComponent() {
+    migrateDefaultModeFromNoProxyToProxyPAC();
     mySelector = new IdeaWideProxySelector(this);
     String name = getClass().getName();
     CommonProxy commonProxy = CommonProxy.getInstance();
@@ -147,6 +157,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Override
   public void loadState(@NotNull HttpConfigurable state) {
     XmlSerializerUtil.copyBean(state, this);
+    migrateDefaultModeFromNoProxyToProxyPAC();
     if (!KEEP_PROXY_PASSWORD) {
       removeSecure("proxy.password");
     }
@@ -601,6 +612,14 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     }
     catch (Exception e) {
       LOG.info(e);
+    }
+  }
+
+  private void migrateDefaultModeFromNoProxyToProxyPAC() {
+    if (DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC) return;
+    DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC = true;
+    if (!USE_HTTP_PROXY && !USE_PROXY_PAC) { // == USE_NO_PROXY
+      USE_PROXY_PAC = true;
     }
   }
 }
