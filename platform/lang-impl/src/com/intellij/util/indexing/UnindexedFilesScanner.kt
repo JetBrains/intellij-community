@@ -505,10 +505,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   fun perform(indicator: CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter) {
     LOG.assertTrue(myProject.getUserData(INDEX_UPDATE_IN_PROGRESS) != true, "Scanning is already in progress")
-    myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true)
-    myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
-    val diagnosticDumper = IndexDiagnosticDumper.getInstance()
     try {
+      myProject.putUserData(INDEX_UPDATE_IN_PROGRESS, true)
+      myFilterHandler.scanningStarted(myProject, isFullIndexUpdate())
+      val diagnosticDumper = IndexDiagnosticDumper.getInstance()
       diagnosticDumper.onScanningStarted(scanningHistory)
       try {
         performScanningAndIndexing(indicator, progressReporter)
