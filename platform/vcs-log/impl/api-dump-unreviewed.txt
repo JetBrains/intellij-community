@@ -2677,9 +2677,11 @@ f:com.intellij.vcs.log.util.PersistentUtil
 - sf:getCorruptionMarkerFile():java.nio.file.Path
 - sf:getProjectLogDataDirectoryName(java.lang.String,java.lang.String):java.lang.String
 a:com.intellij.vcs.log.util.RevisionCollectorTask
-- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.ProgressIndicator,Z):V
 - f:cancel(Z):V
+- f:cancel(Z,com.intellij.openapi.progress.ProgressIndicator,java.util.concurrent.Future):V
 - a:collectRevisions(kotlin.jvm.functions.Function1):V
+- a:collectRevisionsFast(kotlin.jvm.functions.Function1):V
 - pf:getProject():com.intellij.openapi.project.Project
 - pf:getRevisionsCount():I
 - f:isCancelled():Z

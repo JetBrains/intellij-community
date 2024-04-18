@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -17,19 +18,22 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * @param T the type of revisions to collect.
  * @property project the project associated with the task.
- * @property indicator the progress indicator for the task.
+ * @property mainIndicator the progress indicator for the main task.
+ * @property fastTaskIndicator the progress indicator for the fast task.
  *
  * @see waitForRevisions
  */
-abstract class RevisionCollectorTask<T>(protected val project: Project, private val indicator: ProgressIndicator) {
+abstract class RevisionCollectorTask<T>(protected val project: Project, private val mainIndicator: ProgressIndicator, private val fastTaskIndicator: ProgressIndicator, private val fastStartSupported: Boolean) {
   private val future: Future<*>
+  private val fastFuture: Future<*>?
   private val _revisions = ConcurrentLinkedQueue<T>()
   private val exception = AtomicReference<VcsException>()
+  private val firstRevisionCollected = AtomicBoolean(false)
 
   @Volatile
   private var lastSnapshotSize = 0
 
-  val isCancelled get() = indicator.isCanceled
+  val isCancelled get() = mainIndicator.isCanceled
 
   protected val revisionsCount get() = _revisions.size
 
@@ -37,17 +41,50 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
     future = AppExecutorUtil.getAppExecutorService().submit {
       ProgressManager.getInstance().runProcess(Runnable {
         try {
-          collectRevisions { _revisions.add(it) }
+          collectRevisions {
+            synchronized(firstRevisionCollected) {
+              if (!firstRevisionCollected.getAndSet(true)) {
+                _revisions.clear()
+              }
+              _revisions.add(it)
+            }
+          }
         }
         catch (e: VcsException) {
           exception.set(e)
         }
-      }, indicator)
+      }, mainIndicator)
+    }
+    if (fastStartSupported) {
+      fastFuture = AppExecutorUtil.getAppExecutorService().submit {
+        ProgressManager.getInstance().executeProcessUnderProgress(Runnable {
+          try {
+            collectRevisionsFast {
+              synchronized(firstRevisionCollected) {
+                if (firstRevisionCollected.get()) {
+                  cancelFastTask()
+                  return@collectRevisionsFast
+                }
+                _revisions.add(it)
+              }
+            }
+          }
+          catch (e: VcsException) {
+            exception.set(e)
+          }
+        }, mainIndicator)
+      }
+    }
+    else {
+      fastFuture = null
     }
   }
 
   @Throws(VcsException::class)
   abstract fun collectRevisions(consumer: (T) -> Unit)
+
+  @Throws(VcsException::class)
+  abstract fun collectRevisionsFast(consumer: (T) -> Unit)
 
   /**
    * Waits for task to complete in a loop.
@@ -86,10 +123,18 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
   }
 
   fun cancel(wait: Boolean) {
+    cancel(wait, mainIndicator, future)
+  }
+
+  private fun cancelFastTask() {
+    cancel(false, fastTaskIndicator, fastFuture!!)
+  }
+
+  fun cancel(wait: Boolean, indicator: ProgressIndicator, taskFuture: Future<*>) {
     indicator.cancel()
     if (wait) {
       try {
-        future.get(20, TimeUnit.MILLISECONDS)
+        taskFuture.get(20, TimeUnit.MILLISECONDS)
       }
       catch (_: Throwable) {
       }

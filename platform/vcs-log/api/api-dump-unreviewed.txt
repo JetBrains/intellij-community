@@ -97,7 +97,7 @@ com.intellij.vcs.log.VcsLogDiffHandler
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
 - a:collectHistory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.VcsLogFilterCollection,kotlin.jvm.functions.Function1):V
 - s:getByVcs(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.VcsKey):com.intellij.vcs.log.VcsLogFileHistoryHandler
-- a:getHistoryFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.VcsLogFilterCollection,I):java.util.List
+- a:getHistoryFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.VcsLogFilterCollection,I,kotlin.jvm.functions.Function1):V
 - a:getRename(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash):com.intellij.vcs.log.VcsLogFileHistoryHandler$Rename
 - getSupportedFilters(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash):java.util.Set
 - a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
