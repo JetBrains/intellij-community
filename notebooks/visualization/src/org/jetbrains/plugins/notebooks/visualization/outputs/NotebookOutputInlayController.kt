@@ -127,7 +127,7 @@ class NotebookOutputInlayController private constructor(
   // to make it possible to have lazy initialization 'on first show'.
   override fun onViewportChange() {
     for (collapsingComponent in innerComponent.components) {
-      val component = (collapsingComponent as CollapsingComponent).mainComponent as? NotebookOutputInlayShowable ?: return
+      val component = (collapsingComponent as CollapsingComponent).mainComponent as? NotebookOutputInlayShowable ?: continue
       if (component !is Component) return
 
       val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
