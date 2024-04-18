@@ -80,7 +80,7 @@ object PromoPages {
           val dialog = source?.parent?.let { DialogWrapper.findInstance(it) }
           openDownloadLink(dialog)
         }).applyToComponent {
-          this.icon = AllIcons.Ide.External_link_arrow
+          this.icon = AllIcons.Ide.ExternalLinkArrowWhite
           this.horizontalTextPosition = SwingConstants.LEFT
           ClientProperty.put(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
         }

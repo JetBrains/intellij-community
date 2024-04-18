@@ -594,6 +594,7 @@ f:com.intellij.icons.AllIcons$Ide
 - sf:DislikeDimmed:javax.swing.Icon
 - sf:DislikeSelected:javax.swing.Icon
 - sf:ErrorPoint:javax.swing.Icon
+- sf:ExternalLinkArrowWhite:javax.swing.Icon
 - sf:External_link_arrow:javax.swing.Icon
 - sf:FatalError:javax.swing.Icon
 - sf:FatalErrorRead:javax.swing.Icon
@@ -1673,6 +1674,7 @@ f:com.intellij.icons.ExpUiIcons$Hierarchy
 f:com.intellij.icons.ExpUiIcons$Ide
 - sf:ConfigFile:javax.swing.Icon
 - sf:ExternalLink:javax.swing.Icon
+- sf:ExternalLinkWhite:javax.swing.Icon
 - sf:FeedbackRating:javax.swing.Icon
 - sf:FeedbackRatingFocused:javax.swing.Icon
 - sf:FeedbackRatingFocusedOn:javax.swing.Icon

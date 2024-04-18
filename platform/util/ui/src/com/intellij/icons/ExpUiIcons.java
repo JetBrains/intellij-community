@@ -435,6 +435,7 @@ public final class ExpUiIcons {
   public static final class Ide {
     /** 16x16 */ public static final @NotNull Icon ConfigFile = load("expui/ide/configFile.svg", -314971684, 2);
     /** 16x16 */ public static final @NotNull Icon ExternalLink = load("expui/ide/externalLink.svg", 979913203, 2);
+    /** 16x16 */ public static final @NotNull Icon ExternalLinkWhite = load("expui/ide/externalLinkWhite.svg", 1778158336, 0);
     /** 32x32 */ public static final @NotNull Icon FeedbackRating = load("expui/ide/feedbackRating.svg", -510323601, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocused = load("expui/ide/feedbackRatingFocused.svg", -695408414, 2);
     /** 32x32 */ public static final @NotNull Icon FeedbackRatingFocusedOn = load("expui/ide/feedbackRatingFocusedOn.svg", -1501133017, 2);
