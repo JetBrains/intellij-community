@@ -25,12 +25,16 @@ import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.testframework.sm.vcs.RunTestsBeforeCheckinHandler.Companion.showFailedTests
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
@@ -293,7 +297,12 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
 
     return BooleanCommitOption.createLink(project, this, disableWhenDumb = true, initialText, settings.myState::enabled,
                                           SmRunnerBundle.message("link.label.choose.configuration.before.commit")) { sourceLink, linkData ->
-      JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser(linkData))
+      JBPopupFactory.getInstance().createActionGroupPopup(null,
+                                                          createConfigurationChooser(linkData),
+                                                          SimpleDataContext.EMPTY_CONTEXT,
+                                                          JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+                                                          false)
+        .showUnderneathOf(sourceLink)
     }
   }
 
