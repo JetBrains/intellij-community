@@ -1867,7 +1867,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged, @NotNull List<Project> dirtyQueueProjects) {
     List<Project> projectsForFile = ensureFileBelongsToIndexableFilter(fileId, file);
-    if (projectsForFile.isEmpty()) {
+    if (projectsForFile.isEmpty() || (!file.isDirectory() && isTooLarge(file))) {
+      // large file might be scheduled for update in before event when its size was not large
       doInvalidateIndicesForFile(fileId, file, dirtyQueueProjects);
       return;
     }
@@ -1882,48 +1883,40 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     // it doesn't matter content froze or not: indices might depend on file name too
     removeTransientFileDataFromIndices(nontrivialFileIndexedStates, fileId, file);
 
-    boolean isRegularFile = !file.isDirectory();
     IndexedFileImpl indexedFile = new IndexedFileImpl(file, projectForFile);
 
     // Apply index contentless indexes in-place
     // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
     // can be a client that used indices between before and after events, in such case indices are up-to-date due to force update
     // with old content)
-    if (!file.isValid() || (isRegularFile && isTooLarge(file))) {
-      // large file might be scheduled for update in before event when its size was not large
-      getFilesToUpdateCollector().scheduleForUpdate(FileIndexingRequest.deleteRequest(file),
-                                                    ContainerUtil.union(dirtyQueueProjects, projectsForFile));
-    }
-    else {
-      FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
-        FileContent fileContent = new IndexedFileWrapper(indexedFile); // constructor is very light-weight, no need to burden with "lazy"
+    FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
+      FileContent fileContent = new IndexedFileWrapper(indexedFile); // constructor is very light-weight, no need to burden with "lazy"
 
-        // TODO-ank (IJPL-412): use UnindexedFilesFinder.getFileStatus instead
-        Set<ID<?,?>> indexesToInvalidate = new HashSet<>(nontrivialFileIndexedStates);
-        for (ID<?, ?> indexId : getRequiredIndexes(indexedFile)) {
-          if (tryIndexWithoutContent(indexId, file, fileId, fileContent, onlyContentChanged)) {
-            indexesToInvalidate.remove(indexId); // IndexingStamp has been updated by applier just now
-          }
-          else {
-            indexesToInvalidate.add(indexId);
-          }
-        }
-
-        if (!indexesToInvalidate.isEmpty()) {
-          for (ID<?, ?> indexId : indexesToInvalidate) {
-            // TODO-ank: delete not needed indexed data now? (will be deleted during indexing)
-            getIndex(indexId).invalidateIndexedStateForFile(fileId);
-          }
-
-          IndexingStamp.flushCache(fileId);
-          getFilesToUpdateCollector().scheduleForUpdate(FileIndexingRequest.updateRequest(file),
-                                                        ContainerUtil.union(dirtyQueueProjects, projectsForFile));
+      // TODO-ank (IJPL-412): use UnindexedFilesFinder.getFileStatus instead
+      Set<ID<?, ?>> indexesToInvalidate = new HashSet<>(nontrivialFileIndexedStates);
+      for (ID<?, ?> indexId : getRequiredIndexes(indexedFile)) {
+        if (tryIndexWithoutContent(indexId, file, fileId, fileContent, onlyContentChanged)) {
+          indexesToInvalidate.remove(indexId); // IndexingStamp has been updated by applier just now
         }
         else {
-          IndexingFlag.setFileIndexed(file, indexingStamp);
+          indexesToInvalidate.add(indexId);
         }
-      });
-    }
+      }
+
+      if (!indexesToInvalidate.isEmpty()) {
+        for (ID<?, ?> indexId : indexesToInvalidate) {
+          // TODO-ank: delete not needed indexed data now? (will be deleted during indexing)
+          getIndex(indexId).invalidateIndexedStateForFile(fileId);
+        }
+
+        IndexingStamp.flushCache(fileId);
+        getFilesToUpdateCollector().scheduleForUpdate(FileIndexingRequest.updateRequest(file),
+                                                      ContainerUtil.union(dirtyQueueProjects, projectsForFile));
+      }
+      else {
+        IndexingFlag.setFileIndexed(file, indexingStamp);
+      }
+    });
   }
 
   // TODO-ank (IJPL-412): use UnindexedFilesFinder.tryIndexWithoutContent instead
