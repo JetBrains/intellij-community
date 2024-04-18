@@ -17,6 +17,9 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyElement
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 
+/**
+ * Provides a reference for plugin ID - a string literal, coming after `id` in the `plugins` closure (e.g., `plugins { id 'my-plugin-id' }`)
+ */
 @Internal
 class GradlePluginReferenceProvider : PsiSymbolReferenceProvider {
 
@@ -37,7 +40,6 @@ private val myPattern = GroovyPatterns.stringLiteral().withParent(
 )
 
 internal fun getPluginReferences(element: GrLiteral): List<GradlePluginReference> {
-  // TODO refactor: this code duplicates a part from GradleProjectReferenceProvider
   if (!myPattern.accepts(element)) {
     return emptyList()
   }

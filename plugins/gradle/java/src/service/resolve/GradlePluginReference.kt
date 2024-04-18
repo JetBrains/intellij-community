@@ -13,12 +13,16 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 
-
+/**
+ * According to the Gradle documentation, a plugin ID could refer different kinds of plugins: e.g., Core plugins (included in Gradle),
+ * plugins from repositories, Precompiled script plugins. In the current implementation, plugin reference resolving is provided only for
+ * Precompiled script plugins - for navigation to the plugin source file from plugin ID.
+ */
 @Internal
 class GradlePluginReference(
   private val myElement: PsiElement,
   private val myRange: TextRange,
-  private val myQualifiedName: String
+  private val pluginId: String
 ) : SingleTargetReference(), PsiCompletableReference {
 
   override fun getElement(): PsiElement = myElement
@@ -29,19 +33,19 @@ class GradlePluginReference(
     val pluginFile = findPrecompiledGroovyPlugin(searchScope)
                      ?: findPrecompiledKotlinPlugin(searchScope)
                      ?: return null
-    return GradlePluginSymbol(pluginFile.path, myQualifiedName)
+    return GradlePluginSymbol(pluginFile.path, pluginId)
   }
 
   private fun findPrecompiledGroovyPlugin(searchScope: GlobalSearchScope): VirtualFile? {
-    return findPrecompiledPlugin("$myQualifiedName.gradle", searchScope)
+    return findPrecompiledPlugin("$pluginId.gradle", searchScope)
   }
 
   /**
-   * Precompiled script plugins on Kotlin could have a package declaration. If plugin ID ([myQualifiedName]) contains dots,
+   * Precompiled script plugins on Kotlin could have a package declaration. If plugin ID ([pluginId]) contains dots,
    * probably they split file name and packages (directories, containing a file with plugin).
    */
   private fun findPrecompiledKotlinPlugin(searchScope: GlobalSearchScope): VirtualFile? {
-    val leftParts = myQualifiedName.split(".").toMutableList()
+    val leftParts = pluginId.split(".").toMutableList()
     var fileName = ""
     var lastPart = leftParts.removeLastOrNull()
     while (lastPart != null) {
