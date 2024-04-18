@@ -19,7 +19,7 @@ import org.jetbrains.plugins.terminal.exp.hyperlinks.TerminalHyperlinkHighlighte
 import org.jetbrains.plugins.terminal.exp.prompt.PromptRenderingInfo
 import java.util.*
 
-class TerminalOutputController(
+internal class TerminalOutputController(
   project: Project,
   private val editor: EditorEx,
   private val session: BlockTerminalSession,

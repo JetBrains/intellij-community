@@ -34,7 +34,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
 
-class TerminalPromptView(
+internal class TerminalPromptView(
   private val project: Project,
   private val settings: JBTerminalSystemSettingsProviderBase,
   session: BlockTerminalSession,

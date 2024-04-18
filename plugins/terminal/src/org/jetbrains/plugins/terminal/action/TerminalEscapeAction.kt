@@ -15,10 +15,10 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEdito
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.selectionController
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
-import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
+import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 
-class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalEscapeAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   // order matters, because only the first enabled handler will be executed
   private val handlers: List<TerminalEscapeHandler> = listOf(
     CloseHistoryHandler(),

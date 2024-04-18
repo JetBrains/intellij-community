@@ -21,7 +21,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalShellInfoStatistics
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import java.util.concurrent.CopyOnWriteArrayList
 
-class BlockTerminalController(
+internal class BlockTerminalController(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val outputController: TerminalOutputController,

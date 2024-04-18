@@ -33,7 +33,7 @@ import org.jetbrains.plugins.terminal.exp.ShellPromptRenderer
  * Shell session agnostic prompt model that is managing the prompt and input command positions in the Prompt editor.
  * Should know nothing about shell session except the things provided in [sessionInfo].
  */
-class TerminalPromptModel(private val editor: EditorEx, private val sessionInfo: TerminalSessionInfo) : Disposable {
+internal class TerminalPromptModel(private val editor: EditorEx, private val sessionInfo: TerminalSessionInfo) : Disposable {
   private val document: DocumentEx
     get() = editor.document
 
@@ -162,13 +162,13 @@ class TerminalPromptModel(private val editor: EditorEx, private val sessionInfo:
   }
 }
 
-data class PromptRenderingInfo(val text: @NlsSafe String,
-                               val highlightings: List<HighlightingInfo>,
-                               val rightText: @NlsSafe String = "",
-                               val rightHighlightings: List<HighlightingInfo> = emptyList())
+internal data class PromptRenderingInfo(val text: @NlsSafe String,
+                                        val highlightings: List<HighlightingInfo>,
+                                        val rightText: @NlsSafe String = "",
+                                        val rightHighlightings: List<HighlightingInfo> = emptyList())
 
 /** The information about the terminal session required for [TerminalPromptModel] */
-interface TerminalSessionInfo {
+internal interface TerminalSessionInfo {
   val settings: JBTerminalSystemSettingsProviderBase
   val colorPalette: TerminalColorPalette
   val terminalSize: TermSize

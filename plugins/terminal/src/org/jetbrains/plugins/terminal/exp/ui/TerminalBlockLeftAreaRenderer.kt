@@ -7,7 +7,10 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import org.jetbrains.plugins.terminal.exp.TerminalUi
 import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toFloatAndScale
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.geom.Path2D
 import java.awt.geom.Rectangle2D
 
@@ -15,10 +18,12 @@ import java.awt.geom.Rectangle2D
  * Paints the left part of the rounded block frame in the gutter area.
  * Also, can paint the border if [strokeBackgroundKey] is specified and [strokeWidth] is greater than 0.
  */
-class TerminalBlockLeftAreaRenderer(private val backgroundKey: ColorKey,
-                                    private val failoverBackgroundKey: ColorKey? = null,
-                                    private val strokeBackgroundKey: ColorKey? = null,
-                                    private val strokeWidth: Int = 0) : LineMarkerRenderer {
+internal class TerminalBlockLeftAreaRenderer(
+  private val backgroundKey: ColorKey,
+  private val failoverBackgroundKey: ColorKey? = null,
+  private val strokeBackgroundKey: ColorKey? = null,
+  private val strokeWidth: Int = 0
+) : LineMarkerRenderer {
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
     val topIns = toFloatAndScale(TerminalUi.blockTopInset)
     val blocksGap = toFloatAndScale(TerminalUi.blocksGap)

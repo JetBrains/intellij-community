@@ -4,11 +4,9 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.util.Alarm
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.model.CharBuffer
 import com.jediterm.terminal.model.LinesBuffer
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
-import com.jediterm.terminal.util.CharUtils
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -154,8 +152,8 @@ private class OutputBuilder(private val commandEndMarker: String?) {
   }
 }
 
-data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
-data class StyleRange(val startOffset: Int, val endOffset: Int, val style: TextStyle)
+internal data class StyledCommandOutput(val text: String, val commandEndMarkerFound: Boolean, val styleRanges: List<StyleRange>)
+internal data class StyleRange(val startOffset: Int, val endOffset: Int, val style: TextStyle)
 
 internal interface ShellCommandOutputListener {
   fun commandOutputChanged(output: StyledCommandOutput) {}

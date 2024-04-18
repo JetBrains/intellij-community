@@ -62,7 +62,7 @@ import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import kotlin.math.max
 
-object TerminalUiUtils {
+internal object TerminalUiUtils {
   fun createOutputEditor(document: Document, project: Project, settings: JBTerminalSystemSettingsProviderBase): EditorImpl {
     val editor = EditorFactory.getInstance().createEditor(document, project, EditorKind.CONSOLE) as EditorImpl
     editor.isScrollToCaret = false
@@ -258,7 +258,7 @@ object TerminalUiUtils {
   const val YELLOW_COLOR_INDEX: Int = 3
 }
 
-fun Editor.getCharSize(): Dimension2D {
+internal fun Editor.getCharSize(): Dimension2D {
   val baseContext = FontInfo.getFontRenderContext(contentComponent)
   val context = FontRenderContext(baseContext.transform,
                                   AntialiasingType.getKeyForCurrentScope(true),
@@ -280,7 +280,7 @@ private class Dimension2DDouble(private var width: Double, private var height: D
 }
 
 @RequiresBlockingContext
-fun invokeLater(expired: (() -> Boolean)? = null,
+internal fun invokeLater(expired: (() -> Boolean)? = null,
                 modalityState: ModalityState = ModalityState.defaultModalityState(),
                 runnable: Runnable) {
   if (expired != null) {
@@ -293,7 +293,7 @@ fun invokeLater(expired: (() -> Boolean)? = null,
   }
 }
 
-fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }
+internal fun Editor.getDisposed(): () -> Boolean = { this.isDisposed }
 
 internal inline fun <reified T> Document.executeInBulk(crossinline block: () -> T): T {
   var result: T? = null

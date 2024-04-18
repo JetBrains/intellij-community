@@ -1,7 +1,9 @@
 package com.intellij.terminal.completion
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.terminal.completion.ShellArgument
 
+@ApiStatus.Internal
 object CommandSpecCompletionUtil {
   fun ShellArgument.isFilePath(): Boolean = isWithTemplate("filepaths")
 

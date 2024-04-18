@@ -28,14 +28,14 @@ private class TerminalMoveCaretActionHandler(private val moveToStart: Boolean) :
   }
 }
 
-class TerminalMoveCaretToLineStartAction : TerminalPromotedEditorAction(TerminalMoveCaretActionHandler(moveToStart = true)),
+internal class TerminalMoveCaretToLineStartAction : TerminalPromotedEditorAction(TerminalMoveCaretActionHandler(moveToStart = true)),
                                            ActionRemoteBehaviorSpecification.Disabled {
   init {
     shortcutSet = TerminalUiUtils.createSingleShortcutSet(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK)
   }
 }
 
-class TerminalMoveCaretToLineEndAction : TerminalPromotedEditorAction(TerminalMoveCaretActionHandler(moveToStart = false)),
+internal class TerminalMoveCaretToLineEndAction : TerminalPromotedEditorAction(TerminalMoveCaretActionHandler(moveToStart = false)),
                                          ActionRemoteBehaviorSpecification.Disabled {
   init {
     shortcutSet = TerminalUiUtils.createSingleShortcutSet(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK)

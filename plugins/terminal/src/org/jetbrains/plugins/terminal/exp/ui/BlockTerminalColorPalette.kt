@@ -10,7 +10,7 @@ import com.intellij.terminal.TerminalColorPalette
 import com.jediterm.core.Color
 import com.jediterm.terminal.ui.AwtTransformers
 
-class BlockTerminalColorPalette : TerminalColorPalette() {
+internal class BlockTerminalColorPalette : TerminalColorPalette() {
   private val colorKeys = BlockTerminalColors.KEYS
 
   private val colorsScheme: EditorColorsScheme

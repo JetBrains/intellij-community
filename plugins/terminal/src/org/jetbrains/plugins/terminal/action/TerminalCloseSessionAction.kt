@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptControl
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalPromotedDumbAwareAction
 
-class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.editor ?: return
     val promptModel = e.promptController?.model

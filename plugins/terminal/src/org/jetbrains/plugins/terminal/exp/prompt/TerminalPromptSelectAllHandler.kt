@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 
-class TerminalPromptSelectAllHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal class TerminalPromptSelectAllHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val promptModel = editor.terminalPromptModel
     if (editor.isPromptEditor && promptModel != null) {

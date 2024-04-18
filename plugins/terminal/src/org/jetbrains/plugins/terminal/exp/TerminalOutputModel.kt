@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.max
 import kotlin.math.min
 
-class TerminalOutputModel(val editor: EditorEx) {
+internal class TerminalOutputModel(val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = Collections.synchronizedList(ArrayList())
   private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
   private val blockInfos: MutableMap<CommandBlock, CommandBlockInfo> = HashMap()
@@ -389,6 +389,6 @@ private fun buildAndSortHighlightings(document: Document, highlightings: List<Hi
   return result
 }
 
-data class CommandBlockInfo(val exitCode: Int)
+internal data class CommandBlockInfo(val exitCode: Int)
 
 internal const val NEW_TERMINAL_OUTPUT_CAPACITY_KB: String = "new.terminal.output.capacity.kb"

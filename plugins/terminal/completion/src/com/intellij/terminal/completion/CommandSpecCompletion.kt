@@ -1,10 +1,12 @@
 package com.intellij.terminal.completion
 
 import com.intellij.util.containers.TreeTraversal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellArgument
 import java.io.File
 
+@ApiStatus.Internal
 class CommandSpecCompletion(
   private val commandSpecManager: CommandSpecManager,
   private val runtimeDataProvider: ShellRuntimeDataProvider

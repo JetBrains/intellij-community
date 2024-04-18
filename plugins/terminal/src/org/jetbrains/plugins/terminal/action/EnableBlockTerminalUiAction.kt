@@ -15,7 +15,7 @@ import org.jetbrains.plugins.terminal.exp.feedback.showBlockTerminalFeedbackNoti
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 
-class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.messagePointer("action.Terminal.EnableNewUi.text")) {
+internal class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundle.messagePointer("action.Terminal.EnableNewUi.text")) {
   override fun isSelected(e: AnActionEvent): Boolean {
     return Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
   }

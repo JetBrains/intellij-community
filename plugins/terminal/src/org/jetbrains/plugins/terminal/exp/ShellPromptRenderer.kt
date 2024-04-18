@@ -12,7 +12,7 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.exp.prompt.*
 
-class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
+internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
   private val fallbackRenderer: TerminalPromptRenderer = BuiltInPromptRenderer(sessionInfo)
 
   override fun calculateRenderingInfo(state: TerminalPromptState): PromptRenderingInfo {

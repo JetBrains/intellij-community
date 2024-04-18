@@ -21,7 +21,7 @@ import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.properties.Delegates
 
-class TerminalPromptController(
+internal class TerminalPromptController(
   private val editor: EditorEx,
   session: BlockTerminalSession,
   private val commandExecutor: TerminalCommandExecutor

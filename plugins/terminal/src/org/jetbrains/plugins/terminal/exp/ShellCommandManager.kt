@@ -15,7 +15,7 @@ import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-class ShellCommandManager(private val session: BlockTerminalSession) {
+internal class ShellCommandManager(private val session: BlockTerminalSession) {
   private val listeners: CopyOnWriteArrayList<ShellCommandListener> = CopyOnWriteArrayList()
 
   @Volatile
@@ -259,7 +259,7 @@ class ShellCommandManager(private val session: BlockTerminalSession) {
   }
 }
 
-interface ShellCommandListener {
+internal interface ShellCommandListener {
   fun initialized() {}
 
   /**
@@ -285,6 +285,6 @@ interface ShellCommandListener {
   fun clearInvoked() {}
 }
 
-data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
+internal data class CommandFinishedEvent(val command: String, val exitCode: Int, val duration: Duration)
 
 private data class StartedCommand(val command: String, val currentDirectory: String, val commandStarted: TimeMark)

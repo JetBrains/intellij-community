@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 
-class ShellCommandExecutorImpl(private val session: BlockTerminalSession) : ShellCommandExecutor {
+internal class ShellCommandExecutorImpl(private val session: BlockTerminalSession) : ShellCommandExecutor {
   override suspend fun <T> executeCommand(command: DataProviderCommand<T>): T {
     return if (command.isAvailable(session)) {
       val rawResult: String = executeCommandBlocking(command)

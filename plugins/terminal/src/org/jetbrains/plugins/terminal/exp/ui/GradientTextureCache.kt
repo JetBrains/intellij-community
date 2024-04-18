@@ -17,7 +17,7 @@ import java.awt.Paint
 import java.awt.TexturePaint
 import kotlin.math.floor
 
-class GradientTextureCache(
+internal class GradientTextureCache(
   private val scheme: EditorColorsScheme,
   val colorStartKey: ColorKey,
   val colorEndKey: ColorKey

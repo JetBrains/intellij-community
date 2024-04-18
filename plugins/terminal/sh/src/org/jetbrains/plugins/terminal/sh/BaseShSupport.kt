@@ -14,7 +14,7 @@ import com.intellij.sh.psi.ShFileElementType
 import com.intellij.sh.psi.ShSimpleCommand
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
-abstract class BaseShSupport : TerminalShellSupport {
+internal abstract class BaseShSupport : TerminalShellSupport {
   override val promptContentElementType: IElementType
     get() = ShFileElementType.INSTANCE
 

@@ -26,11 +26,13 @@ import java.awt.Font
 import java.awt.Graphics
 import java.awt.Rectangle
 
-class TerminalBlocksDecorator(private val colorPalette: TerminalColorPalette,
-                              private val outputModel: TerminalOutputModel,
-                              private val focusModel: TerminalFocusModel,
-                              private val selectionModel: TerminalSelectionModel,
-                              private val editor: EditorEx) : TerminalOutputListener {
+internal class TerminalBlocksDecorator(
+  private val colorPalette: TerminalColorPalette,
+  private val outputModel: TerminalOutputModel,
+  private val focusModel: TerminalFocusModel,
+  private val selectionModel: TerminalSelectionModel,
+  private val editor: EditorEx
+) : TerminalOutputListener {
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
   private val gradientCache: GradientTextureCache = GradientTextureCache(

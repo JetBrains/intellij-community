@@ -15,7 +15,7 @@ import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
 
-class SimpleTerminalController(
+internal class SimpleTerminalController(
   settings: JBTerminalSystemSettingsProviderBase,
   private val session: BlockTerminalSession,
   private val editor: EditorEx

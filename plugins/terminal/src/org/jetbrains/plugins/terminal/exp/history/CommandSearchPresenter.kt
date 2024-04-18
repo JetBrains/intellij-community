@@ -8,7 +8,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import org.jetbrains.plugins.terminal.exp.prompt.TerminalPromptModel
 
-class CommandSearchPresenter(private val project: Project,
+internal class CommandSearchPresenter(private val project: Project,
                              private val editor: Editor,
                              private val promptModel: TerminalPromptModel) {
   fun showCommandSearch(history: List<String>) {

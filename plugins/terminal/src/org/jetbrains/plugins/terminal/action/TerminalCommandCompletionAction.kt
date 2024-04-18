@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.editor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
-class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalCommandCompletionAction : BaseCodeCompletionAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     invokeCompletion(e, CompletionType.BASIC, 1)
   }

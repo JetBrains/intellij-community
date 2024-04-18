@@ -10,7 +10,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isAlternateBu
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isOutputEditor
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
-abstract class TerminalSearchActionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal abstract class TerminalSearchActionHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val blockController = dataContext.blockTerminalController
     if (blockController != null) {
@@ -28,7 +28,7 @@ abstract class TerminalSearchActionHandler(private val originalHandler: EditorAc
   }
 }
 
-class TerminalFindHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
+internal class TerminalFindHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
   override fun doWithBlockController(blockController: BlockTerminalController) {
     if (blockController.searchSession != null) {
       blockController.activateSearchSession()
@@ -37,20 +37,20 @@ class TerminalFindHandler(originalHandler: EditorActionHandler) : TerminalSearch
   }
 }
 
-class TerminalFindNextHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
+internal class TerminalFindNextHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
   override fun doWithBlockController(blockController: BlockTerminalController) {
     blockController.searchSession?.searchForward()
   }
 }
 
-class TerminalFindPreviousHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
+internal class TerminalFindPreviousHandler(originalHandler: EditorActionHandler) : TerminalSearchActionHandler(originalHandler) {
   override fun doWithBlockController(blockController: BlockTerminalController) {
     blockController.searchSession?.searchBackward()
   }
 }
 
 /** Do nothing on replace action if it is a terminal editor */
-class TerminalReplaceHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
+internal class TerminalReplaceHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     if (!editor.isPromptEditor && !editor.isOutputEditor && !editor.isAlternateBufferEditor) {
       originalHandler.execute(editor, caret, dataContext)

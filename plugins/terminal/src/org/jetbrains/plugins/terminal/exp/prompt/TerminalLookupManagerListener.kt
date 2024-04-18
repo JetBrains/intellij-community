@@ -15,7 +15,7 @@ import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-class TerminalLookupManagerListener : LookupManagerListener {
+internal class TerminalLookupManagerListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     if (newLookup?.editor?.isPromptEditor != true) {
       return

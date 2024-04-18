@@ -4,7 +4,7 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import java.awt.Toolkit
 
-class TerminalAlarmManager(private val settings: JBTerminalSystemSettingsProviderBase) : ShellCommandListener {
+internal class TerminalAlarmManager(private val settings: JBTerminalSystemSettingsProviderBase) : ShellCommandListener {
   private var commandIsRunning: Boolean = false
 
   fun beep() {

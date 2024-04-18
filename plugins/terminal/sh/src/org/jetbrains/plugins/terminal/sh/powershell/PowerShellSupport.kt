@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.sh.getShellCommandTokens
 
-class PowerShellSupport : TerminalShellSupport {
+internal class PowerShellSupport : TerminalShellSupport {
   override val promptContentElementType: IElementType
     get() = PlainTextTokenTypes.PLAIN_TEXT_FILE
 

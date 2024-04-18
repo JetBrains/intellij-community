@@ -16,7 +16,7 @@ import kotlin.math.max
  * 1. If it is a letter or digit, then remove letters or digits until the delimiter.
  * 2. If it is a delimiter, then remove delimiters until a letter or digit and then remove letters or digits until the delimiter.
  */
-class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalDeletePreviousWordAction : TerminalPromotedEditorAction(Handler()), ActionRemoteBehaviorSpecification.Disabled {
   private class Handler : TerminalPromptEditorActionHandler() {
     override fun executeAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
       val caretOffset = editor.caretModel.offset.takeIf { it > 0 } ?: return  // caret at the start, nothing to delete

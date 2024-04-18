@@ -23,7 +23,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.min
 
-class TerminalOutputView(
+internal class TerminalOutputView(
   private val project: Project,
   session: BlockTerminalSession,
   settings: JBTerminalSystemSettingsProviderBase,

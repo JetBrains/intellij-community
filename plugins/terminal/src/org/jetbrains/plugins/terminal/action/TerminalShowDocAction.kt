@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.exp.documentation.TerminalDocumentationMan
 import org.jetbrains.plugins.terminal.exp.history.CommandHistoryPresenter.Companion.isTerminalCommandHistory
 import org.jetbrains.plugins.terminal.exp.history.CommandSearchPresenter.Companion.isTerminalCommandSearch
 
-class TerminalShowDocAction : DumbAwareAction(), HintManagerImpl.ActionToIgnore {
+internal class TerminalShowDocAction : DumbAwareAction(), HintManagerImpl.ActionToIgnore {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val lookup = LookupManager.getActiveLookup(e.editor) as? LookupImpl ?: return

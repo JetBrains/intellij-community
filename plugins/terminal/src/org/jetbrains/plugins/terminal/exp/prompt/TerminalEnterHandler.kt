@@ -13,7 +13,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptControl
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 
-class TerminalEnterHandler(private val originalHandler: EditorActionHandler) : BaseEnterHandler() {
+internal class TerminalEnterHandler(private val originalHandler: EditorActionHandler) : BaseEnterHandler() {
   override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext) {
     val promptController = dataContext.promptController
     val session = dataContext.terminalSession

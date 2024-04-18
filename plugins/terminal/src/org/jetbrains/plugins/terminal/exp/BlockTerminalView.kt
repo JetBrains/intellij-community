@@ -37,7 +37,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-class BlockTerminalView(
+internal class BlockTerminalView(
   private val project: Project,
   private val session: BlockTerminalSession,
   private val settings: JBTerminalSystemSettingsProviderBase,

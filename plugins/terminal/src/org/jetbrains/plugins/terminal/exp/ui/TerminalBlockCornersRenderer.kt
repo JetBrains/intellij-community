@@ -23,7 +23,7 @@ import java.awt.geom.Rectangle2D
  *
  * It is painted over the selection to override it, so the selection will be painted only in the text area.
  */
-class TerminalBlockCornersRenderer private constructor(
+internal class TerminalBlockCornersRenderer private constructor(
   private val backgroundKey: ColorKey?,
   private val gradientCache: GradientTextureCache?,
   private val strokeBackgroundKey: ColorKey? = null,

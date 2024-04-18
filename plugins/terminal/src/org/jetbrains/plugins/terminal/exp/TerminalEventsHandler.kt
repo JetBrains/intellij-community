@@ -5,7 +5,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 
-interface TerminalEventsHandler {
+internal interface TerminalEventsHandler {
   fun keyTyped(e: KeyEvent) {}
   fun keyPressed(e: KeyEvent) {}
 

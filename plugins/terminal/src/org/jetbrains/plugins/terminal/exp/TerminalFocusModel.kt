@@ -19,8 +19,8 @@ import javax.swing.JComponent
 import javax.swing.JPopupMenu
 import javax.swing.MenuSelectionManager
 
-class TerminalFocusModel(private val project: Project,
-                         private val terminalView: BlockTerminalView) {
+internal class TerminalFocusModel(private val project: Project,
+                                  private val terminalView: BlockTerminalView) {
   /** True, if focus is inside the terminal component */
   var isActive: Boolean = true
     private set(value) {

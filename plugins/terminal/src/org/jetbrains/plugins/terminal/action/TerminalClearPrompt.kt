@@ -12,7 +12,7 @@ import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptControl
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalFocusModel
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalSession
 
-class TerminalClearPrompt : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
+internal class TerminalClearPrompt : DumbAwareAction(), ActionRemoteBehaviorSpecification.Disabled {
   override fun actionPerformed(e: AnActionEvent) {
     e.terminalFocusModel?.focusPrompt()
     e.promptController?.model?.reset()
