@@ -134,8 +134,7 @@ sealed class K2MoveRenameUsageInfo(
     companion object {
         fun find(declaration: KtNamedDeclaration): List<UsageInfo> {
             markInternalUsages(declaration)
-            val allDeclarations = listOf(declaration) + declaration.collectDescendantsOfType<KtNamedDeclaration>()
-            return preProcessUsages(allDeclarations.flatMap { findExternalUsages(it) })
+            return preProcessUsages(declaration.collectDescendantsOfType<KtNamedDeclaration>().flatMap { findExternalUsages(it) })
         }
 
         /**
