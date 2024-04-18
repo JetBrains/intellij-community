@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.library.JavaLibraryModificationTracker;
+import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +14,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -133,20 +135,16 @@ public final class PsiUtil {
     return returnValue;
   }
 
+  @RequiresReadLock
   public static boolean isPluginProject(@NotNull final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      boolean foundMarkerClass =
-        JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS,
-                                                     GlobalSearchScope.allScope(project)) != null;
-      return Result.createSingleDependency(foundMarkerClass, JavaLibraryModificationTracker.getInstance(project));
-    });
+    return JavaLibraryUtil.hasLibraryClass(project, IDE_PROJECT_MARKER_CLASS);
   }
 
   public static boolean isPluginModule(@NotNull final Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
       boolean foundMarkerClass = JavaPsiFacade.getInstance(module.getProject())
                                    .findClass(IDE_PROJECT_MARKER_CLASS,
-                                              GlobalSearchScope.moduleRuntimeScope(module, false)) != null;
+                                              GlobalSearchScope.moduleRuntimeScope(module, false)) != null; // must use runTimeScope
       return Result.createSingleDependency(foundMarkerClass, JavaLibraryModificationTracker.getInstance(module.getProject()));
     });
   }
