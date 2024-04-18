@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.completion.ml
+package com.intellij.completion.ml
 
 import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.ml.ContextFeatures
+import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
+import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
@@ -13,7 +16,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 private const val MAX_CHANGES_TO_ANALYZE = 1000
 internal val changesCountKey: Key<Int> = Key<Int>("VcsFeatureProvider.changesCount")
 
-internal class VcsFeatureProvider : ElementFeatureProvider {
+private class VcsFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "vcs"
 
   override fun calculateFeatures(element: LookupElement,

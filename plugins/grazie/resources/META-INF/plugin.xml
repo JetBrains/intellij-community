@@ -26,6 +26,9 @@
     <p>Data privacy: all verification is performed locally, inside your IDE.</p>
     ]]></description>
 
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
   <content>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
