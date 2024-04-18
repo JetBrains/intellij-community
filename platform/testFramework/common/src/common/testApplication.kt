@@ -289,7 +289,9 @@ fun Application.checkEditorsReleased() {
       EditorFactoryImpl.throwNotReleasedError(editor)
     }
     actions.add {
-      editorFactory.releaseEditor(editor)
+      ApplicationManager.getApplication().invokeAndWait {
+        editorFactory.releaseEditor(editor)
+      }
     }
   }
   runAll(actions)
