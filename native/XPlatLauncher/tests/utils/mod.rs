@@ -151,7 +151,9 @@ struct TestEnvironmentShared {
     jbr_root: PathBuf,
     app_jar_path: PathBuf,
     product_info_path: PathBuf,
-    vm_options_path: PathBuf
+    vm_options_path: PathBuf,
+    #[allow(dead_code)]
+    temp_dir: TempDir
 }
 
 fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
@@ -185,9 +187,9 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let project_root = env::current_dir().expect("Failed to get project root");
 
     let bin_name = if cfg!(target_os = "windows") { "xplat-launcher.exe" } else { "xplat-launcher" };
-    let launcher_path = env::current_exe()?.parent_or_err()?.parent_or_err()?.join(bin_name);
-    if !launcher_path.exists() {
-        bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_path);
+    let launcher_file = env::current_exe()?.parent_or_err()?.parent_or_err()?.join(bin_name);
+    if !launcher_file.exists() {
+        bail!("Didn't find source launcher to layout, expected path: {:?}", launcher_file);
     }
 
     let gradle_build_dir = Path::new("./resources/TestProject/build");
@@ -196,11 +198,18 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     }
     let gradle_build_dir = gradle_build_dir.canonicalize()?.strip_ns_prefix()?;
     let jbr_root = gradle_build_dir.join("jbr");
-    let app_jar_path = gradle_build_dir.join("libs/app.jar");
+    let app_jar_file = gradle_build_dir.join("libs/app.jar");
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
     let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
-    Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path, vm_options_path })
+    // on build agents, a temp directory may reside in a different filesystem, so copies are needed for later linking
+    let temp_dir = Builder::new().prefix("xplat_launcher_shared_").tempdir().context("Failed to create temp directory")?;
+    let launcher_path = temp_dir.path().join(launcher_file.file_name().unwrap());
+    fs::copy(&launcher_file, &launcher_path).with_context(|| format!("Failed to copy {launcher_file:?} to {launcher_path:?}"))?;
+    let app_jar_path = temp_dir.path().join(app_jar_file.file_name().unwrap());
+    fs::copy(&app_jar_file, &app_jar_path).with_context(|| format!("Failed to copy {app_jar_file:?} to {app_jar_path:?}"))?;
+
+    Ok(TestEnvironmentShared { launcher_path, jbr_root, app_jar_path, product_info_path, vm_options_path, temp_dir })
 }
 
 #[cfg(target_os = "linux")]
@@ -236,8 +245,10 @@ fn layout_launcher(
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.app_jar_path, "lib/app.jar")
+        ],
+        vec![
             (&shared_env.vm_options_path, "bin/xplat64.vmoptions"),
-            (&shared_env.app_jar_path, "lib/app.jar"),
             (&shared_env.product_info_path, "product-info.json")
         ],
         include_jbr,
@@ -287,8 +298,10 @@ fn layout_launcher(
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.app_jar_path, "lib/app.jar")
+        ],
+        vec![
             (&shared_env.vm_options_path, "bin/xplat.vmoptions"),
-            (&shared_env.app_jar_path, "lib/app.jar"),
             (&shared_env.product_info_path, "Resources/product-info.json"),
             (&info_plist_path, "Info.plist")
         ],
@@ -333,8 +346,10 @@ fn layout_launcher(
         ],
         vec![
             (&shared_env.launcher_path, launcher_rel_path),
+            (&shared_env.app_jar_path, "lib\\app.jar")
+        ],
+        vec![
             (&shared_env.vm_options_path, "bin\\xplat64.exe.vmoptions"),
-            (&shared_env.app_jar_path, "lib\\app.jar"),
             (&shared_env.product_info_path, "product-info.json")
         ],
         include_jbr,
@@ -348,20 +363,27 @@ fn layout_launcher(
 fn layout_launcher_impl(
     target_dir: &Path,
     create_files: Vec<&str>,
+    link_files: Vec<(&Path, &str)>,
     copy_files: Vec<(&Path, &str)>,
     include_jbr: bool,
     jbr_path: &Path
 ) -> Result<()> {
     for target_rel_path in create_files {
         let target = &target_dir.join(target_rel_path);
-        fs::create_dir_all(target.parent_or_err()?)?;
+        fs::create_dir_all(target.parent_or_err()?).with_context(|| format!("Failed to create dir {:?}", target.parent()))?;
         File::create(target).with_context(|| format!("Failed to create file {target:?}"))?;
+    }
+
+    for (source, target_rel_path) in link_files {
+        let target = &target_dir.join(target_rel_path);
+        fs::create_dir_all(target.parent_or_err()?)?;
+        fs::hard_link(source, target).with_context(|| format!("Failed to create hardlink {target:?} -> {source:?}"))?;
     }
 
     for (source, target_rel_path) in copy_files {
         let target = &target_dir.join(target_rel_path);
         fs::create_dir_all(target.parent_or_err()?)?;
-        fs::copy(source, target).with_context(|| format!("Failed to copy from {source:?} to {target:?}"))?;
+        fs::copy(source, target).with_context(|| format!("Failed to copy {source:?} to {target:?}"))?;
     }
 
     if include_jbr {
@@ -373,9 +395,7 @@ fn layout_launcher_impl(
 
 #[cfg(target_family = "unix")]
 fn symlink(original: &Path, link: &Path) -> Result<()> {
-    std::os::unix::fs::symlink(original, link)
-        .with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}"))?;
-
+    std::os::unix::fs::symlink(original, link).with_context(|| format!("Failed to create symlink {link:?} -> {original:?}"))?;
     Ok(())
 }
 
@@ -388,12 +408,12 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
 
     let message = match &result {
         Ok(_) => "",
-        Err(e) if e.raw_os_error() == Some(1314) => "can not use CreateSymbolicLink.\
+        Err(e) if e.raw_os_error() == Some(1314) => "Cannot use CreateSymbolicLink.\
          Consider having a privilege to do that or enabling Developer Mode",
-        Err(_) => "failed to create symlink, but not due to privileges",
+        Err(_) => "Failed to create a symlink for a reason unrelated to privileges",
     };
 
-    result.with_context(|| format!("Failed to create symlink {link:?} pointing to {original:?}; {message}"))
+    result.with_context(|| format!("Failed to create symlink {link:?} -> {original:?}; {message}"))
 }
 
 pub fn get_custom_config_dir() -> PathBuf {
