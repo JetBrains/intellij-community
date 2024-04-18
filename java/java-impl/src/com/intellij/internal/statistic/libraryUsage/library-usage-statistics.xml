@@ -301,6 +301,8 @@
   <technology name="spring-amqp" root="org.springframework.amqp"/>
   <technology name="spring-batch" root="org.springframework.batch"/>
   <technology name="spring-boot" root="org.springframework.boot"/>
+  <technology name="spring-boot-testjars" root="org.springframework.experimental.boot.test.context"/>
+  <technology name="spring-boot-testjars-exec" root="org.springframework.experimental.boot.server.exec"/>
   <technology name="spring-cloud" root="org.springframework.cloud"/>
   <technology name="spring-cloud-gateway" root="org.springframework.cloud.gateway"/>
   <technology name="spring-cloud-kubernetes" root="org.springframework.cloud.kubernetes"/>
@@ -351,6 +353,7 @@
   <technology name="unfiltered" root="unfiltered"/>
   <technology name="unirest" root="kong.unirest"/>
   <technology name="upickle" root="upickle"/>
+  <technology name="unirest" root="kong.unirest.core"/>
   <technology name="utest" root="utest"/>
   <technology name="vaadin-flow" root="com.vaadin.flow"/>
   <technology name="vavr" root="io.vavr"/>
