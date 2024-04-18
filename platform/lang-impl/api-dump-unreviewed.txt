@@ -14454,7 +14454,6 @@ f:com.intellij.ide.actions.searcheverywhere.PreviewExperiment
 *:com.intellij.ide.actions.searcheverywhere.PromoAction
 - a:getCallToAction():java.lang.String
 - a:getPromotedProductIcon():javax.swing.Icon
-- a:getPromotedProductTitle():java.lang.String
 f:com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider
 - com.intellij.ide.actions.searcheverywhere.AbstractEqualityProvider
 - <init>():V
