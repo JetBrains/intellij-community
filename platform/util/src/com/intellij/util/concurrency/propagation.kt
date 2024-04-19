@@ -12,6 +12,7 @@ import com.intellij.concurrency.client.captureClientIdInCallable
 import com.intellij.concurrency.client.captureClientIdInFunction
 import com.intellij.concurrency.client.captureClientIdInRunnable
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
@@ -166,9 +167,16 @@ private fun isContextAwareComputation(runnable: Any): Boolean {
  * ```
  * When `throw NPE` is reached, it is important to not resume `blockingContextScope` until `executeOnPooledThread` is completed.
  * This is why we reuse coroutine algorithms to ensure proper cancellation in our structured concurrency framework.
- * In the case above, the lambda in `executeOnPooledThread` needs to be executed under `runAsCoroutine`
+ * In the case above, the lambda in `executeOnPooledThread` needs to be executed under `runAsCoroutine`.
+ *
+ * ## Exception guarantees
+ * This function is intended to be executed in blocking context, hence it always emits [ProcessCanceledException]
+ *
+ * @param completeOnFinish whether to complete [continuation] on the computation finish. Most of the time, this is the desired default behavior.
+ * However, sometimes in non-linear execution scenarios (such as NonBlockingReadAction), more precise control over the completion of a job is needed.
  */
 @Internal
+@Throws(ProcessCanceledException::class)
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boolean, action: () -> T): T {
   val originalPCE: Ref<ProcessCanceledException> = Ref(null)
@@ -197,7 +205,11 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
   }
   // Since this function is called strictly in blocking context, we need to preserve the PCE that was thrown
   originalPCE.get()?.let { throw it }
-  return deferred.getCompleted()
+  try {
+    return deferred.getCompleted()
+  } catch (ce : CancellationException) {
+    throw CeProcessCanceledException(ce)
+  }
 }
 
 internal fun capturePropagationContext(r: Runnable): Runnable {
