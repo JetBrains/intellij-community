@@ -57,6 +57,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val AGENTS_COUNT: EventId2<Int, Int> = GROUP.registerEvent("agents.count", Int("java_agents"), Int("native_agents"))
   private val AGENT_PRESENCE_C1: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c1", EventFields.Enabled) // IJPL-856
   private val AGENT_PRESENCE_C2: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c2", EventFields.Enabled) // IJPL-148313
+  private val ADD_OPENS_PRESENCE_1: EventId1<Boolean> = GROUP.registerEvent("add.opens.presence.1", EventFields.Enabled) // IJPL-148271
   private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
@@ -187,6 +188,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     var javaAgents = 0
     var isAgentPresentC1 = false
     var isAgentPresentC2 = false
+    var isAddOpensPresent1 = false
 
     for (arg in ManagementFactory.getRuntimeMXBean().inputArguments) {
       if (arg.startsWith("-javaagent:")) {
@@ -201,13 +203,25 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       if (arg.startsWith("-agentlib:") || arg.startsWith("-agentpath:")) {
         nativeAgents++
       }
+      if (arg.startsWith("--add-opens=")) {
+        if (komihash(arg.lowercase().removePrefix("--add-opens=").substringBefore("=")) in setOf("fa09d342a2180e7", "99ae514e0c40bd7e")) {
+          isAddOpensPresent1 = true
+        }
+      }
     }
 
     return buildSet {
       add(DEBUG_AGENT.metric(DebugAttachDetector.isDebugEnabled()))
       add(AGENTS_COUNT.metric(javaAgents, nativeAgents))
-      add(AGENT_PRESENCE_C1.metric(isAgentPresentC1))
-      add(AGENT_PRESENCE_C2.metric(isAgentPresentC2))
+      addAll(
+        listOf(
+          AGENT_PRESENCE_C1 to isAgentPresentC1,
+          AGENT_PRESENCE_C2 to isAgentPresentC2,
+          ADD_OPENS_PRESENCE_1 to isAddOpensPresent1
+        )
+          .filter { it.second }
+          .map { (event, _) -> event.metric(true) }
+      )
     }
   }
 
