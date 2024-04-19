@@ -24,7 +24,11 @@ open class PromoFeaturePage(
   @NlsContexts.Label val descriptionHtml: String,
   val features: List<PromoFeatureListItem>,
   @NlsContexts.Label val trialLabel: String,
-  val pluginId: String?
+  val pluginId: String?,
+  @NlsContexts.Label
+  val disablePromotionText: String? = null,
+  @NlsContexts.HintText
+  val disablePromotionComment: String? = null
 ) {
   open fun getButtonOpenPromotionText(): @Nls String = FeaturePromoBundle.message("get.prefix.with.placeholder", suggestedIde.name)
 
@@ -43,7 +47,9 @@ object PromoPages {
   fun build(
     page: PromoFeaturePage,
     openLearnMore: (url: String) -> Unit,
-    openDownloadLink: (DialogWrapper?) -> Unit
+    openDownloadLink: (DialogWrapper?) -> Unit,
+    disablePromotionStatus: Boolean? = null,
+    disablePromotionHandler: ((Boolean) -> Unit)? = null,
   ): DialogPanel {
     val panel = panel {
       row {
@@ -92,6 +98,19 @@ object PromoPages {
 
         comment(page.trialLabel)
       }.layout(RowLayout.PARENT_GRID)
+
+      if (page.disablePromotionText != null) {
+        group {
+          row {
+            cell()
+            checkBox(page.disablePromotionText).comment(page.disablePromotionComment ?: "").onChanged {
+              disablePromotionHandler?.invoke(!it.isSelected)
+            }.applyToComponent {
+              isSelected = disablePromotionStatus ?: false
+            }
+          }.layout(RowLayout.PARENT_GRID)
+        }
+      }
     }
     return panel
   }
