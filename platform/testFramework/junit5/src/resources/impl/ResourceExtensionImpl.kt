@@ -57,6 +57,11 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
   private val instancesToDeleteKey = TypedStoreKey.createList<R>("[$id")
 
   companion object {
+    /**
+     * Stored in context if at least one class-level resource used
+     */
+    private val testHasClassLifeTimeResources = TypedStoreKey("testHasClassLifeTimeResources", Boolean::class)
+
     private fun <R : Any> KClass<out ResourceProvider<out R>>.keyForResourceByProvider(type: KClass<R>): TypedStoreKey<R> =
       TypedStoreKey("resourceBy${java.name}", type)
 
@@ -77,14 +82,20 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
 
     @TestOnly
     private fun <R : Any, PR : ResourceProvider<R>> ResourceExtensionApi<R, PR>.asImpl(): ResourceExtensionImpl<R, PR> {
-      @Suppress("UNCHECKED_CAST") // No other api can exist
       return this as ResourceExtensionImpl<R, PR>
     }
+
+    /**
+     * True, if this test has at least one class-level resource.
+     * That is checked by Application which can't assume disposables are freed after each test
+     */
+    fun testHasClassLifeTimeResources(context: ExtensionContext): Boolean = context.store.getTyped(testHasClassLifeTimeResources) == true
   }
 
   override fun beforeAll(context: ExtensionContext) {
     this.latestContext = context
     if (lifetime.classLevel) {
+      context.store.putTyped(testHasClassLifeTimeResources, true)
       val clazz = context.element.get() as Class<*>
       fillFieldsWithResource(createNewAutomatically(context), clazz, clazz)
     }
@@ -97,6 +108,7 @@ class ResourceExtensionImpl<R : Any, PR : ResourceProvider<R>>(private val provi
   }
 
   override fun beforeEach(context: ExtensionContext) {
+
     this.latestContext = context
     if (lifetime.methodLevel) {
       val instance = context.testInstance.get()

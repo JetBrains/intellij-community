@@ -33,19 +33,14 @@ class JUnit5Automatic {
     /**
      * [tempDir] is a JUnit5 temporary directory here
      */
-  fun funProjectModuleEdior(module: Module, project: Project, @TempDir tempDir: Path): Unit = runBlocking {
+  fun funProjectModuleEditor(module: Module, project: Project, @TempDir tempDir: Path): Unit = runBlocking {
     assertEquals(module.project, project.service<MyService>().project)
     writeAction {
       val file = LocalFileSystem.getInstance().findFileByNioFile(tempDir)!!
         .findOrCreateFile("file.txt")
         .apply { writeText("hello") }
-      try {
-        FileEditorManager.getInstance(project).openFile(file).first()
-        Assertions.assertNotNull(PsiManager.getInstance(project).findFile(file)?.fileDocument)
-      }
-      finally {
-        FileEditorManager.getInstance(project).closeFile(file)
-      }
+      FileEditorManager.getInstance(project).openFile(file).first()
+      Assertions.assertNotNull(PsiManager.getInstance(project).findFile(file)?.fileDocument)
     }
   }
 
