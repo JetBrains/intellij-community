@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
  * <li>Avoid overriding or implementing this interface.
  * Things have got more complex since the introduction of asynchronous action update.
  * If you need to alter the provided data context or create one from a set of data
- * use {@link CustomizedDataContext} or {@link SimpleDataContext} instead, even in tests.
- * These classes are async-ready, optionally support {@link com.intellij.openapi.util.UserDataHolder}, and run {@link GetDataRule} rules.</li>
+ * use {@link CustomizedDataContext} or {@link com.intellij.openapi.actionSystem.impl.SimpleDataContext} instead, even in tests.
+ * These classes are async-ready, optionally support {@link com.intellij.openapi.util.UserDataHolder}, and run {@link com.intellij.ide.impl.dataRules.GetDataRule} rules.</li>
  * <li>Do not to confuse {@link DataProvider} with {@link DataContext}.
  * A {@link DataContext} is usually provided by the platform with {@link DataProvider}s as its building blocks.
  * For example, a node in a tree view could be a {@link DataProvider} but not a {@link DataContext}.</li>
@@ -42,7 +42,8 @@ public interface DataContext {
    */
   @Nullable Object getData(@NotNull String dataId);
 
-  DataContext EMPTY_CONTEXT = dataId -> null;
+  @NotNull
+  DataContext EMPTY_CONTEXT = __ -> null;
 
   /**
    * Returns the value corresponding to the specified data key. Some of the supported
