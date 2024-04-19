@@ -516,6 +516,7 @@
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyVersionAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedTransformationAnnotator"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.inspections.GroovyComplexArgumentLabelAnnotator"/>
 
     <lang.psiStructureViewFactory language="Groovy"
                                   implementationClass="org.jetbrains.plugins.groovy.structure.GroovyStructureViewFactory"/>
