@@ -209,7 +209,7 @@
   <technology name="spring-integration" class="org.springframework.integration.channel.DirectChannel"/>
   <technology name="spring-integration-amqp" class="org.springframework.integration.amqp.channel.AbstractAmqpChannel"/>
   <technology name="spring-kafka" class="org.springframework.kafka.core.KafkaTemplate"/>
-  <technology name="spring-modulith" class="org.springframework.modulith.core.ApplicationModule"/>
+  <technology name="spring-modulith" class="org.springframework.modulith.ApplicationModule"/>
   <technology name="spring-mvc" class="org.springframework.web.context.WebApplicationContext"/>
   <technology name="spring-osgi" class="org.springframework.osgi.OsgiException"/>
   <technology name="spring-rabbitmq" class="org.springframework.amqp.rabbit.core.RabbitTemplate"/>
