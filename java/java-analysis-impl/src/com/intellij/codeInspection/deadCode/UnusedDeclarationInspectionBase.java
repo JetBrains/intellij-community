@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ex.JobDescriptor;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.util.RefFilter;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -26,6 +27,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.uast.UastMetaLanguage;
 import com.intellij.util.containers.Stack;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -306,6 +308,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                              new RefUnreachableFilter(this, globalContext);
     LOG.assertTrue(processedSuspicious != null, "phase: " + phase);
 
+    Collection<Language> uastLanguages = Language.findInstance(UastMetaLanguage.class).getMatchingLanguages();
     boolean[] requestAdded = {false};
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
       @Override
@@ -373,7 +376,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             return false;
           });
 
-          globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueClassUsagesProcessor(refClass, psiReference -> {
+          globalContext.getExtension(GlobalJavaInspectionContext.CONTEXT).enqueueClassUsagesProcessor(refClass, reference -> {
+            if (!isAddNonJavaUsedEnabled() && !uastLanguages.contains(reference.getElement().getLanguage())) return true;
             getEntryPointsManager(globalContext).addEntryPoint(refClass, false);
             return false;
           });
