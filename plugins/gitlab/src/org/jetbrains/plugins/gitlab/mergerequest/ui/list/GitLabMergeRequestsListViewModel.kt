@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.platform.util.coroutines.childScope
@@ -39,31 +39,22 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
   override val repository: String,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  private val tokenRefreshFlow: Flow<Unit>,
+  tokenRefreshFlow: Flow<Unit>,
   private val loaderSupplier: (CoroutineScope, GitLabMergeRequestsFiltersValue) -> ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>
 ) : GitLabMergeRequestsListViewModel {
 
   private val scope = parentCs.childScope()
 
-  private val loaderInitFlow = MutableSharedFlow<Unit>(1)
-
   private val loaderFlow: Flow<ReloadablePotentiallyInfiniteListLoader<GitLabMergeRequestShortRestDTO>> =
-    filterVm.searchState.mapScoped { search ->
-      loaderSupplier(this, search)
-    }.shareIn(scope, SharingStarted.Lazily, 1)
+    filterVm.searchState
+      .combine(tokenRefreshFlow.withInitial(Unit)) { search, _ -> search }
+      .mapScoped { search -> loaderSupplier(this, search) }
+      .shareIn(scope, SharingStarted.Lazily, 1)
 
   override val listDataFlow: Flow<List<GitLabMergeRequestDetails>> =
     loaderFlow.flatMapLatest { loader -> loader.stateFlow.mapNotNull { it.list?.map(GitLabMergeRequestDetails::fromRestDTO) } }
   override val loading: Flow<Boolean> = loaderFlow.flatMapLatest { it.isBusyFlow }
   override val error: Flow<Throwable?> = loaderFlow.flatMapLatest { loader -> loader.stateFlow.map { it.error } }
-
-  init {
-    scope.launchNow {
-      tokenRefreshFlow.collect {
-        loaderInitFlow.emit(Unit)
-      }
-    }
-  }
 
   override fun requestMore() {
     scope.launch {
