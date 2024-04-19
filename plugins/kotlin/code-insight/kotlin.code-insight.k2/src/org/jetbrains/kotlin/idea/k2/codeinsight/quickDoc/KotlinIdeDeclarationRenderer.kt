@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -580,6 +581,13 @@ internal class KotlinIdeDeclarationRenderer(
                         else -> asFunDeclaration
                     }
                 })
+
+                if (symbol is KtNamedClassOrObjectSymbol && symbol.isData) {
+                    val primaryConstructor = symbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
+                    if (primaryConstructor != null) {
+                        valueParametersRenderer.renderValueParameters(primaryConstructor, printer)
+                    }
+                }
             }
         }
     }
