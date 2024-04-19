@@ -13,7 +13,7 @@ import org.junit.Test
 import java.net.URI
 import kotlin.test.assertEquals
 
-class MarkdownToHtmlConverterTest {
+class CodeFenceSyntaxHighlighterGeneratingProviderTest {
   private val emptyFlavourDescriptor = object : GFMFlavourDescriptor() {
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
       val providers = super.createHtmlGeneratingProviders(linkMap, baseURI).toMutableMap()
@@ -23,7 +23,7 @@ class MarkdownToHtmlConverterTest {
             return if (language == "empty")
               HtmlChunk.text(rawContent)
             else
-              HtmlChunk.text(SYNTAX_HIGHLIGHTER_RESULT).wrapWith("pre")
+              HtmlChunk.text(SYNTAX_HIGHLIGHTER_RESULT)
           }
         }
       )
@@ -48,9 +48,11 @@ class MarkdownToHtmlConverterTest {
     // language=HTML
     val htmlText = """
     <body>  
-        <code class="language-java">
-            <pre>${SYNTAX_HIGHLIGHTER_RESULT}</pre>
-        </code>
+        <pre>
+            <code class="language-java">
+                ${SYNTAX_HIGHLIGHTER_RESULT}
+            </code>
+        </pre>
     </body>
     """.trimIndent()
 
@@ -74,9 +76,11 @@ class MarkdownToHtmlConverterTest {
     // language=HTML
     val htmlText = """
     <body>
-        <code class="language-kotlin">    
-            <pre>${SYNTAX_HIGHLIGHTER_RESULT}</pre>
-        </code>
+        <pre>
+            <code class="language-kotlin">    
+                ${SYNTAX_HIGHLIGHTER_RESULT}
+            </code>
+        </pre>
     </body>
     """.trimIndent()
 
@@ -93,9 +97,11 @@ class MarkdownToHtmlConverterTest {
     // language=HTML
     val htmlText = """
     <body>
-        <code class="language-empty">
-            class A
-        </code>
+        <pre>
+            <code class="language-empty">
+                class A
+            </code>
+        </pre>
     </body>
     """.trimIndent()
 
