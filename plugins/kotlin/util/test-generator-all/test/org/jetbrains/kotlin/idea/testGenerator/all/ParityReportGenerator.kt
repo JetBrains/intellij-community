@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.testGenerator.all
 import org.jetbrains.kotlin.fe10.testGenerator.assembleK1Workspace
 import org.jetbrains.kotlin.fir.testGenerator.assembleK2Workspace
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.testGenerator.generator.SuiteElement
 import org.jetbrains.kotlin.testGenerator.generator.methods.TestCaseMethod
 import org.jetbrains.kotlin.testGenerator.generator.toRelativeStringSystemIndependent
@@ -69,62 +70,77 @@ object ParityReportGenerator {
                 for (suite in group.suites) {
                     if (!suite.commonSuite) continue
 
-                    val singleModel = suite.models.singleOrNull()
-                    val suiteElements: List<SuiteElement> = buildList {
-                        if (singleModel != null) {
-                            val suiteElement = SuiteElement.create(
-                                group,
-                                suite,
-                                singleModel,
-                                suite.generatedClassName.substringAfterLast('.'),
-                                isNested = false
-                            )
-                            fun addSuiteElement(e: SuiteElement) {
+                    // k1 tests are run only on those platforms
+                    val platforms = suite.platforms.filter { it == KMPTestPlatform.Unspecified || it == KMPTestPlatform.Jvm }
+
+                    for (platform in platforms) {
+                        val singleModel = suite.models.singleOrNull()
+                        val suiteElements: List<SuiteElement> = buildList {
+                            if (singleModel != null) {
+                                val suiteElement = SuiteElement.create(
+                                    group,
+                                    suite,
+                                    singleModel,
+                                    suite.generatedClassFqName(platform).substringAfterLast('.'),
+                                    platform,
+                                    isNested = false
+                                )
+                                fun addSuiteElement(e: SuiteElement) {
                                 this += e
                                 e.nestedSuites.forEach(::addSuiteElement)
                             }
                             addSuiteElement(suiteElement)
-                        } else {
-                            addAll(suite.models
-                                .map { SuiteElement.create(group, suite, it, it.testClassName, isNested = true) })
-                        }
-                    }
-
-                    val testCaseMethods = suiteElements.fold(mutableMapOf<String, List<TestCaseMethod>>()) { acc, curr ->
-                        curr.testCaseMethods().forEach { (k, v) ->
-                            acc[k] = (acc[k] ?: ArrayList<TestCaseMethod>()) + v
-                        }
-                        acc
-                    }
-                    if (testCaseMethods.any { it.value.any { !it.file.exists() } }) {
-                        error(testCaseMethods.flatMap { it.value.filter { !it.file.exists() } }.joinToString())
-                    }
-                    testCaseMethods.forEach { (className, files) ->
-                        val testDataMethodFiles = files.filter { it.file.isFile }
-                        val fs = if (testDataMethodFiles.isEmpty()) {
-                            files.mapNotNull {
-                                val f = File(it.file, it.file.name + ".kt")
-                                if (!f.isFile) return@mapNotNull null
-                                it.copy(file = f)
+                            } else {
+                                addAll(suite.models
+                                           .map {
+                                               SuiteElement.create(
+                                                   group,
+                                                   suite,
+                                                   it,
+                                                   it.testClassName,
+                                                   platform,
+                                                   isNested = true
+                                               )
+                                           })
                             }
-                        } else {
-                            testDataMethodFiles
                         }
 
-                        if (fs.isEmpty()) {
-                            if (files.any { it.file.isDirectory }) {
-                                val directories = files
-                                    .filter { it.file.isDirectory }
-                                    .map { it.file.toRelativeKotlinRoot() }
-                                stringBuilder.appendLine().appendLine("$className has directories")
-                                directories.forEach { stringBuilder.append(" * ").appendLine(it) }
+                        val testCaseMethods = suiteElements.fold(mutableMapOf<String, List<TestCaseMethod>>()) { acc, curr ->
+                            curr.testCaseMethods(platform).forEach { (k, v) ->
+                                acc[k] = (acc[k] ?: ArrayList<TestCaseMethod>()) + v
                             }
-                        } else {
-                            this += Case(
-                                clusterName,
-                                category = group.category,
-                                fs.map { CaseNameFile(className, it, it.file.toRelativeKotlinRoot()) }
-                            )
+                            acc
+                        }
+                        if (testCaseMethods.any { it.value.any { !it.file.exists() } }) {
+                            error(testCaseMethods.flatMap { it.value.filter { !it.file.exists() } }.joinToString())
+                        }
+                        testCaseMethods.forEach { (className, files) ->
+                            val testDataMethodFiles = files.filter { it.file.isFile }
+                            val fs = if (testDataMethodFiles.isEmpty()) {
+                                files.mapNotNull {
+                                    val f = File(it.file, it.file.name + ".kt")
+                                    if (!f.isFile) return@mapNotNull null
+                                    it.copy(file = f)
+                                }
+                            } else {
+                                testDataMethodFiles
+                            }
+
+                            if (fs.isEmpty()) {
+                                if (files.any { it.file.isDirectory }) {
+                                    val directories = files
+                                        .filter { it.file.isDirectory }
+                                        .map { it.file.toRelativeKotlinRoot() }
+                                    stringBuilder.appendLine().appendLine("$className has directories")
+                                    directories.forEach { stringBuilder.append(" * ").appendLine(it) }
+                                }
+                            } else {
+                                this += Case(
+                                    clusterName,
+                                    category = group.category,
+                                    fs.map { CaseNameFile(className, it, it.file.toRelativeKotlinRoot()) }
+                                )
+                            }
                         }
                     }
                 }
@@ -160,7 +176,11 @@ object ParityReportGenerator {
         }
     }
 
-    private fun reportSharedFilesDetails(invertedK1FileCases: Map<String, Case>, invertedK2FileCases: Map<String, Case>, stringBuilder: StringBuilder) {
+    private fun reportSharedFilesDetails(
+        invertedK1FileCases: Map<String, Case>,
+        invertedK2FileCases: Map<String, Case>,
+        stringBuilder: StringBuilder
+    ) {
         val testClassesPerCategory = mutableMapOf<GroupCategory, AtomicInteger>()
         val ignored = BooleanArray(2)
         handleCategories(invertedK1FileCases, k1Variation, ignored)
@@ -186,7 +206,7 @@ object ParityReportGenerator {
             val caseNameFile: CaseNameFile = case.files.firstOrNull() ?: continue
 
             val generatedClassName = caseNameFile.generatedClassName
-            testClassesPerClassName.computeIfAbsent(generatedClassName){ AtomicInteger() }.incrementAndGet()
+            testClassesPerClassName.computeIfAbsent(generatedClassName) { AtomicInteger() }.incrementAndGet()
 
             ignored.fill(false)
             if (caseNameFile.testCaseMethod.ignored) {
@@ -206,7 +226,7 @@ object ParityReportGenerator {
             appendLine()
             appendLine("| Status | Category | Success rate, % | K2 files | K1 files |")
             appendLine("| -- | -- | --  | -- | -- |")
-            GroupCategory.entries.forEach{
+            GroupCategory.entries.forEach {
                 val k2 = k2Variation.successByCategory[it]?.get() ?: 0
                 val k1 = k1Variation.successByCategory[it]?.get() ?: 0
                 if (k2 == 0 && k1 == 0) return@forEach
@@ -250,7 +270,8 @@ object ParityReportGenerator {
                     } else {
                         // summary
                         if (first.name != second.first().name && second.size > 1) {
-                            val line = StatusLine("[${first.name}]", second.sumOf { it.k2 }, second.sumOf { it.k1 }, second.sumOf { it.files })
+                            val line =
+                                StatusLine("[${first.name}]", second.sumOf { it.k2 }, second.sumOf { it.k1 }, second.sumOf { it.files })
                             appendLine(line.renderToMd())
                         }
                         // detailed
@@ -284,13 +305,14 @@ object ParityReportGenerator {
         val passed = rate >= SUCCESS_RATE_THRESHOLD
 
         fun renderToMd(): String {
-          val shortName = if (!name[0].isLetter()) (name[0] + name.substringAfterLast('.')) else name.substringAfterLast('.')
-          return PIPE + listOf(if (passed) ":white_check_mark:" else ":x:", shortName, rate, k2, k1, files).joinToString(
-            PIPE) + PIPE
+            val shortName = if (!name[0].isLetter()) (name[0] + name.substringAfterLast('.')) else name.substringAfterLast('.')
+            return PIPE + listOf(if (passed) ":white_check_mark:" else ":x:", shortName, rate, k2, k1, files).joinToString(
+                PIPE
+            ) + PIPE
         }
     }
 
-    private fun File.handleIgnored(vararg variations: Variation, ignored: BooleanArray, action:(Variation) -> Unit) {
+    private fun File.handleIgnored(vararg variations: Variation, ignored: BooleanArray, action: (Variation) -> Unit) {
         val readText = readText()
         for ((idx, variation) in variations.withIndex()) {
             if (!ignored[idx] && variation.ignoreDirectives.any { readText.contains(it) }) {
@@ -305,7 +327,11 @@ object ParityReportGenerator {
         }
     }
 
-    private fun reportK1OnlyFilesDetails(invertedK1FileCases: Map<String, Case>, invertedK2FileCases: Map<String, Case>, stringBuilder: StringBuilder) {
+    private fun reportK1OnlyFilesDetails(
+        invertedK1FileCases: Map<String, Case>,
+        invertedK2FileCases: Map<String, Case>,
+        stringBuilder: StringBuilder
+    ) {
         val k1OnlyCases = mutableSetOf<Case>()
         val k1OnlyFiles = buildSet<String> {
             for (invertedK1FileCasesEntry in invertedK1FileCases) {
