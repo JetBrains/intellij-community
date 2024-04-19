@@ -19,11 +19,11 @@ import java.util.concurrent.atomic.AtomicReference
  * @param T the type of revisions to collect.
  * @property project the project associated with the task.
  * @property mainIndicator the progress indicator for the main task.
- * @property fastTaskIndicator the progress indicator for the fast task.
+ * @property fastTaskIndicator the progress indicator for the fast task or null if the fast task is not supported.
  *
  * @see waitForRevisions
  */
-abstract class RevisionCollectorTask<T>(protected val project: Project, private val mainIndicator: ProgressIndicator, private val fastTaskIndicator: ProgressIndicator, private val fastStartSupported: Boolean) {
+abstract class RevisionCollectorTask<T>(protected val project: Project, private val mainIndicator: ProgressIndicator, private val fastTaskIndicator: ProgressIndicator?) {
   private val future: Future<*>
   private val fastFuture: Future<*>?
   private val _revisions = ConcurrentLinkedQueue<T>()
@@ -55,14 +55,14 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
         }
       }, mainIndicator)
     }
-    if (fastStartSupported) {
-      fastFuture = AppExecutorUtil.getAppExecutorService().submit {
+    fastFuture = fastTaskIndicator?.let {
+      AppExecutorUtil.getAppExecutorService().submit {
         ProgressManager.getInstance().executeProcessUnderProgress(Runnable {
           try {
             collectRevisionsFast {
               synchronized(firstRevisionCollected) {
                 if (firstRevisionCollected.get()) {
-                  cancelFastTask()
+                  fastTaskIndicator.cancel()
                   return@collectRevisionsFast
                 }
                 _revisions.add(it)
@@ -74,9 +74,6 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
           }
         }, fastTaskIndicator)
       }
-    }
-    else {
-      fastFuture = null
     }
   }
 
@@ -127,13 +124,9 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
     cancel(wait, fastTaskIndicator, fastFuture)
   }
 
-  private fun cancelFastTask() {
-    cancel(false, fastTaskIndicator, fastFuture!!)
-  }
-
-  fun cancel(wait: Boolean, indicator: ProgressIndicator, taskFuture: Future<*>) {
-    indicator.cancel()
-    if (wait) {
+  private fun cancel(wait: Boolean, indicator: ProgressIndicator?, taskFuture: Future<*>?) {
+    indicator?.cancel()
+    if (wait && taskFuture != null) {
       try {
         taskFuture.get(20, TimeUnit.MILLISECONDS)
       }
