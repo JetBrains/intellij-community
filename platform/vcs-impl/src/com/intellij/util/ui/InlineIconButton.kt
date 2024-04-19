@@ -158,10 +158,8 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
 
       propertyListener = PropertyChangeListener {
         HelpTooltip.getTooltipFor(c)?.setTitle(c.tooltip)
-        c.revalidate()
-        c.repaint()
       }
-      c.addPropertyChangeListener(propertyListener)
+      c.addPropertyChangeListener("tooltip", propertyListener)
 
       c.isOpaque = false
       c.isFocusable = true
