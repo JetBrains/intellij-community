@@ -314,39 +314,11 @@ public class IdeaGateway {
       return doCreateFileEntry(file, contentAndStamps);
     }
 
-    DirectoryEntry newDir = null;
-    boolean nonLocalRoot = !file.isInLocalFileSystem() && file.getParent() == null;
-    if (file instanceof VirtualFileSystemEntry && !nonLocalRoot) {
-      int nameId = ((VirtualFileSystemEntry)file).getNameId();
-      if (nameId > 0) {
-        newDir = new DirectoryEntry(nameId);
-      }
-    }
+    DirectoryEntries entries = doCreateDirectoryEntries(file);
 
-    DirectoryEntry res;
-    if (newDir == null) {
-      if (nonLocalRoot) {
-        DirectoryEntry first = null;
-        for (String item : Paths.split(file.getUrl())) {
-          DirectoryEntry cur = new DirectoryEntry(item);
-          if (first == null) first = cur;
-          if (newDir != null) newDir.addChild(cur);
-          newDir = cur;
-        }
-        res = first;
-      }
-      else {
-        newDir = new DirectoryEntry(file.getName());
-        res = newDir;
-      }
-    }
-    else {
-      res = newDir;
-    }
-
-    doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
-    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return res;
+    doCreateChildren(entries.last, iterateDBChildren(file), forDeletion);
+    if (!isVersioned(file) && entries.last.getChildren().isEmpty()) return null;
+    return entries.first;
   }
 
   private static @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
@@ -354,6 +326,33 @@ public class IdeaGateway {
       return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
     }
     return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+  }
+
+  private record DirectoryEntries(@NotNull DirectoryEntry first, @NotNull DirectoryEntry last) {
+  }
+
+  private static @NotNull DirectoryEntries doCreateDirectoryEntries(@NotNull VirtualFile file) {
+    if (file.isInLocalFileSystem() || file.getParent() != null) {
+      if (file instanceof VirtualFileSystemEntry) {
+        int nameId = ((VirtualFileSystemEntry)file).getNameId();
+        if (nameId > 0) {
+          DirectoryEntry newDir = new DirectoryEntry(nameId);
+          return new DirectoryEntries(newDir, newDir);
+        }
+      }
+      DirectoryEntry newDir = new DirectoryEntry(file.getName());
+      return new DirectoryEntries(newDir, newDir);
+    }
+
+    DirectoryEntry first = null;
+    DirectoryEntry last = null;
+    for (String item : Paths.split(file.getUrl())) {
+      DirectoryEntry current = new DirectoryEntry(item);
+      if (first == null) first = current;
+      if (last != null) last.addChild(current);
+      last = current;
+    }
+    return new DirectoryEntries(first, last);
   }
 
   private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<? extends VirtualFile> children, final boolean forDeletion) {
