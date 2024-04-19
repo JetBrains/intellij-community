@@ -12,6 +12,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -51,13 +52,27 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
         return allowAnalysisOnEdt {
             analyze(ktModule) {
                 val ktSymbol = when (element) {
-                    is KtParameter -> if (element.hasValOrVar()) element.getSymbol() else null
-                    is KtCallableDeclaration -> element.getSymbol()
-                    is KtClass -> element.primaryConstructor?.getSymbol()
-                        ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
-                    is KtReferenceExpression -> element.mainReference.resolveToSymbols().firstOrNull()
-                        ?.takeIf { it !is KtValueParameterSymbol || it.generatedPrimaryConstructorProperty != null }
-                    else -> null
+                    is KtParameter -> {
+                        if (element.hasValOrVar()) element.getSymbol() else null
+                    }
+                    is KtCallableDeclaration -> {
+                        element.getSymbol()
+                    }
+                    is KtClass -> {
+                        element.primaryConstructor?.getSymbol()
+                            ?: if (element.allConstructors.isEmpty()) element.takeUnless { it.isInterface() }?.getSymbol() else null
+                    }
+                    is KtReferenceExpression -> {
+                        val symbol = element.mainReference.resolveToSymbol()
+                        when {
+                          symbol is KtValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
+                          symbol is KtConstructorSymbol && symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.getContainingSymbol()
+                          else -> symbol
+                        }
+                    }
+                    else -> {
+                        null
+                    }
                 }
 
                 val elementKind = when {

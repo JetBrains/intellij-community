@@ -1311,6 +1311,11 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
     }
 
+    fun testSyntheticPrimaryConstructorByRef() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+    }
+
     fun testChangeConstructorVisibility() = doTest { setNewVisibility(Protected) }
 
     fun testDoNotApplyPrimarySignatureToSecondaryCalls() = doTest {
