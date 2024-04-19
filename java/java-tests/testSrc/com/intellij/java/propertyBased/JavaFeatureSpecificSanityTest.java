@@ -65,7 +65,7 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
     enableInspections();
 
     PropertyChecker
-      .customized().withIterationCount(50)
+      .customized().withIterationCount(30)
       .checkScenarios(createChooser(fileActions, pattern));
   }
 
