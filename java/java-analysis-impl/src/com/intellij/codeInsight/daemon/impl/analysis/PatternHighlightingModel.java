@@ -68,15 +68,28 @@ final class PatternHighlightingModel {
       PsiType recordComponentType = recordComponents[i].getType();
       PsiType substitutedRecordComponentType = substitutor.substitute(recordComponentType);
       PsiType deconstructionComponentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
-      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType, PsiUtil.getLanguageLevel(deconstructionPattern))) {
+      LanguageLevel languageLevel = PsiUtil.getLanguageLevel(deconstructionPattern);
+      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType, languageLevel)) {
         hasMismatchedPattern = true;
         if (recordComponents.length == deconstructionComponents.length) {
-          HighlightInfo.Builder
+          HighlightInfo.Builder builder;
+          if ((substitutedRecordComponentType instanceof PsiPrimitiveType || deconstructionComponentType instanceof PsiPrimitiveType) &&
+              JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
+            String message = JavaErrorBundle.message("inconvertible.type.cast",
+                                                     JavaHighlightUtil.formatType(substitutedRecordComponentType), JavaHighlightUtil
+                                                       .formatType(deconstructionComponentType));
+            builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(deconstructionComponent)
+              .descriptionAndTooltip(message);
+          }
+          else {
             builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
                                                                         deconstructionComponent.getTextRange(), 0);
+          }
+
           if (isApplicable(substitutedRecordComponentType, deconstructionComponentType,
                            JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
-            HighlightUtil.registerIncreaseLanguageLevelFixes(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, builder);
+             HighlightUtil.registerIncreaseLanguageLevelFixes(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, builder);
           }
           errorSink.accept(builder);
           reported = true;
