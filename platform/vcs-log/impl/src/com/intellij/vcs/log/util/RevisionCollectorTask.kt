@@ -72,7 +72,7 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
           catch (e: VcsException) {
             exception.set(e)
           }
-        }, mainIndicator)
+        }, fastTaskIndicator)
       }
     }
     else {
@@ -124,6 +124,7 @@ abstract class RevisionCollectorTask<T>(protected val project: Project, private 
 
   fun cancel(wait: Boolean) {
     cancel(wait, mainIndicator, future)
+    cancel(wait, fastTaskIndicator, fastFuture)
   }
 
   private fun cancelFastTask() {
