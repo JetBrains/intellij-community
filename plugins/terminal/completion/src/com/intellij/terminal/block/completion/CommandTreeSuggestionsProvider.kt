@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.completion
+package com.intellij.terminal.block.completion
 
-import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
-import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
+import com.intellij.terminal.block.completion.CommandSpecCompletionUtil.isFilePath
+import com.intellij.terminal.block.completion.CommandSpecCompletionUtil.isFolder
 import org.jetbrains.terminal.completion.*
 import java.io.File
 

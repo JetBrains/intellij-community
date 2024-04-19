@@ -75,7 +75,7 @@
              id="terminalCommandSpec"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.exp.completion.CommandSpecCompletionWeigher"/>
-    <applicationService serviceInterface="com.intellij.terminal.completion.CommandSpecManager"
+    <applicationService serviceInterface="com.intellij.terminal.block.completion.CommandSpecManager"
                         serviceImplementation="org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager"/>
     <!--suppress PluginXmlValidity -->
     <inline.completion.provider implementation="org.jetbrains.plugins.terminal.exp.TerminalInlineCompletionProvider"/>

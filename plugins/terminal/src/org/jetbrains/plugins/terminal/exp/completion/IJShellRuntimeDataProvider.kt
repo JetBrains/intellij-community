@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.terminal.completion.ShellEnvironment
-import com.intellij.terminal.completion.ShellRuntimeDataProvider
+import com.intellij.terminal.block.completion.ShellEnvironment
+import com.intellij.terminal.block.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener

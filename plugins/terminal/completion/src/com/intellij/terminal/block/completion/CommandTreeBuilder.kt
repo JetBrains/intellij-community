@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.terminal.completion
+package com.intellij.terminal.block.completion
 
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
@@ -13,10 +13,10 @@ internal class CommandTreeBuilder private constructor(
 ) {
   companion object {
     suspend fun build(suggestionsProvider: CommandTreeSuggestionsProvider,
-              commandSpecManager: CommandSpecManager,
-              command: String,
-              commandSpec: ShellCommand,
-              arguments: List<String>): SubcommandNode {
+                      commandSpecManager: CommandSpecManager,
+                      command: String,
+                      commandSpec: ShellCommand,
+                      arguments: List<String>): SubcommandNode {
       val builder = CommandTreeBuilder(suggestionsProvider, commandSpecManager, arguments)
       val root = builder.createSubcommandNode(command, commandSpec, null)
       builder.buildSubcommandTree(root)

@@ -9,8 +9,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.terminal.completion.CommandSpecCompletion
-import com.intellij.terminal.completion.ShellRuntimeDataProvider
+import com.intellij.terminal.block.completion.CommandSpecCompletion
+import com.intellij.terminal.block.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
 import org.jetbrains.plugins.terminal.exp.completion.TerminalCompletionUtil.findIconForSuggestion

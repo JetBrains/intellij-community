@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.terminal.completion.ShellEnvironment
+import com.intellij.terminal.block.completion.ShellEnvironment
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession

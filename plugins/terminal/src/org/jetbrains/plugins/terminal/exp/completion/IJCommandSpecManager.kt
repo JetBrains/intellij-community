@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.terminal.completion.CommandSpecManager
+import com.intellij.terminal.block.completion.CommandSpecManager
 import kotlinx.serialization.json.Json
 import org.jetbrains.terminal.completion.ShellCommand
 import java.io.IOException

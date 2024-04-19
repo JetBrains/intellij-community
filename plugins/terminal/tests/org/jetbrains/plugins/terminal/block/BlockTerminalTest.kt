@@ -3,7 +3,7 @@ package org.jetbrains.plugins.terminal.block
 
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.completion.ShellEnvironment
+import com.intellij.terminal.block.completion.ShellEnvironment
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule

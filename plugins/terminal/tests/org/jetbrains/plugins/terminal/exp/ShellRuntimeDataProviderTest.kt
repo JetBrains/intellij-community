@@ -3,8 +3,8 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.terminal.completion.ShellEnvironment
-import com.intellij.terminal.completion.ShellRuntimeDataProvider
+import com.intellij.terminal.block.completion.ShellEnvironment
+import com.intellij.terminal.block.completion.ShellRuntimeDataProvider
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
