@@ -4,4 +4,4 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.StatusItemMetadata
 
-class TrafficLightStatusItemMetadata(val severity: HighlightSeverity) : StatusItemMetadata
+class TrafficLightStatusItemMetadata(val count: Int, val severity: HighlightSeverity) : StatusItemMetadata

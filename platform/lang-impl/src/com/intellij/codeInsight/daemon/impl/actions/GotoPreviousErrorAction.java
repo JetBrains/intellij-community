@@ -38,6 +38,12 @@ public class GotoPreviousErrorAction extends BaseCodeInsightAction implements Du
   }
 
   @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    GotoNextErrorUtilsKt.reportTrafficHighlightStatistic(e, false);
+    super.actionPerformed(e);
+  }
+
+  @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
   }

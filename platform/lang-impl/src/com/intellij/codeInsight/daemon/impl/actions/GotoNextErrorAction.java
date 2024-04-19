@@ -36,6 +36,12 @@ public class GotoNextErrorAction extends BaseCodeInsightAction implements DumbAw
   }
 
   @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    GotoNextErrorUtilsKt.reportTrafficHighlightStatistic(e, true);
+    super.actionPerformed(e);
+  }
+
+  @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file);
   }
