@@ -26,7 +26,6 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -237,14 +236,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
   }
 
-  @TestOnly
-  public static @Nullable List<LineMarkerInfo<?>> getMergedLineMarkerInfos(@NotNull GutterIconNavigationHandler<?> handler) {
-    if (handler instanceof MergedGutterIconNavigationHandler mergedGutterIconNavigationHandler) {
-      return mergedGutterIconNavigationHandler.getMergedLineMarkersInfos();
-    }
-    return null;
-  }
-
   private static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     private final List<LineMarkerInfo<?>> myInfos;
 
@@ -252,10 +243,6 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
       List<LineMarkerInfo<?>> infos = new ArrayList<>(markers);
       infos.sort(Comparator.comparingInt(o -> o.startOffset));
       myInfos = Collections.unmodifiableList(infos);
-    }
-
-    private @NotNull List<LineMarkerInfo<?>> getMergedLineMarkersInfos() {
-      return myInfos;
     }
 
     @Override
