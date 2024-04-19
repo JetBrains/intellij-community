@@ -551,12 +551,12 @@ internal class ActionUpdater @JvmOverloads constructor(
       return presentation
     }
     val operationName = Utils.operationName(action, OP_actionPresentation, place)
-    // reset enabled/visible flags (actions are encouraged to always set them in `update`)
-    presentation.setEnabledAndVisible(true)
     val event = createActionEvent(presentation)
     val success = try {
       retryOnAwaitSharedData(operationName, maxAwaitSharedDataRetries) {
         ActionUpdaterInterceptor.updateAction(action, event) {
+          // reset enabled/visible flags (actions are encouraged to always set them in `update`)
+          presentation.setEnabledAndVisible(true)
           if (isDefaultImplementationRecursively(OP_actionPresentation, action)) {
             action.applyTextOverride(event)
             return@updateAction true
