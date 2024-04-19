@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,7 +36,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   public static final @NonNls String B_CLOSING = "</b>";
 
   protected static final @NonNls String CLOSE_TAG = "\">";
-  public static final @NonNls String A_HREF_OPENING = "<a HREF=\"";
+  public static final @NonNls String A_HREF_OPENING = "<a href=\"";
   public static final @NonNls String A_CLOSING = "</a>";
 
   protected HTMLComposerImpl() {
@@ -114,7 +115,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     StringBuilder qName = new StringBuilder();
 
     while (!(refEntity instanceof RefProject)) {
-      if (qName.length() > 0) qName.insert(0, ".");
+      if (!qName.isEmpty()) qName.insert(0, ".");
 
       String name = null;
       if (refEntity instanceof RefElement) {
@@ -130,13 +131,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
       qName.insert(0, name);
       if (Comparing.strEqual(refEntity.getName(), refEntity.getQualifiedName())) {
-        buf.append(qName);
+        buf.append(StringUtil.escapeXmlEntities(qName.toString()));
         return;
       }
       refEntity = refEntity.getOwner();
     }
 
-    buf.append(qName);
+    buf.append(StringUtil.escapeXmlEntities(qName.toString()));
   }
 
   @Override

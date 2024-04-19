@@ -1,5 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -7,6 +6,7 @@ import com.intellij.codeInspection.HTMLComposer;
 import com.intellij.codeInspection.HTMLJavaHTMLComposer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -44,7 +44,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendClassExtendsImplements(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (refClass.getBaseClasses().size() > 0) {
+    if (!refClass.getBaseClasses().isEmpty()) {
       HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extends.implements"));
       myComposer.startList(buf);
       for (RefClass refBase : refClass.getBaseClasses()) {
@@ -56,7 +56,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendDerivedClasses(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (refClass.getSubClasses().size() > 0) {
+    if (!refClass.getSubClasses().isEmpty()) {
       if (refClass.isInterface()) {
         HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.extended.implemented"));
       }
@@ -74,7 +74,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendLibraryMethods(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (refClass.getLibraryMethods().size() > 0) {
+    if (!refClass.getLibraryMethods().isEmpty()) {
       HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.overrides.library.methods"));
 
       myComposer.startList(buf);
@@ -87,7 +87,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendSuperMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
-    if (refMethod.getSuperMethods().size() > 0) {
+    if (!refMethod.getSuperMethods().isEmpty()) {
       HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.overrides.implements"));
 
       myComposer.startList(buf);
@@ -100,7 +100,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendDerivedMethods(@NotNull StringBuilder buf, @NotNull RefMethod refMethod) {
-    if (refMethod.getDerivedMethods().size() > 0) {
+    if (!refMethod.getDerivedMethods().isEmpty()) {
       HTMLComposer.appendHeading(buf, AnalysisBundle.message("inspection.export.results.derived.methods"));
 
       myComposer.startList(buf);
@@ -128,7 +128,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
 
   @Override
   public void appendTypeReferences(@NotNull StringBuilder buf, @NotNull RefClass refClass) {
-    if (refClass.getInTypeReferences().size() > 0) {
+    if (!refClass.getInTypeReferences().isEmpty()) {
       HTMLComposer.appendHeading(buf, JavaBundle.message("inspection.export.results.type.references"));
 
       myComposer.startList(buf);
@@ -230,7 +230,10 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     if (owner instanceof RefPackage) {
       buf.append(JavaBundle.message("inspection.export.results.package"));
       buf.append(HTMLComposerImpl.NBSP).append(HTMLComposerImpl.CODE_OPENING);
-      buf.append(RefJavaUtil.getInstance().getPackageName(entity));
+      String name = RefJavaUtil.getInstance().getPackageName(entity);
+      assert name != null;
+      // name for default package: <default>
+      buf.append(StringUtil.escapeXmlEntities(name));
       buf.append(HTMLComposerImpl.CODE_CLOSING);
     }
     else if (owner instanceof RefMethod) {
