@@ -345,7 +345,9 @@ internal class SoftwareBillOfMaterialsImpl(
       }
       claimContainedFiles(
         spdxPackage = rootPackage,
-        files = containedPackages.flatMap { it.files },
+        files = rootPackage.files.asSequence()
+          .plus(containedPackages.asSequence().flatMap { it.files })
+          .toList(),
         document = document,
         license = license,
       )
