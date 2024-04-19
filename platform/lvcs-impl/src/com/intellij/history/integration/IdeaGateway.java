@@ -235,14 +235,14 @@ public class IdeaGateway {
   @RequiresReadLock
   public @NotNull RootEntry createTransientRootEntry() {
     RootEntry root = new RootEntry();
-    doCreateChildren(root, getLocalRoots(), false);
+    doCreateChildren(root, getLocalRoots(), false, null);
     return root;
   }
 
   @RequiresReadLock
   public @NotNull RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
     RootEntry root = new RootEntry();
-    doCreateChildrenForPathOnly(root, path, getLocalRoots());
+    doCreateChildren(root, getLocalRoots(), false, new SinglePathVisitor(path));
     return root;
   }
 
@@ -258,46 +258,17 @@ public class IdeaGateway {
     return roots;
   }
 
-  private void doCreateChildrenForPathOnly(@NotNull DirectoryEntry parent,
-                                           @NotNull String path,
-                                           @NotNull Iterable<? extends VirtualFile> children) {
-    for (VirtualFile child : children) {
-      String name = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
-      if (!path.startsWith(name)) continue;
-      String rest = path.substring(name.length());
-      if (!rest.isEmpty() && rest.charAt(0) != '/') continue;
-      if (!rest.isEmpty() && rest.charAt(0) == '/') {
-        rest = rest.substring(1);
-      }
-      Entry e = doCreateEntryForPathOnly(child, rest);
-      if (e == null) continue;
-      parent.addChild(e);
-    }
-  }
-
-  private @Nullable Entry doCreateEntryForPathOnly(@NotNull VirtualFile file, @NotNull String path) {
-    if (!file.isDirectory()) {
-      if (!isVersioned(file)) return null;
-
-      return doCreateFileEntry(file, false);
-    }
-    DirectoryEntry newDir = new DirectoryEntry(file.getName());
-    doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
-    if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
-    return newDir;
-  }
-
   @RequiresReadLock
   public @Nullable Entry createTransientEntry(@NotNull VirtualFile file) {
-    return doCreateEntry(file, false);
+    return doCreateEntry(file, false, null);
   }
 
   @RequiresReadLock
   public @Nullable Entry createEntryForDeletion(@NotNull VirtualFile file) {
-    return doCreateEntry(file, true);
+    return doCreateEntry(file, true, null);
   }
 
-  private @Nullable Entry doCreateEntry(@NotNull VirtualFile file, boolean forDeletion) {
+  private @Nullable Entry doCreateEntry(@NotNull VirtualFile file, boolean forDeletion, @Nullable FileTreeVisitor visitor) {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
@@ -307,7 +278,7 @@ public class IdeaGateway {
     DirectoryEntries entries = doCreateDirectoryEntries(file);
     if (entries == null) return null;
 
-    doCreateChildren(entries.last, iterateDBChildren(file), forDeletion);
+    doCreateChildren(entries.last, iterateDBChildren(file), forDeletion, visitor);
     if (!isVersioned(file) && entries.last.getChildren().isEmpty()) return null;
     return entries.first;
   }
@@ -361,9 +332,53 @@ public class IdeaGateway {
     return new DirectoryEntries(first, last);
   }
 
-  private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<? extends VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, each -> doCreateEntry(each, forDeletion));
+  private void doCreateChildren(@NotNull DirectoryEntry parent, @NotNull Iterable<? extends VirtualFile> children, boolean forDeletion,
+                                @Nullable FileTreeVisitor visitor) {
+    List<Entry> entries = ContainerUtil.mapNotNull(children, each -> {
+      if (visitor != null && !visitor.before(each)) return null;
+
+      Entry entry = doCreateEntry(each, forDeletion, visitor);
+
+      if (visitor != null) visitor.after(each);
+
+      return entry;
+    });
     parent.addChildren(entries);
+  }
+
+  private interface FileTreeVisitor {
+    boolean before(@NotNull VirtualFile file);
+    void after(@NotNull VirtualFile file);
+  }
+
+  private static class SinglePathVisitor implements FileTreeVisitor {
+    private final @NotNull List<String> myPathsStack = new ArrayList<>();
+
+    private SinglePathVisitor(@NotNull String path) {
+      myPathsStack.add(path);
+    }
+
+    @Override
+    public boolean before(@NotNull VirtualFile child) {
+      String targetPath = ContainerUtil.getLastItem(myPathsStack);
+      if (targetPath == null) return false;
+
+      String childName = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
+      if (!targetPath.startsWith(childName)) return false;
+      String targetPathRest = targetPath.substring(childName.length());
+      if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) != '/') return false;
+      if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) == '/') {
+        targetPathRest = targetPathRest.substring(1);
+      }
+
+      myPathsStack.add(targetPathRest);
+      return true;
+    }
+
+    @Override
+    public void after(@NotNull VirtualFile file) {
+      myPathsStack.remove(myPathsStack.size() - 1);
+    }
   }
 
   public void registerUnsavedDocuments(final @NotNull LocalHistoryFacade vcs) {
