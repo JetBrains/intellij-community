@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -131,12 +130,12 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       vFile = (expression instanceof PsiFileSystemItem ? (PsiFileSystemItem) expression : expression.getContainingFile()).getVirtualFile();
       if (vFile instanceof VirtualFileWindow) vFile = ((VirtualFileWindow)vFile).getDelegate();
 
-      anchor.append("<a HREF=\"");
+      anchor.append("<a href=\"");
       anchor.append(appendURL(vFile, "descr:" + i));
 
-      anchor.append("\">");
-      anchor.append(ProblemDescriptorUtil.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$"));
-      anchor.append("</a>");
+      anchor.append("\"><code>");
+      anchor.append(StringUtil.escapeXmlEntities(ProblemDescriptorUtil.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$")));
+      anchor.append("</code></a>");
     }
     else {
       anchor.append("<font style=\"font-weight:bold; color:#FF0000\";>");
@@ -153,8 +152,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = StringUtil.replace(descriptionTemplate, "</code>", "'");
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
-    final String reference = "#ref";
-    String res = descriptionTemplate.replaceAll(reference, anchor.toString());
+    String res = NBSP + descriptionTemplate.replaceAll("#ref", anchor.toString());
     int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {
@@ -162,7 +160,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       if (doc != null && lineNumber < doc.getLineCount()) {
         lineNumber = Math.min(lineNumber, doc.getLineCount() - 1);
         lineAnchor.append(AnalysisBundle.message("inspection.export.results.at.line")).append(" ");
-        lineAnchor.append("<a HREF=\"");
+        lineAnchor.append("<a href=\"");
         int offset = doc.getLineStartOffset(lineNumber);
         offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
         lineAnchor.append(appendURL(vFile, String.valueOf(offset)));
