@@ -2164,7 +2164,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String toString() {
-    return "PersistentFS";
+    return "PersistentFS[connected: " + isConnected() + ", ownData: " + myVfsData + "]";
   }
 
   private void executeCreateChild(@NotNull VirtualFile parent,
