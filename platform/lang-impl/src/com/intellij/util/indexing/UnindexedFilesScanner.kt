@@ -4,7 +4,7 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
@@ -397,40 +397,38 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
             subTaskReporter.setText(provider.rootsScanningProgressText)
             val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
 
-            blockingContext {
-              myProject.getService(PerProjectIndexingQueue::class.java)
-                .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
-                  scanningStatistics.startFileChecking()
-                  try {
-                    ReadAction.nonBlocking {
-                      val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
-                                                        scanningRequest, myFilterHandler)
-                      val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
-                                                                scanningStatistics, perProviderSink)
-                      if (!rootIterator.mayBeUsed()) {
-                        LOG.warn("Iterator based on $provider can't be used.")
-                        return@nonBlocking
+            myProject.getService(PerProjectIndexingQueue::class.java)
+              .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
+                scanningStatistics.startFileChecking()
+                try {
+                  readAction {
+                    val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
+                                                      scanningRequest, myFilterHandler)
+                    val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
+                                                              scanningStatistics, perProviderSink)
+                    if (!rootIterator.mayBeUsed()) {
+                      LOG.warn("Iterator based on $provider can't be used.")
+                      return@readAction
+                    }
+                    while (files.isNotEmpty()) {
+                      val file = files.removeFirst()
+                      try {
+                        if (file.isValid)
+                          rootIterator.processFile(file)
                       }
-                      while (files.isNotEmpty()) {
-                        val file = files.removeFirst()
-                        try {
-                          if (file.isValid)
-                            rootIterator.processFile(file)
-                        }
-                        catch (e: ProcessCanceledException) {
-                          files.addFirst(file)
-                          throw e
-                        }
+                      catch (e: ProcessCanceledException) {
+                        files.addFirst(file)
+                        throw e
                       }
-                    }.executeSynchronously()
+                    }
                   }
-                  finally {
-                    scanningStatistics.tryFinishFilesChecking()
-                  }
-                  perProviderSink.commit()
                 }
+                finally {
+                  scanningStatistics.tryFinishFilesChecking()
+                }
+                perProviderSink.commit()
+              }
             }
-          }
         }
         catch (e: Exception) {
           scanningRequest.markUnsuccessful()
