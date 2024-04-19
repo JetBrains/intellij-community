@@ -83,7 +83,18 @@ data class ChildContext internal constructor(
 }
 
 @Internal
-fun createChildContext(): ChildContext {
+fun createChildContext() : ChildContext = doCreateChildContext(false)
+
+@Internal
+fun createChildContextWithContextJob() : ChildContext = doCreateChildContext(true)
+
+/**
+ * Use `unconditionalCancellationPropagation` only when you are sure that the current context will always outlive a child computation.
+ * This is the case with `invokeAndWait`, as it parks the thread before computation is finished,
+ * but it is not the case with `invokeLater`
+ */
+@Internal
+private fun doCreateChildContext(unconditionalCancellationPropagation: Boolean): ChildContext {
   val currentThreadContext = currentThreadContext()
 
   // Problem: a task may infinitely reschedule itself
@@ -100,11 +111,13 @@ fun createChildContext(): ChildContext {
   //
   // Effectively, the chain becomes a 1-level tree,
   // as jobs of all scheduled tasks are attached to the initial current Job.
-  val parentBlockingJob = currentThreadContext[BlockingJob]
+
+    val parentBlockingJob =
+      if (unconditionalCancellationPropagation) currentThreadContext[Job]
+      else currentThreadContext[BlockingJob]?.blockingJob
   val (cancellationContext, childContinuation) = if (parentBlockingJob != null) {
-    val parentJob = parentBlockingJob.blockingJob
-    val continuation: Continuation<Unit> = childContinuation(parentJob)
-    Pair(parentBlockingJob + continuation.context.job, continuation)
+    val continuation: Continuation<Unit> = childContinuation(parentBlockingJob)
+    Pair((currentThreadContext[BlockingJob] ?: EmptyCoroutineContext) + continuation.context.job, continuation)
   }
   else {
     Pair(EmptyCoroutineContext, null)
@@ -212,12 +225,14 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
   }
 }
 
-internal fun capturePropagationContext(r: Runnable): Runnable {
+internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean = false): Runnable {
   var command = captureClientIdInRunnable(r)
   if (isContextAwareComputation(r)) {
     return command
   }
-  val (childContext, childContinuation) = createChildContext()
+  val (childContext, childContinuation) =
+    if (forceUseContextJob) createChildContextWithContextJob()
+    else createChildContext()
   if (childContext != EmptyCoroutineContext) {
     command = ContextRunnable(true, childContext, command)
   }

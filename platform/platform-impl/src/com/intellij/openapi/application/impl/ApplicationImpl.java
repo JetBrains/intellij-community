@@ -408,7 +408,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     }
 
     Runnable r =
-      myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.capturePropagationAndCancellationContext(runnable), modalityState);
+      myTransactionGuard.wrapLaterInvocation(AppScheduledExecutorService.captureContextCancellationForRunnableThatDoesNotOutliveContextScope(runnable), modalityState);
     LaterInvocator.invokeAndWait(modalityState, wrapWithRunIntendedWriteAction(r));
   }
 

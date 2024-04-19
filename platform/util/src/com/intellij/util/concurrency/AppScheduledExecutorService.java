@@ -232,7 +232,15 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     if (!propagateContext()) {
       return command;
     }
-    return Propagation.capturePropagationContext(command);
+    return Propagation.capturePropagationContext(command, false);
+  }
+
+  /**
+   * This function intentionally has a scary name so that no one would try to use it.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Runnable captureContextCancellationForRunnableThatDoesNotOutliveContextScope(@NotNull Runnable r) {
+    return Propagation.capturePropagationContext(r, true);
   }
 
   public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
