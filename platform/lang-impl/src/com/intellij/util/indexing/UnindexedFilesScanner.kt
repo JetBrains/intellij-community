@@ -340,7 +340,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     myProject.getService(PerProjectIndexingQueue::class.java).flushNow(this.indexingReason)
   }
 
-  private class ScanningSession(private val myProject: Project,
+  private class ScanningSession(private val project: Project,
                                 private val scanningHistory: ProjectScanningHistoryImpl,
                                 private val forceReindexingTrigger: Predicate<IndexedFile>?,
                                 private val myFilterHandler: FilesFilterScanningHandler,
@@ -354,11 +354,11 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
 
       val sessions =
-        IndexableFileScanner.EP_NAME.extensionList.map { scanner: IndexableFileScanner -> scanner.startSession(myProject) }
+        IndexableFileScanner.EP_NAME.extensionList.map { scanner: IndexableFileScanner -> scanner.startSession(project) }
 
       val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
 
-      LOG.info("Scanning of " + myProject.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
+      LOG.info("Scanning of " + project.name + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads")
       progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
       progressReporter.setSubTasksCount(providers.size)
 
@@ -387,7 +387,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                            indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter,
                                            sharedExplanationLogger: IndexingReasonExplanationLogger) {
       val scanningStatistics = ScanningStatistics(provider.debugName)
-      scanningStatistics.setProviderRoots(provider, myProject)
+      scanningStatistics.setProviderRoots(provider, project)
       val origin = provider.origin
 
       val fileScannerVisitors = blockingContext { sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) } }
@@ -423,14 +423,14 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                   scanningStatistics: ScanningStatistics,
                                   sharedExplanationLogger: IndexingReasonExplanationLogger,
                                   files: ArrayDeque<VirtualFile>) {
-      myProject.getService(PerProjectIndexingQueue::class.java)
+      project.getService(PerProjectIndexingQueue::class.java)
         .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
           scanningStatistics.startFileChecking()
           try {
             readAction {
-              val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, forceReindexingTrigger,
+              val finder = UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
                                                 scanningRequest, myFilterHandler)
-              val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
+              val rootIterator = SingleProviderIterator(project, indicator, provider, finder,
                                                         scanningStatistics, perProviderSink)
               if (!rootIterator.mayBeUsed()) {
                 LOG.warn("Iterator based on $provider can't be used.")
@@ -471,7 +471,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       scanningStatistics.startVfsIterationAndScanningApplication()
       try {
         blockingContext {
-          provider.iterateFiles(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
+          provider.iterateFiles(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
         }
       }
       finally {
