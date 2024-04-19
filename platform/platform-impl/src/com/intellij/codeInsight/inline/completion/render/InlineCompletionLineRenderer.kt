@@ -7,12 +7,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
 
 /**
  * Should not be used outside rendering the default inline completion elements.
@@ -81,17 +82,5 @@ class InlineCompletionLineRenderer(
 
   companion object {
     private val LOG = logger<InlineCompletionLineRenderer>()
-
-    fun TextAttributes.withAlpha(scheme: EditorColorsScheme, alpha: Int = 140): TextAttributes = clone().also { attributes ->
-      val background = scheme.getColor(EditorColors.CARET_ROW_COLOR) ?: scheme.defaultBackground
-      attributes.foregroundColor?.let { attributes.foregroundColor = it.on(background, alpha) }
-      attributes.backgroundColor?.let { attributes.backgroundColor = it.on(background, alpha) }
-    }
-
-    private fun Color.on(background: Color, alpha: Int): Color {
-      fun Int.on(x: Int): Int = (this * alpha + x * (255 - alpha)) / 255
-      @Suppress("UseJBColor")
-      return Color(red.on(background.red), green.on(background.green), blue.on(background.blue))
-    }
   }
 }
