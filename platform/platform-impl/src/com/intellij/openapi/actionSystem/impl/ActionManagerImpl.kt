@@ -261,7 +261,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       timer = MyTimer(coroutineScope.childScope())
     }
 
-    val wrappedListener = if (AppExecutorUtil.propagateContextOrCancellation() && listener !is CapturingListener) {
+    val wrappedListener = if (AppExecutorUtil.propagateContext() && listener !is CapturingListener) {
       CapturingListener(listener)
     }
     else {

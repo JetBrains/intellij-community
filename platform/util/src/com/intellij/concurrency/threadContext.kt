@@ -231,7 +231,7 @@ fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
  * Same as [captureThreadContext] but for [Consumer]
  */
 fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
-  val f = capturePropagationAndCancellationContext(c::accept)
+  val f = capturePropagationContext(c::accept)
   return Consumer(f::apply)
 }
 
@@ -239,7 +239,7 @@ fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
  * Same as [captureThreadContext] but for [Function]
  */
 fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
-  return capturePropagationAndCancellationContext(f)
+  return capturePropagationContext(f)
 }
 
 /**

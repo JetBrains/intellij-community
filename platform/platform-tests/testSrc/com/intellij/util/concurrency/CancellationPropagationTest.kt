@@ -46,22 +46,7 @@ import kotlin.test.assertNotNull
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
  */
 @TestApplication
-@ExtendWith(CancellationPropagationTest.Enabler::class)
 class CancellationPropagationTest {
-
-  class Enabler : InvocationInterceptor {
-
-    override fun interceptTestMethod(
-      invocation: InvocationInterceptor.Invocation<Void>,
-      invocationContext: ReflectiveInvocationContext<Method>,
-      extensionContext: ExtensionContext,
-    ) {
-      runWithCancellationPropagationEnabled {
-        invocation.proceed()
-      }
-    }
-  }
-
   private val service = AppExecutorUtil.getAppExecutorService()
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
 

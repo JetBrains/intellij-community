@@ -206,7 +206,7 @@ public class Alarm implements Disposable {
   }
 
   void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
-    ChildContext childContext = AppExecutorUtil.propagateContextOrCancellation() && !(request instanceof ContextAwareRunnable) ? Propagation.createChildContext() : null;
+    ChildContext childContext = AppExecutorUtil.propagateContext() && !(request instanceof ContextAwareRunnable) ? Propagation.createChildContext() : null;
     Request requestToSchedule = new Request(request, modalityState, delayMillis, childContext);
     synchronized (LOCK) {
       checkDisposed();
