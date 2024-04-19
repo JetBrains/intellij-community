@@ -4764,11 +4764,6 @@ f:com.intellij.ide.actions.LayoutNameInputDialog
 - com.intellij.openapi.ui.Messages$InputDialog
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String):V
 f:com.intellij.ide.actions.LayoutNameInputDialogKt
-f:com.intellij.ide.actions.LayoutsGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.ide.actions.MacWindowActionBase
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
