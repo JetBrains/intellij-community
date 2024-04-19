@@ -8,8 +8,8 @@ import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -96,7 +96,7 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
     val filter = (FileBasedIndex.getInstance() as? FileBasedIndexImpl)?.indexableFilesFilterHolder?.getProjectIndexableFiles(project)
                  ?: return
 
-    try {
+    LOG.runAndLogException {
       val attemptNumber = attemptsCount.incrementAndGet()
       IndexableFilesFilterHealthCheckCollector.reportIndexableFilesFilterHealthcheckStarted(project, filter, attemptNumber)
       val startTime = System.currentTimeMillis()
@@ -137,12 +137,6 @@ class ProjectIndexableFilesFilterHealthCheck(private val project: Project, priva
             res.reason)
         }
       }
-    }
-    catch (_: ProcessCanceledException) {
-
-    }
-    catch (e: Exception) {
-      LOG.error(e)
     }
   }
 
