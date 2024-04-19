@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -136,6 +137,8 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
     subscribeOnNewUiSwitching();
 
     myGraphCommitCellRenderer = getGraphCommitCellRenderer();
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(VcsLogCustomColumnListener.TOPIC, new MyColumnsAvailabilityListener());
     VcsLogColumnManager.getInstance().addCurrentColumnsListener(this, new MyCurrentColumnsListener());
     VcsLogColumnManager.getInstance().addColumnModelListener(this, (column, index) -> {
       getModel().fireTableStructureChanged();
@@ -225,8 +228,13 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       }
 
       for (VcsLogColumn<?> column : columnOrder) {
-        myTableColumns.computeIfAbsent(column, (k) -> createTableColumn(column));
-        columnModel.addColumn(myTableColumns.get(column));
+        boolean isAvailable = column instanceof VcsLogCustomColumn<?> customColumn
+                              ? customColumn.isAvailable(myLogData.getProject())
+                              : true;
+        if (isAvailable) {
+          myTableColumns.computeIfAbsent(column, (k) -> createTableColumn(column));
+          columnModel.addColumn(myTableColumns.get(column));
+        }
       }
     }
 
@@ -1024,6 +1032,15 @@ public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitL
       }
       super.moveColumn(columnIndex, newIndex);
       VcsLogColumnUtilKt.moveColumn(myProperties, column, newIndex);
+    }
+  }
+
+  private class MyColumnsAvailabilityListener implements VcsLogCustomColumnListener {
+    @Override
+    public void columnAvailabilityChanged() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        onColumnOrderSettingChanged();
+      });
     }
   }
 

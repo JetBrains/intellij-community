@@ -43,6 +43,8 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
 
     val logColumn: VcsLogColumn<T> = ExternalStatusLogColumn()
 
+    open fun isColumnAvailable(project: Project): Boolean = true
+
     /**
      * Localized column name
      */
@@ -78,6 +80,8 @@ interface VcsCommitExternalStatusProvider<T : VcsCommitExternalStatus> {
 
       override val isDynamic = true
       override val isResizable = false
+
+      override fun isAvailable(project: Project) = isColumnAvailable(project)
 
       override fun isEnabledByDefault() = isColumnEnabledByDefault
 
