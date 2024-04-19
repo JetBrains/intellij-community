@@ -791,7 +791,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
-    if (Registry.is("wsl.use.remote.agent.for.launch.processes")) {
+    if (WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()) {
       Map<String, String> map = WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
       return map.get(name);
     }

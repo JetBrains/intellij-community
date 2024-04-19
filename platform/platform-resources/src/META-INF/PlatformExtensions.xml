@@ -177,6 +177,8 @@
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
                         serviceImplementation="com.intellij.execution.wsl.ProductionWslIjentManager"/>
+    <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentAvailabilityService"
+                        serviceImplementation="com.intellij.execution.wsl.DummyWslIjentAvailabilityService"/>
 
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
     <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="true" restartRequired="true"
