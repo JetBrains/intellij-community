@@ -276,7 +276,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       // Scanning may throw exception (or error).
       // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
       if (flushQueueAfterScanning) {
-        flushPerProjectIndexingQueue(scanningHistory.scanningReason, indicator)
+        flushPerProjectIndexingQueue()
       }
 
       (myProject as UserDataHolderEx).replace(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED, FirstScanningState.PERFORMED)
@@ -336,7 +336,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     ProgressIndicatorUtils.awaitWithCheckCanceled(latch)
   }
 
-  private fun flushPerProjectIndexingQueue(indexingReason: String?, indicator: CheckPauseOnlyProgressIndicator) {
+  private fun flushPerProjectIndexingQueue() {
     myProject.getService(PerProjectIndexingQueue::class.java).flushNow(this.indexingReason)
   }
 
