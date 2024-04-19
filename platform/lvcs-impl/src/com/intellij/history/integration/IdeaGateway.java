@@ -305,6 +305,7 @@ public class IdeaGateway {
     }
 
     DirectoryEntries entries = doCreateDirectoryEntries(file);
+    if (entries == null) return null;
 
     doCreateChildren(entries.last, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && entries.last.getChildren().isEmpty()) return null;
@@ -334,7 +335,7 @@ public class IdeaGateway {
   private record DirectoryEntries(@NotNull DirectoryEntry first, @NotNull DirectoryEntry last) {
   }
 
-  private static @NotNull DirectoryEntries doCreateDirectoryEntries(@NotNull VirtualFile file) {
+  private static @Nullable DirectoryEntries doCreateDirectoryEntries(@NotNull VirtualFile file) {
     if (file.isInLocalFileSystem() || file.getParent() != null) {
       if (file instanceof VirtualFileSystemEntry) {
         int nameId = ((VirtualFileSystemEntry)file).getNameId();
@@ -355,6 +356,8 @@ public class IdeaGateway {
       if (last != null) last.addChild(current);
       last = current;
     }
+
+    if (first == null) return null;
     return new DirectoryEntries(first, last);
   }
 
