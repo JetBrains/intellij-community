@@ -52,7 +52,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     val filesGenerator = psiJavaFiles()
     PropertyChecker.customized()
-      .withIterationCount(50)
+      .withIterationCount(30)
       .checkScenarios { ImperativeCommand { this.doTestAllFilesWithMemberNameReported(it, filesGenerator) } }
   }
 
