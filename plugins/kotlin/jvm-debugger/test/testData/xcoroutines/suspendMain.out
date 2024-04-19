@@ -38,8 +38,6 @@ CoroutineInfo: -1 coroutine UNKNOWN
 		($this$startCoroutine, completion)
 	KotlinStackFrame runSuspend:!LINE_NUMBER!, RunSuspendKt (kotlin.coroutines.jvm.internal)
 		(block, run)
-	KotlinStackFrame FRAME:main:-1, SuspendMainKt (continuation)
-		(args)
 Disconnected from the target VM
 
 Process finished with exit code 0

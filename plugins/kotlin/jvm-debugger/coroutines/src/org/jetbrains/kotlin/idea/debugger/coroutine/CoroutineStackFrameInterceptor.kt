@@ -22,6 +22,9 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
@@ -36,6 +39,13 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         if (debugProcess.xdebugProcess?.session is XDebugSessionImpl
             && frame !is SkipCoroutineStackFrameProxyImpl
             && AsyncStacksToggleAction.isAsyncStacksEnabled(debugProcess.xdebugProcess?.session as XDebugSessionImpl)) {
+            // skip -1 line in invokeSuspend and main
+            val location = frame.safeLocation()
+            if (location != null && location.safeLineNumber() < 0 &&
+                (location.safeMethod()?.name() == "main" || location.isInvokeSuspend())) {
+                return emptyList()
+            }
+
             val suspendContextImpl = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager)
             val stackFrame = suspendContextImpl?.let {
                 CoroutineFrameBuilder.coroutineExitFrame(frame, it)

@@ -7,7 +7,7 @@ Thread stack trace:
 		($result, this)
 CoroutineInfo: 1 coroutine RUNNING
 	<hidden frames>
-	CoroutineStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt (continuation)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt (continuation)
 		()
 Coroutine Creation Stack Trace
 	<hidden frames>

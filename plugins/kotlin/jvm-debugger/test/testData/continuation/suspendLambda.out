@@ -8,15 +8,17 @@ Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendLambdaKt$fibonacci$1 (continuation)
 		($result, $this$sequence, step, terms, this)
 CoroutineInfo: -1 coroutine UNKNOWN
-	CoroutineStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
 		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
-	CoroutineStackFrame hasNext:!LINE_NUMBER!, SequenceBuilderIterator (kotlin.sequences)
+	KotlinStackFrame resumeWith:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame hasNext:!LINE_NUMBER!, SequenceBuilderIterator (kotlin.sequences)
 		(step, this)
-	CoroutineStackFrame hasNext:!LINE_NUMBER!, TakeSequence$iterator$1 (kotlin.sequences)
+	KotlinStackFrame hasNext:!LINE_NUMBER!, TakeSequence$iterator$1 (kotlin.sequences)
 		(this)
-	CoroutineStackFrame toList:!LINE_NUMBER!, SequencesKt___SequencesKt (kotlin.sequences)
+	KotlinStackFrame toList:!LINE_NUMBER!, SequencesKt___SequencesKt (kotlin.sequences)
 		($this$toList, dst, element, it)
-	CoroutineStackFrame main:!LINE_NUMBER!, SuspendLambdaKt (continuation)
+	KotlinStackFrame main:!LINE_NUMBER!, SuspendLambdaKt (continuation)
 		(a)
 Disconnected from the target VM
 
