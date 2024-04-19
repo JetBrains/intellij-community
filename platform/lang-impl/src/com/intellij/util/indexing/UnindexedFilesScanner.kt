@@ -249,8 +249,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       myFutureScanningRequestToken.markSuccessful()
       projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
 
-      ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, scanningRequest)
-        .collectIndexableFilesConcurrently(progressReporter, orderedProviders)
+      ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
+        .collectIndexableFilesConcurrently(orderedProviders)
       if (isFullIndexUpdate() || myOnProjectOpen) {
         myProject.putUserData(CONTENT_SCANNED, true)
       }
@@ -345,10 +345,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                 private val forceReindexingTrigger: Predicate<IndexedFile>?,
                                 private val myFilterHandler: FilesFilterScanningHandler,
                                 private val indicator: CheckPauseOnlyProgressIndicator,
+                                private val progressReporter: IndexingProgressReporter,
                                 private val scanningRequest: ScanningRequestToken) {
 
-    fun collectIndexableFilesConcurrently(progressReporter: IndexingProgressReporter,
-                                          providers: List<IndexableFilesIterator>) {
+    fun collectIndexableFilesConcurrently(providers: List<IndexableFilesIterator>) {
       if (providers.isEmpty()) {
         return
       }
@@ -375,7 +375,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
         repeatTaskConcurrently(continueOnException = true, SCANNING_DISPATCHER, SCANNING_PARALLELISM) {
           val provider = providersToCheck.receiveCatching().getOrNull() ?: return@repeatTaskConcurrently false
-          scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, progressReporter, sharedExplanationLogger)
+          scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
 
           return@repeatTaskConcurrently true
         }
@@ -385,7 +385,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     private suspend fun scanSingleProvider(provider: IndexableFilesIterator,
                                            sessions: List<ScanSession>,
                                            indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter,
-                                           progressReporter: IndexingProgressReporter,
                                            sharedExplanationLogger: IndexingReasonExplanationLogger) {
       val scanningStatistics = ScanningStatistics(provider.debugName)
       scanningStatistics.setProviderRoots(provider, myProject)
