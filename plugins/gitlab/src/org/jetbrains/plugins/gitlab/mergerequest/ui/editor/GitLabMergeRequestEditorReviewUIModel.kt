@@ -127,7 +127,7 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
 
   private inner class ShiftedNewDiscussion(vm: GitLabMergeRequestEditorNewDiscussionViewModel)
     : GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<GitLabMergeRequestEditorNewDiscussionViewModel>(vm) {
-    override val key: Any = "NEW_${vm.originalLine}"
+    override val key: Any = vm.key
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
     override val line: StateFlow<Int?> = vm.line.shiftLine()
     override fun cancel() = cancelNewDiscussion(vm.originalLine)
