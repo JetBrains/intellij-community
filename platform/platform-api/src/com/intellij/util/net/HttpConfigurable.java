@@ -618,7 +618,8 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   private void migrateDefaultModeFromNoProxyToProxyPAC() {
     if (DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC) return;
     DEFAULT_WAS_MIGRATED_FROM_NO_PROXY_TO_PROXY_PAC = true;
-    if (!USE_HTTP_PROXY && !USE_PROXY_PAC) { // == USE_NO_PROXY
+    if (!USE_HTTP_PROXY && !USE_PROXY_PAC && // == USE_NO_PROXY
+        !USE_PAC_URL && StringUtil.isEmpty(PAC_URL)) {
       USE_PROXY_PAC = true;
     }
   }
