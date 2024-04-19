@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -60,7 +61,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
 
         var javaChangeInfos = changeInfo.getUserData(javaChangeInfoKey)
         if (javaChangeInfos == null) {
-            val ktCallableDeclaration = changeInfo.method
+            val ktCallableDeclaration = changeInfo.method.takeUnless { it.isExpectDeclaration() } ?: unwrappedKotlinBase
             val isProperty = ktCallableDeclaration is KtParameter || ktCallableDeclaration is KtProperty
             val isJvmOverloads = if (ktCallableDeclaration is KtFunction) {
                 ktCallableDeclaration.annotationEntries.any {
@@ -70,9 +71,9 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             } else {
                 false
             }
-            javaChangeInfos = ktCallableDeclaration.toLightMethods().map {
+            javaChangeInfos = ktCallableDeclaration?.toLightMethods()?.map {
                 createJavaInfoForLightMethod(ktCallableDeclaration as KtCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
-            }
+            } ?: emptyList()
             changeInfo.putUserData(javaChangeInfoKey, javaChangeInfos)
         }
 

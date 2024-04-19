@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -80,6 +81,12 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
 
     fun testHeaderSecondaryConstructor() = doTest("Common/src/test/test.kt") {
         addParameter("b", "Boolean", "false")
+    }
+
+    fun testJavaUsage() = ConflictsInTestsException.withIgnoredConflicts<Throwable> {
+        doTest("Common/src/test/test.kt") {
+            addParameter("b", "Boolean", "false")
+        }
     }
 
     fun testImplPrimaryConstructorNoParams() = doTest("JVM/src/test/test.kt") {
