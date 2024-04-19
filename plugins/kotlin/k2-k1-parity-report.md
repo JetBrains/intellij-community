@@ -1,23 +1,24 @@
 # K2/K1 feature parity report
 
 
-Generated on Thu Apr 18 12:12:09 CEST 2024
+Generated on Fri Apr 19 12:08:13 CEST 2024
 
 ## Categories
 
 | Status | Category | Success rate, % | K2 files | K1 files |
 | -- | -- | --  | -- | -- |
- | :white_check_mark: | UNCATEGORIZED | 87 | 3884 | 4465 | 0 | 
- | :white_check_mark: | HIGHLIGHTING | 101 | 515 | 509 | 0 | 
+ | :white_check_mark: | UNCATEGORIZED | 87 | 3887 | 4466 | 0 | 
+ | :white_check_mark: | HIGHLIGHTING | 101 | 519 | 513 | 0 | 
  | :white_check_mark: | COMPLETION | 88 | 3247 | 3674 | 0 | 
- | :white_check_mark: | CODE_INSIGHT | 96 | 3271 | 3421 | 0 | 
+ | :white_check_mark: | CODE_INSIGHT | 96 | 3274 | 3422 | 0 | 
  | :white_check_mark: | NAVIGATION | 103 | 216 | 210 | 0 | 
  | :white_check_mark: | FIND_USAGES | 89 | 635 | 712 | 0 | 
- | :white_check_mark: | REFACTORING | 100 | 1571 | 1577 | 0 | 
+ | :white_check_mark: | REFACTORING | 99 | 692 | 696 | 0 | 
  | :white_check_mark: | RENAME_REFACTORING | 103 | 836 | 810 | 0 | 
  | :white_check_mark: | INLINE_REFACTORING | 98 | 494 | 502 | 0 | 
  | :x: | MOVE_REFACTORING | 67 | 256 | 384 | 0 | 
- | :white_check_mark: | INSPECTIONS | 100 | 3164 | 3173 | 0 | 
+ | :white_check_mark: | EXTRACT_REFACTORING | 100 | 962 | 966 | 0 | 
+ | :white_check_mark: | INSPECTIONS | 100 | 3170 | 3179 | 0 | 
  | :x: | INTENTIONS | 73 | 4362 | 5962 | 0 | 
  | :x: | QUICKFIXES | 58 | 2502 | 4345 | 0 | 
  | :white_check_mark: | SCRIPTS | 100 | 40 | 40 | 0 | 
@@ -25,7 +26,7 @@ Generated on Thu Apr 18 12:12:09 CEST 2024
  | :x: | J2K | 50 | 553 | 1104 | 0 | 
 
 ## Shared cases
-shared 11859 files out of 851 cases
+shared 11950 files out of 856 cases
 
 | Status | Case name | Success rate, % | K2 files | K1 files | Total files |
 | -- | -- | --  | -- | -- | -- |
@@ -471,10 +472,10 @@ shared 11859 files out of 851 cases
  | :white_check_mark: | K2IdeK2CodeKotlinEvaluateExpressionTestGenerated$SingleBreakpoint | 93 | 294 | 317 | 317 | 
  | :white_check_mark: | FirMultiModuleSafeDeleteTestGenerated | 92 | 23 | 25 | 25 | 
  | :white_check_mark: | K2KDocCompletionTestGenerated | 93 | 28 | 30 | 30 | 
- | :white_check_mark: | FirQuickDocTestGenerated | 93 | 69 | 74 | 74 | 
  | :white_check_mark: | [K2SelectExpressionForDebuggerTestGenerated] | 99 | 68 | 69 | 69 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$DisallowMethodCalls | 95 | 20 | 21 | 21 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$Uncategorized | 100 | 48 | 48 | 48 | 
+ | :white_check_mark: | FirQuickDocTestGenerated | 96 | 72 | 75 | 75 | 
  | :white_check_mark: | FirRenameTestGenerated | 98 | 273 | 278 | 278 | 
  | :white_check_mark: | [FirLegacyUastValuesTestGenerated] | 100 | 79 | 79 | 79 | 
  | :white_check_mark: | [FirUastDeclarationTestGenerated] | 100 | 31 | 31 | 31 | 
@@ -506,7 +507,7 @@ shared 11859 files out of 851 cases
  | :white_check_mark: | [KotlinFirBreadcrumbsTestGenerated] | 100 | 15 | 15 | 15 | 
  | :white_check_mark: | [K2SharedQuickFixTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [SharedK2InspectionTestGenerated] | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 380 | 380 | 380 | 
+ | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 383 | 383 | 383 | 
  | :white_check_mark: | [SharedK2KDocHighlightingTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [SharedK2IntentionTestGenerated] | 100 | 364 | 364 | 364 | 
  | :white_check_mark: | [LineMarkersK2TestGenerated] | 100 | 46 | 46 | 46 | 
@@ -541,8 +542,9 @@ shared 11859 files out of 851 cases
  | :white_check_mark: | [KotlinFirMoveStatementTestGenerated] | 99 | 281 | 283 | 283 | 
  | :white_check_mark: | [K2MultiFileQuickFixTestGenerated] | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | [KotlinFirInlineTestGenerated] | 99 | 146 | 148 | 149 | 
- | :white_check_mark: | [K2IntroduceVariableTestGenerated] | 99 | 149 | 150 | 152 | 
+ | :white_check_mark: | [K2IntroduceVariableTestGenerated] | 100 | 151 | 151 | 154 | 
  | :white_check_mark: | [K2IntroduceFunctionTestGenerated] | 101 | 141 | 140 | 144 | 
+ | :white_check_mark: | [K2IntroduceParameterTestGenerated] | 98 | 81 | 83 | 83 | 
  | :white_check_mark: | [K2MovePackageTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [K2MoveTopLevelToInnerTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2SafeDeleteTestGenerated] | 100 | 198 | 198 | 198 | 
@@ -555,10 +557,10 @@ shared 11859 files out of 851 cases
  | :white_check_mark: | FirGotoTypeDeclarationTestGenerated | 111 | 20 | 18 | 20 | 
  | :white_check_mark: | FirGotoDeclarationTestGenerated | 113 | 17 | 15 | 17 | 
  | :white_check_mark: | K2InplaceRenameTestGenerated | 121 | 122 | 101 | 127 | 
- | :white_check_mark: | [K2HighlightingMetaInfoTestGenerated] | 105 | 58 | 55 | 58 | 
+ | :white_check_mark: | [K2HighlightingMetaInfoTestGenerated] | 105 | 60 | 57 | 60 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Diagnostics | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Dsl | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$SmartCasts | 100 | 8 | 8 | 8 | 
+ | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$SmartCasts | 100 | 10 | 10 | 10 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Unresolved | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Uncategorized | 106 | 34 | 32 | 34 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$FocusMode | 150 | 3 | 2 | 3 | 
@@ -569,8 +571,8 @@ kt, test, before.Main.kt, kts, main.java, main.kt, option1.kt, kt.kt, java, 0.kt
 
 ---
 ## Total 
- * K1: 11735 rate: 99 % of 11859 files
- * K2: 8453 rate: 71 % of 11859 files
+ * K1: 11825 rate: 99 % of 11950 files
+ * K2: 8544 rate: 71 % of 11950 files
 ---
 
 ## Build cases for K1
@@ -2003,7 +2005,7 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * fir/tests/testData/resolve/anchors/anchorInSameModuleJavaDependency
 ## K1 only cases
 
-444 K1 only cases (5948 files):
+439 K1 only cases (5865 files):
 
  * org.jetbrains.kotlin.DataFlowValueRenderingTestGenerated
  * org.jetbrains.kotlin.addImport.AddImportTestGenerated
@@ -2407,11 +2409,6 @@ org.jetbrains.kotlin.idea.fir.resolve.K2MultiModuleHighlightingTestGenerated has
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceLambdaParameter$Multiline
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceLambdaParameter$StringTemplates
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceLambdaParameter$Uncategorized
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceParameter$Multiline
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceParameter$Script
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceParameter$StringTemplates
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceParameter$Uncategorized
- * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceParameter$VariableConversion
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$Script
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$StringTemplates
  * org.jetbrains.kotlin.idea.refactoring.introduce.ExtractionTestGenerated$IntroduceProperty$Uncategorized

@@ -76,7 +76,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/inline/lambdaExpression", pattern = Patterns.KT_WITHOUT_DOTS)
         }
     }
-    testGroup("refactorings/kotlin.refactorings.tests.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceFunctionTest> {
             model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("duplicates"))
         }
@@ -110,7 +110,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
     }
 
-    testGroup("refactorings/kotlin.refactorings.introduce.k2", category = REFACTORING, testDataPath = "../../idea/tests/testData") {
+    testGroup("refactorings/kotlin.refactorings.introduce.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceVariableTest> {
             model("refactoring/introduceVariable", pattern = Patterns.KT_OR_KTS_WITHOUT_DOTS, testMethodName = "doIntroduceVariableTest")
         }
