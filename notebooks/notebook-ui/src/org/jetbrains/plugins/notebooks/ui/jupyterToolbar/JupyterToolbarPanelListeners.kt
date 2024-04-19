@@ -19,35 +19,43 @@ class JupyterToolbarPanelListeners(  // PY-66455
 
   private val toolbarService = JupyterToolbarService.getInstance(project)
 
+  private enum class ENTERED_PART { MIDDLE, RIGHT, NONE }
+
   init {
     panel.addMouseListener(this)
     panel.addComponentListener(this)
   }
 
   override fun mouseEntered(e: MouseEvent?) {
-    toolbarService.requestToolbarDisplay(panel, editor)
+    e?.let {
+      val enteredPart = whatPartEntered(it.x)
+      when (enteredPart) {
+        ENTERED_PART.MIDDLE -> toolbarService.requestToolbarDisplay(panel, editor)
+        // todo: for right, see figma
+        // https://www.figma.com/file/ApfhZCnjLV7NRlksW6hy4Y/Jupyter?type=design&node-id=239-8996&mode=design&t=HhbICTruXlSWMcQh-0
+        ENTERED_PART.RIGHT -> return
+        ENTERED_PART.NONE -> return
+      }
+    }
   }
 
-  override fun mouseExited(e: MouseEvent?) {
-    toolbarService.requestToolbarHide()
-  }
+  override fun mouseExited(e: MouseEvent?) = toolbarService.requestToolbarHide()
+  override fun mouseClicked(e: MouseEvent?) = toolbarService.hideToolbarUnconditionally()
+  override fun componentShown(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
+  override fun componentHidden(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
+  override fun componentResized(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
+  override fun componentMoved(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
 
-  override fun mouseClicked(e: MouseEvent?) {
-    toolbarService.hideToolbarUnconditionally()
-  }
+  private fun whatPartEntered(xPos: Int): ENTERED_PART {
+    val panelWidth = panel.width
+    val middleStart = (panelWidth * 0.33).toInt()
+    val middleEnd = (panelWidth * 0.66).toInt()
+    val rightStart = (panelWidth * 0.75).toInt()
 
-  override fun componentResized(e: ComponentEvent?) {
-    toolbarService.adjustToolbarPosition()
-  }
-
-  override fun componentMoved(e: ComponentEvent?) {
-    toolbarService.adjustToolbarPosition()
-  }
-
-  override fun componentShown(e: ComponentEvent?) {
-    toolbarService.hideToolbarUnconditionally()
-  }
-  override fun componentHidden(e: ComponentEvent?) {
-    toolbarService.hideToolbarUnconditionally()
+    return when (xPos) {
+      in middleStart until middleEnd -> ENTERED_PART.MIDDLE
+      in rightStart until panelWidth -> ENTERED_PART.RIGHT
+      else -> ENTERED_PART.NONE
+    }
   }
 }

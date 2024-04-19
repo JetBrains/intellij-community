@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbar
+import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbarService
 import java.awt.GridBagLayout
 import java.awt.Point
 import java.awt.Rectangle
@@ -17,6 +18,7 @@ import javax.swing.SwingUtilities
 class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayout()) {
   private var toolbar: JupyterToolbar? = null
   private val actionGroup = createActionGroup()
+  private val project = editor.project
 
   init {
     if (editor.editorKind != EditorKind.DIFF) {
@@ -71,9 +73,17 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
       val xCoordinate = panelLocationInEditor.x + xOffset
       val yCoordinate = panelLocationInEditor.y
 
-      tb.bounds = Rectangle(xCoordinate, yCoordinate, toolbarPreferredSize.width, toolbarPreferredSize.height)
+      val width = toolbarPreferredSize.width
+      val height = toolbarPreferredSize.height
+      tb.bounds = Rectangle(xCoordinate, yCoordinate, width, height)
+
       revalidate()
       repaint()
+
+      project?.let {
+        val tbService = JupyterToolbarService.getInstance(it)
+        tbService.setActualToolbarSize(width, height)
+      }
     }
   }
 
