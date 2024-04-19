@@ -19,7 +19,7 @@ class JimfsTempDirFactory : TempDirFactory {
   private val fs = Jimfs.newFileSystem()
 
   override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path = runBlocking {
-    createTempDirectory(fs)
+    createTempDirectory(fs.rootDirectories.first())
   }
 
   override fun close() {

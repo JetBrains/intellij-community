@@ -4,17 +4,18 @@ package com.intellij.testFramework.junit5.impl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 
 
 private const val TMP_DIR_PREFIX = "IJTests"
 
+/**
+ * Create temp dir in local temporary dir or [rootDirForTemp] (in-memory nio path could be provided)
+ */
 @TestOnly
-suspend fun createTempDirectory(fs: FileSystem = FileSystems.getDefault()): Path = withContext(Dispatchers.IO) {
-  Files.createTempDirectory(fs.rootDirectories.first(), TMP_DIR_PREFIX)
+suspend fun createTempDirectory(rootDirForTemp: Path? = null): Path = withContext(Dispatchers.IO) {
+  if (rootDirForTemp == null) Files.createTempDirectory(TMP_DIR_PREFIX) else Files.createTempDirectory(rootDirForTemp, TMP_DIR_PREFIX)
 }
 
 

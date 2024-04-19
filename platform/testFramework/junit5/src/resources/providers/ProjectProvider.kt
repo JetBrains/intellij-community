@@ -7,16 +7,13 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.testFramework.junit5.impl.createTempDirectory
 import com.intellij.testFramework.junit5.resources.providers.PathInfo.Companion.addPathInfoToDeleteOnExit
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
 import kotlin.reflect.KClass
 
 /**
  * Creates [Project]
  */
 @TestOnly
-class ProjectProvider(private val createDefaultProjectLocation: suspend () -> PathInfo) : ParameterizableResourceProvider<Project, PathInfo> {
-  constructor(fs: FileSystem = FileSystems.getDefault(), closeFsOnExit: Boolean = false) : this({ PathInfo(createTempDirectory(fs), closeFsOnExit = closeFsOnExit) })
+class ProjectProvider(private val createDefaultProjectLocation: suspend () -> PathInfo = { PathInfo(createTempDirectory()) }) : ParameterizableResourceProvider<Project, PathInfo> {
 
   override val resourceType: KClass<Project> = Project::class
 
