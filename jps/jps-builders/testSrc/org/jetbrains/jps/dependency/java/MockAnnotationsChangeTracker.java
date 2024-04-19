@@ -9,29 +9,29 @@ import org.jetbrains.jps.javac.Iterators;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class MockAnnotationsChangeTracker implements AnnotationChangesTracker {
   private static final String ANOTATION_NAME = MockAnnotation.class.getName().replace('.', '/');
   private static final String HIERARCHY_ANOTATION_NAME = MockHierarchyAnnotation.class.getName().replace('.', '/');
+  private static final Set<String> KOTLIN_TESTS_ANOTATION_NAMES = Set.of("foo/Ann", "Ann");
 
   @Override
   public @NotNull Set<Recompile> methodAnnotationsChanged(JvmMethod method, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff, Difference.Specifier<ParamAnnotation, ParamAnnotation.Diff> paramAnnotationsDiff) {
     //return RECOMPILE_NONE;
-    return handleChanges(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), paramAnnotationsDiff.added(), paramAnnotationsDiff.removed())), an -> an.getAnnotationClass()));
+    return handleChanges(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), Iterators.map(annotationsDiff.changed(), Difference.Change::getPast), paramAnnotationsDiff.added(), paramAnnotationsDiff.removed(), Iterators.map(paramAnnotationsDiff.changed(), Difference.Change::getPast))), an -> an.getAnnotationClass()));
   }
 
   @Override
   public @NotNull Set<Recompile> fieldAnnotationsChanged(JvmField field, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
     //return RECOMPILE_NONE;
-    return handleChanges(Iterators.map(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()), an -> an.getAnnotationClass()));
+    return handleChanges(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), Iterators.map(annotationsDiff.changed(), Difference.Change::getPast))), an -> an.getAnnotationClass()));
   }
 
   @Override
   public @NotNull Set<Recompile> classAnnotationsChanged(JvmClass aClass, Difference.Specifier<ElementAnnotation, ElementAnnotation.Diff> annotationsDiff) {
     //return RECOMPILE_NONE;
-    return handleChanges(Iterators.map(Iterators.flat(annotationsDiff.added(), annotationsDiff.removed()), an -> an.getAnnotationClass()));
+    return handleChanges(Iterators.map(Iterators.flat(List.of(annotationsDiff.added(), annotationsDiff.removed(), Iterators.map(annotationsDiff.changed(), Difference.Change::getPast))), an -> an.getAnnotationClass()));
   }
 
   @NotNull
@@ -43,10 +43,16 @@ public class MockAnnotationsChangeTracker implements AnnotationChangesTracker {
     if (containsAnnotation(HIERARCHY_ANOTATION_NAME, changes)) {
       result.add(Recompile.SUBCLASSES);
     }
+    if (containsAnnotation(KOTLIN_TESTS_ANOTATION_NAMES, changes)) {
+      result.addAll(RECOMPILE_ALL);
+    }
     return result;
   }
 
-  private static boolean containsAnnotation(String annotationName, Iterable<TypeRepr.ClassType> classes) {
-    return !Iterators.isEmpty(Iterators.filter(classes, type -> Objects.equals(annotationName, type.getJvmName()) ));
+  private static boolean containsAnnotation(@NotNull String annotationName, Iterable<TypeRepr.ClassType> classes) {
+    return containsAnnotation(Set.of(annotationName), classes);
+  }
+  private static boolean containsAnnotation(Set<String> annotationNames, Iterable<TypeRepr.ClassType> classes) {
+    return !Iterators.isEmpty(Iterators.filter(classes, type -> annotationNames.contains(type.getJvmName())));
   }
 }
