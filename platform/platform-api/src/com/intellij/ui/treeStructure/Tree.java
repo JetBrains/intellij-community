@@ -28,7 +28,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -459,6 +458,20 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     return null; // TODO not implemented
+  }
+
+  @Nullable CachingTreePath getPath(@Nullable TreeModelEvent event) {
+    if (event == null) return null;
+    var path = event.getTreePath();
+    var model = getModel();
+    // mimic sun.swing.SwingUtilities2.getTreePath
+    if ((path == null) && (model != null)) {
+      Object root = model.getRoot();
+      if (root != null) {
+        return new CachingTreePath(root);
+      }
+    }
+    return CachingTreePath.ensureCaching(path);
   }
 
   public void expandPaths(@NotNull Iterable<@NotNull TreePath> paths) {
@@ -1637,7 +1650,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (e == null) {
           return;
         }
-        TreePath parent = SwingUtilities2.getTreePath(e, getModel());
+        TreePath parent = getPath(e);
         if (parent == null) {
           return;
         }
@@ -1671,9 +1684,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         if (e == null) {
           return;
         }
-        TreePath parent = SwingUtilities2.getTreePath(e, getModel());
+        TreePath parent = getPath(e);
         Object[] children = e.getChildren();
-        if (children == null) {
+        if (children == null || parent == null) {
           return;
         }
         TreePath path;
@@ -1695,10 +1708,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
 
       private void removeDescendantSelectedPaths(TreeModelEvent e) {
-        TreePath pPath = SwingUtilities2.getTreePath(e, getModel());
+        TreePath pPath = getPath(e);
+        if (pPath == null) return;
         Object[] oldChildren = e.getChildren();
         TreeSelectionModel sm = getSelectionModel();
-        if (sm != null && pPath != null && oldChildren != null && oldChildren.length > 0) {
+        if (sm != null && oldChildren != null && oldChildren.length > 0) {
           for (int counter = oldChildren.length - 1; counter >= 0; counter--) {
             Tree.this.removeDescendantSelectedPaths(pPath.pathByAddingChild(oldChildren[counter]), true);
           }
