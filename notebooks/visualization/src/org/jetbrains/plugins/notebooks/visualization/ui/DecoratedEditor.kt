@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
@@ -135,7 +135,7 @@ fun decorateTextEditor(textEditor: TextEditor): TextEditor {
 }
 
 internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
-  ReadAction.run<Nothing> {
+  WriteAction.run<Nothing> {
     EditorScrollingPositionKeeper(editor).use { keeper ->
       keeper.savePosition()
       task.run()
