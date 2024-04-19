@@ -39,24 +39,19 @@ public final class DescriptorComposer extends HTMLComposerImpl {
     genPageHeader(buf, refEntity);
     if (myTool.getDescriptions(refEntity) != null) {
       appendHeading(buf, AnalysisBundle.message("inspection.problem.synopsis"));
-      buf.append("<div class=\"problem-description\">");
+      buf.append("\n<div class=\"problem-description\">");
       CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
       LOG.assertTrue(descriptions != null);
 
-      startList(buf);
+      buf.append("\n<ul>");
       for (int i = 0; i < descriptions.length; i++) {
-        final CommonProblemDescriptor description = descriptions[i];
-
-        startListItem(buf);
-        composeDescription(description, i, buf, refEntity);
-        doneListItem(buf);
+        buf.append("\n<li>");
+        composeDescription(descriptions[i], i, buf, refEntity);
       }
+      buf.append("\n</ul>\n</div>");
 
-      doneList(buf);
-      buf.append("</div>");
-
-      appendResolution(buf,refEntity, quickFixTexts(refEntity, myTool));
+      appendResolution(buf, refEntity, quickFixTexts(refEntity, myTool));
     }
     else {
       appendNoProblems(buf);
@@ -108,11 +103,11 @@ public final class DescriptorComposer extends HTMLComposerImpl {
 
       int idx = 0;
       for (QuickFix fix : fixes) {
-        buf.append("<a HREF=\"file://bred.txt#invokelocal:" + (idx++));
-        buf.append("\">");
-        buf.append(escapeQuickFixText(fix.getName()));
-        buf.append("</a>");
-        buf.append("<br>");
+        buf.append("<a href=\"file://bred.txt#invokelocal:")
+          .append(idx++)
+          .append("\">")
+          .append(escapeQuickFixText(fix.getName()))
+          .append("</a><br>");
         appendAfterHeaderIndention(buf);
       }
     }
