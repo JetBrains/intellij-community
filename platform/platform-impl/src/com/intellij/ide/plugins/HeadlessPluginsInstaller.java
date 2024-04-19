@@ -30,6 +30,11 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
 
   @Override
   public void main(@NotNull List<String> args) {
+    if (args.size() == 1) {
+      printUsageHint();
+      System.exit(0);
+    }
+
     try {
       var pluginIds = new LinkedHashSet<PluginId>();
       var customRepositories = new LinkedHashSet<String>();
@@ -38,12 +43,7 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       for (int i = 1; i < args.size(); i++) {
         var arg = args.get(i);
         if ("-h".equals(arg) || "--help".equals(arg)) {
-          System.out.println(
-            """
-              Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
-
-              Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
-              If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.""");
+          printUsageHint();
         }
         else if (arg.startsWith("--for-project=")) {
           projectPaths.add(Path.of(arg.replace("--for-project=", "")));
@@ -71,6 +71,15 @@ public final class HeadlessPluginsInstaller implements ApplicationStarter {
       LOG.error(t);
       System.exit(1);
     }
+  }
+
+  private static void printUsageHint() {
+    System.out.println(
+      """
+        Usage: installPlugins pluginId* repository* (--for-project=<project-path>)*
+
+        Installs plugins with `pluginId` from the Marketplace or provided `repository`-es.
+        If `--for-project` is specified, also installs the required plugins for a project located at <project-path>.""");
   }
 
   private static void collectProjectRequiredPlugins(Collection<PluginId> collector, List<Path> projectPaths) {
