@@ -104,7 +104,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                       }
                                     }, PsiTypeCastExpression.class, Function.identity()),
                                     new InsertTypeCastCommand(file));
-    PropertyChecker
+    PropertyChecker.customized()
+      .withIterationCount(50)
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
