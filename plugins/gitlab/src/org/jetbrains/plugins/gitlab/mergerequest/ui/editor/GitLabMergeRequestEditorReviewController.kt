@@ -6,7 +6,8 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
-import com.intellij.collaboration.ui.codereview.editor.controlInlaysIn
+import com.intellij.collaboration.ui.codereview.editor.renderInlays
+import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -64,23 +65,10 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
               val editorMarkupModel = editor.markupModel as? EditorMarkupModel
               editorMarkupModel?.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
               try {
-                val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }.distinctUntilChanged()
-                val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }.distinctUntilChanged()
-                combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.collectLatest { enabled ->
-                  if (enabled) supervisorScope {
-                    val cs = this
-                    val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
-                    val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm, editor.document)
-                    try {
-                      CodeReviewEditorGutterChangesRenderer.setupIn(cs, model, editor)
-                      CodeReviewEditorGutterControlsRenderer.setupIn(cs, model, editor)
-                      editor.controlInlaysIn(cs, model.inlays, { it.key }) { createRenderer(model, it) }
-                      awaitCancellation()
-                    }
-                    finally {
-                      Disposer.dispose(model)
-                    }
-                  }
+                val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
+                val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }
+                combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
+                  if (enabled) showReview(fileVm, editor)
                 }
               }
               finally {
@@ -90,6 +78,30 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
           }
         }
     }.cancelOnDispose(editorDisposable)
+  }
+
+  private suspend fun showReview(fileVm: GitLabMergeRequestEditorReviewFileViewModel, editor: EditorEx): Nothing {
+    withContext(Dispatchers.Main) {
+      val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
+      val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm, editor.document)
+      try {
+        launchNow {
+          CodeReviewEditorGutterChangesRenderer.render(model, editor)
+        }
+        launchNow {
+          CodeReviewEditorGutterControlsRenderer.render(model, editor)
+        }
+        launchNow {
+          editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) { createRenderer(model, it) }
+        }
+        awaitCancellation()
+      }
+      finally {
+        withContext(NonCancellable) {
+          Disposer.dispose(model)
+        }
+      }
+    }
   }
 
   private fun CoroutineScope.createRenderer(model: GitLabMergeRequestEditorReviewUIModel,

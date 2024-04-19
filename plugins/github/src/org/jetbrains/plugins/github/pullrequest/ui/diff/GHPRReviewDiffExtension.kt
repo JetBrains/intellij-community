@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.viewer.controlReviewIn
+import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
@@ -58,11 +57,9 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
             changeVm.markViewed()
           }
 
-          coroutineScope {
-            viewer.controlReviewIn(this, { locationToLine, lineToLocations ->
-              DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-            }, GHPREditorReviewModel.KEY, { createRenderer(it) })
-          }
+          viewer.showCodeReview({ locationToLine, lineToLocations ->
+                                  DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
+                                }, GHPREditorReviewModel.KEY, { createRenderer(it) })
         }
       }.cancelOnDispose(viewer)
     }

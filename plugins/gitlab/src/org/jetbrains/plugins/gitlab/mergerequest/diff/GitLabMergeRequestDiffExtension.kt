@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.viewer.controlReviewIn
+import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -62,11 +61,9 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
             changeVm.markViewed()
           }
 
-          coroutineScope {
-            viewer.controlReviewIn(this, { locationToLine, lineToLocations ->
-              DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-            }, DiffEditorModel.KEY, { createRenderer(it, changeVm.avatarIconsProvider) })
-          }
+          viewer.showCodeReview({ locationToLine, lineToLocations ->
+                                  DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
+                                }, DiffEditorModel.KEY, { createRenderer(it, changeVm.avatarIconsProvider) })
         }
       }.cancelOnDispose(viewer)
     }
