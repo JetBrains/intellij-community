@@ -295,6 +295,19 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
             public abstract static class StepInto extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
+                public static class Uncategorized extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                    }
+
+                    @TestMetadata("stepIntoMethodWithAndWithoutSwitcher.kt")
+                    public void testStepIntoMethodWithAndWithoutSwitcher() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoMethodWithAndWithoutSwitcher.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported")
                 public static class Unsupported extends AbstractK1IdeK2CodeKotlinEvaluateExpressionTest {
                     private void runTest(String testDataFilePath) throws Exception {
