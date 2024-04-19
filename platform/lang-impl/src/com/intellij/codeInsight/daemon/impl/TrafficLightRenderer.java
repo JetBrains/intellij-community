@@ -404,7 +404,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         withNavigation().
         withState(state).
         withExpandedStatus(ContainerUtil.map(statusItems, i ->
-          new StatusItem(Integer.toString(i.getProblemCount()), i.getIcon(), i.getCountMessage())));
+          new StatusItem(Integer.toString(i.getProblemCount()), i.getIcon(), i.getCountMessage(), new TrafficLightStatusItemMetadata(i.getSeverity()))));
 
       return status.errorAnalyzingFinished ? result :
              result.withAnalyzingType(AnalyzingType.PARTIAL).
