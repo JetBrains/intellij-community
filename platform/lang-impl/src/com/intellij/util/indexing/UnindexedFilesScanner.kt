@@ -395,23 +395,9 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         try {
           progressReporter.getSubTaskReporter().use { subTaskReporter ->
             subTaskReporter.setText(provider.rootsScanningProgressText)
-            val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
-            val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
-              // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
-              // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
-              PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
-              files.add(fileOrDir)
-            }
+            val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
 
             blockingContext {
-              scanningStatistics.startVfsIterationAndScanningApplication()
-              try {
-                provider.iterateFiles(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
-              }
-              finally {
-                scanningStatistics.tryFinishVfsIterationAndScanningApplication()
-              }
-
               myProject.getService(PerProjectIndexingQueue::class.java)
                 .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
                   scanningStatistics.startFileChecking()
@@ -465,6 +451,30 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         return@repeatTaskConcurrently true
       }
     }
+  }
+
+  private suspend fun getFilesToScan(fileScannerVisitors: List<IndexableFileScanner.IndexableFileVisitor>,
+                                   scanningStatistics: ScanningStatistics,
+                                   provider: IndexableFilesIterator,
+                                   thisProviderDeduplicateFilter: IndexableFilesDeduplicateFilter): ArrayDeque<VirtualFile> {
+    val files: ArrayDeque<VirtualFile> = ArrayDeque(1024)
+    val singleProviderIteratorFactory = ContentIterator { fileOrDir: VirtualFile ->
+      // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
+      // (e.g., JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
+      PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors)
+      files.add(fileOrDir)
+    }
+
+    scanningStatistics.startVfsIterationAndScanningApplication()
+    try {
+      blockingContext {
+        provider.iterateFiles(myProject, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
+      }
+    }
+    finally {
+      scanningStatistics.tryFinishVfsIterationAndScanningApplication()
+    }
+    return files
   }
 
   private suspend fun repeatTaskConcurrently(continueOnException: Boolean,
