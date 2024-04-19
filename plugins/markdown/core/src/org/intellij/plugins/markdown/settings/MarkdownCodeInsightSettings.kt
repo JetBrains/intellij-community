@@ -4,6 +4,7 @@ import com.intellij.openapi.components.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
+@RemoteSetting(direction = RemoteSettingDirection.Both)
 @State(name = "MarkdownCodeInsightSettings",
        category = SettingsCategory.CODE,
        storages = [(Storage("markdown.xml"))])
