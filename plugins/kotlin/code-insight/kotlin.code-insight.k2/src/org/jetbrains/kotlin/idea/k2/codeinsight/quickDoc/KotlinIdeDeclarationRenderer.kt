@@ -6,6 +6,15 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotated
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplicationWithArgumentsInfo
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtArrayAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtEnumEntryAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtNamedAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtUnsupportedAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.KtKeywordsRenderer
@@ -29,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeP
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableReturnTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtCallableSignatureRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KtValueParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.classifiers.KtSingleTypeParameterSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.KtTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtClassTypeQualifierRenderer
@@ -65,6 +75,7 @@ import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -97,7 +108,32 @@ internal class KotlinIdeDeclarationRenderer(
         returnTypeFilter = KtCallableReturnTypeFilter.ALWAYS
         propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
         bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
-        parameterDefaultValueRenderer = KtParameterDefaultValueRenderer.THREE_DOTS
+        parameterDefaultValueRenderer = object : KtParameterDefaultValueRenderer {
+            context(KtAnalysisSession)
+            override fun renderDefaultValue(
+                symbol: KtValueParameterSymbol,
+                printer: PrettyPrinter
+            ) {
+                val defaultValue = symbol.defaultValue
+                if (defaultValue != null) {
+                    with(highlightingManager) {
+                        val builder = StringBuilder()
+                        builder.appendCodeSnippetHighlightedByLexer(defaultValue.text)
+                        printer.append(builder)
+                    }
+                }
+            }
+        }
+
+        valueParameterRenderer = object : KtValueParameterSymbolRenderer {
+            context(KtAnalysisSession, KtDeclarationRenderer)
+            override fun renderSymbol(symbol: KtValueParameterSymbol, printer: PrettyPrinter): Unit = printer {
+                highlight(" = ") { asOperationSign } .separated(
+                    { callableSignatureRenderer.renderCallableSignature(symbol, keyword = null, printer) },
+                    { parameterDefaultValueRenderer.renderDefaultValue(symbol, printer) },
+                )
+            }
+        }
 
         keywordsRenderer = keywordsRenderer.keywordsRenderer()
         modifiersRenderer = modifiersRenderer.modifiersRenderer()
@@ -164,7 +200,24 @@ internal class KotlinIdeDeclarationRenderer(
                 }
             }
         }
-        annotationArgumentsRenderer = KtAnnotationArgumentsRenderer.NONE
+        annotationArgumentsRenderer = object : KtAnnotationArgumentsRenderer {
+            context(KtAnalysisSession, KtAnnotationRenderer)
+            override fun renderAnnotationArguments(
+                annotation: KtAnnotationApplication,
+                owner: KtAnnotated,
+                printer: PrettyPrinter
+            ) {
+                if (annotation !is KtAnnotationApplicationWithArgumentsInfo) return
+
+                if (annotation.arguments.isEmpty()) return
+                printer.printCollection(annotation.arguments, prefix = "(", postfix = ")") { argument ->
+                    append(highlight(argument.name.renderName()) { asParameter })
+                    append(highlight(" = ") { asOperationSign } )
+
+                    renderConstantValue(argument.expression)
+                }
+            }
+        }
         annotationsQualifiedNameRenderer = object : KtAnnotationQualifierRenderer {
             context(KtAnalysisSession, KtAnnotationRenderer)
             override fun renderQualifier(
@@ -538,6 +591,99 @@ internal class KotlinIdeDeclarationRenderer(
                 if (symbol is KtConstructorSymbol) return
                 typeRenderer.renderType(symbol.returnType, printer)
             }
+        }
+    }
+
+    private fun PrettyPrinter.renderConstantValue(value: KtAnnotationValue) {
+        when (value) {
+            is KtAnnotationApplicationValue -> {
+                renderAnnotationConstantValue(value)
+            }
+
+            is KtArrayAnnotationValue -> {
+                renderArrayConstantValue(value)
+            }
+
+            is KtEnumEntryAnnotationValue -> {
+                renderEnumEntryConstantValue(value)
+            }
+
+            is KtConstantAnnotationValue -> {
+                renderConstantAnnotationValue(value)
+            }
+
+            KtUnsupportedAnnotationValue -> {
+                append("error(\"non-annotation value\")")
+            }
+
+            is KtKClassAnnotationValue -> {
+                renderKClassAnnotationValue(value)
+            }
+        }
+    }
+
+    private fun PrettyPrinter.renderKClassAnnotationValue(value: KtKClassAnnotationValue) {
+        when (value) {
+            is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> append("UNRESOLVED_CLASS")
+            is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> append(value.ktClass.nameAsName?.renderName())
+            is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> append(value.classId.asSingleFqName().renderName())
+        }
+        append(highlight("::") { asColon })
+        append(highlight("class") { asKeyword })
+    }
+
+    private fun PrettyPrinter.renderConstantAnnotationValue(value: KtConstantAnnotationValue) {
+        with(highlightingManager) {
+            val builder = StringBuilder()
+            builder.appendCodeSnippetHighlightedByLexer(value.constantValue.renderAsKotlinConstant())
+            append(builder)
+        }
+    }
+
+    private fun PrettyPrinter.renderEnumEntryConstantValue(value: KtEnumEntryAnnotationValue) {
+        val callableId = value.callableId
+        if (callableId != null) {
+            append(highlight(callableId.classId!!.shortClassName.renderName()) { asClassName})
+            append(highlight(".") { asDot } )
+            append(highlight(callableId.callableName.renderName()) { asClassName })
+        }
+    }
+
+    private fun PrettyPrinter.renderAnnotationConstantValue(application: KtAnnotationApplicationValue) {
+        renderAnnotationApplication(application.annotationValue)
+    }
+
+    private fun PrettyPrinter.renderAnnotationApplication(value: KtAnnotationApplicationWithArgumentsInfo) {
+        val shortClassName = value.classId?.shortClassName
+        if (shortClassName != null) {
+            append(highlight("@$shortClassName") {
+                asAnnotationName
+            })
+        }
+        if (value.arguments.isNotEmpty()) {
+            append(highlight("(") { asBraces })
+            renderNamedConstantValueList(value.arguments)
+            append(highlight(")") { asBraces })
+        }
+    }
+
+    private fun PrettyPrinter.renderArrayConstantValue(value: KtArrayAnnotationValue) {
+        append(highlight("[") { asBrackets } )
+        renderConstantValueList(value.values)
+        append(highlight("]") { asBrackets } )
+    }
+
+    private fun PrettyPrinter.renderConstantValueList(list: Collection<KtAnnotationValue>) {
+        printCollection(list, ", ") { constantValue ->
+            renderConstantValue(constantValue)
+        }
+    }
+
+    private fun PrettyPrinter.renderNamedConstantValueList(list: Collection<KtNamedAnnotationValue>) {
+        printCollection(list, ", ") { namedValue ->
+            append(highlight(namedValue.name.renderName()) { asParameter } )
+            append(highlight(" = ") { asOperationSign } )
+            renderConstantValue(namedValue.expression)
         }
     }
 }
