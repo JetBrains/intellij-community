@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class J {
     public static void foo(Boolean bool, Character c, Byte b, Short s, Integer i, Long l, Float f, Double d, Object obj) {
         System.out.println(bool.booleanValue());

@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.j2k.postProcessings.*
 import org.jetbrains.kotlin.name.FqName
@@ -84,6 +85,11 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
         KotlinJ2KK2Bundle.message("processing.step.cleaning.up.code"),
         listOf(
+            @Suppress("UNCHECKED_CAST")
+            K2DiagnosticBasedPostProcessingGroup(
+                uselessCastProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>,
+                smartcastImpossibleProcessing as K2DiagnosticBasedProcessing<KtDiagnosticWithPsi<*>>
+            ),
             InspectionLikeProcessingGroup(
                 VarToValProcessing(),
                 RemoveExplicitPropertyTypeProcessing(),
