@@ -66,7 +66,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     )
 
     if (runnerSettings is DebuggingRunnerData) {
-      vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
+      vmParameters.defineProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "true")
     }
 
     if (vmParametersAsList.none { it.startsWith("-Xmx") }) {
