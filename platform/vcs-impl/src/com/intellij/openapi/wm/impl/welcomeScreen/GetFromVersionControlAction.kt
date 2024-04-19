@@ -15,7 +15,7 @@ import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
 
-open class GetFromVersionControlAction : DumbAwareAction() {
+internal open class GetFromVersionControlAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val isEnabled = CheckoutProvider.EXTENSION_POINT_NAME.hasAnyExtensions()
     val presentation = e.presentation
@@ -50,6 +50,4 @@ open class GetFromVersionControlAction : DumbAwareAction() {
   }
 }
 
-class ProjectFromVersionControlAction : GetFromVersionControlAction()
-
-
+private class ProjectFromVersionControlAction : GetFromVersionControlAction()

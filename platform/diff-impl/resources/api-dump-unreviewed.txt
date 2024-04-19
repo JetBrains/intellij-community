@@ -1466,8 +1466,6 @@ f:com.intellij.diff.tools.combined.CombinedDiffRegistry
 - f:resetBadge():V
 - f:setCombinedDiffEnabled(Z):V
 - f:showBadge():Z
-com.intellij.diff.tools.combined.CombinedDiffTool
-- com.intellij.diff.DiffTool
 f:com.intellij.diff.tools.combined.CombinedDiffUIState
 - <init>():V
 - f:getDiffInfoStateFlow():kotlinx.coroutines.flow.StateFlow
