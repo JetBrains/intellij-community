@@ -5,10 +5,13 @@ package org.jetbrains.kotlin.idea.navigation
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.codeInsight.navigation.collectRelatedItems
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.codeInsight.GotoSuperActionHandler
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
@@ -39,13 +42,13 @@ abstract class AbstractKotlinNavigationMultiModuleTest : AbstractMultiModuleTest
 
 
 abstract class AbstractKotlinGotoImplementationMultiModuleTest : AbstractKotlinNavigationMultiModuleTest() {
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("navigation/implementations/multiModule")
+    override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("navigation/implementations/multiModule")
 
     override fun doNavigate(editor: Editor, file: PsiFile) = NavigationTestUtils.invokeGotoImplementations(editor, file)!!
 }
 
 abstract class AbstractKotlinGotoSuperMultiModuleTest : AbstractKotlinNavigationMultiModuleTest() {
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("navigation/gotoSuper/multiModule")
+    override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("navigation/gotoSuper/multiModule")
 
     override fun doNavigate(editor: Editor, file: PsiFile): GotoTargetHandler.GotoData {
         val (superDeclarations, _) = GotoSuperActionHandler.SuperDeclarationsAndDescriptor.forDeclarationAtCaret(editor, file)
@@ -54,11 +57,18 @@ abstract class AbstractKotlinGotoSuperMultiModuleTest : AbstractKotlinNavigation
 }
 
 abstract class AbstractKotlinGotoRelatedSymbolMultiModuleTest : AbstractKotlinNavigationMultiModuleTest() {
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("navigation/relatedSymbols/multiModule")
+    override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("navigation/relatedSymbols/multiModule")
 
     override fun doNavigate(editor: Editor, file: PsiFile): GotoTargetHandler.GotoData {
         val source = file.findElementAt(editor.caretModel.offset)!!
-        val relatedItems = collectRelatedItems(contextElement = source, dataContext = SimpleDataContext.EMPTY_CONTEXT)
+        val relatedItems =
+            runBlocking {
+                withBackgroundProgress(project, "Test Android Gradle Sync") {
+                    readAction {
+                        collectRelatedItems(contextElement = source, dataContext = SimpleDataContext.EMPTY_CONTEXT)
+                    }
+                }
+            }
         return GotoTargetHandler.GotoData(source, relatedItems.map { it.element }.toTypedArray(), emptyList())
     }
 }
