@@ -249,8 +249,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       myFutureScanningRequestToken.markSuccessful()
       projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
 
-      ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler)
-        .collectIndexableFilesConcurrently(indicator, progressReporter, orderedProviders, scanningRequest)
+      ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator)
+        .collectIndexableFilesConcurrently(progressReporter, orderedProviders, scanningRequest)
       if (isFullIndexUpdate() || myOnProjectOpen) {
         myProject.putUserData(CONTENT_SCANNED, true)
       }
@@ -343,10 +343,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private class ScanningSession(private val myProject: Project,
                                 private val scanningHistory: ProjectScanningHistoryImpl,
                                 private val forceReindexingTrigger: Predicate<IndexedFile>?,
-                                private val myFilterHandler: FilesFilterScanningHandler) {
+                                private val myFilterHandler: FilesFilterScanningHandler,
+                                private val indicator: CheckPauseOnlyProgressIndicator) {
 
-    fun collectIndexableFilesConcurrently(indicator: CheckPauseOnlyProgressIndicator,
-                                          progressReporter: IndexingProgressReporter,
+    fun collectIndexableFilesConcurrently(progressReporter: IndexingProgressReporter,
                                           providers: List<IndexableFilesIterator>,
                                           scanningRequest: ScanningRequestToken) {
       if (providers.isEmpty()) {
@@ -375,7 +375,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
         repeatTaskConcurrently(continueOnException = true, SCANNING_DISPATCHER, SCANNING_PARALLELISM) {
           val provider = providersToCheck.receiveCatching().getOrNull() ?: return@repeatTaskConcurrently false
-          scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, progressReporter, sharedExplanationLogger, scanningRequest, indicator)
+          scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, progressReporter, sharedExplanationLogger, scanningRequest)
 
           return@repeatTaskConcurrently true
         }
@@ -387,8 +387,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                            indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter,
                                            progressReporter: IndexingProgressReporter,
                                            sharedExplanationLogger: IndexingReasonExplanationLogger,
-                                           scanningRequest: ScanningRequestToken,
-                                           indicator: CheckPauseOnlyProgressIndicator) {
+                                           scanningRequest: ScanningRequestToken) {
       val scanningStatistics = ScanningStatistics(provider.debugName)
       scanningStatistics.setProviderRoots(provider, myProject)
       val origin = provider.origin
@@ -402,7 +401,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         progressReporter.getSubTaskReporter().use { subTaskReporter ->
           subTaskReporter.setText(provider.rootsScanningProgressText)
           val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
-          scanFiles(provider, scanningStatistics, sharedExplanationLogger, scanningRequest, indicator, files)
+          scanFiles(provider, scanningStatistics, sharedExplanationLogger, scanningRequest, files)
         }
       }
       catch (e: Exception) {
@@ -426,7 +425,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                   scanningStatistics: ScanningStatistics,
                                   sharedExplanationLogger: IndexingReasonExplanationLogger,
                                   scanningRequest: ScanningRequestToken,
-                                  indicator: CheckPauseOnlyProgressIndicator,
                                   files: ArrayDeque<VirtualFile>) {
       myProject.getService(PerProjectIndexingQueue::class.java)
         .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
