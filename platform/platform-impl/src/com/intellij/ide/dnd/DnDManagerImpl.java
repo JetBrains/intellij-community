@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.awt.RelativePoint;
@@ -20,6 +21,7 @@ import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +64,8 @@ public final class DnDManagerImpl extends DnDManager {
 
   private WeakReference<Component> myLastDropHandler;
 
+  private boolean dragMotionThresholdInitialized = false;
+
   @Override
   public void registerSource(@NotNull AdvancedDnDSource source) {
     registerSource(source, source.getComponent());
@@ -69,9 +73,22 @@ public final class DnDManagerImpl extends DnDManager {
 
   @Override
   public void registerSource(@NotNull DnDSource source, @NotNull JComponent component) {
+    if (!dragMotionThresholdInitialized) {
+      // Must do it before the first drag gesture recognizer is created, because some of its implementations
+      // use static initalization (macOS, notably), so the value will be stuck in AWT internals forever.
+      initializeDragMotionThreshold();
+    }
     component.putClientProperty(SOURCE_KEY, source);
     DragSource defaultDragSource = DragSource.getDefaultDragSource();
     defaultDragSource.createDefaultDragGestureRecognizer(component, DnDConstants.ACTION_COPY_OR_MOVE, myDragGestureListener);
+  }
+
+  private void initializeDragMotionThreshold() {
+    var motionThreshold = Registry.intValue("ide.dnd.threshold", -1, -1, 50);
+    if (motionThreshold != -1) {
+      AWTAccessor.getToolkitAccessor().setDesktopProperty(Toolkit.getDefaultToolkit(), "DnD.gestureMotionThreshold", motionThreshold);
+    }
+    dragMotionThresholdInitialized = true;
   }
 
   @Override
