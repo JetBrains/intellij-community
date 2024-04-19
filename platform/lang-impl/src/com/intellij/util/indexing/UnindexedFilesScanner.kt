@@ -343,7 +343,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private class ScanningSession(private val project: Project,
                                 private val scanningHistory: ProjectScanningHistoryImpl,
                                 private val forceReindexingTrigger: Predicate<IndexedFile>?,
-                                private val myFilterHandler: FilesFilterScanningHandler,
+                                private val filterHandler: FilesFilterScanningHandler,
                                 private val indicator: CheckPauseOnlyProgressIndicator,
                                 private val progressReporter: IndexingProgressReporter,
                                 private val scanningRequest: ScanningRequestToken) {
@@ -429,7 +429,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           try {
             readAction {
               val finder = UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
-                                                scanningRequest, myFilterHandler)
+                                                scanningRequest, filterHandler)
               val rootIterator = SingleProviderIterator(project, indicator, provider, finder,
                                                         scanningStatistics, perProviderSink)
               if (!rootIterator.mayBeUsed()) {
