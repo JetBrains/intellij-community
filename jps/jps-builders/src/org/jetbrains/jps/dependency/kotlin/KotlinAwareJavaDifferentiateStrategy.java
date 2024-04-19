@@ -26,6 +26,7 @@ import static org.jetbrains.jps.javac.Iterators.*;
  */
 public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
   private static final TypeRepr.ClassType JVM_OVERLOADS_ANNOTATION = new TypeRepr.ClassType("kotlin/jvm/JvmOverloads");
+  private static final EnumSet<Visibility> PRIVATE_VISIBILITY = EnumSet.of(Visibility.LOCAL, Visibility.PRIVATE_TO_THIS, Visibility.PRIVATE);
 
   @Override
   public boolean processAddedClasses(DifferentiateContext context, Iterable<JvmClass> addedClasses, Utils future, Utils present) {
@@ -47,10 +48,9 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       else {
         debug("Affecting lookup usages for top-level functions and properties in a newly added file ", addedClass.getName());
         String scopeName = getKotlinName(addedClass);
-        EnumSet<Visibility> privateAccess = EnumSet.of(Visibility.LOCAL, Visibility.INTERNAL, Visibility.PRIVATE, Visibility.PRIVATE_TO_THIS);
         for (String symbolName : unique(flat(
-          map(filter(container.getFunctions(), f -> !privateAccess.contains(Attributes.getVisibility(f))), KmFunction::getName),
-          map(filter(container.getProperties(), p -> !privateAccess.contains(Attributes.getVisibility(p))), KmProperty::getName)
+          map(filter(container.getFunctions(), f -> !PRIVATE_VISIBILITY.contains(Attributes.getVisibility(f))), KmFunction::getName),
+          map(filter(container.getProperties(), p -> !PRIVATE_VISIBILITY.contains(Attributes.getVisibility(p))), KmProperty::getName)
         ))) {
           context.affectUsage(new LookupNameUsage(scopeName, symbolName));
           debug("Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
@@ -212,8 +212,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (KmFunction func : flat(metaDiff.functions().removed(), metaDiff.functions().added())) {
-        Visibility visibility = Attributes.getVisibility(func);
-        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS || find(func.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
+        if (PRIVATE_VISIBILITY.contains(Attributes.getVisibility(func)) || find(func.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
           continue;
         }
         debug("Removed or added function declares default values: ", changedClass.getName());
@@ -222,8 +221,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
 
       for (Difference.Change<KmFunction, KotlinMeta.KmFunctionsDiff> funChange : metaDiff.functions().changed()) {
         KmFunction changedKmFunction = funChange.getPast();
-        Visibility visibility = Attributes.getVisibility(changedKmFunction);
-        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+        if (PRIVATE_VISIBILITY.contains(Attributes.getVisibility(changedKmFunction))) {
           continue;
         }
         KotlinMeta.KmFunctionsDiff funDiff = funChange.getDiff();
@@ -252,8 +250,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (KmConstructor con : flat(metaDiff.constructors().removed(), metaDiff.constructors().added())) {
-        Visibility visibility = Attributes.getVisibility(con);
-        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS || find(con.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
+        if (PRIVATE_VISIBILITY.contains(Attributes.getVisibility(con)) || find(con.getValueParameters(), Attributes::getDeclaresDefaultValue) == null) {
           continue;
         }
         debug("Removed or added constructor declares default values: ", changedClass.getName());
@@ -262,8 +259,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       
       for (Difference.Change<KmConstructor, KotlinMeta.KmConstructorsDiff> conChange : metaDiff.constructors().changed()) {
         KmConstructor changedCons = conChange.getPast();
-        Visibility visibility = Attributes.getVisibility(changedCons);
-        if (visibility == Visibility.PRIVATE || visibility == Visibility.PRIVATE_TO_THIS) {
+        if (PRIVATE_VISIBILITY.contains(Attributes.getVisibility(changedCons))) {
           continue;
         }
         KotlinMeta.KmConstructorsDiff conDiff = conChange.getDiff();
@@ -318,8 +314,7 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
       }
 
       for (KmTypeAlias alias : flat(metaDiff.typeAliases().removed(), metaDiff.typeAliases().added())) {
-        Visibility visibility = Attributes.getVisibility(alias);
-        if (visibility != Visibility.PRIVATE && visibility != Visibility.PRIVATE_TO_THIS) {
+        if (!PRIVATE_VISIBILITY.contains(Attributes.getVisibility(alias))) {
           debug("A type alias declaration was added/removed; affecting lookup usages ", alias.getName());
           affectMemberLookupUsages(context, changedClass, alias.getName(), future);
         }
