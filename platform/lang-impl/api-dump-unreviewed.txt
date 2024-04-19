@@ -29014,15 +29014,6 @@ f:com.intellij.util.indexing.DumbModeWhileScanningSubscriber
 - com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode
 - <init>():V
 - runActivity(com.intellij.openapi.project.Project):V
-f:com.intellij.util.indexing.DurableTimestampsEnumerator
-- com.intellij.util.io.DurableDataEnumerator
-- <init>(java.nio.file.Path):V
-- close():V
-- enumerate(com.intellij.util.indexing.TimestampsImmutable):I
-- force():V
-- isDirty():Z
-- tryEnumerate(com.intellij.util.indexing.TimestampsImmutable):I
-- valueOf(I):com.intellij.util.indexing.TimestampsImmutable
 f:com.intellij.util.indexing.FileBasedIndexImpl
 - com.intellij.util.indexing.FileBasedIndex
 - f:myWriteLock:java.util.concurrent.locks.Lock
@@ -29243,6 +29234,7 @@ f:com.intellij.util.indexing.PerProjectIndexingQueue$TestCompanion
 - <init>(com.intellij.util.indexing.PerProjectIndexingQueue):V
 - f:getAndResetQueuedFiles():kotlin.Pair
 f:com.intellij.util.indexing.PersistentIndexingStampEnumeratorKt
+- sf:createTimestampsEnumerator(java.nio.file.Path):com.intellij.util.io.DurableDataEnumerator
 e:com.intellij.util.indexing.RebuildStatus
 - java.lang.Enum
 - sf:DOING_REBUILD:com.intellij.util.indexing.RebuildStatus
