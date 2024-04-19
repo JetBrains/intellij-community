@@ -19,7 +19,7 @@ class JupyterToolbarPanelListeners(  // PY-66455
 
   private val toolbarService = JupyterToolbarService.getInstance(project)
 
-  private enum class ENTERED_PART { MIDDLE, RIGHT, NONE }
+  private enum class PanelRegion { MIDDLE, RIGHT, NONE }
 
   init {
     panel.addMouseListener(this)
@@ -28,13 +28,13 @@ class JupyterToolbarPanelListeners(  // PY-66455
 
   override fun mouseEntered(e: MouseEvent?) {
     e?.let {
-      val enteredPart = whatPartEntered(it.x)
+      val enteredPart = determineMouseRegion(it.x)
       when (enteredPart) {
-        ENTERED_PART.MIDDLE -> toolbarService.requestToolbarDisplay(panel, editor)
+        PanelRegion.MIDDLE -> toolbarService.requestToolbarDisplay(panel, editor)
         // todo: for right, see figma
         // https://www.figma.com/file/ApfhZCnjLV7NRlksW6hy4Y/Jupyter?type=design&node-id=239-8996&mode=design&t=HhbICTruXlSWMcQh-0
-        ENTERED_PART.RIGHT -> return
-        ENTERED_PART.NONE -> return
+        PanelRegion.RIGHT -> return
+        PanelRegion.NONE -> return
       }
     }
   }
@@ -46,16 +46,16 @@ class JupyterToolbarPanelListeners(  // PY-66455
   override fun componentResized(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
   override fun componentMoved(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
 
-  private fun whatPartEntered(xPos: Int): ENTERED_PART {
+  private fun determineMouseRegion(xPos: Int): PanelRegion {
     val panelWidth = panel.width
-    val middleStart = (panelWidth * 0.33).toInt()
+    val middleStart = (panelWidth * 0.25).toInt()
     val middleEnd = (panelWidth * 0.66).toInt()
     val rightStart = (panelWidth * 0.75).toInt()
 
     return when (xPos) {
-      in middleStart until middleEnd -> ENTERED_PART.MIDDLE
-      in rightStart until panelWidth -> ENTERED_PART.RIGHT
-      else -> ENTERED_PART.NONE
+      in middleStart until middleEnd -> PanelRegion.MIDDLE
+      in rightStart until panelWidth -> PanelRegion.RIGHT
+      else -> PanelRegion.NONE
     }
   }
 }
