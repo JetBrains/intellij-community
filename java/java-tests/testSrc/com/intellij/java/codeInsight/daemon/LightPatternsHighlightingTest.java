@@ -103,7 +103,15 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
 
   public void testUnnamedPatternsUnavailable() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20, this::doTest);
-  } 
+  }
+
+  public void testInstanceofPrimitivesNotAllowed() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
+
+  public void testRecordPrimitiveInstanceOfPatternNotAllowed() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, this::doTest);
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".java");

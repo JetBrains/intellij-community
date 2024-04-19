@@ -206,19 +206,26 @@ public final class HighlightUtil {
     PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
     if (operandType == null) return;
-    if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
-        || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
-        || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
+    boolean operandIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(operandType);
+    boolean checkIsPrimitive = TypeConversionUtil.isPrimitiveAndNotNull(checkType);
+    boolean convertible = TypeConversionUtil.areTypesConvertible(operandType, checkType);
+    boolean primitiveInPatternsEnabled = JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(PsiUtil.getLanguageLevel(expression));
+    if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) || !convertible) {
       String message = JavaErrorBundle.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
         .formatType(checkType));
       HighlightInfo.Builder info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      if (TypeConversionUtil.isPrimitiveAndNotNull(checkType)) {
+      if (checkIsPrimitive) {
         IntentionAction action = getFixFactory().createReplacePrimitiveWithBoxedTypeAction(operandType, typeElement);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
       }
+
+      if (((operandIsPrimitive || checkIsPrimitive) && !primitiveInPatternsEnabled) && convertible) {
+        registerIncreaseLanguageLevelFixes(expression, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, info);
+      }
+
       errorSink.accept(info);
       return;
     }

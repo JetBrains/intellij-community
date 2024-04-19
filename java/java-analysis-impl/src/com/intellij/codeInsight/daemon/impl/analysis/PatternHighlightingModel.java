@@ -12,6 +12,8 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.*;
@@ -66,12 +68,16 @@ final class PatternHighlightingModel {
       PsiType recordComponentType = recordComponents[i].getType();
       PsiType substitutedRecordComponentType = substitutor.substitute(recordComponentType);
       PsiType deconstructionComponentType = JavaPsiPatternUtil.getPatternType(deconstructionComponent);
-      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType)) {
+      if (!isApplicable(substitutedRecordComponentType, deconstructionComponentType, PsiUtil.getLanguageLevel(deconstructionPattern))) {
         hasMismatchedPattern = true;
         if (recordComponents.length == deconstructionComponents.length) {
           HighlightInfo.Builder
             builder = HighlightUtil.createIncompatibleTypeHighlightInfo(substitutedRecordComponentType, deconstructionComponentType,
                                                                         deconstructionComponent.getTextRange(), 0);
+          if (isApplicable(substitutedRecordComponentType, deconstructionComponentType,
+                           JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel())) {
+            HighlightUtil.registerIncreaseLanguageLevelFixes(deconstructionComponent, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, builder);
+          }
           errorSink.accept(builder);
           reported = true;
         }
@@ -121,8 +127,9 @@ final class PatternHighlightingModel {
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern).descriptionAndTooltip(message);
   }
 
-  private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType) {
-    if (recordType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) {
+  private static boolean isApplicable(@NotNull PsiType recordType, @Nullable PsiType patternType, @NotNull LanguageLevel languageLevel) {
+    if ((recordType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+        !JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel)) {
       return recordType.equals(patternType);
     }
     return patternType != null && TypeConversionUtil.areTypesConvertible(recordType, patternType);
@@ -921,8 +928,8 @@ final class PatternHighlightingModel {
   }
 
   static class RecordExhaustivenessResult {
-    private boolean isExhaustive;
-    private boolean canBeAdded;
+    private final boolean isExhaustive;
+    private final boolean canBeAdded;
 
     final Map<PsiType, Set<List<PsiType>>> missedBranchesByType = new HashMap<>();
 
