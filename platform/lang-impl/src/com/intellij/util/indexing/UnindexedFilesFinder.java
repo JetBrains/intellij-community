@@ -140,14 +140,13 @@ final class UnindexedFilesFinder {
 
   UnindexedFilesFinder(@NotNull Project project,
                        IndexingReasonExplanationLogger explanationLogger,
-                       @NotNull FileBasedIndexImpl fileBasedIndex,
                        @Nullable Predicate<? super IndexedFile> forceReindexingTrigger,
                        ScanningRequestToken indexingRequest,
                        @NotNull FilesFilterScanningHandler filterHandler) {
     this.explanationLogger = explanationLogger;
     myProject = project;
-    myFileBasedIndex = fileBasedIndex;
-    myFileTypeIndex = fileBasedIndex.getIndex(FileTypeIndex.NAME);
+    myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    myFileTypeIndex = myFileBasedIndex.getIndex(FileTypeIndex.NAME);
 
     myStateProcessors = FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList().stream()
       .map(ex -> ex.createFileIndexingStatusProcessor(project))
