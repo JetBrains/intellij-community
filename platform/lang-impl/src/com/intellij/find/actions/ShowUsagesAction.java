@@ -1322,7 +1322,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       totalWidth += width;
       column.setMinWidth(Math.min(ShowUsagesTable.MIN_COLUMN_WIDTH, width));
       column.setMaxWidth(width);
-      column.setWidth(Math.min(ShowUsagesTable.MAX_COLUMN_WIDTH, width));
+      column.setWidth(width);
       column.setPreferredWidth(width);
     }
     table.getColumnModel().getColumn(colsNum - 1).setMaxWidth(Integer.MAX_VALUE); //last column should grow for the rest of the table width
@@ -1343,7 +1343,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
       width = Math.max(width, rendererWidth + table.getIntercellSpacing().width);
     }
-    return width;
+    return Math.min(ShowUsagesTable.MAX_COLUMN_WIDTH, width);
   }
 
   private static void rebuildTable(@NotNull Project project,
