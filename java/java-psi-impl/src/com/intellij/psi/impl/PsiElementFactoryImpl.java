@@ -2,7 +2,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
@@ -518,7 +517,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   @Override
   public @NotNull PsiKeyword createKeyword(@NotNull String keyword, PsiElement context) throws IncorrectOperationException {
     LanguageLevel level = PsiUtil.getLanguageLevel(context);
-    if (!JavaLexer.isKeyword(keyword, level) && !JavaLexer.isSoftKeyword(keyword, level)) {
+    if (!PsiUtil.isKeyword(keyword, level) && !PsiUtil.isSoftKeyword(keyword, level)) {
       throw new IncorrectOperationException("\"" + keyword + "\" is not a keyword.");
     }
     return new LightKeyword(myManager, keyword);
