@@ -369,6 +369,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                    "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
       {"shift ctrl V",             "PasteMultiple", "Terminal.Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
       {"shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
+      {"shift ctrl alt B",         "DatabaseView.OpenDdlInConsole", "SurroundWith"},
     }),
     Map.entry("Default for GNOME", new String[][]{
       {"shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
