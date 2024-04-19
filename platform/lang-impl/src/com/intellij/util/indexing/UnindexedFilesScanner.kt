@@ -396,39 +396,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           progressReporter.getSubTaskReporter().use { subTaskReporter ->
             subTaskReporter.setText(provider.rootsScanningProgressText)
             val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
-
-            myProject.getService(PerProjectIndexingQueue::class.java)
-              .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
-                scanningStatistics.startFileChecking()
-                try {
-                  readAction {
-                    val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
-                                                      scanningRequest, myFilterHandler)
-                    val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
-                                                              scanningStatistics, perProviderSink)
-                    if (!rootIterator.mayBeUsed()) {
-                      LOG.warn("Iterator based on $provider can't be used.")
-                      return@readAction
-                    }
-                    while (files.isNotEmpty()) {
-                      val file = files.removeFirst()
-                      try {
-                        if (file.isValid)
-                          rootIterator.processFile(file)
-                      }
-                      catch (e: ProcessCanceledException) {
-                        files.addFirst(file)
-                        throw e
-                      }
-                    }
-                  }
-                }
-                finally {
-                  scanningStatistics.tryFinishFilesChecking()
-                }
-                perProviderSink.commit()
-              }
-            }
+            scanFiles(provider, scanningStatistics, sharedExplanationLogger, scanningRequest, indicator, files)
+          }
         }
         catch (e: Exception) {
           scanningRequest.markUnsuccessful()
@@ -449,6 +418,45 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
         return@repeatTaskConcurrently true
       }
     }
+  }
+
+  private suspend fun scanFiles(provider: IndexableFilesIterator,
+                                scanningStatistics: ScanningStatistics,
+                                sharedExplanationLogger: IndexingReasonExplanationLogger,
+                                scanningRequest: ScanningRequestToken,
+                                indicator: CheckPauseOnlyProgressIndicator,
+                                files: ArrayDeque<VirtualFile>) {
+    myProject.getService(PerProjectIndexingQueue::class.java)
+      .getSink(provider, scanningHistory.scanningSessionId).use { perProviderSink ->
+        scanningStatistics.startFileChecking()
+        try {
+          readAction {
+            val finder = UnindexedFilesFinder(myProject, sharedExplanationLogger, myIndex, forceReindexingTrigger,
+                                              scanningRequest, myFilterHandler)
+            val rootIterator = SingleProviderIterator(myProject, indicator, provider, finder,
+                                                      scanningStatistics, perProviderSink)
+            if (!rootIterator.mayBeUsed()) {
+              LOG.warn("Iterator based on $provider can't be used.")
+              return@readAction
+            }
+            while (files.isNotEmpty()) {
+              val file = files.removeFirst()
+              try {
+                if (file.isValid)
+                  rootIterator.processFile(file)
+              }
+              catch (e: ProcessCanceledException) {
+                files.addFirst(file)
+                throw e
+              }
+            }
+          }
+        }
+        finally {
+          scanningStatistics.tryFinishFilesChecking()
+        }
+        perProviderSink.commit()
+      }
   }
 
   private suspend fun getFilesToScan(fileScannerVisitors: List<IndexableFileScanner.IndexableFileVisitor>,
