@@ -89,6 +89,12 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
         }
     }
 
+    fun testJavaConstructorUsage() = ConflictsInTestsException.withIgnoredConflicts<Throwable> {
+        doTest("Common/src/test/test.kt") {
+            addParameter("b", "Boolean", "false")
+        }
+    }
+
     fun testImplPrimaryConstructorNoParams() = doTest("JVM/src/test/test.kt") {
         addParameter("n", "Int", "1")
     }

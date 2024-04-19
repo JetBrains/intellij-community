@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
-import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiSuperMethodUtil
@@ -13,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -44,9 +42,9 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
 
         (changeInfo.getUserData(javaChangeInfoPerUsageKey) ?: emptyMap())[usage]?.let { return it }
 
-        val target = usage.reference?.resolve() ?: usage.element
-        val unwrappedKotlinBase = (target?.unwrapped as? KtCallableDeclaration
-            ?: (usage as? OverriderUsageInfo)?.baseMethod?.unwrapped as? KtCallableDeclaration)
+        val target = (usage.element?.parent as? PsiNewExpression)?.resolveConstructor() ?: usage.reference?.resolve() ?: usage.element
+        val unwrappedKotlinBase = (target?.unwrapped as? KtNamedDeclaration
+            ?: (usage as? OverriderUsageInfo)?.baseMethod?.unwrapped as? KtNamedDeclaration)
 
         if (unwrappedKotlinBase != null) {
             val propertyChangeInfo = changeInfo.dependentProperties[unwrappedKotlinBase]
@@ -72,7 +70,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
                 false
             }
             javaChangeInfos = ktCallableDeclaration?.toLightMethods()?.map {
-                createJavaInfoForLightMethod(ktCallableDeclaration as KtCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
+                createJavaInfoForLightMethod(ktCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
             } ?: emptyList()
             changeInfo.putUserData(javaChangeInfoKey, javaChangeInfos)
         }
@@ -109,7 +107,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
     }
 
     private fun createJavaInfoForLightMethod(
-        method: KtCallableDeclaration,
+        method: KtNamedDeclaration,
         lightMethod: PsiMethod,
         changeInfo: KotlinChangeInfo,
         isJvmOverloads: Boolean,
@@ -117,7 +115,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
     ): JavaChangeInfo {
         val params = mapKotlinParametersToJava(method, lightMethod, changeInfo, isJvmOverloads)
 
-        val afterReceiverIdx = if (method.receiverTypeReference != null) 1 else 0
+        val afterReceiverIdx = if ((method as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
         if (isProperty && lightMethod.parameters.size > afterReceiverIdx) {
             //additional parameter for setter
             params += ParameterInfoImpl(
@@ -160,7 +158,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
-    private fun createPsiType(ktTypeText: String, originalFunction: KtCallableDeclaration): PsiType {
+    private fun createPsiType(ktTypeText: String, originalFunction: PsiElement): PsiType {
         val project = originalFunction.project
         val codeFragment = KtPsiFactory(project).createTypeCodeFragment(ktTypeText, originalFunction)
         return allowAnalysisOnEdt {
@@ -174,7 +172,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
     }
 
     private fun mapKotlinParametersToJava(
-        originalFunction: KtCallableDeclaration,
+        originalFunction: KtNamedDeclaration,
         currentPsiMethod: PsiMethod,
         changeInfoBase: KotlinChangeInfoBase,
         isJvmOverloads: Boolean
@@ -192,12 +190,12 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         }
 
         val newParameterList = changeInfoBase.newParameters
-        val receiverOffset = if (originalFunction.receiverTypeReference != null) 1 else 0
-        val oldParameterCount = originalFunction.valueParameters.count() + receiverOffset
+        val receiverOffset = if ((originalFunction as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
+        val oldParameterCount = ((originalFunction as? KtCallableDeclaration)?.valueParameters?.count() ?: 0) + receiverOffset
         val oldIndexMap = mutableMapOf<Int, Int>()
         var orderChanged = false
         if (isJvmOverloads) {
-            originalFunction.valueParameters.forEachIndexed { oldIdx, p ->
+            (originalFunction as? KtCallableDeclaration)?.valueParameters?.forEachIndexed { oldIdx, p ->
                 for ((idx, pp) in currentPsiMethod.parameterList.parameters.withIndex()) {
                     if (pp.unwrapped == p) {
                         oldIndexMap[oldIdx] = idx
@@ -266,7 +264,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
             p.defaultValue?.let {
                 try {
                     KtPsiFactory(psiMethod.project).createExpression(it)
-                } catch (e: Throwable) {
+                } catch (_: Throwable) {
                     null
                 }
             },

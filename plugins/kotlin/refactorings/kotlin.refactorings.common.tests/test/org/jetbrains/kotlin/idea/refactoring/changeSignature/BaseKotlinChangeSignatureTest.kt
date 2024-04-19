@@ -749,6 +749,11 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         addParameter(createKotlinStringParameter(defaultValueForCall = defaultValueForCall))
     }
 
+    fun testConstructorJavaUsages1() = doTestAndIgnoreConflicts {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("\"abc\"")
+        addParameter(createKotlinStringParameter(defaultValueForCall = defaultValueForCall))
+    }
+
     //------------ remove parameters ------------
 
     fun testRemoveLastNonLambdaParameter() = doTest { removeParameter(0) }
@@ -1347,7 +1352,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     fun testJvmOverloadedSwapParams2() = doTestAndIgnoreConflicts { swapParameters(0, 2) }//todo
 
-    fun testJvmOverloadedConstructorSwapParams() = doTestAndIgnoreConflicts { swapParameters(1, 2) }//todo
+    fun testJvmOverloadedConstructorSwapParams() = doTestAndIgnoreConflicts { swapParameters(1, 2) }
 
     fun testJvmOverloadedAddDefault1() = doTestJvmOverloadedAddDefault(0)
 
