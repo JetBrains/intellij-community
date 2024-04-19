@@ -45,12 +45,15 @@ public final class KotlinAwareJavaDifferentiateStrategy extends JvmDifferentiate
         affectClassLookupUsages(context, addedClass);
       }
       else {
-        debug("Affecting lookup usages for top-level functions in a newly added file ", addedClass.getName());
-        for (KmFunction kmFunction : container.getFunctions()) {
-          Visibility visibility = Attributes.getVisibility(kmFunction);
-          if (visibility != Visibility.PRIVATE && visibility != Visibility.PRIVATE_TO_THIS) {
-            affectMemberLookupUsages(context, addedClass, kmFunction.getName(), future);
-          }
+        debug("Affecting lookup usages for top-level functions and properties in a newly added file ", addedClass.getName());
+        String scopeName = getKotlinName(addedClass);
+        EnumSet<Visibility> privateAccess = EnumSet.of(Visibility.LOCAL, Visibility.INTERNAL, Visibility.PRIVATE, Visibility.PRIVATE_TO_THIS);
+        for (String symbolName : unique(flat(
+          map(filter(container.getFunctions(), f -> !privateAccess.contains(Attributes.getVisibility(f))), KmFunction::getName),
+          map(filter(container.getProperties(), p -> !privateAccess.contains(Attributes.getVisibility(p))), KmProperty::getName)
+        ))) {
+          context.affectUsage(new LookupNameUsage(scopeName, symbolName));
+          debug("Affect ", "lookup '" + symbolName + "'", " usage owned by node '", addedClass.getName(), "'");
         }
       }
     }

@@ -7,11 +7,9 @@ Exit code: OK
 ------------------------------------------
 Cleaning output files:
   out/production/module/META-INF/module.kotlin_module
-  out/production/module/foo/FunAKt.class
   out/production/module/use/UseAKt.class
 End of files
 Compiling files:
-  src/funA.kt
   src/useA.kt
 End of files
 Exit code: OK

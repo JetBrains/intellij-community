@@ -7,16 +7,12 @@ End of files
 Cleaning output files:
   out/production/module/foo/B.class
   out/production/module/use/CreateAKt.class
-  out/production/module/use/CreateBKt.class
   out/production/module/use/UseAfooKt.class
-  out/production/module/use/UseBbarKt.class
 End of files
 Compiling files:
   src/B.kt
   src/createA.kt
-  src/createB.kt
   src/useAfoo.kt
-  src/useBbar.kt
 End of files
 Exit code: ABORT
 ------------------------------------------
@@ -30,9 +26,7 @@ Compiling files:
   src/A.kt
   src/B.kt
   src/createA.kt
-  src/createB.kt
   src/useAfoo.kt
-  src/useBbar.kt
 End of files
 Exit code: OK
 ------------------------------------------
