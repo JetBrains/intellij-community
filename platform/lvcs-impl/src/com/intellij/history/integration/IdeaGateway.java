@@ -222,24 +222,6 @@ public class IdeaGateway {
     return f;
   }
 
-  public List<VirtualFile> getAllFilesFrom(@NotNull String path) {
-    VirtualFile f = findVirtualFile(path);
-    if (f == null) return Collections.emptyList();
-    return collectFiles(f, new ArrayList<>());
-  }
-
-  private static @NotNull List<VirtualFile> collectFiles(@NotNull VirtualFile f, @NotNull List<VirtualFile> result) {
-    if (f.isDirectory()) {
-      for (VirtualFile child : iterateDBChildren(f)) {
-        collectFiles(child, result);
-      }
-    }
-    else {
-      result.add(f);
-    }
-    return result;
-  }
-
   public static @NotNull Iterable<VirtualFile> iterateDBChildren(VirtualFile f) {
     if (!(f instanceof NewVirtualFile nf)) return Collections.emptyList();
     return nf.iterInDbChildrenWithoutLoadingVfsFromOtherProjects();
