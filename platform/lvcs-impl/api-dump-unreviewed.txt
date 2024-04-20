@@ -331,7 +331,6 @@ a:com.intellij.history.core.changes.StructuralChange
 f:com.intellij.history.core.revisions.ChangeRevision
 - com.intellij.history.core.revisions.Revision
 - <init>(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,com.intellij.history.core.changes.ChangeSet,Z):V
-- containsChangeWithId(J):Z
 - findEntry():com.intellij.history.core.tree.Entry
 - getAffectedFileNames():com.intellij.openapi.util.Pair
 - getChangeSetId():java.lang.Long
@@ -508,8 +507,6 @@ f:com.intellij.history.integration.LocalHistoryImpl
 f:com.intellij.history.integration.LocalHistoryImpl$Companion
 - f:getInstanceImpl():com.intellij.history.integration.LocalHistoryImpl
 - f:getStorageDir():java.nio.file.Path
-f:com.intellij.history.integration.LocalHistoryUtil
-- <init>():V
 f:com.intellij.history.integration.ValidateHistoryAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
