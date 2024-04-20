@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.psi.typeRefHelpers.setReceiverTypeReference
 import org.jetbrains.kotlin.types.Variance
@@ -442,6 +444,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         } else {
             if (element is KtClass) {
                 val constructor = element.createPrimaryConstructorIfAbsent()
+                if (element.hasActualModifier()) {
+                    constructor.addModifier(KtTokens.ACTUAL_KEYWORD)
+                }
                 val oldParameterList = constructor.valueParameterList ?: error("Primary constructor has to have parameter list")
                 newParameterList = oldParameterList.replace(newParameterList) as KtParameterList
             } else if (isLambda) {
