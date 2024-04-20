@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMod
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractableCodeDescriptorWithConflicts
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionData
@@ -209,7 +210,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
         returnType: KtType
     ): IExtractableCodeDescriptor<KtType> {
         val experimentalMarkers = analyze(extractionData.commonParent) { extractionData.getExperimentalMarkers() }
-        val descriptor = ExtractableCodeDescriptor(
+        var descriptor = ExtractableCodeDescriptor(
             context = extractionData.commonParent,
             extractionData = extractionData,
             suggestedNames = suggestedFunctionNames,
@@ -224,6 +225,9 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
             optInMarkers = experimentalMarkers.optInMarkers,
             annotations = experimentalMarkers.propagatingMarkerDescriptors
         )
+        for (analyser in ExtractFunctionDescriptorModifier.EP_NAME.extensionList) {
+            descriptor = analyser.modifyDescriptor(descriptor)
+        }
         return descriptor
     }
 
