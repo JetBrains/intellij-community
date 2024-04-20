@@ -24,7 +24,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.editor.*
@@ -49,17 +53,19 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 
     fun installInlays(reviewVm: GHPRDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
       val settings = GithubSettings.getInstance()
-      cs.launchNow(Dispatchers.Main) {
-        reviewVm.getViewModelFor(change).collectLatest { changeVm ->
-          if (changeVm == null) return@collectLatest
+      cs.launchNow {
+        withContext(Dispatchers.Main) {
+          reviewVm.getViewModelFor(change).collectScoped { changeVm ->
+            if (changeVm == null) return@collectScoped
 
-          if (settings.isAutomaticallyMarkAsViewed) {
-            changeVm.markViewed()
+            if (settings.isAutomaticallyMarkAsViewed) {
+              changeVm.markViewed()
+            }
+
+            viewer.showCodeReview({ locationToLine, lineToLocations ->
+                                    DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
+                                  }, GHPREditorReviewModel.KEY, { createRenderer(it) })
           }
-
-          viewer.showCodeReview({ locationToLine, lineToLocations ->
-                                  DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-                                }, GHPREditorReviewModel.KEY, { createRenderer(it) })
         }
       }.cancelOnDispose(viewer)
     }
