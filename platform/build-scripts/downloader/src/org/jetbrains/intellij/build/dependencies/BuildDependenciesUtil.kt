@@ -14,6 +14,7 @@ import org.w3c.dom.Element
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.io.StringWriter
 import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,6 +24,11 @@ import java.util.*
 import java.util.logging.Logger
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.Transformer
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 import kotlin.io.path.listDirectoryEntries
 
 @ApiStatus.Internal
@@ -96,6 +102,16 @@ object BuildDependenciesUtil {
     check(elements.size == 1) { "Expected one and only one component with name '$componentName'" }
     return elements[0]
   }
+
+  val Element.asText: String
+    get() {
+      val transFactory = TransformerFactory.newInstance()
+      val transformer: Transformer = transFactory.newTransformer()
+      val buffer = StringWriter()
+      transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
+      transformer.transform(DOMSource(this), StreamResult(buffer))
+      return buffer.toString().replace("\r", "")
+    }
 
   fun getSingleChildElement(parent: Element, tagName: String): Element {
     val result = getChildElements(parent, tagName)

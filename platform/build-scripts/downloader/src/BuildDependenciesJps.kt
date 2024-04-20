@@ -1,13 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.apache.commons.codec.digest.DigestUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.asText
 import java.net.URI
 import java.nio.file.Path
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 object BuildDependenciesJps {
@@ -43,22 +45,50 @@ object BuildDependenciesJps {
     val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
 
     val library = BuildDependenciesUtil.getLibraryElement(root, libraryName, iml)
+
+    val properties = BuildDependenciesUtil.getSingleChildElement(library, "properties")
+
+    // every library in Ultimate project must have a sha256 checksum, so all of this data must be present
+    val verification = BuildDependenciesUtil.getSingleChildElement(properties, "verification")
+    val artifacts = BuildDependenciesUtil.getChildElements(verification, "artifact")
+    val sha256sumMap = artifacts.associate {
+      it.getAttribute("url") to BuildDependenciesUtil.getSingleChildElement(it, "sha256sum").textContent.trim()
+    }
+
     val classes = BuildDependenciesUtil.getSingleChildElement(library, "CLASSES")
     val roots = BuildDependenciesUtil.getChildElements(classes, "root")
       .mapNotNull { it.getAttribute("url") }
       .map { it
         .removePrefix("jar:/")
+        .replace("\$MAVEN_REPOSITORY\$", "")
         .trim('!', '/')
-        .replace("\$MAVEN_REPOSITORY\$", mavenRepositoryUrl.trimEnd('/')) }
-      .map {
-        if (username != null && password != null)
-          BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(it), username, password)
-        else
-          BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(it))
+      }
+      .map { relativePath ->
+        val fileUrl = "file://\$MAVEN_REPOSITORY\$/${relativePath}"
+        val remoteUrl = mavenRepositoryUrl.trimEnd('/') + "/${relativePath}"
+
+        val expectedSha256Checksum = sha256sumMap[fileUrl] ?: error("SHA256 checksum is missing for $fileUrl:\n${library.asText}")
+
+        val localMavenFile = getLocalArtifactRepositoryRoot().resolve(relativePath)
+
+        val file = when {
+          localMavenFile.isRegularFile() && localMavenFile.fileSize() > 0 -> localMavenFile
+          username != null && password != null -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl), username, password)
+          else -> BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, URI(remoteUrl))
+        }
+
+        val actualSha256checksum = file.inputStream().use { DigestUtils.sha256Hex(it) }
+
+        if (expectedSha256Checksum != actualSha256checksum) {
+          file.deleteExisting()
+          error("File $file has wrong checksum. On disk: ${actualSha256checksum}. Expected: ${expectedSha256Checksum}. Library:\n${library.asText}")
+        }
+
+        file
       }
 
     if (roots.isEmpty()) {
-      error("No library roots for library '$libraryName'")
+      error("No library roots for library '$libraryName' in the following iml file at '$iml':\n${iml.readText()}")
     }
 
     roots
@@ -91,5 +121,10 @@ object BuildDependenciesJps {
     }
 
     return roots.single()
+  }
+
+  fun getLocalArtifactRepositoryRoot(): Path {
+    val root = System.getProperty("user.home", null) ?: error("'user.home' system property is not found")
+    return Path.of(root, ".m2/repository")
   }
 }
