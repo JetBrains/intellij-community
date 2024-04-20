@@ -246,9 +246,9 @@ public class IdeaGateway {
   }
 
   @RequiresReadLock
-  public @NotNull RootEntry createTransientRootEntryForPathOnly(@NotNull String path) {
+  public @NotNull RootEntry createTransientRootEntryForPath(@NotNull String path, boolean includeChildren) {
     RootEntry root = new RootEntry();
-    doCreateChildren(root, getLocalRoots(), false, new SinglePathVisitor(path));
+    doCreateChildren(root, getLocalRoots(), false, new SinglePathVisitor(path, includeChildren));
     return root;
   }
 
@@ -359,8 +359,10 @@ public class IdeaGateway {
 
   private static class SinglePathVisitor implements FileTreeVisitor {
     private final @NotNull List<String> myPathsStack = new ArrayList<>();
+    private final boolean myIncludeChildren;
 
-    private SinglePathVisitor(@NotNull String path) {
+    private SinglePathVisitor(@NotNull String path, boolean includeChildren) {
+      myIncludeChildren = includeChildren;
       myPathsStack.add(path);
     }
 
@@ -368,6 +370,10 @@ public class IdeaGateway {
     public boolean before(@NotNull VirtualFile child) {
       String targetPath = ContainerUtil.getLastItem(myPathsStack);
       if (targetPath == null) return false;
+      if (myIncludeChildren && targetPath.isEmpty()) {
+        myPathsStack.add("");
+        return true;
+      }
 
       String childName = StringUtil.trimStart(getNameOrUrlPart(child), "/"); // on Mac FS root name is "/"
       if (!targetPath.startsWith(childName)) return false;

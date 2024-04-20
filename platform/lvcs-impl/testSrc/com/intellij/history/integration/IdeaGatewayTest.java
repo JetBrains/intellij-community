@@ -64,7 +64,7 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     createFile(lowLevelDir + "/path3.txt");
     createFile(topLevelDir + "/dir3/path.txt");
 
-    RootEntry rootEntry = myGateway.createTransientRootEntryForPathOnly(myGateway.getPathOrUrl(file));
+    RootEntry rootEntry = myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(file), false);
     assertEquals(myGateway.getPathOrUrl(file), getAllPaths(rootEntry));
   }
 
@@ -78,8 +78,24 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     createFile(lowLevelDir + "/file.txt");
     createDirectory(topLevelDir + "/dir239");
 
-    RootEntry rootEntry = myGateway.createTransientRootEntryForPathOnly(myGateway.getPathOrUrl(directory));
+    RootEntry rootEntry = myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(directory), false);
     assertEquals(myGateway.getPathOrUrl(directory), getAllPaths(rootEntry));
+  }
+
+  public void testSingleDirectoryWithChildrenRootEntry() throws IOException {
+    String topLevelDir = "dir1";
+    String lowLevelDir = topLevelDir + "/dir2";
+
+    VirtualFile directory = createDirectory(lowLevelDir);
+
+    VirtualFile file1 = createFile(lowLevelDir + "/file1.txt");
+    VirtualFile file2 = createFile(lowLevelDir + "/file2.txt");
+
+    createDirectory(lowLevelDir + "smth");
+    createDirectory(topLevelDir + "/dir239");
+
+    RootEntry rootEntry = myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(directory), true);
+    assertEquals(myGateway.getPathOrUrl(file1) + "\n" + myGateway.getPathOrUrl(file2), getAllPaths(rootEntry));
   }
 
   public static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {
