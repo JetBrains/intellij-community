@@ -7,6 +7,7 @@ import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import org.jetbrains.kotlin.idea.test.extractMarkerOffset
@@ -100,6 +101,11 @@ class KotlinMultiModuleChangeSignatureTest : KotlinMultiFileTestCase() {
         doTest("Common/src/test/test.kt") {
             addParameter("b", "Boolean", "false")
         }
+    }
+
+    fun testKeepValVarInPlatform() = doTest("Common/src/test/test.kt") {
+        newParameters[0].valOrVar = KotlinValVar.None
+        newParameters[0].currentType = KotlinTypeInfo("Boolean", method)
     }
 
     fun testImplPrimaryConstructorNoParams() = doTest("JVM/src/test/test.kt") {

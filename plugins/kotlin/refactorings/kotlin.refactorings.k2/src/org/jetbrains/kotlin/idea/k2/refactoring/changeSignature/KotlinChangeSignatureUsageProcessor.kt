@@ -24,8 +24,10 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.*
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils
@@ -307,7 +309,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val parameterTypes = mutableMapOf<KtParameter, KtTypeReference>()
                 for ((paramIndex, parameter) in parameterList.parameters.withIndex()) {
                     val parameterInfo = changeInfo.newParameters[paramIndex + offset]
-                    parameter.setValOrVar(parameterInfo.valOrVar)
+                    if (!(element.isEffectivelyActual() && changeInfo.method is KtNamedDeclaration && (changeInfo.method as KtNamedDeclaration).isExpectDeclaration())) {
+                        parameter.setValOrVar(if (element.isExpectDeclaration()) KotlinValVar.None else parameterInfo.valOrVar)
+                    }
                     if (parameter.typeReference != null || isReturnTypeRequired(element)) {
                         parameterTypes[parameter] =
                             psiFactory.createType(parameterInfo.typeText, element, changeInfo.method, Variance.IN_VARIANCE)

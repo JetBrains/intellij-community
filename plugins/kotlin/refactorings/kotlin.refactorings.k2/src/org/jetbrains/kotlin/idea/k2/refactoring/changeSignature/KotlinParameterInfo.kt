@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.types.Variance
 
@@ -140,7 +142,7 @@ class KotlinParameterInfo(
 
         val buffer = StringBuilder()
 
-        if (valOrVar != KotlinValVar.None) {
+        if (valOrVar != KotlinValVar.None && !(baseFunction is KtNamedDeclaration && baseFunction.isExpectDeclaration())) {
             buffer.append(valOrVar).append(' ')
         }
 
@@ -171,7 +173,7 @@ class KotlinParameterInfo(
         val psiFactory = KtPsiFactory(originalParameter.project)
         val newParameter = originalParameter.copied()
 
-        if (valOrVar != newParameter.valOrVarKeyword.toValVar()) {
+        if (valOrVar != newParameter.valOrVarKeyword.toValVar() && !(baseFunction is KtNamedDeclaration && baseFunction.isExpectDeclaration())) {
             newParameter.setValOrVar(valOrVar)
         }
 
