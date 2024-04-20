@@ -988,6 +988,14 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         removeParameter(0)
     }
 
+    fun testRemoveParameterUsedInClassBody() = doTestConflict {
+        removeParameter(0)
+    }
+
+    fun testRemovePropertyUsedInAnotherClass() = doTestConflict {
+        removeParameter(0)
+    }
+
     // ----  renames ----------------------------------
 
 
@@ -1549,7 +1557,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
     fun testAddParameterFromFunctionWithReceiver() = doJavaTest { newParameters.add(ParameterInfoImpl(-1, "i", PsiTypes.intType())) }
 
     // ---- data class ---------
-    fun testRemoveDataClassParameter() = doTest { removeParameter(1) }
+    open fun testRemoveDataClassParameter() = doTest { removeParameter(1) }
     fun testSwapDataClassParameters() = doTest {
         swapParameters(0, 2)
         swapParameters(1, 2)
@@ -1563,7 +1571,7 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         )
     }
 
-    fun testRemoveAllOriginalDataClassParameters() = doTest {
+    open fun testRemoveAllOriginalDataClassParameters() = doTest {
         val psiFactory = KtPsiFactory(project)
 
         swapParameters(1, 2)

@@ -118,4 +118,16 @@ class KotlinFirChangeSignatureTest :
     fun testInterface() {
         doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
     }
+
+    override fun testRemoveDataClassParameter() {
+        runAndCheckConflicts {
+            super.testRemoveDataClassParameter()
+        }
+    }
+
+    override fun testRemoveAllOriginalDataClassParameters() {
+        runAndCheckConflicts {
+            super.testRemoveAllOriginalDataClassParameters()
+        }
+    }
 }
