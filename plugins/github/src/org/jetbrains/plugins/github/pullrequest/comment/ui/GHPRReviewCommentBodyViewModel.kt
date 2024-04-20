@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
@@ -90,20 +91,20 @@ class GHPRReviewCommentBodyViewModel internal constructor(
     }.launchNowIn(cs)
   }
 
-  val blocks: StateFlow<List<GHPRCommentBodyBlock>> = threadData.combineState(body) { thread, body ->
-    if (thread == null) return@combineState emptyList()
+  val blocks: StateFlow<List<GHPRCommentBodyBlock>> = combineStateIn(cs, threadData, body) { thread, body ->
+    if (thread == null) return@combineStateIn emptyList()
     val markdownConverter = GHMarkdownToHtmlConverter(project)
     val suggestions = body.getSuggestions()
     if (suggestions.isEmpty()) {
       val html = markdownConverter.convertMarkdown(body)
-      return@combineState listOf(GHPRCommentBodyBlock.HTML(html))
+      return@combineStateIn listOf(GHPRCommentBodyBlock.HTML(html))
     }
     else {
       val patchReader = PatchReader(PatchHunkUtil.createPatchFromHunk("_", thread.diffHunk))
       val hunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull() ?: run {
         LOG.warn("Empty diff hunk for thread $thread")
         val html = markdownConverter.convertMarkdown(body)
-        return@combineState listOf(GHPRCommentBodyBlock.HTML(html))
+        return@combineStateIn listOf(GHPRCommentBodyBlock.HTML(html))
       }
       val code = hunk.lines
         .filter { it.type != PatchLine.Type.REMOVE }

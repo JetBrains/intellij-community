@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
@@ -88,7 +88,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
     .map { it.comments.withIndex() }
     .mapDataToModel({ it.value.id }, { createComment(it) }, { update(it) })
     .stateIn(cs, SharingStarted.Eagerly, emptyList())
-  override val comments = commentsVms.combineState(repliesFolded) { comments, folded ->
+  override val comments = combineStateIn(cs, commentsVms, repliesFolded) { comments, folded ->
     if (!folded || comments.size <= 3) {
       comments.map { GHPRCompactReviewThreadViewModel.CommentItem.Comment(it) }
     }

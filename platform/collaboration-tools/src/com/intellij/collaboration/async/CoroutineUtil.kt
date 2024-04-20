@@ -147,6 +147,14 @@ fun <T1, T2, R> StateFlow<T1>.combineState(other: StateFlow<T2>, combiner: (T1, 
   DerivedStateFlow(combine(other, combiner)) { combiner(value, other.value) }
 
 /**
+ * Not great, because will always compute [combiner] twice at the start
+ * To be used when you need the flow to handle [CoroutineStart.UNDISPATCHED], because pure [combine] does not
+ */
+@ApiStatus.Internal
+fun <T1, T2, R> combineStateIn(cs: CoroutineScope, sf1: StateFlow<T1>, sf2: StateFlow<T2>, combiner: (T1, T2) -> R): StateFlow<R> =
+  combine(sf1, sf2, combiner).stateIn(cs, SharingStarted.Eagerly, combiner(sf1.value, sf2.value))
+
+/**
  * Special state flow which value is supplied by [valueSupplier] and collection is delegated to [source]
  *
  * [valueSupplier] should NEVER THROW to avoid contract violation
