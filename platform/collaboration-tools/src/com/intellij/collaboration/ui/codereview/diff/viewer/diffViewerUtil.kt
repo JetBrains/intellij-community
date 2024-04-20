@@ -2,6 +2,7 @@
 package com.intellij.collaboration.ui.codereview.diff.viewer
 
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.RefComparisonChange
@@ -194,27 +195,29 @@ private fun <I : CodeReviewInlayModel, M : CodeReviewEditorModel<I>> EditorEx.in
 }
 
 private fun <V : DiffViewerBase> V.viewerReadyFlow(
-): Flow<Boolean> = callbackFlow {
+): Flow<Boolean> {
   val isViewerGood: V.() -> Boolean = {
     if (this is UnifiedDiffViewer) isContentGood else true
   }
-  val listener = object : DiffViewerListener() {
-    // for now this utility is only used for constant diffs
-    // uncomment if diff can actually be changed on rediff
-    /*override fun onBeforeRediff() {
+  return callbackFlow {
+    val listener = object : DiffViewerListener() {
+      // for now this utility is only used for constant diffs
+      // uncomment if diff can actually be changed on rediff
+      /*override fun onBeforeRediff() {
       trySend(false)
     }*/
 
-    override fun onAfterRediff() {
-      trySend(isViewerGood())
+      override fun onAfterRediff() {
+        trySend(isViewerGood())
+      }
     }
-  }
-  addListener(listener)
-  send(isViewerGood())
-  awaitClose {
-    removeListener(listener)
-  }
-}.flowOn(Dispatchers.Main).distinctUntilChanged()
+    addListener(listener)
+    send(isViewerGood())
+    awaitClose {
+      removeListener(listener)
+    }
+  }.withInitial(isViewerGood()).flowOn(Dispatchers.Main).distinctUntilChanged()
+}
 
 interface DiffMapped {
   val location: Flow<DiffLineLocation?>
