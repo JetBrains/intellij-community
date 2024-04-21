@@ -19,7 +19,7 @@ interface ABExperimentOption : PluginAware {
    * Returns a size of an audience group for the option.
    *
    * The number of A/B experimental groups is limited.
-   * For most cases, a small group size will be sufficient.
+   * The group size must be agreed with the analysts so that the result of the experiment is statistically significant.
    *
    * If group capacity is exhausted for a specific IDE, there will be an error in runtime.
    * In such a case, you need to communicate with related persons of other options

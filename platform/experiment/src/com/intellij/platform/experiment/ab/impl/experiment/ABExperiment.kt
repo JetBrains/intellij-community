@@ -53,7 +53,7 @@ class ABExperiment {
     private const val DEVICE_ID_PURPOSE = "A/B Experiment"
     private const val DEVICE_ID_SALT = "ab experiment salt"
     private const val TOTAL_NUMBER_OF_BUCKETS = 1024
-    internal val TOTAL_NUMBER_OF_GROUPS = if (isPopularIDE()) 16 else 8
+    internal const val TOTAL_NUMBER_OF_GROUPS = 256
 
     internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
 
