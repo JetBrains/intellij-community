@@ -61,7 +61,7 @@ class ABExperiment {
       return AB_EXPERIMENTAL_OPTION_EP.extensionList.filter {
         val pluginDescriptor = it.getPluginDescriptor()
         val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
-        pluginInfo.isDevelopedByJetBrains()
+        pluginInfo.isDevelopedByJetBrains() && it.isEnabled()
       }
     }
 

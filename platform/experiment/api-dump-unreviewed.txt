@@ -9,6 +9,8 @@ f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentKt
 - sf:getABExperimentInstance():com.intellij.platform.experiment.ab.impl.experiment.ABExperiment
 com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption
 - com.intellij.openapi.extensions.PluginAware
+- a:checkIdeIsSuitable():Z
+- a:checkIdeVersionIsSuitable():Z
 - a:getGroupSizeForIde-VJBkicw(Z):I
 - a:getId-d3vBMqI():java.lang.String
 - a:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
@@ -29,6 +31,8 @@ f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionId
 - toString():java.lang.String
 - s:toString-impl(java.lang.String):java.lang.String
 - bf:unbox-impl():java.lang.String
+f:com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOptionKt
+- sf:isEnabled(com.intellij.platform.experiment.ab.impl.experiment.ABExperimentOption):Z
 f:com.intellij.platform.experiment.ab.impl.option.ABExperimentControlOptionKt
 - sf:isControlOptionEnabled():Z
 f:com.intellij.platform.experiment.ab.impl.option.ABExperimentOptionGroupSize

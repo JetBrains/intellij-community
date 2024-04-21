@@ -17,4 +17,12 @@ internal class ABExperimentControlOption : ABExperimentOptionBase() {
   override fun getGroupSizeForIde(isPopular: Boolean): ABExperimentOptionGroupSize {
     return ABExperimentOptionGroupSize(32)
   }
+
+  override fun checkIdeIsSuitable(): Boolean {
+    return true
+  }
+
+  override fun checkIdeVersionIsSuitable(): Boolean {
+    return true
+  }
 }
