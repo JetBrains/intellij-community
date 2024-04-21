@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.runner.RunWith
 import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.nextTemplateVariable
 import com.intellij.java.refactoring.ExtractMethodAndDuplicatesInplaceTest.Companion.renameTemplate
+import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
 
 
@@ -20,7 +22,15 @@ class FirInplaceExtractFunctionTest : KotlinLightCodeInsightFixtureTestCase() {
 
     override val testDataDirectory = IDEA_TEST_DATA_DIR.resolve("refactoring/extractFunctionInplace")
 
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
+
     fun testStringTemplate() {
+        doTest()
+    }
+
+    fun testEmptySpaces() {
         doTest()
     }
 

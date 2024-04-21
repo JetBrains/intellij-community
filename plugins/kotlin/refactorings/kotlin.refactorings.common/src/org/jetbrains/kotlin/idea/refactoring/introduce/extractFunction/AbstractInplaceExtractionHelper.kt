@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtract
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import kotlin.math.min
 
 interface AbstractInplaceExtractionHelper<KotlinType,
         Result : IExtractionResult<KotlinType>,
@@ -59,13 +60,17 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                 .invoke(project, editor, descriptorWithConflicts.descriptor.extractionData.originalFile, null)
         }
         val descriptor = descriptorWithConflicts.descriptor
-        val elements = descriptor.extractionData.originalElements
+        val elements = descriptor.extractionData.physicalElements
         val file = descriptor.extractionData.originalFile
-        val callTextRange = TextRange(rangeOf(elements.first()).startOffset, rangeOf(elements.last()).endOffset)
+        val callTextRange =
+            editor.document.createRangeMarker(
+                rangeOf(elements.first()).startOffset,
+                rangeOf(elements.last()).endOffset
+            ).apply {
+                isGreedyToLeft = true
+                isGreedyToRight = true
+            }
 
-        val commonParent = descriptor.extractionData.commonParent
-        val container = commonParent.takeIf { commonParent != elements.firstOrNull() } ?: commonParent.parent
-        val callRangeProvider: () -> TextRange? = createSmartRangeProvider(container, callTextRange)
         val editorState = EditorState(project, editor)
         val disposable = Disposer.newDisposable()
         WriteCommandAction.writeCommandAction(project).run<Throwable> {
@@ -78,7 +83,7 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                 Disposer.dispose(disposable)
                 return
             }
-            val callRange: TextRange = callRangeProvider.invoke() ?: throw IllegalStateException()
+            val callRange: TextRange = callTextRange.textRange
             val callIdentifier = findSingleCallExpression(file, callRange)?.calleeExpression ?: throw IllegalStateException()
             val methodIdentifier = extraction.declaration.nameIdentifier ?: throw IllegalStateException()
             val methodRange = extraction.declaration.textRange
@@ -140,7 +145,8 @@ interface AbstractInplaceExtractionHelper<KotlinType,
 
     fun findSingleCallExpression(file: KtFile, range: TextRange?): KtCallExpression? {
         if (range == null) return null
-        val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset), file.findElementAt(range.endOffset))
+        val container = PsiTreeUtil.findCommonParent(file.findElementAt(range.startOffset),
+                                                     file.findElementAt(min(file.textLength - 1, range.endOffset)))
         val callExpressions = PsiTreeUtil.findChildrenOfType(container, KtCallExpression::class.java)
         return callExpressions.singleOrNull { it.textRange in range }
     }
