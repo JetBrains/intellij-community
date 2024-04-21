@@ -562,7 +562,8 @@ class ExtractTestFiles(
 private fun getConflictsFile(path: String, isFirPlugin: Boolean): File {
     if (isFirPlugin) {
         val firSpecific = File("$path.fir.conflicts")
-        if (firSpecific.exists()) {
+        //if fir specific after exists, ignore k1 conflicts if any
+        if (firSpecific.exists() || File("$path.fir.after").exists()) {
             return firSpecific
         }
     }

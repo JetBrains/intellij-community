@@ -7,5 +7,7 @@ class A {
 }
 
 fun bar() {
-    <selection>A</selection>.foo()
+    a().foo()
 }
+
+private fun a(): A.Companion = A
