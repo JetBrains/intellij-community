@@ -252,7 +252,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
 
             when {
                 defaultValue == null -> body.appendElement(returnExpression)
-                !defaultValue.callSiteReturn -> lastExpression!!.replaceWithReturn(returnExpression)
+                !defaultValue.callSiteReturn || defaultValue.hasImplicitReturn -> lastExpression!!.replaceWithReturn(returnExpression)
             }
 
             if (generatorOptions.allowExpressionBody) {

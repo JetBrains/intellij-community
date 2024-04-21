@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 data class OutputDescriptor<KotlinType>(
     val defaultResultExpression: KtExpression?,
     val typeOfDefaultFlow: KotlinType,
+    val implicitReturn: KtExpression?,
     val valuedReturnExpressions: List<KtExpression>,
     val returnValueType: KotlinType,
     val jumpExpressions: List<KtExpression>,

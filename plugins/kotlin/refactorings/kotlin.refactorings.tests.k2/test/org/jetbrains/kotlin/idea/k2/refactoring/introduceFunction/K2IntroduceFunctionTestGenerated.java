@@ -675,6 +675,16 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/genericPair.kt");
             }
 
+            @TestMetadata("implicitReturn.kt")
+            public void testImplicitReturn() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/implicitReturn.kt");
+            }
+
+            @TestMetadata("implicitReturnWithAnotherTarget.kt")
+            public void testImplicitReturnWithAnotherTarget() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/implicitReturnWithAnotherTarget.kt");
+            }
+
             @TestMetadata("initializersAndUpdate.kt")
             public void testInitializersAndUpdate() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/outputValues/initializersAndUpdate.kt");

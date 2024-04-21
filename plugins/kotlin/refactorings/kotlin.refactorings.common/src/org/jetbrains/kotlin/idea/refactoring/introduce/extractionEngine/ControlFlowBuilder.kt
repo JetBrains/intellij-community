@@ -51,9 +51,10 @@ object ControlFlowBuilder {
                 emptyControlFlow.copy(
                     outputValues = listOf(
                         ExpressionValue(
-                            false,
-                            listOfNotNull(defaultResultExpression),
-                            defaultReturnType
+                            callSiteReturn = false,
+                            hasImplicitReturn = false,
+                            originalExpressions = listOfNotNull(defaultResultExpression),
+                            valueType = defaultReturnType
                         )
                     )
                 )
@@ -74,7 +75,14 @@ object ControlFlowBuilder {
             if (typeOfDefaultFlow.isMeaningful()) {
                 if (valuedReturnExpressions.isNotEmpty() || jumpExpressions.isNotEmpty()) return multipleExitsError
 
-                outputValues.add(ExpressionValue(false, listOfNotNull(defaultResultExpression), typeOfDefaultFlow))
+                outputValues.add(
+                    ExpressionValue(
+                        false,
+                        hasImplicitReturn = false,
+                        originalExpressions = listOfNotNull(defaultResultExpression),
+                        valueType = typeOfDefaultFlow
+                    )
+                )
             } else if (valuedReturnExpressions.isNotEmpty()) {
                 if (jumpExpressions.isNotEmpty()) return multipleExitsError
 
@@ -99,7 +107,11 @@ object ControlFlowBuilder {
                 }
 
                 if (!hasSingleTarget) return multipleExitsError
-                outputValues.add(ExpressionValue(true, valuedReturnExpressions, returnValueType))
+                outputValues.add(ExpressionValue(true,
+                                                 hasImplicitReturn = implicitReturn != null,
+                                                 originalExpressions = valuedReturnExpressions,
+                                                 valueType = returnValueType
+                ))
             }
 
             outDeclarations.mapTo(outputValues) {

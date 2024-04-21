@@ -12,6 +12,7 @@ interface OutputValue<KotlinType> {
 
     class ExpressionValue<KotlinType>(
         val callSiteReturn: Boolean,
+        val hasImplicitReturn: Boolean,
         override val originalExpressions: List<KtExpression>,
         override val valueType: KotlinType
     ) : OutputValue<KotlinType>

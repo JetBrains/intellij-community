@@ -660,6 +660,7 @@ private fun ExtractionData.createOutputDescriptor(pseudocode: Pseudocode, localI
     return OutputDescriptor(
         defaultResultExpression = defaultResultExpressions.singleOrNull(),
         typeOfDefaultFlow = typeOfDefaultFlow,
+        implicitReturn = null,
         valuedReturnExpressions = valuedReturnExpressions,
         returnValueType = returnValueType,
         jumpExpressions = jumpExits.map { it.element as KtExpression },

@@ -1507,6 +1507,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/genericPair.kt");
                 }
 
+                @TestMetadata("implicitReturn.kt")
+                public void testImplicitReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/implicitReturn.kt");
+                }
+
+                @TestMetadata("implicitReturnWithAnotherTarget.kt")
+                public void testImplicitReturnWithAnotherTarget() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/implicitReturnWithAnotherTarget.kt");
+                }
+
                 @TestMetadata("initializersAndUpdate.kt")
                 public void testInitializersAndUpdate() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/initializersAndUpdate.kt");
