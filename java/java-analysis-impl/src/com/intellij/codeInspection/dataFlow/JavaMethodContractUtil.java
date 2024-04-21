@@ -2,11 +2,13 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.*;
+import com.intellij.java.library.JavaLibraryModificationTracker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
@@ -145,7 +147,7 @@ public final class JavaMethodContractUtil {
       return ContractInfo.PURE;
     }
     return CachedValuesManager.getCachedValue(method, () -> {
-      final PsiAnnotation contractAnno = findContractAnnotation(method);
+      PsiAnnotation contractAnno = findContractAnnotation(method);
       ContractInfo info = ContractInfo.EMPTY;
       if (contractAnno != null) {
         List<StandardMethodContract> contracts = parseContracts(method, contractAnno);
@@ -166,7 +168,16 @@ public final class JavaMethodContractUtil {
         boolean explicit = !AnnotationUtil.isInferredAnnotation(contractAnno);
         info = new ContractInfo(contracts, pure, explicit, mutationSignature);
       }
-      return CachedValueProvider.Result.create(info, method, PsiModificationTracker.MODIFICATION_COUNT);
+
+      PsiFile file = method.getContainingFile();
+      if (file != null
+          && file.getVirtualFile() != null
+          && ProjectFileIndex.getInstance(method.getProject()).isInLibrary(file.getVirtualFile())) {
+        // there is no need to recompute info on changes in the project code
+        return Result.create(info, JavaLibraryModificationTracker.getInstance(method.getProject()));
+      }
+
+      return Result.create(info, method, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
