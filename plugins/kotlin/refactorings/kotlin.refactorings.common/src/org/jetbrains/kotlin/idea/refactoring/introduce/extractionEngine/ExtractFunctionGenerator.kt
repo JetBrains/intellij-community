@@ -404,7 +404,10 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
                     is Jump -> {
                         val elementToInsertAfterCall = outputValue.elementToInsertAfterCall
                         when {
-                            elementToInsertAfterCall == null -> Collections.singletonList(psiFactory.createExpression(callText))
+                            elementToInsertAfterCall == null -> listOf(
+                                newLine,
+                                psiFactory.createExpression(callText)
+                            )
                             outputValue.conditional -> Collections.singletonList(
                                 psiFactory.createExpression("if ($callText) ${elementToInsertAfterCall.text}")
                             )

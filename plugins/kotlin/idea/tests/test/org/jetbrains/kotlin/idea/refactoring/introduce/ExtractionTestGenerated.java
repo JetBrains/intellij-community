@@ -1411,6 +1411,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakAndReturn.kt");
                 }
 
+                @TestMetadata("breakAndReturn1.kt")
+                public void testBreakAndReturn1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakAndReturn1.kt");
+                }
+
                 @TestMetadata("breakContinueAndDefault.kt")
                 public void testBreakContinueAndDefault() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakContinueAndDefault.kt");

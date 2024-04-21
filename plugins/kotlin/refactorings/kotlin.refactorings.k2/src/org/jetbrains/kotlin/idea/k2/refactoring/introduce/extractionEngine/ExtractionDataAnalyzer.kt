@@ -175,7 +175,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
                 typeOfDefaultFlow = approximateWithResolvableType(typeOfDefaultFlow, scope) ?: builtinTypes.UNIT,
                 valuedReturnExpressions = exitSnapshot.valuedReturnExpressions.filter { it is KtReturnExpression },
                 returnValueType = approximateWithResolvableType(exitSnapshot.returnValueType, scope) ?: builtinTypes.UNIT,
-                jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression },
+                jumpExpressions = exitSnapshot.jumpExpressions.filter { it is KtBreakExpression || it is KtContinueExpression || it is KtReturnExpression && it.returnedExpression == null},
                 hasSingleTarget = !exitSnapshot.hasMultipleJumpTargets,
                 sameExitForDefaultAndJump = if (exitSnapshot.hasJumps) !exitSnapshot.hasEscapingJumps && defaultExpressionInfo != null else defaultExpressionInfo == null
             )

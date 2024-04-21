@@ -579,6 +579,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakAndReturn.kt");
             }
 
+            @TestMetadata("breakAndReturn1.kt")
+            public void testBreakAndReturn1() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakAndReturn1.kt");
+            }
+
             @TestMetadata("breakContinueAndDefault.kt")
             public void testBreakContinueAndDefault() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/exitPointEquivalence/breakContinueAndDefault.kt");

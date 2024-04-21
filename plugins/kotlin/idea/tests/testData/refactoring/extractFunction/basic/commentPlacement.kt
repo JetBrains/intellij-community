@@ -6,5 +6,3 @@ fun main() {
     if (true) return
     println()</selection>
 }
-
-// IGNORE_K1
