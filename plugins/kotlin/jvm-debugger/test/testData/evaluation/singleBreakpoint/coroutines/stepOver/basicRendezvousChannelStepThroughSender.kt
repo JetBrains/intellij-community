@@ -22,3 +22,4 @@ fun main() = runBlocking {
 // STEP_OVER: 12
 
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
+// REGISTRY: debugger.always.suspend.thread.before.switch=true
