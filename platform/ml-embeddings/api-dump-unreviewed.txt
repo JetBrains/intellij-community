@@ -332,4 +332,5 @@ f:com.intellij.platform.ml.embeddings.utils.IndexingUtilsKt
 - sf:generateEmbeddings(java.util.List,Z,kotlin.coroutines.Continuation):java.lang.Object
 - bs:generateEmbeddings$default(java.util.List,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - sf:normalized(ai.grazie.emb.FloatTextEmbedding):ai.grazie.emb.FloatTextEmbedding
-- sf:splitIdentifierIntoTokens(java.lang.String):java.util.List
+- sf:splitIdentifierIntoTokens(java.lang.String,Z):java.lang.String
+- bs:splitIdentifierIntoTokens$default(java.lang.String,Z,I,java.lang.Object):java.lang.String
