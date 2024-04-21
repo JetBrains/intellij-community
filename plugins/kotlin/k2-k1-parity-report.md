@@ -1,28 +1,28 @@
 # K2/K1 feature parity report
 
 
-Generated on Fri Apr 19 12:08:13 CEST 2024
+Generated on Sun Apr 21 06:54:44 CEST 2024
 
 ## Categories
 
 | Status | Category | Success rate, % | K2 files | K1 files |
 | -- | -- | --  | -- | -- |
- | :white_check_mark: | UNCATEGORIZED | 87 | 3887 | 4466 | 0 | 
- | :white_check_mark: | HIGHLIGHTING | 101 | 519 | 513 | 0 | 
- | :white_check_mark: | COMPLETION | 88 | 3247 | 3674 | 0 | 
- | :white_check_mark: | CODE_INSIGHT | 96 | 3274 | 3422 | 0 | 
- | :white_check_mark: | NAVIGATION | 103 | 216 | 210 | 0 | 
- | :white_check_mark: | FIND_USAGES | 89 | 635 | 712 | 0 | 
- | :white_check_mark: | REFACTORING | 99 | 692 | 696 | 0 | 
- | :white_check_mark: | RENAME_REFACTORING | 103 | 836 | 810 | 0 | 
- | :white_check_mark: | INLINE_REFACTORING | 98 | 494 | 502 | 0 | 
- | :x: | MOVE_REFACTORING | 67 | 256 | 384 | 0 | 
- | :white_check_mark: | EXTRACT_REFACTORING | 100 | 962 | 966 | 0 | 
- | :white_check_mark: | INSPECTIONS | 100 | 3170 | 3179 | 0 | 
- | :x: | INTENTIONS | 73 | 4362 | 5962 | 0 | 
- | :x: | QUICKFIXES | 58 | 2502 | 4345 | 0 | 
- | :white_check_mark: | SCRIPTS | 100 | 40 | 40 | 0 | 
- | :white_check_mark: | DEBUGGER | 97 | 934 | 961 | 0 | 
+ | :white_check_mark: | UNCATEGORIZED | 118 | 1803 | 1524 | 0 | 
+ | :x: | HIGHLIGHTING | 76 | 218 | 285 | 0 | 
+ | :x: | COMPLETION | 64 | 1353 | 2126 | 0 | 
+ | :x: | CODE_INSIGHT | 58 | 1228 | 2130 | 0 | 
+ | :x: | NAVIGATION | 50 | 71 | 142 | 0 | 
+ | :white_check_mark: | FIND_USAGES | 89 | 317 | 356 | 0 | 
+ | :x: | REFACTORING | 80 | 308 | 386 | 0 | 
+ | :white_check_mark: | RENAME_REFACTORING | 103 | 418 | 405 | 0 | 
+ | :white_check_mark: | INLINE_REFACTORING | 202 | 332 | 164 | 0 | 
+ | :x: | MOVE_REFACTORING | 66 | 128 | 193 | 0 | 
+ | :x: | EXTRACT_REFACTORING | 64 | 377 | 586 | 0 | 
+ | :x: | INSPECTIONS | 22 | 577 | 2610 | 0 | 
+ | :x: | INTENTIONS | 53 | 1510 | 2857 | 0 | 
+ | :x: | QUICKFIXES | 48 | 864 | 1815 | 0 | 
+ | :x: | SCRIPTS | 0 | 0 | 40 | 0 | 
+ | :x: | DEBUGGER | 0 | 0 | 961 | 0 | 
  | :x: | J2K | 50 | 553 | 1104 | 0 | 
 
 ## Shared cases
