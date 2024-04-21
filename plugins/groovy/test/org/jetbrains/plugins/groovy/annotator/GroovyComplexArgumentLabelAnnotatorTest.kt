@@ -1,9 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.util.TestUtils
 
-class GroovyComplexArgumentLabelAnnotatorTest : JavaCodeInsightFixtureTestCase() {
+
+class GroovyComplexArgumentLabelAnnotatorTest : LightGroovyTestCase() {
+  override fun getBasePath() = "${TestUtils.getTestDataPath()}/annotator/"
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = GroovyProjectDescriptors.GROOVY_4_0
+
   fun `test should not highlight literals`() {
     val tripleQuote = "\"\"\""
     myFixture.configureByText("main.groovy", """
@@ -184,7 +194,6 @@ class GroovyComplexArgumentLabelAnnotatorTest : JavaCodeInsightFixtureTestCase()
           def ww = [<error descr="A complex label expression before a colon must be parenthesized">x <=> x</error>: 1]
           def xxx = [<error descr="A complex label expression before a colon must be parenthesized">x in list</error>: 1]
           def yy = [<error descr="A complex label expression before a colon must be parenthesized">(Double) x</error>: 1]
-          def aaa = [<error descr="A complex label expression before a colon must be parenthesized">~x</error>: 1]
           def bbb = [<error descr="A complex label expression before a colon must be parenthesized">x |= x</error>: 1]
           def ccc = [<error descr="A complex label expression before a colon must be parenthesized">x &= x</error>: 1]
           def ddd = [<error descr="A complex label expression before a colon must be parenthesized">x <<= 1</error>: 1]
@@ -195,6 +204,70 @@ class GroovyComplexArgumentLabelAnnotatorTest : JavaCodeInsightFixtureTestCase()
     myFixture.testHighlighting(false, false, false)
   }
 
+  fun `test should not highlight complex operators in parenthesis`() {
+    myFixture.configureByText("main.groovy", """      
+      static void main(String[] args) {
+          Integer x = 1
+          String string = null;
+          def list = []
+          def map = [1:1]
+          def a = [(1 + x): 1]
+          def b = [(1 - x): 1]
+          def c = [(1 * x): 1]
+          def d = [(1 / x): 1]
+          def e = [(1 % x): 1]
+          def f = [(1 ** x): 1]
+          def g = [(x += 1): 1]
+          def h = [(x -= 1): 1]
+          def i = [(x *= 1): 1]
+          def j = [(x /= 1): 1]
+          def k = [(x %= 1): 1]
+          def l = [(x **= 1): 1]
+          def m = [(+x): 1]
+          def n = [(-x): 1]
+          def o = [(++x): 1]
+          def p = [(--x): 1]
+          def q = [(x == 1): 1]
+          def r = [(x < 1): 1]
+          def u = [(x <= 1): 1]
+          def w = [(x <= 1): 1]
+          def xx = [(x > 1): 1]
+          def y = [(x >= 1): 1]
+          def z = [(x != 1): 1] 
+          def aa = [(x === x): 1] 
+          def bb = [(x !== x): 1]
+          def cc = [(true && false): 1]
+          def dd = [(true || false): 1]
+          def ee = [(~x): 1]
+          def ff = [(x | x): 1]
+          def gg = [(x & x): 1]
+          def hh = [(x & x): 1]
+          def jj = [(x << 1): 1]
+          def kk = [(x >> 1): 1]
+          def ll = [(x >>> 1): 1]
+          def mm = [(string ? true : false): 1]
+          def nn = [(string ?: string): 1]
+          def oo = [(string ?= string): 1]
+          def pp = [(string.&length): 1]
+          def rr = [(string =~ 'foo'): 1]
+          def ss = [(string ==~ 'foo'): 1]
+          def vv = [(0..x): 1]
+          def ww = [(x <=> x): 1]
+          def xxx = [(x in list): 1]
+          def yy = [((Double) x): 1]
+          def bbb = [(x |= x): 1]
+          def ccc = [(x &= x): 1]
+          def ddd = [(x <<= 1): 1]
+          def eee = [(x >>= 1): 1]
+          def fff = [(x >>>= 1): 1]
+      }
+    """.trimIndent())
+    myFixture.testHighlighting(false, false, false)
+  }
 
-
+  fun `test quickfix`() {
+    val testName = getTestName(true).trim()
+    CodeInsightTestUtil.doIntentionTest(myFixture, GroovyBundle.message("groovy.complex.argument.label.quick.fix.message"), "${testName}_before.groovy", "${testName}_after.groovy")
+    myFixture.availableIntentions
+  }
 }
