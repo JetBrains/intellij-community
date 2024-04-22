@@ -78,8 +78,8 @@ public class CustomizableActionsPanel {
         return filter.getPreferredSize().height;
       }
     };
-    myTopPanel.add(filter, BorderLayout.WEST);
-    myTopPanel.add(createToolbar(), BorderLayout.CENTER);
+    myTopPanel.add(filter, BorderLayout.EAST);
+    myTopPanel.add(createToolbar(), BorderLayout.WEST);
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
@@ -95,7 +95,9 @@ public class CustomizableActionsPanel {
     container.add(addGroupToolbar, BorderLayout.WEST);
 
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
-      .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), getRestoreGroup()), true);
+      .createActionToolbar(ActionPlaces.TOOLBAR,
+                           new DefaultActionGroup(new EditIconAction(), new MoveUpAction(), new MoveDownAction(), new Separator(),
+                                                  new RemoveAction(), getRestoreGroup()), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     toolbar.setTargetComponent(myTopPanel);
@@ -827,7 +829,7 @@ public class CustomizableActionsPanel {
 
   private final class RemoveAction extends TreeSelectionAction {
     private RemoveAction() {
-      super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.General.Remove);
+      super(IdeBundle.messagePointer("button.remove"), Presentation.NULL_STRING, AllIcons.Actions.GC);
       ShortcutSet shortcutSet = KeymapUtil.filterKeyStrokes(CommonShortcuts.getDelete(),
                                                             KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0),
                                                             KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0));
