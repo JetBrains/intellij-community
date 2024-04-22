@@ -542,7 +542,10 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                         }
                         @Suppress("USELESS_CAST") // KT-10755
                         when {
-                            callableInfo is FunctionInfo -> psiFactory.createFunction("${modifiers}fun<> $header $body") as KtNamedDeclaration
+                            callableInfo is FunctionInfo -> {
+                                val braces = if (isStartTemplate) "<>" else ""
+                                psiFactory.createFunction("${modifiers}fun$braces $header $body") as KtNamedDeclaration
+                            }
                             (callableInfo as ConstructorInfo).isPrimary -> {
                                 val constructorText = if (modifiers.isNotEmpty()) "${modifiers}constructor$paramList" else paramList
                                 psiFactory.createPrimaryConstructor(constructorText) as KtNamedDeclaration
@@ -601,12 +604,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                     }
                 }
 
-                if (callableInfo is PropertyInfo) {
-                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
-                }
-                if (callableInfo is ConstructorInfo) {
-                    callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
-                }
+                callableInfo.annotations.forEach { declaration.addAnnotationEntry(it) }
 
                 val newInitializer = pointerOfAssignmentToReplace?.element
                 if (newInitializer != null) {

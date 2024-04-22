@@ -214,6 +214,8 @@ interface UastElementFactory {
   fun createLongConstantExpression(long: Long, context: PsiElement?): UExpression?
 
   fun createNullLiteral(context: PsiElement?): ULiteralExpression?
+
+  fun createComment(text: String, context: PsiElement?): UComment
 }
 
 @ApiStatus.Experimental

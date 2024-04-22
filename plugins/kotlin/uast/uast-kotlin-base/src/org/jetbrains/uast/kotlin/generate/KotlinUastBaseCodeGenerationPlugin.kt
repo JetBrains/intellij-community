@@ -296,6 +296,10 @@ abstract class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory(context).createExpression("null").toUElementOfType()!!
     }
 
+    override fun createComment(text: String, context: PsiElement?): UComment {
+        return psiFactory(context).createComment(text).toUElementOfType()!!
+    }
+
     /*override*/ fun createIntLiteral(value: Int, context: PsiElement?): ULiteralExpression {
         return psiFactory(context).createExpression(value.toString()).toUElementOfType()!!
     }

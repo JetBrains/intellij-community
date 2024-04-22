@@ -309,6 +309,10 @@ class JavaUastElementFactory(private val project: Project) : UastElementFactory 
     return JavaULiteralExpression(literalExpr, null)
   }
 
+  override fun createComment(text: String, context: PsiElement?): UComment {
+    return psiFactory.createCommentFromText(text, context).toUElementOfType()!!
+  }
+
   private class MethodCallUpgradeHelper(val project: Project, val methodCall: PsiMethodCallExpression, val expectedReturnType: PsiType) {
     lateinit var resultType: PsiType
 

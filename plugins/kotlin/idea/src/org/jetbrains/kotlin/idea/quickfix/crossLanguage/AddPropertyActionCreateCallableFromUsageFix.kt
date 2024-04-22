@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
+import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.PsiType
 import com.intellij.psi.createSmartPointer
@@ -20,6 +21,7 @@ class AddPropertyActionCreateCallableFromUsageFix(
     val propertyName: String,
     val setterRequired: Boolean,
     val isLateinitPreferred: Boolean = setterRequired,
+    val annotations: List<AnnotationRequest> = emptyList(),
     classOrFileName: String?
 ) : AbstractPropertyActionCreateCallableFromUsageFix(targetContainer, classOrFileName) {
     private val modifierListPointer = modifierList.createSmartPointer()
@@ -34,9 +36,13 @@ class AddPropertyActionCreateCallableFromUsageFix(
             val modifierList = modifierListPointer.element ?: return@run null
             val resolutionFacade = targetContainer.getResolutionFacade()
             val nullableAnyType = resolutionFacade.moduleDescriptor.builtIns.nullableAnyType
-            val initializer = if (!isLateinitPreferred) {
-                KtPsiFactory(targetContainer.project).createExpression("TODO(\"initialize me\")")
+            val psiFactory = KtPsiFactory(targetContainer.project)
+            val initializer = if(!isLateinitPreferred) {
+                psiFactory.createExpression("TODO(\"initialize me\")")
             } else null
+            val annotations = annotations.map {
+                psiFactory.createAnnotationEntry("@${renderAnnotation(targetContainer, it, psiFactory)}")
+            }
             val ktType = (propertyType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: nullableAnyType
             val propertyInfo = PropertyInfo(
                 propertyName,
@@ -46,7 +52,8 @@ class AddPropertyActionCreateCallableFromUsageFix(
                 listOf(targetContainer),
                 modifierList = modifierList,
                 initializer = initializer,
-                isLateinitPreferred = isLateinitPreferred
+                isLateinitPreferred = isLateinitPreferred,
+                annotations = annotations
             )
             propertyInfo
         }

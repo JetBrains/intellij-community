@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
@@ -20,6 +21,7 @@ import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -55,6 +57,7 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.types.TypeUtils.makeNullableAsSpecified
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -70,7 +73,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         internal fun ExpectedTypes.toKotlinTypeInfo(resolutionFacade: ResolutionFacade): TypeInfo {
             val candidateTypes = flatMapTo(LinkedHashSet()) {
-                val ktType = (it.theType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: return@flatMapTo emptyList()
+                var ktType = (it.theType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: return@flatMapTo emptyList()
+                if (it.asSafely<ExpectedTypeWithNullability>()?.nullability == Nullability.NULLABLE) {
+                    ktType = makeNullableAsSpecified(ktType, true)
+                }
                 when (it.theKind) {
                     ExpectedType.Kind.EXACT, ExpectedType.Kind.SUBTYPE -> listOf(ktType)
                     ExpectedType.Kind.SUPERTYPE -> listOf(ktType) + ktType.supertypes()
@@ -271,7 +277,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         propertyType: JvmType,
         propertyName: String,
         setterRequired: Boolean,
-        classOrFileName: String?
+        classOrFileName: String?,
+        annotations: List<AnnotationRequest>
     ): List<IntentionAction> {
         val modifierBuilder = ModifierBuilder(targetContainer).apply { addJvmModifiers(modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
@@ -283,6 +290,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             propertyName = propertyName,
             setterRequired = setterRequired,
             isLateinitPreferred = false,
+            annotations = annotations,
             classOrFileName = classOrFileName
         )
 
@@ -294,6 +302,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
                     propertyType = propertyType,
                     propertyName = propertyName,
                     setterRequired = true,
+                    annotations = annotations,
                     classOrFileName = classOrFileName
                 )
             )
@@ -361,7 +370,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
                     propertyType.theType,
                     nameAndKind.first,
                     setterRequired,
-                    targetClass.name
+                    targetClass.name,
+                    request.annotations.toList()
                 )
             }
         }
@@ -371,7 +381,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             modifierList = modifierBuilder.modifierList,
             familyName = KotlinBundle.message("add.method"),
             providedText = KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString()),
-            targetContainer = targetContainer
+            targetContainer = targetContainer,
+            annotations = request.annotations.toList()
         )
 
         return listOf(addMethodAction)
@@ -678,7 +689,7 @@ internal fun addAnnotationEntry(
     return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
 }
 
-private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
+internal fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
     val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
     fun isKotlinAnnotation(annotation: AnnotationRequest): Boolean =
         javaPsiFacade.findClass(annotation.qualifiedName, target.resolveScope)?.language == KotlinLanguage.INSTANCE
