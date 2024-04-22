@@ -5,11 +5,15 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
   public void testFindingFile() {
@@ -96,6 +100,49 @@ public class IdeaGatewayTest extends IntegrationTestCase {
 
     RootEntry rootEntry = myGateway.createTransientRootEntryForPath(myGateway.getPathOrUrl(directory), true);
     assertEquals(myGateway.getPathOrUrl(file1) + "\n" + myGateway.getPathOrUrl(file2), getAllPaths(rootEntry));
+  }
+
+  public void testMultipleFilesRootEntry() throws IOException {
+    String topLevelDir = "dir1";
+    String lowLevelDir2 = topLevelDir + "/dir2";
+    String lowLevelDir3 = topLevelDir + "/dir3";
+
+    VirtualFile file1 = createFile(lowLevelDir2 + "/file1.txt");
+    VirtualFile file2 = createFile(lowLevelDir2 + "/file2.txt");
+    VirtualFile file3 = createFile(lowLevelDir3 + "/file3.txt");
+
+    createDirectory(lowLevelDir2 + "smth");
+    createDirectory(topLevelDir + "/dir239");
+    createFile(lowLevelDir2 + "/other.file.txt");
+    createFile(lowLevelDir3 + "/and.other.file.txt");
+
+    Collection<String> paths = ContainerUtil.map(Arrays.asList(file1, file2, file3), file -> myGateway.getPathOrUrl(file));
+    RootEntry rootEntry = myGateway.createTransientRootEntryForPaths(paths, true);
+    assertEquals(StringUtil.join(paths, "\n"), getAllPaths(rootEntry));
+  }
+
+  public void testMultipleDirectoriesRootEntry() throws IOException {
+    String topLevelDir = "dir1";
+    String lowLevelDir2 = topLevelDir + "/dir2";
+    String lowLevelDir3 = topLevelDir + "/dir3";
+
+    VirtualFile directory2 = createDirectory(lowLevelDir2);
+    VirtualFile directory3 = createDirectory(lowLevelDir3);
+
+    VirtualFile file1 = createFile(lowLevelDir2 + "/file1.txt");
+    VirtualFile file2 = createFile(lowLevelDir2 + "/file2.txt");
+    VirtualFile file3 = createFile(lowLevelDir3 + "/file3.txt");
+    VirtualFile directory4 = createDirectory(lowLevelDir3 + "/someDir");
+
+    createDirectory(topLevelDir + "smth");
+    createDirectory(topLevelDir + "/dir239");
+    createFile(topLevelDir + "/other.file.txt");
+    createFile(topLevelDir + "/and.other.file.txt");
+
+    Collection<String> paths = ContainerUtil.map(Arrays.asList(directory2, directory3), directory -> myGateway.getPathOrUrl(directory));
+    RootEntry rootEntry = myGateway.createTransientRootEntryForPaths(paths, true);
+    assertEquals(StringUtil.join(Arrays.asList(file1, file2, directory4, file3), file -> myGateway.getPathOrUrl(file), "\n"),
+                 getAllPaths(rootEntry));
   }
 
   public static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {

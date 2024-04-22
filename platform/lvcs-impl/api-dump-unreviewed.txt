@@ -459,6 +459,7 @@ c:com.intellij.history.integration.IdeaGateway
 - createTransientEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
 - createTransientRootEntry():com.intellij.history.core.tree.RootEntry
 - createTransientRootEntryForPath(java.lang.String,Z):com.intellij.history.core.tree.RootEntry
+- createTransientRootEntryForPaths(java.util.Collection,Z):com.intellij.history.core.tree.RootEntry
 - ensureFilesAreWritable(com.intellij.openapi.project.Project,java.util.List):Z
 - findOrCreateFileSafely(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
 - findOrCreateFileSafely(java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile

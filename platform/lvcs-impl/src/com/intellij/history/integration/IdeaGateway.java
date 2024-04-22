@@ -40,10 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IdeaGateway {
   private static final Key<ContentAndTimestamps> SAVED_DOCUMENT_CONTENT_AND_STAMP_KEY
@@ -247,8 +244,16 @@ public class IdeaGateway {
 
   @RequiresReadLock
   public @NotNull RootEntry createTransientRootEntryForPath(@NotNull String path, boolean includeChildren) {
+    return createTransientRootEntryForPaths(Collections.singletonList(path), includeChildren);
+  }
+
+  @RequiresReadLock
+  public @NotNull RootEntry createTransientRootEntryForPaths(@NotNull Collection<String> paths, boolean includeChildren) {
     RootEntry root = new RootEntry();
-    doCreateChildren(root, getLocalRoots(), false, new SinglePathVisitor(path, includeChildren));
+    Collection<VirtualFile> localRoots = getLocalRoots();
+    for (String path : paths) {
+      doCreateChildren(root, localRoots, false, new SinglePathVisitor(path, includeChildren));
+    }
     return root;
   }
 
@@ -343,11 +348,19 @@ public class IdeaGateway {
     List<Entry> entries = ContainerUtil.mapNotNull(children, each -> {
       if (visitor != null && !visitor.before(each)) return null;
 
-      Entry entry = doCreateEntry(each, forDeletion, visitor);
+      Entry newEntry = null;
+      Entry existingEntry = parent.findEntry(each.getName());
+      if (existingEntry != null) {
+        if (existingEntry instanceof DirectoryEntry existingDirectoryEntry) {
+          doCreateChildren(existingDirectoryEntry, iterateDBChildren(each), forDeletion, visitor);
+        }
+      } else {
+        newEntry = doCreateEntry(each, forDeletion, visitor);
+      }
 
       if (visitor != null) visitor.after(each);
 
-      return entry;
+      return newEntry;
     });
     parent.addChildren(entries);
   }
