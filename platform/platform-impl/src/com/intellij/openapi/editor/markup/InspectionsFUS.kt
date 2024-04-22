@@ -29,7 +29,7 @@ object InspectionsFUS : CounterUsagesCollector() {
     Other
   }
 
-  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 3)
+  private val eventLogGroup: EventLogGroup = EventLogGroup("new.inspections.widget", 4)
 
   private val actionIdField = EventFields.StringValidatedByCustomRule("action_id", ActionRuleValidator::class.java)
   private val startAction = eventLogGroup.registerEvent("action_started", EventFields.Int("tabId"), actionIdField)
