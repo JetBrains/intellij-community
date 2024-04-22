@@ -1914,7 +1914,7 @@
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.ConstantValueInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnreachableCode" bundle="messages.JavaBundle" key="inspection.data.flow.unreachable.code.display.name"
-                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" implementationClass="com.intellij.codeInspection.dataFlow.UnreachableCodeInspection"/>
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.OptionalOfNullableMisuseInspectionMerger" />
     <inspectionElementsMerger implementation="com.intellij.codeInspection.dataFlow.ConstantValueInspectionMerger" />
