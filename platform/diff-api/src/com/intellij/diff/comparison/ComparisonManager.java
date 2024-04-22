@@ -59,16 +59,19 @@ public abstract class ComparisonManager {
                                                      @NotNull CharSequence text2,
                                                      @NotNull CharSequence text3,
                                                      @NotNull ComparisonPolicy policy,
-                                                     @NotNull ProgressIndicator indicator) throws DiffTooBigException;  /**
+                                                     @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
+  /**
    * Compare three texts by-line (LEFT - BASE - RIGHT)
    * Do not actually skip "ignored" changes, but keep them from forming merge conflicts.
    */
   public abstract List<MergeLineFragment> mergeLinesWithinRange(@NotNull CharSequence text1,
-                                                     @NotNull CharSequence text2,
-                                                     @NotNull CharSequence text3,
-                                                     @NotNull ComparisonPolicy policy,
-                                                     @NotNull MergeRange range,
-                                                     @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+                                                                @NotNull CharSequence text2,
+                                                                @NotNull CharSequence text3,
+                                                                @NotNull ComparisonPolicy policy,
+                                                                @NotNull MergeRange range,
+                                                                @NotNull ProgressIndicator indicator) throws DiffTooBigException;
+
   /**
    * Return the common parts of the two files, that can be used as an ad-hoc merge base content.
    */

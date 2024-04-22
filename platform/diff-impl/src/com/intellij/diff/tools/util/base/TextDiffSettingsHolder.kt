@@ -105,7 +105,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var isAutoResolveImportConflicts: Boolean
       get()      = SHARED_SETTINGS.MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS
       set(value) { SHARED_SETTINGS.MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS = value
-        SHARED_SETTINGS.eventDispatcher.multicaster.resolveConflictsInImportsChanged()}
+                   SHARED_SETTINGS.eventDispatcher.multicaster.resolveConflictsInImportsChanged()}
 
     var isEnableLstGutterMarkersInMerge: Boolean
       get()      = SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS

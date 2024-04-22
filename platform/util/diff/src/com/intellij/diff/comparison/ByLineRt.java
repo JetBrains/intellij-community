@@ -394,11 +394,12 @@ public final class ByLineRt {
 
   @NotNull
   @ApiStatus.Internal
-  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts, MergeRange range) {
+  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts,
+                                                                      @NotNull MergeRange range) {
     //noinspection SSBasedInspection
     return conflicts.stream().map(conflict -> new MergeLineFragmentImpl(conflict.start1 + range.start1, conflict.end1 + range.start1,
-                                                             conflict.start2 + range.start2, conflict.end2 + range.start2,
-                                                             conflict.start3 + range.start3, conflict.end3 + range.start3))
+                                                                        conflict.start2 + range.start2, conflict.end2 + range.start2,
+                                                                        conflict.start3 + range.start3, conflict.end3 + range.start3))
       .collect(Collectors.toList());
   }
 

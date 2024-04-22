@@ -1097,6 +1097,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       String title = DiffBundle.message("message.do.in.merge.command", e.getPresentation().getText());
       executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, getApplyChangeRunnable(side, selectedChanges));
     }
+
     //Runnable to execute inside merge command under WriteLock
     protected abstract @NotNull Runnable getApplyChangeRunnable(ThreeSide side, List<TextMergeChange> selectedChanges);
 

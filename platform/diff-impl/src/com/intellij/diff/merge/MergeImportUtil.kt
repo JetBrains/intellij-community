@@ -11,7 +11,7 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.ThreeSide
-import com.intellij.lang.imports.ImportBlockRangeProvider.Companion.getRange
+import com.intellij.lang.imports.ImportBlockRangeProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -60,10 +60,14 @@ class MergeImportUtil {
     @JvmStatic
     fun getImportMergeRange(project: Project?, mergeRequest: TextMergeRequest): MergeRange? {
       if (project == null) return null
-      val files = listOf(getPsiFile(ThreeSide.LEFT, project, mergeRequest), getPsiFile(ThreeSide.BASE, project, mergeRequest), getPsiFile(ThreeSide.RIGHT, project, mergeRequest))
+      val files = listOf(getPsiFile(ThreeSide.LEFT, project, mergeRequest),
+                         getPsiFile(ThreeSide.BASE, project, mergeRequest),
+                         getPsiFile(ThreeSide.RIGHT, project, mergeRequest))
       val ranges = files.mapNotNull(this::getImportLineRange)
       if (ranges.size != 3) return null
-      return MergeRange(ranges[0].start, ranges[0].end + 1, ranges[1].start, ranges[1].end + 1, ranges[2].start, ranges[2].end + 1)
+      return MergeRange(ranges[0].start, ranges[0].end + 1,
+                        ranges[1].start, ranges[1].end + 1,
+                        ranges[2].start, ranges[2].end + 1)
     }
 
     private fun getPsiFile(side: ThreeSide, project: Project, mergeRequest: TextMergeRequest): PsiFile? {
@@ -73,11 +77,11 @@ class MergeImportUtil {
       return PsiManager.getInstance(project).findFile(file)
     }
 
-    private fun getImportLineRange(file: PsiFile?): LineRange? {
-      if (file == null) return null
-      val range = getRange(file)
+    private fun getImportLineRange(psiFile: PsiFile?): LineRange? {
+      if (psiFile == null) return null
+      val range = ImportBlockRangeProvider.getRange(psiFile)
       if (range == null) return null
-      val document = file.fileDocument
+      val document = psiFile.fileDocument
       return LineRange(document.getLineNumber(range.startOffset), document.getLineNumber(range.endOffset))
     }
 
