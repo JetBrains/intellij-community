@@ -104,6 +104,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -161,6 +162,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private SingleAlarm myOtherThreadsAlarm = null;
   private int myOtherThreadsReachBreakpointNumber = 0;
+
+  protected AtomicInteger mySuspendAllInvocation = new AtomicInteger(0);
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
