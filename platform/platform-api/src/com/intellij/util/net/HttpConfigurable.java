@@ -395,6 +395,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
       for (Proxy proxy : proxies) {
         try {
           urlConnection = url.openConnection(proxy);
+          break;
         }
         catch (IOException e) {
           // continue iteration
