@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
+import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -8,7 +9,8 @@ import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -111,12 +113,13 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
       if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
     override val reactionsVm: GitLabReactionsViewModel? = null
 
-    override val body: Flow<String> = note.body
-    override val bodyHtml: Flow<String> = body.map {
+    override val body: StateFlow<String> = note.body
+    override val bodyHtml: StateFlow<String> = body.mapStateInNow(cs) {
       GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
-    }.modelFlow(cs, LOG)
+    }
 
-    override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
+    override val discussionState: StateFlow<GitLabDiscussionStateContainer> =
+      MutableStateFlow(GitLabDiscussionStateContainer.DEFAULT)
 
     val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
       note.position.map { pos -> pos?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) } }

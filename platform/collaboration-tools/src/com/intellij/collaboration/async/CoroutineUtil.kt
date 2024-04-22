@@ -139,6 +139,12 @@ fun <T, M> StateFlow<T>.mapState(
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
 
+@ApiStatus.Internal
+fun <T, M> StateFlow<T>.mapStateInNow(
+  scope: CoroutineScope,
+  mapper: (value: T) -> M
+): StateFlow<M> = map { mapper(it) }.stateInNow(scope, mapper(value))
+
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> = DerivedStateFlow(map(mapper)) { mapper(value) }
 
