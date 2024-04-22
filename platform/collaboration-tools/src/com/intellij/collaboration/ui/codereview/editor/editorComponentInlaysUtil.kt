@@ -27,7 +27,8 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal typealias RendererFactory<VM> = CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
+internal typealias RendererFactory<VM, C> = CoroutineScope.(VM) -> ComponentInlayRenderer<C>
+internal typealias CodeReviewRendererFactory<VM> = CoroutineScope.(VM) -> CodeReviewComponentInlayRenderer
 
 @Deprecated("Use EditorMappedViewModel instead for explicit flow guarantees")
 interface EditorMapped {
@@ -51,7 +52,7 @@ fun <VM : EditorMapped> EditorEx.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: RendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>
 ): Job = cs.launchNow(Dispatchers.Main) {
   doRenderInlays(vmsFlow, HashingUtil.mappingStrategy(vmKeyExtractor), rendererFactory)
 }
@@ -66,13 +67,13 @@ fun <VM : EditorMapped> EditorEx.controlInlaysIn(
 suspend fun <VM : EditorMappedViewModel> EditorEx.renderInlays(
   vmsFlow: Flow<Collection<VM>>,
   vmHashingStrategy: HashingStrategy<VM>,
-  rendererFactory: RendererFactory<VM>
+  rendererFactory: RendererFactory<VM, JComponent>
 ): Nothing = doRenderInlays(vmsFlow, vmHashingStrategy, rendererFactory)
 
 private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
   vmsFlow: Flow<Collection<VM>>,
   vmHashingStrategy: HashingStrategy<VM>,
-  rendererFactory: RendererFactory<VM>
+  rendererFactory: RendererFactory<VM, JComponent>
 ): Nothing {
   val editor = this
   withContext(Dispatchers.Main + CoroutineName("Editor component inlays for $this")) {
@@ -103,7 +104,7 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
   }
 }
 
-private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, rendererFactory: RendererFactory<VM>): Nothing {
+private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, rendererFactory: RendererFactory<VM, JComponent>): Nothing {
   withContext(Dispatchers.Main + CoroutineName("Scope for code review component editor inlay for $vm")) {
     var inlay: Inlay<*>? = null
     try {
@@ -138,7 +139,7 @@ private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, r
 
 private fun <VM : EditorMapped> CoroutineScope.insertComponent(
   vm: VM,
-  rendererFactory: RendererFactory<VM>,
+  rendererFactory: RendererFactory<VM, JComponent>,
   editor: EditorEx,
   offset: Int
 ): Inlay<*>? {
