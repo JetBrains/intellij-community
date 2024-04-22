@@ -9,6 +9,7 @@ import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,10 @@ public class MoveMembersIntoClassFix extends PsiBasedModCommandAction<PsiImplici
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiImplicitClass implicitClass) {
-    return Presentation.of(JavaAnalysisBundle.message("intention.family.name.move.members.into.class"));
+    long count = StreamEx.of(implicitClass.getChildren()).select(PsiMember.class)
+      .remove(PsiClass.class::isInstance).count();
+    if (count == 0) return null;
+    return Presentation.of(JavaAnalysisBundle.message("intention.name.move.members.into.class", count));
   }
 
   @Override

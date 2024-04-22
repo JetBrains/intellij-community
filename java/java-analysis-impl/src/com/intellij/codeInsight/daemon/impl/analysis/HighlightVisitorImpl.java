@@ -655,7 +655,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitField(@NotNull PsiField field) {
     super.visitField(field);
-    if (!hasErrorResults()) add(HighlightClassUtil.checkImplicitClassMember(field, myLanguageLevel, myFile));
     if (!hasErrorResults()) add(HighlightClassUtil.checkIllegalInstanceMemberInRecord(field));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkFinalFieldInitialized(field));
   }
@@ -688,6 +687,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
+      if (variable instanceof PsiField field) {
+        add(HighlightClassUtil.checkImplicitClassMember(field, myLanguageLevel, myFile));
+      }
       add(HighlightUtil.checkVariableAlreadyDefined(variable));
       if (variable.isUnnamed()) {
         HighlightInfo.Builder notAvailable = checkFeature(variable, JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
@@ -721,6 +723,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
     else if (parent instanceof PsiMethod method) {
+      add(HighlightClassUtil.checkImplicitClassMember(method, myLanguageLevel, myFile));
       if (method.isConstructor()) {
         HighlightInfo.Builder info = HighlightMethodUtil.checkConstructorName(method);
         if (info != null) {
@@ -905,7 +908,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitMethod(@NotNull PsiMethod method) {
     super.visitMethod(method);
-    if (!hasErrorResults()) add(HighlightClassUtil.checkImplicitClassMember(method, myLanguageLevel, myFile));
     if (!hasErrorResults()) add(HighlightControlFlowUtil.checkUnreachableStatement(method.getBody()));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkConstructorHandleSuperClassExceptions(method));
     if (!hasErrorResults()) add(HighlightMethodUtil.checkRecursiveConstructorInvocation(method));
