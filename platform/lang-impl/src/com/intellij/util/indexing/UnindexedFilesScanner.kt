@@ -2,7 +2,6 @@
 package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
-import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
@@ -202,9 +201,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private fun scan(indicator: CheckPauseOnlyProgressIndicator,
                    progressReporter: IndexingProgressReporter,
                    markRef: Ref<StatusMark>) {
-    var snapshot = PerformanceWatcher.takeSnapshot()
-    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage("Performing delayed pushing properties tasks for " + myProject.name))
     markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
+    LOG.info("Performing delayed pushing properties tasks for " + myProject.name)
     try {
       val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
       if (pusher is PushedFilePropertiesUpdaterImpl) {
@@ -214,8 +212,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     finally {
       markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
     }
-
-    snapshot = PerformanceWatcher.takeSnapshot()
 
     if (isFullIndexUpdate()) {
       myIndex.clearIndicesIfNecessary()
@@ -255,8 +251,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
           ?.completeToken(scanningRequest, isFullIndexUpdate())
       }
     }
-    val scanningCompletedMessage = getLogScanningCompletedStageMessage()
-    LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage))
+    LOG.info(getLogScanningCompletedStageMessage())
   }
 
   private fun scanAndUpdateUnindexedFiles(indicator: CheckPauseOnlyProgressIndicator,
@@ -336,7 +331,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     myProject.getService(PerProjectIndexingQueue::class.java).flushNow(this.indexingReason)
   }
 
-  private class ScanningSession(private val project: Project,
+  internal class ScanningSession(private val project: Project,
                                 private val scanningHistory: ProjectScanningHistoryImpl,
                                 private val forceReindexingTrigger: Predicate<IndexedFile>?,
                                 private val filterHandler: FilesFilterScanningHandler,
