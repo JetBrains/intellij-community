@@ -2,8 +2,8 @@
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.AccessToken
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,7 +22,7 @@ interface IncompleteDependenciesService {
   @RequiresReadLock
   fun getState(): DependenciesState
 
-  @RequiresBlockingContext
+  @RequiresWriteLock
   fun enterIncompleteState(): IncompleteDependenciesAccessToken
 
   enum class DependenciesState(val isComplete: Boolean) {
@@ -31,7 +31,7 @@ interface IncompleteDependenciesService {
   }
 
   abstract class IncompleteDependenciesAccessToken : AccessToken() {
-    @RequiresBlockingContext
+    @RequiresWriteLock
     abstract override fun finish()
   }
 }
