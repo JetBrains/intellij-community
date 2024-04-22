@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 /**
@@ -9,4 +9,13 @@ package com.intellij.execution.process;
  *
  * Also implementations of ProcessHandler should take in account that process can implement this interface
  */
-public interface SelfKiller {}
+public interface SelfKiller {
+  /**
+   * Send some signal to the process that indicates some soft termination. For example, SIGINT.
+   * <p>
+   * If this method returns false, the caller must destroy the process in a less gentle way, like SIGTERM or SIGKILL.
+   */
+  default boolean tryDestroyGracefully() {
+    return false;
+  }
+}
