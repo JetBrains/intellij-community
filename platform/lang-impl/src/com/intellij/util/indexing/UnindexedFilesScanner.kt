@@ -42,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -363,7 +364,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       progressReporter.setSubTasksCount(providers.size)
 
       val sharedExplanationLogger = IndexingReasonExplanationLogger()
-      val providersToCheck = Channel<IndexableFilesIterator>(capacity = SCANNING_PARALLELISM)
+      val providersToCheck = Channel<IndexableFilesIterator>(capacity = RENDEZVOUS)
 
       runBlockingCancellable {
         async {
