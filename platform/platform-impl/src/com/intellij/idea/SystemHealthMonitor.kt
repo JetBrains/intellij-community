@@ -409,13 +409,13 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
       else if (usableSpace < NO_DISK_SPACE_THRESHOLD) {
         LOG.warn("Extremely low disk space: ${usableSpace}")
         withContext(Dispatchers.EDT) {
-          Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", store.name()), IdeBundle.message("no.disk.space.title"))
+          Messages.showErrorDialog(IdeBundle.message("no.disk.space.message", storeName(store)), IdeBundle.message("no.disk.space.title"))
         }
         delay(5.seconds)
       }
       else if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
         LOG.warn("Low disk space: ${usableSpace}")
-        MyNotification(IdeBundle.message("low.disk.space.message", store.name()), NotificationType.WARNING, "low.disk")
+        MyNotification(IdeBundle.message("low.disk.space.message", storeName(store)), NotificationType.WARNING, "low.disk")
           .setTitle(IdeBundle.message("low.disk.space.title"))
           .whenExpired { monitorDiskSpace(scope, dir, store, initialDelay = 5.seconds) }
           .notify(null)
@@ -427,3 +427,7 @@ private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore,
     }
   }
 }
+
+private fun storeName(store: FileStore): String =
+  if (store.name().isBlank()) store.toString().trim().trimStart('(').trimEnd(')')
+  else store.toString()
