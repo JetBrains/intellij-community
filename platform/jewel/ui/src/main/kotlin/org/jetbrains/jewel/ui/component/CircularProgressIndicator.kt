@@ -13,9 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -76,7 +74,6 @@ private fun CircularProgressIndicatorImpl(
 ) {
     val defaultColor = if (JewelTheme.isDark) Color(0xFF6F737A) else Color(0xFFA8ADBD)
     val frames = remember { mutableStateListOf<Painter>() }
-    var framesCount by remember { mutableStateOf(0) }
 
     val density = LocalDensity.current
     LaunchedEffect(density, style.color, defaultColor) {
@@ -87,13 +84,13 @@ private fun CircularProgressIndicatorImpl(
                     loadSvgPainter(it.byteInputStream(), density)
                 },
             )
-            framesCount = frames.size
         }
     }
 
-    if (framesCount == 0) {
+    if (frames.isEmpty()) {
         Box(modifier.size(iconSize))
     } else {
+        val framesCount = frames.size
         val transition = rememberInfiniteTransition("CircularProgressIndicator")
         val currentIndex by
             transition.animateValue(
