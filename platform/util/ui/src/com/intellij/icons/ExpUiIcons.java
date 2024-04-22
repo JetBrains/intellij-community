@@ -496,7 +496,7 @@ public final class ExpUiIcons {
   }
 
   public static final class Nodes {
-    /** 16x16 */ public static final @NotNull Icon AbstractException = load("expui/nodes/abstractException.svg", 557846383, 2);
+    /** 16x16 */ public static final @NotNull Icon AbstractException = load("expui/nodes/abstractException.svg", 1473228068, 2);
     /** 16x16 */ public static final @NotNull Icon AccessLocal = load("expui/nodes/accessLocal.svg", -1034596711, 2);
     /** 16x16 */ public static final @NotNull Icon AccessPrivate = load("expui/nodes/accessPrivate.svg", 1833439018, 2);
     /** 16x16 */ public static final @NotNull Icon AccessProtected = load("expui/nodes/accessProtected.svg", -493043417, 2);
@@ -516,9 +516,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon DataTables = load("expui/nodes/dataTables.svg", -1920718805, 2);
     /** 16x16 */ public static final @NotNull Icon Desktop = load("expui/nodes/desktop.svg", -1879263839, 2);
     /** 16x16 */ public static final @NotNull Icon EditFolder = load("expui/nodes/editFolder.svg", -1715842178, 2);
-    /** 16x16 */ public static final @NotNull Icon Enum = load("expui/nodes/enum.svg", -1860463909, 2);
+    /** 16x16 */ public static final @NotNull Icon Enum = load("expui/nodes/enum.svg", -1736290823, 2);
     /** 16x16 */ public static final @NotNull Icon ErrorIntroduction = load("expui/nodes/errorIntroduction.svg", 1066814848, 2);
-    /** 16x16 */ public static final @NotNull Icon Exception = load("expui/nodes/exception.svg", 74365265, 2);
+    /** 16x16 */ public static final @NotNull Icon Exception = load("expui/nodes/exception.svg", 1989999435, 2);
     /** 16x16 */ public static final @NotNull Icon ExcludedGenerated = load("expui/nodes/excludedGenerated.svg", -1741171970, 2);
     /** 16x16 */ public static final @NotNull Icon ExcludeRoot = load("expui/nodes/excludeRoot.svg", -1337025191, 2);
     /** 16x16 */ public static final @NotNull Icon Field = load("expui/nodes/field.svg", 2024455730, 2);
