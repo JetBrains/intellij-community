@@ -822,8 +822,13 @@ public class JavaKeywordCompletion {
                && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailTypes.humbleSpaceBeforeWordType()));
       }
-      else if (isEndOfBlock(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiMember.class) == null) {
-        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
+      else if (isEndOfBlock(myPosition)) {
+        PsiMember parentMember = PsiTreeUtil.getParentOfType(myPosition, PsiMember.class);
+        if (parentMember == null || parentMember instanceof PsiField field &&
+            field.getParent() instanceof PsiImplicitClass implicitClass &&
+            implicitClass.getFirstChild() == field) {
+          addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailTypes.humbleSpaceBeforeWordType()));
+        }
       }
     }
 
