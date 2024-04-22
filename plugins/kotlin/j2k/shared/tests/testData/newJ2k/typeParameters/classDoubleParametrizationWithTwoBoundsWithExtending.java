@@ -1,4 +1,6 @@
 // IGNORE_K2
+import java.util.Collection;
+
 interface INode {}
 interface Node {}
 class A {}

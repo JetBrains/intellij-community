@@ -59,6 +59,7 @@ fun getNewJ2KConversions(context: NewJ2kConverterContext): List<Conversion> = li
     ImplicitCastsConversion(context),
     PrimitiveTypeCastsConversion(context),
     LiteralConversion(context),
+    RedundantTypeProjectionConversion(context),
     RemoveRedundantQualifiersForCallsConversion(context),
     FunctionalInterfacesConversion(context),
     FilterImportsConversion(context),
