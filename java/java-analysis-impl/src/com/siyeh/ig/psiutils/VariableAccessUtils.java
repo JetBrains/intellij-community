@@ -507,7 +507,7 @@ public final class VariableAccessUtils {
     final boolean sameType = Comparing.equal(variableType, initializationType);
     for (PsiReferenceExpression refElement : getVariableReferences(variable)) {
       if (finalVariableIntroduction || canCaptureThis) {
-        final PsiElement element = PsiTreeUtil.getParentOfType(refElement, PsiClass.class, PsiLambdaExpression.class);
+        PsiElement element = LambdaUtil.getContainingClassOrLambda(refElement);
         if (element != null && PsiTreeUtil.isAncestor(containingScope, element, true)) {
           return false;
         }
