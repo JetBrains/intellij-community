@@ -1,7 +1,7 @@
-LineBreakpoint created at coroutineSuspendFun.kt:30
+LineBreakpoint created at coroutineSuspendFun.kt:31
 Run Java
 Connected to the target VM
-coroutineSuspendFun.kt:30
+coroutineSuspendFun.kt:31
 Thread stack trace:
 	KotlinStackFrame c:!LINE_NUMBER!, CoroutineSuspendFunKt (continuation)
 		($completion, c, paramB)

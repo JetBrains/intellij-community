@@ -1,7 +1,7 @@
-LineBreakpoint created at suspendFunWithInner.kt:40
+LineBreakpoint created at suspendFunWithInner.kt:41
 Run Java
 Connected to the target VM
-suspendFunWithInner.kt:40
+suspendFunWithInner.kt:41
 Thread stack trace:
 	CoroutinePreflightFrame c:!LINE_NUMBER!, TestSuspendA$InClassB$InClassC (continuation)
 		($completion, $continuation, $result, inClassCMethodVal)

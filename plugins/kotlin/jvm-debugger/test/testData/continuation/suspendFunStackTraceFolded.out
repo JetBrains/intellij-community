@@ -1,7 +1,7 @@
-LineBreakpoint created at suspendFunStackTraceFolded.kt:11
+LineBreakpoint created at suspendFunStackTraceFolded.kt:12
 Run Java
 Connected to the target VM
-suspendFunStackTraceFolded.kt:11
+suspendFunStackTraceFolded.kt:12
 Thread stack trace:
 	CoroutinePreflightFrame invokeSuspend:!LINE_NUMBER!, SuspendFunStackTraceFoldedKt$main$1 (continuation)
 		($result, this)
