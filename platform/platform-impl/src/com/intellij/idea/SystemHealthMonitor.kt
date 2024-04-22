@@ -107,10 +107,10 @@ private fun checkInstallationIntegrity() {
 private fun checkIdeDirectories() {
   if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
     if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-      showNotification(key = "implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsPath()))
+      showNotification("implicit.plugin.directory.path", suppressable = true, action = null, shorten(PathManager.getPluginsPath()))
     }
     if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
-      showNotification(key = "implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogPath()))
+      showNotification("implicit.log.directory.path", suppressable = true, action = null, shorten(PathManager.getLogPath()))
     }
   }
 }
@@ -339,26 +339,26 @@ private fun checkAncientOs() {
 }
 
 private fun showNotification(
-  key: @PropertyKey(resourceBundle = "messages.IdeBundle") String?,
+  key: @PropertyKey(resourceBundle = "messages.IdeBundle") String,
   suppressable: Boolean,
   action: NotificationAction?,
   vararg params: Any
 ) {
   if (suppressable) {
-    val ignored = PropertiesComponent.getInstance().isValueSet("ignore.$key")
+    val ignored = PropertiesComponent.getInstance().isValueSet("ignore.${key}")
     LOG.warn("issue detected: ${key}${if (ignored) " (ignored)" else ""}")
     if (ignored) {
       return
     }
   }
 
-  val notification = MyNotification(IdeBundle.message(key!!, *params), NotificationType.WARNING, key)
+  val notification = MyNotification(IdeBundle.message(key, *params), NotificationType.WARNING, key)
   if (action != null) {
     notification.addAction(action)
   }
   if (suppressable) {
     notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("sys.health.acknowledge.action")) {
-      PropertiesComponent.getInstance().setValue("ignore.$key", "true")
+      PropertiesComponent.getInstance().setValue("ignore.${key}", "true")
     })
   }
   notification.isImportant = true
@@ -385,7 +385,7 @@ private fun startDiskSpaceMonitoring() {
     return
   }
 
-  monitorDiskSpace(scope = service<CoreUiCoroutineScopeHolder>().coroutineScope, dir = dir, store = store, initialDelay = 1.seconds)
+  monitorDiskSpace(service<CoreUiCoroutineScopeHolder>().coroutineScope, dir, store, initialDelay = 1.seconds)
 }
 
 private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Duration) {
