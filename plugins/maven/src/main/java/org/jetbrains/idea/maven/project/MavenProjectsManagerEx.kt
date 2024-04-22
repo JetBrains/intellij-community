@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -15,6 +17,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
@@ -313,6 +316,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     val console = syncConsole
     console.startTransaction()
+    var incompleteState: IncompleteDependenciesService.IncompleteDependenciesAccessToken? = null
     val syncActivity = importActivityStarted(project, MavenUtil.SYSTEM_ID)
     try {
       console.startImport(spec.isExplicit)
@@ -332,19 +336,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           showUntrustedProjectNotification(myProject)
           return result.modules
         }
+        incompleteState = writeAction {
+          project.service<IncompleteDependenciesService>().enterIncompleteState()
+        }
       }
-      val readingResult = readMavenProjectsActivity(syncActivity) { read() }
-
-      fireImportAndResolveScheduled()
-      val projectsToResolve = collectProjectsToResolve(readingResult)
-
-      logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
-
-      val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
-
-      withContext(tracer.span("notifyMavenProblems")) {
-        MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
-      }
+      val result = doDynamicSync(syncActivity, read, spec, modelsProvider)
 
       return result
     }
@@ -354,6 +350,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
     finally {
       logDebug("Finish update ${project.name}, $spec ${myProject.name}")
+      incompleteState?.let {
+        writeAction { it.finish() }
+      }
       console.finishTransaction(spec.resolveIncrementally())
       syncActivity.finished {
         listOf(ProjectImportCollector.LINKED_PROJECTS.with(projectsTree.rootProjects.count()),
@@ -363,6 +362,25 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         ApplicationManager.getApplication().messageBus.syncPublisher(MavenSyncListener.TOPIC).syncFinished(myProject)
       }
     }
+  }
+
+  private suspend fun MavenProjectsManagerEx.doDynamicSync(syncActivity: StructuredIdeActivity,
+                                                           read: suspend () -> MavenProjectsTreeUpdateResult,
+                                                           spec: MavenSyncSpec,
+                                                           modelsProvider: IdeModifiableModelsProvider?): List<Module> {
+    val readingResult = readMavenProjectsActivity(syncActivity) { read() }
+
+    fireImportAndResolveScheduled()
+    val projectsToResolve = collectProjectsToResolve(readingResult)
+
+    logDebug("Reading result: ${readingResult.updated.size}, ${readingResult.deleted.size}; to resolve: ${projectsToResolve.size}")
+
+    val result = importModules(spec, syncActivity, projectsToResolve, modelsProvider)
+
+    withContext(tracer.span("notifyMavenProblems")) {
+      MavenResolveResultProblemProcessor.notifyMavenProblems(myProject)
+    }
+    return result
   }
 
   private suspend fun importModules(spec: MavenSyncSpec,
