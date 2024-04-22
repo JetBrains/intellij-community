@@ -31,20 +31,13 @@ class JupyterToolbarPanelListeners(  // PY-66455
       val enteredPart = determineMouseRegion(it.x)
       when (enteredPart) {
         PanelRegion.MIDDLE -> toolbarService.requestToolbarDisplay(panel, editor)
-        // todo: for right, see figma
+        // todo: for additional cell actions toolbar, also implement mouse moved
         // https://www.figma.com/file/ApfhZCnjLV7NRlksW6hy4Y/Jupyter?type=design&node-id=239-8996&mode=design&t=HhbICTruXlSWMcQh-0
         PanelRegion.RIGHT -> return
         PanelRegion.NONE -> return
       }
     }
   }
-
-  override fun mouseExited(e: MouseEvent?) = toolbarService.requestToolbarHide()
-  override fun mouseClicked(e: MouseEvent?) = toolbarService.hideToolbarUnconditionally()
-  override fun componentShown(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
-  override fun componentHidden(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
-  override fun componentResized(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
-  override fun componentMoved(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
 
   private fun determineMouseRegion(xPos: Int): PanelRegion {
     val panelWidth = panel.width
@@ -58,4 +51,11 @@ class JupyterToolbarPanelListeners(  // PY-66455
       else -> PanelRegion.NONE
     }
   }
+
+  override fun mouseExited(e: MouseEvent?) = toolbarService.requestToolbarHide()
+  override fun mouseClicked(e: MouseEvent?) = toolbarService.hideToolbarUnconditionally()
+  override fun componentShown(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
+  override fun componentHidden(e: ComponentEvent?) = toolbarService.hideToolbarUnconditionally()
+  override fun componentResized(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
+  override fun componentMoved(e: ComponentEvent?) = toolbarService.adjustToolbarPosition()
 }
