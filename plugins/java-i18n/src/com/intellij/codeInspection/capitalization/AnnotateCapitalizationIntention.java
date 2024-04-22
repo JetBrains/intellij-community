@@ -20,63 +20,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * @author Dmitry Avdeev
  */
 public final class AnnotateCapitalizationIntention implements IntentionAction {
-
-
-  public class J {
-    public interface Element {}
-
-    public class Box<T> {
-      private T t;
-
-      public Box(T t) {
-        this.t = t;
-      }
-
-      public void putT(T t) {
-        this.t = t;
-      }
-
-      public T getT() {
-        return t;
-      }
-    }
-
-    public class Container implements Element {
-      private final List<Element> children;
-      private List<? extends Element> nonFinalChildren = new ArrayList<>();
-
-      public Container(Element... children) {
-        this.children = new ArrayList<>(Arrays.asList(children));
-      }
-
-      public List<Element> getChildren() {
-        return children;
-      }
-
-      public List<? super Container> mergeWithChildren(List<? extends Element> other) {
-        children.addAll(other);
-        return children;
-      }
-
-      private void test(List<Element> elements) {
-        elements = getChildren();
-
-      }
-
-      public Box<? extends Container> getBox() {
-        Box<Container> box = new Box<>(new Container());
-        return box;
-      }
-    }
-  }
 
   public AnnotateCapitalizationIntention() {
   }

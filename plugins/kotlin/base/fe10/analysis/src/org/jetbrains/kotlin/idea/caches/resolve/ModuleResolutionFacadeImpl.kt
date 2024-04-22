@@ -84,7 +84,6 @@ internal class ModuleResolutionFacadeImpl(
         elements: Collection<KtElement>,
         callback: DiagnosticSink.DiagnosticsCallback?
     ): AnalysisResult {
-        println("ModuleResolutionFacadeImpl::analyzeWithAllCompilerChecks")
         ResolveInDispatchThreadManager.assertNoResolveInDispatchThread()
 
         return runWithCancellationCheck {

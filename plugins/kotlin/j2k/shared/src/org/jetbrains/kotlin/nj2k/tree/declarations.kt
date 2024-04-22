@@ -5,7 +5,8 @@ package org.jetbrains.kotlin.nj2k.tree
 import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
 import org.jetbrains.kotlin.nj2k.tree.visitors.JKVisitor
 import org.jetbrains.kotlin.nj2k.types.JKNoType
-import org.jetbrains.kotlin.nj2k.types.fqName
+import java.util.*
+import kotlin.collections.ArrayList
 
 abstract class JKDeclaration : JKTreeElement(), PsiOwner by PsiOwnerImpl() {
     abstract val name: JKNameIdentifier
@@ -180,10 +181,6 @@ class JKTypeParameter(
     override var name: JKNameIdentifier by child(name)
     var upperBounds: List<JKTypeElement> by children(upperBounds)
     override var annotationList by child(annotationList)
-
-    init {
-        println("In declarations.kt JKTypeParameter, name = ${name.value}")
-    }
 
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameter(this)
 }

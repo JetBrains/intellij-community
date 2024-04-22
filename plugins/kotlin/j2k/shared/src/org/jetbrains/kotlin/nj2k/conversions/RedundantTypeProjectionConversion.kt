@@ -2,64 +2,49 @@
 
 package org.jetbrains.kotlin.nj2k.conversions
 
-import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.JKClass.ClassKind.*
-import org.jetbrains.kotlin.nj2k.tree.Visibility.*
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.psi.KtClass
 
+/**
+ * This processing step is analogous to the "REDUNDANT_PROJECTION" diagnostic-based postprocessing step. The goal here is to remove
+ * redundant type projection keywords (i.e. `in` and `out`) by checking whether the use site and declaration have the same type projection.
+ * For example, this step would change `fun <T> doThing(): T where T : Comparable<in T>` into `fun <T> doThing(): T where T : Comparable<T>`
+ */
 class RedundantTypeProjectionConversion(context: NewJ2kConverterContext) : RecursiveConversion(context) {
     context(KtAnalysisSession)
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
-        if (element is JKTypeParameter) {
-            println("\n!!!!====== Found JKTypeParameter ${element.name.value} ${element.parent?.parent}\n")
+        // e.g. `out String` in `list as List<out String>`
+        if (element is JKTypeElement) {
+            return recurse(getNewTypeElementOrNull(element.type) ?: element)
         }
-        if (element !is JKTypeParameterList || element.typeParameters.isEmpty()) return recurse(element)
-        println("\nRedundantTypeProjectionConversion, ${element.typeParameters.size}")
-        // class CC<T, K> : A() where T : INode?, T : Comparable<in T?>?, K : Node?, K : Collection<out K?>?
-        val newTypeParameters = mutableListOf<JKTypeParameter>()
-        for (typeParameter in element.typeParameters) {
-            println("== ${typeParameter.name.value}")
-            val newUpperBounds = mutableListOf<JKTypeElement>()
-            for (upperBound in typeParameter.upperBounds) {
-                val upperBoundType = upperBound.type
-                if (upperBoundType !is JKClassType || upperBoundType.parameters.isEmpty()) {
-                    newUpperBounds += upperBound.detached(typeParameter)
-                    continue
-                }
-                val upperBoundTypeDefinition = upperBoundType.classReference.target
-                if (upperBoundTypeDefinition !is KtClass || upperBoundTypeDefinition.typeParameters.size != upperBoundType.parameters.size) {
-                    newUpperBounds += upperBound.detached(typeParameter)
-                    continue
-                }
 
-                val newUpperBoundTypeParameters = mutableListOf<JKType>()
-                for ((inheritorTypeParameter, parentTypeParameter) in upperBoundType.parameters.zip(upperBoundTypeDefinition.typeParameters)) {
-                    println("    inheritorTypeParameter = $inheritorTypeParameter")
-                    if (inheritorTypeParameter !is JKVarianceTypeParameterType || inheritorTypeParameter.variance.name.uppercase() != parentTypeParameter.variance.label.uppercase()) {
-                        newUpperBoundTypeParameters += inheritorTypeParameter
-                        continue
-                    }
+        // e.g. `T` in `class CC<T> : A() where  T : Comparable<in T>?`
+        if (element is JKTypeParameter && element.upperBounds.isNotEmpty()) {
+            val newUpperBounds = element.upperBounds.map { getNewTypeElementOrNull(it.type) ?: it.detached(element) }
+            return recurse(JKTypeParameter(element::name.detached(), newUpperBounds, element::annotationList.detached()))
+        }
 
-                    println("    inheritorTypeParameter.boundType.fqName = ${inheritorTypeParameter.boundType.fqName}")
-                    newUpperBoundTypeParameters += inheritorTypeParameter.boundType as JKTypeParameterType
-                }
-                newUpperBounds += JKTypeElement(JKClassType(upperBoundType.classReference, newUpperBoundTypeParameters, upperBoundType.nullability))
+        return recurse(element)
+    }
 
-                println("  target = ${upperBoundTypeDefinition.javaClass.name}")
-                println("  ${upperBoundType.fqName}, ${upperBoundType.parameters.size}")
-            }
+    private fun getNewTypeElementOrNull(type: JKType): JKTypeElement? {
+        if (type !is JKClassType || type.parameters.isEmpty()) return null
+        val typeDefinition = type.classReference.target
+        if (typeDefinition !is KtClass || typeDefinition.typeParameters.size != type.parameters.size) {
+            return null
+        }
 
-            newTypeParameters += if (1 == 1) {
-                JKTypeParameter(typeParameter::name.detached(), newUpperBounds, typeParameter::annotationList.detached())
+        val newTypeParameters = type.parameters.zip(typeDefinition.typeParameters).map { (localTypeParameter, definitionTypeParameter) ->
+            if (localTypeParameter is JKVarianceTypeParameterType &&
+                localTypeParameter.variance.name.uppercase() == definitionTypeParameter.variance.label.uppercase()) {
+                localTypeParameter.boundType as JKTypeParameterType
             } else {
-                typeParameter.detached(element)
+                localTypeParameter
             }
         }
-
-        return recurse(JKTypeParameterList(newTypeParameters))
+        return JKTypeElement(JKClassType(type.classReference, newTypeParameters, type.nullability))
     }
 }

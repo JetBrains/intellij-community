@@ -62,6 +62,7 @@ internal fun getK2J2KConversions(context: NewJ2kConverterContext): List<Conversi
     ImplicitCastsConversion(context),
     PrimitiveTypeCastsConversion(context),
     LiteralConversion(context),
+    RedundantTypeProjectionConversion(context),
     RemoveRedundantQualifiersForCallsConversion(context),
     FunctionalInterfacesConversion(context),
     FilterImportsConversion(context),

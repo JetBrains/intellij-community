@@ -6074,6 +6074,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("../../shared/tests/testData/newJ2k/typeParameters/rawTypeCast.java");
         }
 
+        @TestMetadata("redundantTypeProjections.java")
+        public void testRedundantTypeProjections() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/typeParameters/redundantTypeProjections.java");
+        }
+
         @TestMetadata("typeFromOtherFile.java")
         public void testTypeFromOtherFile() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/typeParameters/typeFromOtherFile.java");
