@@ -1537,6 +1537,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");
                 }
 
+                @TestMetadata("nonConditionalReturn.kt")
+                public void testNonConditionalReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nonConditionalReturn.kt");
+                }
+
                 @TestMetadata("nonLocalReturn.kt")
                 public void testNonLocalReturn() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nonLocalReturn.kt");
@@ -2549,6 +2554,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedEnum.kt");
                 }
 
+                @TestMetadata("qualifiedInnerClass.kt")
+                public void testQualifiedInnerClass() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedInnerClass.kt");
+                }
+
                 @TestMetadata("qualifiedObject.kt")
                 public void testQualifiedObject() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedObject.kt");
@@ -2582,6 +2592,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 @TestMetadata("reducedParameterList.kt")
                 public void testReducedParameterList() throws Exception {
                     runTest("testData/refactoring/extractFunction/parameters/misc/reducedParameterList.kt");
+                }
+
+                @TestMetadata("redundantReceiverWithSuspend.kt")
+                public void testRedundantReceiverWithSuspend() throws Exception {
+                    runTest("testData/refactoring/extractFunction/parameters/misc/redundantReceiverWithSuspend.kt");
                 }
 
                 @TestMetadata("replaceWithBackticks.kt")
