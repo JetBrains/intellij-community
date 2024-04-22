@@ -120,7 +120,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       try {
         SystemProxySettings.getInstance().openProxySettings();
       } catch (Exception e) {
-        mySystemProxySettingsLink.setEnabled(false);
         Logger.getInstance(HttpProxySettingsUi.class).error("failed to open system proxy settings", e);
       }
     });
