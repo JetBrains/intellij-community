@@ -330,6 +330,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    *
    * @see #actionPerformed(AnActionEvent)
    */
+  @ApiStatus.OverrideOnly
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     update(e);
   }
