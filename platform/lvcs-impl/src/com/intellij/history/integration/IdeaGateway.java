@@ -279,7 +279,7 @@ public class IdeaGateway {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      return doCreateFileEntry(file, getActualContentNoAcquire(file));
+      return doCreateFileEntry(file, false);
     }
     DirectoryEntry newDir = new DirectoryEntry(file.getName());
     doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
@@ -301,17 +301,7 @@ public class IdeaGateway {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      Pair<StoredContent, Long> contentAndStamps;
-      if (forDeletion) {
-        FileDocumentManager m = FileDocumentManager.getInstance();
-        Document d = m.isFileModified(file) ? m.getCachedDocument(file) : null; // should not try to load document
-        contentAndStamps = acquireAndClearCurrentContent(file, d);
-      }
-      else {
-        contentAndStamps = getActualContentNoAcquire(file);
-      }
-
-      return doCreateFileEntry(file, contentAndStamps);
+      return doCreateFileEntry(file, forDeletion);
     }
 
     DirectoryEntries entries = doCreateDirectoryEntries(file);
@@ -321,11 +311,24 @@ public class IdeaGateway {
     return entries.first;
   }
 
-  private static @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
-    if (file instanceof VirtualFileSystemEntry) {
-      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+  private @NotNull Entry doCreateFileEntry(@NotNull VirtualFile file, boolean forDeletion) {
+    Pair<StoredContent, Long> contentAndStamps;
+    if (forDeletion) {
+      FileDocumentManager m = FileDocumentManager.getInstance();
+      Document d = m.isFileModified(file) ? m.getCachedDocument(file) : null; // should not try to load document
+      contentAndStamps = acquireAndClearCurrentContent(file, d);
     }
-    return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+    else {
+      contentAndStamps = getActualContentNoAcquire(file);
+    }
+
+    StoredContent content = contentAndStamps.first;
+    Long timestamp = contentAndStamps.second;
+
+    if (file instanceof VirtualFileSystemEntry) {
+      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), content, timestamp, !file.isWritable());
+    }
+    return new FileEntry(file.getName(), content, timestamp, !file.isWritable());
   }
 
   private record DirectoryEntries(@NotNull DirectoryEntry first, @NotNull DirectoryEntry last) {
