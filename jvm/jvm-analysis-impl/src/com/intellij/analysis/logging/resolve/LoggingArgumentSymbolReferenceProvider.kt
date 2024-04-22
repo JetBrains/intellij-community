@@ -2,6 +2,8 @@
 package com.intellij.analysis.logging.resolve
 
 import com.intellij.codeInspection.logging.*
+import com.intellij.codeInspection.logging.PlaceholderCountIndexStrategy.KOTLIN_MULTILINE_RAW_STRING
+import com.intellij.codeInspection.logging.PlaceholderCountIndexStrategy.RAW_STRING
 import com.intellij.codeInspection.logging.PlaceholderLoggerType.*
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiExternalReferenceHost
@@ -10,11 +12,8 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceProvider
 import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.getParentOfType
-import org.jetbrains.uast.toUElementOfType
 
 class LoggingArgumentSymbolReferenceProvider : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
@@ -74,14 +73,19 @@ internal fun <T> getAlignedPlaceholderCount(placeholderList: List<T>, context: P
 
 internal fun getPlaceholderRanges(context: PlaceholderContext): List<PlaceholderRanges>? {
   val logStringText = context.logStringArgument.sourcePsi?.text ?: return null
+  val type = if (isKotlinMultilineString(context.logStringArgument, logStringText))  KOTLIN_MULTILINE_RAW_STRING else RAW_STRING
   val partHolders = listOf(
     LoggingStringPartEvaluator.PartHolder(
       logStringText,
       true
     )
   )
-  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, partHolders)
+  val placeholderCountResult = solvePlaceholderCount(context.loggerType, context.placeholderParameters.size, partHolders, type)
   if (placeholderCountResult.status != PlaceholdersStatus.EXACTLY) return null
 
   return placeholderCountResult.placeholderRangesList
+}
+
+private fun isKotlinMultilineString(logString: UExpression, text : String): Boolean {
+  return logString is UPolyadicExpression && text.startsWith("\"\"\"") && text.endsWith("\"\"\"") && text.length >= 6
 }
