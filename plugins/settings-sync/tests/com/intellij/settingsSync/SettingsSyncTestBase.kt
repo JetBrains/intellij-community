@@ -4,17 +4,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
-import org.junit.After
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.Rule
-import org.junit.rules.RuleChain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -23,18 +20,12 @@ import kotlin.io.path.readText
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
+@TestApplication
 internal abstract class SettingsSyncTestBase {
 
   companion object {
     val LOG = logger<SettingsSyncTestBase>()
   }
-
-  private val appRule = ApplicationRule()
-  private val tempDirManager = TemporaryDirectory()
-  private val disposableRule = DisposableRule()
-  @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
-
-  @Rule @JvmField val logger = TestLoggerFactory.createTestWatcher()
 
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path
@@ -42,13 +33,13 @@ internal abstract class SettingsSyncTestBase {
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
-  protected val disposable: Disposable get() = disposableRule.disposable
+  @TestDisposable
+  protected lateinit var disposable: Disposable
   protected val settingsSyncStorage: Path get() = configDir.resolve("settingsSync")
 
-  @Before
-  fun setup() {
+  @BeforeEach
+  fun setup(@TempDir mainDir: Path) {
     application = ApplicationManager.getApplication() as ApplicationImpl
-    val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
 
     SettingsSyncLocalSettings.getInstance().state.reset()
@@ -68,7 +59,7 @@ internal abstract class SettingsSyncTestBase {
     }
   }
 
-  @After
+  @AfterEach
   fun cleanup() {
     if (::bridge.isInitialized) {
       bridge.waitForAllExecuted()
@@ -87,13 +78,13 @@ internal abstract class SettingsSyncTestBase {
   }
 
   protected fun assertFileWithContent(expectedContent: String, file: Path) {
-    assertTrue("File $file does not exist", file.exists())
-    assertEquals("File $file has unexpected content", expectedContent, file.readText())
+    assertTrue(file.exists(), "File $file does not exist")
+    assertEquals(expectedContent, file.readText(), "File $file has unexpected content")
   }
 
   protected fun assertServerSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
-    assertNotNull("Nothing has been pushed", pushedSnapshot)
+    assertNotNull(pushedSnapshot, "Nothing has been pushed")
     pushedSnapshot!!.assertSettingsSnapshot {
       build()
     }
