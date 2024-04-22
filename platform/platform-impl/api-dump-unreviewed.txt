@@ -3198,7 +3198,7 @@ f:com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 *f:com.intellij.execution.ijent.IjentChildProcessAdapter
 - java.lang.Process
 - com.intellij.execution.process.SelfKiller
-- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentChildProcess):V
+- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentId,com.intellij.platform.ijent.IjentChildProcess):V
 - destroy():V
 - destroyForcibly():java.lang.Process
 - exitValue():I
@@ -3210,12 +3210,13 @@ f:com.intellij.execution.filters.ShowTextPopupHyperlinkInfo
 - pid():J
 - supportsNormalTermination():Z
 - toString():java.lang.String
+- tryDestroyGracefully():Z
 - waitFor():I
 - waitFor(J,java.util.concurrent.TimeUnit):Z
 f:com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 - com.pty4j.PtyProcess
 - com.intellij.execution.process.SelfKiller
-- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentChildProcess):V
+- <init>(kotlinx.coroutines.CoroutineScope,com.intellij.platform.ijent.IjentId,com.intellij.platform.ijent.IjentChildProcess):V
 - destroy():V
 - destroyForcibly():java.lang.Process
 - exitValue():I
@@ -3229,6 +3230,7 @@ f:com.intellij.execution.ijent.IjentChildPtyProcessAdapter
 - setWinSize(com.pty4j.WinSize):V
 - supportsNormalTermination():Z
 - toString():java.lang.String
+- tryDestroyGracefully():Z
 - waitFor():I
 - waitFor(J,java.util.concurrent.TimeUnit):Z
 f:com.intellij.execution.impl.ConsoleViewUtil
