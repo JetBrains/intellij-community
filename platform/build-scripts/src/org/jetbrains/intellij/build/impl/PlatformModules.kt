@@ -147,9 +147,7 @@ suspend fun createPlatformLayout(pluginsToPublish: Set<PluginLayout>, context: B
   val productLayout = context.productProperties.productLayout
   return createPlatformLayout(
     addPlatformCoverage = !productLayout.excludedModuleNames.contains("intellij.platform.coverage") &&
-                          hasPlatformCoverage(productLayout = productLayout,
-                                              enabledPluginModules = enabledPluginModules,
-                                              context = context),
+                          hasPlatformCoverage(productLayout = productLayout, enabledPluginModules = enabledPluginModules, context = context),
     projectLibrariesUsedByPlugins = computeProjectLibsUsedByPlugins(enabledPluginModules = enabledPluginModules, context = context),
     context = context,
   )
@@ -542,7 +540,7 @@ private fun processProductXmlDescriptor(
 ): Set<ModuleItem> {
   val xml = JDOMUtil.load(file)
   resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
-  val result = collectAndEmbedProductModules(root = xml, context = context)
+  val result = collectAndEmbedProductModules(root = xml, xIncludePathResolver = xIncludePathResolver, context = context)
   val data = JDOMUtil.write(xml)
   layout.withPatch { moduleOutputPatcher, _ ->
     moduleOutputPatcher.patchModuleOutput(moduleName, "META-INF/${file.fileName}", data)
@@ -559,22 +557,17 @@ private fun toLoadPath(relativePath: String): String {
   }
 }
 
-private fun getModuleDescriptor(moduleName: String, context: BuildContext): CDATA {
+private fun getModuleDescriptor(moduleName: String, xIncludePathResolver: XIncludePathResolver, context: BuildContext): CDATA {
   val descriptorFile = "$moduleName.xml"
   val file = requireNotNull(context.findFileInModuleSources(moduleName, descriptorFile)) {
     "Cannot find file $descriptorFile in module $moduleName"
   }
   val xml = JDOMUtil.load(file)
-  resolveNonXIncludeElement(original = xml, base = file, pathResolver = object : XIncludePathResolver {
-    override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean): Path {
-      val loadPath = relativePath.removePrefix("/")
-      return requireNotNull(context.findFileInModuleSources(moduleName, loadPath)) { "Cannot find $loadPath in module $moduleName" }
-    }
-  })
+  resolveNonXIncludeElement(original = xml, base = file, pathResolver = xIncludePathResolver)
   return CDATA(JDOMUtil.write(xml))
 }
 
-private fun collectAndEmbedProductModules(root: Element, context: BuildContext): Set<ModuleItem> {
+private fun collectAndEmbedProductModules(root: Element, xIncludePathResolver: XIncludePathResolver, context: BuildContext): Set<ModuleItem> {
   val result = LinkedHashSet<ModuleItem>()
   for (moduleElement in (root.getChildren("content").asSequence().flatMap { it.getChildren("module") })) {
     val moduleName = moduleElement.getAttributeValue("name") ?: continue
@@ -587,7 +580,7 @@ private fun collectAndEmbedProductModules(root: Element, context: BuildContext):
     }
 
     check(moduleElement.content.isEmpty())
-    moduleElement.setContent(getModuleDescriptor(moduleName = moduleName, context = context))
+    moduleElement.setContent(getModuleDescriptor(moduleName = moduleName, xIncludePathResolver = xIncludePathResolver, context = context))
   }
   return result
 }

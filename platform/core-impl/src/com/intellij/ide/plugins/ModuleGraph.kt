@@ -42,6 +42,7 @@ class ModuleGraph internal constructor(
 }
 
 private val VCS_ALIAS_ID = PluginId.getId("com.intellij.modules.vcs")
+private val RIDER_ALIAS_ID = PluginId.getId("com.intellij.modules.rider")
 
 internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): ModuleGraph {
   val moduleMap = HashMap<String, IdeaPluginDescriptorImpl>(plugins.size * 2)
@@ -88,6 +89,10 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
       }
       if (!strictCheck) {
         moduleMap.get("intellij.platform.collaborationTools")?.let { result.add(it) }
+      }
+
+      if (doesDependOnPluginAlias(module, RIDER_ALIAS_ID)) {
+        moduleMap.get("intellij.rider")?.let { result.add(it) }
       }
     }
 
