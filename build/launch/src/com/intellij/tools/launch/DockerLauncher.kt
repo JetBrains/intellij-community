@@ -50,7 +50,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
   private val uid = UnixSystem().uid.toString()
   private val gid = UnixSystem().gid.toString()
   private val userName: String = System.getProperty("user.name")!!
-  private val userHome: String = "/home/$userName"
+  private val userHome: String = getCanonicalUserHome(userName)
 
   fun runInContainer(cmd: List<String>): Pair<Process, String> {
     val containerIdFile = File.createTempFile("cwm.docker.cid", "")
@@ -234,3 +234,5 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     return dockerRun to containerId
   }
 }
+
+private fun getCanonicalUserHome(userName: String): String = if (userName == "root") "/root" else "/home/$userName"
