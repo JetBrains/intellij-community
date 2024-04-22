@@ -1,21 +1,21 @@
 MODULES
-wasm20221114
+project
 
-wasm20221114.commonMain
+project.commonMain
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (COMPILE)
 
-wasm20221114.commonTest
+project.commonTest
     commonMain (friend, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-annotations-wasm-js:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test-wasm-js:{{KGP_VERSION}} (TEST)
     wasmJsMain (friend, TEST)
 
-wasm20221114.wasmJsMain
+project.wasmJsMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (COMPILE)
 
-wasm20221114.wasmJsTest
+project.wasmJsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     org.jetbrains.kotlin:kotlin-stdlib-wasm-js:{{KGP_VERSION}} (TEST)

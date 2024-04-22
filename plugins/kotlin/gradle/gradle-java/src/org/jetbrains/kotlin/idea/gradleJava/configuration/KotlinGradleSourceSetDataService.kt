@@ -198,7 +198,8 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
         val NON_JVM_LIBRARY_KINDS: List<PersistentLibraryKind<*>> = listOf(
             KotlinJavaScriptLibraryKind,
-            KotlinWasmLibraryKind,
+            KotlinWasmJsLibraryKind,
+            KotlinWasmWasiLibraryKind,
             KotlinNativeLibraryKind,
             KotlinCommonLibraryKind
         )

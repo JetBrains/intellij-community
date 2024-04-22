@@ -28,9 +28,18 @@ object KotlinJavaScriptLibraryKind : PersistentLibraryKind<DummyLibraryPropertie
     }
 }
 
-object KotlinWasmLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.wasm"), KotlinLibraryKind {
+object KotlinWasmJsLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.wasm.js"), KotlinLibraryKind {
     override val compilerPlatform: TargetPlatform
-        get() = WasmPlatforms.Default
+        get() = WasmPlatforms.wasmJs
+
+    override fun createDefaultProperties(): DummyLibraryProperties {
+        return DummyLibraryProperties.INSTANCE
+    }
+}
+
+object KotlinWasmWasiLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.wasm.wasi"), KotlinLibraryKind {
+    override val compilerPlatform: TargetPlatform
+        get() = WasmPlatforms.wasmWasi
 
     override fun createDefaultProperties(): DummyLibraryProperties {
         return DummyLibraryProperties.INSTANCE

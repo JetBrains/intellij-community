@@ -103,6 +103,12 @@ data class KotlinNativeCompilationExtensionsImpl(
     constructor(extensions: KotlinNativeCompilationExtensions) : this(extensions.konanTarget)
 }
 
+data class KotlinWasmCompilationExtensionsImpl(
+    override val wasmTarget: String
+) : KotlinWasmCompilationExtensions {
+    constructor(extensions: KotlinWasmCompilationExtensions) : this(extensions.wasmTarget)
+}
+
 data class KotlinCompilationCoordinatesImpl(
     override val targetName: String,
     override val compilationName: String
@@ -122,6 +128,7 @@ data class KotlinCompilationImpl(
     override val compilerArguments: List<String>?,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
+    override val wasmExtensions: KotlinWasmCompilationExtensions?,
     override val associateCompilations: Set<KotlinCompilationCoordinates>,
     override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
     override val isTestComponent: Boolean,
@@ -138,6 +145,7 @@ data class KotlinCompilationImpl(
         compilerArguments = kotlinCompilation.compilerArguments?.toList(),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
+        wasmExtensions = kotlinCompilation.wasmExtensions?.let(::KotlinWasmCompilationExtensionsImpl),
         associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
         extras = IdeaKotlinExtras.copy(kotlinCompilation.extras),
         isTestComponent = kotlinCompilation.isTestComponent,

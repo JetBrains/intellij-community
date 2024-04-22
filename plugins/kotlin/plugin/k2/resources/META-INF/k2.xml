@@ -40,7 +40,8 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJvmIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJsIdePlatformKindTooling"/>
-    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirWasmIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirWasmJsIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirWasmWasiIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirNativeIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirCommonIdePlatformKindTooling"/>
 
@@ -149,7 +150,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
-    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmJsLibraryType"/>
+    <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver"
                     serviceImplementation="org.jetbrains.kotlin.idea.modules.IdeJavaModuleResolver"/>
