@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline.item
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapDataToModel
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModelBase
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
@@ -38,7 +39,7 @@ interface GHPRTimelineReviewViewModel {
 
   val isBusy: StateFlow<Boolean>
 
-  val canEdit: Boolean
+  val canEdit: StateFlow<Boolean>
   val editVm: StateFlow<CodeReviewTextEditingViewModel?>
 
   val threads: StateFlow<ComputedResult<List<GHPRTimelineThreadViewModel>>>
@@ -74,7 +75,9 @@ class UpdateableGHPRTimelineReviewViewModel internal constructor(
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 
-  override val canEdit: Boolean = initialData.viewerCanUpdate
+  // GH fails to edit reviews that are initialized with an empty body.
+  // bodyHtml will contain <body></body>, so it's less easy to check for emptiness.
+  override val canEdit: StateFlow<Boolean> = dataState.mapState { it.body.isNotEmpty() && initialData.viewerCanUpdate }
 
   private val _editVm = MutableStateFlow<EditViewModel?>(null)
   override val editVm: StateFlow<CodeReviewTextEditingViewModel?> = _editVm.asStateFlow()
