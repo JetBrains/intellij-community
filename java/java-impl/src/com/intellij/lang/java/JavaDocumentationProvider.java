@@ -1011,6 +1011,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
         if (virtualFile != null) {
           String pkgName = ((PsiJavaFile)file).getPackageName();
+          if (!pkgName.isEmpty() && aClass instanceof PsiImplicitClass) return null;
           String relPath =
             (pkgName.isEmpty() ? qName : pkgName.replace('.', '/') + '/' + qName.substring(pkgName.length() + 1)) + HTML_EXTENSION;
           return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
