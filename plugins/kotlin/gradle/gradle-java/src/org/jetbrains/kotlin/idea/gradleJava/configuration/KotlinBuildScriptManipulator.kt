@@ -198,7 +198,7 @@ class KotlinBuildScriptManipulator(
         val dependencyText = getCompileDependencySnippet(
             libraryDescriptor.libraryGroupId,
             libraryDescriptor.libraryArtifactId,
-            libraryDescriptor.maxVersion,
+            libraryDescriptor.preferredVersion ?: libraryDescriptor.maxVersion ?: libraryDescriptor.minVersion,
             scope.toGradleCompileScope(scriptFile.module?.buildSystemType == BuildSystemType.AndroidGradle)
         )
 
