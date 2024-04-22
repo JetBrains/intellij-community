@@ -517,6 +517,10 @@ fun <T : CommandChain> T.delay(delayMs: Int): T = apply {
   addCommand("${CMD_PREFIX}delay ${delayMs}")
 }
 
+fun <T : CommandChain> T.delay(delay: Duration): T = apply {
+  addCommand("${CMD_PREFIX}delay ${delay.inWholeMilliseconds}")
+}
+
 fun <T : CommandChain> T.withSystemMetrics(chain: CommandChain): T = apply {
   if (chain == this) throw IllegalStateException("Current command chain provided")
   for (command in chain) {

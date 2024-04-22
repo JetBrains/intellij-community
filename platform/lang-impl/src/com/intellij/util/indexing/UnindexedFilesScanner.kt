@@ -4,6 +4,7 @@ package com.intellij.util.indexing
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
@@ -257,8 +258,12 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
     finally {
-      projectIndexingDependenciesService.completeToken(scanningRequest, isFullIndexUpdate())
       markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false)
+      ReadAction.run<Throwable> {
+        // read action ensures that service won't be disposed and storage inside won't be closed
+        myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
+          ?.completeToken(scanningRequest, isFullIndexUpdate())
+      }
     }
     val scanningCompletedMessage = getLogScanningCompletedStageMessage()
     LOG.info(snapshot.getLogResponsivenessSinceCreationMessage(scanningCompletedMessage))
@@ -616,9 +621,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   override fun dispose() {
     if (!myProject.isDisposed) {
-      val serviceIfCreated = myProject.getServiceIfCreated(
-        ProjectIndexingDependenciesService::class.java)
-      serviceIfCreated?.completeToken(myFutureScanningRequestToken)
+      myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
+        ?.completeToken(myFutureScanningRequestToken)
     }
   }
 

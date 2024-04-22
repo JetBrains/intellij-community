@@ -29344,17 +29344,6 @@ f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 - f:getCurrentTokenInTest():com.intellij.util.indexing.dependencies.AppIndexingDependenciesToken
 - f:invalidateAllStamps(java.lang.String):V
 f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesService$Companion
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage
-- com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
-- sf:Companion:com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage$Companion
-- <init>(java.nio.channels.FileChannel,java.nio.file.Path):V
-- f:readAppFingerprint():com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint$FingerprintImpl
-- f:readRequestId():I
-- resetStorage():V
-- f:writeAppFingerprint(com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint$FingerprintImpl):V
-- f:writeRequestId(I):V
-f:com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage$Companion
-- f:openOrInit(java.nio.file.Path):com.intellij.util.indexing.dependencies.AppIndexingDependenciesStorage
 com.intellij.util.indexing.dependencies.FileIndexingStamp
 - a:isSame(I):Z
 - a:store(java.util.function.IntConsumer):V
@@ -29363,22 +29352,6 @@ f:com.intellij.util.indexing.dependencies.FutureScanningRequestToken
 - <init>():V
 - f:isSuccessful():Z
 - f:markSuccessful():V
-a:com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
-- sf:Companion:com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase$Companion
-- sf:FIRST_UNUSED_OFFSET:J
-- <init>(java.nio.channels.FileChannel,java.nio.file.Path,I):V
-- f:checkVersion(kotlin.jvm.functions.Function2):V
-- f:close():V
-- f:completeMigration():V
-- pf:getStoragePath():java.nio.file.Path
-- f:initIfNotInitialized():V
-- f:readIntOrExecute(J,kotlin.jvm.functions.Function1):I
-- resetStorage():V
-- f:tooFewBytesReadMsg(I,java.lang.String):java.lang.String
-- f:tooFewBytesWrittenMsg(I,java.lang.String):java.lang.String
-- f:writeIntOrExecute(J,I,kotlin.jvm.functions.Function1):V
-f:com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase$Companion
-- f:openOrInit(java.nio.file.Path,kotlin.jvm.functions.Function2):com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
 com.intellij.util.indexing.dependencies.IndexingRequestToken
 - a:getFileIndexingStamp(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.indexing.dependencies.FileIndexingStamp
 f:com.intellij.util.indexing.dependencies.IndexingRequestTokenImpl
@@ -29412,18 +29385,6 @@ f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
 - f:requestHeavyScanningOnProjectOpen(java.lang.String):V
 f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService$Companion
 - f:getNULL_STAMP():com.intellij.util.indexing.dependencies.FileIndexingStamp
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage
-- com.intellij.util.indexing.dependencies.IndexingDependenciesStorageBase
-- sf:Companion:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage$Companion
-- sf:DEFAULT_APP_INDEXING_REQUEST_ID_OF_LAST_COMPLETED_SCANNING:I
-- <init>(java.nio.channels.FileChannel,java.nio.file.Path):V
-- f:readAppIndexingRequestIdOfLastScanning():I
-- f:readIncompleteScanningMark():Z
-- resetStorage():V
-- f:writeAppIndexingRequestIdOfLastScanning(I):V
-- f:writeIncompleteScanningMark(Z):V
-f:com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage$Companion
-- f:openOrInit(java.nio.file.Path):com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesStorage
 f:com.intellij.util.indexing.dependencies.ReadWriteFileIndexingStampImpl
 - com.intellij.util.indexing.dependencies.FileIndexingStamp
 - <init>(I):V

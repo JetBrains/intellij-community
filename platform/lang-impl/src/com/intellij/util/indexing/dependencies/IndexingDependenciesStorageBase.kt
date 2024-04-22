@@ -3,6 +3,7 @@ package com.intellij.util.indexing.dependencies
 
 import com.intellij.util.io.ResilientFileChannel
 import com.intellij.util.io.createParentDirectories
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -10,9 +11,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
+@ApiStatus.Internal
 abstract class IndexingDependenciesStorageBase(private val storage: FileChannel,
                                                protected val storagePath: Path,
                                                private val storageVersion: Int) {
+  val isOpen: Boolean
+    get() = storage.isOpen
 
   companion object {
     private const val STORAGE_VERSION_OFFSET = 0L
