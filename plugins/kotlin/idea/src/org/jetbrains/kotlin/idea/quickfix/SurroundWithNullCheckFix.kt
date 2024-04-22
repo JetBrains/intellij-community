@@ -6,30 +6,30 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableSimpleExpression
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isNullabilityMismatch
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 class SurroundWithNullCheckFix(
     expression: KtExpression,
@@ -113,16 +113,19 @@ class SurroundWithNullCheckFix(
                     expectedType = diagnosticWithParameters.a
                     actualType = diagnosticWithParameters.b
                 }
+
                 Errors.TYPE_MISMATCH_WARNING -> {
                     val diagnosticWithParameters = Errors.TYPE_MISMATCH_WARNING.cast(diagnostic)
                     expectedType = diagnosticWithParameters.a
                     actualType = diagnosticWithParameters.b
                 }
+
                 ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS -> {
                     val diagnosticWithParameters = ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS.cast(diagnostic)
                     expectedType = diagnosticWithParameters.a
                     actualType = diagnosticWithParameters.b
                 }
+
                 else -> return null
             }
             val root = when (val parent = nullableExpression.parent) {
@@ -130,10 +133,12 @@ class SurroundWithNullCheckFix(
                     val call = parent.getParentOfType<KtCallExpression>(true) ?: return null
                     call.getLastParentOfTypeInRow<KtQualifiedExpression>() ?: call
                 }
+
                 is KtBinaryExpression -> {
                     if (parent.right != nullableExpression) return null
                     parent
                 }
+
                 else -> return null
             }
             if (root.parent !is KtBlockExpression) return null

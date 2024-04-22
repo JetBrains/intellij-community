@@ -6,16 +6,16 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
+import com.intellij.psi.createSmartPointer
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
@@ -26,14 +26,9 @@ import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
 import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
-import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
-import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
-import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
+import org.jetbrains.kotlin.idea.core.overrideImplement.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 internal class OverrideKeywordHandler(
@@ -102,7 +97,6 @@ internal class OverrideKeywordHandler(
     }
 
     context(KtAnalysisSession)
-    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun createLookupElementToGenerateSingleOverrideMember(
         member: KtClassMember,
         declaration: KtCallableDeclaration?,
@@ -159,7 +153,6 @@ internal class OverrideKeywordHandler(
         }
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
     private fun generateMemberInNewAnalysisSession(
         classOrObject: KtClassOrObject,
         member: KtClassMember,
