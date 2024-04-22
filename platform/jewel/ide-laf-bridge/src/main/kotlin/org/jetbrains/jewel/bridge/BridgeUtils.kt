@@ -77,7 +77,7 @@ public fun List<Color>.createVerticalBrush(
 
 public fun retrieveIntAsDp(key: String): Dp {
     val rawValue = UIManager.get(key)
-    if (rawValue is Int) rawValue.dp
+    if (rawValue is Int) return rawValue.dp
 
     keyNotFound(key, "Int")
 }

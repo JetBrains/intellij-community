@@ -146,7 +146,9 @@ public class MenuItemMetrics(
     public val separatorPadding: PaddingValues,
     public val keybindingsPadding: PaddingValues,
     public val separatorThickness: Dp,
+    public val separatorHeight: Dp,
     public val iconSize: Dp,
+    public val minHeight: Dp,
 ) {
 
     public companion object

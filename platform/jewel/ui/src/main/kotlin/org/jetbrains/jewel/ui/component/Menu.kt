@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -158,7 +160,7 @@ internal fun MenuContent(
                 ambientColor = colors.shadow,
                 spotColor = colors.shadow,
             )
-            .border(Stroke.Alignment.Center, style.metrics.borderWidth, colors.border, menuShape)
+            .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
             .background(colors.background, menuShape)
             .width(IntrinsicSize.Max)
             .onHover { localMenuManager.onHoveredChange(it) },
@@ -336,12 +338,14 @@ public fun MenuSeparator(
     metrics: MenuItemMetrics = JewelTheme.menuStyle.metrics.itemMetrics,
     colors: MenuItemColors = JewelTheme.menuStyle.colors.itemColors,
 ) {
-    Divider(
-        orientation = Orientation.Horizontal,
-        modifier = modifier.padding(metrics.separatorPadding),
-        color = colors.separator,
-        thickness = metrics.separatorThickness,
-    )
+    Box(modifier.height(metrics.separatorHeight)) {
+        Divider(
+            orientation = Orientation.Horizontal,
+            modifier = Modifier.fillMaxWidth().padding(metrics.separatorPadding),
+            color = colors.separator,
+            thickness = metrics.separatorThickness,
+        )
+    }
 }
 
 @Composable
@@ -422,9 +426,11 @@ internal fun MenuItem(
 
             Row(
                 modifier = Modifier.fillMaxWidth()
+                    .defaultMinSize(minHeight = itemMetrics.minHeight)
                     .drawItemBackground(itemMetrics, backgroundColor)
                     .padding(itemMetrics.contentPadding),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (canShowIcon) {
                     val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)

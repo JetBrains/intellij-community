@@ -1546,13 +1546,15 @@ public final class org/jetbrains/jewel/ui/component/styling/MenuItemColors$Compa
 public final class org/jetbrains/jewel/ui/component/styling/MenuItemMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/MenuItemMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;Landroidx/compose/foundation/layout/PaddingValues;FFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getIconSize-D9Ej5fM ()F
 	public final fun getKeybindingsPadding ()Landroidx/compose/foundation/layout/PaddingValues;
+	public final fun getMinHeight-D9Ej5fM ()F
 	public final fun getOuterPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getSelectionCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getSeparatorHeight-D9Ej5fM ()F
 	public final fun getSeparatorPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getSeparatorThickness-D9Ej5fM ()F
 	public fun hashCode ()I

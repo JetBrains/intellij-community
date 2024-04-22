@@ -20,21 +20,17 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.InputMode
-import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Active
@@ -47,8 +43,6 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
-import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
-import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -98,6 +92,7 @@ public fun Dropdown(
     val borderColor by colors.borderFor(dropdownState)
     val hasNoOutline = outline == Outline.None
 
+    var componentWidth by remember { mutableIntStateOf(-1) }
     Box(
         modifier = modifier
             .clickable(
@@ -120,7 +115,8 @@ public fun Dropdown(
             .thenIf(outline == Outline.None) { focusOutline(dropdownState, shape) }
             .outline(dropdownState, outline, shape)
             .width(IntrinsicSize.Max)
-            .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height)),
+            .defaultMinSize(minSize.width, minSize.height.coerceAtLeast(arrowMinSize.height))
+            .onSizeChanged { componentWidth = it.width },
         contentAlignment = Alignment.CenterStart,
     ) {
         CompositionLocalProvider(LocalContentColor provides colors.contentFor(dropdownState).value) {
@@ -146,6 +142,7 @@ public fun Dropdown(
         }
 
         if (expanded) {
+            val density = LocalDensity.current
             PopupMenu(
                 onDismissRequest = {
                     expanded = false
@@ -154,56 +151,12 @@ public fun Dropdown(
                     }
                     true
                 },
-                modifier = menuModifier.focusProperties { canFocus = true },
+                modifier = menuModifier.focusProperties { canFocus = true }
+                    .defaultMinSize(minWidth = with(density) { componentWidth.toDp() }),
                 style = style.menuStyle,
                 horizontalAlignment = Alignment.Start,
                 content = menuContent,
             )
-        }
-    }
-}
-
-@Composable
-internal fun DropdownMenu(
-    onDismissRequest: (InputMode) -> Boolean,
-    horizontalAlignment: Alignment.Horizontal,
-    modifier: Modifier = Modifier,
-    style: MenuStyle,
-    content: MenuScope.() -> Unit,
-) {
-    val density = LocalDensity.current
-
-    val popupPositionProvider = AnchorVerticalMenuPositionProvider(
-        contentOffset = style.metrics.offset,
-        contentMargin = style.metrics.menuMargin,
-        alignment = horizontalAlignment,
-        density = density,
-    )
-
-    var focusManager: FocusManager? by remember { mutableStateOf(null) }
-    var inputModeManager: InputModeManager? by remember { mutableStateOf(null) }
-    val menuManager = remember(onDismissRequest) { MenuManager(onDismissRequest = onDismissRequest) }
-
-    Popup(
-        popupPositionProvider = popupPositionProvider,
-        onDismissRequest = { onDismissRequest(InputMode.Touch) },
-        properties = PopupProperties(focusable = true),
-        onPreviewKeyEvent = { false },
-        onKeyEvent = {
-            val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
-            val currentInputModeManager =
-                checkNotNull(inputModeManager) { "InputModeManager must not be null" }
-            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
-        },
-    ) {
-        focusManager = LocalFocusManager.current
-        inputModeManager = LocalInputModeManager.current
-
-        CompositionLocalProvider(
-            LocalMenuManager provides menuManager,
-            LocalMenuStyle provides style,
-        ) {
-            MenuContent(modifier, content = content)
         }
     }
 }

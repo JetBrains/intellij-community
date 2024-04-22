@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -42,6 +43,7 @@ import org.jetbrains.jewel.ui.component.CircularProgressIndicator
 import org.jetbrains.jewel.ui.component.CircularProgressIndicatorBig
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.Divider
+import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.LazyTree
@@ -52,6 +54,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.component.separator
 
 @Composable
 internal fun ComponentShowcaseTab() {
@@ -85,6 +88,23 @@ private fun RowScope.ColumnOne() {
             },
             style = Typography.h3TextStyle(),
         )
+
+        var selectedItem by remember { mutableIntStateOf(-1) }
+        Dropdown(
+            menuContent = {
+                selectableItem(selectedItem == 0, onClick = { selectedItem = 0 }) {
+                    Text("Hello")
+                }
+
+                separator()
+
+                selectableItem(selectedItem == 1, onClick = { selectedItem = 1 }) {
+                    Text("World")
+                }
+            },
+        ) {
+            Text("Selected item $selectedItem")
+        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),

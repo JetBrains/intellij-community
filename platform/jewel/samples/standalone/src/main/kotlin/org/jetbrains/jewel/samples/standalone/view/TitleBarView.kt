@@ -45,7 +45,7 @@ fun DecoratedWindowScope.TitleBarView() {
                             val painterProvider =
                                 rememberResourcePainterProvider(it.icon, StandaloneSampleIcons::class.java)
                             val painter by painterProvider.getPainter(Size(20))
-                            Icon(painter, "icon")
+                            Icon(painter, "icon", modifier = Modifier.size(20.dp))
                             Text(it.title)
                         }
                     }

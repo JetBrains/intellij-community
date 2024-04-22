@@ -187,7 +187,9 @@ public fun MenuItemMetrics.Companion.defaults(
     separatorPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     keybindingsPadding: PaddingValues = PaddingValues(start = 36.dp),
     separatorThickness: Dp = 1.dp,
+    separatorHeight: Dp = 9.dp,
     iconSize: Dp = 16.dp,
+    minHeight: Dp = 20.dp,
 ): MenuItemMetrics =
     MenuItemMetrics(
         selectionCornerSize,
@@ -196,7 +198,9 @@ public fun MenuItemMetrics.Companion.defaults(
         separatorPadding,
         keybindingsPadding,
         separatorThickness,
+        separatorHeight,
         iconSize,
+        minHeight,
     )
 
 public fun SubmenuMetrics.Companion.defaults(
