@@ -9,6 +9,7 @@ import com.intellij.platform.ml.embeddings.search.indices.InMemoryEmbeddingSearc
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager
 import com.intellij.platform.ml.embeddings.services.LocalArtifactsManager.Companion.SEMANTIC_SEARCH_RESOURCES_DIR
+import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -35,6 +36,7 @@ class ActionEmbeddingsStorage : EmbeddingsStorage {
     ActionEmbeddingStorageManager.getInstance().triggerIndexing() // trigger indexing on first search usage
     if (index.getSize() == 0) return emptyList()
     val searchStartTime = System.nanoTime()
+    LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
     val embedding = generateEmbedding(text) ?: return emptyList()
     val neighbours = index.findClosest(searchEmbedding = embedding, topK = topK, similarityThreshold = similarityThreshold)
     EmbeddingSearchLogger.searchFinished(null, EmbeddingSearchLogger.Index.ACTIONS, TimeoutUtil.getDurationMillis(searchStartTime))
@@ -45,6 +47,7 @@ class ActionEmbeddingsStorage : EmbeddingsStorage {
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Flow<ScoredText> {
     ActionEmbeddingStorageManager.getInstance().triggerIndexing() // trigger indexing on first search usage
     if (index.getSize() == 0) return emptyFlow()
+    LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
     val embedding = generateEmbedding(text) ?: return emptyFlow()
     return index.streamFindClose(embedding, similarityThreshold)
   }

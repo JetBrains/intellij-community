@@ -6,6 +6,7 @@ import com.intellij.platform.ml.embeddings.logging.EmbeddingSearchLogger
 import com.intellij.platform.ml.embeddings.search.indices.DiskSynchronizedEmbeddingSearchIndex
 import com.intellij.platform.ml.embeddings.search.indices.IndexableEntity
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
 import com.intellij.platform.ml.embeddings.utils.generateEmbedding
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -24,6 +25,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
     if (index.getSize() == 0) return emptyList()
     val searchStartTime = System.nanoTime()
+    LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
     val embedding = generateEmbedding(text) ?: return emptyList()
     val neighbours = index.findClosest(embedding, topK, similarityThreshold)
     EmbeddingSearchLogger.searchFinished(project, reportableIndex, TimeoutUtil.getDurationMillis(searchStartTime))
@@ -34,6 +36,7 @@ abstract class DiskSynchronizedEmbeddingsStorage<T : IndexableEntity>(val projec
   suspend fun streamSearchNeighbours(text: String, similarityThreshold: Double? = null): Flow<ScoredText> {
     FileBasedEmbeddingStoragesManager.getInstance(project).triggerIndexing()
     if (index.getSize() == 0) return emptyFlow()
+    LocalEmbeddingServiceProvider.getInstance().scheduleCleanup()
     val embedding = generateEmbedding(text) ?: return emptyFlow()
     return index.streamFindClose(embedding, similarityThreshold)
   }
