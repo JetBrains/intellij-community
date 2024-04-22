@@ -36,7 +36,9 @@ internal class IsUpToDateCheckStartupActivity : ProjectActivity {
       return
     }
     // Triggering project save activity to ensure that we don't violate the contract of JPS execution (.idea folder has to be available)
-    saveSettings(project)
+    if (!project.isDefault && project.projectFile?.exists() != true) {
+      saveSettings(project)
+    }
 
     coroutineContext.ensureActive()
     logger.info("activity started")
