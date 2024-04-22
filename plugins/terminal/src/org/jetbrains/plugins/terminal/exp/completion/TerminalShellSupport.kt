@@ -8,7 +8,7 @@ import com.intellij.util.KeyedLazyInstanceEP
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellType
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface TerminalShellSupport {
   val promptContentElementType: IElementType
 
