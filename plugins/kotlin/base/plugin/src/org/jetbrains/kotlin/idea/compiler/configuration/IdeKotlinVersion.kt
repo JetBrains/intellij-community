@@ -31,7 +31,7 @@ class IdeKotlinVersion private constructor(
             "^(\\d+)" + // major
             "\\.(\\d+)" + // minor
             "\\.(\\d+)" + // patch
-            "(?:-([A-Za-z]\\w+(?:-release)?))?" + // kind suffix
+            "(?:-([A-Za-z]\\w+(?:\\.\\d+)?(?:-release)?))?" + // kind suffix
             "(?:-(\\d+)?)?$" // build number
         ).toRegex(RegexOption.IGNORE_CASE)
 
@@ -105,7 +105,7 @@ class IdeKotlinVersion private constructor(
                 kindSuffix.startsWith("beta") -> parseKind(kindSuffix, "beta") { Kind.Beta(it) }
                 kindSuffix.startsWith("m")  -> parseKind(kindSuffix, "m") { Kind.Milestone(it) }
                 kindSuffix.startsWith("eap") -> parseKind(kindSuffix, "eap") { Kind.Eap(it) }
-                kindSuffix.matches(Regex("ij\\d+")) -> Kind.ForIde(kindSuffix)
+                kindSuffix.matches(Regex("""ij\d+(?:\.\d+)?""")) -> Kind.ForIde(kindSuffix)
                 else -> null
             } ?: return Result.failure(IllegalArgumentException("Unsupported version kind suffix: \"$kindSuffix\" ($rawVersion)"))
 
