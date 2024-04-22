@@ -203,54 +203,45 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                    markRef: Ref<StatusMark>) {
     applyDelayedPushOperations()
 
-    val orderedProviders: List<IndexableFilesIterator>
-    markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, true)
-    try {
+    val orderedProviders: List<IndexableFilesIterator> = markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators) {
       if (predefinedIndexableFilesIterators == null) {
         val pair = collectProviders(myProject, myIndex)
-        orderedProviders = pair.first
         markRef.set(pair.second)
+        pair.first
       }
       else {
-        orderedProviders = predefinedIndexableFilesIterators
+        predefinedIndexableFilesIterators
       }
     }
-    finally {
-      markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, false)
-    }
 
-    markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, true)
-    val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
-    val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen() else projectIndexingDependenciesService.newScanningToken()
-    try {
+    markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
+      val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
+      val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen() else projectIndexingDependenciesService.newScanningToken()
       myFutureScanningRequestToken.markSuccessful()
       projectIndexingDependenciesService.completeToken(myFutureScanningRequestToken)
 
-      ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
-        .collectIndexableFilesConcurrently(orderedProviders)
-    }
-    finally {
-      markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false)
-      ReadAction.run<Throwable> {
-        // read action ensures that service won't be disposed and storage inside won't be closed
-        myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
-          ?.completeToken(scanningRequest, isFullIndexUpdate())
+      try {
+        ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
+          .collectIndexableFilesConcurrently(orderedProviders)
+      }
+      finally {
+        ReadAction.run<Throwable> {
+          // read action ensures that service won't be disposed and storage inside won't be closed
+          myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
+            ?.completeToken(scanningRequest, isFullIndexUpdate())
+        }
       }
     }
+
     LOG.info(getLogScanningCompletedStageMessage())
   }
 
   private fun applyDelayedPushOperations() {
-    markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
-    LOG.info("Performing delayed pushing properties tasks for " + myProject.name)
-    try {
+    markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
       val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
       if (pusher is PushedFilePropertiesUpdaterImpl) {
         pusher.performDelayedPushTasks()
       }
-    }
-    finally {
-      markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
     }
   }
 
@@ -625,16 +616,18 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     this.flushQueueAfterScanning = flushQueueAfterScanning
   }
 
-  private fun markStage(scanningStage: ProjectScanningHistoryImpl.Stage, isStart: Boolean) {
+  private fun <T> markStage(scanningStage: ProjectScanningHistoryImpl.Stage, block: () -> T): T {
     ProgressManager.checkCanceled()
+    LOG.info("[${myProject.locationHash}], scanning stage: $scanningStage")
     val scanningStageTime = Instant.now()
-    if (isStart) {
+    try {
       scanningHistory.startStage(scanningStage, scanningStageTime)
+      return block()
     }
-    else {
+    finally {
       scanningHistory.stopStage(scanningStage, scanningStageTime)
+      ProgressManager.checkCanceled()
     }
-    ProgressManager.checkCanceled()
   }
 
   private fun getLogScanningCompletedStageMessage(): String {
