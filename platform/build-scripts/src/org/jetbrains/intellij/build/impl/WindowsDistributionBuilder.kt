@@ -355,8 +355,7 @@ internal class WindowsDistributionBuilder(
 
       val communityHome = context.paths.communityHomeDir
       val inputPath = if (customizer.useXPlatLauncher) {
-        val (execPath, licensePath) = NativeLauncherDownloader.findLocalLauncher(context, OsFamily.WINDOWS, arch)
-                                      ?: NativeLauncherDownloader.downloadLauncher(context, OsFamily.WINDOWS, arch)
+        val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.WINDOWS, arch)
         val licenses = winDistPath.resolve("license/launcher-third-party-libraries.html")
         if (!licenses.exists()) {
           copyFile(licensePath, licenses)

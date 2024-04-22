@@ -197,7 +197,7 @@ class MacDistributionBuilder(
     copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     val executable = context.productProperties.baseFileName
-    val (execPath, licensePath) = NativeLauncherDownloader.downloadLauncher(context, OsFamily.MACOS, arch)
+    val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.MACOS, arch)
     copyFile(execPath, macDistDir.resolve("MacOS/${executable}"))
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))
 

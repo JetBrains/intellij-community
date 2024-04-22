@@ -360,7 +360,7 @@ class LinuxDistributionBuilder(
 
   private suspend fun addNativeLauncher(distBinDir: Path, targetPath: Path, arch: JvmArchitecture) {
     if (customizer.useXPlatLauncher) {
-      val (execPath, licensePath) = NativeLauncherDownloader.downloadLauncher(context, OsFamily.LINUX, arch)
+      val (execPath, licensePath) = NativeLauncherDownloader.findLocalOrDownload(context, OsFamily.LINUX, arch)
       copyFile(execPath, distBinDir.resolve(context.productProperties.baseFileName))
       copyFile(licensePath, targetPath.resolve("license/launcher-third-party-libraries.html"))
     }

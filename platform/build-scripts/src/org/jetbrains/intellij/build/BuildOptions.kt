@@ -8,7 +8,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.jps.api.GlobalOptions
 import java.nio.file.Path
 import java.util.*
@@ -329,6 +328,11 @@ data class BuildOptions(
     targetOs = persistentListOf(OsFamily.currentOs)
     targetArch = JvmArchitecture.currentJvmArch
   }
+
+  /**
+   * When `true`, attempts to locate a local debug build of cross-platform launcher.
+   */
+  var useLocalLauncher: Boolean = false
 
   /**
    * Pass `true` to this system property to produce .snap packages.

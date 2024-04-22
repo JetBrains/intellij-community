@@ -9,9 +9,23 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTE
 
 object NativeLauncherDownloader {
   /**
-   * Downloads and unpacks the launcher tarball and returns a pair of paths (executable, license) for the given platform.
+   * Attempts to locate a local debug build of cross-platform launcher when in the development mode
+   * and [org.jetbrains.intellij.build.BuildOptions.useLocalLauncher] is set to `true`.
+   *
+   * Otherwise, Downloads and unpacks the launcher tarball.
+   *
+   * Returns a pair of paths `(executable, license)` for the given platform.
    */
-  suspend fun downloadLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path> {
+  suspend fun findLocalOrDownload(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path> {
+    if (context.options.isInDevelopmentMode && context.options.useLocalLauncher) {
+      val localLauncher = findLocalLauncher(context, os, arch)
+      if (localLauncher != null) return localLauncher
+    }
+
+    return downloadLauncher(context, os, arch)
+  }
+
+  private suspend fun downloadLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path> {
     val communityRoot = context.paths.communityHomeDirRoot
 
     val version = context.dependenciesProperties.property("launcherBuild")
@@ -33,25 +47,19 @@ object NativeLauncherDownloader {
     return executableFile to licenseFile
   }
 
-  /**
-   * Attempts to locate a local debug build of cross-platform launcher.
-   * Not available outside the development mode.
-   */
-  fun findLocalLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path>? {
+  private fun findLocalLauncher(context: BuildContext, os: OsFamily, arch: JvmArchitecture): Pair<Path, Path>? {
     check(os to arch in PLATFORMS) { "Unknown platform: ${os} / ${arch}" }
 
-    if (context.options.isInDevelopmentMode) {
-      val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
-      if (Files.isDirectory(targetDir)) {
-        val executableName = executableName(os)
-        val executableFile = targetDir.resolve(executableName)
-        if (Files.isRegularFile(executableFile)) {
-          val licenseFile = targetDir.resolve(LICENSE_FILE_NAME)
-          if (!Files.exists(licenseFile)) {
-            Files.writeString(licenseFile, "(cross-platform launcher license file stub)", StandardOpenOption.CREATE_NEW)
-          }
-          return executableFile to licenseFile
+    val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
+    if (Files.isDirectory(targetDir)) {
+      val executableName = executableName(os)
+      val executableFile = targetDir.resolve(executableName)
+      if (Files.isRegularFile(executableFile)) {
+        val licenseFile = targetDir.resolve(LICENSE_FILE_NAME)
+        if (!Files.exists(licenseFile)) {
+          Files.writeString(licenseFile, "(cross-platform launcher license file stub)", StandardOpenOption.CREATE_NEW)
         }
+        return executableFile to licenseFile
       }
     }
 
