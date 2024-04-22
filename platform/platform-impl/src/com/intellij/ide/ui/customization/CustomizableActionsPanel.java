@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
@@ -15,6 +17,7 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +28,7 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -34,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
@@ -48,6 +54,7 @@ public class CustomizableActionsPanel {
   protected JTree myActionsTree;
   private final JPanel myTopPanel = new BorderLayoutPanel();
   protected CustomActionsSchema mySelectedSchema;
+  private final Computable<Integer> myPreferredHeightProvider;
 
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
@@ -64,25 +71,37 @@ public class CustomizableActionsPanel {
     patchActionsTreeCorrespondingToSchema(root);
 
     TreeExpansionMonitor.install(myActionsTree);
-    myTopPanel.add(setupFilterComponent(myActionsTree), BorderLayout.WEST);
+    Component filter = setupFilterComponent(myActionsTree);
+    myPreferredHeightProvider = new Computable<Integer>() {
+      @Override
+      public Integer compute() {
+        return filter.getPreferredSize().height;
+      }
+    };
+    myTopPanel.add(filter, BorderLayout.WEST);
     myTopPanel.add(createToolbar(), BorderLayout.CENTER);
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
   }
 
-  private ActionToolbarImpl createToolbar() {
-    ActionGroup addGroup = new DefaultActionGroup(new AddActionActionTreeSelectionAction()/*, new AddGroupAction()*/, new AddSeparatorAction());
-    addGroup.getTemplatePresentation().setText(IdeBundle.message("group.customizations.add.action.group"));
-    addGroup.getTemplatePresentation().setIcon(AllIcons.General.Add);
-    addGroup.setPopup(true);
-    ActionGroup restoreGroup = getRestoreGroup();
+  private Component createToolbar() {
+    JPanel container = new JPanel(new BorderLayout());
+
+    ActionToolbarImpl addGroupToolbar = (ActionToolbarImpl)ActionManager.getInstance()
+      .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(new AddActionActionTreeSelectionAction()), true);
+    addGroupToolbar.setActionButtonBorder(new JBEmptyBorder(0));
+    addGroupToolbar.setBorder(new JBEmptyBorder(0));
+    container.add(addGroupToolbar, BorderLayout.WEST);
+
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
-      .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(addGroup, new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), restoreGroup), true);
+      .createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(new RemoveAction(), new EditIconAction(), new MoveUpAction(), new MoveDownAction(), getRestoreGroup()), true);
     toolbar.setForceMinimumSize(true);
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     toolbar.setTargetComponent(myTopPanel);
-    return toolbar;
+    container.add(toolbar, BorderLayout.CENTER);
+
+    return container;
   }
 
   protected @NotNull ActionGroup getRestoreGroup() {
@@ -582,9 +601,44 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private final class AddActionActionTreeSelectionAction extends TreeSelectionAction {
+  private final class AddActionActionTreeSelectionAction extends TreeSelectionAction implements CustomComponentAction {
     private AddActionActionTreeSelectionAction() {
-      super(IdeBundle.messagePointer("button.add.action"));
+      super(IdeBundle.messagePointer("group.customizations.add.action.button"));
+    }
+
+    @Override
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      JButton button = new JButton(presentation.getText()) {
+        @Override
+        public Dimension getPreferredSize() {
+          Dimension size = super.getPreferredSize();
+          if (myPreferredHeightProvider != null) size.height = myPreferredHeightProvider.compute();
+          return size;
+        }
+      };
+
+      button.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          performAction(button, place, presentation);
+        }
+      });
+
+      return button;
+    }
+
+    @Override
+    public void updateCustomComponent(@NotNull JComponent component, @NotNull Presentation presentation) {
+      component.setEnabled(presentation.isEnabled());
+    }
+
+    void performAction(JComponent component, String place, Presentation presentation) {
+      DataContext dataContext = ActionToolbar.getDataContextFor(component);
+      AnActionEvent event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext);
+
+      if (ActionUtil.lastUpdateAndCheckDumb(this, event, true)) {
+        ActionUtil.performActionDumbAwareWithCallbacks(this, event);
+      }
     }
 
     @Override
