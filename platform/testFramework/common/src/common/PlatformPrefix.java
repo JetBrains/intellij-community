@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.util.PlatformUtils;
@@ -8,10 +8,11 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.net.URL;
 
+import static com.intellij.ide.plugins.PluginDescriptorLoader.isProductWithTheOnlyDescriptor;
+
 @TestOnly
 @Internal
 public final class PlatformPrefix {
-
   private PlatformPrefix() { }
 
   private static final String[] PREFIX_CANDIDATES = {
@@ -38,7 +39,16 @@ public final class PlatformPrefix {
     }
 
     for (String candidate : PREFIX_CANDIDATES) {
-      String markerPath = candidate == null ? "idea/ApplicationInfo.xml" : "META-INF/" + candidate + "Plugin.xml";
+      String markerPath;
+      if (candidate == null) {
+        markerPath = "idea/ApplicationInfo.xml";
+      }
+      else if (isProductWithTheOnlyDescriptor(candidate)) {
+        markerPath = "idea/" + candidate + "ApplicationInfo.xml";
+      }
+      else {
+        markerPath = "META-INF/" + candidate + "Plugin.xml";
+      }
       URL resource = PlatformPrefix.class.getClassLoader().getResource(markerPath);
       if (resource != null) {
         if (candidate != null) {

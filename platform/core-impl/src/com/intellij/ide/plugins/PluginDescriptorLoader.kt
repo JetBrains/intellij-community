@@ -657,7 +657,8 @@ private fun CoroutineScope.loadCoreModules(
 }
 
 // should be the only plugin in lib
-private fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
+@Internal
+fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
   return platformPrefix == PlatformUtils.IDEA_PREFIX ||
          platformPrefix == PlatformUtils.WEB_PREFIX ||
          platformPrefix == PlatformUtils.DBE_PREFIX ||
