@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import okhttp3.MediaType.Companion.toMediaType
@@ -46,10 +46,13 @@ internal val httpClient: OkHttpClient by lazy {
     .writeTimeout(timeout, unit)
     .readTimeout(timeout, unit)
     .addInterceptor { chain ->
-      chain.proceed(chain.request()
-                      .newBuilder()
-                      .header("User-Agent", "IJ Builder")
-                      .build())
+      var request = chain.request()
+      if (request.header("User-Agent").isNullOrBlank()) {
+        request = request.newBuilder()
+          .header("User-Agent", "IJ Builder")
+          .build()
+      }
+      chain.proceed(request)
     }
     .addInterceptor { chain ->
       val request = chain.request()
