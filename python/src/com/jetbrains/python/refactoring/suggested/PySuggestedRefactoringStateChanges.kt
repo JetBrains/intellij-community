@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -12,7 +13,6 @@ import com.intellij.psi.util.elementType
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRefactoringStateChanges
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
-import com.intellij.refactoring.suggested.range
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
@@ -102,7 +102,7 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
     override fun guessParameterIdByMarker(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
       val disappearedRanges = prevState.additionalData[DISAPPEARED_RANGES] ?: return null
-      return disappearedRanges.entries.firstOrNull { it.key.isValid && it.key.range == markerRange }?.value
+      return disappearedRanges.entries.firstOrNull { it.key.isValid && it.key.asTextRange == markerRange }?.value
     }
 
     private fun createSignatureData(function: PyFunction): SuggestedRefactoringSupport.Signature? {

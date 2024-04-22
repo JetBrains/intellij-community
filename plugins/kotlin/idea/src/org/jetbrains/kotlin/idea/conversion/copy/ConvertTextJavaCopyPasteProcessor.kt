@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
@@ -18,7 +19,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.*
-import com.intellij.refactoring.suggested.range
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -142,7 +142,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
                 }
             }
 
-            runPostProcessing(project, targetFile, newBounds.range, convertedResult.converterContext, j2kKind)
+            runPostProcessing(project, targetFile, newBounds.asTextRange, convertedResult.converterContext, j2kKind)
 
             conversionPerformed = true
         }
