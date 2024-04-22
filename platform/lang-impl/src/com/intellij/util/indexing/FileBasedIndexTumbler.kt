@@ -23,7 +23,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFilesQueue
-import com.intellij.util.indexing.PersistentDirtyFilesQueue.removeCurrentFile
 import org.jetbrains.annotations.NonNls
 import java.util.*
 
@@ -108,7 +107,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
             val orphanQueue = fileBasedIndex.orphanDirtyFileIdsFromLastSession
             val projectQueueFile = project.getQueueFile()
             val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
-            removeCurrentFile(projectQueueFile)
             fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.addFiles(projectDirtyFilesQueue.fileIds)
             fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
             val indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, startSuspended = false, allowSkippingScanning = false, project.coroutineScope, "On FileBasedIndexTumbler.turnOn (reason=$reason)")

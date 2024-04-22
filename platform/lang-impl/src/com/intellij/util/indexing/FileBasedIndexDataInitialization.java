@@ -197,7 +197,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());
-      PersistentDirtyFilesQueue.removeCurrentFile(PersistentDirtyFilesQueue.getQueueFile());
     }
   }
 
