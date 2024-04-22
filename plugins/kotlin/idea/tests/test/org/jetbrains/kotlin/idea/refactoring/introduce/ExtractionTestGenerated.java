@@ -1733,6 +1733,16 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/throws/outputValueWithThrow.kt");
                 }
 
+                @TestMetadata("returnTypeByThrow.kt")
+                public void testReturnTypeByThrow() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/throws/returnTypeByThrow.kt");
+                }
+
+                @TestMetadata("returnTypeByThrow1.kt")
+                public void testReturnTypeByThrow1() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/throws/returnTypeByThrow1.kt");
+                }
+
                 @TestMetadata("returnWithThrow.kt")
                 public void testReturnWithThrow() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/throws/returnWithThrow.kt");

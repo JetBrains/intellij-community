@@ -901,6 +901,16 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/throws/outputValueWithThrow.kt");
             }
 
+            @TestMetadata("returnTypeByThrow.kt")
+            public void testReturnTypeByThrow() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/throws/returnTypeByThrow.kt");
+            }
+
+            @TestMetadata("returnTypeByThrow1.kt")
+            public void testReturnTypeByThrow1() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/throws/returnTypeByThrow1.kt");
+            }
+
             @TestMetadata("returnWithThrow.kt")
             public void testReturnWithThrow() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/extractFunction/controlFlow/throws/returnWithThrow.kt");

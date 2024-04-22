@@ -7,6 +7,7 @@ data class OutputDescriptor<KotlinType>(
     val defaultResultExpression: KtExpression?,
     val typeOfDefaultFlow: KotlinType,
     val implicitReturn: KtExpression?,
+    val lastExpressionHasNothingType: Boolean,
     val valuedReturnExpressions: List<KtExpression>,
     val returnValueType: KotlinType,
     val jumpExpressions: List<KtExpression>,

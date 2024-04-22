@@ -39,7 +39,9 @@ object ControlFlowBuilder {
                 ControlFlow<KotlinType>(emptyList(), {
                     object : OutputValueBoxer.AsTuple<KotlinType>(it) {
                         override val returnType: KotlinType by lazy {
-                            createTuple(outputValues)
+                            if (outputValues.isEmpty() && lastExpressionHasNothingType) {
+                                nothingType
+                            } else createTuple(outputValues)
                         }
                     }
                 }, localVariablesToCopy)
