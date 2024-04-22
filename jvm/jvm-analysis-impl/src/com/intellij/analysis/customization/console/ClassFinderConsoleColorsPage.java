@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.customization.console;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -41,7 +42,7 @@ public final class ClassFinderConsoleColorsPage implements ColorSettingsPage, Di
     new AttributesDescriptor(OptionsBundle.messagePointer("options.language.defaults.class.name"), TERMINAL_CLASS_NAME_LOG_REFERENCE);
 
   private static final AttributesDescriptor LOG_STRING_PLACEHOLDER_NAME =
-    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.logging.string.placeholder"),
+    new AttributesDescriptor(JvmAnalysisBundle.messagePointer("jvm.options.general.color.descriptor.logging.string.placeholder"),
                              LOG_STRING_PLACEHOLDER);
   private static final AttributesDescriptor[] ATTRS = {LOG_CLASS_NAME, LOG_STRING_PLACEHOLDER_NAME,};
 
