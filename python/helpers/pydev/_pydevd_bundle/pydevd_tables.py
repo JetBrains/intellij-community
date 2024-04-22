@@ -22,7 +22,8 @@ def is_error_on_eval(val):
     return is_exception_on_eval
 
 
-def exec_table_command(init_command, command_type, start_index, end_index, f_globals, f_locals):
+def exec_table_command(init_command, command_type, start_index, end_index, f_globals,
+                       f_locals):
     # type: (str, str, [int, None], [int, None], dict, dict) -> (bool, str)
     table = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
     is_exception_on_eval = is_error_on_eval(table)
@@ -69,7 +70,11 @@ def __get_table_provider(output):
                                'pandas.core.series.Series']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
-    elif type_qualified_name in ['numpy.ndarray', 'builtins.dict']:
+    elif type_qualified_name in ['numpy.ndarray',
+                                 'tensorflow.python.framework.ops.EagerTensor',
+                                 'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
+                                 'torch.Tensor',
+                                 'builtins.dict']:
         import _pydevd_bundle.tables.pydevd_numpy as table_provider
     elif type_qualified_name.startswith('polars') and (
             type_qualified_name.endswith('DataFrame')

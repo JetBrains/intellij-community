@@ -13,7 +13,27 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ArrayViewStrategy extends DataViewStrategy {
-  private static final String NDARRAY = "ndarray";
+  private final String myTypeName;
+
+  public static @NotNull ArrayViewStrategy createInstanceForNumpyArray() {
+    return new ArrayViewStrategy("ndarray");
+  }
+
+  public static @NotNull ArrayViewStrategy createInstanceForEagerTensor() {
+    return new ArrayViewStrategy("EagerTensor");
+  }
+
+  public static @NotNull ArrayViewStrategy createInstanceForResourceVariable() {
+    return new ArrayViewStrategy("ResourceVariable");
+  }
+
+  public static @NotNull ArrayViewStrategy createInstanceForTensor() {
+    return new ArrayViewStrategy("Tensor");
+  }
+
+  protected ArrayViewStrategy(final @NotNull String typeName) {
+    this.myTypeName = typeName;
+  }
 
   @Override
   public AsyncArrayTableModel createTableModel(int rowCount,
@@ -61,6 +81,6 @@ public class ArrayViewStrategy extends DataViewStrategy {
 
   @Override
   public @NotNull String getTypeName() {
-    return NDARRAY;
+    return myTypeName;
   }
 }
