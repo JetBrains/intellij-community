@@ -41,6 +41,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JdkVersionDetector
+import java.io.File
 import java.io.IOException
 import java.nio.file.FileStore
 import java.nio.file.Files
@@ -234,9 +235,7 @@ private suspend fun checkEnvironment() {
 
   try {
     if (shellEnvDeferred!!.await() == false) {
-      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) {
-        BrowserUtil.browse("https://intellij.com/shell-env")
-      }
+      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/shell-env") }
       val appName = ApplicationNamesInfo.getInstance().fullProductName
       val shell = System.getenv("SHELL")
       showNotification("shell.env.loading.failed", suppressable = true, action, appName, shell)
@@ -253,7 +252,9 @@ private fun checkLauncher() {
     val binName = baseName + if (SystemInfo.isWindows) "64.exe" else ""
     val scriptName = baseName + if (SystemInfo.isWindows) ".bat" else ".sh"
     if (Files.isRegularFile(Path.of(PathManager.getBinPath(), binName))) {
-      showNotification("ide.script.launcher.used", suppressable = true, action = null, scriptName, binName)
+      val prefix = "bin" + File.separatorChar
+      val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) { BrowserUtil.browse("https://intellij.com/launcher") }
+      showNotification("ide.script.launcher.used", suppressable = true, action, prefix + scriptName, prefix + binName)
     }
   }
 }
