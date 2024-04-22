@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,7 @@ import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.forgetPr
 import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.scanAndIndexProjectAfterOpen;
 
 final class ProjectFileBasedIndexStartupActivity implements StartupActivity.RequiredForSmartMode {
+  private static final Logger LOG = Logger.getInstance(ProjectFileBasedIndexStartupActivity.class);
   private final ConcurrentList<Project> myOpenProjects = ContainerUtil.createConcurrentList();
   private final CoroutineScope myCoroutineScope;
 
@@ -46,7 +49,6 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
     }
 
-    OrphanDirtyFilesQueue orphanQueue = fileBasedIndex.getOrphanDirtyFileIdsFromLastSession();
     Path projectQueueFile = getQueueFile(project);
     ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().getCreationTimestamp());
 
@@ -72,6 +74,12 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
     fileBasedIndex.loadIndexes();
     fileBasedIndex.waitUntilIndicesAreInitialized();
+
+    OrphanDirtyFilesQueue orphanQueue = fileBasedIndex.getOrphanDirtyFileIdsFromLastSession();
+    if (orphanQueue == null) {
+      LOG.error("Orphan dirty files queue is not yet initialized");
+      orphanQueue = new OrphanDirtyFilesQueue(new IntArrayList(), 0L);
+    }
 
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();

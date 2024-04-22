@@ -81,7 +81,6 @@ import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlinx.coroutines.CoroutineScope;
@@ -645,8 +644,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         IntSet unprocessedOrphanDirtyFiles = new IntOpenHashSet();
-        OrphanDirtyFilesQueue orphanDirtyFileIds = getOrphanDirtyFileIdsFromLastSession();
-        unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
+        OrphanDirtyFilesQueue orphanDirtyFileIds = myOrphanDirtyFileIdsFromLastSession;
+        if (orphanDirtyFileIds == null) {
+          LOG.info("Shutting FileBaseIndex before orphan dirty files queue was read from disk");
+        }
+        else {
+          unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
+        }
 
         if (myIsUnitTestMode) {
           IntSet allStaleIdsToCheck = new IntOpenHashSet();
@@ -672,7 +676,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
 
         IntSet orphanDirtyFilesFromThisSession = getAllDirtyFiles(null);
-        orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).store(vfsCreationStamp);
+        if (orphanDirtyFileIds != null) {
+          orphanDirtyFileIds.plus(orphanDirtyFilesFromThisSession).store(vfsCreationStamp);
+        }
         // remove events from event merger, so they don't show up after FileBasedIndex is restarted using tumbler
         getChangedFilesCollector().clear();
         myFilesToUpdateCollector.clear();
@@ -904,9 +910,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @NotNull
+  @Nullable
   OrphanDirtyFilesQueue getOrphanDirtyFileIdsFromLastSession() {
-    return Objects.requireNonNullElse(myOrphanDirtyFileIdsFromLastSession, new OrphanDirtyFilesQueue(new IntArrayList(), 0L));
+    return myOrphanDirtyFileIdsFromLastSession;
   }
 
   void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {
