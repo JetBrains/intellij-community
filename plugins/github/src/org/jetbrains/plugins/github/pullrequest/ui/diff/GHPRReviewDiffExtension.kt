@@ -21,6 +21,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,8 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
   }
 
   @Service(Service.Level.PROJECT)
-  private class InlaysController(private val cs: CoroutineScope) {
+  private class InlaysController(parentCs: CoroutineScope) {
+    private val cs = parentCs.childScope(Dispatchers.Main)
 
     fun installInlays(reviewVm: GHPRDiffViewModel, change: RefComparisonChange, viewer: DiffViewerBase) {
       val settings = GithubSettings.getInstance()
