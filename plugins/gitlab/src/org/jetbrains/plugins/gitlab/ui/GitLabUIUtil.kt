@@ -93,9 +93,14 @@ object GitLabUIUtil {
       }
 
       // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
-      val fileDestination = gitRepository.root.toNioPath().resolve(linkDestination.replace('\\', '/')).toString()
-      val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
-      visitor.consumeHtml(HtmlChunk.link(fileDescription, linkText).toString())
+      try {
+        val fileDestination = gitRepository.root.toNioPath().resolve(linkDestination.replace('\\', '/')).toString()
+        val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
+        visitor.consumeHtml(HtmlChunk.link(fileDescription, linkText).toString())
+      } catch (e: Exception) {
+        // If some error occurred (because the file path is invalid because it's likely a link), just leave it as is
+        visitor.consumeHtml(HtmlChunk.link(linkDestination, linkText).toString())
+      }
       return
     }
   }
