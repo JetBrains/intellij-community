@@ -431,18 +431,19 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private @Nullable RefJavaElement refineElement(RefEntity refEntity) {
     if (!(refEntity instanceof RefJavaElement refElement)) return null; //dead code doesn't work with refModule | refPackage
-    if (!getFilter().accepts(refElement)) return null;
-    refEntity = getRefManager().getRefinedElement(refEntity);
-    refElement = (RefJavaElement)refEntity;
-    if (!refElement.isValid()) return null;
-    if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return null;
-    if (isSuppressed(refElement)) return null;
+    RefFilter filter = getFilter();
+    if (!filter.accepts(refElement)) return null;
+    RefJavaElement refinedElement = (RefJavaElement)getRefManager().getRefinedElement(refEntity);
+    if (refinedElement != refEntity && filter.accepts(refinedElement)) return null; // prevent duplicate reporting
+    if (!refinedElement.isValid()) return null;
+    if (!compareVisibilities(refinedElement, getTool().getSharedLocalInspectionTool())) return null;
+    if (isSuppressed(refinedElement)) return null;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() & getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
-        (myFixedElements.containsKey(refElement) || isExcluded(refEntity))) {
+        (myFixedElements.containsKey(refinedElement) || isExcluded(refinedElement))) {
       return null;
     }
-    if (skipEntryPoints(refElement)) return null;
-    return refElement;
+    if (skipEntryPoints(refinedElement)) return null;
+    return refinedElement;
   }
 
   protected boolean skipEntryPoints(RefJavaElement refElement) {
