@@ -6,8 +6,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToFq
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2PsiUnifierTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
-import org.jetbrains.kotlin.idea.k2.refactoring.introduceFunction.AbstractK2IntroduceFunctionTest
-import org.jetbrains.kotlin.idea.k2.refactoring.introduceFunction.AbstractK2IntroduceParameterTest
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2IntroduceFunctionTest
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2IntroduceParameterTest
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.AbstractK2IntroducePropertyTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.*
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractFirMultiModuleSafeDeleteTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
@@ -83,6 +84,10 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
 
         testClass<AbstractK2IntroduceParameterTest> {
             model("refactoring/introduceParameter", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroduceParameterTest")
+        }
+
+        testClass<AbstractK2IntroducePropertyTest> {
+            model("refactoring/introduceProperty", pattern = Patterns.KT_OR_KTS, testMethodName = "doIntroducePropertyTest")
         }
     }
 

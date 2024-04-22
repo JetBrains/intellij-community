@@ -52,5 +52,10 @@
       <keyboard-shortcut keymap="$default" first-keystroke="control alt shift M"/>
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractFunction"/>
     </action>
+    <action id="IntroduceProperty" class="org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty.IntroduceK2PropertyAction"
+            use-shortcut-of="IntroduceField">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
+    </action>
+
   </actions>
 </idea-plugin>

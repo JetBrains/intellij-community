@@ -1,0 +1,12 @@
+// EXTRACTION_TARGET: property with getter
+
+open class Base(protected val i: Int)
+
+class Impl(i: Int) : Base(i) {
+    private val n: Int
+        get() = 2 + 3 + i
+
+    fun foo(): Int {
+        return n
+    }
+}

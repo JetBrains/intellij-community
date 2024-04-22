@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.targetKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AbstractExtractionDataAnalyzer
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ControlFlow
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IReplacement
@@ -313,12 +314,13 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     )
 }
 
-fun ExtractableCodeDescriptor.validate(): ExtractableCodeDescriptorWithConflicts {
+fun ExtractableCodeDescriptor.validate(target: ExtractionTarget = ExtractionTarget.FUNCTION): ExtractableCodeDescriptorWithConflicts {
     val config = ExtractionGeneratorConfiguration(
         this,
         ExtractionGeneratorOptions(
             inTempFile = true,
-            allowExpressionBody = false
+            allowExpressionBody = false,
+            target = target
         )
     )
     val result = Generator.generateDeclaration(config, null)

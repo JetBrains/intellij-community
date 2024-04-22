@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
+import com.intellij.codeInsight.template.TemplateEditingListener;
+import com.intellij.codeInsight.template.TemplateManagerListener;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
@@ -31,12 +33,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
-import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention;
 import org.jetbrains.kotlin.idea.references.ReferenceUtilsKt;
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.types.KotlinType;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,10 +48,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction;
-import static org.jetbrains.kotlin.idea.refactoring.introduce.AbstractKotlinInplaceIntroducerKt.TYPE_REFERENCE_VARIABLE_NAME;
 
-public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> extends InplaceVariableIntroducer<KtExpression> {
-    private static final Key<KotlinInplaceVariableIntroducer> ACTIVE_INTRODUCER = Key.create("ACTIVE_INTRODUCER");
+public abstract class AbstractKotlinInplaceVariableIntroducer<D extends KtCallableDeclaration, KotlinType> extends InplaceVariableIntroducer<KtExpression> {
+    private static final Key<AbstractKotlinInplaceVariableIntroducer> ACTIVE_INTRODUCER = Key.create("ACTIVE_INTRODUCER");
 
     private static final Function0<Boolean> TRUE = new Function0<>() {
         @Override
@@ -106,12 +104,12 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     protected D myDeclaration;
     private final boolean isVar;
     private final boolean myDoNotChangeVar;
-    @Nullable private final KotlinType myExprType;
+    @Nullable protected final KotlinType myExprType;
     private final boolean noTypeInference;
     private final List<ControlWrapper> panelControls = new ArrayList<>();
     private JPanel contentPanel;
 
-    public KotlinInplaceVariableIntroducer(
+    public AbstractKotlinInplaceVariableIntroducer(
             PsiNamedElement elementToRename, Editor editor, Project project,
             @Nls String title, KtExpression[] occurrences,
             @Nullable KtExpression expr, boolean replaceOccurrence,
@@ -190,6 +188,8 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
         return getContentPanel();
     }
 
+    protected abstract String renderType(KotlinType kotlinType);
+
     @Nullable
     protected final Function0<JComponent> getCreateExplicitTypeCheckBox() {
         if (myExprType == null || noTypeInference) return null;
@@ -206,8 +206,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
                         runWriteActionAndRestartRefactoring(
                                 () -> {
                                     if (exprTypeCheckbox.isSelected()) {
-                                        String renderedType =
-                                                IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(myExprType);
+                                        String renderedType = renderType(myExprType);
                                         myDeclaration.setTypeReference(new KtPsiFactory(myProject).createType(renderedType));
                                     } else {
                                         myDeclaration.setTypeReference(null);
@@ -324,13 +323,8 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
         }
     }
 
-    protected void addTypeReferenceVariable(TemplateBuilderImpl builder) {
-        KtTypeReference typeReference = myDeclaration.getTypeReference();
-        Expression expression = SpecifyTypeExplicitlyIntention.Companion.createTypeExpressionForTemplate(myExprType, myDeclaration, false);
-        if (typeReference != null && expression != null) {
-            builder.replaceElement(typeReference, TYPE_REFERENCE_VARIABLE_NAME, expression, false);
-        }
-    }
+    protected abstract void addTypeReferenceVariable(TemplateBuilderImpl builder);
+    protected abstract TemplateEditingListener createTypeReferencePostprocessor();
 
     @Override
     protected void addAdditionalVariables(TemplateBuilderImpl builder) {
@@ -352,7 +346,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
         TemplateState templateState =
                 TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
         if (templateState != null && myDeclaration.getTypeReference() != null) {
-            templateState.addTemplateStateListener(SpecifyTypeExplicitlyIntention.Companion.createTypeReferencePostprocessor(myDeclaration));
+            templateState.addTemplateStateListener(createTypeReferencePostprocessor());
         }
 
         return result;
@@ -413,7 +407,7 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
     }
 
     @Nullable
-    public static KotlinInplaceVariableIntroducer getActiveInstance(@NotNull Editor editor) {
+    public static AbstractKotlinInplaceVariableIntroducer getActiveInstance(@NotNull Editor editor) {
         return editor.getUserData(ACTIVE_INTRODUCER);
     }
 }

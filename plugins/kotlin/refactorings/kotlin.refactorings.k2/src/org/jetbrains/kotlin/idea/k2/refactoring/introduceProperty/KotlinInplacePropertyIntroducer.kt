@@ -1,32 +1,33 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty
+package org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeChooseValueExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.createPostTypeUpdateProcessor
+import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.Generator
 import org.jetbrains.kotlin.idea.refactoring.introduce.TYPE_REFERENCE_VARIABLE_NAME
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionResult
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.generateDeclaration
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicatesSilently
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.AbstractKotlinInplaceVariableIntroducer
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.types.KotlinType
 import java.awt.event.ItemEvent
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
@@ -39,28 +40,25 @@ class KotlinInplacePropertyIntroducer(
     project: Project,
     @Nls title: String,
     doNotChangeVar: Boolean,
-    exprType: KotlinType?,
+    exprType: TypeInfo?,
     private var extractionResult: ExtractionResult,
     private val availableTargets: List<ExtractionTarget>
-) : AbstractKotlinInplaceVariableIntroducer<KtProperty, KotlinType>(
+) : AbstractKotlinInplaceVariableIntroducer<KtProperty, TypeInfo>(
     property, editor, project, title, KtExpression.EMPTY_ARRAY, null, false, property, false, doNotChangeVar, exprType, false
 ) {
     init {
         assert(availableTargets.isNotEmpty()) { "No targets available: ${property.getElementTextWithContext()}" }
     }
 
-    override fun renderType(kotlinType: KotlinType): String {
-        return IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(kotlinType)
-    }
-
     private var currentTarget: ExtractionTarget = extractionResult.config.generatorOptions.target
-        set(value: ExtractionTarget) {
+        set(value) {
             if (value == currentTarget) return
 
             field = value
             runWriteActionAndRestartRefactoring {
                 with(extractionResult.config) {
-                    extractionResult = copy(generatorOptions = generatorOptions.copy(target = currentTarget)).generateDeclaration(property)
+                    val configuration = copy(generatorOptions = generatorOptions.copy(target = currentTarget))
+                    extractionResult = Generator.generateDeclaration(configuration, property)
                     property = extractionResult.declaration as KtProperty
                     myElementToRename = property
                 }
@@ -72,7 +70,7 @@ class KotlinInplacePropertyIntroducer(
 
     private var property: KtProperty
         get() = myDeclaration
-        set(value: KtProperty) {
+        set(value) {
             myDeclaration = value
         }
 
@@ -143,16 +141,16 @@ class KotlinInplacePropertyIntroducer(
         if (!isInitializer()) return
         val typeReference = myDeclaration.getTypeReference();
         val exprType = myExprType
-        if (exprType != null) {
-            val expression = SpecifyTypeExplicitlyIntention.Companion.createTypeExpressionForTemplate(exprType, myDeclaration, false);
-            if (typeReference != null && expression != null) {
-                builder.replaceElement(typeReference, TYPE_REFERENCE_VARIABLE_NAME, expression, false);
-            }
+        if (exprType != null && typeReference != null) {
+            val expression = TypeChooseValueExpression(listOf(exprType.defaultType) + exprType.otherTypes, exprType.defaultType)
+            builder.replaceElement(typeReference, TYPE_REFERENCE_VARIABLE_NAME, expression, false);
         }
     }
 
+    override fun renderType(kotlinType: TypeInfo): String = kotlinType.defaultType.shortTypeRepresentation
+
     override fun createTypeReferencePostprocessor(): TemplateEditingListener {
-        return SpecifyTypeExplicitlyIntention.Companion.createTypeReferencePostprocessor(myDeclaration)
+        return createPostTypeUpdateProcessor(myDeclaration, listOf(myDeclaration to myExprType!!).iterator(), myProject, myEditor)
     }
 
     override fun checkLocalScope(): PsiElement {
@@ -161,7 +159,10 @@ class KotlinInplacePropertyIntroducer(
 
     override fun performRefactoring(): Boolean {
         if (replaceAll) {
-            processDuplicatesSilently(extractionResult.duplicateReplacers, myProject)
+            val duplicateReplacers = extractionResult.duplicateReplacers
+            myProject.executeWriteCommand(MethodDuplicatesHandler.getRefactoringName()) {
+                duplicateReplacers.values.forEach { it() }
+            }
         }
         return true
     }
