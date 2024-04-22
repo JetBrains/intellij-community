@@ -1245,6 +1245,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       expandedState.put(path, Boolean.TRUE);
     }
 
+    void markPathCollapsed(TreePath path) {
+      expandedState.put(path, Boolean.FALSE);
+    }
+
     @NotNull Set<TreePath> getExpandedPaths() {
       var result = new HashSet<TreePath>();
       var rootPath = getRootPath();
@@ -1333,7 +1337,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
           if (isNotLeaf(path)) {
-            expandedState.put(path, Boolean.TRUE);
+            markPathExpanded(path);
             fireTreeExpanded(path);
             var parent = path.getParentPath();
             if (parent == null || !toExpand.contains(parent)) {
@@ -1428,12 +1432,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         fireBulkCollapseStarted();
         suspendExpandCollapseAccessibilityAnnouncements();
         for (TreePath path : toExpand) {
-          expandedState.put(path, Boolean.TRUE);
+          markPathExpanded(path);
           fireTreeExpanded(path);
         }
         for (TreePath path : toCollapseList) {
           if (isNotLeaf(path)) {
-            expandedState.put(path, Boolean.FALSE);
+            markPathCollapsed(path);
             fireTreeCollapsed(path);
             if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
               addSelectionPath(path);
@@ -1555,7 +1559,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           } catch (ExpandVetoException eve) {
             return false;
           }
-          expandedState.put(parentPath, Boolean.TRUE);
+          markPathExpanded(parentPath);
           fireTreeExpanded(parentPath);
           if (accessibleContext != null) {
             ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
@@ -1575,7 +1579,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       catch (ExpandVetoException eve) {
         return;
       }
-      expandedState.put(path, Boolean.TRUE);
+      markPathExpanded(path);
       fireTreeExpanded(path);
       if (accessibleContext != null) {
         ((AccessibleJTree)accessibleContext).fireVisibleDataPropertyChange();
@@ -1592,7 +1596,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       catch (ExpandVetoException eve) {
         return;
       }
-      expandedState.put(path, Boolean.FALSE);
+      markPathCollapsed(path);
       fireTreeCollapsed(path);
       if (removeDescendantSelectedPaths(path, false) && !isPathSelected(path)) {
         addSelectionPath(path);
@@ -1672,7 +1676,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
               collapsePath(parent);
             }
             else {
-              expandedState.put(parent, Boolean.TRUE);
+              markPathExpanded(parent);
             }
           }
         }
