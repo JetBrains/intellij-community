@@ -3227,14 +3227,4 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       }
       """);
   }
-  
-  public void testImportKeyword() {
-    myFixture.configureByText("Test.java", """
-      import java.util.*;
-      <caret>import java.util.stream.Stream;
-      
-      class Main {}""");
-    myFixture.completeBasic();
-    assertTrue(myFixture.getLookupElementStrings().contains("import"));
-  }
 }

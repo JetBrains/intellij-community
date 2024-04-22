@@ -246,6 +246,24 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     assertStringItems("extends", "super");
   }
 
+  public void testImportKeyword() {
+    configureFromFileText("Test.java", """
+      import java.util.*;
+      <caret>import java.util.stream.Stream;
+      
+      class Main {}""");
+    complete();
+    assertContainsItems("import");
+  }
+
+  public void testPackageKeyword() {
+    configureFromFileText("Test.java", """
+      pa<caret>ckage hello.world;
+      """);
+    complete();
+    assertContainsItems("package");
+  }
+
   private void doTest() {
     configureByTestName();
     checkResultByTestName();
