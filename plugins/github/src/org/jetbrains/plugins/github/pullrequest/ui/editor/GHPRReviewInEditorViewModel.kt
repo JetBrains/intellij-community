@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 import com.intellij.collaboration.util.*

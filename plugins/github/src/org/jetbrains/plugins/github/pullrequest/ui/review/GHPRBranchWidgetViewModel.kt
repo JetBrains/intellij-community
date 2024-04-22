@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.review
 
 import com.intellij.collaboration.async.classAsCoroutineName
-import com.intellij.collaboration.async.computationState
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.platform.util.coroutines.childScope
