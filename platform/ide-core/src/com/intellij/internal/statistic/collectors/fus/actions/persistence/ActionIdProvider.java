@@ -2,14 +2,13 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 
 /**
- * The ActionIdProvider interface provides action id that can be reported to FUS (Feature Usage Statistics).
- * Use this interface for actions which are not registered within {@link com.intellij.openapi.actionSystem.ActionManager} (e.g., represented by lambda/anonymous classes)
+ * The interface provides an action ID that can be reported to Feature Usage Statistics.
+ * Use this interface for actions which are not registered within {@link com.intellij.openapi.actionSystem.ActionManager}
+ * (e.g., represented by lambda/anonymous classes).
  */
 @ApiStatus.Internal
 public interface ActionIdProvider {
-  @NonNls
   String getId();
 }
