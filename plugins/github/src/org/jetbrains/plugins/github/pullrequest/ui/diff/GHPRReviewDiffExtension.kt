@@ -27,7 +27,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
@@ -94,12 +93,11 @@ private class DiffEditorModel(
   private val lineToLocation: (Int) -> DiffLineLocation?
 ) : GHPREditorReviewModel {
 
-  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> = combine(
-    diffVm.threads.mapModelsToViewModels { MappedThread(it) },
-    diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }
-  ) { threads, new ->
-    threads + new
-  }.stateInNow(cs, emptyList())
+  private val threads = diffVm.threads.mapModelsToViewModels { MappedThread(cs, it) }.stateInNow(cs, emptyList())
+  private val newComments = diffVm.newComments.mapModelsToViewModels { MappedNewComment(it) }.stateInNow(cs, emptyList())
+
+  override val inlays: StateFlow<Collection<GHPREditorMappedComponentModel>> =
+    combineStateIn(cs, threads, newComments) { threads, new -> threads + new }
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     diffVm.locationsWithDiscussions.map {
@@ -154,9 +152,10 @@ private class DiffEditorModel(
     inlays.value.asSequence().filter { it.line.value == lineIdx }.filterIsInstance<Hideable>().syncOrToggleAll()
   }
 
-  private inner class MappedThread(vm: GHPRReviewThreadDiffViewModel)
+  private inner class MappedThread(parentCs: CoroutineScope, vm: GHPRReviewThreadDiffViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRCompactReviewThreadViewModel>(vm) {
-    override val isVisible: StateFlow<Boolean> = vm.isVisible.combineState(hiddenState) { visible, hidden -> visible && !hidden }
+    private val cs = parentCs.childScope(classAsCoroutineName())
+    override val isVisible: StateFlow<Boolean> = combineStateIn(cs, vm.isVisible, hiddenState) { visible, hidden -> visible && !hidden }
     override val line: StateFlow<Int?> = vm.location.mapState { loc -> loc?.let { locationToLine(it) } }
   }
 
