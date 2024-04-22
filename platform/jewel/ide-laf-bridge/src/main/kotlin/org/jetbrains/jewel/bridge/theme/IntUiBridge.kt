@@ -431,7 +431,7 @@ private fun readChipStyle(): ChipStyle {
 
 private fun readDividerStyle() =
     DividerStyle(
-        color = retrieveColorOrUnspecified("Borders.color"),
+        color = JBColor.border().toComposeColorOrUnspecified(),
         metrics = DividerMetrics.defaults(),
     )
 
