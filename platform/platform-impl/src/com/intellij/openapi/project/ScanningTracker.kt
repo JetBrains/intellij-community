@@ -10,7 +10,7 @@ class ScanningTracker : ActivityTracker {
 
   override suspend fun isInProgress(project: Project): Boolean {
     return project.serviceAsync<UnindexedFilesScannerExecutor>().isRunning.value ||
-           !project.serviceAsync<UnindexedFilesScannerExecutor>().hasQueuedTasks
+           project.serviceAsync<UnindexedFilesScannerExecutor>().hasQueuedTasks
   }
 
   override suspend fun awaitConfiguration(project: Project) {

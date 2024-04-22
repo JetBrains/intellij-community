@@ -44,6 +44,7 @@ import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
@@ -66,7 +67,8 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                                                 private val startCondition: Future<*>?,
                                                 private val shouldHideProgressInSmartMode: Boolean?,
                                                 private val futureScanningHistory: SettableFuture<ProjectScanningHistory>,
-                                                private val forceReindexingTrigger: Predicate<IndexedFile>?) : FilesScanningTask {
+                                                private val forceReindexingTrigger: Predicate<IndexedFile>?) : FilesScanningTask,
+                                                                                                               Closeable {
   enum class TestMode {
     PUSHING, PUSHING_AND_SCANNING
   }
@@ -143,7 +145,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     return predefinedIndexableFilesIterators == null
   }
 
-  override fun tryMergeWith(oldTask: FilesScanningTask): UnindexedFilesScanner {
+  fun tryMergeWith(oldTask: FilesScanningTask): UnindexedFilesScanner {
     oldTask as UnindexedFilesScanner
 
     LOG.assertTrue(myProject == oldTask.myProject)
@@ -507,12 +509,12 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     }
   }
 
-  override fun perform(indicator: ProgressIndicator) {
+  fun perform() {
     perform(object : CheckPauseOnlyProgressIndicator {
       override fun onPausedStateChanged(action: Consumer<Boolean>) {}
 
       override fun freezeIfPaused() {}
-    }, IndexingProgressReporter(indicator))
+    }, IndexingProgressReporter(/* no visible progress */))
   }
 
   fun perform(indicator: CheckPauseOnlyProgressIndicator, progressReporter: IndexingProgressReporter) {
@@ -607,7 +609,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     return futureScanningHistory
   }
 
-  override fun dispose() {
+  override fun close() {
     if (!myProject.isDisposed) {
       myProject.getServiceIfCreated(ProjectIndexingDependenciesService::class.java)
         ?.completeToken(myFutureScanningRequestToken)

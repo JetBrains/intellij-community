@@ -16,7 +16,7 @@ interface UnindexedFilesScannerExecutor {
 
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable)
   fun suspendQueue()
-  fun resumeQueue(onFinish: () -> Unit)
+  fun resumeQueue()
   fun cancelAllTasksAndWait()
   fun getPauseReason(): StateFlow<PersistentList<String>>
 

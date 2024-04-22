@@ -100,7 +100,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
         for (project in ProjectUtil.getOpenProjects()) {
-          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue(onFinish = {})
+          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue()
           project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
           FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
         }
