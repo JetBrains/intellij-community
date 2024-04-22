@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.LocalTimeCounter.currentTime
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import org.jetbrains.annotations.ApiStatus
@@ -54,7 +55,7 @@ class AutoImportProjectTracker(
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, false, null, serviceDisposable)
+  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, true, null, serviceDisposable)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   private fun createProjectChangesListener() =
@@ -273,17 +274,6 @@ class AutoImportProjectTracker(
     projectData.settingsTracker.refreshChanges()
   }
 
-  override fun initializeComponent() {
-    LOG.debug("Project tracker initialization")
-    ApplicationManager.getApplication().messageBus.connect(serviceDisposable)
-      .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
-    project.messageBus.connect(serviceDisposable)
-      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
-    dispatcher.setRestartTimerOnAdd(true)
-    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
-    dispatcher.activate()
-  }
-
   @TestOnly
   fun getActivatedProjects() =
     projectDataMap.values
@@ -297,19 +287,30 @@ class AutoImportProjectTracker(
   }
 
   init {
+    LOG.debug("Project tracker initialization")
+
     projectReloadOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
     projectReloadOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
     projectChangeOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
     projectChangeOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
     isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { scheduleChangeProcessing() }
     settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) { scheduleChangeProcessing() }
-    asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
     projectReloadOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project reload start event") }
     projectReloadOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project reload finish event") }
     projectChangeOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project change start event") }
     projectChangeOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project change finish event") }
     isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) { LOG.debug("Detected project lookup start event") }
     isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { LOG.debug("Detected project lookup finish event") }
+
+    dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
+    asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }
+
+    dispatcher.setRestartTimerOnAdd(true)
+
+    application.messageBus.connect(serviceDisposable)
+      .subscribe(BatchFileChangeListener.TOPIC, createProjectChangesListener())
+    project.messageBus.connect(serviceDisposable)
+      .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
   }
 
   private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())
