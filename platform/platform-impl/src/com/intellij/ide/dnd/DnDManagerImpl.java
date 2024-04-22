@@ -21,7 +21,6 @@ import com.intellij.util.ui.TimerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +28,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
@@ -86,7 +87,19 @@ public final class DnDManagerImpl extends DnDManager {
   private void initializeDragMotionThreshold() {
     var motionThreshold = Registry.intValue("ide.dnd.threshold", -1, -1, 50);
     if (motionThreshold != -1) {
-      AWTAccessor.getToolkitAccessor().setDesktopProperty(Toolkit.getDefaultToolkit(), "DnD.gestureMotionThreshold", motionThreshold);
+      try {
+        Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
+        Method getToolkitAccessor = awtAccessor.getMethod("getToolkitAccessor");
+        getToolkitAccessor.setAccessible(true); // just in case
+        Object toolkitAccessor = getToolkitAccessor.invoke(null);
+        Method setDesktopProperty = toolkitAccessor.getClass().getMethod("setDesktopProperty", Toolkit.class, String.class, Object.class);
+        setDesktopProperty.setAccessible(true); // just in case
+        setDesktopProperty.invoke(toolkitAccessor, Toolkit.getDefaultToolkit(), "DnD.gestureMotionThreshold", motionThreshold);
+      }
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
+        LOG.warn("An exception occurred when trying to set the DnD.gestureMotionThreshold desktop property. " +
+                 "Likely causes: a bug or not running under the JetBrains Runtime", e);
+      }
     }
     dragMotionThresholdInitialized = true;
   }
