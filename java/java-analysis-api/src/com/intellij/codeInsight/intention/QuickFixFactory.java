@@ -523,13 +523,6 @@ public abstract class QuickFixFactory {
   public abstract @NotNull IntentionAction createRemoveDuplicateExtendsAction(@NotNull String className);
 
   /**
-   * @deprecated error elements are not provided anymore for members declared out of class.
-   * Now they are members of an implicitly declared class and can be moved as usual members.
-   */
-  @Deprecated
-  public abstract @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement);
-
-  /**
    * Creates a fix that changes the type of the receiver parameter
    *
    * @param parameter receiver parameter to change type for

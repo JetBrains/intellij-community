@@ -960,11 +960,6 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public @NotNull IntentionAction createMoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
-    return new MoveMemberIntoClassFix(errorElement).asIntention();
-  }
-
-  @Override
   public @NotNull IntentionAction createReceiverParameterTypeFix(@NotNull PsiReceiverParameter parameter, @NotNull PsiType newType) {
     return new ReceiverParameterTypeFix(parameter, newType).asIntention();
   }
