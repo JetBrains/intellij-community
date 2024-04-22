@@ -45,7 +45,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.FileStore
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
@@ -373,22 +372,16 @@ private const val LOW_DISK_SPACE_THRESHOLD = (50 shl 20).toLong()
 private const val MAX_WRITE_SPEED_IN_BPS = (500 shl 20).toLong()  // 500 MB/s is (somewhat outdated) peak SSD write speed
 
 private fun startDiskSpaceMonitoring() {
-  if (SystemProperties.getBooleanProperty("idea.no.system.path.space.monitoring", false)) {
+  if (System.getProperty("idea.no.system.path.space.monitoring").toBoolean()) {
     return
   }
 
-  val dir: Path
-  val store: FileStore
-  try {
-    dir = Path.of(PathManager.getSystemPath())
-    store = Files.getFileStore(dir)
-  }
-  catch (e: IOException) {
-    LOG.error(e)
-    return
-  }
-  catch (e: InvalidPathException) {
-    LOG.error(e)
+  val (dir, store) = runCatching {
+    val dir = Path.of(PathManager.getSystemPath())
+    val store = Files.getFileStore(dir)
+    dir to store
+  }.getOrElse {
+    LOG.error(it)
     return
   }
 
