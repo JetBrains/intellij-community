@@ -126,7 +126,9 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   override val reactionsVm: GitLabReactionsViewModel? = null
 
   override val body: Flow<String> = note.body
-  override val bodyHtml: Flow<String> = body.map { GitLabUIUtil.convertToHtml(project, mr.gitRepository, it) }.modelFlow(cs, LOG)
+  override val bodyHtml: Flow<String> = body.map {
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
+  }.modelFlow(cs, LOG)
 
   override val discussionState: Flow<GitLabDiscussionStateContainer> = flowOf(GitLabDiscussionStateContainer.DEFAULT)
 

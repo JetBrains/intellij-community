@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import git4idea.repo.GitRepository
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import java.nio.file.Path
@@ -30,15 +30,24 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
   fun `test link with query does not throw an exception`() {
     assertNoThrowable {
       GitLabUIUtil.convertToHtml(
-        project, gitRepository, """
+        project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
         [link](/some/invalid/file/path?query=123)
       """.trimIndent())
     }
   }
 
+  fun `test link with starting with project path redirects to browser (for now)`() {
+    val parsed = GitLabUIUtil.convertToHtml(
+      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
+        [link](/test-account/mr-test/-/merge_requests/1)
+      """.trimIndent())
+
+    assertThat(parsed).contains("href=\"/test-account/mr-test/-/merge_requests/1\"")
+  }
+
   fun `test simple file link gets file link prefix`() {
     val parsed = GitLabUIUtil.convertToHtml(
-      project, gitRepository, """
+      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
         [link](bla.md)
       """.trimIndent())
 
@@ -47,7 +56,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
 
   fun `test nested file link gets file link prefix`() {
     val parsed = GitLabUIUtil.convertToHtml(
-      project, gitRepository, """
+      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
         [link](directory/a/b/bla.md)
       """.trimIndent())
 
@@ -56,7 +65,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
 
   fun `test nested file link with backslashes gets file link prefix`() {
     val parsed = GitLabUIUtil.convertToHtml(
-      project, gitRepository, """
+      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
         [link](directory\a\b\bla.md)
       """.trimIndent())
 
@@ -65,7 +74,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
 
   fun `test simple MR link gets MR link prefix`() {
     val parsed = GitLabUIUtil.convertToHtml(
-      project, gitRepository, """
+      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
         !53
       """.trimIndent())
 
