@@ -11759,12 +11759,12 @@ c:com.intellij.ui.treeStructure.SimpleTreeStructure$Impl
 - <init>(com.intellij.ui.treeStructure.SimpleNode):V
 - getRootElement():java.lang.Object
 c:com.intellij.ui.treeStructure.Tree
-- javax.swing.JTree
 - com.intellij.openapi.ui.Queryable
 - com.intellij.ui.ComponentWithExpandableItems
 - com.intellij.ui.ComponentWithFileColors
 - com.intellij.ui.tree.TreePathBackgroundSupplier
 - com.intellij.util.ui.ComponentWithEmptyText
+- javax.swing.JTree
 - <init>():V
 - <init>(javax.swing.tree.TreeModel):V
 - <init>(javax.swing.tree.TreeNode):V
