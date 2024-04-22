@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.util.LocalTimeCounter.currentTime
 import org.jetbrains.annotations.ApiStatus
@@ -166,13 +167,12 @@ class ProjectSettingsTracker(
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
       submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
-        val localFileSystem = LocalFileSystem.getInstance()
-        val settingsFiles = settingsPaths.map { Path.of(it) }
+        val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
         if (settingsFiles.isEmpty()) {
           callback(settingsPaths)
         }
         else {
-          localFileSystem.refreshNioFiles(settingsFiles, isAsyncChangesProcessing, false) {
+          LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
             callback(settingsPaths)
           }
         }
