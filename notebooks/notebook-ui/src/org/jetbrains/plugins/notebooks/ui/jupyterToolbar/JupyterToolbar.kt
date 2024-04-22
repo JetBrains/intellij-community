@@ -2,11 +2,9 @@ package org.jetbrains.plugins.notebooks.ui.jupyterToolbar
 
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.editor.Editor
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.NewUiValue
 import com.intellij.ui.RoundedLineBorder
@@ -27,7 +25,7 @@ import javax.swing.SwingUtilities
  * PY-66455
  */
 @ApiStatus.Internal
-open class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String = ActionPlaces.EDITOR_INLAY) :
+class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String = ActionPlaces.EDITOR_INLAY) :
   ActionToolbarImpl(place, actionGroup, true)
 {
   init {
@@ -74,28 +72,6 @@ open class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: S
     private const val ALPHA = 1.0f
     private val TOOLBAR_ARC_SIZE = JBUI.scale(14)
     private val TOOLBAR_BORDER_THICKNESS = JBUI.scale(1)
-    private val OUTER_PADDING = JBUI.scale(3)
-    fun createImmediatelyUpdatedJupyterToolbar(
-      group: ActionGroup,
-      targetComponent: JComponent,
-      onUpdated: (JupyterToolbar) -> Unit
-    ): JupyterToolbar {
-      val toolbar = object : JupyterToolbar(group, targetComponent, ActionPlaces.EDITOR_FLOATING_TOOLBAR)
-      {
-        override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
-          val firstTime = forced && !hasVisibleActions()
-          super.actionsUpdated(forced, newVisibleActions)
-          if (firstTime) {
-            ComponentUtil.markAsShowing(this, false)
-            onUpdated.invoke(this)
-          }
-        }
-      }
-
-      toolbar.putClientProperty(SUPPRESS_FAST_TRACK, true)
-      ComponentUtil.markAsShowing(toolbar, true)
-      toolbar.updateActionsImmediately(true)
-      return toolbar
-    }
+    private val OUTER_PADDING = JBUI.scale(1)
   }
 }
