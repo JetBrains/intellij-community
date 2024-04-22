@@ -203,16 +203,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
                    markRef: Ref<StatusMark>) {
     applyDelayedPushOperations()
 
-    val orderedProviders: List<IndexableFilesIterator> = markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators) {
-      if (predefinedIndexableFilesIterators == null) {
-        val pair = collectProviders(myProject, myIndex)
-        markRef.set(pair.second)
-        pair.first
-      }
-      else {
-        predefinedIndexableFilesIterators
-      }
-    }
+    val orderedProviders: List<IndexableFilesIterator> = getIndexableFilesIterators(markRef)
 
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
@@ -235,6 +226,18 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     LOG.info(getLogScanningCompletedStageMessage())
   }
+
+  private fun getIndexableFilesIterators(markRef: Ref<StatusMark>) =
+    markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators) {
+      if (predefinedIndexableFilesIterators == null) {
+        val pair = collectProviders(myProject, myIndex)
+        markRef.set(pair.second)
+        pair.first
+      }
+      else {
+        predefinedIndexableFilesIterators
+      }
+    }
 
   private fun applyDelayedPushOperations() {
     markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
