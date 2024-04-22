@@ -11771,6 +11771,7 @@ c:com.intellij.find.SearchTextArea
 - <init>(javax.swing.JTextArea,Z):V
 - <init>(javax.swing.JTextArea,Z,Z):V
 - getMinimumSize():java.awt.Dimension
+- s:getNewLineKeystroke():javax.swing.KeyStroke
 - getTextArea():javax.swing.JTextArea
 - propertyChange(java.beans.PropertyChangeEvent):V
 - setExtraActions(com.intellij.openapi.actionSystem.AnAction[]):java.util.List

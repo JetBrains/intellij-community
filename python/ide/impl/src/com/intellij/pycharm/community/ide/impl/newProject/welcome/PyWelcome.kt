@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileElement
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -248,7 +248,7 @@ private object PyWelcome {
 
     // search everywhere is not initialized until its first usage happens
     val searchEverywhereShortcut = IdeBundle.message("double.ctrl.or.shift.shortcut",
-                                                     if (SystemInfo.isMac) MacKeymapUtil.SHIFT else "Shift")
+                                                     if (ClientSystemInfo.isMac()) MacKeymapUtil.SHIFT else "Shift")
 
     document.setText(
       (if (languageLevel.isPython2) "# coding=utf-8\n" else "") +

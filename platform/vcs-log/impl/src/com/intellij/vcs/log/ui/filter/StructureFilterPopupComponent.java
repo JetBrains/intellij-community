@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -334,7 +334,7 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     }
 
     private static int getModifier() {
-      return SystemInfo.isMac ? ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
+      return ClientSystemInfo.isMac() ? ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
     }
 
     @Override

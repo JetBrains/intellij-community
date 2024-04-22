@@ -19,9 +19,9 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -304,7 +304,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   final class CommentOutBin extends QuickFixAction {
     CommentOutBin(@NotNull InspectionToolWrapper toolWrapper) {
-      super(AnalysisBundle.message("inspection.dead.code.comment.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+      super(AnalysisBundle.message("inspection.dead.code.comment.quickfix"), null,
+            KeyStroke.getKeyStroke(KeyEvent.VK_SLASH, ClientSystemInfo.isMac() ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
             toolWrapper);
     }
 

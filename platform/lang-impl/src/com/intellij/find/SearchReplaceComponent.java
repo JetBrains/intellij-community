@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -458,7 +459,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                                        addTextToRecent(mySearchTextComponent);
                                                      }
                                                    }
-                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, SystemInfo.isMac
+                                                 }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ClientSystemInfo.isMac()
                                                                                               ? META_DOWN_MASK : CTRL_DOWN_MASK),
                                                  JComponent.WHEN_FOCUSED);
     // make sure Enter is consumed by search text field, even if 'next occurrence' action is disabled

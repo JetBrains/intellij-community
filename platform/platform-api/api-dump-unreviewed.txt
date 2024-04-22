@@ -1705,6 +1705,7 @@ f:com.intellij.openapi.actionSystem.CommonShortcuts
 - s:getDuplicate():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getEditSource():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getFind():com.intellij.openapi.actionSystem.ShortcutSet
+- s:getInsert():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getInsertKeystroke():javax.swing.KeyStroke
 - s:getMove():com.intellij.openapi.actionSystem.ShortcutSet
 - s:getMoveDown():com.intellij.openapi.actionSystem.ShortcutSet

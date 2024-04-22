@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -58,6 +59,11 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
 
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
+
+  /**
+   * @deprecated Use {@link #getNewLineKeystroke()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
 
@@ -95,7 +101,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myTextArea);
     LightEditActionFactory.create(event -> myTextArea.transferFocusBackward())
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK)), myTextArea);
-    KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NEW_LINE_KEYSTROKE, WHEN_FOCUSED);
+    KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), getNewLineKeystroke(), WHEN_FOCUSED);
     myTextArea.setDocument(new PlainDocument() {
       @Override
       public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
@@ -337,6 +343,10 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   @Deprecated
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
+  public static KeyStroke getNewLineKeystroke() {
+    return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (ClientSystemInfo.isMac() ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
+  }
+
   private final class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -379,7 +389,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private final class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
-      setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
+      setShortcutSet(new CustomShortcutSet(getNewLineKeystroke()));
       getTemplatePresentation().setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }
 

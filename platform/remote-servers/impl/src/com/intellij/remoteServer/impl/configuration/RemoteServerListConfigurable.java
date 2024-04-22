@@ -231,7 +231,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   private final class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
     private AddRemoteServerGroup() {
       super(CloudBundle.message("group.action.AddRemoteServerGroup.text"), "", IconUtil.getAddIcon());
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree);
     }
 
     @Override

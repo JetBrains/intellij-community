@@ -5,10 +5,10 @@ package com.intellij.ui.plaf.beg;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
@@ -238,7 +238,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     if (keystroke != null){
       int j1 = keystroke.getModifiers();
       if (j1 > 0){
-        if (SystemInfoRt.isMac) {
+        if (ClientSystemInfo.isMac()) {
           s1 = MacKeymapUtil.getKeyModifiersTextForMacOSLeopard(j1);
         }
         else {
