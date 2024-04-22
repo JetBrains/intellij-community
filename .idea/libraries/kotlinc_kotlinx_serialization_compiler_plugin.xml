@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlinx-serialization-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.0.0-ij241-280">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.0.0-ij241.15989-9">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-ij241-280/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-ij241-280.jar">
-          <sha256sum>5b6854bd1d3d24184d09c725ebb8c8b8a915983afe53e241cbdacea6e186b5c5</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-ij241.15989-9/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-ij241.15989-9.jar">
+          <sha256sum>3c37edaabbe7fb6b631724ee5ce285b6bdedbedd2a81bfcd55ea4dbd282eb0b8</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-ij241-280/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-ij241-280.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-ij241.15989-9/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-ij241.15989-9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-ij241-280/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-ij241-280-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.0.0-ij241.15989-9/kotlinx-serialization-compiler-plugin-for-ide-2.0.0-ij241.15989-9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
