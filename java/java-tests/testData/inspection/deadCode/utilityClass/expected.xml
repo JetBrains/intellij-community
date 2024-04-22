@@ -8,6 +8,6 @@
   <problem>
     <file>Example.java</file>
     <line>3</line>
-    <description>No class references have been found. Class static initializer is not reachable.</description>
+    <description>No class references has been found. Class static initializer is not reachable.</description>
   </problem>
 </problems>

@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems>  
+<problems>
+
+  <problem><!-- TODO false positive -->
+    <file>Test.kt</file>
+    <line>7</line>
+    <entry_point TYPE="class" FQNAME="Test.Companion" />
+    <description>No class references has been found. Class static initializer is not reachable.</description>
+  </problem>
 </problems>
 
