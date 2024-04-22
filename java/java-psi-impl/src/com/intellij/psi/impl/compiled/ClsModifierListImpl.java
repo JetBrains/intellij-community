@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.ModifierFlags;
@@ -187,9 +186,7 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
   private static @Nullable String getAnnotationReferenceShortName(@NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
     if (referenceElement == null) return null;
-    String name = referenceElement.getReferenceName();
-    if (name == null) return null;
-    return StringUtil.getShortName(name);
+    return referenceElement.getReferenceName();
   }
 
   @Override
