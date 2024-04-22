@@ -201,17 +201,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
   private fun scan(indicator: CheckPauseOnlyProgressIndicator,
                    progressReporter: IndexingProgressReporter,
                    markRef: Ref<StatusMark>) {
-    markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
-    LOG.info("Performing delayed pushing properties tasks for " + myProject.name)
-    try {
-      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
-      if (pusher is PushedFilePropertiesUpdaterImpl) {
-        pusher.performDelayedPushTasks()
-      }
-    }
-    finally {
-      markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
-    }
+    applyDelayedPushOperations()
 
     val orderedProviders: List<IndexableFilesIterator>
     markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, true)
@@ -248,6 +238,20 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       }
     }
     LOG.info(getLogScanningCompletedStageMessage())
+  }
+
+  private fun applyDelayedPushOperations() {
+    markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, true)
+    LOG.info("Performing delayed pushing properties tasks for " + myProject.name)
+    try {
+      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
+      if (pusher is PushedFilePropertiesUpdaterImpl) {
+        pusher.performDelayedPushTasks()
+      }
+    }
+    finally {
+      markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
+    }
   }
 
   private fun scanAndUpdateUnindexedFiles(indicator: CheckPauseOnlyProgressIndicator,
