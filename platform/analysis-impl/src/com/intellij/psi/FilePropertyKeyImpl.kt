@@ -110,7 +110,7 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     @JvmStatic
     @get:VisibleForTesting
     val READ_PERSISTENT_VALUE: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      Registry.`is`("retrieve.pushed.properties.from.vfs", true) or Registry.`is`("scanning.in.smart.mode", true)
+      Registry.`is`("retrieve.pushed.properties.from.vfs", true) or true // FIXME: IJPL-2852, "scanning.in.smart.mode"
     }
 
     @JvmStatic
