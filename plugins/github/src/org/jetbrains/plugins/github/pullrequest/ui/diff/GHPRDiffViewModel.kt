@@ -15,12 +15,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -102,13 +104,13 @@ internal class GHPRDiffViewModelImpl(
   override val diffVm: StateFlow<ComputedResult<DiffProducersViewModel?>> =
     helper.diffVm.stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override fun getViewModelFor(change: RefComparisonChange): StateFlow<GHPRDiffChangeViewModelImpl?> =
     changeVmsMap.getOrPut(change) {
-      changesFetchFlow.computationState().transformLatest {
-        val result = it.getOrNull<GitBranchComparisonResult>() ?: return@transformLatest
-        this.emit(result.patchesByChange[change])
-      }.mapNullableScoped { createChangeVm(change, it) }.stateIn(cs, SharingStarted.Lazily, null)
+      changesFetchFlow.computationState()
+        .mapNotNull { it.getOrNull() }
+        .map { it.patchesByChange[change] }
+        .mapNullableScoped { createChangeVm(change, it) }
+        .stateIn(cs, SharingStarted.Lazily, null)
     }
 
   override suspend fun showDiffFor(changes: ChangesSelection) {
