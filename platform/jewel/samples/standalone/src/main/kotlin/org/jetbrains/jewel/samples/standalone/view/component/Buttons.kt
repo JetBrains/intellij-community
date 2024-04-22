@@ -16,7 +16,7 @@ import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.Text
 
 @Composable
-@View(title = "Buttons", position = 0)
+@View(title = "Buttons", position = 0, icon = "icons/components/button.svg")
 fun Buttons() {
     Row(
         modifier = Modifier.fillMaxWidth(),

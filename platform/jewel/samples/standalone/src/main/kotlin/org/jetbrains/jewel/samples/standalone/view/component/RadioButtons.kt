@@ -14,7 +14,7 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 
 @Composable
-@View(title = "Radio Buttons", position = 2)
+@View(title = "Radio Buttons", position = 2, icon = "icons/components/radioButton.svg")
 fun RadioButtons() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

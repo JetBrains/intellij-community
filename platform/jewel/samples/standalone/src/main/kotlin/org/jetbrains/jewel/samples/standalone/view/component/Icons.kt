@@ -29,7 +29,7 @@ import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
-@View(title = "Icons", position = 6)
+@View(title = "Icons", position = 6, icon = "icons/components/toolbar.svg")
 internal fun Icons() {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),

@@ -31,7 +31,7 @@ private const val LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipisc
     "Sed nec sapien nec dui rhoncus bibendum. Sed blandit bibendum libero."
 
 @Composable
-@View(title = "TextAreas", position = 8)
+@View(title = "TextAreas", position = 8, icon = "icons/components/textArea.svg")
 fun TextAreas() {
     Row(
         Modifier.padding(horizontal = 16.dp).height(150.dp),

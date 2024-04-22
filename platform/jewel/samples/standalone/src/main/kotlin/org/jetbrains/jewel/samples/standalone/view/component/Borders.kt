@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.RadioButtonRow
@@ -25,6 +26,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
+@View("Borders", position = 13, icon = "icons/components/borders.svg")
 internal fun Borders() {
     GroupHeader("Borders")
     var borderAlignment by remember { mutableStateOf(Stroke.Alignment.Center) }

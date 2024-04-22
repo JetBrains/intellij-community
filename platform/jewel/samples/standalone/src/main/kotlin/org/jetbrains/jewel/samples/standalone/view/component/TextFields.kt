@@ -38,7 +38,7 @@ import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
 @Composable
-@View(title = "TextFields", position = 9)
+@View(title = "TextFields", position = 9, icon = "icons/components/textField.svg")
 fun TextFields() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

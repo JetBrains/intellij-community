@@ -18,7 +18,7 @@ import org.jetbrains.jewel.ui.component.styling.DropdownStyle
 import kotlin.random.Random
 
 @Composable
-@View(title = "Dropdowns", position = 3)
+@View(title = "Dropdowns", position = 3, icon = "icons/components/comboBox.svg")
 fun Dropdowns() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

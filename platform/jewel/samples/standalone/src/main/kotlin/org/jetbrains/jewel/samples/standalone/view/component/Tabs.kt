@@ -34,7 +34,7 @@ import org.jetbrains.jewel.ui.util.thenIf
 import kotlin.math.max
 
 @Composable
-@View(title = "Tabs", position = 7)
+@View(title = "Tabs", position = 7, icon = "icons/components/tabs.svg")
 fun Tabs() {
     Text("Default tabs", Modifier.fillMaxWidth())
     DefaultTabShowcase()

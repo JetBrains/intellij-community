@@ -15,7 +15,7 @@ import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.TriStateCheckboxRow
 
 @Composable
-@View(title = "Checkboxes", position = 1)
+@View(title = "Checkboxes", position = 1, icon = "icons/components/checkBox.svg")
 fun Checkboxes() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),

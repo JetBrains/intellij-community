@@ -17,7 +17,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
 
 @Composable
-@View(title = "Links", position = 4)
+@View(title = "Links", position = 4, icon = "icons/components/links.svg")
 fun Links() {
     Row(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
