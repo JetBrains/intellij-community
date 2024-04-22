@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.combineStateIn
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
@@ -14,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -76,12 +78,15 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
   rendererFactory: RendererFactory<VM, JComponent>
 ): Nothing {
   val editor = this
-  withContext(Dispatchers.Main + CoroutineName("Editor component inlays for $this")) {
+  withContext(Dispatchers.Main.immediate + CoroutineName("Editor component inlays for $this")) {
     val inlaysCs = this
     val controllersByVmKey = createCustomHashingStrategyMap<VM, Job>(vmHashingStrategy)
+    val positionKeeper = EditorScrollingPositionKeeper(editor)
     vmsFlow.map {
       createCustomHashingStrategySet(vmHashingStrategy).apply { addAll(it) }
     }.collect {
+      positionKeeper.savePosition()
+
       // remove missing
       val iter = controllersByVmKey.iterator()
       while (iter.hasNext()) {
@@ -99,17 +104,29 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
           controlInlay(vm, editor, rendererFactory)
         }
       }
+
+      // immediately validate the editor to recalculate the size with inlays
+      editor.contentComponent.validate()
+      positionKeeper.restorePosition(true)
+      editor.contentComponent.repaint()
     }
     awaitCancellation()
   }
 }
 
 private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, rendererFactory: RendererFactory<VM, JComponent>): Nothing {
-  withContext(Dispatchers.Main + CoroutineName("Scope for code review component editor inlay for $vm")) {
+  withContext(Dispatchers.Main.immediate + CoroutineName("Scope for code review component editor inlay for $vm")) {
     var inlay: Inlay<*>? = null
     try {
-      combine(vm.line, vm.isVisible, ::Pair)
-        .distinctUntilChanged()
+      val lineFlow = vm.line
+      val visibleFlow = vm.isVisible
+      if (lineFlow is StateFlow && visibleFlow is StateFlow) {
+        // Can't do combine.stateIn bc combine doesn't handle UNDISPATCHED
+        combineStateIn(this, lineFlow, visibleFlow, ::Pair)
+      }
+      else {
+        combine(lineFlow, visibleFlow, ::Pair)
+      }.distinctUntilChanged()
         .collect { (line, isVisible) ->
           val currentInlay = inlay
           if (line != null && isVisible) {
