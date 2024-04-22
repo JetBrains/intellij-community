@@ -213,10 +213,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       markStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, false)
     }
 
-    if (isFullIndexUpdate()) {
-      myIndex.clearIndicesIfNecessary()
-    }
-
     val orderedProviders: List<IndexableFilesIterator>
     markStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, true)
     try {
@@ -294,6 +290,10 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
     progressReporter.setIndeterminate(true)
     progressReporter.setText(IndexingBundle.message("progress.indexing.scanning"))
+
+    if (isFullIndexUpdate()) {
+      myIndex.clearIndicesIfNecessary()
+    }
 
     scan(indicator, progressReporter, markRef)
 
