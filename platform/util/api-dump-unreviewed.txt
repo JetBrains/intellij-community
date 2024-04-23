@@ -4783,12 +4783,15 @@ c:com.intellij.util.indexing.impl.ChangeTrackingValueContainer
 - p:myInvalidated:it.unimi.dsi.fastutil.ints.IntSet
 - <init>(com.intellij.openapi.util.Computable):V
 - addValue(I,java.lang.Object):V
+- containsCachedMergedData():Z
+- containsOnlyInvalidatedChange():Z
 - dropMergedData():V
 - getValueIterator():com.intellij.util.indexing.ValueContainer$ValueIterator
 - isDirty():Z
 - removeAssociatedValue(I):Z
 - p:removeFromAdded(I):Z
 - saveTo(java.io.DataOutput,com.intellij.util.io.DataExternalizer):V
+- setNeedsCompacting(Z):V
 - size():I
 f:com.intellij.util.indexing.impl.CollectionDataExternalizer
 - com.intellij.util.io.DataExternalizer
