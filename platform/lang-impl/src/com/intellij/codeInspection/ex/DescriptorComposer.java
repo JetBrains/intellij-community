@@ -44,12 +44,14 @@ public final class DescriptorComposer extends HTMLComposerImpl {
 
       LOG.assertTrue(descriptions != null);
 
-      buf.append("\n<ul>");
+      startList(buf);
       for (int i = 0; i < descriptions.length; i++) {
-        buf.append("\n<li>");
+        startListItem(buf);
         composeDescription(descriptions[i], i, buf, refEntity);
+        doneListItem(buf);
       }
-      buf.append("\n</ul>\n</div>");
+      doneList(buf);
+      buf.append("\n</div>");
 
       appendResolution(buf, refEntity, quickFixTexts(refEntity, myTool));
     }
