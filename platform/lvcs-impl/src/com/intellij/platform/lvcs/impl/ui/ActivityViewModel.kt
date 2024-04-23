@@ -37,13 +37,12 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
         .collect { filter ->
           thisLogger<ActivityViewModel>().debug("Loading activity items for $activityScope and filter $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
-          val activityItems = withContext(Dispatchers.Default) {
+          val activityData = withContext(Dispatchers.Default) {
             LocalHistoryCounter.logLoadItems(project, activityScope) {
               activityProvider.loadActivityList(activityScope, filter)
             }
           }
           withContext(Dispatchers.EDT) {
-            val activityData = ActivityData(activityItems)
             activityItemsFlow.value = activityData
             eventDispatcher.multicaster.onItemsLoadingStopped(activityData)
           }

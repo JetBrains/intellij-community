@@ -31,6 +31,9 @@ f:com.intellij.history.core.ChangeListStorageImpl
 - purge(J,I,com.intellij.util.Consumer):V
 - readPrevious(I,it.unimi.dsi.fastutil.ints.IntSet):com.intellij.history.core.ChangeSetHolder
 - writeNextSet(com.intellij.history.core.changes.ChangeSet):V
+*c:com.intellij.history.core.ChangeProcessorBase
+- <init>(java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
+- process(com.intellij.history.core.changes.ChangeSet,com.intellij.history.core.changes.Change,java.lang.String):V
 f:com.intellij.history.core.ChangeSetHolder
 - java.lang.Record
 - <init>(I,com.intellij.history.core.changes.ChangeSet):V
@@ -100,7 +103,6 @@ a:com.intellij.history.core.LocalHistoryFacade$Listener
 - changeSetFinished(com.intellij.history.core.changes.ChangeSet):V
 f:com.intellij.history.core.LocalHistoryFacadeKt
 - *sf:collectChanges(com.intellij.history.core.LocalHistoryFacade,java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
-- sf:matches(com.intellij.history.core.changes.Change,java.lang.String,java.lang.String,java.util.regex.Pattern):Z
 f:com.intellij.history.core.LocalHistoryRecordsTable
 - com.intellij.util.io.storage.AbstractRecordsTable
 - <init>(java.nio.file.Path,com.intellij.util.io.StorageLockContext):V
@@ -873,7 +875,7 @@ com.intellij.platform.lvcs.impl.ActivityDiffObject
 - a:getPresentation(com.intellij.platform.lvcs.impl.ActivityItem):com.intellij.platform.lvcs.impl.ActivityPresentation
 - a:isActivityFilterSupported(com.intellij.platform.lvcs.impl.ActivityScope):Z
 - a:isScopeFilterSupported(com.intellij.platform.lvcs.impl.ActivityScope):Z
-- a:loadActivityList(com.intellij.platform.lvcs.impl.ActivityScope,java.lang.String):java.util.List
+- a:loadActivityList(com.intellij.platform.lvcs.impl.ActivityScope,java.lang.String):com.intellij.platform.lvcs.impl.ActivityData
 - a:loadDiffData(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.platform.lvcs.impl.ActivityDiffData
 - a:loadSingleDiff(com.intellij.platform.lvcs.impl.ActivityScope,com.intellij.platform.lvcs.impl.ActivitySelection):com.intellij.diff.chains.DiffRequestProducer
 *:com.intellij.platform.lvcs.impl.ActivityScope
