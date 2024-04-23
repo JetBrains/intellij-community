@@ -3697,6 +3697,7 @@ c:com.intellij.openapi.diff.actions.MergeFilesAction
 f:com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 - <init>():V
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
+- s:logToggleCombinedDiffBlockCollapse(com.intellij.openapi.project.Project):V
 - s:logToggleDiffTool(com.intellij.openapi.project.Project,com.intellij.diff.DiffTool,java.lang.String):V
 - s:logToggleHighlightPolicy(com.intellij.diff.tools.util.base.HighlightPolicy,java.lang.String):V
 - s:logToggleIgnorePolicy(com.intellij.diff.tools.util.base.IgnorePolicy,java.lang.String):V

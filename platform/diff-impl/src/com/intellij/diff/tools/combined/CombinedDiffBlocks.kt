@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -209,6 +210,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   private var blockCollapsed by Delegates.observable(isCollapsed) { _, oldValue, newValue ->
     if (oldValue != newValue) {
+      DiffUsageTriggerCollector.logToggleCombinedDiffBlockCollapse(project)
       updateBodyContent(newValue)
       collapsingListeners.multicaster.onCollapseStateChanged(id, newValue)
     }
