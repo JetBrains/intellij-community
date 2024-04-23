@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.cache.impl.idCache;
 
+import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,22 +37,20 @@ public final class JavaIdIndexer implements IdIndexer {
 
   @Override
   public @NotNull Map<IdIndexEntry, Integer> map(@NotNull FileContent inputData) {
-
     VirtualFile file = inputData.getFile();
-    String extension = file.getExtension();
-    if (extension != null && extension.equals(JavaClassFileType.DEFAULT_EXTENSION) && isEnabled) {
+    FileType fileType = file.getFileType();
+    if (fileType.equals(JavaClassFileType.INSTANCE) && isEnabled) {
       Map<IdIndexEntry, Integer> idEntries = calculateIdEntriesParsingConstantPool(inputData);
       if (idEntries != null) return idEntries;
       return Map.of();
     }
     // we are skipping indexing of sources in libraries (we are going to index only the compiled library classes)
-    if (!isEnabled && !JavaFileElementType.isInSourceContent(file)) {
-      return Map.of();
+    if (isEnabled || JavaFileElementType.isInSourceContent(file)) {
+      IdDataConsumer consumer = new IdDataConsumer();
+      scanContentWithCheckCanceled(inputData, createIndexingLexer(new OccurrenceConsumer(consumer, false)));
+      return consumer.getResult();
     }
-
-    IdDataConsumer consumer = new IdDataConsumer();
-    scanContentWithCheckCanceled(inputData, createIndexingLexer(new OccurrenceConsumer(consumer, false)));
-    return consumer.getResult();
+    return Map.of();
   }
 
   @Nullable

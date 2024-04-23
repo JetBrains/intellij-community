@@ -2791,6 +2791,8 @@
     <pluginSuggestionProvider implementation="com.intellij.ide.android.AndroidSuggestionProvider"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.codeInsight.generation.analysis.GenerateLoggerStatisticsCollector"/>
+
+    <trigramIndexFilterExcludeExtension implementation="com.intellij.java.impl.find.ngrams.JavaTrigramFilterExcludeExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

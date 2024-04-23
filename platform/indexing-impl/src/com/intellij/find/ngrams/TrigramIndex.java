@@ -1,10 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
@@ -36,10 +41,10 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   }
 
   @ApiStatus.Internal
-  public static boolean isIndexable(FileType fileType) {
-    return !fileType.isBinary() &&
-           isEnabled() &&
-           (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
+  public static boolean isIndexable(@NotNull VirtualFile file, @NotNull Project project) {
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+    TrigramIndexFilter trigramIndexFilter = ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
+    return trigramIndexFilter.acceptInput(indexedFile);
   }
 
   @Override
@@ -64,7 +69,7 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
+    return ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
   }
 
   @Override

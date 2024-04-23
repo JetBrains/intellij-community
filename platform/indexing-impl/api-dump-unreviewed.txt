@@ -11,11 +11,6 @@ f:com.intellij.find.ngrams.TrigramIndex
 - getName():com.intellij.util.indexing.ID
 - getVersion():I
 - needsForwardIndexWhenSharing():Z
-f:com.intellij.find.ngrams.TrigramTextSearchService
-- com.intellij.find.TextSearchService
-- <init>():V
-- isInSearchableScope(com.intellij.openapi.vfs.VirtualFile):Z
-- processFilesWithText(java.lang.String,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):com.intellij.find.TextSearchService$TextSearchResult
 f:com.intellij.ide.todo.TodoFilter
 - java.lang.Cloneable
 - <init>():V

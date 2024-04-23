@@ -94,7 +94,7 @@ e:com.intellij.find.FindModel$SearchContext
 - s:values():com.intellij.find.FindModel$SearchContext[]
 *:com.intellij.find.TextSearchService
 - s:getInstance():com.intellij.find.TextSearchService
-- a:isInSearchableScope(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInSearchableScope(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
 - a:processFilesWithText(java.lang.String,com.intellij.util.Processor,com.intellij.psi.search.GlobalSearchScope):com.intellij.find.TextSearchService$TextSearchResult
 *e:com.intellij.find.TextSearchService$TextSearchResult
 - java.lang.Enum
