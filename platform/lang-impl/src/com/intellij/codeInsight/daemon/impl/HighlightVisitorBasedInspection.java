@@ -30,7 +30,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
-  public static final String SHORT_NAME = "Annotator";
+  public static final String SHORT_NAME = HighlightInfo.ANNOTATOR_INSPECTION_SHORT_NAME;
   @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean highlightErrorElements = true;
   @SuppressWarnings("WeakerAccess") // made public for serialization
