@@ -485,6 +485,10 @@ private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path
 }
 
 private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+  val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.WINDOWS) {
+    "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
+  }
+
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
@@ -497,7 +501,9 @@ private fun generateProductJson(targetDir: Path, context: BuildContext, arch: Jv
       startupWmClass = null,
       bootClassPathJarNames = context.bootClassPathJarNames,
       additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
-      mainClass = context.ideMainClassName)),
+      mainClass = context.ideMainClassName,
+      customCommands = listOfNotNull(jetbrainsClientCustomLaunchData),
+    )),
     context)
   writeProductInfoJson(targetDir.resolve(PRODUCT_INFO_FILE_NAME), json, context)
   return json

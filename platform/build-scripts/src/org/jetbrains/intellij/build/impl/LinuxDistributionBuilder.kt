@@ -312,6 +312,10 @@ class LinuxDistributionBuilder(
   override fun isRuntimeBundled(file: Path): Boolean = !file.name.contains(NO_RUNTIME_SUFFIX)
 
   private fun generateProductJson(targetDir: Path, arch: JvmArchitecture, withRuntime: Boolean = true): String {
+    val jetbrainsClientCustomLaunchData = generateJetBrainsClientLaunchData(context, arch, OsFamily.LINUX) {
+      "bin/${it.productProperties.baseFileName}64.vmoptions"
+    }
+
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
@@ -326,6 +330,7 @@ class LinuxDistributionBuilder(
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
           mainClass = context.ideMainClassName,
+          customCommands = listOfNotNull(jetbrainsClientCustomLaunchData)
         )
       ),
       context
