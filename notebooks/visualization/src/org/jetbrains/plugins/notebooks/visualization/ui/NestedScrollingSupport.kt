@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
+import com.intellij.openapi.util.registry.Registry
 import java.awt.AWTEvent
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -14,7 +15,7 @@ import kotlin.time.DurationUnit
 
 /**
  * Decorates component to handle nested scrolling areas gracefully.
- * As it described in https://wiki.mozilla.org/Gecko:Mouse_Wheel_Scrolling#Mouse_wheel_transaction
+ * As it described in [Mozilla documentation](https://wiki.mozilla.org/Gecko:Mouse_Wheel_Scrolling#Mouse_wheel_transaction)
  */
 fun addNestedScrollingSupport(view: JComponent): JLayer<JComponent> {
   return JLayer(view, object : LayerUI<JComponent>() {
@@ -61,14 +62,14 @@ fun addNestedScrollingSupport(view: JComponent): JLayer<JComponent> {
       }
     }
 
-
     private fun getValidOwner(e: MouseWheelEvent): Component? {
       val component = e.component
       return if (component == null) {
         null
       }
       else {
-        if (isTimeoutExceeded(1500.milliseconds)) {
+        val scrollOwnerTimeout = Registry.intValue("jupyter.editor.scroll.mousewheel.timeout", 250).milliseconds
+        if (isTimeoutExceeded(scrollOwnerTimeout)) {
           component
         }
         else {
