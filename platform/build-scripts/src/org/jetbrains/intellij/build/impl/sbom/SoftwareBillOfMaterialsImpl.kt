@@ -228,9 +228,9 @@ internal class SoftwareBillOfMaterialsImpl(
      */
     val extractedRuntimePackage = spdxPackage(this, name = "./jbr/**") {
       setVersionInfo(version)
-      setSupplier(runtimeArchivePackage.supplier.get())
       setDownloadLocation(SpdxConstants.NOASSERTION_VALUE)
     }
+    claimOwnership(spdxPackage = extractedRuntimePackage, document = this, license = license)
     extractedRuntimePackage.relatesTo(runtimeArchivePackage, RelationshipType.EXPANDED_FROM_ARCHIVE)
     addRuntimeUpstreams(runtimeArchivePackage, os, arch)
     validate(runtimeArchivePackage)
@@ -749,24 +749,34 @@ internal class SoftwareBillOfMaterialsImpl(
     return licenseInfo
   }
 
+  private fun claimOwnership(
+    spdxPackage: SpdxPackage,
+    document: SpdxDocument,
+    license: Options.DistributionLicense,
+  ) {
+    spdxPackage.setSupplier(creator)
+    spdxPackage.copyrightText = license.copyrightText
+    val licenseInfo = extractedLicenseInfo(
+      spdxDocument = document,
+      name = license.name,
+      text = license.text,
+      url = license.url
+    )
+    spdxPackage.licenseDeclared = licenseInfo
+    spdxPackage.licenseConcluded = licenseInfo
+  }
+
   private fun claimContainedFiles(
     spdxPackage: SpdxPackage,
     files: Collection<SpdxFile> = spdxPackage.files,
     document: SpdxDocument,
     license: Options.DistributionLicense,
   ) {
-    spdxPackage.setSupplier(creator)
-    spdxPackage.copyrightText = license.copyrightText
-    spdxPackage.licenseDeclared = extractedLicenseInfo(
-      spdxDocument = document,
-      name = license.name,
-      text = license.text,
-      url = license.url
-    )
-    spdxPackage.licenseConcluded = spdxPackage.licenseDeclared
+    claimOwnership(spdxPackage, document, license)
+    val licenseInfo = spdxPackage.licenseConcluded
     files.forEach {
       it.copyrightText = license.copyrightText
-      it.licenseConcluded = spdxPackage.licenseConcluded
+      it.licenseConcluded = licenseInfo
     }
     spdxPackage.setPackageVerificationCode(
       document.createPackageVerificationCode(
