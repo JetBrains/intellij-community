@@ -188,18 +188,22 @@ private fun loadConfiguration(project: Project?): LoadedConfiguration {
 }
 
 internal fun streamProvider(project: Project?): StreamProvider {
-  val componentManager = (project ?: ApplicationManager.getApplication()) as ComponentStoreOwner
-  return (componentManager as ComponentStoreOwner).componentStore.storageManager.streamProvider
+  return ((project ?: ApplicationManager.getApplication()) as ComponentStoreOwner).componentStore.storageManager.streamProvider
 }
 
 private fun loadDefaultTemplates(prefixes: List<String>): FileTemplateLoadResult {
   val result = FileTemplateLoadResult(HashMap())
   val processedUrls = HashSet<URL>()
   val processedLoaders = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
-  for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
-    val loader = plugin.classLoader
-    if (loader is PluginAwareClassLoader && (loader as PluginAwareClassLoader).files.isEmpty() || !processedLoaders.add(loader)) {
+  for (module in PluginManagerCore.getPluginSet().getEnabledModules()) {
+    val loader = module.classLoader
+    if ((loader is PluginAwareClassLoader && loader.files.isEmpty()) || !processedLoaders.add(loader)) {
       // test or development mode, when IDEA_CORE's loader contains all the classpath
+      continue
+    }
+
+    if (module.moduleName != null && module.jarFiles.isNullOrEmpty()) {
+      // not isolated module - skip, as resource will be loaded from plugin classpath
       continue
     }
 
