@@ -21,16 +21,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.xml.ConvertContext;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MavenUrlConverter extends MavenReferenceConverter<String> {
   @Override
-  public String fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public String fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     return s;
   }
 
   @Override
-  public String toString(@Nullable String text, ConvertContext context) {
+  public String toString(@Nullable String text, @NotNull ConvertContext context) {
     return text;
   }
 

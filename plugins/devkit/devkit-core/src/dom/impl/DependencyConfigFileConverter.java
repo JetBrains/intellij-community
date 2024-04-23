@@ -104,7 +104,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
   };
 
   @Override
-  public PathReference fromString(@Nullable String s, ConvertContext context) {
+  public PathReference fromString(@Nullable String s, @NotNull ConvertContext context) {
     final XmlElement element = context.getReferenceXmlElement();
     final Module module = context.getModule();
     if (s == null || element == null || module == null) {

@@ -39,17 +39,17 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   protected abstract @InspectionMessage String getUnresolvedMessage(String value);
 
   @Override
-  public @NotNull Collection<? extends T> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends T> getVariants(final @NotNull ConvertContext context) {
     return Collections.emptyList();
   }
 
   @Override
-  public T fromString(final String str, final ConvertContext context) {
+  public T fromString(final String str, final @NotNull ConvertContext context) {
     return convertString(unquote(str, getQuoteSigns()), context);
   }
 
   @Override
-  public String toString(final T ts, final ConvertContext context) {
+  public String toString(final T ts, final @NotNull ConvertContext context) {
     final char delimiter = getQuoteSign(ts, context);
     final String s = convertValue(ts, context);
     return delimiter > 0? delimiter + s+ delimiter : s;

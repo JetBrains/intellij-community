@@ -44,7 +44,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   private static final String SUB_DESCRIPTOR_FILENAME_DELIMITER = ".";
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     String value = StringUtil.notNullize(s);
 
     String filePath;
@@ -64,7 +64,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
 
   @Override
   public @Nullable IdeaPlugin fromString(@Nullable String s,
-                                         ConvertContext context) {
+                                         @NotNull ConvertContext context) {
     if (StringUtil.isEmpty(s)) return null;
     final Module currentModule = context.getModule();
     if (currentModule == null) return null;
@@ -83,7 +83,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   }
 
   @Override
-  public @Nullable String toString(@Nullable IdeaPlugin plugin, ConvertContext context) {
+  public @Nullable String toString(@Nullable IdeaPlugin plugin, @NotNull ConvertContext context) {
     if (plugin == null) return null;
     return getDisplayName(plugin);
   }
@@ -116,7 +116,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   private static final Key<Double> LOOKUP_PRIORITY = Key.create("LOOKUP_PRIORITY");
 
   @Override
-  public @NotNull Collection<? extends IdeaPlugin> getVariants(ConvertContext context) {
+  public @NotNull Collection<? extends IdeaPlugin> getVariants(@NotNull ConvertContext context) {
     final Module currentModule = context.getModule();
     if (currentModule == null) return Collections.emptyList();
     final Project project = context.getProject();

@@ -46,7 +46,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   @Override
-  public PsiFileSystemItem fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public PsiFileSystemItem fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -94,7 +94,7 @@ public class AntPathConverter extends Converter<PsiFileSystemItem> implements Cu
   }
 
   @Override
-  public String toString(@Nullable PsiFileSystemItem file, ConvertContext context) {
+  public String toString(@Nullable PsiFileSystemItem file, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;

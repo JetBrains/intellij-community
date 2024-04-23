@@ -37,7 +37,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   @Override
-  public PsiType fromString(final String s, final ConvertContext context) {
+  public PsiType fromString(final String s, final @NotNull ConvertContext context) {
     return convertFromString(s, context);
   }
 
@@ -91,7 +91,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   @Override
-  public String toString(final PsiType psiType, final ConvertContext context) {
+  public String toString(final PsiType psiType, final @NotNull ConvertContext context) {
     return convertToString(psiType);
   }
 

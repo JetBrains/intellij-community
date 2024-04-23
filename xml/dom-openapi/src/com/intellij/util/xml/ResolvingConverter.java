@@ -23,7 +23,7 @@ import java.util.Set;
 public abstract class ResolvingConverter<T> extends Converter<T> implements ResolvingHint {
 
   @Override
-  public @InspectionMessage String getErrorMessage(@Nullable String s, final ConvertContext context) {
+  public @InspectionMessage String getErrorMessage(@Nullable String s, final @NotNull ConvertContext context) {
     return AnalysisBundle.message("error.cannot.resolve.default.message", s);
   }
 
@@ -31,7 +31,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return reference completion variants
    */
-  public abstract @NotNull Collection<? extends T> getVariants(final ConvertContext context);
+  public abstract @NotNull Collection<? extends T> getVariants(@NotNull ConvertContext context);
 
   /**
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
@@ -90,7 +90,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @return is reference to?
    */
   public boolean isReferenceTo(@NotNull PsiElement element, final String stringValue, @Nullable T resolveResult,
-                               final ConvertContext context) {
+                               @NotNull ConvertContext context) {
     return resolveResult != null && element.getManager().areElementsEquivalent(element, getPsiElement(resolveResult));
   }
 
@@ -105,7 +105,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return PSI element to resolve to. By default calls {@link #getPsiElement(Object)} method
    */
-  public @Nullable PsiElement resolve(final T o, final ConvertContext context) {
+  public @Nullable PsiElement resolve(final T o, @NotNull ConvertContext context) {
     final PsiElement psiElement = getPsiElement(o);
     return psiElement == null && o != null ? DomUtil.getValueElement((GenericDomValue)context.getInvocationElement()) : psiElement;
   }
@@ -114,7 +114,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @param context context
    * @return LocalQuickFix'es to correct non-resolved value (e.g. 'create from usage')
    */
-  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+  public LocalQuickFix[] getQuickFixes(@NotNull ConvertContext context) {
     return LocalQuickFix.EMPTY_ARRAY;
   }
 
@@ -137,12 +137,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   public abstract static class StringConverter extends ResolvingConverter<String> {
 
     @Override
-    public String fromString(final String s, final ConvertContext context) {
+    public String fromString(final String s, final @NotNull ConvertContext context) {
       return s;
     }
 
     @Override
-    public String toString(final String s, final ConvertContext context) {
+    public String toString(final String s, final @NotNull ConvertContext context) {
       return s;
     }
   }
@@ -160,12 +160,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
     }
 
     @Override
-    public T fromString(final String s, final ConvertContext context) {
+    public T fromString(final String s, final @NotNull ConvertContext context) {
       return myWrappedConverter.fromString(s, context);
     }
 
     @Override
-    public String toString(final T t, final ConvertContext context) {
+    public String toString(final T t, final @NotNull ConvertContext context) {
       return myWrappedConverter.toString(t, context);
     }
   }
@@ -176,17 +176,17 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   @Deprecated
   public static final ResolvingConverter EMPTY_CONVERTER = new ResolvingConverter() {
     @Override
-    public @NotNull Collection getVariants(final ConvertContext context) {
+    public @NotNull Collection getVariants(final @NotNull ConvertContext context) {
       return Collections.emptyList();
     }
 
     @Override
-    public Object fromString(final String s, final ConvertContext context) {
+    public Object fromString(final String s, final @NotNull ConvertContext context) {
       return s;
     }
 
     @Override
-    public String toString(final Object t, final ConvertContext context) {
+    public String toString(final Object t, final @NotNull ConvertContext context) {
       return String.valueOf(t);
     }
   };
@@ -197,7 +197,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
   @Deprecated
   public static final Converter<Boolean> BOOLEAN_CONVERTER = new ResolvingConverter<>() {
     @Override
-    public Boolean fromString(final String s, final ConvertContext context) {
+    public Boolean fromString(final String s, final @NotNull ConvertContext context) {
       if ("true".equalsIgnoreCase(s)) {
         return Boolean.TRUE;
       }
@@ -208,12 +208,12 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
     }
 
     @Override
-    public String toString(final Boolean t, final ConvertContext context) {
+    public String toString(final Boolean t, final @NotNull ConvertContext context) {
       return t == null ? null : t.toString();
     }
 
     @Override
-    public @NotNull Collection<? extends Boolean> getVariants(final ConvertContext context) {
+    public @NotNull Collection<? extends Boolean> getVariants(final @NotNull ConvertContext context) {
       final DomElement element = context.getInvocationElement();
       if (element instanceof GenericDomValue) {
         final SubTag annotation = element.getAnnotation(SubTag.class);
