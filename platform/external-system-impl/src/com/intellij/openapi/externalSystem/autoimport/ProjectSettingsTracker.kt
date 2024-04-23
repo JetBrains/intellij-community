@@ -247,7 +247,10 @@ class ProjectSettingsTracker(
     subscribeOnDocumentsAndVirtualFilesChanges(settingsAsyncSupplier, ProjectSettingsListener(), parentDisposable)
   }
 
-  data class State(var isDirty: Boolean = true, var settingsFiles: Map<String, Long> = emptyMap())
+  data class State(
+    val isDirty: Boolean = true,
+    val settingsFiles: Map<String, Long> = emptyMap()
+  )
 
   private class SettingsFilesStatus(
     val oldCRC: Map<String, Long>,

@@ -50,7 +50,7 @@ class AutoImportProjectTracker(
   private val settings = AutoImportProjectTrackerSettings.getInstance(project)
   private val notificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
 
-  private val projectStates = ConcurrentHashMap<State.Id, State.Project>()
+  private val projectDataStates = ConcurrentHashMap<ExternalSystemProjectId, ProjectDataState>()
   private val projectDataMap = ConcurrentHashMap<ExternalSystemProjectId, ProjectData>()
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
@@ -251,19 +251,30 @@ class AutoImportProjectTracker(
   }
 
   override fun getState(): State {
-    val projectSettingsTrackerStates = projectDataMap.asSequence()
-      .map { (id, data) -> id.getState() to data.getState() }
-      .toMap()
-    return State(projectSettingsTrackerStates)
+    val systemStates = HashMap<String, HashMap<String, ProjectDataState>>()
+    for ((projectId, projectData) in projectDataMap) {
+      val (systemId, externalProjectPath) = projectId
+      val projectStates = systemStates.getOrPut(systemId.id) { HashMap() }
+      projectStates[externalProjectPath] = ProjectDataState(
+        projectData.status.isDirty(),
+        projectData.settingsTracker.getState()
+      )
+    }
+    return State(systemStates)
   }
 
   override fun loadState(state: State) {
-    projectStates.putAll(state.projectSettingsTrackerStates)
+    for ((systemId, systemData) in state.projectData) {
+      for ((externalProjectPath, projectData) in systemData) {
+        val projectId = ExternalSystemProjectId(ProjectSystemId(systemId), externalProjectPath)
+        projectDataStates[projectId] = projectData
+      }
+    }
     projectDataMap.forEach { (id, data) -> loadState(id, data) }
   }
 
   private fun loadState(projectId: ExternalSystemProjectId, projectData: ProjectData) {
-    val projectState = projectStates.remove(projectId.getState())
+    val projectState = projectDataStates.remove(projectId)
     val settingsTrackerState = projectState?.settingsTracker
     if (settingsTrackerState == null || projectState.isDirty) {
       projectData.status.markDirty(currentTime(), EXTERNAL)
@@ -313,12 +324,6 @@ class AutoImportProjectTracker(
       .subscribe(LookupManagerListener.TOPIC, createProjectCompletionListener())
   }
 
-  private fun ProjectData.getState() = State.Project(status.isDirty(), settingsTracker.getState())
-
-  private fun ProjectSystemId.getState() = id
-
-  private fun ExternalSystemProjectId.getState() = State.Id(systemId.getState(), externalProjectPath)
-
   private data class ProjectData(
     val status: ProjectStatus,
     val activationProperty: MutableBooleanProperty,
@@ -335,13 +340,14 @@ class AutoImportProjectTracker(
     }
   }
 
-  data class State(var projectSettingsTrackerStates: Map<Id, Project> = emptyMap()) {
-    data class Id(var systemId: String? = null, var externalProjectPath: String? = null)
-    data class Project(
-      var isDirty: Boolean = false,
-      var settingsTracker: ProjectSettingsTracker.State? = null
-    )
-  }
+  data class State(
+    val projectData: Map<String, Map<String, ProjectDataState>> = emptyMap()
+  )
+
+  data class ProjectDataState(
+    val isDirty: Boolean = false,
+    val settingsTracker: ProjectSettingsTracker.State? = null
+  )
 
   private data class ProjectReloadContext(
     override val isExplicitReload: Boolean,
