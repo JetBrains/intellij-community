@@ -175,10 +175,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           if (!refElement.isSuspicious()) return;
 
           PsiFile file = refElement.getContainingFile();
-
           if (file == null) return;
-          boolean isSuppressed = refElement.isSuppressed(getShortName(), ALTERNATIVE_ID);
-          if (isSuppressed || !((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this) && !scope.contains(file)) {
+          if (!((GlobalInspectionContextBase)globalContext).isToCheckFile(file, UnusedDeclarationInspectionBase.this) && !scope.contains(file)) {
             getEntryPointsManager(globalContext).addEntryPoint(refElement, false);
           }
         }

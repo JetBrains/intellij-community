@@ -2101,6 +2101,7 @@ com.intellij.codeInspection.reference.RefElement
 - a:isPermanentEntry():Z
 - a:isReachable():Z
 - a:isReferenced():Z
+- isSuppressed(java.lang.String[]):Z
 com.intellij.codeInspection.reference.RefEntity
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ELEMENTS_ARRAY:com.intellij.codeInspection.reference.RefEntity[]

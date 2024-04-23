@@ -65,6 +65,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
+  private static final String[] SUPPRESSIONS = {UnusedDeclarationInspectionBase.SHORT_NAME, UnusedDeclarationInspectionBase.ALTERNATIVE_ID};
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
     ConcurrentCollectionFactory.createConcurrentIdentityMap();
   private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentIdentitySet();
@@ -430,14 +431,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   private @Nullable RefJavaElement refineElement(RefEntity refEntity) {
-    if (!(refEntity instanceof RefJavaElement refElement)) return null; //dead code doesn't work with refModule | refPackage
+    if (!(refEntity instanceof RefJavaElement refElement)) return null; // dead code doesn't work with refModule | refPackage
     RefFilter filter = getFilter();
     if (!filter.accepts(refElement)) return null;
     RefJavaElement refinedElement = (RefJavaElement)getRefManager().getRefinedElement(refEntity);
     if (refinedElement != refEntity && filter.accepts(refinedElement)) return null; // prevent duplicate reporting
     if (!refinedElement.isValid()) return null;
     if (!compareVisibilities(refinedElement, getTool().getSharedLocalInspectionTool())) return null;
-    if (isSuppressed(refinedElement)) return null;
+    if (isSuppressed(refinedElement) || refinedElement.isSuppressed(SUPPRESSIONS)) return null;
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() & getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
         (myFixedElements.containsKey(refinedElement) || isExcluded(refinedElement))) {
       return null;

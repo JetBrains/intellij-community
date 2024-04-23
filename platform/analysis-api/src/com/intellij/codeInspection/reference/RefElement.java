@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiElement;
@@ -106,4 +106,14 @@ public interface RefElement extends RefEntity {
 
   @NotNull
   RefElement getContainingEntry();
+
+  /**
+   * Checks if the specified warnings are suppressed for this element or any of its surrounding elements.
+   *
+   * @param toolIds the tool ids to check, for example "unchecked" or "deprecation"
+   * @return true, when any one of the specified ids is suppressed or when "ALL" is suppressed, false otherwise.
+   */
+  default boolean isSuppressed(String @NotNull ... warningIds) {
+    return false;
+  }
 }

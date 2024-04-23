@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<problems>  
+<problems>
+  <problem>
+    <file>B.java</file>
+    <line>2</line>
+    <offset>2</offset>
+    <length>1</length>
+    <highlighted_element>B</highlighted_element>
+    <description>All constructor usages belong to the calls chain that has no members reachable from entry points.</description>
+  </problem>
 </problems>
 
