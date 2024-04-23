@@ -112,9 +112,9 @@ private fun doCreateChildContext(unconditionalCancellationPropagation: Boolean):
   // Effectively, the chain becomes a 1-level tree,
   // as jobs of all scheduled tasks are attached to the initial current Job.
 
-    val parentBlockingJob =
-      if (unconditionalCancellationPropagation) currentThreadContext[Job]
-      else currentThreadContext[BlockingJob]?.blockingJob
+  val parentBlockingJob =
+    if (unconditionalCancellationPropagation) currentThreadContext[Job]
+    else currentThreadContext[BlockingJob]?.blockingJob
   val (cancellationContext, childContinuation) = if (parentBlockingJob != null) {
     val continuation: Continuation<Unit> = childContinuation(parentBlockingJob)
     Pair((currentThreadContext[BlockingJob] ?: EmptyCoroutineContext) + continuation.context.job, continuation)
