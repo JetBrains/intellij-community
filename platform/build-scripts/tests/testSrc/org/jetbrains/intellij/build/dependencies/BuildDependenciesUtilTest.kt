@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.dependencies
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.asText
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.createDocumentBuilder
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -33,7 +34,7 @@ class BuildDependenciesUtilTest {
       """.trimIndent()
     val documentBuilder = createDocumentBuilder()
     val document = documentBuilder.parse(testContent.byteInputStream())
-    val component = BuildDependenciesUtil.getSingleChildElement(document.documentElement, "component")
+    val component = document.documentElement.getSingleChildElement("component")
     assertEquals("""
       <component inherit-compiler-output="true" name="NewModuleRootManager">
           <exclude-output/>

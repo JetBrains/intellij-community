@@ -7,6 +7,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.asText
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getChildElements
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getComponentElement
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getLibraryElement
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.getSingleChildElement
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.*
@@ -19,9 +23,9 @@ object BuildDependenciesJps {
   fun getProjectModule(projectHome: Path, moduleName: String): Path {
     val modulesXml = projectHome.resolve(".idea/modules.xml")
     val root = BuildDependenciesUtil.createDocumentBuilder().parse(modulesXml.toFile()).documentElement
-    val moduleManager = BuildDependenciesUtil.getComponentElement(root, "ProjectModuleManager")
-    val modules = BuildDependenciesUtil.getSingleChildElement(moduleManager, "modules")
-    val allModules = BuildDependenciesUtil.getChildElements(modules, "module")
+    val moduleManager = root.getComponentElement("ProjectModuleManager")
+    val modules = moduleManager.getSingleChildElement("modules")
+    val allModules = modules.getChildElements("module")
       .mapNotNull { it.getAttribute("filepath") }
     val moduleFile = allModules.singleOrNull { it.endsWith("/${moduleName}.iml") }
                        ?.replace("\$PROJECT_DIR\$", getSystemIndependentPath(projectHome))
@@ -44,19 +48,19 @@ object BuildDependenciesJps {
   ): List<Path> = try {
     val root = BuildDependenciesUtil.createDocumentBuilder().parse(iml.toFile()).documentElement
 
-    val library = BuildDependenciesUtil.getLibraryElement(root, libraryName, iml)
+    val library = root.getLibraryElement(libraryName, iml)
 
-    val properties = BuildDependenciesUtil.getSingleChildElement(library, "properties")
+    val properties = library.getSingleChildElement("properties")
 
     // every library in Ultimate project must have a sha256 checksum, so all of this data must be present
-    val verification = BuildDependenciesUtil.getSingleChildElement(properties, "verification")
-    val artifacts = BuildDependenciesUtil.getChildElements(verification, "artifact")
+    val verification = properties.getSingleChildElement("verification")
+    val artifacts = verification.getChildElements("artifact")
     val sha256sumMap = artifacts.associate {
-      it.getAttribute("url") to BuildDependenciesUtil.getSingleChildElement(it, "sha256sum").textContent.trim()
+      it.getAttribute("url") to it.getSingleChildElement("sha256sum").textContent.trim()
     }
 
-    val classes = BuildDependenciesUtil.getSingleChildElement(library, "CLASSES")
-    val roots = BuildDependenciesUtil.getChildElements(classes, "root")
+    val classes = library.getSingleChildElement("CLASSES")
+    val roots = classes.getChildElements("root")
       .mapNotNull { it.getAttribute("url") }
       .map { it
         .removePrefix("jar:/")
