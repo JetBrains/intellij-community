@@ -115,19 +115,25 @@ class IncrementalDOMBuilder(
 
   private fun actuallyProcessImageNode(node: Node, baseFile: VirtualFile, projectRoot: VirtualFile) {
     var path = node.attr("src")
-    if (SystemInfo.isWindows) {
-      path = StringUtil.replace(path, "\\", "/")
+    val hasFileHost = path.startsWith("file:/")
+    if (hasFileHost && !node.hasAttr("from-extension")) {
+      return
     }
-    if (!path.startsWith('/')) {
-      val resolved = baseFile.findFileByRelativePath(path) ?: return
-      path = VfsUtilCore.getRelativePath(resolved, projectRoot) ?: path
+    if (!hasFileHost) {
+      if (SystemInfo.isWindows) {
+        path = StringUtil.replace(path, "\\", "/")
+      }
+      if (!path.startsWith('/')) {
+        val resolved = baseFile.findFileByRelativePath(path) ?: return
+        path = VfsUtilCore.getRelativePath(resolved, projectRoot) ?: path
+      }
+      if (SystemInfo.isWindows && path.startsWith("/")) {
+        path = path.trimStart('/')
+      }
+      path = FileUtil.toSystemIndependentName(path)
     }
-    if (SystemInfo.isWindows && path.startsWith("/")) {
-      path = path.trimStart('/')
-    }
-    val fixedPath = FileUtil.toSystemIndependentName(path)
     if (fileSchemeResourceProcessor != null) {
-      val processed = PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, fixedPath)
+      val processed = PreviewStaticServer.getStaticUrl(fileSchemeResourceProcessor, path)
       node.attr("data-original-src", path)
       node.attr("src", processed)
     }
