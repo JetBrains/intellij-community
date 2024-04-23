@@ -86,7 +86,7 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
      */
     protected fun KtFunction.isComposable(): Boolean {
         // Unfortunate facts about trying to check @Composable annotation:
-        // * analysis-based version is absolutely correct but slow
+        // * analysis-based version is absolutely correct but slow and can freeze UI (EA-1162557)
         // * PSI-check is fast but isn't precise in the case of aliases (really rare case?)
         // * there are several other implementations in Android plugin maintained by Google:
         //   * copy-pasted and buggy (always returns false):
@@ -95,17 +95,8 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
         //       com.android.tools.compose.AndroidComposablePsiUtils.isComposableFunction
         //
         // Someday somebody will fix all these problems.
-        return if (DumbService.isDumb(project)) {
-            KotlinPsiHeuristics.hasAnnotation(this, COMPOSABLE_FQ_NAME)
-        } else {
-            analyze(this) {
-                annotationEntries.any {
-                    it.typeReference?.getKtType()?.expandedClassSymbol?.classIdIfNonLocal == COMPOSABLE_CLASS_ID
-                }
-            }
-        }
+        return KotlinPsiHeuristics.hasAnnotation(this, COMPOSABLE_FQ_NAME)
     }
 
     private val COMPOSABLE_FQ_NAME = FqName("androidx.compose.runtime.Composable")
-    private val COMPOSABLE_CLASS_ID = ClassId.topLevel(COMPOSABLE_FQ_NAME)
 }
