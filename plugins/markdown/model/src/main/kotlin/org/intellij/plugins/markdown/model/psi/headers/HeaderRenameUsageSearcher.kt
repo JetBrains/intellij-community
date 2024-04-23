@@ -28,7 +28,7 @@ internal class HeaderRenameUsageSearcher: RenameUsageSearcher {
   private class ModifiableRenameUsageWrapper(
     usage: PsiUsage
   ): PsiModifiableRenameUsage by PsiModifiableRenameUsage.defaultPsiModifiableRenameUsage(usage) {
-    override val declaration = true
+    override val declaration = false // required for non inplace rename
 
     override val fileUpdater = updater
 
