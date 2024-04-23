@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import java.net.URL
 
 internal class FileSchemeResourcesProcessor(
   private val baseFile: VirtualFile?,
@@ -13,7 +15,11 @@ internal class FileSchemeResourcesProcessor(
   }
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-    val resource = projectRoot?.findFileByRelativePath(resourceName) ?: return null
+    val resource = if (resourceName.startsWith("file:/")) {
+      VfsUtil.findFileByURL(URL(resourceName))
+    } else {
+      projectRoot?.findFileByRelativePath(resourceName)
+    } ?: return null
     return ResourceProvider.loadExternalResource(resource)
   }
 }
