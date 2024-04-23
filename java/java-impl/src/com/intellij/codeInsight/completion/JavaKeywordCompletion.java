@@ -1166,6 +1166,10 @@ public class JavaKeywordCompletion {
       return;
     }
 
+    if (JavaPatternCompletionUtil.insideDeconstructionList(position)) {
+      JavaPatternCompletionUtil.suggestPrimitivesInsideDeconstructionListPattern(position, result);
+    }
+
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position) &&
                        !psiElement().afterLeaf(psiElement().afterLeaf(".")).accepts(position);
     if (afterNew) {

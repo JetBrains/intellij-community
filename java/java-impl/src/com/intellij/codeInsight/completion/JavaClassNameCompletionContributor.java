@@ -151,7 +151,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
               JavaConstructorCallElement.wrap(element, insertedElement).forEach(
                 e -> consumer.consume(highlighter.highlightIfNeeded(null, e, e.getObject())));
               if (patternContext) {
-                JavaPatternCompletionUtil.addPatterns(consumer::consume, insertedElement, element.getObject());
+                JavaPatternCompletionUtil.addPatterns(consumer::consume, insertedElement, element.getObject(), false);
               }
             }
           }

@@ -553,6 +553,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
       addModuleReferences(parent, parameters.getOriginalFile(), result);
     }
+
+    if (JavaPatternCompletionUtil.insideDeconstructionList(parameters.getPosition())) {
+      JavaPatternCompletionUtil.suggestFullDeconstructionList(parameters, result);
+    }
   }
 
   @VisibleForTesting
