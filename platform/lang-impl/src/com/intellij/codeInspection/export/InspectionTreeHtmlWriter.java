@@ -161,7 +161,9 @@ public final class InspectionTreeHtmlWriter {
       return type + "&nbsp;<b>" + escapeNonBreakingSymbols(node) + "</b>";
     }
     else if (node instanceof InspectionNode) {
-      return "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;inspection";
+      return node.getClass() != InspectionNode.class
+             ? "<b>" + escapeNonBreakingSymbols(node) + "</b>"
+             : "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;inspection";
     }
     else if (node instanceof InspectionGroupNode) {
       return "<b>" + escapeNonBreakingSymbols(node) + "</b>&nbsp;group";
@@ -179,7 +181,7 @@ public final class InspectionTreeHtmlWriter {
                       <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
                       <meta name="author" content="JetBrains">
                       <script type="text/javascript" src="script.js"></script>
-                      <link rel="stylesheet" type="text/css" href="styles.css"/>
+                      <link rel="stylesheet" type="text/css" href="styles.css">
                       <title>""")
       .append(title)
       .append("""
