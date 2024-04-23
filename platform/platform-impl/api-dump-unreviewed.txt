@@ -28762,6 +28762,88 @@ e:com.intellij.ui.dsl.validation.Level
 - s:valueOf(java.lang.String):com.intellij.ui.dsl.validation.Level
 - s:values():com.intellij.ui.dsl.validation.Level[]
 f:com.intellij.ui.dsl.validation.impl.UtilsKt
+f:com.intellij.ui.filterField.FilterAllAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>(java.lang.String,com.intellij.ui.filterField.FilterApplier):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.ui.filterField.FilterApplier
+- a:applyFilter(java.lang.String,java.util.Collection):V
+a:com.intellij.ui.filterField.FilterField
+- javax.swing.JPanel
+- <init>(java.lang.String):V
+- pa:buildActions():java.util.Collection
+- p:createUnfocusedBorder():javax.swing.border.Border
+- getAccessibleContext():javax.accessibility.AccessibleContext
+- a:getCurrentText():java.lang.String
+- f:getOriginalMessage():java.lang.String
+f:com.intellij.ui.filterField.FilterFieldAction
+- com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ex.CustomComponentAction
+- <init>(kotlin.jvm.functions.Function0):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- f:getSupplier():kotlin.jvm.functions.Function0
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ui.filterField.FilterFieldKt
+f:com.intellij.ui.filterField.FilterItem
+- <init>(java.lang.String,java.lang.String):V
+- <init>(java.util.function.Supplier,java.lang.String):V
+- f:getTitle():java.lang.String
+- f:getValue():java.lang.String
+f:com.intellij.ui.filterField.FilterMultiSelectAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>(java.lang.String,java.lang.String,java.awt.Component,java.util.List,java.util.Collection,com.intellij.ui.filterField.FilterApplier):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.ui.filterField.FilterSearchTextField
+- com.intellij.ui.SearchTextField
+- <init>():V
+- addNotify():V
+- f:isSkipDocumentEvents():Z
+- removeNotify():V
+- setBounds(I,I,I,I):V
+- p:setEmptyHistory():V
+- setSelectedItem(java.lang.String):V
+- f:setTextIgnoreEvents(java.lang.String):V
+- p:showCompletionPopup():V
+f:com.intellij.ui.filterField.FilterSideTabs
+- com.intellij.ui.tabs.impl.SingleHeightTabs
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+f:com.intellij.ui.filterField.FilterValueAction
+- com.intellij.openapi.actionSystem.AnAction
+- <init>(java.lang.String,java.lang.String,java.lang.String,com.intellij.ui.filterField.FilterApplier):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ui.filterField.FiltersKt
+- sf:createFilterActions(java.awt.Component,java.lang.String,java.lang.String,java.util.List,java.util.Collection,com.intellij.ui.filterField.FilterApplier):java.util.Collection
+- sf:fillFilterItems(java.util.List,java.lang.String,java.util.Collection,java.util.List,com.intellij.ui.filterField.FilterApplier):V
+a:com.intellij.ui.filterField.SearchPopupControllerBase
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.ui.filterField.FilterSearchTextField,javax.swing.JList):V
+- pa:getAttributes():java.util.List
+- pa:getCompletionValues(java.lang.String):java.util.List
+- f:handleEnter(java.awt.event.KeyEvent):Z
+- f:handleShowPopup():V
+- f:handleUpDown(java.awt.event.KeyEvent):Z
+- f:hidePopup():V
+- f:isPopupShow():Z
+- f:showAttributesPopup(java.lang.String,I):V
+a:com.intellij.ui.filterField.SearchQueryParserBase
+- sf:Companion:com.intellij.ui.filterField.SearchQueryParserBase$Companion
+- <init>():V
+- pf:addWords(java.lang.String):V
+- pa:getAttributes():java.util.Set
+- f:getWords():java.util.Set
+- pa:handleAttribute(java.lang.String,java.lang.String):V
+- f:parse(java.lang.String):V
+- sf:parseAttributeInQuery(java.lang.String,I):com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
+- sf:wrapAttribute(java.lang.String):java.lang.String
+f:com.intellij.ui.filterField.SearchQueryParserBase$Companion
+- f:parseAttributeInQuery(java.lang.String,I):com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
+- f:wrapAttribute(java.lang.String):java.lang.String
+f:com.intellij.ui.filterField.SearchQueryParserBase$QueryCompletionPosition
+- <init>(java.lang.String,java.lang.String,I):V
+- f:getAttributeName():java.lang.String
+- f:getAttributeValue():java.lang.String
+- f:getStartPosition():I
 *c:com.intellij.ui.jcef.HwFacadeHelper
 - sf:TRANSPARENT_COLOR:java.awt.Color
 - addNotify():V
