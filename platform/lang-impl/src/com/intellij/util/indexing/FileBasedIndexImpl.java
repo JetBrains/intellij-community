@@ -1425,6 +1425,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     FileIndexesValuesApplier applier;
     if (isDeleteRequest || !isValid || isTooLarge(file)) {
       ProgressManager.checkCanceled();
+      myIndexableFilesFilterHolder.removeFile(fileId); // in case this is not isDeleteRequest
       applier = new FileIndexesValuesApplier(this, fileId, file, indexingStamp, Collections.emptyList(), Collections.emptyList(),
                                              true, true, applicationMode,
                                              cachedFileType == null ? file.getFileType() : cachedFileType, false);
