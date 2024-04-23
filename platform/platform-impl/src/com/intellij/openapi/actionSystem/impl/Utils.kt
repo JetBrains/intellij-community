@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -52,6 +53,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.UiNotifyConnector
 import io.opentelemetry.api.OpenTelemetry
@@ -379,6 +381,14 @@ object Utils {
                                   component: Component?,
                                   place: String,
                                   task: suspend () -> T): T = runBlockingForActionExpand(CoroutineName("computeWithProgressIcon")) {
+    withProgressIcon(loadingIconPoint, component, place, task)
+  }
+
+  @RequiresEdt
+  suspend fun <T> withProgressIcon(loadingIconPoint: RelativePoint?,
+                                   component: Component?,
+                                   place: String,
+                                   task: suspend () -> T): T = coroutineScope {
     val mainJob = coroutineContext.job
     val loopJob = launch {
       runEdtLoop(mainJob, null, component, null)
@@ -387,12 +397,15 @@ object Utils {
     else launch {
       addLoadingIcon(loadingIconPoint, place)
     }
-    try {
-      task()
-    }
-    finally {
-      progressJob?.cancel()
-      loopJob.cancel()
+    withContext(Dispatchers.Default) {
+      try {
+        task()
+      }
+      finally {
+        progressJob?.cancel()
+        loopJob.cancel()
+        SwingUtilities.invokeLater(EmptyRunnable.getInstance())
+      }
     }
   }
 
