@@ -596,8 +596,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     new ProjectDirtyFilesQueue(dirtyFileIds, lastSeenIndex).store(project, vfsCreationStamp);
   }
 
+  @ApiStatus.Internal
   @NotNull
-  private IntSet getAllDirtyFiles(@Nullable Project project) {
+  public IntSet getAllDirtyFiles(@Nullable Project project) {
     IntSet dirtyFileIds = new IntOpenHashSet();
     dirtyFileIds.addAll(getDirtyFiles(getChangedFilesCollector().getDirtyFiles(), project));
     dirtyFileIds.addAll(getDirtyFiles(myFilesToUpdateCollector.getDirtyFiles(), project));

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
+import com.intellij.util.indexing.ReusingPersistentFilterConditions.IS_FILTER_LOADED_FROM_DISK
 import com.intellij.util.indexing.UnindexedFilesScanner.Companion.LOG
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
@@ -39,7 +40,8 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           orphanQueue: OrphanDirtyFilesQueue,
                                           projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                           startSuspended: Boolean,
-                                          allowSkippingScanning: Boolean,
+                                          allowSkippingFullScanning: Boolean,
+                                          requireReadingIndexableFilesIndexFromDisk: Boolean,
                                           coroutineScope: CoroutineScope,
                                           indexingReason: String): Job {
   FileBasedIndex.getInstance().loadIndexes()
@@ -47,9 +49,9 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
   val filterHolder = fileBasedIndex.indexableFilesFilterHolder
-  val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder)
+  val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder, requireReadingIndexableFilesIndexFromDisk)
 
-  return if (allowSkippingScanning && Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
+  return if (allowSkippingFullScanning && Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
     scheduleDirtyFilesScanning(project, orphanQueue, projectDirtyFilesQueue, startSuspended, coroutineScope, indexingReason)
   }
   else {
@@ -184,8 +186,15 @@ private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<Virtual
   }
 }
 
-private fun isIndexableFilesFilterUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean {
-  val unsatisfiedConditions = ReusingPersistentFilterConditions.entries.filter { !it.isUpToDate(project, filterHolder) }
+private fun isIndexableFilesFilterUpToDate(project: Project,
+                                           filterHolder: ProjectIndexableFilesFilterHolder,
+                                           requireReadingIndexableFilesIndexFromDisk: Boolean): Boolean {
+  val unsatisfiedConditions = ReusingPersistentFilterConditions.entries
+    .filter { !it.isUpToDate(project, filterHolder) }
+    .let { conditions ->
+      if (requireReadingIndexableFilesIndexFromDisk) conditions
+      else conditions.filter { it != IS_FILTER_LOADED_FROM_DISK }
+    }
   return if (unsatisfiedConditions.isEmpty()) {
     LOG.info("Persistent indexable files filter is up-to-date for project ${project.name}")
     true

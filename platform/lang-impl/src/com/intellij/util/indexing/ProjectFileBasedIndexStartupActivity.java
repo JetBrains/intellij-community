@@ -83,7 +83,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, suspended, true, myCoroutineScope, "On project open");
+    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, suspended, true, true, myCoroutineScope, "On project open");
     forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 
