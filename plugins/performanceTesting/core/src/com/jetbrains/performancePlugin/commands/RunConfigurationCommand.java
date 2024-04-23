@@ -44,8 +44,6 @@ public final class RunConfigurationCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runConfiguration";
   private static final String MAIN_SPAN_NAME = "runRunConfiguration";
   private static final String DURATION_SPAN_NAME = "runConfiguration#ProcessDuration";
-  private static final String WAIT_FOR_PROCESS_STARTED = "TILL_STARTED";
-  private static final String WAIT_FOR_PROCESS_TERMINATED = "TILL_TERMINATED";
   @SuppressWarnings("TestOnlyProblems") private ExecutionEnvironment myExecutionEnvironment = new ExecutionEnvironment();
 
   private static final Logger LOG = Logger.getInstance(RunConfigurationCommand.class);
@@ -81,7 +79,7 @@ public final class RunConfigurationCommand extends AbstractCommand {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
         myExecutionEnvironment = env;
-        if (options.mode.equals(WAIT_FOR_PROCESS_STARTED)) {
+        if (options.mode == Mode.TILL_STARTED) {
           mainSpan.get().end();
           timer.stop();
           long executionTime = timer.getTotalTime();
@@ -99,7 +97,7 @@ public final class RunConfigurationCommand extends AbstractCommand {
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
-        if (options.mode.equals(WAIT_FOR_PROCESS_TERMINATED)) {
+        if (options.mode == Mode.TILL_TERMINATED) {
           processSpan.get().end();
           mainSpan.get().end();
           timer.stop();
@@ -121,10 +119,6 @@ public final class RunConfigurationCommand extends AbstractCommand {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (!options.mode.contains(WAIT_FOR_PROCESS_STARTED) && !options.mode.contains(WAIT_FOR_PROCESS_TERMINATED)) {
-        actionCallback.reject("Specified mode is neither TILL_STARTED nor TILL_TERMINATED");
-      }
-
       Executor executor = options.debug ? new DefaultDebugExecutor() : new DefaultRunExecutor();
       ExecutionTarget target = DefaultExecutionTarget.INSTANCE;
       RunConfiguration configurationToRun = getConfigurationByName(runManager, options.configurationName);
@@ -158,12 +152,17 @@ public final class RunConfigurationCommand extends AbstractCommand {
 
   private static class RunConfigurationOptions {
     @Argument
-    String mode;
+    Mode mode;
     @Argument
     String configurationName;
     @Argument
     boolean failureExpected;
     @Argument
     boolean debug;
+  }
+
+  enum Mode {
+    TILL_STARTED,
+    TILL_TERMINATED
   }
 }
