@@ -290,10 +290,14 @@ public final class ExternalSystemUtil {
     ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
     if (!isPreviewMode && !TrustedProjects.isTrusted(project)) {
-      LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
+      }
       return;
     }
-    LOG.debug("Stated " + externalSystemId + " load", new Throwable());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Stated " + externalSystemId + " load", new Throwable());
+    }
 
     AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, externalSystemId);
     var projectSyncTypeStorage = localSettings.getProjectSyncType();

@@ -337,7 +337,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       final long gradleCallTimeInMs = (System.currentTimeMillis() - gradleCallStartTime);
-      LOG.debug(String.format("Gradle data obtained in %d ms", gradleCallTimeInMs));
       ExternalSystemSyncActionsCollector.logPhaseFinished(
         null, activityId, Phase.GRADLE_CALL, gradleCallTimeInMs, gradleCallErrorsCount);
       gradleCallSpan.end();

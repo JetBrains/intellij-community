@@ -220,8 +220,8 @@ public final class LibraryDependencyDataService extends AbstractDependencyDataSe
                                       @NotNull LibraryDependencyData dependencyData) {
     orderEntry.setExported(dependencyData.isExported());
     orderEntry.setScope(dependencyData.getScope());
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(String.format(
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(String.format(
         "Configuring library '%s' of module '%s' to be%s exported and have scope %s",
         lib, module.getName(), dependencyData.isExported() ? " not" : "", dependencyData.getScope()
       ));
