@@ -57,4 +57,9 @@ internal class UastFakeSourceLightDefaultAccessorForConstructorParameter(
 
         return super.getReturnType()
     }
+
+    override fun hasModifierProperty(name: String): Boolean {
+        if (name == PsiModifier.FINAL) return true
+        return super.hasModifierProperty(name)
+    }
 }

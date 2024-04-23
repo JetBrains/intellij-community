@@ -2,7 +2,7 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
     UImportStatement (isOnDemand = false) [import java.lang.reflect.ParameterizedType]
     UImportStatement (isOnDemand = false) [import java.lang.reflect.Type]
     UClass (name = ComplicatedTypesKt) [public final class ComplicatedTypesKt {...}]
-        UMethod (name = typeTokenOf) [public static fun typeTokenOf() : java.lang.reflect.Type {...}]
+        UMethod (name = typeTokenOf) [public static final fun typeTokenOf() : java.lang.reflect.Type {...}]
             UBlockExpression [{...}] = Nothing
                 UDeclarationsExpression [var base: <ErrorType> = anonymous object : TypeBase<T>() {}] = Undetermined
                     ULocalVariable (name = base) [var base: <ErrorType> = anonymous object : TypeBase<T>() {}]

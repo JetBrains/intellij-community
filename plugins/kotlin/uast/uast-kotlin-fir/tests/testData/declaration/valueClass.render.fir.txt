@@ -26,9 +26,9 @@ public final class User {
         }
     }
     public fun User(@org.jetbrains.annotations.NotNull p: float, @org.jetbrains.annotations.NotNull q: float) = UastEmptyExpression
-    public fun getP() : float = UastEmptyExpression
-    public fun getQ() : float = UastEmptyExpression
-    public fun setQ(@org.jetbrains.annotations.NotNull <set-?>: float) : void = UastEmptyExpression
+    public final fun getP() : float = UastEmptyExpression
+    public final fun getQ() : float = UastEmptyExpression
+    public final fun setQ(@org.jetbrains.annotations.NotNull <set-?>: float) : void = UastEmptyExpression
 }
 
 public final class Alignment {
@@ -39,8 +39,8 @@ public final class Alignment {
     @org.jetbrains.annotations.NotNull private final var horizontal: int
     @org.jetbrains.annotations.NotNull private final var vertical: int
     public fun Alignment(@org.jetbrains.annotations.NotNull horizontal: int, @org.jetbrains.annotations.NotNull vertical: int) = UastEmptyExpression
-    public fun getHorizontal() : int = UastEmptyExpression
-    public fun getVertical() : int = UastEmptyExpression
+    public final fun getHorizontal() : int = UastEmptyExpression
+    public final fun getVertical() : int = UastEmptyExpression
     public static final class Horizontal {
         @null public static final var Companion: Alignment.Horizontal.Companion
         @org.jetbrains.annotations.NotNull private static final var Start: int = <init>(0)
@@ -50,9 +50,9 @@ public final class Alignment {
         private fun Horizontal(@org.jetbrains.annotations.NotNull value: int) = UastEmptyExpression
         public static final class Companion {
             private fun Companion() = UastEmptyExpression
-            public fun getStart() : int = UastEmptyExpression
-            public fun getCenterHorizontally() : int = UastEmptyExpression
-            public fun getEnd() : int = UastEmptyExpression
+            public final fun getStart() : int = UastEmptyExpression
+            public final fun getCenterHorizontally() : int = UastEmptyExpression
+            public final fun getEnd() : int = UastEmptyExpression
         }
     }
     public static final class Vertical {
@@ -64,15 +64,15 @@ public final class Alignment {
         private fun Vertical(@org.jetbrains.annotations.NotNull value: int) = UastEmptyExpression
         public static final class Companion {
             private fun Companion() = UastEmptyExpression
-            public fun getTop() : int = UastEmptyExpression
-            public fun getCenterVertically() : int = UastEmptyExpression
-            public fun getBottom() : int = UastEmptyExpression
+            public final fun getTop() : int = UastEmptyExpression
+            public final fun getCenterVertically() : int = UastEmptyExpression
+            public final fun getBottom() : int = UastEmptyExpression
         }
     }
     public static final class Companion {
         public final fun getTopStart() : Alignment = UastEmptyExpression
         private fun Companion() = UastEmptyExpression
-        public fun getTop() : int = UastEmptyExpression
-        public fun getStart() : int = UastEmptyExpression
+        public final fun getTop() : int = UastEmptyExpression
+        public final fun getStart() : int = UastEmptyExpression
     }
 }
