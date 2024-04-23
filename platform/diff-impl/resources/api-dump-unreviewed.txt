@@ -1275,7 +1275,7 @@ f:com.intellij.diff.tools.combined.CombinedCaretToPrevBlockAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 com.intellij.diff.tools.combined.CombinedCollapsibleDiffBlock
-- com.intellij.diff.tools.combined.CombinedDiffBlock
+- com.intellij.diff.tools.combined.CombinedSelectableDiffBlock
 - a:addListener(com.intellij.diff.tools.combined.CombinedDiffBlockListener,com.intellij.openapi.Disposable):V
 - a:setCollapsed(Z):V
 f:com.intellij.diff.tools.combined.CombinedDiffActionPromoter

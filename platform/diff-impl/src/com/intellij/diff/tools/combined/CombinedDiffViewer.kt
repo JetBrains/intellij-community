@@ -74,7 +74,7 @@ class CombinedDiffViewer(
   private val cs = GlobalScope.namedChildScope("CombinedDiffViewer", Dispatchers.EDT)
 
   private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
-  private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
+  private val diffBlocks: MutableMap<CombinedBlockId, CombinedCollapsibleDiffBlock<*>> = hashMapOf()
 
   private val collapsedDiffBlocks: BitSet = BitSet(blockState.blocksCount)
 
@@ -196,16 +196,14 @@ class CombinedDiffViewer(
     }
   }
 
-  private fun createDiffBlock(content: CombinedDiffBlockContent, isCollapsed: Boolean): CombinedDiffBlock<*> {
+  private fun createDiffBlock(content: CombinedDiffBlockContent, isCollapsed: Boolean): CombinedCollapsibleDiffBlock<*> {
     val viewer = content.viewer
     if (!viewer.isEditorBased) {
       focusListener.register(viewer.component, this)
     }
     val diffBlockFactory = CombinedSimpleDiffBlockFactory()
     val newDiffBlock = diffBlockFactory.createBlock(project, content, isCollapsed)
-    if (newDiffBlock is CombinedCollapsibleDiffBlock) {
-      newDiffBlock.addListener(MyCombinedBlockListener(), this)
-    }
+    newDiffBlock.addListener(MyCombinedBlockListener(), this)
 
     installActionOnBlock("Vcs.CombinedDiff.CaretToPrevBlock", newDiffBlock)
     installActionOnBlock("Vcs.CombinedDiff.CaretToNextBlock", newDiffBlock)
@@ -215,7 +213,7 @@ class CombinedDiffViewer(
   }
 
   private fun registerNewDiffBlock(blockId: CombinedBlockId,
-                                   newBlock: CombinedDiffBlock<*>,
+                                   newBlock: CombinedCollapsibleDiffBlock<*>,
                                    newViewer: DiffViewer) {
     Disposer.register(newBlock, Disposable {
       diffBlocks.remove(blockId)
@@ -430,8 +428,6 @@ class CombinedDiffViewer(
 
   fun getCurrentBlockId(): CombinedBlockId = blockState.currentBlock
 
-  private fun getSelectableBlock(blockId: CombinedBlockId) = diffBlocks[blockId] as? CombinedSelectableDiffBlock
-
   fun getDiffBlocksCount(): Int = blockState.blocksCount
 
   fun getCurrentDiffViewer(): DiffViewer? = diffViewers[blockState.currentBlock]
@@ -485,9 +481,9 @@ class CombinedDiffViewer(
 
   private fun changeSelection(oldBlockId: CombinedBlockId, newBlockId: CombinedBlockId) {
     if (oldBlockId != newBlockId) {
-      getSelectableBlock(oldBlockId)?.setSelected(false)
+      diffBlocks[oldBlockId]?.setSelected(false)
     }
-    getSelectableBlock(newBlockId)?.setSelected(true)
+    diffBlocks[newBlockId]?.setSelected(true)
   }
 
   private fun requestFocusInBlock(blockId: CombinedBlockId) {
@@ -583,15 +579,13 @@ class CombinedDiffViewer(
   }
 
   internal fun toggleBlockCollapse() {
-    val block = diffBlocks[blockState.currentBlock] as? CombinedCollapsibleDiffBlock ?: return
+    val block = diffBlocks[blockState.currentBlock] ?: return
     val newCollapseState = !block.id.isCollapsed
     block.setCollapsed(newCollapseState)
   }
 
   internal fun collapseAllBlocks() {
     for (block in diffBlocks.values) {
-      if (block !is CombinedCollapsibleDiffBlock) continue
-
       block.setCollapsed(true)
     }
 

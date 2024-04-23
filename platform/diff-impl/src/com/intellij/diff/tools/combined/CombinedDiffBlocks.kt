@@ -59,7 +59,7 @@ interface CombinedSelectableDiffBlock<ID : CombinedBlockId> : CombinedDiffBlock<
   fun setSelected(selected: Boolean)
 }
 
-interface CombinedCollapsibleDiffBlock<ID : CombinedBlockId> : CombinedDiffBlock<ID> {
+interface CombinedCollapsibleDiffBlock<ID : CombinedBlockId> : CombinedSelectableDiffBlock<ID> {
   fun setCollapsed(collapsed: Boolean)
 
   fun addListener(listener: CombinedDiffBlockListener, parentDisposable: Disposable)
@@ -78,7 +78,7 @@ interface CombinedDiffBlockFactory<ID : CombinedBlockId> {
 internal class CombinedSimpleDiffBlockFactory : CombinedDiffBlockFactory<CombinedPathBlockId> {
   override fun createBlock(project: Project,
                            content: CombinedDiffBlockContent,
-                           isCollapsed: Boolean): CombinedDiffBlock<CombinedPathBlockId> =
+                           isCollapsed: Boolean): CombinedCollapsibleDiffBlock<CombinedPathBlockId> =
     with(content.blockId as CombinedPathBlockId) {
       CombinedSimpleDiffBlock(project, this, content.viewer.component, content.viewer is CombinedDiffLoadingBlock, isCollapsed)
     }
