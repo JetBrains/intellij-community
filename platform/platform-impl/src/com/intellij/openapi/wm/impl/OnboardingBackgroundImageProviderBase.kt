@@ -80,7 +80,7 @@ abstract class OnboardingBackgroundImageProviderBase : OnboardingBackgroundImage
   companion object {
     private val BACKGROUND_IMAGE_DISPOSABLE_KEY: Key<Disposable> = Key.create("ide.background.image.provider.background.image")
     private const val LOADING_TIMEOUT_MILLIS: Long = 300
-    private val USE_LONG_TIMEOUT: Boolean get() = Registry.`is`("ide.onboarding.background.use.long.timeout", false)
+    private val USE_LONG_TIMEOUT: Boolean get() = Registry.`is`("ide.onboarding.background.use.long.timeout", true)
     private val LOG = Logger.getInstance(OnboardingBackgroundImageProviderBase::class.java)
   }
 }
