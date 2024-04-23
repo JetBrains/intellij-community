@@ -777,6 +777,10 @@ internal class SoftwareBillOfMaterialsImpl(
    * See https://pypi.org/project/ntia-conformance-checker/
    */
   private suspend fun checkNtiaConformance(documents: List<Path>) {
+    if (context.applicationInfo.shortCompanyName == "Google") {
+      // Android Studio (b/335465901): we do our own SBOM validation later, not using ntia-checker.
+      return
+    }
     if (Docker.isAvailable && !SystemInfoRt.isWindows) {
       val ntiaChecker = "ntia-checker"
       suspendingRetryWithExponentialBackOff {
