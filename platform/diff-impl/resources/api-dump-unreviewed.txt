@@ -951,7 +951,7 @@ c:com.intellij.diff.merge.MergeModelBase$State
 - f:myStartLine:I
 - <init>(I,I,I):V
 f:com.intellij.diff.merge.MergeReferenceData
-- <init>(java.util.Map):V
+- <init>(java.util.List,java.util.List):V
 - f:getReferenceData(com.intellij.diff.util.ThreeSide):java.util.List
 a:com.intellij.diff.merge.MergeRequestProcessor
 - com.intellij.openapi.Disposable

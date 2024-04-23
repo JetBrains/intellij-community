@@ -951,11 +951,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected void applyNonConflictedChanges(@NotNull ThreeSide side) {
     executeMergeCommand(DiffBundle.message("merge.dialog.apply.non.conflicted.changes.command"), true, null, () -> {
       List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
-      for (TextMergeChange change : allChanges) {
-        if (change.isImportChange() && change.isChange(side)) {
-          markChangeResolved(change);
-        }
-      }
 
       MergeReferenceData referenceData = getReferenceDataForChanges(getResolvableChanges(side));
       for (TextMergeChange change : allChanges) {
@@ -981,11 +976,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     List<TextMergeChange> changes = getAllChanges();
     executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, () -> {
       MergeReferenceData referenceData = getReferenceDataForChanges(getResolvableChanges(ThreeSide.BASE));
-      for (TextMergeChange change : getChanges()) {
-        if (change.isImportChange()) {
-          markChangeResolved(change);
-        }
-      }
       for (TextMergeChange change : getChanges()) {
         resolveChangeAutomatically(change, ThreeSide.BASE, referenceData);
       }
@@ -1019,7 +1009,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       if (change.isChange(Side.LEFT)) {
         leftFragments.add(change.getFragment());
       }
-      else {
+      if (change.isChange(Side.RIGHT)) {
         rightFragments.add(change.getFragment());
       }
     }
@@ -1068,6 +1058,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       String[] newContentLines = LineTokenizer.tokenize(newContent, false);
       myModel.replaceChange(change.getIndex(), Arrays.asList(newContentLines));
       markChangeResolved(change);
+
+      if (mergeReferenceData != null) {
+        int newLineStart = myModel.getLineStart(change.getIndex());
+        int newLineEnd = myModel.getLineEnd(change.getIndex());
+        restoreReferenceData(newLineStart, newLineEnd, mergeReferenceData.getReferenceData(ThreeSide.LEFT));
+        restoreReferenceData(newLineStart, newLineEnd, mergeReferenceData.getReferenceData(ThreeSide.RIGHT));
+      }
     }
     else {
       Side masterSide = side.select(Side.LEFT,
@@ -1121,11 +1118,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       if (selectedChanges.isEmpty()) return;
 
       String title = DiffBundle.message("message.do.in.merge.command", e.getPresentation().getText());
-      executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, getApplyChangeRunnable(side, selectedChanges));
+      executeMergeCommand(title, selectedChanges.size() > 1, selectedChanges, () -> apply(side, selectedChanges));
     }
 
-    //Runnable to execute inside merge command under WriteLock
-    protected abstract @NotNull Runnable getApplyChangeRunnable(ThreeSide side, List<TextMergeChange> selectedChanges);
+    @RequiresWriteLock
+    protected abstract void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes);
 
     private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
       EditorEx editor = getEditor(side);
@@ -1158,8 +1155,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
   private abstract class ApplySelectedChangesWithReferenceDataAction extends ApplySelectedChangesActionBase {
     @Override
-    @NotNull
-    protected Runnable getApplyChangeRunnable(ThreeSide side, List<TextMergeChange> selectedChanges) {
+    protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
       MergeReferenceData referenceData;
       if (getTextSettings().isAutoResolveImportConflicts()) {
         referenceData = getReferenceDataForChanges(getResolvableChanges(side));
@@ -1167,13 +1163,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       else {
         referenceData = null;
       }
-      return () -> apply(side, selectedChanges, referenceData);
+      doApply(side, changes, referenceData);
     }
 
-
-    protected abstract void apply(@NotNull ThreeSide side,
-                                  @NotNull List<? extends TextMergeChange> changes,
-                                  @Nullable MergeReferenceData mergeReferenceData);
+    protected abstract void doApply(@NotNull ThreeSide side,
+                                    @NotNull List<? extends TextMergeChange> changes,
+                                    @Nullable MergeReferenceData mergeReferenceData);
   }
 
   private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
@@ -1182,6 +1177,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     IgnoreSelectedChangesSideAction(@NotNull Side side) {
       mySide = side;
       ActionUtil.copyFrom(this, mySide.select("Diff.IgnoreLeftSide", "Diff.IgnoreRightSide"));
+    }
+
+    @Override
+    protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
+      for (TextMergeChange change : changes) {
+        ignoreChange(change, mySide, false);
+      }
     }
 
     @Override
@@ -1197,16 +1199,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     @Override
     protected boolean isEnabled(@NotNull TextMergeChange change) {
       return !change.isResolved(mySide);
-    }
-
-    @Override
-    @NotNull
-    protected Runnable getApplyChangeRunnable(ThreeSide side, List<TextMergeChange> selectedChanges) {
-      return () -> {
-        for (TextMergeChange change : selectedChanges) {
-          ignoreChange(change, mySide, false);
-        }
-      };
     }
   }
 
@@ -1230,14 +1222,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       return !change.isResolved();
     }
 
-    @NotNull
     @Override
-    protected Runnable getApplyChangeRunnable(ThreeSide side, List<TextMergeChange> selectedChanges) {
-      return () -> {
-        for (TextMergeChange change : selectedChanges) {
-          markChangeResolved(change);
-        }
-      };
+    protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes) {
+      for (TextMergeChange change : changes) {
+        markChangeResolved(change);
+      }
     }
   }
 
@@ -1266,9 +1255,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void apply(@NotNull ThreeSide side,
-                         @NotNull List<? extends TextMergeChange> changes,
-                         @Nullable MergeReferenceData mergeReferenceData) {
+    protected void doApply(@NotNull ThreeSide side,
+                           @NotNull List<? extends TextMergeChange> changes,
+                           @Nullable MergeReferenceData mergeReferenceData) {
       for (int i = changes.size() - 1; i >= 0; i--) {
         replaceChange(changes.get(i), mySide, false, mergeReferenceData);
       }
@@ -1299,8 +1288,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes, MergeReferenceData mergeReferenceData) {
-
+    protected void doApply(@NotNull ThreeSide side,
+                           @NotNull List<? extends TextMergeChange> changes,
+                           @Nullable MergeReferenceData mergeReferenceData) {
       for (int i = changes.size() - 1; i >= 0; i--) {
         replaceChange(changes.get(i), mySide, true, mergeReferenceData);
       }
@@ -1328,9 +1318,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
 
     @Override
-    protected void apply(@NotNull ThreeSide side,
-                         @NotNull List<? extends TextMergeChange> changes,
-                         @Nullable MergeReferenceData mergeReferenceData) {
+    protected void doApply(@NotNull ThreeSide side,
+                           @NotNull List<? extends TextMergeChange> changes,
+                           @Nullable MergeReferenceData mergeReferenceData) {
       for (int i = changes.size() - 1; i >= 0; i--) {
         TextMergeChange change = changes.get(i);
         resolveChangeAutomatically(change, ThreeSide.BASE, mergeReferenceData);
