@@ -60,14 +60,16 @@ class MergeImportUtil {
     @JvmStatic
     fun getImportMergeRange(project: Project?, mergeRequest: TextMergeRequest): MergeRange? {
       if (project == null) return null
-      val files = listOf(getPsiFile(ThreeSide.LEFT, project, mergeRequest),
-                         getPsiFile(ThreeSide.BASE, project, mergeRequest),
-                         getPsiFile(ThreeSide.RIGHT, project, mergeRequest))
-      val ranges = files.mapNotNull(this::getImportLineRange)
-      if (ranges.size != 3) return null
-      return MergeRange(ranges[0].start, ranges[0].end + 1,
-                        ranges[1].start, ranges[1].end + 1,
-                        ranges[2].start, ranges[2].end + 1)
+
+      val ranges = ArrayList<LineRange>()
+      for (side in ThreeSide.entries) {
+        val psiFile = getPsiFile(side, project, mergeRequest) ?: return null
+        val importRange = getImportLineRange(psiFile) ?: return null
+        ranges.add(importRange)
+      }
+      return MergeRange(ranges[0].start, ranges[0].end,
+                        ranges[1].start, ranges[1].end,
+                        ranges[2].start, ranges[2].end)
     }
 
     private fun getPsiFile(side: ThreeSide, project: Project, mergeRequest: TextMergeRequest): PsiFile? {
@@ -77,14 +79,12 @@ class MergeImportUtil {
       return PsiManager.getInstance(project).findFile(file)
     }
 
-    private fun getImportLineRange(psiFile: PsiFile?): LineRange? {
-      if (psiFile == null) return null
-      val range = ImportBlockRangeProvider.getRange(psiFile)
-      if (range == null) return null
+    private fun getImportLineRange(psiFile: PsiFile): LineRange? {
+      val range = ImportBlockRangeProvider.getRange(psiFile) ?: return null
       val document = psiFile.fileDocument
-      return LineRange(document.getLineNumber(range.startOffset), document.getLineNumber(range.endOffset))
+      return LineRange(document.getLineNumber(range.startOffset),
+                       document.getLineNumber(range.endOffset) + 1)
     }
-
   }
 }
 
@@ -94,7 +94,9 @@ class MergeImportUtil {
  * @property importBlockEnd The end index of import range (exclusive).
  */
 @Internal
-data class MergeLineFragmentsWithImportMetadata(val fragments: List<MergeLineFragment>, val importBlockStart: Int = -1, val importBlockEnd: Int = -1) {
+data class MergeLineFragmentsWithImportMetadata(val fragments: List<MergeLineFragment>, val importBlockStart: Int, val importBlockEnd: Int) {
+  constructor(fragments: List<MergeLineFragment>) : this(fragments, -1, -1)
+
   fun isIndexInImportRange(index: Int) = index in importBlockStart..<importBlockEnd
 }
 
@@ -106,6 +108,7 @@ data class ProcessorData<T : TextBlockTransferableData>(val processor: CopyPaste
   }
 }
 
-class MergeReferenceData(private val sideToData: Map<ThreeSide, List<ProcessorData<TextBlockTransferableData>>>) {
-  fun getReferenceData(side: ThreeSide): List<ProcessorData<TextBlockTransferableData>> = sideToData[side] ?: emptyList()
+class MergeReferenceData(private val left: List<ProcessorData<*>>,
+                         private val right: List<ProcessorData<*>>) {
+  fun getReferenceData(side: ThreeSide): List<ProcessorData<*>> = side.selectNotNull(left, emptyList(), right)
 }

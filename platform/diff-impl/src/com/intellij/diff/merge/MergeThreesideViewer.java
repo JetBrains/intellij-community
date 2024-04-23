@@ -84,7 +84,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -390,13 +389,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       });
       MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
       List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
-      List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments.getFragments(),
-                                                                fragment -> MergeRangeUtil.getLineMergeType(fragment, sequences,
-                                                                                                            lineOffsets,
-                                                                                                            ignorePolicy.getComparisonPolicy()));
+      List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments.getFragments(), fragment -> {
+        return MergeRangeUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy());
+      });
 
       FoldingModelSupport.Data foldingState =
-        myFoldingModel.createState(new ArrayList<>(lineFragments.getFragments()), lineOffsets, getFoldingModelSettings());
+        myFoldingModel.createState(lineFragments.getFragments(), lineOffsets, getFoldingModelSettings());
 
       return () -> apply(ThreeSide.BASE.select(sequences), lineFragments, conflictTypes, foldingState, ignorePolicy);
     }
@@ -416,15 +414,17 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private static MergeLineFragmentsWithImportMetadata getLineFragments(@NotNull ProgressIndicator indicator,
-                                                                       List<CharSequence> sequences,
-                                                                       MergeRange importRange, IgnorePolicy ignorePolicy) {
+                                                                       @NotNull List<CharSequence> sequences,
+                                                                       @Nullable MergeRange importRange,
+                                                                       @NotNull IgnorePolicy ignorePolicy) {
     if (importRange != null) {
       return MergeImportUtil.getDividedFromImportsFragments(sequences, ignorePolicy.getComparisonPolicy(), importRange, indicator);
     }
     ComparisonManager manager = ComparisonManager.getInstance();
 
-    return new MergeLineFragmentsWithImportMetadata(
-      manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2), ignorePolicy.getComparisonPolicy(), indicator), -1, -1);
+    List<MergeLineFragment> fragments = manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2),
+                                                           ignorePolicy.getComparisonPolicy(), indicator);
+    return new MergeLineFragmentsWithImportMetadata(fragments);
   }
 
 
@@ -456,13 +456,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       MergeLineFragment fragment = fragments.get(index);
       MergeConflictType conflictType = conflictTypes.get(index);
 
-      TextMergeChange change =
-        new TextMergeChange(index, fragmentsWithMetadata.isIndexInImportRange(index), fragment, conflictType,
-                            myTextMergeViewer);
+      boolean isInImportRange = fragmentsWithMetadata.isIndexInImportRange(index);
+      TextMergeChange change = new TextMergeChange(index, isInImportRange, fragment, conflictType, myTextMergeViewer);
 
       myAllMergeChanges.add(change);
       onChangeAdded(change);
     }
+
     myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
 
     myInitialScrollHelper.onRediff();
@@ -480,10 +480,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myCurrentIgnorePolicy = ignorePolicy;
     myResolveImportConflicts = getTextSettings().isAutoResolveImportConflicts();
 
-    if (getTextSettings().isAutoResolveImportConflicts()) {
-      List<TextMergeChange> importChanges = getChanges().stream().filter(change -> change.isImportChange()).toList();
+    if (myResolveImportConflicts) {
+      List<TextMergeChange> importChanges = ContainerUtil.filter(getChanges(), change -> change.isImportChange());
       if (importChanges.size() != fragmentsWithMetadata.getFragments().size()) {
-        getChanges().stream().filter(change -> change.isImportChange()).forEach(this::markChangeResolved);
+        for (TextMergeChange importChange : importChanges) {
+          markChangeResolved(importChange);
+        }
       }
     }
     if (getTextSettings().isAutoApplyNonConflictedChanges()) {
@@ -843,15 +845,16 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       markChangeResolved(change);
     }
     int newLineEnd = myModel.getLineEnd(change.getIndex());
+
     if (mergeReferenceData != null) {
       restoreReferenceData(newLineStart, newLineEnd, mergeReferenceData.getReferenceData(sourceSide));
     }
   }
 
-  @SuppressWarnings("unchecked")
   private void restoreReferenceData(int newLineStart,
                                     int newLineEnd,
-                                    List<ProcessorData<TextBlockTransferableData>> referenceData) {
+                                    @NotNull List<ProcessorData<?>> referenceData) {
+    if (myProject == null) return;
     if (!getTextSettings().isAutoResolveImportConflicts()) return;
     Document baseDocument = getContent(ThreeSide.BASE).getDocument();
     int newLineStartOffset = baseDocument.getLineStartOffset(newLineStart);
@@ -862,12 +865,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     });
   }
 
-  private @NotNull List<ProcessorData<TextBlockTransferableData>> getReferenceData(ThreeSide sourceSide,
-                                                                                   List<MergeLineFragment> fragments) {
-    Document sourceDocument = getContent(sourceSide).getDocument();
+  private @NotNull List<ProcessorData<?>> getReferenceData(@NotNull ThreeSide sourceSide, @NotNull List<MergeLineFragment> fragments) {
+    if (myProject == null) return Collections.emptyList();
     if (!getTextSettings().isAutoResolveImportConflicts()) return Collections.emptyList();
+    Document sourceDocument = getContent(sourceSide).getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(sourceDocument);
-    if (myProject == null || file == null) return Collections.emptyList();
+    if (file == null) return Collections.emptyList();
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     if (psiFile == null) return Collections.emptyList();
 
@@ -876,13 +879,21 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     int[] endOffsets = fragments.stream().mapToInt(fragment -> sourceDocument.getLineEndOffset(fragment.getEndLine(sourceSide)))
       .toArray();
 
-    //noinspection unchecked
-    return CopyPastePostProcessor.EP_NAME.getExtensionList()
-      .stream().filter(ReferenceCopyPasteProcessor.class::isInstance)
-      .map(processor -> new ProcessorData<>((CopyPastePostProcessor<TextBlockTransferableData>)processor,
-                                            processor.collectTransferableData(psiFile, getEditor(sourceSide), startOffsets,
-                                                                              endOffsets)))
-      .toList();
+    return ContainerUtil.mapNotNull(CopyPastePostProcessor.EP_NAME.getExtensionList(), processor -> {
+      return processor instanceof ReferenceCopyPasteProcessor
+             ? createProcessorData(processor, sourceSide, psiFile, startOffsets, endOffsets)
+             : null;
+    });
+  }
+
+  private @NotNull <T extends TextBlockTransferableData>
+  ProcessorData<T> createProcessorData(@NotNull CopyPastePostProcessor<T> processor,
+                                       @NotNull ThreeSide sourceSide,
+                                       @NotNull PsiFile psiFile,
+                                       int[] startOffsets,
+                                       int[] endOffsets) {
+    List<T> processorData = processor.collectTransferableData(psiFile, getEditor(sourceSide), startOffsets, endOffsets);
+    return new ProcessorData<>(processor, processorData);
   }
 
   protected class MyMergeModel extends MergeModelBase<TextMergeChange.State> {
@@ -940,8 +951,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected void applyNonConflictedChanges(@NotNull ThreeSide side) {
     executeMergeCommand(DiffBundle.message("merge.dialog.apply.non.conflicted.changes.command"), true, null, () -> {
       List<TextMergeChange> allChanges = new ArrayList<>(getAllChanges());
-      getChanges().stream().filter(TextMergeChange::isImportChange).filter(change -> change.isChange(side))
-        .forEach(this::markChangeResolved);
+      for (TextMergeChange change : allChanges) {
+        if (change.isImportChange() && change.isChange(side)) {
+          markChangeResolved(change);
+        }
+      }
+
       MergeReferenceData referenceData = getReferenceDataForChanges(getResolvableChanges(side));
       for (TextMergeChange change : allChanges) {
         if (!change.isConflict()) {
@@ -959,16 +974,21 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   }
 
   private List<TextMergeChange> getResolvableChanges(ThreeSide side) {
-    return getChanges().stream().filter(change -> !change.isImportChange() && canResolveChangeAutomatically(change, side)).toList();
+    return ContainerUtil.filter(getAllChanges(), change -> !change.isImportChange() && canResolveChangeAutomatically(change, side));
   }
 
   private void applyResolvableConflictedChanges() {
     List<TextMergeChange> changes = getAllChanges();
     executeMergeCommand(DiffBundle.message("message.resolve.simple.conflicts.command"), true, null, () -> {
       MergeReferenceData referenceData = getReferenceDataForChanges(getResolvableChanges(ThreeSide.BASE));
-      getChanges().stream().filter(TextMergeChange::isImportChange).forEach(this::markChangeResolved);
-      changes.stream().filter(change -> !change.isImportChange())
-        .forEach(change -> resolveChangeAutomatically(change, ThreeSide.BASE, referenceData));
+      for (TextMergeChange change : getChanges()) {
+        if (change.isImportChange()) {
+          markChangeResolved(change);
+        }
+      }
+      for (TextMergeChange change : getChanges()) {
+        resolveChangeAutomatically(change, ThreeSide.BASE, referenceData);
+      }
     });
 
     TextMergeChange firstUnresolved = ContainerUtil.find(changes, c -> !c.isResolved());
@@ -989,18 +1009,24 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
-  private MergeReferenceData getReferenceDataForChanges(List<? extends TextMergeChange> contentChanges) {
+  private @Nullable MergeReferenceData getReferenceDataForChanges(@NotNull List<? extends TextMergeChange> contentChanges) {
+    if (myProject == null) return null;
     if (!getTextSettings().isAutoResolveImportConflicts()) return null;
-    Map<ThreeSide, List<TextMergeChange>> changesBySides = contentChanges.stream()
-      .collect(Collectors.groupingBy(change -> change.isChange(ThreeSide.LEFT) ? ThreeSide.LEFT : ThreeSide.RIGHT));
 
-    return new MergeReferenceData(changesBySides
-                                    .entrySet()
-                                    .stream()
-                                    .collect(Collectors.toMap(
-                                      entry -> entry.getKey(),
-                                      entry -> getReferenceData(entry.getKey(),
-                                                                ContainerUtil.map(entry.getValue(), change -> change.getFragment())))));
+    List<MergeLineFragment> leftFragments = new ArrayList<>();
+    List<MergeLineFragment> rightFragments = new ArrayList<>();
+    for (TextMergeChange change : contentChanges) {
+      if (change.isChange(Side.LEFT)) {
+        leftFragments.add(change.getFragment());
+      }
+      else {
+        rightFragments.add(change.getFragment());
+      }
+    }
+
+    List<ProcessorData<?>> leftData = getReferenceData(ThreeSide.LEFT, leftFragments);
+    List<ProcessorData<?>> rightData = getReferenceData(ThreeSide.RIGHT, rightFragments);
+    return new MergeReferenceData(leftData, rightData);
   }
 
   private boolean isChangeRangeModified(@NotNull TextMergeChange change) {
