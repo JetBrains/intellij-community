@@ -1284,6 +1284,24 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[1].setType("Float?")
     }
 
+    fun testAddValParameterToConstructorConflictWithClass() = doTestConflict {
+        val parameter = createKotlinIntParameter("c")
+        parameter.valOrVar = KotlinValVar.Val
+        addParameter(parameter)
+    }
+
+    fun testAddValParameterToConstructorConflictWithProperty() = doTestConflict {
+        val parameter = createKotlinIntParameter("p")
+        parameter.valOrVar = KotlinValVar.Val
+        addParameter(parameter)
+    }
+
+    fun testAddValParameterToConstructorConflictWithFunction() = doTest {
+        val parameter = createKotlinParameter("f", "() -> Unit", null, false)
+        parameter.valOrVar = KotlinValVar.Val
+        addParameter(parameter)
+    }
+
     fun testGenericConstructor() = doTest {
         setNewVisibility(Public)
 

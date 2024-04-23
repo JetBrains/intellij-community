@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureUsageProcessor
 import com.intellij.refactoring.changeSignature.MethodCallUsageInfo
@@ -24,12 +23,13 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinCha
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinFunctionCallUsage
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinOverrideUsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinPropertyCallUsage
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.conflicts.areSameSignatures
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkNewPropertyConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
-import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
@@ -70,9 +70,22 @@ class KotlinChangeSignatureConflictSearcher(
 
         for (parameter in originalInfo.getNonReceiverParameters()) {
 
-            if (parameter.oldName != parameter.name && !parameter.isNewParameter) {//todo conflicts with new parameter
+            if (parameter.oldName != parameter.name || parameter.isNewParameter) {
                 val unresolvableCollisions = mutableListOf<UsageInfo>()
-                checkRedeclarationConflicts(function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)], parameter.name, unresolvableCollisions)
+                val ktParameter = if (!parameter.isNewParameter)
+                    function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
+                else null
+                if (ktParameter != null) { //todo conflicts with new parameter
+                    checkRedeclarationConflicts(ktParameter, parameter.name, unresolvableCollisions)
+                }
+
+                if (function is KtConstructor<*> && parameter.valOrVar != KotlinValVar.None && !(ktParameter != null && ktParameter.hasValOrVar())) {
+
+                    val containingClass = function.containingClassOrObject
+                    if (containingClass != null) {
+                        checkNewPropertyConflicts(containingClass, parameter.name, unresolvableCollisions)
+                    }
+                }
                 for (info in unresolvableCollisions) {
                     when (info) {
                         is BasicUnresolvableCollisionUsageInfo -> {

@@ -186,6 +186,23 @@ fun checkDeclarationNewNameConflicts(
     }
 }
 
+fun checkNewPropertyConflicts(
+    containingClass: KtClassOrObject,
+    newName: String,
+    result: MutableList<UsageInfo>,
+) {
+    analyze(containingClass) {
+        val containingSymbol = containingClass.getNamedClassOrObjectSymbol() ?: return
+        var potentialCandidates = containingSymbol
+            .getCombinedMemberScope()
+            .findSiblingsByName(containingSymbol, Name.identifier(newName), containingSymbol)
+            .filter { candidateSymbol -> candidateSymbol !is KtFunctionLikeSymbol }
+        for (candidateSymbol in potentialCandidates) {
+            registerAlreadyDeclaredConflict(candidateSymbol, result)
+        }
+    }
+}
+
 fun registerAlreadyDeclaredConflict(candidateSymbol: KtDeclarationSymbol, result: MutableList<UsageInfo>) {
     val candidate = candidateSymbol.psi as? PsiNamedElement ?: return
 
