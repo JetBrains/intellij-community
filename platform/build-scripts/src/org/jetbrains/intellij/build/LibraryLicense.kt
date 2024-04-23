@@ -100,6 +100,10 @@ data class LibraryLicense(
     require(supplier == null || supplier.startsWith("Organization: ") || supplier.startsWith("Person: ")) {
       "$supplier should start either with 'Organization: ' or with 'Person: ' prefix"
     }
+    require(license != JETBRAINS_OWN || licenseUrl == null && spdxIdentifier == null) {
+      "Library '${name ?: libraryName}' has $JETBRAINS_OWN license and " +
+      "is not expected to have neither 'licenseUrl=$licenseUrl' nor 'spdxIdentifier=$spdxIdentifier' specified"
+    }
   }
 
   companion object {

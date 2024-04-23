@@ -615,8 +615,8 @@ internal class SoftwareBillOfMaterialsImpl(
 
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
-        license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
         license.license == LibraryLicense.JETBRAINS_OWN -> document.jetBrainsOwnLicense
+        license.licenseUrl == null || license.spdxIdentifier == null -> SpdxNoAssertionLicense()
         else -> parseLicense(document, checkNotNull(license.spdxIdentifier))
       }
     }
