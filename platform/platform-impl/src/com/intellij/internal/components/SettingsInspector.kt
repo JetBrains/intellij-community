@@ -59,7 +59,7 @@ internal class SettingsModel(val components: List<ComponentDescriptor>) {
                 out.name("pluginId")
                 out.value(it.idString)
               }
-              out.name("class")
+              out.name("classFqn")
               out.value(descriptor.aClass.name)
               findStorage(descriptor.state)?.let { storage ->
                 out.name("storage")
