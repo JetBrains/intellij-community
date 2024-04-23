@@ -38,6 +38,8 @@ fun addNestedScrollingSupport(view: JComponent): JLayer<JComponent> {
 
     override fun processMouseWheelEvent(e: MouseWheelEvent, l: JLayer<out JComponent>) {
       if (redispatchingInProgress) {
+        // Prevents [JBScrollPane] from propagating wheel events to the parent component
+        e.consume()
         return
       }
       val owner = getValidOwner(e)
