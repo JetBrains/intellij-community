@@ -299,7 +299,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
-      if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD && node.getOperand() != null) {
+      if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
         getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.cant.assign.to.await.expr")).range(node).create();
       }
     }
