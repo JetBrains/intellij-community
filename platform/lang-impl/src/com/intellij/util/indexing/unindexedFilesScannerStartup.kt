@@ -72,6 +72,10 @@ internal fun isFirstProjectScanningRequested(project: Project): Boolean {
   return project.getUserData(FIRST_SCANNING_REQUESTED) != null
 }
 
+internal fun isFirstProjectScanningPerformed(project: Project): Boolean {
+  return project.getUserData(FIRST_SCANNING_REQUESTED) == FirstScanningState.PERFORMED
+}
+
 internal fun invalidateProjectFilterIfFirstScanningNotRequested(project: Project): Boolean {
   return initialScanningLock.withLock {
     if (isFirstProjectScanningRequested(project)) {

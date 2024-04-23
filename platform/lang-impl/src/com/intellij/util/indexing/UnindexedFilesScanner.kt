@@ -131,10 +131,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       isIndexingFilesFilterUpToDate || this.predefinedIndexableFilesIterators == null,
       "Should request full scanning on project open")
     myFutureScanningRequestToken = myProject.getService(ProjectIndexingDependenciesService::class.java).newFutureScanningToken()
-
-    if (isFullIndexUpdate()) {
-      myProject.putUserData(CONTENT_SCANNED, null)
-    }
   }
 
   private fun defaultHideProgressInSmartModeStrategy(): Boolean {
@@ -252,9 +248,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
       ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
         .collectIndexableFilesConcurrently(orderedProviders)
-      if (isFullIndexUpdate() || myOnProjectOpen) {
-        myProject.putUserData(CONTENT_SCANNED, true)
-      }
     }
     finally {
       markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, false)
@@ -672,7 +665,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     @Volatile
     var ourTestMode: TestMode? = null
 
-    private val CONTENT_SCANNED = Key.create<Boolean>("CONTENT_SCANNED")
     private val INDEX_UPDATE_IN_PROGRESS = Key.create<Boolean>("INDEX_UPDATE_IN_PROGRESS")
 
     private fun mergeIterators(iterators: List<IndexableFilesIterator>?,
@@ -691,11 +683,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
     @JvmStatic
     fun isIndexUpdateInProgress(project: Project): Boolean {
       return project.getUserData(INDEX_UPDATE_IN_PROGRESS) == true
-    }
-
-    @JvmStatic
-    fun isProjectContentFullyScanned(project: Project): Boolean {
-      return true == project.getUserData(CONTENT_SCANNED)
     }
 
     private fun collectProviders(project: Project, index: FileBasedIndexImpl): Pair<List<IndexableFilesIterator>, StatusMark?> {
