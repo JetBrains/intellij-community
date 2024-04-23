@@ -2,14 +2,13 @@
 package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.kotlin.inspections.KtCompanionObjectInExtensionInspectionTestBase
 
 @TestDataPath("/inspections/createObjectAndMoveProhibitedDeclarationsFix")
 class KtCreateObjectAndMoveProhibitedDeclarationsFixTest : KtCompanionObjectInExtensionInspectionTestBase() {
 
-  private val fixName = DevKitKotlinBundle.message("inspections.create.object.and.move.prohibited.declarations.fix.text")
+  private val fixName = "Create an object and move the prohibited declarations"
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/createObjectAndMoveProhibitedDeclarationsFix"
 
