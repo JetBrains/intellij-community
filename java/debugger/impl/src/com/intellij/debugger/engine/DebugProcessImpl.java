@@ -2644,6 +2644,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
             .createHtmlTextBalloonBuilder(content, messageType, null)
             .setHideOnClickOutside(true)
+            .setDisposable(myDisposable)
             .setHideOnFrameResize(false);
           Balloon balloon = balloonBuilder.createBalloon();
           balloon.show(new AnchoredPoint(AnchoredPoint.Anchor.TOP, target), Balloon.Position.above);
