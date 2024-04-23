@@ -19,10 +19,10 @@ import org.jetbrains.plugins.gradle.service.resolve.GradlePluginReference
 private val GRADLE_DSL_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl")
 private val GRADLE_DSL_ID: Name = Name.identifier("id")
 
-class KotlinGradlePluginReferenceProvider: ImplicitReferenceProvider {
+class KotlinGradlePluginReferenceProvider : ImplicitReferenceProvider {
     override fun getImplicitReference(
-      element: PsiElement,
-      offsetInElement: Int
+        element: PsiElement,
+        offsetInElement: Int
     ): PsiSymbolReference? {
         val parent = element.parent
         val callExpression = parent?.getParentOfType<KtCallExpression>(true, KtDeclarationWithBody::class.java) ?: return null
@@ -32,8 +32,8 @@ class KotlinGradlePluginReferenceProvider: ImplicitReferenceProvider {
         val value = ktLiteralStringTemplateEntry.text
 
         val callableId = analyze(callExpression) {
-          val singleFunctionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull()
-          singleFunctionCallOrNull?.symbol?.callableIdIfNonLocal ?: return null
+            val singleFunctionCallOrNull = callExpression.resolveCall()?.singleFunctionCallOrNull()
+            singleFunctionCallOrNull?.symbol?.callableIdIfNonLocal ?: return null
         }
 
         if (callableId.packageName != GRADLE_DSL_PACKAGE || callableId.callableName != GRADLE_DSL_ID) return null
