@@ -5,15 +5,17 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.treeView.NodeRenderer
+import com.intellij.internal.showSources
 import com.intellij.internal.ui.sandbox.components.*
 import com.intellij.internal.ui.sandbox.dsl.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.*
-import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.breadcrumbs.Breadcrumbs
+import com.intellij.ui.components.breadcrumbs.Crumb
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.speedSearch.ElementFilter
 import com.intellij.ui.tree.FilteringTreeModel
@@ -26,10 +28,13 @@ import com.intellij.util.Alarm
 import com.intellij.util.concurrency.Invoker
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
+import java.awt.Font
 import java.awt.event.KeyEvent
 import java.util.function.Consumer
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JTree
+import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
@@ -94,8 +99,6 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     }
   }
 
-  private val splitter = OnePixelSplitter(false, "UISandboxDialog.splitter.proportion", 0.2f)
-
   private val searchTextField = object : SearchTextField("UISandboxDialog.filter.history") {
     init {
       addDocumentListener(object : DocumentAdapter() {
@@ -127,6 +130,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       return super.preprocessEventForTextField(e)
     }
   }
+
   private val updatingAlarm = Alarm(myDisposable)
   private var activeFilterText = ""
     set(value) {
@@ -136,6 +140,18 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         treeModel.updateTree(tree, true, selection)
       }
     }
+
+  private var selectedNode: SandboxTreeNodeBase? = null
+
+  private lateinit var placeholder: Placeholder
+
+  private val breadcrumbs = object : Breadcrumbs() {
+    override fun getFontStyle(crumb: Crumb): Int {
+      return Font.BOLD
+    }
+  }
+
+  private lateinit var viewSource: ActionLink
 
   private val emptyPanel = panel {
     row {
@@ -174,9 +190,28 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
           .align(Align.FILL)
       }.resizableRow()
     }
-    splitter.apply {
+
+    val rightPanel = panel {
+      panel {
+        row {
+          cell(breadcrumbs)
+          viewSource = link("View source") {
+            showSources()
+          }.align(AlignX.RIGHT)
+            .customize(UnscaledGaps.EMPTY)
+            .component
+        }
+      }.customize(UnscaledGaps(top = 10, left = 10, right = 16))
+
+      row {
+        placeholder = placeholder()
+          .align(Align.FILL)
+      }.resizableRow()
+    }
+
+    val result = OnePixelSplitter(false, "UISandboxDialog.splitter.proportion", 0.2f).apply {
       firstComponent = leftPanel
-      secondComponent = emptyPanel
+      secondComponent = rightPanel
       minimumSize = JBDimension(400, 300)
       preferredSize = JBDimension(800, 600)
     }
@@ -184,7 +219,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     getPropertyComponent().getValue(SELECTED_TREE_ITEM)?.let {
       selectItem(it)
     }
-    return splitter
+    return result
   }
 
   private fun selectItem(item: String) {
@@ -219,33 +254,72 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   }
 
   private fun onNodeSelected(node: SandboxTreeNodeBase?) {
-    val selectedItem: String?
+    selectedNode = node
+
     when (node) {
       null -> {
-        splitter.secondComponent = emptyPanel
-        selectedItem = null
+        placeholder.component = emptyPanel
       }
       is SandboxTreeGroup -> {
-        splitter.secondComponent = emptyPanel
-        selectedItem = node.title
+        placeholder.component = createGroupContent(node).apply {
+          prepareContent()
+        }
       }
       is SandboxTreeLeaf -> {
-        val panel = JPanel(BorderLayout())
-        panel.add(node.panelCache.value, BorderLayout.CENTER)
-        panel.border = JBUI.Borders.empty(10)
-        splitter.secondComponent = if (node.isScrollbarNeeded()) ScrollPaneFactory.createScrollPane(panel, true) else panel
-        selectedItem = node.title
+        val panel = node.panelCache.value
+        panel.prepareContent()
+        placeholder.component = if (node.isScrollbarNeeded()) ScrollPaneFactory.createScrollPane(panel, true) else panel
       }
     }
 
+    fillBreadcrumbs()
+    viewSource.isEnabled = selectedNode is SandboxTreeLeaf
+
     // Don't store when treeModel is disposing while closing the dialog
     if (treeModel.getRoot() != null) {
-      getPropertyComponent().setValue(SELECTED_TREE_ITEM, selectedItem)
+      getPropertyComponent().setValue(SELECTED_TREE_ITEM, selectedNode?.title)
     }
+  }
+
+  private fun JComponent.prepareContent() {
+    border = JBUI.Borders.empty(6, 16, 16, 16)
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+  }
+
+  private fun createGroupContent(group: SandboxTreeGroup): JComponent {
+    return panel {
+      for (child in group.children) {
+        row {
+          link(child.title) {
+            selectItem(child.title)
+          }.customize(UnscaledGaps(bottom = 4))
+        }
+      }
+    }
+  }
+
+  private fun fillBreadcrumbs() {
+    val path = mutableListOf<String>()
+    var currentNode = selectedNode
+    while (currentNode != null && currentNode.parent != null) {
+      path.add(currentNode.title)
+      currentNode = currentNode.parent as SandboxTreeNodeBase?
+    }
+
+    val crumbs = path.reversed().map {
+      Crumb.Impl(null, it, null, null)
+    }
+    breadcrumbs.setCrumbs(crumbs)
   }
 
   private fun extractSandboxTreeNode(node: Any): SandboxTreeNodeBase? {
     return ((node as? DefaultMutableTreeNode)?.userObject as? FilteringTreeStructure.FilteringNode)?.delegate as? SandboxTreeNodeBase
+  }
+
+  private fun showSources() {
+    val leaf = selectedNode as? SandboxTreeLeaf ?: return
+    val src = "src/${leaf.sandboxPanel::class.java.name.replace('.', '/')}.kt"
+    showSources(project, src)
   }
 }
 
@@ -266,7 +340,7 @@ private sealed class SandboxTreeNodeBase(parent: SimpleNode?) : SimpleNode(paren
 private class SandboxTreeGroup(parent: SimpleNode?, disposable: Disposable, override val title: String, children: List<Any>) :
   SandboxTreeNodeBase(parent) {
 
-  private val children: Array<SimpleNode>
+  private val children: Array<SandboxTreeNodeBase>
 
   init {
     if (children.isEmpty()) {
@@ -291,22 +365,22 @@ private class SandboxTreeGroup(parent: SimpleNode?, disposable: Disposable, over
     }.toTypedArray()
   }
 
-  override fun getChildren(): Array<SimpleNode> {
+  override fun getChildren(): Array<SandboxTreeNodeBase> {
     return children
   }
 }
 
-private class SandboxTreeLeaf(parent: SimpleNode?, disposable: Disposable, private val child: UISandboxPanel) :
+private class SandboxTreeLeaf(parent: SimpleNode?, disposable: Disposable, val sandboxPanel: UISandboxPanel) :
   SandboxTreeNodeBase(parent) {
 
-  override val title: String = child.title
+  override val title: String = sandboxPanel.title
 
   val panelCache = lazy {
-    child.createContent(disposable)
+    sandboxPanel.createContent(disposable)
   }
 
   fun isScrollbarNeeded(): Boolean {
-    return child.isScrollbarNeeded
+    return sandboxPanel.isScrollbarNeeded
   }
 
   override fun getChildren(): Array<SimpleNode> {
