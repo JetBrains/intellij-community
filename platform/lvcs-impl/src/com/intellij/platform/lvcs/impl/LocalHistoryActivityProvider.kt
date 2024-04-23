@@ -30,38 +30,46 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
   }
 
   override fun loadActivityList(scope: ActivityScope, scopeFilter: String?): List<ActivityItem> {
-    val result = mutableListOf<ActivityItem>()
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      val path = gateway.getPathOrUrl(scope.file)
-      gateway.registerUnsavedDocuments(facade)
-      var lastLabel: ChangeSet? = null
-      facade.collectChanges(projectId, path, scopeFilter) { changeSet ->
-        if (changeSet.isSystemLabelOnly) return@collectChanges
-        if (changeSet.isLabelOnly) {
-          lastLabel = changeSet
-        }
-        else {
-          if (lastLabel != null) {
-            result.add(lastLabel!!.toActivityItem(scope))
-            lastLabel = null
-          }
-          result.add(changeSet.toActivityItem(scope))
-        }
-      }
+      return loadFileActivityList(projectId, scope, scopeFilter)
     }
-    else {
-      val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
-      for (changeSet in facade.changes) {
-        if (changeSet.isSystemLabelOnly) continue
-        if (changeSet.isLabelOnly) {
-          if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
-        }
-        else {
-          if (!changeSet.changes.any { change -> paths.any { path -> change.affectsPath(path) } }) continue
+    return loadRecentActivityList(projectId, scope)
+  }
+
+  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: String?): List<ActivityItem> {
+    val result = mutableListOf<ActivityItem>()
+    val path = gateway.getPathOrUrl(scope.file)
+    gateway.registerUnsavedDocuments(facade)
+    var lastLabel: ChangeSet? = null
+    facade.collectChanges(projectId, path, scopeFilter) { changeSet ->
+      if (changeSet.isSystemLabelOnly) return@collectChanges
+      if (changeSet.isLabelOnly) {
+        lastLabel = changeSet
+      }
+      else {
+        if (lastLabel != null) {
+          result.add(lastLabel!!.toActivityItem(scope))
+          lastLabel = null
         }
         result.add(changeSet.toActivityItem(scope))
       }
+    }
+    return result
+  }
+
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope): List<ActivityItem> {
+    val result = mutableListOf<ActivityItem>()
+    val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
+    for (changeSet in facade.changes) {
+      if (changeSet.isSystemLabelOnly) continue
+      if (changeSet.isLabelOnly) {
+        if (!changeSet.changes.any { it.affectsProject(projectId) }) continue
+      }
+      else {
+        if (!changeSet.changes.any { change -> paths.any { path -> change.affectsPath(path) } }) continue
+      }
+      result.add(changeSet.toActivityItem(scope))
     }
     return result
   }
