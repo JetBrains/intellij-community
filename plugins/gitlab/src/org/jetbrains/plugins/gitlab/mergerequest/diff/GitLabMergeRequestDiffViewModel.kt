@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
-import com.intellij.collaboration.async.computationState
+import com.intellij.collaboration.async.computationStateFlow
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
@@ -23,8 +23,11 @@ import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -59,7 +62,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
 ) {
   private val changesSorter = project.service<GitLabMergeRequestsPreferences>().changesGroupingState
     .map { RefComparisonChangesSorter.Grouping(project, it) }
-  private val changesFetchFlow = mergeRequest.changes.mapScoped(true) { async { it.loadRevisionsAndParseChanges() } }
+  private val changesFetchFlow = computationStateFlow(mergeRequest.changes, GitLabMergeRequestChanges::loadRevisionsAndParseChanges)
   private val helper = CodeReviewDiffViewModelComputer(changesFetchFlow, changesSorter) { changesBundle, change ->
     val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
     val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
@@ -82,7 +85,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
 
   override fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?> =
     changeVmsMap.getOrPut(change) {
-      changesFetchFlow.computationState()
+      changesFetchFlow
         .mapNotNull { it.getOrNull() }
         .mapScoped { changes ->
           changes.patchesByChange[change]?.let { createChangeVm(changes, change, it) }

@@ -20,7 +20,6 @@ import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
@@ -63,11 +62,9 @@ internal class GHPRDiffViewModelImpl(
   override val reviewVm = DelegatingGHPRReviewViewModel(reviewVmHelper)
 
   private val changesFetchFlow = with(dataProvider.changesData) {
-    changesNeedReloadSignal.withInitial(Unit).mapScoped(true) {
-      async {
-        loadChanges().also {
-          ensureAllRevisionsFetched()
-        }
+    computationStateFlow(changesNeedReloadSignal.withInitial(Unit)) {
+      loadChanges().also {
+        ensureAllRevisionsFetched()
       }
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
@@ -106,7 +103,7 @@ internal class GHPRDiffViewModelImpl(
 
   override fun getViewModelFor(change: RefComparisonChange): StateFlow<GHPRDiffChangeViewModelImpl?> =
     changeVmsMap.getOrPut(change) {
-      changesFetchFlow.computationState()
+      changesFetchFlow
         .mapNotNull { it.getOrNull() }
         .map { it.patchesByChange[change] }
         .mapNullableScoped { createChangeVm(change, it) }
