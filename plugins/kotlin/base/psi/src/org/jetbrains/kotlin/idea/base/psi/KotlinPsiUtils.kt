@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
@@ -130,6 +131,15 @@ fun <T> getTopmostElementAtOffset(element: PsiElement, offset: Int, vararg class
     } while (true)
 
     return lastElementOfType
+}
+
+/**
+ * @return the [FqName] of the first non-local declaration containing [offset]
+ */
+fun getFqNameAtOffset(file: KtFile, offset: Int): FqName? {
+    if (offset !in 0 until file.textLength) return null
+
+    return file.findElementAt(offset)?.parents(withSelf = true)?.mapNotNull { it.kotlinFqName }?.firstOrNull()
 }
 
 private fun <T> Array<out Class<out T>>.anyIsInstance(element: PsiElement): Boolean =

@@ -37,6 +37,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedExtensions.kt");
         }
 
+        @TestMetadata("AlreadyImportedExtensions2.kt")
+        public void testAlreadyImportedExtensions2() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedExtensions2.kt");
+        }
+
         @TestMetadata("AlreadyImportedViaStar.kt")
         public void testAlreadyImportedViaStar() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedViaStar.kt");
@@ -45,6 +50,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("AlreadyImportedViaStarWithOuter.kt")
         public void testAlreadyImportedViaStarWithOuter() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedViaStarWithOuter.kt");
+        }
+
+        @TestMetadata("AmbiguityError.kt")
+        public void testAmbiguityError() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/AmbiguityError.kt");
         }
 
         @TestMetadata("ClassAlreadyImported.kt")
@@ -172,6 +182,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/EnumEntriesWithOuter.kt");
         }
 
+        @TestMetadata("EnumMember.kt")
+        public void testEnumMember() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/EnumMember.kt");
+        }
+
         @TestMetadata("Extension.kt")
         public void testExtension() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/Extension.kt");
@@ -222,6 +237,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/FunctionParameter.kt");
         }
 
+        @TestMetadata("FunctionToImportContainsSelectedClass.kt")
+        public void testFunctionToImportContainsSelectedClass() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/FunctionToImportContainsSelectedClass.kt");
+        }
+
         @TestMetadata("GetExpression.kt")
         public void testGetExpression() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/GetExpression.kt");
@@ -260,6 +280,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ImportedElementCopied.kt")
         public void testImportedElementCopied() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/ImportedElementCopied.kt");
+        }
+
+        @TestMetadata("ImportedInSourceWithStarImport.kt")
+        public void testImportedInSourceWithStarImport() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/ImportedInSourceWithStarImport.kt");
         }
 
         @TestMetadata("Inner.kt")
@@ -302,6 +327,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
         }
 
+        @TestMetadata("MultiCaretSelection.kt")
+        public void testMultiCaretSelection() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/MultiCaretSelection.kt");
+        }
+
         @TestMetadata("MultiCaretSelectionEntireFile.kt")
         public void testMultiCaretSelectionEntireFile() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/MultiCaretSelectionEntireFile.kt");
@@ -310,6 +340,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("MultiDeclaration.kt")
         public void testMultiDeclaration() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/MultiDeclaration.kt");
+        }
+
+        @TestMetadata("MultiReferenceConflict.kt")
+        public void testMultiReferenceConflict() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/MultiReferenceConflict.kt");
         }
 
         @TestMetadata("MultiReferencePartiallyCopied.kt")
@@ -375,6 +410,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("PartiallyQualified.kt")
         public void testPartiallyQualified() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/PartiallyQualified.kt");
+        }
+
+        @TestMetadata("PartiallySelectedBlock.kt")
+        public void testPartiallySelectedBlock() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/PartiallySelectedBlock.kt");
         }
 
         @TestMetadata("QualifiedTypeConflict.kt")
@@ -475,6 +515,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("UnresolvedOverload.kt")
         public void testUnresolvedOverload() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/UnresolvedOverload.kt");
+        }
+
+        @TestMetadata("VariableCalls.kt")
+        public void testVariableCalls() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/VariableCalls.kt");
         }
     }
 
@@ -496,6 +541,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedExtensions.kt");
         }
 
+        @TestMetadata("AlreadyImportedExtensions2.kt")
+        public void testAlreadyImportedExtensions2() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedExtensions2.kt");
+        }
+
         @TestMetadata("AlreadyImportedViaStar.kt")
         public void testAlreadyImportedViaStar() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedViaStar.kt");
@@ -504,6 +554,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("AlreadyImportedViaStarWithOuter.kt")
         public void testAlreadyImportedViaStarWithOuter() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/AlreadyImportedViaStarWithOuter.kt");
+        }
+
+        @TestMetadata("AmbiguityError.kt")
+        public void testAmbiguityError() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/AmbiguityError.kt");
         }
 
         @TestMetadata("ClassAlreadyImported.kt")
@@ -631,6 +686,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/EnumEntriesWithOuter.kt");
         }
 
+        @TestMetadata("EnumMember.kt")
+        public void testEnumMember() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/EnumMember.kt");
+        }
+
         @TestMetadata("Extension.kt")
         public void testExtension() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/Extension.kt");
@@ -681,6 +741,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/FunctionParameter.kt");
         }
 
+        @TestMetadata("FunctionToImportContainsSelectedClass.kt")
+        public void testFunctionToImportContainsSelectedClass() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/FunctionToImportContainsSelectedClass.kt");
+        }
+
         @TestMetadata("GetExpression.kt")
         public void testGetExpression() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/GetExpression.kt");
@@ -719,6 +784,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("ImportedElementCopied.kt")
         public void testImportedElementCopied() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/ImportedElementCopied.kt");
+        }
+
+        @TestMetadata("ImportedInSourceWithStarImport.kt")
+        public void testImportedInSourceWithStarImport() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/ImportedInSourceWithStarImport.kt");
         }
 
         @TestMetadata("Inner.kt")
@@ -761,6 +831,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
         }
 
+        @TestMetadata("MultiCaretSelection.kt")
+        public void testMultiCaretSelection() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/MultiCaretSelection.kt");
+        }
+
         @TestMetadata("MultiCaretSelectionEntireFile.kt")
         public void testMultiCaretSelectionEntireFile() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/MultiCaretSelectionEntireFile.kt");
@@ -769,6 +844,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("MultiDeclaration.kt")
         public void testMultiDeclaration() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/MultiDeclaration.kt");
+        }
+
+        @TestMetadata("MultiReferenceConflict.kt")
+        public void testMultiReferenceConflict() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/MultiReferenceConflict.kt");
         }
 
         @TestMetadata("MultiReferencePartiallyCopied.kt")
@@ -834,6 +914,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("PartiallyQualified.kt")
         public void testPartiallyQualified() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/PartiallyQualified.kt");
+        }
+
+        @TestMetadata("PartiallySelectedBlock.kt")
+        public void testPartiallySelectedBlock() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/PartiallySelectedBlock.kt");
         }
 
         @TestMetadata("QualifiedTypeConflict.kt")
@@ -934,6 +1019,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
         @TestMetadata("UnresolvedOverload.kt")
         public void testUnresolvedOverload() throws Exception {
             runTest("../../idea/tests/testData/copyPaste/imports/UnresolvedOverload.kt");
+        }
+
+        @TestMetadata("VariableCalls.kt")
+        public void testVariableCalls() throws Exception {
+            runTest("../../idea/tests/testData/copyPaste/imports/VariableCalls.kt");
         }
     }
 }

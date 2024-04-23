@@ -384,7 +384,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         file: KtFile,
         findReferenceProvider: (indicator: ProgressIndicator) -> List<ReferenceToRestoreData>
     ) {
-        val task = object : Task.Backgroundable(project, KotlinBundle.message("copy.paste.resolve.references"), true) {
+        val task = object : Task.Backgroundable(project, KotlinBundle.message("copy.paste.resolve.pasted.references"), true) {
             override fun run(indicator: ProgressIndicator) {
                 assert(!ApplicationManager.getApplication().isWriteAccessAllowed) {
                     "Resolving references on dispatch thread leads to live lock"
@@ -409,7 +409,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 showRestoreReferencesDialog(project, referencesPossibleToRestore)
             if (selectedReferencesToRestore.isEmpty()) return@invokeLater
 
-            project.executeWriteCommand(KotlinBundle.message("resolve.pasted.references")) {
+            project.executeWriteCommand(KotlinBundle.message("copy.paste.restore.pasted.references.capitalized")) {
                 val imported = TreeSet<String>()
                 restoreReferences(selectedReferencesToRestore, file, imported)
 
