@@ -61,7 +61,11 @@ internal class SoftwareBillOfMaterialsImpl(
   private val context: BuildContext,
   private val distributions: List<DistributionForOsTaskResult>,
   private val distributionFiles: List<DistributionFileEntry>
-): SoftwareBillOfMaterials {
+) : SoftwareBillOfMaterials {
+  private companion object {
+    val JETBRAINS_GITHUB_ORGANIZATIONS = setOf("JetBrains", "Kotlin")
+  }
+
   private val specVersion: String = Version.TWO_POINT_THREE_VERSION
 
   private val creator: String
@@ -595,12 +599,19 @@ internal class SoftwareBillOfMaterialsImpl(
     val supplier: String? = license.supplier ?: organizations ?: developers
 
     val copyrightText: String?
-      get() = if (license.copyrightText == null && license.license == LibraryLicense.JETBRAINS_OWN) {
+      get() = if (license.copyrightText == null && isSupplierJetBrains) {
         jetBrainsOwnLicense.copyrightText
       }
       else {
         license.copyrightText
       }
+
+    val isSupplierJetBrains: Boolean by lazy {
+      license.license == LibraryLicense.JETBRAINS_OWN || JETBRAINS_GITHUB_ORGANIZATIONS.any {
+        license.url?.startsWith("https://github.com/$it/") == true ||
+        license.licenseUrl?.startsWith("https://github.com/$it/") == true
+      }
+    }
 
     fun license(document: SpdxDocument): AnyLicenseInfo {
       return when {
@@ -681,13 +692,7 @@ internal class SoftwareBillOfMaterialsImpl(
   private fun SpdxPackageBuilder.setOrigin(library: MavenLibrary, upstreamPackage: SpdxPackage?) {
     when {
       library.supplier != null -> setSupplier(library.supplier)
-      library.license.license == LibraryLicense.JETBRAINS_OWN ||
-      library.license.url?.startsWith("https://github.com/JetBrains/") == true ||
-      library.license.licenseUrl?.startsWith("https://github.com/JetBrains/") == true ||
-      library.license.url?.startsWith("https://github.com/Kotlin/") == true ||
-      library.license.licenseUrl?.startsWith("https://github.com/Kotlin/") == true -> {
-        setSupplier("Organization: ${Suppliers.JETBRAINS}")
-      }
+      library.isSupplierJetBrains -> setSupplier("Organization: ${Suppliers.JETBRAINS}")
       library.license.url?.startsWith("https://github.com/apache/") == true ||
       library.license.licenseUrl?.startsWith("https://github.com/apache/") == true -> {
         setSupplier("Organization: ${Suppliers.APACHE}")
