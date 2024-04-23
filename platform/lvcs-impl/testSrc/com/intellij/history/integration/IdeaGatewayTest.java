@@ -82,7 +82,7 @@ public class IdeaGatewayTest extends IntegrationTestCase {
     assertEquals(myGateway.getPathOrUrl(directory), getAllPaths(rootEntry));
   }
 
-  private static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {
+  public static @NotNull String getAllPaths(@NotNull RootEntry rootEntry) {
     StringBuilder result = new StringBuilder();
     printAllPaths(rootEntry, result);
     return result.toString();

@@ -98,8 +98,14 @@ public class IdeaGateway {
     return true;
   }
 
-  public String getPathOrUrl(@NotNull VirtualFile file) {
+  public @NotNull String getPathOrUrl(@NotNull VirtualFile file) {
     return file.isInLocalFileSystem() ? file.getPath() : file.getUrl();
+  }
+
+  public static @NotNull String getNameOrUrlPart(@NotNull VirtualFile file) {
+    String name = file.getName();
+    if (file.isInLocalFileSystem() || file.getParent() != null) return name;
+    return VirtualFileManager.constructUrl(file.getFileSystem().getProtocol(), StringUtil.trimStart(name, "/"));
   }
 
   protected static @NotNull VersionedFilterData getVersionedFilterData() {
@@ -363,7 +369,7 @@ public class IdeaGateway {
       String targetPath = ContainerUtil.getLastItem(myPathsStack);
       if (targetPath == null) return false;
 
-      String childName = StringUtil.trimStart(child.getName(), "/"); // on Mac FS root name is "/"
+      String childName = StringUtil.trimStart(getNameOrUrlPart(child), "/"); // on Mac FS root name is "/"
       if (!targetPath.startsWith(childName)) return false;
       String targetPathRest = targetPath.substring(childName.length());
       if (!targetPathRest.isEmpty() && targetPathRest.charAt(0) != '/') return false;
