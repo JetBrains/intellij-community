@@ -147,7 +147,7 @@ public final class DescriptorComposer extends HTMLComposerImpl {
       descriptionTemplate = StringUtil.replace(descriptionTemplate, "</code>", "'");
       descriptionTemplate = XmlStringUtil.escapeString(descriptionTemplate);
     }
-    String res = NBSP + descriptionTemplate.replaceAll("#ref", anchor.toString());
+    String res = descriptionTemplate.replaceAll("#ref", anchor.toString());
     int lineNumber = description instanceof ProblemDescriptor ? ((ProblemDescriptor)description).getLineNumber() : -1;
     StringBuilder lineAnchor = new StringBuilder();
     if (expression != null && lineNumber >= 0) {
