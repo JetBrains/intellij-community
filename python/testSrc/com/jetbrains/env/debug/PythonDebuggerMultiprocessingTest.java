@@ -60,7 +60,7 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
     });
   }
 
-  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12"})
+  @EnvTestTagsRequired(tags = {"-python3.11", "-python3.12", "-iron", "-jython"})
   @Test
   public void testMultiprocessingSubprocess() {
     runPythonTest(new PyDebuggerMultiprocessTask("/debug", "test_multiprocess_args.py") {
@@ -77,12 +77,6 @@ public class PythonDebuggerMultiprocessingTest extends PyEnvTestCase {
         eval("sys.argv[2]").hasValue("'etc etc'");
 
         resume();
-      }
-
-      @NotNull
-      @Override
-      public Set<String> getTags() {
-        return ImmutableSet.of("-iron", "-jython"); //can't run on iron and jython
       }
     });
   }
