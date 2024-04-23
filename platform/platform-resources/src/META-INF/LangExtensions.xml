@@ -1401,6 +1401,9 @@
     <registryKey key="language.service.status.bar.widget"
                  description="Show Language Services status bar widget"
                  defaultValue="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetUsagesCollector"/>
+    <applicationService serviceInterface="com.intellij.platform.lang.lsWidget.internal.LanguageServiceWidgetActionsService"
+                        serviceImplementation="com.intellij.platform.lang.lsWidget.impl.LanguageServiceWidgetActionsServiceImpl"/>
     <statusBarWidgetFactory id="LineSeparator" implementation="com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory"
                             order="after Position"/>
     <statusBarWidgetFactory id="Encoding" implementation="com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory"
