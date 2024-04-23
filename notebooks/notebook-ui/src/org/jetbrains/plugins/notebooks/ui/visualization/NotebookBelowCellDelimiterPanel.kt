@@ -35,7 +35,7 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
     add(basicPanel, c)
   }
 
-  fun initialize(@Nls executionTimeDetails: String?, executionCount: Int?, statusIcon: Icon, isExecutable: Boolean) {
+  fun initialize(@Nls tooltipText: String?, executionCount: Int?, statusIcon: Icon, isExecutable: Boolean) {
     val notebookAppearance = editor.notebookAppearance
     background = editor.colorsScheme.defaultBackground
     preferredSize = Dimension(preferredSize.width, notebookAppearance.EXECUTION_TIME_HEIGHT)
@@ -48,9 +48,15 @@ class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayou
     if (isExecutable) {
       val executionCountText = "[${executionCount ?: 0}]"
       val executionLabel = JLabel(executionCountText)
+
       executionLabel.icon = statusIcon
       executionLabel.font = labelFont
       executionLabel.foreground = labelForeground
+
+      if (!tooltipText.isNullOrEmpty()) {
+        executionLabel.toolTipText = tooltipText
+      }
+
       add(executionLabel, BorderLayout.WEST)
       shouldUseCustomBackground = true
     }
