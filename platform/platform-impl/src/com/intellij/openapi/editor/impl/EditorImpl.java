@@ -38,8 +38,7 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
-import com.intellij.openapi.editor.impl.stickyLines.StickyLinesPanel;
+import com.intellij.openapi.editor.impl.stickyLines.*;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -158,7 +157,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull MyScrollPane myScrollPane;
   private final @NotNull EditorComponentImpl myEditorComponent;
   private final @NotNull EditorGutterComponentImpl myGutterComponent;
-  private final @Nullable StickyLinesPanel myStickyLinesPanel;
+  private final @Nullable StickyLinesManager myStickyLinesManager;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
   private final FocusModeModel myFocusModeModel;
   private volatile long myLastTypedActionTimestamp = -1;
@@ -169,6 +168,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final Map<Object, Cursor> myCustomCursors = new LinkedHashMap<>();
   private Cursor myDefaultCursor;
   boolean myCursorSetExternally;
+
+  private static final Integer SCROLL_PANE_LAYER = 0;
+  private static final Integer STICKY_PANEL_LAYER = 200;
+  private static final Integer VERTICAL_SCROLLBAR_LAYER = 250;
+  private static final Integer FLOATING_TOOLBAR_LAYER = 300;
+  private static final Integer STATUS_COMPONENT_LAYER = 300;
 
   static {
     Cursor emptyCursor = null;
@@ -445,8 +450,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
     initComponent();
 
-    myStickyLinesPanel = createStickyLinesPanel();
-    if (myStickyLinesPanel != null) {
+    myStickyLinesManager = createStickyLinesPanel();
+    if (myStickyLinesManager != null) {
       // remove the status component from the scroll pane and place it on the layered pane where the sticky panel lives,
       // otherwise the sticky panel would overlap the status
       myScrollPane.placeStatusOnTopOfStickyPanel();
@@ -1144,10 +1149,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.setAutoscrolls(false); // we have our own auto-scrolling code
 
     this.myLayeredPane = new PanelWithFloatingToolbar();
-    myLayeredPane.add(myScrollPane, JLayeredPane.DEFAULT_LAYER);
+    myLayeredPane.add(myScrollPane, SCROLL_PANE_LAYER);
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> {
       if (mayShowToolbar()) {
-        myLayeredPane.add(new EditorFloatingToolbar(this), JLayeredPane.POPUP_LAYER);
+        myLayeredPane.add(new EditorFloatingToolbar(this), FLOATING_TOOLBAR_LAYER);
       }
     }, getDisposable());
     myPanel.add(myLayeredPane, BorderLayout.CENTER);
@@ -1705,8 +1710,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
-    if (myStickyLinesPanel != null) {
-      myStickyLinesPanel.repaintLinesInRange(startVisualLine, endVisualLine);
+    if (myStickyLinesManager != null) {
+      myStickyLinesManager.repaintLines(startVisualLine, endVisualLine);
     }
   }
 
@@ -1990,8 +1995,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
     if (rect.isEmpty()) return;
-    if (myStickyLinesPanel != null) {
-      myStickyLinesPanel.startDumb();
+    if (myStickyLinesManager != null) {
+      myStickyLinesManager.startDumb();
     }
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
@@ -5585,7 +5590,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public JComponent getStatusComponent() {
-      if (myStickyLinesPanel == null) {
+      if (myStickyLinesManager == null) {
         return super.getStatusComponent();
       }
       else {
@@ -5595,7 +5600,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setStatusComponent(JComponent statusComponent) {
-      if (myStickyLinesPanel == null) {
+      if (myStickyLinesManager == null) {
         super.setStatusComponent(statusComponent);
       }
       else {
@@ -5604,7 +5609,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           super.setStatusComponent(null);
         }
         if (statusComponent != null) {
-          myLayeredPane.add(statusComponent, Integer.valueOf(300));
+          myLayeredPane.add(statusComponent, STATUS_COMPONENT_LAYER);
         } else if (myStatusComponent != null) {
           myLayeredPane.remove(myStatusComponent);
         }
@@ -5775,8 +5780,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myMouseListener;
   }
 
-  @Nullable StickyLinesPanel getStickyLinesPanel() {
-    return myStickyLinesPanel;
+  @Nullable StickyLinesManager getStickyLinesPanel() {
+    return myStickyLinesManager;
   }
 
   /**
@@ -5788,8 +5793,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!ClientId.isCurrentlyUnderLocalId()) {
       return true;
     }
-    if (myStickyLinesPanel != null) {
-      return myStickyLinesPanel.suppressHintForLine(hintStartLogicalLine);
+    if (myStickyLinesManager != null) {
+      return myStickyLinesManager.suppressHintForLine(hintStartLogicalLine);
     }
     return false;
   }
@@ -5818,13 +5823,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myIsStickyLineHovered = stickyLineHovered;
   }
 
-  private @Nullable StickyLinesPanel createStickyLinesPanel() {
+  private @Nullable StickyLinesManager createStickyLinesPanel() {
     if (myProject != null && myKind == EditorKind.MAIN_EDITOR && !isMirrored()) {
-      StickyLinesManager stickyManager = new StickyLinesManager(this, myDocumentMarkupModel.getDelegate(), myDisposable);
-      myLayeredPane.add(stickyManager.getStickyPanel(), Integer.valueOf(200));
-      myLayeredPane.add(myVerticalScrollBar, Integer.valueOf(250));
+      StickyLinesModel stickyModel = StickyLinesModel.getModel(myDocumentMarkupModel.getDelegate());
+      VisualStickyLines visualStickyLines = new VisualStickyLines(this, stickyModel);
+      StickyLineShadowPainter shadowPainter = new StickyLineShadowPainter();
+      StickyLinesPanel stickyPanel = new StickyLinesPanel(this, shadowPainter, visualStickyLines);
+      StickyLinesManager stickyManager = new StickyLinesManager(
+        this, stickyModel,
+        stickyPanel,
+        shadowPainter,
+        visualStickyLines,
+        myDisposable
+      );
+      myLayeredPane.add(stickyPanel, STICKY_PANEL_LAYER);
+      myLayeredPane.add(myVerticalScrollBar, VERTICAL_SCROLLBAR_LAYER);
       ((MyScrollPaneLayout) myScrollPane.getLayout()).setVerticalScrollBar(myVerticalScrollBar);
-      return stickyManager.getStickyPanel();
+      return stickyManager;
     } else {
       return null;
     }

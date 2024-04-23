@@ -8,7 +8,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 
 @Suppress("UseJBColor") // JBColor does not work properly if IDE theme differs from editor's color scheme
-internal class StickyLineShadowPainter(var isDarkColorScheme: Boolean) {
+internal class StickyLineShadowPainter(var isDarkColorScheme: Boolean = false) {
 
   // shadow settings
   private val SHADOW_HEIGHT_FACTOR_LIGHT: Double = 0.2
