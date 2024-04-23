@@ -3,13 +3,11 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.introduceProperty
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl
-import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateEditingListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.NonFocusableCheckBox
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -20,8 +18,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.Generator
 import org.jetbrains.kotlin.idea.refactoring.introduce.TYPE_REFERENCE_VARIABLE_NAME
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionTarget
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicatesSilently
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.AbstractKotlinInplaceVariableIntroducer
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -159,10 +157,7 @@ class KotlinInplacePropertyIntroducer(
 
     override fun performRefactoring(): Boolean {
         if (replaceAll) {
-            val duplicateReplacers = extractionResult.duplicateReplacers
-            myProject.executeWriteCommand(MethodDuplicatesHandler.getRefactoringName()) {
-                duplicateReplacers.values.forEach { it() }
-            }
+            processDuplicatesSilently(extractionResult.duplicateReplacers, myProject)
         }
         return true
     }

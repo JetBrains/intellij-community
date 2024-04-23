@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// SUGGESTED_NAMES: i, getT
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
 // PARAM_DESCRIPTOR: value-parameter a: kotlin.Int defined in test
@@ -7,60 +8,71 @@
 // SIBLING:
 fun test(a: Int): Int {
     var b: Int = 1
-    b = i(a, b)
-    return b
+    val t = i(a, b)
+    return t
 }
 
 fun foo1() {
     val x = 1
     var y: Int = x
     println(
-            if (x > 0) {
-                y + x
-            }
-            else {
-                y - x
-            }
+        i(x, y)
     )
 }
 
 fun foo2(x: Int) {
     var p: Int = 1
-    p = i(x, p)
-    println(p)
+    var q: Int
+    if (x > 0) {
+        p++
+        q = p + x
+    }
+    else {
+        p--
+        q = p - x
+    }
+    println(q)
 }
 
 fun foo3(x: Int): Int {
     var p: Int = 1
-    return i(x, p)
+    if (x > 0) {
+        p++
+        return p + x
+    }
+    else {
+        p--
+        return p - x
+    }
 }
 
 fun foo4() {
     val t: (Int) -> (Int) = {
         var n = it
-        if (it > 0) {
-            n + it
-        }
-        else {
-            n - it
-        }
+        i(it, n)
     }
     println(t(1))
 }
 
-fun foo5(x: Int): Int {
-    var p: Int = 1
-    i(x, p)
-}
-
 private fun i(a: Int, b: Int): Int {
     var b1 = b
-    if (a > 0) {
-        b1 = b1 + a
+    return if (a > 0) {
+        b1++
+        b1 + a
     } else {
-        b1 = b1 - a
+        b1--
+        b1 - a
     }
-    return b1
 }
 
-// IGNORE_K2
+fun foo5(x: Int): Int {
+    var p: Int = 1
+    if (x > 0) {
+        p++
+        val t = p + x
+    }
+    else {
+        p--
+        val u = p - x
+    }
+}

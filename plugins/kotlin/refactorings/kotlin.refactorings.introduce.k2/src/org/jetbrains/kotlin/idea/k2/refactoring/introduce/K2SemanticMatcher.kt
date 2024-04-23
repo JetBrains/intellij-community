@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.introduce
 
+import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
@@ -16,6 +17,9 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.Success
 import org.jetbrains.kotlin.idea.codeinsight.utils.findRelevantLoopForExpression
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -66,6 +70,48 @@ object K2SemanticMatcher {
         )
 
         return matches
+    }
+
+    /**
+     * Matches the elements in the target KotlinPsiRange with the elements in the pattern KotlinPsiRange, searching for [parameters] replacement.
+     *
+     * @param target The target KotlinPsiRange to match against.
+     * @param pattern The pattern KotlinPsiRange to match.
+     * @param parameters The list of parameters which are used in [pattern].
+     * @return null if match fails
+     */
+    context(KtAnalysisSession)
+    fun matchRanges(
+        target: KotlinPsiRange,
+        pattern: KotlinPsiRange,
+        parameters: List<PsiNamedElement>
+    ): Success<PsiNamedElement>? {
+        if (target.elements.size != pattern.elements.size) return null
+
+        val substitution = mutableMapOf<PsiNamedElement, KtElement?>().apply {
+            parameters.forEach {
+                put(it, null)
+            }
+        }
+
+        val matchingContext = MatchingContext(substitution = substitution)
+
+        target.elements.forEachIndexed { i, t ->
+            val p = pattern.elements[i] as? KtElement ?: return@forEachIndexed
+
+            if ((t as? KtElement)?.isSemanticMatch(p, matchingContext) != true) {
+                return null
+            }
+        }
+
+        val result = mutableMapOf<PsiNamedElement, KtElement>()
+        substitution.entries.forEach { (parameter, argument) ->
+            if (argument == null) {
+                return null
+            }
+            result.put(parameter, argument)
+        }
+        return StrictSuccess(target, result)
     }
 
     context(KtAnalysisSession)
@@ -139,10 +185,21 @@ object K2SemanticMatcher {
     private data class MatchingContext(
         val symbols: MutableMap<KtSymbol, KtSymbol> = mutableMapOf(),
         val blockBodyOwners: MutableMap<KtFunctionLikeSymbol, KtFunctionLikeSymbol> = mutableMapOf(),
+        val substitution: MutableMap<PsiNamedElement, KtElement?> = mutableMapOf(),
     ) {
         context(KtAnalysisSession)
         fun areSymbolsEqualOrAssociated(targetSymbol: KtSymbol?, patternSymbol: KtSymbol?): Boolean {
             if (targetSymbol == null || patternSymbol == null) return targetSymbol == null && patternSymbol == null
+
+            if (patternSymbol is KtNamedSymbol) {
+                val patternElement = patternSymbol.psi as? PsiNamedElement
+                if (patternElement != null && substitution.containsKey(patternElement)) {
+                    val expression =
+                        KtPsiFactory.contextual(targetSymbol.psi!!).createExpression((targetSymbol as KtNamedSymbol).name.asString())
+                    val oldElement = substitution.put(patternElement, expression)
+                    return oldElement !is KtElement || oldElement.text == expression.text
+                }
+            }
 
             return targetSymbol == patternSymbol || symbols[targetSymbol] == patternSymbol
         }
@@ -219,6 +276,13 @@ object K2SemanticMatcher {
     context(KtAnalysisSession)
     private fun elementsMatchOrBothAreNull(targetElement: KtElement?, patternElement: KtElement?, context: MatchingContext): Boolean {
         if (targetElement == null || patternElement == null) return targetElement == null && patternElement == null
+        if (patternElement is KtSimpleNameExpression) {
+            val patternElement = patternElement.mainReference.resolveToSymbol() as? PsiNamedElement
+            if (patternElement != null && context.substitution.containsKey(patternElement)) {
+                val oldElement = context.substitution.put(patternElement, targetElement)
+                return oldElement !is KtElement || oldElement.isSemanticMatch(targetElement)
+            }
+        }
         return targetElement.isSemanticMatch(patternElement, context)
     }
 

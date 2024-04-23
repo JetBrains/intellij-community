@@ -5,4 +5,4 @@ fun test() = "123"
 private val string = test()
 
 val f = string + "456"
-val x = test()
+val x = string

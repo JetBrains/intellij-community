@@ -20,11 +20,11 @@ import com.intellij.refactoring.extractMethod.newImpl.inplace.ExtractMethodTempl
 import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractUtils
 import com.intellij.refactoring.extractMethod.newImpl.inplace.TemplateField
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractableSubstringInfo
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptor
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractableCodeDescriptorWithConflicts
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionResult
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -37,11 +37,6 @@ interface AbstractInplaceExtractionHelper<KotlinType,
     fun doRefactor(descriptor: IExtractableCodeDescriptor<KotlinType>, onFinish: (Result) -> Unit = {})
 
     fun createRestartHandler(): AbstractExtractKotlinFunctionHandler
-    fun extractDuplicates(
-        duplicateReplacers: Map<KotlinPsiRange, () -> Unit>,
-        project: Project,
-        editor: Editor
-    )
 
     @Nls
     fun getIdentifierError(file: KtFile, variableRange: TextRange): String?
@@ -107,7 +102,7 @@ interface AbstractInplaceExtractionHelper<KotlinType,
                     editorState.revert()
                 }
                 .onSuccess {
-                    extractDuplicates(extraction.duplicateReplacers, file.project, editor)
+                    processDuplicates(extraction.duplicateReplacers, project, editor)
                 }
                 .disposeWithTemplate(disposable)
                 .createTemplate(file, listOf(templateField))

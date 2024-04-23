@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractE
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.EXTRACT_FUNCTION
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionGeneratorOptions
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractionOptions
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.processDuplicates
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
@@ -47,7 +48,11 @@ abstract class AbstractK2IntroduceFunctionTest : AbstractExtractionTest() {
                     descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
                     onFinish: (ExtractionResult) -> Unit
                 ) {
-                    doRefactor(ExtractionGeneratorConfiguration(descriptorWithConflicts.descriptor, ExtractionGeneratorOptions.DEFAULT), onFinish)
+                    fun afterFinish(extraction: ExtractionResult) {
+                        processDuplicates(extraction.duplicateReplacers, project, editor)
+                        onFinish(extraction)
+                    }
+                    doRefactor(ExtractionGeneratorConfiguration(descriptorWithConflicts.descriptor, ExtractionGeneratorOptions.DEFAULT), ::afterFinish)
                 }
             }
         )

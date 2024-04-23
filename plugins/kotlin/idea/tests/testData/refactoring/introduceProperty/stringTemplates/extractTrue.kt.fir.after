@@ -4,6 +4,6 @@ private val bool = true
 fun foo(): String {
     val x = "atrue123"
     val x = "aTRUE123"
-    val z = true
+    val z = bool
     return "ab${bool}def"
 }

@@ -17,6 +17,11 @@ import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.ReplacePromptDialog
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.StrictSuccess
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiUnificationResult.WeakSuccess
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.ExpressionValue
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.Jump
 import org.jetbrains.kotlin.idea.refactoring.introduce.getPhysicalTextRange
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -68,10 +73,10 @@ fun processDuplicates(
         Messages.showYesNoDialog(
             project,
             KotlinBundle.message("0.has.detected.1.code.fragments.in.2.that.can.be.replaced.with.3",
-                ApplicationNamesInfo.getInstance().productName,
-                duplicateReplacers.size,
-                scopeDescription,
-                usageDescription
+                                 ApplicationNamesInfo.getInstance().productName,
+                                 duplicateReplacers.size,
+                                 scopeDescription,
+                                 usageDescription
             ),
             KotlinBundle.message("text.process.duplicates"),
             Messages.getQuestionIcon()
@@ -111,4 +116,57 @@ fun processDuplicatesSilently(duplicateReplacers: Map<KotlinPsiRange, () -> Unit
     project.executeWriteCommand(MethodDuplicatesHandler.getRefactoringName()) {
         duplicateReplacers.values.forEach { it() }
     }
+}
+
+
+fun <KotlinType> IExtractableCodeDescriptor<KotlinType>.processWeakMatch(
+    match: WeakSuccess<*>,
+    newControlFlow: ControlFlow<KotlinType>
+): Boolean {
+    val valueCount = controlFlow.outputValues.size
+
+    val weakMatches = HashMap(match.weakMatches)
+    val currentValuesToNew = HashMap<OutputValue<KotlinType>, OutputValue<KotlinType>>()
+
+    fun matchValues(currentValue: OutputValue<KotlinType>, newValue: OutputValue<KotlinType>): Boolean {
+        if ((currentValue is Jump) != (newValue is Jump)) return false
+        if (currentValue.originalExpressions.zip(newValue.originalExpressions).all { weakMatches[it.first] == it.second }) {
+            currentValuesToNew[currentValue] = newValue
+            weakMatches.keys.removeAll(currentValue.originalExpressions)
+            return true
+        }
+        return false
+    }
+
+    if (valueCount == 1) {
+        matchValues(controlFlow.outputValues.first(), newControlFlow.outputValues.first())
+    } else {
+        outer@
+        for (currentValue in controlFlow.outputValues)
+            for (newValue in newControlFlow.outputValues) {
+                if ((currentValue is ExpressionValue<KotlinType>) != (newValue is ExpressionValue<KotlinType>)) continue
+                if (matchValues(currentValue, newValue)) continue@outer
+            }
+    }
+
+    return currentValuesToNew.size == valueCount && weakMatches.isEmpty()
+}
+
+fun <KotlinType> IExtractableCodeDescriptor<KotlinType>.getControlFlowIfMatched(
+    match: KotlinPsiUnificationResult.Success<*>,
+    analysisResult: AnalysisResult<KotlinType>
+): ControlFlow<KotlinType>? {
+    if (analysisResult.status != AnalysisResult.Status.SUCCESS) return null
+
+    val newControlFlow = analysisResult.descriptor!!.controlFlow
+    if (newControlFlow.outputValues.isEmpty()) return newControlFlow
+    if (controlFlow.outputValues.size != newControlFlow.outputValues.size) return null
+
+    val matched = when (match) {
+        is StrictSuccess -> true
+        is WeakSuccess -> processWeakMatch(match, newControlFlow)
+        else -> throw AssertionError("Unexpected unification result: $match")
+    }
+
+    return if (matched) newControlFlow else null
 }

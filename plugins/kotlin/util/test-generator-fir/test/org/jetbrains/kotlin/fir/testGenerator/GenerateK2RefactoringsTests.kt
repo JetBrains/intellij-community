@@ -79,7 +79,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
     }
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {
         testClass<AbstractK2IntroduceFunctionTest> {
-            model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest", excludedDirectories = listOf("duplicates"))
+            model("refactoring/extractFunction", pattern = Patterns.KT_OR_KTS, testMethodName = "doExtractFunctionTest")
         }
 
         testClass<AbstractK2IntroduceParameterTest> {

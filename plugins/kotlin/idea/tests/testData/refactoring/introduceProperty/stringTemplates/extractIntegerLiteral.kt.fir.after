@@ -5,6 +5,6 @@ fun foo(): String {
     val x = "a1234_"
     val y = "-4123a"
     val z = "+1243a"
-    val u = 123
+    val u = i
     return "ab${i}def"
 }

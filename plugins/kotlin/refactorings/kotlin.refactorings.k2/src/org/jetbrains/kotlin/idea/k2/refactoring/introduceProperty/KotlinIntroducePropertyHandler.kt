@@ -10,7 +10,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
-import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -34,7 +33,6 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetS
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHintByKey
 import org.jetbrains.kotlin.idea.refactoring.introduce.validateExpressionElements
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -131,10 +129,7 @@ class KotlinIntroducePropertyHandler(
                     )
                     introducer.performInplaceRefactoring(LinkedHashSet(descriptor.suggestedNames))
                 } else {
-                    val duplicateReplacers = it.duplicateReplacers
-                    project.executeWriteCommand(MethodDuplicatesHandler.getRefactoringName()) {
-                        duplicateReplacers.values.forEach { it() }
-                    }
+                    processDuplicatesSilently(it.duplicateReplacers, project)
                 }
             }
         } else {
