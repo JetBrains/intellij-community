@@ -31,6 +31,7 @@ import com.intellij.util.LocalTimeCounter.currentTime
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
@@ -340,10 +341,12 @@ class AutoImportProjectTracker(
     }
   }
 
+  @Serializable
   data class State(
     val projectData: Map<String, Map<String, ProjectDataState>> = emptyMap()
   )
 
+  @Serializable
   data class ProjectDataState(
     val isDirty: Boolean = false,
     val settingsTracker: ProjectSettingsTracker.State? = null
