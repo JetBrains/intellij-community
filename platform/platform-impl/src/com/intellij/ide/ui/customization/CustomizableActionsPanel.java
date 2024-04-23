@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,7 +53,7 @@ import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 public class CustomizableActionsPanel {
   private final JPanel myPanel = new BorderLayoutPanel(5, 5);
   protected JTree myActionsTree;
-  private final JPanel myTopPanel = new BorderLayoutPanel();
+  private final JPanel myTopPanel = new JPanel(new GridLayout());
   protected CustomActionsSchema mySelectedSchema;
   private final Computable<Integer> myPreferredHeightProvider;
 
@@ -68,24 +69,23 @@ public class CustomizableActionsPanel {
     myActionsTree.setCellRenderer(createDefaultRenderer());
     RowsDnDSupport.install(myActionsTree, model);
 
-    patchActionsTreeCorrespondingToSchema(root);
 
     TreeExpansionMonitor.install(myActionsTree);
-    Component filter = setupFilterComponent(myActionsTree);
-    myPreferredHeightProvider = new Computable<Integer>() {
+    JComponent filter = setupFilterComponent(myActionsTree);
+    myPreferredHeightProvider = new Computable<>() {
       @Override
       public Integer compute() {
         return filter.getPreferredSize().height;
       }
     };
-    myTopPanel.add(filter, BorderLayout.EAST);
-    myTopPanel.add(createToolbar(), BorderLayout.WEST);
+
+    CustomizationActionPanelLayoutUtilsKt.setupTopPanelLayout(myTopPanel, createToolbar(), filter);
 
     myPanel.add(myTopPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myActionsTree), BorderLayout.CENTER);
   }
 
-  private Component createToolbar() {
+  private JComponent createToolbar() {
     JPanel container = new JPanel(new BorderLayout());
 
     ActionToolbarImpl addGroupToolbar = (ActionToolbarImpl)ActionManager.getInstance()
@@ -144,6 +144,7 @@ public class CustomizableActionsPanel {
         mySpeedSearch.getComponent().repaint();
       }
     };
+    filterComponent.setMaximumSize(new Dimension(300, 300));
     JTextField textField = filterComponent.getTextEditor();
     int[] keyCodes = {KeyEvent.VK_HOME, KeyEvent.VK_END, KeyEvent.VK_UP, KeyEvent.VK_DOWN};
     for (int keyCode : keyCodes) {
