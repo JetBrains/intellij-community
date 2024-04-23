@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.Strings;
@@ -323,8 +322,8 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
 
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor refJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> refJavaVisitor.visitMethod(this));
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ReadAction.run(() -> javaVisitor.visitMethod(this));
     }
     else {
       super.accept(visitor);
