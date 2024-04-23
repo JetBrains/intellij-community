@@ -8,6 +8,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
@@ -875,13 +876,17 @@ object Utils {
     UiNotifyConnector.doWhenFirstShown(comp) {
       UIUtil.getWindow(comp)?.addWindowListener(object : WindowAdapter() {
         override fun windowOpened(e: WindowEvent) {
-          getTracer(false).spanBuilder("popupShown#${System.getProperty("perf.test.popup.name")}")
-            .setStartTimestamp(startNanos, TimeUnit.NANOSECONDS)
-            .startSpan()
-            .end(System.nanoTime(), TimeUnit.NANOSECONDS)
+          val time = TimeoutUtil.getDurationMillis(startNanos)
+
+          System.getProperty("perf.test.popup.name")?.let { popupName ->
+            val startTimeUnixNano = startNanos + StartUpMeasurer.getStartTimeUnixNanoDiff()
+            getTracer(false).spanBuilder("popupShown#$popupName")
+              .setStartTimestamp(startTimeUnixNano, TimeUnit.NANOSECONDS)
+              .startSpan()
+              .end(startTimeUnixNano + TimeUnit.MILLISECONDS.toNanos(time), TimeUnit.NANOSECONDS)
+          }
 
           e.window.removeWindowListener(this)
-          val time = TimeoutUtil.getDurationMillis(startNanos)
           @Suppress("DEPRECATION", "removal", "HardCodedStringLiteral")
           Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Popup invocation took $time ms",
                        NotificationType.INFORMATION).notify(null)
