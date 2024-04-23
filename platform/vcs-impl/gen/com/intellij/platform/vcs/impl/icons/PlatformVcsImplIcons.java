@@ -14,5 +14,11 @@ public final class PlatformVcsImplIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PlatformVcsImplIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Vcs = load("icons/new/vcs.svg", 1023462254, 2);
+
+  public static final class New {
+    /** 16x16 */ public static final @NotNull Icon Stash = load("icons/new/stash.svg", -380414361, 2);
+    /** 16x16 */ public static final @NotNull Icon Vcs = load("icons/new/vcs.svg", 1023462254, 2);
+  }
+
+  /** 16x16 */ public static final @NotNull Icon Stash = load("icons/Stash.svg", -451629034, 2);
 }

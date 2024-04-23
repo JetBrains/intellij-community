@@ -392,7 +392,7 @@
       <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
     </group>
 
-    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.Stash"/>
+    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons.Stash"/>
 
     <group id="Git.Stage.Configure" popup="true">
       <separator key="separator.Git.Stage.Configure.display.as"/>

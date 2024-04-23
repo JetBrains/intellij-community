@@ -35,7 +35,7 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
       }
     }
     else {
-      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) PlatformVcsImplIcons.Vcs else null
+      presentation.icon = if (ExperimentalUI.isNewUI() && (ActionPlaces.PROJECT_WIDGET_POPUP == e.place)) PlatformVcsImplIcons.New.Vcs else null
     }
   }
 

@@ -836,6 +836,22 @@
         "general/web.svg"
       ]
     },
+    "vcs": {
+      "diff.svg": "actions/diff.svg",
+      "changes.svg": "actions/listChanges.svg",
+      "commit.svg": "actions/commit.svg",
+      "revert.svg": "actions/rollback.svg",
+      "update.svg": "actions/checkOut.svg",
+      "fetch.svg": "vcs/fetch.svg",
+      "merge.svg": "vcs/merge.svg",
+      "patch.svg": "vcs/patch.svg",
+      "push.svg": "vcs/push.svg",
+      "changelist.svg": "vcs/changelist.svg",
+      "unshelve.svg": [
+        "vcs/Unshelve.svg",
+        "vcs/unshelveSilent.svg"
+      ]
+    },
     "webReferences": {
       "server.svg": "webreferences/server.svg"
     },

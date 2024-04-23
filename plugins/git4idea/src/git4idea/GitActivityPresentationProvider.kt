@@ -4,17 +4,18 @@ package git4idea
 import com.intellij.history.ActivityId
 import com.intellij.history.ActivityPresentationProvider
 import com.intellij.icons.AllIcons
+import com.intellij.platform.vcs.impl.icons.PlatformVcsImplIcons
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
-class GitActivityPresentationProvider : ActivityPresentationProvider {
+private class GitActivityPresentationProvider : ActivityPresentationProvider {
   override val id: String get() = ID
 
   override fun getIcon(kind: String): Icon? {
     return when (kind) {
       GitActivity.Merge.kind -> AllIcons.Vcs.Merge
-      GitActivity.Stash.kind -> AllIcons.Vcs.Stash
+      GitActivity.Stash.kind -> PlatformVcsImplIcons.Stash
       GitActivity.Unstash.kind -> AllIcons.Vcs.Unshelve
       GitActivity.Reset.kind, GitActivity.Revert.kind -> AllIcons.Actions.Rollback
       GitActivity.CherryPick.kind -> DvcsImplIcons.CherryPick
