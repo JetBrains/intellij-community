@@ -544,6 +544,10 @@ public final class GitUtil {
     return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
   }
 
+  /**
+   * @param remotes is REQUIRED to parse 'origin/feature/branch' references:
+   *                these can be both 'branch on origin/feature remote' and 'feature/branch on origin remote'.
+   */
   public static @NotNull GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
                                                            @NotNull Collection<GitRemote> remotes) {
     String stdName = GitBranchUtil.stripRefsPrefix(fullBranchName);

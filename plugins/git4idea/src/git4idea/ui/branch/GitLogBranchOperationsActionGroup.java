@@ -111,7 +111,7 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     // ref.getName() for GitRefManager.REMOTE_BRANCH is GitRemoteBranch.getNameForLocalOperations
     GitBranch branch = ref.getType() == GitRefManager.LOCAL_BRANCH
                        ? new GitLocalBranch(ref.getName())
-                       : GitUtil.parseRemoteBranch(ref.getName(), Collections.emptyList());
+                       : GitUtil.parseRemoteBranch(ref.getName(), repository.getRemotes());
 
     List<AnAction> actions = new ArrayList<>(3);
 
