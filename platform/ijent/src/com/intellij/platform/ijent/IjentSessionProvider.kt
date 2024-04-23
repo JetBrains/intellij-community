@@ -219,7 +219,7 @@ private class Commands(
  * This tricky function checks if the necessary core utils exist and tries to substitute them with busybox otherwise.
  */
 private suspend fun getCommandPaths(shellProcess: ShellProcess): Commands {
-  var busybox: String? = null
+  var busybox: Lazy<String>? = null
 
   // This strange at first glance code helps reduce copy-paste errors.
   val commands: Set<String> = setOf(
@@ -239,7 +239,7 @@ private suspend fun getCommandPaths(shellProcess: ShellProcess): Commands {
   fun getCommandPath(name: String): String {
     assert(name in commands)
     return outputOfWhich.firstOrNull { it.endsWith("/$name") }
-           ?: busybox?.let { "$it $name" }
+           ?: busybox?.value?.let { "$it $name" }
            ?: throw IjentStartupError.IncompatibleTarget(setOf("busybox", name).joinToString(prefix = "The remote machine has none of: "))
   }
 
@@ -256,7 +256,7 @@ private suspend fun getCommandPaths(shellProcess: ShellProcess): Commands {
     outputOfWhich += line
   }
 
-  busybox = getCommandPath("busybox")
+  busybox = lazy { getCommandPath("busybox") }
 
   return Commands(
     chmod = getCommandPath("chmod"),
