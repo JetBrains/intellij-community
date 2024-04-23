@@ -1,9 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.history.core
+package com.intellij.history.integration
 
 import com.intellij.history.LocalHistory
-import com.intellij.history.integration.IntegrationTestCase
-import com.intellij.history.integration.LocalHistoryImpl
+import com.intellij.history.core.processContents
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
