@@ -148,7 +148,7 @@ public final class IdempotenceChecker {
     String s = o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString();
     return s.contains(o.getClass().getSimpleName()) || o instanceof String || o instanceof Number || o instanceof Class
            ? s
-           : s + " (class " + o.getClass().getName() + ")";
+           : s + " (" + (o.getClass().isArray() ? o.getClass().getComponentType()+"[]": o.getClass()) + ")";
   }
 
   private static String checkValueEquivalence(@Nullable Object existing, @Nullable Object fresh) {
@@ -213,7 +213,7 @@ public final class IdempotenceChecker {
   }
 
   private static String whichIsField(@NotNull @NonNls String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
-    return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
+    return msg == null ? null : appendDetail(msg, "which is `." + field + "` of " + existing + " and " + fresh);
   }
 
   private static Object @Nullable [] asArray(@NotNull Object o) {
