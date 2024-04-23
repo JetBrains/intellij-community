@@ -1584,6 +1584,7 @@ f:com.intellij.diff.tools.combined.CombinedPathBlockId
 com.intellij.diff.tools.combined.CombinedSelectableDiffBlock
 - com.intellij.diff.tools.combined.CombinedDiffBlock
 - a:setSelected(Z):V
+- updateBorder(Z):V
 f:com.intellij.diff.tools.combined.CombinedToggleBlockCollapseAction
 - com.intellij.diff.tools.combined.CombinedGlobalBlockNavigationAction
 - <init>():V

@@ -57,6 +57,7 @@ interface CombinedDiffBlock<ID : CombinedBlockId> : Disposable {
 
 interface CombinedSelectableDiffBlock<ID : CombinedBlockId> : CombinedDiffBlock<ID> {
   fun setSelected(selected: Boolean)
+  fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {}
 }
 
 interface CombinedCollapsibleDiffBlock<ID : CombinedBlockId> : CombinedSelectableDiffBlock<ID> {
@@ -218,7 +219,7 @@ internal class CombinedSimpleDiffBlock(project: Project,
       pathOnlyHeader.selected = newValue
       headerWithToolbar.selected = newValue
       stickyHeader.selected = newValue
-      updateBorder()
+      updateBorder(updateStickyHeaderBottomBorder = false)
     }
   }
 
@@ -226,13 +227,14 @@ internal class CombinedSimpleDiffBlock(project: Project,
     pathOnlyHeader.focused = state
     headerWithToolbar.focused = state
     stickyHeader.focused = state
-    updateBorder()
+    updateBorder(updateStickyHeaderBottomBorder = false)
   }
 
-  private fun updateBorder() {
+  override fun updateBorder(updateStickyHeaderBottomBorder: Boolean) {
     val isFocused = pathOnlyHeader.focused || headerWithToolbar.focused || stickyHeader.focused
     val borderColor = CombinedDiffUI.getBlockBorderColor(blockSelected, isFocused)
     stickyHeaderComponent.borderColor = borderColor
+    stickyHeaderComponent.bottomBorderColor = if (updateStickyHeaderBottomBorder) borderColor else CombinedDiffUI.EDITOR_BORDER_COLOR
     component.borderColor = borderColor
   }
 

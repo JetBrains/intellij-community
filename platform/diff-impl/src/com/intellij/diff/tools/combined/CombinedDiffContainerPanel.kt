@@ -23,6 +23,10 @@ internal class CombinedDiffContainerPanel(
     if (oldValue != newValue) repaint()
   }
 
+  var bottomBorderColor: Color by Delegates.observable(CombinedDiffUI.EDITOR_BORDER_COLOR) { _, oldValue, newValue ->
+    if (oldValue != newValue) repaint()
+  }
+
   init {
     // unscaled border for correct insets
     @Suppress("UseDPIAwareBorders")
@@ -104,7 +108,7 @@ internal class CombinedDiffContainerPanel(
   private fun paintBottomBoxOutline(g: Graphics2D, outerBounds: Rectangle) {
     GraphicsUtil.disableAAPainting(g)
 
-    g.color = CombinedDiffUI.EDITOR_BORDER_COLOR //sticky header bottom border color
+    g.color = bottomBorderColor //sticky header bottom border color
 
     // bottom
     g.fillRect(outerBounds.x, outerBounds.y + height - borderThickness, outerBounds.width, borderThickness)

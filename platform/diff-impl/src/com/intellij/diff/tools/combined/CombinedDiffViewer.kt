@@ -423,6 +423,8 @@ class CombinedDiffViewer(
       viewState.setStickyHeaderUnderBorder(true)
     }
 
+    block.updateBorder(updateStickyHeaderBottomBorder = showBorder)
+
     updateDiffInfo(block.id)
   }
 
