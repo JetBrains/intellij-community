@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.AbstractCopyPasteTest
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
@@ -18,12 +19,18 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private val NO_ERRORS_DUMP_DIRECTIVE = "// NO_ERRORS_DUMP"
     private val DELETE_DEPENDENCIES_BEFORE_PASTE_DIRECTIVE = "// DELETE_DEPENDENCIES_BEFORE_PASTE"
 
+    private val disableTestDirective: String get() = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+
     protected fun doTestCut(path: String) {
-        doTestAction(IdeActions.ACTION_CUT, path)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), "${disableTestDirective}_CUT") {
+            doTestAction(IdeActions.ACTION_CUT, path)
+        }
     }
 
     protected fun doTestCopy(path: String) {
-        doTestAction(IdeActions.ACTION_COPY, path)
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), "${disableTestDirective}_COPY") {
+            doTestAction(IdeActions.ACTION_COPY, path)
+        }
     }
 
     private fun doTestAction(cutOrCopy: String, unused: String) {

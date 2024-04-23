@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
+import org.jetbrains.kotlin.idea.codeInsight.AbstractInsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
 import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
 import org.jetbrains.kotlin.testGenerator.model.Patterns.DIRECTORY
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT
 import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_OR_KTS
+import org.jetbrains.kotlin.testGenerator.model.Patterns.KT_WITHOUT_DOTS
 import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 import org.jetbrains.kotlin.testGenerator.model.Patterns.forRegex
 
@@ -124,6 +126,22 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractKotlinFirJoinLinesTest> {
             model("../../../idea/tests/testData/joinLines")
+        }
+        testClass<AbstractInsertImportOnPasteTest> {
+            model(
+                "../../../idea/tests/testData/copyPaste/imports",
+                pattern = KT_WITHOUT_DOTS,
+                testMethodName = "doTestCopy",
+                testClassName = "Copy",
+                isRecursive = false
+            )
+            model(
+                "../../../idea/tests/testData/copyPaste/imports",
+                pattern = KT_WITHOUT_DOTS,
+                testMethodName = "doTestCut",
+                testClassName = "Cut",
+                isRecursive = false
+            )
         }
     }
 }
