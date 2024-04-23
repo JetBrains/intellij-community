@@ -145,7 +145,7 @@ public final class IdempotenceChecker {
   private static @NonNls String objAndClass(Object o) {
     if (o == null) return "null";
 
-    String s = o.toString();
+    String s = o instanceof Object[] ? Arrays.toString((Object[])o) : o.toString();
     return s.contains(o.getClass().getSimpleName()) || o instanceof String || o instanceof Number || o instanceof Class
            ? s
            : s + " (class " + o.getClass().getName() + ")";

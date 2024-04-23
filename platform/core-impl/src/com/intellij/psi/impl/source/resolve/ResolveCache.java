@@ -287,23 +287,18 @@ public class ResolveCache implements Disposable {
   private static final Object NULL_RESULT = ObjectUtils.sentinel("ResolveCache.NULL_RESULT");
 
   private static <TRef, TResult> void cache(@NotNull TRef ref, @NotNull Map<? super TRef, TResult> map, TResult result, @NotNull Computable<? extends TResult> doResolve) {
+    // no use in creating SoftReference to null
+    //noinspection unchecked
+    TResult toStore = result == null ? (TResult)NULL_RESULT : result;
     // optimization: less contention
     TResult cached = map.get(ref);
     if (cached != null) {
-      if (cached == result) {
+      if (cached == toStore) {
         return;
       }
-      IdempotenceChecker.checkEquivalence(cached, result, ref.getClass(), doResolve);
+      IdempotenceChecker.checkEquivalence(cached, toStore, ref.getClass(), doResolve);
     }
-    if (result == null) {
-      // no use in creating SoftReference to null
-      //noinspection unchecked
-      cached = (TResult)NULL_RESULT;
-    }
-    else {
-      cached = result;
-    }
-    map.put(ref, cached);
+    map.put(ref, toStore);
   }
 
   private static @NotNull <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
