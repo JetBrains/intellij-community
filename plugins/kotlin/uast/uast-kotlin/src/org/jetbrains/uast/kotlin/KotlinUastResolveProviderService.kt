@@ -448,10 +448,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return ktType.toPsiType(source, ktExpression, PsiTypeConversionConfiguration.create(ktExpression))
     }
 
+    private inline fun <reified T : DeclarationDescriptor> getDescriptor(ktDeclaration: KtDeclaration): T? {
+        return ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? T
+    }
+
+    private fun getType(ktDeclaration: KtDeclaration): KotlinType? {
+        return getDescriptor<CallableDescriptor>(ktDeclaration)?.returnType
+    }
+
     override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
-        val returnType = (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
-            ?.returnType
-            ?: return null
+        val returnType = getType(ktDeclaration) ?: return null
         return returnType.toPsiType(
             source,
             ktDeclaration,
@@ -460,10 +466,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 isBoxed = returnType.isMarkedNullable,
             )
         )
-    }
-
-    private fun getType(ktDeclaration: KtDeclaration): KotlinType? {
-        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)?.returnType
     }
 
     override fun getType(
@@ -536,6 +538,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 TypeNullability.FLEXIBLE -> KtTypeNullability.UNKNOWN
             }
         }
+    }
+
+    override fun modality(ktDeclaration: KtDeclaration): Modality? {
+        return getDescriptor<MemberDescriptor>(ktDeclaration)?.modality
     }
 
     private fun getTargetType(annotatedElement: PsiElement): KotlinType? {

@@ -40,7 +40,7 @@ UFile (package = ) [public final class ReifiedResolveKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [filterIsInstance()] : java.util.List<? extends java.lang.String>
                                 UIdentifier (Identifier (filterIsInstance)) [UIdentifier (Identifier (filterIsInstance))]
                                 USimpleNameReferenceExpression (identifier = filterIsInstance, resolvesTo = null) [filterIsInstance] : java.util.List<? extends java.lang.String>
-        UMethod (name = foo) [public static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit>) : T {...}]
+        UMethod (name = foo) [public static final fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit>) : T {...}]
             UParameter (name = init) [@org.jetbrains.annotations.NotNull var init: kotlin.jvm.functions.Function1<? super T,kotlin.Unit> = { ...}]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                 ULambdaExpression [{ ...}] : kotlin.jvm.functions.Function1<? super T, ? extends kotlin.Unit>

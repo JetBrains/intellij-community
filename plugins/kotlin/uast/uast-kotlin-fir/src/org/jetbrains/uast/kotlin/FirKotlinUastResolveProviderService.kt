@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.buildTypeParameterType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -728,6 +730,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     override fun nullability(psiElement: PsiElement): KtTypeNullability? {
         return getTargetType(psiElement, null) { ktType ->
             nullability(ktType)
+        }
+    }
+
+    override fun modality(ktDeclaration: KtDeclaration): Modality? {
+        analyzeForUast(ktDeclaration) {
+            return (ktDeclaration.getSymbol() as? KtSymbolWithModality)?.modality
         }
     }
 
