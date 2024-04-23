@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.util.PotemkinOverlayProgress
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
@@ -52,6 +53,7 @@ import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.util.SlowOperations
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.UiNotifyConnector
 import io.opentelemetry.api.OpenTelemetry
@@ -379,6 +381,23 @@ object Utils {
                                   component: Component?,
                                   place: String,
                                   task: suspend () -> T): T = runBlockingForActionExpand(CoroutineName("computeWithProgressIcon")) {
+    withProgressIcon(loadingIconPoint, component, place, task)
+  }
+
+  suspend fun <T> withProgressIcon(dataContext: DataContext,
+                                   place: String,
+                                   task: suspend () -> T): T {
+    val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
+    val loadingIconPoint = if (component == null) null
+    else JBPopupFactory.getInstance().guessBestPopupLocation(dataContext)
+    return withProgressIcon(loadingIconPoint, component, place, task)
+  }
+
+  @RequiresEdt
+  suspend fun <T> withProgressIcon(loadingIconPoint: RelativePoint?,
+                                   component: Component?,
+                                   place: String,
+                                   task: suspend () -> T): T = coroutineScope {
     val mainJob = coroutineContext.job
     val loopJob = launch {
       runEdtLoop(mainJob, null, component, null)
@@ -387,12 +406,15 @@ object Utils {
     else launch {
       addLoadingIcon(loadingIconPoint, place)
     }
-    try {
-      task()
-    }
-    finally {
-      progressJob?.cancel()
-      loopJob.cancel()
+    withContext(Dispatchers.Default) {
+      try {
+        task()
+      }
+      finally {
+        progressJob?.cancel()
+        loopJob.cancel()
+        SwingUtilities.invokeLater(EmptyRunnable.getInstance())
+      }
     }
   }
 
@@ -582,6 +604,7 @@ object Utils {
       val presentation = presentationFactory.getPresentation(action)
       if (multiChoice && action is Toggleable) {
         presentation.isMultiChoice = true
+        System.out.println("MULTICHOICE " + action.javaClass.name)
       }
       val peer = when {
         action is Separator -> null
@@ -1106,6 +1129,7 @@ suspend fun runEdtLoop(mainJob: Job, expire: (() -> Boolean)?, contextComponent:
   try {
     ThreadingAssertions.assertEventDispatchThread()
     while (true) {
+      //runInterruptible()
       // we need `suspend getNextEvent()` API, or at least `getNextEventOrNull(timeout)`
       // because blocking `getNextEvent` prevents "computeOnEDT" blocks from executing.
       // `peekEvent()` + `delay(10)` would do but editor scrolling became noticeably less smooth.
