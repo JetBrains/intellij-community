@@ -116,7 +116,15 @@ public final class NewMappings implements Disposable {
       LOG.debug("activated");
     }
     updateActiveVcses(true);
-    updateMappedRoots(true);
+
+    boolean fireMappingsChangedEvent = true;
+    if (haveDefaultMapping() != null) {
+      updateMappedRootsFast(fireMappingsChangedEvent);
+      scheduleMappedRootsUpdateWithoutDelay();
+    }
+    else {
+      updateMappedRoots(fireMappingsChangedEvent);
+    }
   }
 
   /**
@@ -197,6 +205,11 @@ public final class NewMappings implements Disposable {
     });
   }
 
+  private void scheduleMappedRootsUpdateWithoutDelay() {
+    scheduleMappedRootsUpdate();
+    myRootUpdateQueue.sendFlush();
+  }
+
   private void updateVcsMappings(@NotNull List<VcsDirectoryMapping> mappings) {
     myRootUpdateQueue.cancelAllUpdates();
 
@@ -212,13 +225,14 @@ public final class NewMappings implements Disposable {
 
     updateActiveVcses(false);
 
+    boolean fireMappingsChangedEvent = false;
     if (ApplicationManager.getApplication().isDispatchThread() &&
         ContainerUtil.exists(newMappings, it -> it.isDefaultMapping())) {
-      updateMappedRootsFast();
-      scheduleMappedRootsUpdate();
+      updateMappedRootsFast(fireMappingsChangedEvent);
+      scheduleMappedRootsUpdateWithoutDelay();
     }
     else {
-      updateMappedRoots(false);
+      updateMappedRoots(fireMappingsChangedEvent);
     }
 
     notifyMappingsChanged();
@@ -236,7 +250,7 @@ public final class NewMappings implements Disposable {
     setNewMappedRoots(mappings, newMappedRoots, fireMappingsChangedEvent);
   }
 
-  private void updateMappedRootsFast() {
+  private void updateMappedRootsFast(boolean fireMappingsChangedEvent) {
     if (!myActivated) return;
     LOG.debug("updateMappedRootsFast");
 
@@ -246,9 +260,12 @@ public final class NewMappings implements Disposable {
       mappings = myMappings;
       mappedRoots = myMappedRoots;
     }
+    if (mappedRoots.isEmpty()) {
+      mappedRoots = getCachedMappedRootsIfNeeded(mappings);
+    }
     Mappings newMappedRoots = collectMappedRoots(mappings, mappedRoots);
 
-    setNewMappedRoots(mappings, newMappedRoots, false);
+    setNewMappedRoots(mappings, newMappedRoots, fireMappingsChangedEvent);
   }
 
   private void setNewMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
@@ -342,6 +359,20 @@ public final class NewMappings implements Disposable {
     return newMapping;
   }
 
+  private @NotNull List<MappedRoot> getCachedMappedRootsIfNeeded(@NotNull List<VcsDirectoryMapping> mappings) {
+    VcsDirectoryMapping defaultMapping = ContainerUtil.find(mappings, it -> it.isDefaultMapping());
+    if (defaultMapping == null) return Collections.emptyList();
+
+    AbstractVcs vcs = getMappingsVcs(defaultMapping);
+    if (vcs == null) return Collections.emptyList();
+
+    List<String> oldMappings = VcsDirectoryMappingCache.getInstance(myProject).getMappings(defaultMapping.getVcs());
+    return ContainerUtil.mapNotNull(oldMappings, path -> {
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+      return root != null ? new MappedRoot(vcs, defaultMapping, root) : null;
+    });
+  }
+
   private @NotNull Mappings collectMappedRoots(@NotNull List<VcsDirectoryMapping> mappings,
                                                @Nullable List<MappedRoot> reuseMappedRoots) {
     Map<VirtualFile, MappedRoot> mappedRoots = new HashMap<>();
@@ -379,6 +410,9 @@ public final class NewMappings implements Disposable {
         else {
           Set<VirtualFile> directMappingDirs = ContainerUtil.map2Set(mappedRoots.values(), it -> it.root);
           defaultMappings = findDefaultMappingsFor(mapping, directMappingDirs, pointerDisposable);
+
+          VcsDirectoryMappingCache.getInstance(myProject).setMappings(mapping.getVcs(),
+                                                                      ContainerUtil.map(defaultMappings, it -> it.root.getPath()));
         }
         for (MappedRoot mappedRoot : defaultMappings) {
           mappedRoots.putIfAbsent(mappedRoot.root, mappedRoot);
