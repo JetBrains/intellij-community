@@ -47,6 +47,7 @@ internal class PromoDockerAction : ProPromoAction(PromoTopic.Docker)
 fun activateAIAssistantToolwindow(project: Project) {
   val toolWindowManager = ToolWindowManager.getInstance(project)
   val aiAssistantToolWindow = toolWindowManager.getToolWindow("AIAssistant") ?: return
+  aiAssistantToolWindow.isAvailable = true
   aiAssistantToolWindow.show()
   aiAssistantToolWindow.contentManager.selectedContent?.component?.requestFocus()
 }
