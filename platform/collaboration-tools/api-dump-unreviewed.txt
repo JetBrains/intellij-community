@@ -1410,17 +1410,8 @@ a:com.intellij.collaboration.ui.codereview.diff.action.CodeReviewDiscussionsTogg
 *f:com.intellij.collaboration.ui.codereview.diff.model.ComputedDiffViewModelKt
 - sf:getSelected(com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State):com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer
 *f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel
-- <init>(java.util.List,I):V
-- f:canNavigate():Z
-- f:canSelectNext():Z
-- f:canSelectPrev():Z
 - f:getProducers():kotlinx.coroutines.flow.StateFlow
-- f:select(com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain$Producer):V
-- f:selectNext():V
-- f:selectPrev():V
-- f:updateProducers(kotlin.jvm.functions.Function1):V
 *f:com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State
-- <init>(java.util.List,I):V
 - f:component1():java.util.List
 - f:component2():I
 - f:copy(java.util.List,I):com.intellij.collaboration.ui.codereview.diff.model.DiffProducersViewModel$State

@@ -24,29 +24,31 @@ interface ComputedDiffViewModel {
 /**
  * A view model representing a list of [ChangeDiffRequestChain.Producer] with selection
  */
-class DiffProducersViewModel(producers: List<ChangeDiffRequestChain.Producer>, selection: Int) {
-  private val _producers = MutableStateFlow(State(producers, selection))
+class DiffProducersViewModel private constructor(initialState: State) {
+  internal constructor() : this(State(emptyList(), -1))
+
+  private val _producers = MutableStateFlow(initialState)
   val producers: StateFlow<State> = _producers.asStateFlow()
 
-  fun canNavigate(): Boolean = producers.value.producers.size > 1
+  internal fun canNavigate(): Boolean = producers.value.producers.size > 1
 
-  fun canSelectPrev(): Boolean = producers.value.selectedIdx > 0
-  fun selectPrev() = updateSelection { max(selectedIdx - 1, 0) }
+  internal fun canSelectPrev(): Boolean = producers.value.selectedIdx > 0
+  internal fun selectPrev() = updateSelection { max(selectedIdx - 1, 0) }
 
-  fun canSelectNext(): Boolean = producers.value.run { selectedIdx < producers.lastIndex }
-  fun selectNext() = updateSelection { min(selectedIdx + 1, producers.lastIndex) }
+  internal fun canSelectNext(): Boolean = producers.value.run { selectedIdx < producers.lastIndex }
+  internal fun selectNext() = updateSelection { min(selectedIdx + 1, producers.lastIndex) }
 
-  fun select(change: ChangeDiffRequestChain.Producer) = updateSelection { producers.indexOf(change) }
+  internal fun select(change: ChangeDiffRequestChain.Producer) = updateSelection { producers.indexOf(change) }
 
   private fun updateSelection(newIndexSupplier: State.() -> Int) = updateProducers {
     it.copy(selectedIdx = it.newIndexSupplier())
   }
 
-  fun updateProducers(newStateSupplier: (State) -> State) {
+  internal fun updateProducers(newStateSupplier: (State) -> State) {
     _producers.update(newStateSupplier)
   }
 
-  data class State(val producers: List<ChangeDiffRequestChain.Producer>, val selectedIdx: Int) {
+  data class State internal constructor(val producers: List<ChangeDiffRequestChain.Producer>, val selectedIdx: Int) {
     init {
       require(selectedIdx < 0 || selectedIdx in producers.indices)
     }

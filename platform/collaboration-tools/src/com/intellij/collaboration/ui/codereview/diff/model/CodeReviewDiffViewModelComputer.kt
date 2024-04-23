@@ -90,8 +90,8 @@ class CodeReviewDiffViewModelComputer<D> @ApiStatus.Experimental constructor(
     if (changes.isEmpty()) {
       return null
     }
-    val currentVm = this?.also { vm ->
-      vm.updateProducers { state ->
+    return (this ?: DiffProducersViewModel()).apply {
+      updateProducers { state ->
         val currentChanges = state.getChanges()
         if (currentChanges != changes) {
           val producers = createProducers(data, changes)
@@ -106,13 +106,7 @@ class CodeReviewDiffViewModelComputer<D> @ApiStatus.Experimental constructor(
           scrollIfPossible(it.getSelected(), scrollLocation)
         }
       }
-    } ?: run {
-      val producers = createProducers(data, changes)
-      DiffProducersViewModel(producers, selectedIdx).also {
-        scrollIfPossible(it.producers.value.getSelected(), scrollLocation)
-      }
     }
-    return currentVm
   }
 
   private fun createProducers(data: D, changes: List<RefComparisonChange>): List<CodeReviewDiffRequestProducer> =
