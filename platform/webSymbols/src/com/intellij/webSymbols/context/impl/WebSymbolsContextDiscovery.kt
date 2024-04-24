@@ -427,6 +427,7 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
       override fun rootsChanged(event: ModuleRootEvent) {
         previousContext.clear()
         cachedData.clear()
+        thisLogger().info("Notifying that Web Symbol context may have changed due to roots changes.")
         project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
       }
     })
@@ -435,7 +436,9 @@ private class WebSymbolsContextDiscoveryInfo(private val project: Project, priva
     })
     messageBus.subscribe(VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        if (events.any { it.file?.name == WebSymbolsContext.WEB_SYMBOLS_CONTEXT_FILE }) {
+        val wsFile = events.find { it.file?.name == WebSymbolsContext.WEB_SYMBOLS_CONTEXT_FILE }
+        if (wsFile != null) {
+          thisLogger().info("Notifying that Web Symbol context may have changed due to changes in ${wsFile.path}.")
           cs.launch {
             project.messageBus.syncPublisher(WebSymbolContextChangeListener.TOPIC).contextMayHaveChanged()
           }
