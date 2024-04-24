@@ -43,7 +43,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             ChangeSignatureAction.getChangeSignatureHandler(callableDeclaration)?.invoke(project, arrayOf(callableDeclaration), dataContext)
             return
         }
-        runChangeSignature(project, editor, callableDeclaration)
+        runChangeSignature(project, editor, callableDeclaration, dataContext)
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
@@ -99,13 +99,17 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
 
 
     private fun runChangeSignature(
-        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration
+        project: Project, editor: Editor?, callableDescriptor: KtNamedDeclaration, dataContext: DataContext?
     ) {
 
         val superMethods = checkSuperMethods(callableDescriptor, emptyList(), RefactoringBundle.message("to.refactor"))
 
-        val callableToRefactor = superMethods.firstOrNull() as? KtNamedDeclaration ?: return
+        val callableToRefactor = superMethods.firstOrNull() ?: return
         when {
+            callableToRefactor !is KtNamedDeclaration -> {
+                ChangeSignatureAction.getChangeSignatureHandler(callableToRefactor)?.invoke(project, arrayOf(callableToRefactor), dataContext)
+            }
+
             callableToRefactor is KtFunction || callableToRefactor is KtClass -> {
                 KotlinChangeSignatureDialog(project, editor, KotlinMethodDescriptor(callableToRefactor), callableDescriptor, null).show()
             }
@@ -117,7 +121,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
             callableToRefactor is KtParameter -> {
                 val ownerFunction = callableToRefactor.ownerFunction
                 if (ownerFunction is KtCallableDeclaration) {
-                    runChangeSignature(project, editor, ownerFunction)
+                    runChangeSignature(project, editor, ownerFunction, dataContext)
                 }
             }
         }
