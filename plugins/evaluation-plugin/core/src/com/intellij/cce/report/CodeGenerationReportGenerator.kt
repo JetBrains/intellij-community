@@ -13,6 +13,9 @@ class CodeGenerationReportGenerator(
   featuresStorages: List<FeaturesStorage>,
   dirs: GeneratorDirectories
 ) : BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs) {
+
+  override fun textToInsert(session: Session) = session.expectedText.lines().first()
+
   override fun getSpan(session: Session?, text: String, lookupOrder: Int): String =
     createHTML().span("completion ${
       getColor(session, lookupOrder)
