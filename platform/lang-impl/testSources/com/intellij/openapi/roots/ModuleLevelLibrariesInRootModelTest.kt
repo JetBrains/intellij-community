@@ -13,30 +13,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class ModuleLevelLibrariesInRootModelTest {
-  companion object {
-    @JvmField
-    @ClassRule
-    val appRule = ApplicationRule()
-  }
-
-  @Rule
   @JvmField
-  val projectModel = ProjectModelRule()
+  @RegisterExtension
+  val projectModel = ProjectModelExtension()
 
   lateinit var module: Module
 
-  @Before
+  @BeforeEach
   fun setUp() {
     module = projectModel.createModule()
   }
