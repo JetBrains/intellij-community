@@ -118,7 +118,8 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -572,8 +573,10 @@ public final class BuildManager implements Disposable {
   private static @NotNull Function<String, String> wslPathMapper(@Nullable WSLDistribution distribution) {
     return distribution == null?
       Function.identity() :
-      // interned paths collapse repeated slashes so \\wsl$ ends up /wsl$
-      path -> path.startsWith("/wsl$")? distribution.getWslPath("/" + path) : path;
+      path -> {
+        WslPath wslPath = WslPath.parseWindowsUncPath(path);
+        return wslPath != null && wslPath.getDistribution().getId().equalsIgnoreCase(distribution.getId())? wslPath.getLinuxPath() : path;
+      };
   }
 
   private static Function<String, String> wslPathMapper(@NotNull String projectPath) {
@@ -585,7 +588,7 @@ public final class BuildManager implements Disposable {
         if (myImpl != null) {
           return myImpl.apply(path);
         }
-        if (path.startsWith("/wsl$")) {
+        if (WslPath.isWslUncPath(path)) {
           Project project = findProjectByProjectPath(projectPath);
           myImpl = wslPathMapper(project != null ? findWSLDistribution(project) : null);
           return myImpl.apply(path);
@@ -2277,9 +2280,9 @@ public final class BuildManager implements Disposable {
   }
 
   private abstract static class InternedPath {
-    private static final LoadingCache<String, String> nameCache = Caffeine.newBuilder().maximumSize(1024).build(key -> key);
+    private static final LoadingCache<String, String> ourNameCache = Caffeine.newBuilder().maximumSize(2048).build(key -> key);
 
-    protected final String[] path;
+    protected final String[] myPath;
 
     /**
      * @param path assuming a system-independent path with forward slashes
@@ -2288,9 +2291,9 @@ public final class BuildManager implements Disposable {
       List<String> list = new ArrayList<>();
       StringTokenizer tokenizer = new StringTokenizer(path, "/", false);
       while (tokenizer.hasMoreTokens()) {
-        list.add(nameCache.get(tokenizer.nextToken()));
+        list.add(ourNameCache.get(tokenizer.nextToken()));
       }
-      this.path = list.toArray(String[]::new);
+      myPath = list.toArray(String[]::new);
     }
 
     public abstract String getValue();
@@ -2302,38 +2305,47 @@ public final class BuildManager implements Disposable {
 
       InternedPath path = (InternedPath)o;
 
-      return Arrays.equals(this.path, path.path);
+      return Arrays.equals(this.myPath, path.myPath);
     }
 
     @Override
     public int hashCode() {
-      return Arrays.hashCode(path);
+      return Arrays.hashCode(myPath);
     }
 
     public static void clearCache() {
-      nameCache.invalidateAll();
+      ourNameCache.invalidateAll();
     }
 
     public static InternedPath create(String path) {
-      return path.startsWith("/")? new XInternedPath(path) : new WinInternedPath(path);
+      return path.startsWith("//")? new WinInternedPath(path.substring(2), true) : path.startsWith("/")? new XInternedPath(path) : new WinInternedPath(path, false);
     }
   }
 
   private static final class WinInternedPath extends InternedPath {
-    private WinInternedPath(String path) {
+    private final boolean myIsUNC;
+
+    private WinInternedPath(String path, boolean isUNC) {
       super(path);
+      myIsUNC = isUNC;
     }
 
     @Override
     public String getValue() {
-      if (path.length == 1) {
-        String name = path[0];
+      if (myPath.length == 0) {
+        return myIsUNC? "//" : "";
+      }
+      if (myPath.length == 1) {
+        String name = myPath[0];
         // handle the case of a Windows volume name
-        return name.length() == 2 && name.endsWith(":")? name + "/" : name;
+        return name.length() == 2 && name.endsWith(":")? name + "/" : myIsUNC? "//" + name : name;
       }
 
       final StringBuilder buf = new StringBuilder();
-      for (CharSequence element : path) {
+      if (myIsUNC) {
+        buf.append("/");
+      }
+      for (CharSequence element : myPath) {
         if (!buf.isEmpty()) {
           buf.append("/");
         }
@@ -2350,9 +2362,9 @@ public final class BuildManager implements Disposable {
 
     @Override
     public String getValue() {
-      if (path.length > 0) {
+      if (myPath.length > 0) {
         final StringBuilder buf = new StringBuilder();
-        for (CharSequence element : path) {
+        for (CharSequence element : myPath) {
           buf.append('/').append(element);
         }
         return buf.toString();
