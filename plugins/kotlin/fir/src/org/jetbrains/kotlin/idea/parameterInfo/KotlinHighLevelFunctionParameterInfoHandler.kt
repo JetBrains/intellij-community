@@ -13,6 +13,7 @@ import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
@@ -202,7 +203,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val hasTypeMismatchBeforeCurrent = CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(
                     callElement,
                     argumentMapping,
-                    currentArgumentIndex
+                    currentArgumentIndex,
+
+                    // We only want to display the parameter info as "disabled" if the type mismatch can *definitely* be proved. If an
+                    // argument has a type error instead, the parameter info may still be applicable and even help the user fix the error.
+                    subtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.LENIENT,
                 )
 
                 // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
