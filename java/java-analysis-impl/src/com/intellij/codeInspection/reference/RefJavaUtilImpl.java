@@ -52,6 +52,23 @@ public final class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Override
+                       public boolean visitNamedExpression(@NotNull UNamedExpression node) {
+                         PsiElement source = node.getSourcePsi();
+                         if (source instanceof PsiNameValuePair pair) {
+                           PsiReference reference = pair.getReference();
+                           if (reference != null) {
+                             PsiElement target = reference.resolve();
+                             final RefElement refElement = refManager.getReference(target);
+                             if (refElement != null) {
+                               refElement.initializeIfNeeded();
+                               refFrom.addReference(refElement, target, decl, false, true, node);
+                             }
+                           }
+                         }
+                         return false;
+                       }
+
+                       @Override
                        public boolean visitAnnotation(@NotNull UAnnotation node) {
                          PsiClass javaClass = node.resolve();
                          if (javaClass != null) {
