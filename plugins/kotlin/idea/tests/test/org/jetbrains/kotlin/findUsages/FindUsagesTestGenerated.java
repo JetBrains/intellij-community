@@ -1087,6 +1087,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("annotationConstructorCall.0.kt")
+            public void testAnnotationConstructorCall() throws Exception {
+                runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/annotationConstructorCall.0.kt");
+            }
+
             @TestMetadata("annotationEntry.0.kt")
             public void testAnnotationEntry() throws Exception {
                 runTest("testData/findUsages/kotlin/findPrimaryConstructorUsages/annotationEntry.0.kt");
