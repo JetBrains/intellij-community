@@ -564,6 +564,10 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
 
     // ------------- add parameter ------------
 
+    fun testAddParameterWithSameNameConflict() = doTestConflict {
+        addParameter(createKotlinIntParameter())
+    }
+
     fun testAddNewParameterWithDefaultValueToFunctionWithEmptyArguments() = withIgnoredConflicts<Throwable> {
         doTest {
             addNewIntParameterWithValue(true)

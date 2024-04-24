@@ -69,21 +69,26 @@ class KotlinChangeSignatureConflictSearcher(
         }
 
         for (parameter in originalInfo.getNonReceiverParameters()) {
-
-            if (parameter.oldName != parameter.name || parameter.isNewParameter) {
+            val parameterName = parameter.name
+            if (parameter.oldName != parameterName || parameter.isNewParameter) {
                 val unresolvableCollisions = mutableListOf<UsageInfo>()
                 val ktParameter = if (!parameter.isNewParameter)
                     function.valueParameters[max(0, parameter.oldIndex - if (function.receiverTypeReference != null) 1 else 0)]
                 else null
-                if (ktParameter != null) { //todo conflicts with new parameter
-                    checkRedeclarationConflicts(ktParameter, parameter.name, unresolvableCollisions)
+                if (ktParameter != null) {
+                    checkRedeclarationConflicts(ktParameter, parameterName, unresolvableCollisions)
+                }
+                else {
+                    if (originalInfo.getNonReceiverParameters().any { it != parameter && it.name == parameterName }) {
+                        result.putValue(function, KotlinBundle.message("text.duplicating.parameter", parameterName))
+                    }
                 }
 
                 if (function is KtConstructor<*> && parameter.valOrVar != KotlinValVar.None && !(ktParameter != null && ktParameter.hasValOrVar())) {
 
                     val containingClass = function.containingClassOrObject
                     if (containingClass != null) {
-                        checkNewPropertyConflicts(containingClass, parameter.name, unresolvableCollisions)
+                        checkNewPropertyConflicts(containingClass, parameterName, unresolvableCollisions)
                     }
                 }
                 for (info in unresolvableCollisions) {
