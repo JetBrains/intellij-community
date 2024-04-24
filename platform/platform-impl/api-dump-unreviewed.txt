@@ -22023,6 +22023,13 @@ f:com.intellij.openapi.wm.impl.LibraryDependentToolWindowManagerKt
 com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler
 - com.sun.jna.Callback
 - a:handleEvent(I,I):V
+a:com.intellij.openapi.wm.impl.ListenableToolbarComboButton
+- com.intellij.openapi.wm.impl.ToolbarComboButton
+- <init>(com.intellij.openapi.wm.impl.ToolbarComboButtonModel):V
+- addNotify():V
+- pa:installListeners(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
+- removeNotify():V
+- f:updateWidgetAction():V
 f:com.intellij.openapi.wm.impl.MaximizeToolWindowAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.impl.FusAwareAction
