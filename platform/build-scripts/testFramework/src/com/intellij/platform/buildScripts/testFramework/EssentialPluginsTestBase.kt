@@ -52,10 +52,5 @@ private fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescripti
     honorCompatiblePluginsToIgnore = false,
     context = context
   )
-
-  val plugins = ArrayList<PluginDescription>()
-  for (plugin in pluginMap.values.toSet()) {
-    plugins.add(PluginDescription(pluginId = plugin.id, requiredDependencies = plugin.requiredDependencies))
-  }
-  return plugins.associateBy { it.pluginId }
+  return pluginMap.values.associate { it.id to PluginDescription(pluginId = it.id, requiredDependencies = it.requiredDependencies) }
 }
