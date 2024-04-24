@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="ai.grazie.code.insight.psi" type="repository">
+    <properties include-transitive-deps="false" maven-id="ai.grazie.code.insight:code-insight-psi-jvm:0.3.79">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/code/insight/code-insight-psi-jvm/0.3.79/code-insight-psi-jvm-0.3.79.jar">
+          <sha256sum>c64b879c15fc0ef32cad39e329d0e9208add9934f8812a316b9b1957fc69fde5</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/code/insight/code-insight-psi-jvm/0.3.79/code-insight-psi-jvm-0.3.79.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/code/insight/code-insight-psi-jvm/0.3.79/code-insight-psi-jvm-0.3.79-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
