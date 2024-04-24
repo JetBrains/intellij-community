@@ -112,12 +112,8 @@ internal class KotlinIdeDeclarationRenderer(
         propertyAccessorsRenderer = KtPropertyAccessorsRenderer.NONE
         bodyMemberScopeProvider = KtRendererBodyMemberScopeProvider.NONE
         parameterDefaultValueRenderer = object : KtParameterDefaultValueRenderer {
-            context(KtAnalysisSession)
-            override fun renderDefaultValue(
-                symbol: KtValueParameterSymbol,
-                printer: PrettyPrinter
-            ) {
-                val defaultValue = symbol.defaultValue
+            override fun renderDefaultValue(analysisSession: KtAnalysisSession, symbol: KtValueParameterSymbol, printer: PrettyPrinter) {
+                val defaultValue = with(analysisSession) { symbol.defaultValue }
                 if (defaultValue != null) {
                     with(highlightingManager) {
                         val builder = StringBuilder()
@@ -129,11 +125,23 @@ internal class KotlinIdeDeclarationRenderer(
         }
 
         valueParameterRenderer = object : KtValueParameterSymbolRenderer {
-            context(KtAnalysisSession, KtDeclarationRenderer)
-            override fun renderSymbol(symbol: KtValueParameterSymbol, printer: PrettyPrinter): Unit = printer {
-                highlight(" = ") { asOperationSign } .separated(
-                    { callableSignatureRenderer.renderCallableSignature(symbol, keyword = null, printer) },
-                    { parameterDefaultValueRenderer.renderDefaultValue(symbol, printer) },
+            override fun renderSymbol(
+                analysisSession: KtAnalysisSession,
+                symbol: KtValueParameterSymbol,
+                declarationRenderer: KtDeclarationRenderer,
+                printer: PrettyPrinter
+            ): Unit = printer {
+                highlight(" = ") { asOperationSign }.separated(
+                    {
+                        callableSignatureRenderer.renderCallableSignature(
+                            analysisSession,
+                            symbol,
+                            keyword = null,
+                            declarationRenderer,
+                            printer,
+                        )
+                    },
+                    { parameterDefaultValueRenderer.renderDefaultValue(analysisSession, symbol, printer) },
                 )
             }
         }
@@ -208,10 +216,11 @@ internal class KotlinIdeDeclarationRenderer(
             }
         }
         annotationArgumentsRenderer = object : KtAnnotationArgumentsRenderer {
-            context(KtAnalysisSession, KtAnnotationRenderer)
             override fun renderAnnotationArguments(
+                analysisSession: KtAnalysisSession,
                 annotation: KtAnnotationApplication,
                 owner: KtAnnotated,
+                annotationRenderer: KtAnnotationRenderer,
                 printer: PrettyPrinter
             ) {
                 if (annotation !is KtAnnotationApplicationWithArgumentsInfo) return
@@ -671,7 +680,12 @@ internal class KotlinIdeDeclarationRenderer(
                 if (symbol is KtNamedClassOrObjectSymbol && symbol.isData) {
                     val primaryConstructor = symbol.getDeclaredMemberScope().getConstructors().firstOrNull { it.isPrimary }
                     if (primaryConstructor != null) {
-                        valueParametersRenderer.renderValueParameters(primaryConstructor, printer)
+                        declarationRenderer.valueParametersRenderer.renderValueParameters(
+                            analysisSession,
+                            primaryConstructor,
+                            declarationRenderer,
+                            printer
+                        )
                     }
                 }
             }
