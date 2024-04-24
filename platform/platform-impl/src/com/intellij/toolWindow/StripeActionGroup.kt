@@ -162,6 +162,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
         object : AnActionWrapper(ac) {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
           override fun update(e: AnActionEvent) {
+            super.update(e)
             e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
           }
         }
