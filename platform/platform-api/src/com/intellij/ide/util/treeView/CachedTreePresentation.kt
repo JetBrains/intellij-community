@@ -7,6 +7,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus.Internal
+import javax.swing.Icon
 import javax.swing.JTree
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
@@ -41,9 +42,10 @@ class CachedTreePresentationData(
       if (userObject is PresentableNodeDescriptor<*>) {
         val presentation = userObject.presentation
         val children = mutableListOf<CachedTreePresentationData>()
+        val iconData = getIconData(presentation.getIcon(false))
         val result = CachedTreePresentationData(
           TreeState.PathElement(TreeState.calcId(userObject), TreeState.calcType(userObject), 0, null),
-          CachedPresentationDataImpl(presentation.presentableText ?: ""),
+          CachedPresentationDataImpl(presentation.presentableText ?: "", iconData),
           children
         )
         val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
@@ -77,7 +79,16 @@ interface CachedTreePathElement {
 @Internal
 interface CachedPresentationData {
   val text: String
+  val iconData: CachedIconPresentation?
+  val icon: Icon? get() = getLoadingIcon(iconData)
 }
+
+@Internal
+data class CachedIconPresentation(
+  val path: String,
+  val plugin: String,
+  val module: String?,
+)
 
 private class CachedTreePresentationNode(
   val data: CachedTreePresentationData,
@@ -99,7 +110,7 @@ private class CachedTreePresentationNode(
 
   override fun update(presentation: PresentationData) {
     presentation.presentableText = data.presentation.text
-    presentation.setIcon(AnimatedIcon.Default.INSTANCE)
+    presentation.setIcon(data.presentation.icon ?: AnimatedIcon.Default.INSTANCE)
   }
 
   override fun toString(): String = "(cached) ${super.toString()}"

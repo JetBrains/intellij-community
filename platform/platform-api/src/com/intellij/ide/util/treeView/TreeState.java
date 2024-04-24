@@ -134,12 +134,23 @@ public final class TreeState implements JDOMExternalizable {
   @Tag("data")
   static final class CachedPresentationDataImpl implements CachedPresentationData {
     String text;
+    String iconPath;
+    String iconPlugin;
+    String iconModule;
 
     @SuppressWarnings("unused")
     CachedPresentationDataImpl() { }
 
-    CachedPresentationDataImpl(@NotNull String text) {
+    CachedPresentationDataImpl(
+      @NotNull String text,
+      @Nullable CachedIconPresentation iconPresentation
+    ) {
       this.text = text;
+      if (iconPresentation != null) {
+        this.iconPath = iconPresentation.getPath();
+        this.iconPlugin = iconPresentation.getPlugin();
+        this.iconModule = iconPresentation.getModule();
+      }
     }
 
     @NotNull
@@ -154,9 +165,49 @@ public final class TreeState implements JDOMExternalizable {
       this.text = text;
     }
 
+    @Nullable
+    @Attribute("iconPath")
+    public String getIconPath() {
+      return iconPath;
+    }
+
+    @Attribute("iconPath")
+    public void setIconPath(String iconPath) {
+      this.iconPath = iconPath;
+    }
+
+    @Nullable
+    @Attribute("iconPlugin")
+    public String getIconPlugin() {
+      return iconPlugin;
+    }
+
+    @Attribute("iconPlugin")
+    public void setIconPlugin(String iconPlugin) {
+      this.iconPlugin = iconPlugin;
+    }
+
+    @Nullable
+    @Attribute("iconModule")
+    public String getIconModule() {
+      return iconModule;
+    }
+
+    @Attribute("iconModule")
+    public void setIconModule(String iconModule) {
+      this.iconModule = iconModule;
+    }
+
+    @Nullable
+    @Override
+    public CachedIconPresentation getIconData() {
+      if (iconPath == null || iconPlugin == null) return null;
+      return new CachedIconPresentation(iconPath, iconPlugin, iconModule);
+    }
+
     @Override
     public String toString() {
-      return "'" + text + "'";
+      return "'" + text + "' icon=" + iconPath;
     }
   }
 
