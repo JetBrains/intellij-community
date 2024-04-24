@@ -1,507 +1,494 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl;
+package com.intellij.openapi.roots.impl
 
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.*;
-import com.intellij.openapi.roots.ContentIteratorEx;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
-import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.util.ModalityUiUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.TreeNodeProcessingResult;
-import com.intellij.util.gist.GistManager;
-import com.intellij.util.gist.GistManagerImpl;
-import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic;
-import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
-import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.roots.*;
-import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import kotlin.sequences.Sequence;
-import kotlin.sequences.SequencesKt;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.InternalFileType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbServiceImpl.Companion.isSynchronousTaskExecution
+import com.intellij.openapi.roots.ContentIteratorEx
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.roots.impl.FilesScanExecutor.runOnAllThreads
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.psi.impl.PsiManagerEx
+import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.util.ModalityUiUtil
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.TreeNodeProcessingResult
+import com.intellij.util.gist.GistManager
+import com.intellij.util.gist.GistManagerImpl
+import com.intellij.util.indexing.*
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushedDiagnostic.addEvent
+import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics
+import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.shouldDumpInUnitTestMode
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
+import com.intellij.util.indexing.roots.IndexableFileScanner
+import com.intellij.util.indexing.roots.IndexableFileScanner.IndexableFileVisitor
+import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
+import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
+import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import java.io.IOException
+import java.util.*
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.function.Function
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFilePropertiesUpdater() {
+  private val myTasks: Queue<Runnable> = ConcurrentLinkedQueue()
 
-import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.isFirstProjectScanningRequested;
-
-public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
-  private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
-
-  private final Project myProject;
-
-  private final Queue<Runnable> myTasks = new ConcurrentLinkedQueue<>();
-
-  public PushedFilePropertiesUpdaterImpl(@NotNull Project project) {
-    myProject = project;
-
-    SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
-    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        if (LOG.isTraceEnabled()) {
+  init {
+    val connection = myProject.messageBus.simpleConnect()
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        if (LOG.isTraceEnabled) {
           LOG
-            .trace(new Throwable("Processing roots changed event (caused by file type change: " + event.isCausedByFileTypesChange() + ")"));
+            .trace(
+              Throwable("Processing roots changed event (caused by file type change: " + event.isCausedByFileTypesChange + ")"))
         }
-        for (FilePropertyPusher<?> pusher : FilePropertyPusher.EP_NAME.getExtensionList()) {
-          pusher.afterRootsChanged(project);
+        for (pusher in FilePropertyPusher.EP_NAME.extensionList) {
+          pusher.afterRootsChanged(myProject)
         }
       }
-    });
+    })
 
-    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        myTasks.clear();
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+        myTasks.clear()
       }
-    });
+    })
   }
 
   @ApiStatus.Internal
-  public void processAfterVfsChanges(@NotNull List<? extends VFileEvent> events) {
-    List<Runnable> syncTasks = new ArrayList<>();
-    List<Runnable> delayedTasks = new ArrayList<>();
-    List<FilePropertyPusher<?>> filePushers = getFilePushers();
+  fun processAfterVfsChanges(events: List<VFileEvent>) {
+    val syncTasks = ArrayList<Runnable>()
+    val delayedTasks: MutableList<Runnable> = ArrayList()
+    val filePushers = filePushers
 
     // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
     // (e.g. imported modules or jdk), but it is often unclear why small file sets change and what these files are.
-    if (LOG.isDebugEnabled() && events.size() < 20) {
-      for (VFileEvent event : events) LOG.debug("File changed: " + event.getPath() + ".\nevent:" + event);
+    if (LOG.isDebugEnabled && events.size < 20) {
+      for (event in events) LOG.debug("""
+  File changed: ${event.path}.
+  event:$event
+  """.trimIndent())
     }
 
-    for (VFileEvent event : events) {
-      if (event instanceof VFileCreateEvent) {
-        boolean isDirectory = ((VFileCreateEvent)event).isDirectory();
-        List<FilePropertyPusher<?>> pushers = isDirectory ? FilePropertyPusher.EP_NAME.getExtensionList() : filePushers;
+    for (event in events) {
+      if (event is VFileCreateEvent) {
+        val isDirectory = event.isDirectory
+        val pushers = if (isDirectory) FilePropertyPusher.EP_NAME.extensionList else filePushers
 
         if (!event.isFromRefresh()) {
-          ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
+          ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers))
         }
         else {
-          FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(((VFileCreateEvent)event).getChildName());
-          boolean isProjectOrWorkspaceFile = fileType instanceof InternalFileType ||
-                                             VfsUtilCore.findContainingDirectory(((VFileCreateEvent)event).getParent(),
-                                                                                 Project.DIRECTORY_STORE_FOLDER) != null;
+          val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(event.childName)
+          val isProjectOrWorkspaceFile = fileType is InternalFileType ||
+                                         VfsUtilCore.findContainingDirectory(event.parent,
+                                                                             Project.DIRECTORY_STORE_FOLDER) != null
           if (!isProjectOrWorkspaceFile) {
-            ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(event, pushers));
+            ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(event, pushers))
           }
         }
       }
-      else if (event instanceof VFileMoveEvent || event instanceof VFileCopyEvent) {
-        VirtualFile file = getFile(event);
-        if (file == null) continue;
-        boolean isDirectory = file.isDirectory();
-        List<FilePropertyPusher<?>> pushers = isDirectory ? FilePropertyPusher.EP_NAME.getExtensionList() : filePushers;
-        ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers));
+      else if (event is VFileMoveEvent || event is VFileCopyEvent) {
+        val file = getFile(event)
+        if (file == null) continue
+        val isDirectory = file.isDirectory
+        val pushers = if (isDirectory) FilePropertyPusher.EP_NAME.extensionList else filePushers
+        ContainerUtil.addIfNotNull(syncTasks, createRecursivePushTask(event, pushers))
       }
     }
-    boolean pushingSomethingSynchronously =
-      !syncTasks.isEmpty() && syncTasks.size() < FileBasedIndexProjectHandler.ourMinFilesToStartDumbMode;
+    val pushingSomethingSynchronously =
+      !syncTasks.isEmpty() && syncTasks.size < FileBasedIndexProjectHandler.ourMinFilesToStartDumbMode
     if (pushingSomethingSynchronously) {
       // push synchronously to avoid entering dumb mode in the middle of a meaningful write action
       // when only a few files are created/moved
-      syncTasks.forEach(Runnable::run);
+      syncTasks.forEach(Runnable::run)
     }
     else {
-      delayedTasks.addAll(syncTasks);
+      delayedTasks.addAll(syncTasks)
     }
     if (!delayedTasks.isEmpty()) {
-      queueTasks(delayedTasks, "Push on VFS changes");
+      queueTasks(delayedTasks, "Push on VFS changes")
     }
     if (pushingSomethingSynchronously) {
-      Application app = ApplicationManager.getApplication();
-      if (app.isDispatchThread()) {
-        scheduleDumbModeReindexingIfNeeded();
+      val app = ApplicationManager.getApplication()
+      if (app.isDispatchThread) {
+        scheduleDumbModeReindexingIfNeeded()
       }
       else {
-        app.invokeLater(this::scheduleDumbModeReindexingIfNeeded, myProject.getDisposed());
+        app.invokeLater({ this.scheduleDumbModeReindexingIfNeeded() }, myProject.disposed)
       }
     }
   }
 
-  private static VirtualFile getFile(@NotNull VFileEvent event) {
-    VirtualFile file = event.getFile();
-    if (event instanceof VFileCopyEvent) {
-      file = ((VFileCopyEvent)event).getNewParent().findChild(((VFileCopyEvent)event).getNewChildName());
-    }
-    return file;
+  override fun runConcurrentlyIfPossible(tasks: List<Runnable>) {
+    invokeConcurrentlyIfPossible(tasks)
   }
 
-  @Override
-  public void runConcurrentlyIfPossible(List<? extends Runnable> tasks) {
-    invokeConcurrentlyIfPossible(tasks);
-  }
-
-  public void initializeProperties() {
-    FilePropertyPusher.EP_NAME.forEachExtensionSafe(pusher -> {
-      pusher.initExtra(myProject);
-    });
-  }
-
-  public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
-    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
-      try {
-        session.visitFile(fileOrDir);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        LOG.error("Failed to visit file", e, new Attachment("filePath.txt", fileOrDir.getPath()));
-      }
+  fun initializeProperties() {
+    FilePropertyPusher.EP_NAME.forEachExtensionSafe { pusher: FilePropertyPusher<*> ->
+      pusher.initExtra(myProject)
     }
   }
 
-  @Nullable
-  private Runnable createRecursivePushTask(@NotNull VFileEvent event, @NotNull List<? extends FilePropertyPusher<?>> pushers) {
-    List<IndexableFileScanner> scanners = IndexableFileScanner.EP_NAME.getExtensionList();
+  private fun createRecursivePushTask(event: VFileEvent, pushers: List<FilePropertyPusher<*>>): Runnable? {
+    val scanners = IndexableFileScanner.EP_NAME.extensionList
     if (pushers.isEmpty() && scanners.isEmpty()) {
-      return null;
+      return null
     }
 
-    return () -> {
+    return Runnable {
       // delay calling event.getFile() until background to avoid expensive VFileCreateEvent.getFile() in EDT
-      VirtualFile dir = getFile(event);
-      ProjectFileIndex fileIndex = ReadAction.compute(() -> ProjectFileIndex.getInstance(myProject));
-      if (dir != null && ReadAction.compute(() -> fileIndex.isInContent(dir)) && !ProjectUtil.isProjectOrWorkspaceFile(dir)) {
-        doPushRecursively(pushers, scanners, new ProjectIndexableFilesIteratorImpl(dir));
+      val dir = getFile(event)
+      val fileIndex = ReadAction.compute<ProjectFileIndex, RuntimeException> { ProjectFileIndex.getInstance(myProject) }
+      if (dir != null && ReadAction.compute<Boolean, RuntimeException> { fileIndex.isInContent(dir) } && !isProjectOrWorkspaceFile(dir)) {
+        doPushRecursively(pushers, scanners, ProjectIndexableFilesIteratorImpl(dir))
       }
-    };
-  }
-
-  private void doPushRecursively(@NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                 @NotNull List<? extends IndexableFileScanner> scanners,
-                                 @NotNull IndexableFilesIterator indexableFilesIterator) {
-    List<IndexableFileScanner.IndexableFileVisitor> sessions =
-      ContainerUtil.mapNotNull(scanners, visitor -> visitor.startSession(myProject).createVisitor(indexableFilesIterator.getOrigin()));
-    indexableFilesIterator.iterateFiles(myProject, fileOrDir -> {
-      applyPushersToFile(fileOrDir, pushers, null);
-      applyScannersToFile(fileOrDir, sessions);
-      return true;
-    }, IndexableFilesDeduplicateFilter.create());
-    finishVisitors(sessions);
-  }
-
-  public static void finishVisitors(List<? extends IndexableFileScanner.IndexableFileVisitor> sessions) {
-    for (IndexableFileScanner.IndexableFileVisitor session : sessions) {
-      session.visitingFinished();
     }
   }
 
-  private void queueTasks(@NotNull List<? extends Runnable> actions, @NotNull @NonNls String reason) {
-    actions.forEach(myTasks::offer);
-    DumbModeTask task = new MyDumbModeTask(reason, this);
-    myProject.getMessageBus().connect(task).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        for (RootsChangeRescanningInfo info : ((ModuleRootEventImpl)event).getInfos()) {
-          if (info == RootsChangeRescanningInfo.TOTAL_RESCAN) {
-            DumbService.getInstance(myProject).cancelTask(task);
-            return;
+  private fun doPushRecursively(pushers: List<FilePropertyPusher<*>>,
+                                scanners: List<IndexableFileScanner>,
+                                indexableFilesIterator: IndexableFilesIterator) {
+    val sessions = scanners.mapNotNull({ visitor: IndexableFileScanner ->
+                                         visitor.startSession(myProject).createVisitor(indexableFilesIterator.origin)
+                                       })
+    indexableFilesIterator.iterateFiles(myProject, { fileOrDir: VirtualFile ->
+      applyPushersToFile(fileOrDir, pushers, null)
+      applyScannersToFile(fileOrDir, sessions)
+      true
+    }, IndexableFilesDeduplicateFilter.create())
+    finishVisitors(sessions)
+  }
+
+  private fun queueTasks(actions: List<Runnable>, reason: @NonNls String) {
+    actions.forEach { myTasks.offer(it) }
+    val task: DumbModeTask = MyDumbModeTask(reason, this)
+    myProject.messageBus.connect(task).subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        for (info in (event as ModuleRootEventImpl).infos) {
+          if (info === RootsChangeRescanningInfo.TOTAL_RESCAN) {
+            DumbService.getInstance(myProject).cancelTask(task)
+            return
           }
         }
       }
-    });
-    task.queue(myProject);
+    })
+    task.queue(myProject)
   }
 
-  public void performDelayedPushTasks() { performDelayedPushTasks(null); }
+  fun performDelayedPushTasks() {
+    performDelayedPushTasks(null)
+  }
 
-  private void performDelayedPushTasks(@Nullable ChangedFilesPushingStatistics statistics) {
-    boolean hadTasks = false;
+  private fun performDelayedPushTasks(statistics: ChangedFilesPushingStatistics?) {
+    var hadTasks = false
     while (true) {
-      ProgressManager.checkCanceled(); // give a chance to suspend indexing
+      ProgressManager.checkCanceled() // give a chance to suspend indexing
 
-      Runnable task = myTasks.poll();
+      val task = myTasks.poll()
       if (task == null) {
-        break;
+        break
       }
       try {
-        task.run();
-        hadTasks = true;
+        task.run()
+        hadTasks = true
       }
-      catch (ProcessCanceledException e) {
+      catch (e: ProcessCanceledException) {
         if (statistics != null) {
-          statistics.finished(true);
-          ChangedFilesPushedDiagnostic.INSTANCE.addEvent(myProject, statistics);
+          statistics.finished(true)
+          addEvent(myProject, statistics)
         }
-        queueTasks(Collections.singletonList(task),
-                   "Rerun pushing tasks after process cancelled"); // reschedule dumb mode and ensure the canceled task is enqueued again
-        throw e;
+        queueTasks(listOf(task),
+                   "Rerun pushing tasks after process cancelled") // reschedule dumb mode and ensure the canceled task is enqueued again
+        throw e
       }
     }
 
     if (hadTasks) {
-      scheduleDumbModeReindexingIfNeeded();
+      scheduleDumbModeReindexingIfNeeded()
     }
     if (statistics != null) {
-      statistics.finished(false);
-      ChangedFilesPushedDiagnostic.INSTANCE.addEvent(myProject, statistics);
+      statistics.finished(false)
+      addEvent(myProject, statistics)
     }
   }
 
-  private void scheduleDumbModeReindexingIfNeeded() {
-    FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject);
+  private fun scheduleDumbModeReindexingIfNeeded() {
+    FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(myProject)
   }
 
-  @Override
-  public void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<? super VirtualFile> acceptFileCondition) {
-    if (fileOrDir.isDirectory()) {
-      for (VirtualFile child : fileOrDir.getChildren()) {
-        if (!child.isDirectory() && acceptFileCondition.value(child)) {
-          filePropertiesChanged(child);
+  override fun filePropertiesChanged(fileOrDir: VirtualFile, acceptFileCondition: Condition<in VirtualFile>) {
+    if (fileOrDir.isDirectory) {
+      for (child in fileOrDir.children) {
+        if (!child.isDirectory && acceptFileCondition.value(child)) {
+          filePropertiesChanged(child)
         }
       }
     }
     else if (acceptFileCondition.value(fileOrDir)) {
-      filePropertiesChanged(fileOrDir);
+      filePropertiesChanged(fileOrDir)
     }
   }
 
-  private static <T> T findNewPusherValue(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher, T moduleValue) {
-    //Do not check fileOrDir.getUserData() as it may be outdated.
-    T immediateValue = pusher.getImmediateValue(project, fileOrDir);
-    if (immediateValue != null) return immediateValue;
-    if (moduleValue != null) return moduleValue;
-    return findNewPusherValueFromParent(project, fileOrDir, pusher);
-  }
-
-  private static <T> T findNewPusherValueFromParent(Project project, VirtualFile fileOrDir, FilePropertyPusher<? extends T> pusher) {
-    final VirtualFile parent = fileOrDir.getParent();
-    if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
-      final T userValue = pusher.getFilePropertyKey().getPersistentValue(parent);
-      if (userValue != null) return userValue;
-      return findNewPusherValue(project, parent, pusher, null);
-    }
-    T projectValue = pusher.getImmediateValue(project, null);
-    return projectValue != null ? projectValue : pusher.getDefaultValue();
-  }
-
-  @Override
-  public void pushAll(FilePropertyPusher<?> @NotNull ... pushers) {
+  override fun pushAll(vararg pushers: FilePropertyPusher<*>) {
     if (!isFirstProjectScanningRequested(myProject)) {
-      LOG.info("Ignoring push request, as project is not yet initialized");
-      return;
+      LOG.info("Ignoring push request, as project is not yet initialized")
+      return
     }
-    queueTasks(Collections.singletonList(() -> doPushAll(Arrays.asList(pushers))), "Push all on " + Arrays.toString(pushers));
+    queueTasks(listOf(
+      Runnable { doPushAll(Arrays.asList(*pushers)) }), "Push all on " + pushers.contentToString())
   }
 
-  private void doPushAll(@NotNull List<? extends FilePropertyPusher<?>> pushers) {
-    scanProject(myProject, module -> {
-      final Object[] moduleValues = getModuleImmediateValues(pushers, module);
-      return fileOrDir -> {
-        applyPushersToFile(fileOrDir, pushers, moduleValues);
-        return TreeNodeProcessingResult.CONTINUE;
-      };
-    });
-  }
-
-  public static Object @NotNull [] getModuleImmediateValues(@NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                                            @NotNull Module module) {
-    final Object[] moduleValues;
-    moduleValues = new Object[pushers.size()];
-    for (int i = 0; i < moduleValues.length; i++) {
-      moduleValues[i] = pushers.get(i).getImmediateValue(module);
-    }
-    return moduleValues;
-  }
-
-  public static Object @NotNull [] getImmediateValuesEx(@NotNull List<? extends FilePropertyPusherEx<?>> pushers,
-                                                        @NotNull IndexableSetOrigin origin) {
-    final Object[] moduleValues;
-    moduleValues = new Object[pushers.size()];
-    for (int i = 0; i < moduleValues.length; i++) {
-      moduleValues[i] = pushers.get(i).getImmediateValueEx(origin);
-    }
-    return moduleValues;
-  }
-
-  public static void scanProject(@NotNull Project project,
-                                 @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
-    Stream<Runnable> tasksStream;
-    Sequence<ModuleEntity> modulesSequence = ReadAction.compute(() ->
-                                                                  WorkspaceModel.getInstance(project).getCurrentSnapshot().entities(ModuleEntity.class));
-    List<ModuleEntity> moduleEntities = SequencesKt.toList(modulesSequence);
-    IndexableFilesDeduplicateFilter indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create();
-    tasksStream = moduleEntities.stream()
-      .flatMap(moduleEntity -> {
-        return ReadAction.compute(() -> {
-          EntityStorage storage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
-          Module module = ModuleEntityUtils.findModule(moduleEntity, storage);
-          if (module == null) {
-            return Stream.empty();
-          }
-          ProgressManager.checkCanceled();
-          return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
-                                   it -> new Object() {
-                                     final IndexableFilesIterator files = it;
-                                     final ContentIteratorEx iterator = iteratorProducer.apply(module);
-                                   })
-            .stream()
-            .map(pair -> (Runnable)() -> {
-              pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);
-            });
-        });
-      });
-    List<Runnable> tasks = tasksStream.collect(Collectors.toList());
-    invokeConcurrentlyIfPossible(tasks);
-  }
-
-  public static void invokeConcurrentlyIfPossible(@NotNull List<? extends Runnable> tasks) {
-    if (tasks.isEmpty()) return;
-    boolean synchronous = (tasks.size() == 1);
-    if (DumbServiceImpl.isSynchronousTaskExecution()) {
-      synchronous = true;
-    }
-    else {
-      LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed(), "Write access is not allowed");
-    }
-    if (synchronous) {
-      for (Runnable r : tasks) r.run();
-      return;
-    }
-    ConcurrentLinkedQueue<Runnable> tasksQueue = new ConcurrentLinkedQueue<>(tasks);
-    FilesScanExecutor.runOnAllThreads(() -> {
-      Runnable runnable;
-      while ((runnable = tasksQueue.poll()) != null) runnable.run();
-    });
-  }
-
-  public void applyPushersToFile(final VirtualFile fileOrDir,
-                                 @NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                 final Object[] moduleValues) {
-    if (pushers.isEmpty()) return;
-    if (fileOrDir.isDirectory()) {
-      fileOrDir.getChildren(); // outside read action to avoid freezes
-    }
-
-    ReadAction.run(() -> {
-      if (!fileOrDir.isValid() || !(fileOrDir instanceof VirtualFileWithId)) return;
-      doApplyPushersToFile(fileOrDir, pushers, moduleValues);
-    });
-  }
-
-  private void doApplyPushersToFile(@NotNull VirtualFile fileOrDir,
-                                    @NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                    Object @Nullable[] moduleValues) {
-    final boolean isDir = fileOrDir.isDirectory();
-    for (int i = 0; i < pushers.size(); i++) {
-      //noinspection unchecked
-      FilePropertyPusher<Object> pusher = (FilePropertyPusher<Object>)pushers.get(i);
-      if (isDir
-          ? !pusher.acceptsDirectory(fileOrDir, myProject)
-          : pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir, myProject)) {
-        continue;
+  private fun doPushAll(pushers: List<FilePropertyPusher<*>>) {
+    scanProject(myProject) { module: Module ->
+      val moduleValues = getModuleImmediateValues(pushers, module)
+      ContentIteratorEx { fileOrDir: VirtualFile ->
+        applyPushersToFile(fileOrDir, pushers, moduleValues)
+        TreeNodeProcessingResult.CONTINUE
       }
-      Object value = moduleValues != null ? moduleValues[i] : null;
-      findAndUpdateValue(fileOrDir, pusher, value);
     }
   }
 
-  @Override
-  public <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue) {
-    T newValue = findNewPusherValue(myProject, fileOrDir, pusher, moduleValue);
+  fun applyPushersToFile(fileOrDir: VirtualFile,
+                         pushers: List<FilePropertyPusher<*>>,
+                         moduleValues: Array<Any?>?) {
+    if (pushers.isEmpty()) return
+    if (fileOrDir.isDirectory) {
+      fileOrDir.children // outside read action to avoid freezes
+    }
+
+    ReadAction.run<RuntimeException> {
+      if (!fileOrDir.isValid || fileOrDir !is VirtualFileWithId) return@run
+      doApplyPushersToFile(fileOrDir, pushers, moduleValues)
+    }
+  }
+
+  private fun doApplyPushersToFile(fileOrDir: VirtualFile,
+                                   pushers: List<FilePropertyPusher<*>>,
+                                   moduleValues: Array<Any?>?) {
+    val isDir = fileOrDir.isDirectory
+    for (i in pushers.indices) {
+      val pusher = pushers[i] as FilePropertyPusher<Any>
+      val notApplicable =
+        if (isDir) !pusher.acceptsDirectory(fileOrDir, myProject)
+        else pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir, myProject)
+      if (notApplicable) {
+        continue
+      }
+      val value = moduleValues?.get(i)
+      findAndUpdateValue(fileOrDir, pusher, value)
+    }
+  }
+
+  override fun <T : Any> findAndUpdateValue(fileOrDir: VirtualFile, pusher: FilePropertyPusher<T>, moduleValue: T?) {
+    val newValue: T = findNewPusherValue(myProject, fileOrDir, pusher, moduleValue)
     try {
-      pusher.persistAttribute(myProject, fileOrDir, newValue);
+      pusher.persistAttribute(myProject, fileOrDir, newValue)
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  @Override
-  public void filePropertiesChanged(@NotNull final VirtualFile file) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    if (fileBasedIndex instanceof FileBasedIndexImpl) {
-      ((FileBasedIndexImpl) fileBasedIndex).requestReindex(file, false);
-    }
-    for (final Project project : ProjectManager.getInstance().getOpenProjects()) {
-      reloadPsi(file, project);
+    catch (e: IOException) {
+      LOG.error(e)
     }
   }
 
-  private static void reloadPsi(final VirtualFile file, final Project project) {
-    final FileManagerImpl fileManager = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
-    if (fileManager.findCachedViewProvider(file) != null) {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.getDisposed(),
-                                         () -> WriteAction.run(() -> fileManager.forceReload(file))
-      );
+  @Deprecated("Deprecated in Java")
+  override fun filePropertiesChanged(file: VirtualFile) {
+    ApplicationManager.getApplication().assertReadAccessAllowed()
+    val fileBasedIndex = FileBasedIndex.getInstance()
+    if (fileBasedIndex is FileBasedIndexImpl) {
+      fileBasedIndex.requestReindex(file, false)
+    }
+    for (project in ProjectManager.getInstance().openProjects) {
+      reloadPsi(file, project)
     }
   }
 
-  private static List<FilePropertyPusher<?>> getFilePushers() {
-    return ContainerUtil.findAll(FilePropertyPusher.EP_NAME.getExtensionList(), pusher -> !pusher.pushDirectoriesOnly());
-  }
-
-  private static final class MyDumbModeTask extends DumbModeTask {
-    private final @NotNull @NonNls String myReason;
-    private final PushedFilePropertiesUpdaterImpl myUpdater;
-
-    private MyDumbModeTask(@NotNull @NonNls String reason, @NotNull PushedFilePropertiesUpdaterImpl updater) {
-      myUpdater = updater;
-      myReason = reason;
-    }
-
-    @Override
-    public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-      indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-      ChangedFilesPushingStatistics statistics;
-      if (!ApplicationManager.getApplication().isUnitTestMode() || IndexDiagnosticDumper.Companion.getShouldDumpInUnitTestMode()) {
-        statistics = new ChangedFilesPushingStatistics(myReason);
+  private class MyDumbModeTask(private val myReason: @NonNls String,
+                               private val myUpdater: PushedFilePropertiesUpdaterImpl) : DumbModeTask() {
+    override fun performInDumbMode(indicator: ProgressIndicator) {
+      indicator.isIndeterminate = true
+      indicator.text = IndexingBundle.message("progress.indexing.scanning")
+      val statistics = if (!ApplicationManager.getApplication().isUnitTestMode || shouldDumpInUnitTestMode) {
+        ChangedFilesPushingStatistics(myReason)
       }
       else {
-        statistics = null;
+        null
       }
-      ((GistManagerImpl)GistManager.getInstance()).runWithMergingDependentCacheInvalidations(() ->
-        myUpdater.performDelayedPushTasks(statistics));
+      (GistManager.getInstance() as GistManagerImpl).runWithMergingDependentCacheInvalidations {
+        myUpdater.performDelayedPushTasks(statistics)
+      }
     }
 
-    @Override
-    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
-      if (taskFromQueue instanceof MyDumbModeTask && ((MyDumbModeTask)taskFromQueue).myUpdater == myUpdater) return this;
-      return null;
+    override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? {
+      if (taskFromQueue is MyDumbModeTask && taskFromQueue.myUpdater == myUpdater) return this
+      return null
     }
 
-    @Override
-    public String toString() {
-      return super.toString() + " (reason: " + myReason + ")";
+    override fun toString(): String {
+      return super.toString() + " (reason: " + myReason + ")"
     }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(
+      PushedFilePropertiesUpdater::class.java)
+
+    private fun getFile(event: VFileEvent): VirtualFile? {
+      var file = event.file
+      if (event is VFileCopyEvent) {
+        file = event.newParent.findChild(event.newChildName)
+      }
+      return file
+    }
+
+    fun applyScannersToFile(fileOrDir: VirtualFile, sessions: List<IndexableFileVisitor>) {
+      for (session in sessions) {
+        try {
+          session.visitFile(fileOrDir)
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Exception) {
+          LOG.error("Failed to visit file", e, Attachment("filePath.txt", fileOrDir.path))
+        }
+      }
+    }
+
+    fun finishVisitors(sessions: List<IndexableFileVisitor>) {
+      for (session in sessions) {
+        session.visitingFinished()
+      }
+    }
+
+    private fun <T> findNewPusherValue(project: Project, fileOrDir: VirtualFile, pusher: FilePropertyPusher<out T>, moduleValue: T?): T {
+      //Do not check fileOrDir.getUserData() as it may be outdated.
+      val immediateValue = pusher.getImmediateValue(project, fileOrDir)
+      if (immediateValue != null) return immediateValue
+      if (moduleValue != null) return moduleValue
+      return findNewPusherValueFromParent(project, fileOrDir, pusher)
+    }
+
+    private fun <T> findNewPusherValueFromParent(project: Project, fileOrDir: VirtualFile, pusher: FilePropertyPusher<out T>): T {
+      val parent = fileOrDir.parent
+      if (parent != null && ProjectFileIndex.getInstance(project).isInContent(parent)) {
+        val userValue = pusher.filePropertyKey.getPersistentValue(parent)
+        if (userValue != null) return userValue
+        return findNewPusherValue(project, parent, pusher, null)
+      }
+      val projectValue = pusher.getImmediateValue(project, null)
+      return projectValue ?: pusher.defaultValue
+    }
+
+    @JvmStatic
+    fun getModuleImmediateValues(pushers: List<FilePropertyPusher<*>>,
+                                 module: Module): Array<Any?> {
+      val moduleValues = arrayOfNulls<Any>(pushers.size)
+      for (i in moduleValues.indices) {
+        moduleValues[i] = pushers[i].getImmediateValue(module)
+      }
+      return moduleValues
+    }
+
+    @JvmStatic
+    fun getImmediateValuesEx(pushers: List<FilePropertyPusherEx<*>>,
+                             origin: IndexableSetOrigin): Array<Any?> {
+      val moduleValues = arrayOfNulls<Any>(pushers.size)
+      for (i in moduleValues.indices) {
+        moduleValues[i] = pushers[i].getImmediateValueEx(origin)
+      }
+      return moduleValues
+    }
+
+    @JvmStatic
+    fun scanProject(project: Project,
+                    iteratorProducer: Function<in Module, out ContentIteratorEx>) {
+      val modulesSequence = ReadAction.compute<Sequence<ModuleEntity>, RuntimeException> {
+        WorkspaceModel.getInstance(project).currentSnapshot.entities(
+          ModuleEntity::class.java)
+      }
+      val moduleEntities = modulesSequence.toList()
+      val indexableFilesDeduplicateFilter = IndexableFilesDeduplicateFilter.create()
+
+      val tasks = moduleEntities.flatMap { moduleEntity: ModuleEntity ->
+        ReadAction.compute<List<Runnable>, RuntimeException> {
+          val storage: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+          val module: Module? = moduleEntity.findModule(storage)
+          if (module == null) {
+            return@compute emptyList()
+          }
+          ProgressManager.checkCanceled()
+          createIterators(moduleEntity, storage, project).map { it: IndexableFilesIterator ->
+            val iterator: ContentIteratorEx = iteratorProducer.apply(module)
+            Runnable {
+              it.iterateFiles(project, iterator, indexableFilesDeduplicateFilter)
+            }
+          }
+        }
+      }
+      invokeConcurrentlyIfPossible(tasks)
+    }
+
+    fun invokeConcurrentlyIfPossible(tasks: List<Runnable>) {
+      if (tasks.isEmpty()) return
+      var synchronous = (tasks.size == 1)
+      if (isSynchronousTaskExecution) {
+        synchronous = true
+      }
+      else {
+        LOG.assertTrue(!ApplicationManager.getApplication().isWriteAccessAllowed, "Write access is not allowed")
+      }
+      if (synchronous) {
+        for (r in tasks) r.run()
+        return
+      }
+      val tasksQueue = ConcurrentLinkedQueue(tasks)
+      runOnAllThreads {
+        var runnable: Runnable? = tasksQueue.poll()
+        while (runnable != null) {
+          runnable.run()
+          runnable = tasksQueue.poll()
+        }
+      }
+    }
+
+    private fun reloadPsi(file: VirtualFile, project: Project) {
+      val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerImpl
+      if (fileManager.findCachedViewProvider(file) != null) {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), project.disposed
+        ) { WriteAction.run<RuntimeException> { fileManager.forceReload(file) } }
+      }
+    }
+
+    private val filePushers: List<FilePropertyPusher<*>>
+      get() = FilePropertyPusher.EP_NAME.extensionList.filter({ pusher: FilePropertyPusher<*> -> !pusher.pushDirectoriesOnly() })
   }
 }
