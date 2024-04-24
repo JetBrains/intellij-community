@@ -141,9 +141,7 @@
       <group class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
       <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
       <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InToolWindow" id="Vcs.Log.OpenAnotherTab"
-              icon="AllIcons.General.Add">
-        <add-to-group group-id="LocalChangesView.TabActions"/>
-      </action>
+              icon="AllIcons.General.Add"/>
       <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InEditor" id="Vcs.Log.OpenAnotherTabInEditor"
               icon="AllIcons.Actions.OpenNewTab"/>
       <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
@@ -246,6 +244,15 @@
     <group id="Vcs.Log.ChangesBrowser.Popup">
       <reference id="Vcs.RepositoryChangesBrowserMenu"/>
       <reference id="Vcs.Log.ShowChangesFromParents"/>
+    </group>
+    <group id="Vcs.Log.ToolWindow.TabActions">
+      <reference id="Vcs.Log.OpenAnotherTab"/>
+      <group id="Vcs.Log.ToolWindow.TabActions.DropDown" icon="AllIcons.Toolbar.Expand" popup="true"
+             class="com.intellij.vcs.log.ui.actions.VcsLogToolWindowDropdownActionGroup">
+        <reference id="Vcs.Log.OpenAnotherTabInEditor"/>
+        <reference id="Vcs.ShowTabbedFileHistory"/>
+      </group>
+      <add-to-group group-id="LocalChangesView.TabActions"/>
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
