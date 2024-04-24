@@ -48,6 +48,7 @@ import java.awt.geom.Point2D;
  * <li>{@link #getSelectionModel()}
  * </ul>
  * The appearance of an editor is determined by:
+ * <ul>
  * <li>{@link #getColorsScheme()}
  * <li>{@link #getScrollingModel()}
  * <li>{@link #getSoftWrapModel()}
