@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.editor.impl.EditorGutterComponentImpl.getGapBetweenAreas;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -117,8 +119,9 @@ public final class EditorGutterLayout {
         .showIf(this::isLineNumbersShown),
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
         .showIf(this::isLineNumbersShown),
-      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth),
-      areaGap()
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth)
+        .showIf(this::isLineNumbersShown),
+      areaGap() // Note: ADDITIONAL_LINE_NUMBERS_AREA rendering depends on this gap
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(this::isLineNumbersShown),
 
@@ -170,9 +173,15 @@ public final class EditorGutterLayout {
         .showIf(this::isLineNumbersShown),
       areaGap(12)
         .showIf(() -> isLineNumbersShown() && !myEditorGutter.isLineMarkersShown()),
-      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth),
-      area(ADDITIONAL_LINE_NUMBERS_AREA, EditorGutterComponentImpl.GAP_AFTER_LINE_NUMBERS_WIDTH::get)
-        .showIf(() -> isLineNumbersShown() && myEditorGutter.isLineMarkersShown()),
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> myEditorGutter.myAdditionalLineNumberAreaWidth)
+        .showIf(this::isLineNumbersShown),
+      area(ADDITIONAL_LINE_NUMBERS_AREA, () -> {
+        // Note: ADDITIONAL_LINE_NUMBERS_AREA rendering depends on this gap
+        return Math.max(myEditorGutter.isLineMarkersShown() ? EditorGutterComponentImpl.GAP_AFTER_LINE_NUMBERS_WIDTH.get() : 0,
+                        myEditorGutter.myAdditionalLineNumberAreaWidth > 0 ? getGapBetweenAreas() : 0);
+      })
+        .showIf(() -> isLineNumbersShown()),
+
       area(ANNOTATIONS_AREA, () -> myEditorGutter.myTextAnnotationExtraSize)
         .as(EditorMouseEventArea.LINE_MARKERS_AREA)
         .showIf(() -> myEditorGutter.myTextAnnotationExtraSize != 0),
