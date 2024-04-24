@@ -34,7 +34,7 @@ class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
 
     val shiftForward = CharArrayUtil.shiftForward(editor.document.immutableCharSequence, lineStartOffset, " \t")
 
-    return editor.offsetToXY(shiftForward).x
+    return editor.offsetToXY(shiftForward, true, false).x
   }
 
   override fun getPoint(inlay: Inlay<*>, targetPoint: Point): Point {
