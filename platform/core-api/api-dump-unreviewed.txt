@@ -4662,10 +4662,8 @@ a:com.intellij.psi.PsiReferenceBase$Poly
 - isReferenceTo(com.intellij.psi.PsiElement):Z
 - resolve():com.intellij.psi.PsiElement
 a:com.intellij.psi.PsiReferenceContributor
-- com.intellij.openapi.Disposable
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
-- dispose():V
 - a:registerReferenceProviders(com.intellij.psi.PsiReferenceRegistrar):V
 a:com.intellij.psi.PsiReferenceProvider
 - <init>():V
