@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
 import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
 import com.intellij.collaboration.async.mapScoped
+import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,8 +55,9 @@ internal class GitLabMergeRequestsListViewModelImpl(
 
   override val listDataFlow: Flow<List<GitLabMergeRequestDetails>> =
     loaderFlow.flatMapLatest { loader -> loader.stateFlow.mapNotNull { it.list?.map(GitLabMergeRequestDetails::fromRestDTO) } }
-  override val loading: Flow<Boolean> = loaderFlow.flatMapLatest { it.isBusyFlow }
-  override val error: Flow<Throwable?> = loaderFlow.flatMapLatest { loader -> loader.stateFlow.map { it.error } }
+      .modelFlow(scope, LOG)
+  override val loading: Flow<Boolean> = loaderFlow.flatMapLatest { it.isBusyFlow }.modelFlow(scope, LOG)
+  override val error: Flow<Throwable?> = loaderFlow.flatMapLatest { loader -> loader.stateFlow.map { it.error } }.modelFlow(scope, LOG)
 
   override fun requestMore() {
     scope.launch {
@@ -66,5 +69,9 @@ internal class GitLabMergeRequestsListViewModelImpl(
     scope.launch {
       loaderFlow.first().refresh()
     }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(GitLabMergeRequestsListViewModel::class.java)
   }
 }
