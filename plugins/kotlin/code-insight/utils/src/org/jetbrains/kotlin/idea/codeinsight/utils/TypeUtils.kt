@@ -33,8 +33,12 @@ fun KtType.isEnum(): Boolean {
  * TODO should be moved to [KtFlexibleTypeRenderer] and removed from here, see KT-64138
  */
 object KtFlexibleTypeAsUpperBoundRenderer : KtFlexibleTypeRenderer {
-    context(KtAnalysisSession, KtTypeRenderer)
-    override fun renderType(type: KtFlexibleType, printer: PrettyPrinter) {
-        renderType(type.upperBound, printer)
+    override fun renderType(
+        analysisSession: KtAnalysisSession,
+        type: KtFlexibleType,
+        typeRenderer: KtTypeRenderer,
+        printer: PrettyPrinter
+    ) {
+        typeRenderer.renderType(analysisSession, type.upperBound, printer)
     }
 }

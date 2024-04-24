@@ -23,14 +23,20 @@ import org.jetbrains.kotlin.library.metadata.KlibMetadataFactories
 import org.jetbrains.kotlin.library.metadata.NullFlexibleTypeDeserializer
 import org.jetbrains.kotlin.library.metadata.impl.KlibMetadataModuleDescriptorFactoryImpl
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind
 import org.jetbrains.kotlin.resolve.TargetEnvironment
-import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer
 import org.jetbrains.kotlin.storage.StorageManager
 
-class WasmPlatformKindResolution : IdePlatformKindResolution {
-    override val kind get() = WasmIdePlatformKind
+class WasmJsPlatformKindResolution : WasmPlatformKindResolution() {
+    override val kind get() = WasmJsIdePlatformKind
+}
 
+class WasmWasiPlatformKindResolution : WasmPlatformKindResolution() {
+    override val kind get() = WasmWasiIdePlatformKind
+}
+
+abstract class WasmPlatformKindResolution : IdePlatformKindResolution {
     override fun getKeyForBuiltIns(moduleInfo: ModuleInfo, sdkInfo: SdkInfo?, stdlibInfo: LibraryInfo?): BuiltInsCacheKey {
         return BuiltInsCacheKey.DefaultBuiltInsKey
     }

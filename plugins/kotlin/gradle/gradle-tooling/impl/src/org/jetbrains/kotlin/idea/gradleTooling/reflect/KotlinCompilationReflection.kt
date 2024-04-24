@@ -15,6 +15,7 @@ interface KotlinCompilationReflection {
     val allSourceSets: Collection<Named>? // this.sourceSets + their transitive closure through dependsOn relation
     val compilationOutput: KotlinCompilationOutputReflection?
     val konanTargetName: String?
+    val wasmTargetName: String?
     val compileKotlinTaskName: String?
     val associateCompilations: Iterable<KotlinCompilationReflection>
     val archiveTaskName: String?
@@ -49,6 +50,11 @@ private class KotlinCompilationReflectionImpl(private val instance: Any) : Kotli
         if (instance.javaClass.getMethodOrNull("getKonanTarget") == null) null
         else instance.callReflectiveAnyGetter("getKonanTarget", logger)
             ?.callReflectiveGetter("getName", logger)
+    }
+    override val wasmTargetName: String? by lazy {
+        if (instance.javaClass.getMethodOrNull("getWasmTarget") == null) null
+        else instance.callReflectiveAnyGetter("getWasmTarget", logger)
+            ?.callReflectiveGetter("getAlias", logger)
     }
     override val compileKotlinTaskName: String? by lazy {
         instance.callReflectiveGetter("getCompileKotlinTaskName", logger)
