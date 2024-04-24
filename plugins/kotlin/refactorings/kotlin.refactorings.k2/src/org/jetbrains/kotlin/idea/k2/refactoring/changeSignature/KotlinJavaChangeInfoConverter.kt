@@ -126,7 +126,7 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
         }
 
         val returnType = if (changeInfo.newReturnTypeInfo.text != null && !(isProperty && lightMethod.parameters.size > afterReceiverIdx))
-            createPsiType(changeInfo.newReturnTypeInfo.text!!, method)
+            createPsiType(changeInfo.newReturnTypeInfo.text!!, method, true)
         else PsiTypes.voidType()
 
         var newName = changeInfo.newName
@@ -158,14 +158,14 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class, KtAllowAnalysisFromWriteAction::class)
-    private fun createPsiType(ktTypeText: String, originalFunction: PsiElement): PsiType {
+    private fun createPsiType(ktTypeText: String, originalFunction: PsiElement, unitToVoid: Boolean = false): PsiType {
         val project = originalFunction.project
         val codeFragment = KtPsiFactory(project).createTypeCodeFragment(ktTypeText, originalFunction)
         return allowAnalysisOnEdt {
             allowAnalysisFromWriteAction {
                 analyze(codeFragment) {
                     val ktType = codeFragment.getContentElement()?.getKtType()!!
-                    ktType.asPsiType(originalFunction, true)!!
+                    if (unitToVoid && ktType.isUnit) PsiTypes.voidType() else ktType.asPsiType(originalFunction, true)!!
                 }
             }
         }

@@ -7,5 +7,5 @@ class J {
 }
 
 class B extends C {
-    public kotlin.Unit m(boolean b) {}
+    public void m(boolean b) {}
 }
