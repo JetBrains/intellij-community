@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider.ValidatorTarget
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.isVisible
@@ -35,8 +34,7 @@ open class Fe10KotlinNewDeclarationNameValidator(
     private val checkDeclarationsIn: Sequence<PsiElement>,
     private val target: ValidatorTarget,
     private val excludedDeclarations: List<KtDeclaration> = emptyList()
-) : KotlinNameValidator {
-
+) : (String) -> Boolean {
     constructor(
         container: PsiElement,
         anchor: PsiElement?,

@@ -1,21 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil.getParentOfType
-import com.intellij.util.application
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult.ErrorMessage
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.AnalysisResult.Status
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.ExpressionValue
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.Jump
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnonymousInitializer
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithBody
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
@@ -161,18 +169,15 @@ abstract class AbstractExtractionDataAnalyzer<KotlinType, P : IMutableParameter<
     private fun suggestFunctionNames(returnType: KotlinType): List<String> {
         val functionNames = LinkedHashSet<String>()
 
-        val validatorTarget = if (data.options.extractAsProperty) KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
-        else KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION
-
-        val targetSibling = data.targetSibling
-        val container = targetSibling as KtElement
-        val validator = application
-            .service<KotlinNameValidatorProvider>()
-            .createNameValidator(
-                container = container,
-                target = validatorTarget,
-                anchor = if (targetSibling is KtAnonymousInitializer) container else targetSibling,
-            )
+        val validatorTarget = when {
+            data.options.extractAsProperty -> KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
+            else -> KotlinNameSuggestionProvider.ValidatorTarget.FUNCTION
+        }
+        val validator = nameSuggester.createNameValidator(
+            data.targetSibling as KtElement,
+            if (data.targetSibling is KtAnonymousInitializer) data.targetSibling.parent else data.targetSibling,
+            validatorTarget
+        )
 
         functionNames.addAll(
             nameSuggester.suggestNamesByType(

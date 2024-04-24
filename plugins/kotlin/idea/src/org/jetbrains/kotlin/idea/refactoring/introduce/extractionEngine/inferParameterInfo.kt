@@ -2,9 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
-import com.intellij.openapi.components.service
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.util.application
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.cfg.pseudocode.Pseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.SingleType
@@ -15,7 +13,6 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -30,8 +27,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
 import org.jetbrains.kotlin.resolve.calls.util.hasBothReceivers
+import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
@@ -115,13 +112,11 @@ internal fun ExtractionData.inferParametersInfo(
         }
     }
 
-    val varNameValidator = application
-        .service<KotlinNameValidatorProvider>()
-        .createNameValidator(
-            container = commonParent.getNonStrictParentOfType<KtExpression>()!!,
-            target = KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
-            anchor = physicalElements.firstOrNull()
-        )
+    val varNameValidator = ExtractNameSuggester.createNameValidator(
+        commonParent.getNonStrictParentOfType<KtExpression>()!!,
+        physicalElements.firstOrNull(),
+        KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
+    )
 
     val existingParameterNames = hashSetOf<String>()
     for ((descriptorToExtract, parameter) in extractedDescriptorToParameter) {

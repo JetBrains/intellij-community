@@ -8,7 +8,5 @@
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.compiler.K2KotlinCompilerIdeAllowedErrorFilter"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider"
-                        serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.K2NameValidatorProviderImpl"/>
   </extensions>
 </idea-plugin>
