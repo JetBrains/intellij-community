@@ -190,4 +190,9 @@
     <group id="XDebugger.RunToCursorInlayExtraActions">
     </group>
   </actions>
+
+  <projectListeners>
+    <listener class="com.intellij.xdebugger.impl.breakpoints.BreakpointVariantPriorityTracker"
+              topic="com.intellij.xdebugger.breakpoints.XBreakpointListener"/>
+  </projectListeners>
 </idea-plugin>
