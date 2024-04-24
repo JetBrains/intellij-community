@@ -18,7 +18,7 @@ import kotlin.time.measureTime
 
 const val KOTLIN_SCRIPTS_MODULE_NAME = "Kotlin Scripts"
 
-object KotlinScriptEntitySource : EntitySource
+object KotlinK2ScriptEntitySource : EntitySource
 
 suspend fun Project.createScriptModules(scripts: Set<ScriptModel>) {
     val duration = measureTime { createPureScriptModules(scripts, this) }
@@ -51,11 +51,11 @@ private suspend fun createPureScriptModules(scriptPaths: Set<ScriptModel>, proje
 
         val dependencies = updatedStorage.createDependencies(moduleName, scriptFile, project)
 
-        updatedStorage.addEntity(ModuleEntity(moduleName, dependencies, KotlinScriptEntitySource))
+        updatedStorage.addEntity(ModuleEntity(moduleName, dependencies, KotlinK2ScriptEntitySource))
     }
 
     WorkspaceModel.getInstance(project).update("Updating kotlin scripts modules") {
-        it.replaceBySource({ entitySource -> entitySource is KotlinScriptEntitySource }, updatedStorage)
+        it.replaceBySource({ entitySource -> entitySource is KotlinK2ScriptEntitySource }, updatedStorage)
     }
 }
 
@@ -100,7 +100,7 @@ fun MutableEntityStorage.createDependencies(
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName))
     val dependencyLibrary =
-        addEntity(LibraryEntity("$moduleName dependencies", libraryTableId, classRoots + sourceRoots, KotlinScriptEntitySource))
+        addEntity(LibraryEntity("$moduleName dependencies", libraryTableId, classRoots + sourceRoots, KotlinK2ScriptEntitySource))
 
     return listOfNotNull(LibraryDependency(dependencyLibrary.symbolicId, false, DependencyScope.COMPILE), sdk)
 }
