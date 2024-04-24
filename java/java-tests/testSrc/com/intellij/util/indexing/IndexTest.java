@@ -1318,7 +1318,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
 
   private boolean findWordInDumbMode(String word, final VirtualFile file, boolean inDumbMode) {
     assertEquals(inDumbMode, DumbService.isDumb(getProject()));
-    assertTrue(FileBasedIndex.isIndexAccessDuringDumbModeEnabled());
 
     final IdIndexEntry wordHash = new IdIndexEntry(word, true);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());

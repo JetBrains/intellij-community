@@ -22,7 +22,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +169,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   @Override
   public boolean isDumbAware() {
-    return FileBasedIndex.isIndexAccessDuringDumbModeEnabled();
+    return true;
   }
 
   public static final class JavadocSeparatorContributor implements ChooseByNameContributorEx, GotoClassContributor {
