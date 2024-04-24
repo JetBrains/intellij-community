@@ -124,7 +124,7 @@ fun loadApp(setupEventQueue: Runnable) {
     """
     $COROUTINE_DUMP_HEADER
     ${dumpCoroutines(stripDump = false)}
-    """
+    """.trimIndent()
   }
   val isHeadless = UITestUtil.getAndSetHeadlessProperty()
   AppMode.setHeadlessInTestMode(isHeadless)
