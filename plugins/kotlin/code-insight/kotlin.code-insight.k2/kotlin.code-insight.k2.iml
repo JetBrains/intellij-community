@@ -54,6 +54,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
+    <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="module" module-name="kotlin.formatter.minimal" />
