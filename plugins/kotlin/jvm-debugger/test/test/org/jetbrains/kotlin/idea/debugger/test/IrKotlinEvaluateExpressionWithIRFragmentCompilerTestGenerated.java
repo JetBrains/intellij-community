@@ -305,6 +305,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                     public void testStepIntoMethodWithAndWithoutSwitcher() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoMethodWithAndWithoutSwitcher.kt");
                     }
+
+                    @TestMetadata("stepIntoSuspendLambda.kt")
+                    public void testStepIntoSuspendLambda() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoSuspendLambda.kt");
+                    }
                 }
 
                 @RunWith(JUnit3RunnerWithInners.class)
