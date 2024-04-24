@@ -64,7 +64,7 @@ object FileBasedIndexLayoutSettings {
       }
 
       // scan for exact layout id & version match
-      for (bean in DefaultIndexStorageLayout.supportedLayoutProviders) {
+      for (bean in IndexStorageLayoutLocator.supportedLayoutProviders) {
         if (bean.id == id && bean.version == version) {
           currentLayout = Ref.create(bean)
           return false
@@ -72,7 +72,7 @@ object FileBasedIndexLayoutSettings {
       }
 
       // scan only matched id
-      for (bean in DefaultIndexStorageLayout.supportedLayoutProviders) {
+      for (bean in IndexStorageLayoutLocator.supportedLayoutProviders) {
         if (bean.id == id) {
           setUsedLayout(bean)
           currentLayout = Ref.create(bean)

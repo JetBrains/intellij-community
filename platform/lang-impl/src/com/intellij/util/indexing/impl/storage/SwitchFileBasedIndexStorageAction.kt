@@ -59,7 +59,7 @@ private fun defaultIndexStorageDescriptor(): IndexStorageDescriptor {
 }
 
 private fun customIndexStorageDescriptors(): List<IndexStorageDescriptor> =
-  DefaultIndexStorageLayout.supportedLayoutProviders.map {
+  IndexStorageLayoutLocator.supportedLayoutProviders.map {
     IndexStorageDescriptor(it.localizedPresentableName, it.id, it.version, it)
   }
 

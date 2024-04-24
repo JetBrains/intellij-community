@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.collect.Iterators;
@@ -70,7 +70,7 @@ import com.intellij.util.indexing.diagnostic.IndexStatisticGroup;
 import com.intellij.util.indexing.diagnostic.StorageDiagnosticData;
 import com.intellij.util.indexing.events.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.projectFilter.IncrementalProjectIndexableFilesFilterHolder;
 import com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHolder;
@@ -484,7 +484,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     int attemptCount = 2;
     for (int attempt = 0; attempt < attemptCount; attempt++) {
       try {
-        VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension);
+        VfsAwareIndexStorageLayout<K, V> layout = IndexStorageLayoutLocator.getLayout(extension);
         index = createIndex(extension, layout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
@@ -504,7 +504,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         boolean lastAttempt = attempt == attemptCount - 1;
 
         try {
-          VfsAwareIndexStorageLayout<K, V> layout = DefaultIndexStorageLayout.getLayout(extension);
+          VfsAwareIndexStorageLayout<K, V> layout = IndexStorageLayoutLocator.getLayout(extension);
           layout.clearIndexData();
         }
         catch (Exception layoutEx) {

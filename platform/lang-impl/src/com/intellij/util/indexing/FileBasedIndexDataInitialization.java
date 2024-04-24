@@ -20,7 +20,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
@@ -134,7 +134,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = extension.initialize(DefaultIndexStorageLayout.getCustomLayoutId());
+      FileBasedIndexInfrastructureExtension.InitializationResult result = extension.initialize(IndexStorageLayoutLocator.getCustomLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                   result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
