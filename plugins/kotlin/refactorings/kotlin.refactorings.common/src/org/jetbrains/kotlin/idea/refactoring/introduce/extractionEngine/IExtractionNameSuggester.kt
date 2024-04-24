@@ -2,23 +2,38 @@
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidator
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
 import org.jetbrains.kotlin.psi.KtElement
 
 interface IExtractionNameSuggester<KotlinType> {
+
     fun suggestNamesByType(
         kotlinType: KotlinType,
         container: KtElement,
-        validator: (String) -> Boolean,
-        defaultName: String? = null
-    ): List<String>
+        validator: KotlinNameValidator,
+        defaultName: @NonNls String? = null,
+    ): List<@NonNls String> // todo return an actual Sequence
 
-    fun createNameValidator(
-        container: KtElement,
-        anchor: PsiElement?,
-        validatorType: KotlinNameSuggestionProvider.ValidatorTarget
-    ): (String) -> Boolean
+    fun suggestNameByName(
+        name: @NonNls String,
+        validator: KotlinNameValidator,
+    ): @NonNls String
+}
 
-    fun suggestNameByName(name: String, container: KtElement, anchor: PsiElement?): String
+fun IExtractionNameSuggester<*>.suggestNameByName(
+    name: @NonNls String,
+    container: KtElement,
+    anchor: PsiElement?,
+): @NonNls String {
+    val validator = KotlinNameValidatorProvider.getInstance()
+        .createNameValidator(
+            container = container,
+            target = KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER,
+            anchor = anchor,
+        )
 
+    return suggestNameByName(name, validator)
 }
