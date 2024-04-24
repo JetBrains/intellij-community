@@ -123,17 +123,17 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
     searchPanel.add(VerticalLayout.CENTER, mySearch);
     myFilter = new SettingsFilter(project, groups, mySearch) {
       @Override
-      Configurable getConfigurable(SimpleNode node) {
+      protected Configurable getConfigurable(SimpleNode node) {
         return SettingsTreeView.getConfigurable(node);
       }
 
       @Override
-      SimpleNode findNode(Configurable configurable) {
+      protected SimpleNode findNode(Configurable configurable) {
         return myTreeView.findNode(configurable);
       }
 
       @Override
-      void updateSpotlight(boolean now) {
+      protected void updateSpotlight(boolean now) {
         if (!myDisposed && mySpotlightPainter != null) {
           if (!now) {
             mySpotlightPainter.updateLater();

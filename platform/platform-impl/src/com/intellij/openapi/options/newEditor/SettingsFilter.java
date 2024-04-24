@@ -48,7 +48,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private volatile SearchableOptionsRegistrar searchableOptionRegistrar;
   private final Alarm myUpdatingAlarm;
 
-  SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
+  public SettingsFilter(@Nullable Project project, @NotNull List<? extends ConfigurableGroup> groups, SearchTextField search) {
     myUpdatingAlarm = new Alarm(project != null ? project : ApplicationManager.getApplication());
     SearchableOptionsRegistrarImpl optionRegistrar =
       (SearchableOptionsRegistrarImpl)ApplicationManager.getApplication().getServiceIfCreated(SearchableOptionsRegistrar.class);
@@ -97,11 +97,11 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     });
   }
 
-  abstract Configurable getConfigurable(SimpleNode node);
+  protected abstract Configurable getConfigurable(SimpleNode node);
 
-  abstract SimpleNode findNode(Configurable configurable);
+  protected abstract SimpleNode findNode(Configurable configurable);
 
-  abstract void updateSpotlight(boolean now);
+  protected abstract void updateSpotlight(boolean now);
 
   @Override
   public boolean shouldBeShowing(SimpleNode node) {
@@ -136,12 +136,14 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
     return StringUtil.isEmpty(mySearch.getText());
   }
 
-  @NotNull String getFilterText() {
+  @NotNull
+  public String getFilterText() {
     String text = mySearch.getText();
     return text == null ? "" : text.trim();
   }
 
-  @NotNull String getSpotlightFilterText() {
+  @NotNull
+  public String getSpotlightFilterText() {
     if (myHits != null) {
       return myHits.getSpotlightFilter();
     }
