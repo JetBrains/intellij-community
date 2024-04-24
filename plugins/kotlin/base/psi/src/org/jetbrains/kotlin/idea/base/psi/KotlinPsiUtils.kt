@@ -309,3 +309,12 @@ fun KtElement.findParameterWithName(name: String): KtParameter? {
     val function = getStrictParentOfType<KtFunction>() ?: return null
     return function.valueParameters.firstOrNull { it.name == name } ?: function.findParameterWithName(name)
 }
+
+fun KtSimpleNameExpression.isPartOfQualifiedExpression(): Boolean {
+    var parent = parent
+    while (parent is KtDotQualifiedExpression) {
+        if (parent.selectorExpression !== this) return true
+        parent = parent.parent
+    }
+    return false
+}

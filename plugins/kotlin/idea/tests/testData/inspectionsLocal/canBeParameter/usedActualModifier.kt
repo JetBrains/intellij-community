@@ -1,3 +1,4 @@
+// PROBLEM: none
 expect abstract class Bar
 
 expect class Foo : Bar {
@@ -7,6 +8,5 @@ expect class Foo : Bar {
 actual abstract class Bar(baz: String)
 
 actual class Foo(
-    // NO
-    actual val baz: Int
+    actual <caret>val baz: Int
 ) : Bar(baz.toString())

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils
 
 import com.intellij.lang.ASTNode
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
