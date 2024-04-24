@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 
 object CliArgumentStringBuilder {
-    private const val LANGUAGE_FEATURE_FLAG_PREFIX = "-XXLanguage:"
+    const val LANGUAGE_FEATURE_FLAG_PREFIX = "-XXLanguage:"
     private const val LANGUAGE_FEATURE_DEDICATED_FLAG_PREFIX = "-X"
 
     private val LanguageFeature.dedicatedFlagInfo

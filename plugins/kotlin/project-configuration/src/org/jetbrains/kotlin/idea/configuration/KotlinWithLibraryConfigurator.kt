@@ -36,9 +36,7 @@ import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
 import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
-import org.jetbrains.kotlin.idea.facet.getOrCreateConfiguredFacet
-import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
-import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
+import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.askUpdateRuntime
@@ -371,21 +369,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             return
         }
 
-        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getSettings(module)
-        if (facetSettings != null) {
-            val model = FacetManager.getInstance(module).createModifiableModel()
-            with(facetSettings) {
-                if (languageVersion != null) {
-                    languageLevel = LanguageVersion.fromVersionString(languageVersion)
-                }
-                if (apiVersion != null) {
-                    apiLevel = LanguageVersion.fromVersionString(apiVersion)
-                }
-            }
-            runWriteAction {
-                model.commit()
-            }
-        }
+        module.setLanguageAndApiVersionInKotlinFacet(languageVersion, apiVersion)
     }
 
     @Deprecated(
@@ -434,24 +418,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
     override val canAddModuleWideOptIn: Boolean = true
 
     override fun addModuleWideOptIn(module: Module, annotationFqName: FqName, compilerArgument: String) {
-        // if used in a quick fix, this prevents Fleet from running the side-effect during preview (and the bugs that follow)
-        SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL)
-
-        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(module.project)
-        try {
-            module.getOrCreateConfiguredFacet(modelsProvider, useProjectSettings = false, commitModel = true) {
-                val facetSettings = configuration.settings
-                val compilerSettings = facetSettings.compilerSettings ?: CompilerSettings().also {
-                    facetSettings.compilerSettings = it
-                }
-
-                compilerSettings.additionalArguments += " $compilerArgument"
-                facetSettings.updateMergedArguments()
-            }
-            module.project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
-        } finally {
-            modelsProvider.dispose()
-        }
+        module.addCompilerArgumentToKotlinFacet(compilerArgument)
     }
 
     companion object {
