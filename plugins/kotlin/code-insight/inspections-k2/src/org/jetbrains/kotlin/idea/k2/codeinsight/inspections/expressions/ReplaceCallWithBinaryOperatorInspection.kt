@@ -221,13 +221,13 @@ context(KtAnalysisSession)
 private fun areRelatedBySubtyping(first: KtExpression, second: KtExpression): Boolean {
     val firstType = first.getKtType() ?: return false
     val secondType = second.getKtType() ?: return false
-    return firstType isSubTypeOf secondType || secondType isSubTypeOf firstType
+    return firstType.isSubTypeOf(secondType) || secondType.isSubTypeOf(firstType)
 }
 
 context(KtAnalysisSession)
 private fun KtExpression.hasDoubleOrFloatType(): Boolean {
     val type = getKtType() ?: return false
-    return type isSubTypeOf builtinTypes.DOUBLE || type isSubTypeOf builtinTypes.FLOAT
+    return type.isSubTypeOf(builtinTypes.DOUBLE) || type.isSubTypeOf(builtinTypes.FLOAT)
 }
 
 context(KtAnalysisSession)

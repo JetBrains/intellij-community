@@ -119,8 +119,8 @@ private fun buildType(type: KtType, typeArgumentsMapping: Map<KtTypeParameterSym
 
 context(KtAnalysisSession)
 private fun isApplicableType(type: KtType, expectedType: KtType): Boolean {
-    return type isEqualTo expectedType ||
-            (expectedType.isMarkedNullable && type.withNullability(KtTypeNullability.NULLABLE) isEqualTo expectedType)
+    return type.isEqualTo(expectedType) ||
+            (expectedType.isMarkedNullable && type.withNullability(KtTypeNullability.NULLABLE).isEqualTo(expectedType))
 }
 
 context(KtAnalysisSession)

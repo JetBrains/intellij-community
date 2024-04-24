@@ -56,7 +56,7 @@ object TypeMismatchFactories {
                 return emptyList()
             }
             val nullableExpectedType = expectedType.withNullability(KtTypeNullability.NULLABLE)
-            if (actualType isSubTypeOf nullableExpectedType) {
+            if (actualType.isSubTypeOf(nullableExpectedType)) {
                 return listOfNotNull(psi.asAddExclExclCallFix())
             }
         }
