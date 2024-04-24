@@ -91,6 +91,8 @@ object CorruptionMarker {
     }
 
     deletePersistentIndexableFilesFilters()
+    FileUtil.deleteWithRenaming(PersistentDirtyFilesQueue.getQueueFile())
+    FileUtil.deleteWithRenaming(PersistentDirtyFilesQueue.getQueuesDir())
 
     // serialization manager is initialized before and use removed index root so we need to reinitialize it
     SerializationManagerEx.getInstanceEx().reinitializeNameStorage()

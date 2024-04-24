@@ -20,8 +20,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TestActionEvent.createTestEvent
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.utils.vfs.createFile
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.Companion.readJsonIndexingActivityDiagnostic
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumperUtils
@@ -82,6 +84,29 @@ class DirtyFilesQueueTest {
   @Test
   fun `test dirty file is indexed after FileBasedIndex is restarted (with full scanning)`() {
     testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning = false)
+  }
+
+  @Test
+  fun `test queues removed from disk after invalidating caches`() {
+    runBlocking {
+      val src = tempDir.createVirtualDir("src")
+      writeAction {
+        val rootModel = ModuleRootManager.getInstance(p.module).modifiableModel
+        rootModel.addContentEntry(src)
+        rootModel.commit()
+      }
+      IndexingTestUtil.waitUntilIndexesAreReady(project) // scanning due to model change
+      writeAction { src.createFile("A.txt") }
+      restartSkippingFullScanning(false) // persist queue
+      assertThat(project.getQueueFile()).exists()
+      assertThat(getQueueFile()).exists()
+      runBlocking(Dispatchers.EDT) {
+        ForceIndexRebuildAction().actionPerformed(createTestEvent())
+      }
+      IndexingTestUtil.suspendUntilIndexesAreReady(project)
+      assertThat(project.getQueueFile()).doesNotExist()
+      assertThat(getQueueFile()).doesNotExist()
+    }
   }
 
   private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning: Boolean) {

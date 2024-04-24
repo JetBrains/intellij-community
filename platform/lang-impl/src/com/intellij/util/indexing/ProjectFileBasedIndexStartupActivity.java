@@ -49,6 +49,11 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
       ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
     }
 
+    // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
+    // also dirty file queues can be read only after [com.intellij.util.indexing.IndexDataInitializer] because it processes corruption marker
+    fileBasedIndex.loadIndexes();
+    fileBasedIndex.waitUntilIndicesAreInitialized();
+
     Path projectQueueFile = getQueueFile(project);
     ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().getCreationTimestamp());
 
@@ -70,10 +75,6 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     });
 
     if (!registered) return;
-
-    // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
-    fileBasedIndex.loadIndexes();
-    fileBasedIndex.waitUntilIndicesAreInitialized();
 
     OrphanDirtyFilesQueue orphanQueue = fileBasedIndex.getOrphanDirtyFileIdsFromLastSession();
     if (orphanQueue == null) {
