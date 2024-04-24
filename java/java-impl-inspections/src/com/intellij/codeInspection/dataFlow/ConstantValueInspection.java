@@ -20,6 +20,8 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.source.PsiFieldImpl;
@@ -323,7 +325,10 @@ public final class ConstantValueInspection extends AbstractBaseJavaLocalInspecti
       PsiPattern pattern = instanceOf.getPattern();
       if (pattern instanceof PsiTypeTestPattern typeTestPattern && typeTestPattern.getPatternVariable() != null) {
         PsiTypeElement checkType = typeTestPattern.getCheckType();
-        if (checkType != null && checkType.getType().isAssignableFrom(type)) {
+        LanguageLevel languageLevel = PsiUtil.getLanguageLevel(instanceOf);
+        if (checkType != null && checkType.getType().isAssignableFrom(type) &&
+            //see com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl.visitInstanceOfExpression
+            !JavaFeature.PATTERN_GUARDS_AND_RECORD_PATTERNS.isSufficient(languageLevel)) {
           // Reported as compilation error
           return true;
         }
