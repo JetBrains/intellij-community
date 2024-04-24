@@ -699,11 +699,6 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
       return true == project.getUserData(CONTENT_SCANNED)
     }
 
-    @JvmStatic
-    fun isFirstProjectScanningRequested(project: Project): Boolean {
-      return project.getUserData(FIRST_SCANNING_REQUESTED) != null
-    }
-
     private fun collectProviders(project: Project, index: FileBasedIndexImpl): Pair<List<IndexableFilesIterator>, StatusMark?> {
       val cache = DependenciesIndexedStatusService.shouldBeUsed()
       val originalOrderedProviders: List<IndexableFilesIterator>

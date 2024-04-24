@@ -25,6 +25,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.math.max
 
 @JvmField
@@ -36,6 +38,9 @@ internal enum class FirstScanningState {
   REQUESTED, PERFORMED
 }
 
+private val initialScanningLock = ReentrantLock()
+private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
+
 internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           orphanQueue: OrphanDirtyFilesQueue,
                                           projectDirtyFilesQueue: ProjectDirtyFilesQueue,
@@ -45,17 +50,37 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           coroutineScope: CoroutineScope,
                                           indexingReason: String): Job {
   FileBasedIndex.getInstance().loadIndexes()
-  (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
+  val isFilterInvalidated = initialScanningLock.withLock {
+    (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
+    project.getUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED) == true
+  }
   val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
 
   val filterHolder = fileBasedIndex.indexableFilesFilterHolder
-  val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder, requireReadingIndexableFilesIndexFromDisk)
+  val isFilterUpToDate = isIndexableFilesFilterUpToDate(project, filterHolder, isFilterInvalidated, requireReadingIndexableFilesIndexFromDisk)
 
   return if (allowSkippingFullScanning && Registry.`is`("full.scanning.on.startup.can.be.skipped") && isFilterUpToDate) {
     scheduleDirtyFilesScanning(project, orphanQueue, projectDirtyFilesQueue, startSuspended, coroutineScope, indexingReason)
   }
   else {
     scheduleFullScanning(project, orphanQueue, projectDirtyFilesQueue, startSuspended, isFilterUpToDate, coroutineScope, indexingReason)
+  }
+}
+
+
+internal fun isFirstProjectScanningRequested(project: Project): Boolean {
+  return project.getUserData(FIRST_SCANNING_REQUESTED) != null
+}
+
+internal fun invalidateProjectFilterIfFirstScanningNotRequested(project: Project): Boolean {
+  return initialScanningLock.withLock {
+    if (isFirstProjectScanningRequested(project)) {
+      false
+    }
+    else {
+      project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, true)
+      true
+    }
   }
 }
 
@@ -188,9 +213,10 @@ private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<Virtual
 
 private fun isIndexableFilesFilterUpToDate(project: Project,
                                            filterHolder: ProjectIndexableFilesFilterHolder,
+                                           isFilterInvalidated: Boolean,
                                            requireReadingIndexableFilesIndexFromDisk: Boolean): Boolean {
   val unsatisfiedConditions = ReusingPersistentFilterConditions.entries
-    .filter { !it.isUpToDate(project, filterHolder) }
+    .filter { !it.isUpToDate(project, filterHolder, isFilterInvalidated) }
     .let { conditions ->
       if (requireReadingIndexableFilesIndexFromDisk) conditions
       else conditions.filter { it != IS_FILTER_LOADED_FROM_DISK }
@@ -207,40 +233,34 @@ private fun isIndexableFilesFilterUpToDate(project: Project,
 
 private enum class ReusingPersistentFilterConditions {
   IS_PERSISTENT_FILTER_ENABLED {
-    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean {
+    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder, isFilterInvalidated: Boolean): Boolean {
       return usePersistentFilesFilter()
     }
   },
   IS_FILTER_LOADED_FROM_DISK {
-    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean {
+    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder, isFilterInvalidated: Boolean): Boolean {
       return filterHolder.wasDataLoadedFromDisk(project)
     }
   },
   IS_SCANNING_COMPLETED {
-    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean {
+    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder, isFilterInvalidated: Boolean): Boolean {
       return project.getService(ProjectIndexingDependenciesService::class.java).isScanningCompleted()
     }
   },
   FILTER_IS_NOT_INVALIDATED {
-    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean {
-      return project.getUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED) != true
+    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder, isFilterInvalidated: Boolean): Boolean {
+      return !isFilterInvalidated
     }
   },
   INDEXING_REQUEST_ID_DID_NOT_CHANGE_AFTER_LAST_SCANNING {
-    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean {
+    override fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder, isFilterInvalidated: Boolean): Boolean {
       val projectService = project.getService(ProjectIndexingDependenciesService::class.java)
       val appService = ApplicationManager.getApplication().getService(AppIndexingDependenciesService::class.java)
       return appService.getCurrent().toInt() == projectService.getAppIndexingRequestIdOfLastScanning()
     }
   };
 
-  abstract fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder): Boolean
-}
-
-private val PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED = Key<Boolean>("PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED")
-
-internal fun invalidatePersistentIndexableFilesFilter(project: Project) {
-  project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, true)
+  abstract fun isUpToDate(project: Project, filterHolder: ProjectIndexableFilesFilterHolder, isFilterInvalidated: Boolean): Boolean
 }
 
 private class ResultOfClearIndexesForDirtyFiles(val projectDirtyFilesFromProjectQueue: List<VirtualFile>, val projectDirtyFilesFromOrphanQueue: List<VirtualFile>)

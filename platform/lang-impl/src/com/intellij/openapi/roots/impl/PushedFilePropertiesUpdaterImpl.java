@@ -58,6 +58,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.isFirstProjectScanningRequested;
+
 public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater {
   private static final Logger LOG = Logger.getInstance(PushedFilePropertiesUpdater.class);
 
@@ -312,7 +314,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   @Override
   public void pushAll(FilePropertyPusher<?> @NotNull ... pushers) {
-    if (!UnindexedFilesScanner.isFirstProjectScanningRequested(myProject)) {
+    if (!isFirstProjectScanningRequested(myProject)) {
       LOG.info("Ignoring push request, as project is not yet initialized");
       return;
     }
