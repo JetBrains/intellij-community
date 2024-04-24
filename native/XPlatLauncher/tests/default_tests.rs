@@ -196,6 +196,20 @@ mod tests {
     }
 
     #[test]
+    fn corrupted_vm_options_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("\0\0\0\0-Xmx512m\n");
+
+        let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
+
+        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+
+        let nul_message = "Invalid character ('\\0') found in VM options file";
+        let nul_message_present = result.stderr.find(nul_message);
+        assert!(nul_message_present.is_some(), "Error message ('{}') is missing: {:?}", nul_message, result);
+    }
+
+    #[test]
     fn arguments_test() {
         let args = &["arguments-test-123"];
         let dump = run_launcher(LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
@@ -281,7 +295,7 @@ mod tests {
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
@@ -301,7 +315,7 @@ mod tests {
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
 
-        assert!(!result.exit_status.success(), "expected to fail:{:?}", result);
+        assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
 
         let header = "Cannot start the IDE";
         let header_present = result.stderr.find(header);
