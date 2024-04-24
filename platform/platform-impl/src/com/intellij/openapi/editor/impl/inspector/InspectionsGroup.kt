@@ -304,12 +304,10 @@ class InspectionsGroup(val analyzerGetter: () -> AnalyzerStatus, val editor: Edi
 
       val focusManager = IdeFocusManager.getInstance(editor.project)
 
-      val delegateEvent = AnActionEvent.createFromAnAction(action,
-                                                           e.inputEvent,
-                                                           ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                           editor.dataContext)
-
-      val wrapped = delegateEvent.withDataContext(wrapDataContext(delegateEvent.dataContext))
+      val wrapped = AnActionEvent.createFromAnAction(action,
+                                                     e.inputEvent,
+                                                     ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                     wrapDataContext(editor.dataContext))
       InspectionsFUS.performAction(e.project, fusTabId, actionId)
 
       val project = e.project ?: return
