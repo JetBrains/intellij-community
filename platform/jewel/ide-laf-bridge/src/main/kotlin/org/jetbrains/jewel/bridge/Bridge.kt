@@ -18,21 +18,22 @@ import kotlinx.coroutines.flow.shareIn
 internal val IntelliJApplication: Application
     get() = ApplicationManager.getApplication()
 
-private val Application.lookAndFeelFlow: Flow<Unit>
-    get() = messageBus.flow(LafManagerListener.TOPIC) { LafManagerListener { trySend(Unit) } }
+private fun Application.lookAndFeelFlow(scope: CoroutineScope): Flow<Unit> =
+    messageBus.flow(LafManagerListener.TOPIC, scope) { LafManagerListener { trySend(Unit) } }
 
 internal fun Application.lookAndFeelChangedFlow(
     scope: CoroutineScope,
     sharingStarted: SharingStarted = SharingStarted.Eagerly,
 ): Flow<Unit> =
-    lookAndFeelFlow.onStart { emit(Unit) }
+    lookAndFeelFlow(scope).onStart { emit(Unit) }
         .shareIn(scope, sharingStarted, replay = 1)
 
 internal fun <L : Any, K> MessageBus.flow(
     topic: Topic<L>,
+    parentScope: CoroutineScope,
     listener: ProducerScope<K>.() -> L,
 ): Flow<K> = callbackFlow {
-    val connection: SimpleMessageBusConnection = simpleConnect()
+    val connection: SimpleMessageBusConnection = connect(parentScope)
     connection.subscribe(topic, listener())
     awaitClose { connection.disconnect() }
 }
