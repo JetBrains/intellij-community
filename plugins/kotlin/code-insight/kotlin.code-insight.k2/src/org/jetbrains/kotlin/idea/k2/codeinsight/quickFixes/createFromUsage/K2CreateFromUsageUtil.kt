@@ -205,16 +205,24 @@ object K2CreateFromUsageUtil {
     val WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS: KtTypeRenderer = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
         // Without this, it will render `kotlin.String!` for `kotlin.String`, which causes a syntax error.
         flexibleTypeRenderer = object : KtFlexibleTypeRenderer {
-            context(KtAnalysisSession, KtTypeRenderer)
-            override fun renderType(type: KtFlexibleType, printer: PrettyPrinter) {
-                renderType(type.lowerBound, printer)
+            override fun renderType(
+                analysisSession: KtAnalysisSession,
+                type: KtFlexibleType,
+                typeRenderer: KtTypeRenderer,
+                printer: PrettyPrinter
+            ) {
+                typeRenderer.renderType(analysisSession, type.lowerBound, printer)
             }
         }
         // Without this, it can render `kotlin.String & kotlin.Any`, which causes a syntax error.
         definitelyNotNullTypeRenderer = object : KtDefinitelyNotNullTypeRenderer {
-            context(KtAnalysisSession, KtTypeRenderer)
-            override fun renderType(type: KtDefinitelyNotNullType, printer: PrettyPrinter) {
-                renderType(type.original, printer)
+            override fun renderType(
+                analysisSession: KtAnalysisSession,
+                type: KtDefinitelyNotNullType,
+                typeRenderer: KtTypeRenderer,
+                printer: PrettyPrinter
+            ) {
+                typeRenderer.renderType(analysisSession, type.original, printer)
             }
         }
         // Listing variances will cause a syntax error.

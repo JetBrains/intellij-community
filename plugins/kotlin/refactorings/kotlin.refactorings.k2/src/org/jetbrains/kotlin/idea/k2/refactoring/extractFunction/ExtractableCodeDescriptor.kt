@@ -62,15 +62,18 @@ data class ExtractableCodeDescriptor(
             return analyze(container) {
                 val filteredRenderer = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.annotationRenderer.with {
                     annotationFilter = annotationFilter.and(object : KtRendererAnnotationsFilter {
-                        context(KtAnalysisSession)
                         override fun filter(
-                            annotation: KtAnnotationApplication, owner: KtAnnotated
-                        ): Boolean = annotation.classId in classIds
+                            analysisSession: KtAnalysisSession,
+                            annotation: KtAnnotationApplication,
+                            owner: KtAnnotated
+                        ): Boolean {
+                            return annotation.classId in classIds
+                        }
                     })
 
                 }
                 val printer = PrettyPrinter()
-                filteredRenderer.renderAnnotations(container.getSymbol(), printer)
+                filteredRenderer.renderAnnotations(analysisSession, container.getSymbol(), printer)
                 printer.toString() + "\n"
             }
         }

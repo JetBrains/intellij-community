@@ -373,6 +373,8 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
                     || hasKotlinCommonLegacyRuntimeInScope(scope)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
+                    || hasKotlinWasmJsRuntimeInScope(module)
+                    || hasKotlinWasmWasiRuntimeInScope(module)
                     || hasKotlinNativeRuntimeInScope(module)
         })
     }
@@ -441,15 +443,15 @@ fun hasKotlinJsRuntimeInScope(module: Module): Boolean {
 }
 
 fun hasKotlinWasmRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_FQ_NAME, KotlinWasmJsLibraryKind)
 }
 
 fun hasKotlinWasmJsRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_JS_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_JS_FQ_NAME, KotlinWasmJsLibraryKind)
 }
 
 fun hasKotlinWasmWasiRuntimeInScope(module: Module): Boolean {
-    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_WASI_FQ_NAME, KotlinWasmLibraryKind)
+    return hasKotlinPlatformRuntimeInScope(module, KOTLIN_WASM_WASI_FQ_NAME, KotlinWasmWasiLibraryKind)
 }
 
 fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {

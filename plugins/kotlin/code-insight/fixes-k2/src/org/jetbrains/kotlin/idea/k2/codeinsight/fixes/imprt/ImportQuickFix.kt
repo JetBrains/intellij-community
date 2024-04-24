@@ -266,7 +266,7 @@ class ImportQuickFix(
             if (symbol is KtNamedClassOrObjectSymbol) {
                 append("class $fqName")
             } else {
-                renderer.renderDeclaration(symbol, printer = this)
+                renderer.renderDeclaration(analysisSession, symbol, printer = this)
             }
 
             when (symbol) {
