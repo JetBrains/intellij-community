@@ -2,11 +2,11 @@
 package com.intellij.terminal.completion
 
 import com.intellij.terminal.block.completion.ShellEnvironment
-import com.intellij.terminal.block.completion.engine.CommandPartNode
-import com.intellij.terminal.block.completion.engine.CommandTreeBuilder
-import com.intellij.terminal.block.completion.engine.CommandTreeSuggestionsProvider
-import com.intellij.terminal.block.completion.engine.SubcommandNode
-import com.intellij.terminal.completion.util.FakeCommandSpecManager
+import com.intellij.terminal.block.completion.engine.ShellCommandNode
+import com.intellij.terminal.block.completion.engine.ShellCommandTreeBuilder
+import com.intellij.terminal.block.completion.engine.ShellCommandTreeNode
+import com.intellij.terminal.block.completion.engine.ShellCommandTreeSuggestionsProvider
+import com.intellij.terminal.completion.util.FakeShellCommandSpecsManager
 import com.intellij.terminal.completion.util.FakeShellRuntimeDataProvider
 import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
@@ -20,7 +20,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 
 @RunWith(JUnit4::class)
-class CommandSpecSuggestionsTest {
+class ShellCommandSpecSuggestionsTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
   private var shellEnvironment: ShellEnvironment? = null
@@ -317,12 +317,12 @@ class CommandSpecSuggestionsTest {
   }
 
   private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
-    val commandSpecManager = FakeCommandSpecManager(commandMap)
-    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager,
-                                                             FakeShellRuntimeDataProvider(filePathSuggestions, shellEnvironment))
-    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
-                                                            commandName, spec, arguments.asList())
-    val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as CommandPartNode<*>) { node -> node.children }
+    val commandSpecManager = FakeShellCommandSpecsManager(commandMap)
+    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(commandSpecManager,
+                                                                  FakeShellRuntimeDataProvider(filePathSuggestions, shellEnvironment))
+    val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
+                                                                   commandName, spec, arguments.asList())
+    val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(rootNode as ShellCommandTreeNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: rootNode
     val actual = suggestionsProvider.getSuggestionsOfNext(lastNode, typedPrefix).flatMap { it.names }.filter { it.isNotEmpty() }
 

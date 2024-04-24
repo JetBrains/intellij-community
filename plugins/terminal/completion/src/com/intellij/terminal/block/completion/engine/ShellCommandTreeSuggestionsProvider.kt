@@ -1,28 +1,28 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.block.completion.engine
 
-import com.intellij.terminal.block.completion.CommandSpecCompletionUtil.isFilePath
-import com.intellij.terminal.block.completion.CommandSpecCompletionUtil.isFolder
-import com.intellij.terminal.block.completion.CommandSpecManager
 import com.intellij.terminal.block.completion.ShellArgumentSuggestion
+import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFilePath
+import com.intellij.terminal.block.completion.ShellCommandSpecUtil.isFolder
+import com.intellij.terminal.block.completion.ShellCommandSpecsManager
 import com.intellij.terminal.block.completion.ShellRuntimeDataProvider
 import org.jetbrains.terminal.completion.*
 import java.io.File
 
-internal class CommandTreeSuggestionsProvider(
-  private val commandSpecManager: CommandSpecManager,
+internal class ShellCommandTreeSuggestionsProvider(
+  private val commandSpecManager: ShellCommandSpecsManager,
   private val runtimeDataProvider: ShellRuntimeDataProvider
 ) {
-  suspend fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
+  suspend fun getSuggestionsOfNext(node: ShellCommandTreeNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {
-      is SubcommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
-      is OptionNode -> getSuggestionsForOption(node, nextNodeText)
-      is ArgumentNode -> node.parent?.let { getSuggestionsOfNext(it, nextNodeText) } ?: emptyList()
+      is ShellCommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
+      is ShellOptionNode -> getSuggestionsForOption(node, nextNodeText)
+      is ShellArgumentNode -> node.parent?.let { getSuggestionsOfNext(it, nextNodeText) } ?: emptyList()
       else -> emptyList()
     }
   }
 
-  suspend fun getDirectSuggestionsOfNext(option: OptionNode, nextNodeText: String): List<BaseSuggestion> {
+  suspend fun getDirectSuggestionsOfNext(option: ShellOptionNode, nextNodeText: String): List<BaseSuggestion> {
     val availableArgs = getAvailableArguments(option)
     return availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) }
   }
@@ -48,16 +48,16 @@ internal class CommandTreeSuggestionsProvider(
     return (aliases + commands).distinctBy { it.names.single() }.toList()
   }
 
-  fun getAvailableArguments(node: OptionNode): List<ShellArgument> {
+  fun getAvailableArguments(node: ShellOptionNode): List<ShellArgument> {
     return node.getAvailableArguments(node.spec.args)
   }
 
-  private fun getAvailableArguments(node: SubcommandNode): List<ShellArgument> {
+  private fun getAvailableArguments(node: ShellCommandNode): List<ShellArgument> {
     return node.getAvailableArguments(node.spec.args)
   }
 
-  private fun CommandPartNode<*>.getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
-    val existingArgs = children.mapNotNull { (it as? ArgumentNode)?.spec }
+  private fun ShellCommandTreeNode<*>.getAvailableArguments(allArgs: List<ShellArgument>): List<ShellArgument> {
+    val existingArgs = children.mapNotNull { (it as? ShellArgumentNode)?.spec }
     val lastExistingArg = existingArgs.lastOrNull()
     val lastExistingArgIndex = lastExistingArg?.let { allArgs.indexOf(it) } ?: -1
     val firstRequiredArgIndex = allArgs.withIndex().find { (ind, argument) ->
@@ -67,7 +67,7 @@ internal class CommandTreeSuggestionsProvider(
     return allArgs.subList(lastExistingArgIndex + if (includeLast) 0 else 1, firstRequiredArgIndex + 1)
   }
 
-  private suspend fun getSuggestionsForSubcommand(node: SubcommandNode, nextNodeText: String): List<BaseSuggestion> {
+  private suspend fun getSuggestionsForSubcommand(node: ShellCommandNode, nextNodeText: String): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
 
     // suggest subcommands and options only if the provided value is not a file path
@@ -81,8 +81,8 @@ internal class CommandTreeSuggestionsProvider(
         return suggestions
       }
 
-      val lastArg = (node.children.lastOrNull() as? ArgumentNode)?.spec
-      if ((!node.getMergedParserDirectives().optionsMustPrecedeArguments || node.children.filterIsInstance<ArgumentNode>().isEmpty())
+      val lastArg = (node.children.lastOrNull() as? ShellArgumentNode)?.spec
+      if ((!node.getMergedParserDirectives().optionsMustPrecedeArguments || node.children.filterIsInstance<ShellArgumentNode>().isEmpty())
           && (lastArg?.isVariadic != true || lastArg.optionsCanBreakVariadicArg)) {
         val options = getAvailableOptions(node)
         suggestions.addAll(options)
@@ -94,8 +94,8 @@ internal class CommandTreeSuggestionsProvider(
     return suggestions
   }
 
-  private fun getAvailableOptions(node: SubcommandNode): List<ShellOption> {
-    val existingOptions = node.children.mapNotNull { (it as? OptionNode)?.spec }
+  private fun getAvailableOptions(node: ShellCommandNode): List<ShellOption> {
+    val existingOptions = node.children.mapNotNull { (it as? ShellOptionNode)?.spec }
     return getAllOptions(node).filter { opt ->
       (opt.repeatTimes == 0 || existingOptions.count { it == opt } < opt.repeatTimes)
       && opt.exclusiveOn.none { exclusive -> existingOptions.any { it.names.contains(exclusive) } }
@@ -103,7 +103,7 @@ internal class CommandTreeSuggestionsProvider(
     }
   }
 
-  private fun getAllOptions(node: SubcommandNode): List<ShellOption> {
+  private fun getAllOptions(node: ShellCommandNode): List<ShellOption> {
     val options = mutableListOf<ShellOption>()
     options.addAll(node.spec.options)
 
@@ -111,7 +111,7 @@ internal class CommandTreeSuggestionsProvider(
      * Checks that [parent] command contain the subcommand with the name of [child].
      * If there is no such subcommand, it means that [child] is a nested command in a place of argument with [ShellArgument.isCommand] = true.
      */
-    fun isSubcommand(parent: SubcommandNode, child: SubcommandNode): Boolean {
+    fun isSubcommand(parent: ShellCommandNode, child: ShellCommandNode): Boolean {
       return parent.spec.subcommands.find { subCmd -> child.spec.names.any { subCmd.names.contains(it) } } != null
     }
 
@@ -119,7 +119,7 @@ internal class CommandTreeSuggestionsProvider(
     var parent = node.parent
     // parent commands can define 'persistent' options - they can be used in all subcommands
     // but add persistent options from parent, only if it is a direct subcommand
-    while (parent is SubcommandNode && isSubcommand(parent, child)) {
+    while (parent is ShellCommandNode && isSubcommand(parent, child)) {
       options.addAll(parent.spec.options.filter { it.isPersistent })
       child = parent
       parent = parent.parent
@@ -127,16 +127,16 @@ internal class CommandTreeSuggestionsProvider(
     return options
   }
 
-  private suspend fun getSuggestionsForOption(node: OptionNode, nextNodeText: String): List<BaseSuggestion> {
+  private suspend fun getSuggestionsForOption(node: ShellOptionNode, nextNodeText: String): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
     val directSuggestions = getDirectSuggestionsOfNext(node, nextNodeText)
     suggestions.addAll(directSuggestions)
 
     val availableArgs = getAvailableArguments(node)
-    val lastArg = (node.children.lastOrNull() as? ArgumentNode)?.spec
+    val lastArg = (node.children.lastOrNull() as? ShellArgumentNode)?.spec
     // suggest parent options and args if there is no required args or last arg is required, but variadic
     val args = if (lastArg?.isVariadic == true && lastArg.optionsCanBreakVariadicArg) availableArgs - lastArg else availableArgs
-    if (node.parent is SubcommandNode && args.all { it.isOptional }) {
+    if (node.parent is ShellCommandNode && args.all { it.isOptional }) {
       val parentSuggestions = getSuggestionsForSubcommand(node.parent, nextNodeText)
       suggestions.addAll(parentSuggestions)
     }

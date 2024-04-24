@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.terminal.completion.ShellCommand
 
 @ApiStatus.Internal
-interface CommandSpecManager {
+interface ShellCommandSpecsManager {
   /**
    * Returns a short version of the command specification: only names, description
    * and the loadSpec reference for loading full specification.

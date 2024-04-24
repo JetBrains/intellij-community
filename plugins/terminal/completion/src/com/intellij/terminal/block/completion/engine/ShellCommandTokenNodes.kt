@@ -6,22 +6,24 @@ import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.jetbrains.terminal.completion.ShellOption
 
-internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
-  val children: MutableList<CommandPartNode<*>> = mutableListOf()
+internal abstract class ShellCommandTreeNode<T>(val text: String, open val spec: T?, val parent: ShellCommandTreeNode<*>?) {
+  val children: MutableList<ShellCommandTreeNode<*>> = mutableListOf()
 
   override fun toString(): String {
     return "${javaClass.simpleName} { text: $text, children: $children }"
   }
 }
 
-internal class SubcommandNode(text: String,
-                              override val spec: ShellCommand,
-                              parent: CommandPartNode<*>?) : CommandPartNode<ShellCommand>(text, spec, parent) {
+internal class ShellCommandNode(
+  text: String,
+  override val spec: ShellCommand,
+  parent: ShellCommandTreeNode<*>?
+) : ShellCommandTreeNode<ShellCommand>(text, spec, parent) {
   fun getMergedParserDirectives(): ShellCommandParserDirectives {
     val directives = mutableListOf<ShellCommandParserDirectives>()
     directives.add(spec.parserDirectives)
     var cur = parent
-    while (cur is SubcommandNode) {
+    while (cur is ShellCommandNode) {
       directives.add(cur.spec.parserDirectives)
       cur = cur.parent
     }
@@ -37,12 +39,16 @@ internal class SubcommandNode(text: String,
   }
 }
 
-internal class OptionNode(text: String,
-                          override val spec: ShellOption,
-                          parent: CommandPartNode<*>?) : CommandPartNode<ShellOption>(text, spec, parent)
+internal class ShellOptionNode(
+  text: String,
+  override val spec: ShellOption,
+  parent: ShellCommandTreeNode<*>?
+) : ShellCommandTreeNode<ShellOption>(text, spec, parent)
 
-internal class ArgumentNode(text: String,
-                            override val spec: ShellArgument,
-                            parent: CommandPartNode<*>?) : CommandPartNode<ShellArgument>(text, spec, parent)
+internal class ShellArgumentNode(
+  text: String,
+  override val spec: ShellArgument,
+  parent: ShellCommandTreeNode<*>?
+) : ShellCommandTreeNode<ShellArgument>(text, spec, parent)
 
-internal class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)
+internal class ShellUnknownNode(text: String, parent: ShellCommandTreeNode<*>?) : ShellCommandTreeNode<Any>(text, null, parent)

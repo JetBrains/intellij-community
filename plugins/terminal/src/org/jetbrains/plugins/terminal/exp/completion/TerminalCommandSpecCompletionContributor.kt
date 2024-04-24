@@ -9,7 +9,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.terminal.block.completion.CommandSpecCompletion
+import com.intellij.terminal.block.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.block.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSession
 import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.terminalPromptModel
@@ -63,7 +63,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       return emptyList()
     }
 
-    val completion = CommandSpecCompletion(IJCommandSpecManager.getInstance(), context.runtimeDataProvider)
+    val completion = ShellCommandSpecCompletion(IJShellCommandSpecsManager.getInstance(), context.runtimeDataProvider)
     val command = expandedTokens.first()
     val arguments = expandedTokens.subList(1, expandedTokens.size)
     if (arguments.isEmpty()) {

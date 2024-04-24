@@ -7,13 +7,13 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.exp.completion.CommandSpecsBean
-import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
+import org.jetbrains.plugins.terminal.exp.completion.IJShellCommandSpecsManager
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-class CommandSpecLoadingTest : BasePlatformTestCase() {
+class ShellCommandSpecLoadingTest : BasePlatformTestCase() {
   private val commandName = "main"
 
   override fun setUp() {
@@ -27,10 +27,10 @@ class CommandSpecLoadingTest : BasePlatformTestCase() {
 
   @Test
   fun `load command spec for subcommand from separate file`() = runBlocking {
-    val spec = IJCommandSpecManager.getInstance().getCommandSpec(commandName) ?: error("Not found command with name: '$commandName'")
+    val spec = IJShellCommandSpecsManager.getInstance().getCommandSpec(commandName) ?: error("Not found command with name: '$commandName'")
     val subcommand = spec.subcommands.firstOrNull() ?: error("Not found subcommands in spec: $spec")
     val specReference = subcommand.loadSpec ?: error("'loadSpec' property is null in subcommand: $subcommand")
-    val loadedSubcommand = IJCommandSpecManager.getInstance().getCommandSpec(specReference)
+    val loadedSubcommand = IJShellCommandSpecsManager.getInstance().getCommandSpec(specReference)
     assertNotNull(loadedSubcommand)
   }
 }

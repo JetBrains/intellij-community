@@ -1,9 +1,9 @@
 package com.intellij.terminal.block.completion
 
-import com.intellij.terminal.block.completion.engine.CommandPartNode
-import com.intellij.terminal.block.completion.engine.CommandTreeBuilder
-import com.intellij.terminal.block.completion.engine.CommandTreeSuggestionsProvider
-import com.intellij.terminal.block.completion.engine.SubcommandNode
+import com.intellij.terminal.block.completion.engine.ShellCommandNode
+import com.intellij.terminal.block.completion.engine.ShellCommandTreeBuilder
+import com.intellij.terminal.block.completion.engine.ShellCommandTreeNode
+import com.intellij.terminal.block.completion.engine.ShellCommandTreeSuggestionsProvider
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.terminal.completion.BaseSuggestion
@@ -11,8 +11,8 @@ import org.jetbrains.terminal.completion.ShellArgument
 import java.io.File
 
 @ApiStatus.Internal
-class CommandSpecCompletion(
-  private val commandSpecManager: CommandSpecManager,
+class ShellCommandSpecCompletion(
+  private val commandSpecManager: ShellCommandSpecsManager,
   private val runtimeDataProvider: ShellRuntimeDataProvider
 ) {
 
@@ -34,9 +34,9 @@ class CommandSpecCompletion(
 
     val completeArguments = arguments.subList(0, arguments.size - 1)
     val lastArgument = arguments.last()
-    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
-    val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
-                                                            command, commandSpec, completeArguments)
+    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
+    val rootNode: ShellCommandNode = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
+                                                                   command, commandSpec, completeArguments)
     return computeSuggestions(suggestionsProvider, rootNode, lastArgument)
   }
 
@@ -47,7 +47,7 @@ class CommandSpecCompletion(
       files  // cur token contains path delimiter, so it is a path, and we should not propose commands
     }
     else {
-      val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
+      val suggestionsProvider = ShellCommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
       val commands = suggestionsProvider.getAvailableCommands()
       files + commands
     }
@@ -58,15 +58,15 @@ class CommandSpecCompletion(
    */
   suspend fun computeFileItems(incompletePath: String): List<BaseSuggestion> {
     if (incompletePath.isBlank()) return emptyList()
-    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
+    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(commandSpecManager, runtimeDataProvider)
     val fakeArgument = ShellArgument(templates = listOf("filepaths"))
     return suggestionsProvider.getFileSuggestions(fakeArgument, incompletePath, onlyDirectories = false).filterEmptyNames()
   }
 
-  private suspend fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
-                                         root: SubcommandNode,
+  private suspend fun computeSuggestions(suggestionsProvider: ShellCommandTreeSuggestionsProvider,
+                                         root: ShellCommandNode,
                                          lastArgument: String): List<BaseSuggestion> {
-    val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as CommandPartNode<*>) { node -> node.children }
+    val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as ShellCommandTreeNode<*>) { node -> node.children }
     val lastNode = allChildren.last() ?: root
     return suggestionsProvider.getSuggestionsOfNext(lastNode, lastArgument).filterEmptyNames()
   }

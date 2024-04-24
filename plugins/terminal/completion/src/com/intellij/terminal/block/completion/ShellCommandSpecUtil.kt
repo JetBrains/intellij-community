@@ -4,7 +4,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.terminal.completion.ShellArgument
 
 @ApiStatus.Internal
-object CommandSpecCompletionUtil {
+object ShellCommandSpecUtil {
   fun ShellArgument.isFilePath(): Boolean = isWithTemplate("filepaths")
 
   fun ShellArgument.isFolder(): Boolean = isWithTemplate("folders")

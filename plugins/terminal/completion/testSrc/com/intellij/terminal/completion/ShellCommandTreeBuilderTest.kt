@@ -2,7 +2,7 @@
 package com.intellij.terminal.completion
 
 import com.intellij.terminal.block.completion.engine.*
-import com.intellij.terminal.completion.util.FakeCommandSpecManager
+import com.intellij.terminal.completion.util.FakeShellCommandSpecsManager
 import com.intellij.terminal.completion.util.FakeShellRuntimeDataProvider
 import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.util.containers.JBIterable
@@ -17,7 +17,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 
 @RunWith(JUnit4::class)
-class CommandTreeBuilderTest {
+class ShellCommandTreeBuilderTest {
   private val commandName = "command"
   private var filePathSuggestions: List<String> = emptyList()
 
@@ -245,10 +245,10 @@ class CommandTreeBuilderTest {
   }
 
   private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) = runBlocking {
-    val commandSpecManager = FakeCommandSpecManager()
-    val suggestionsProvider = CommandTreeSuggestionsProvider(commandSpecManager, FakeShellRuntimeDataProvider(filePathSuggestions))
-    val root = CommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
-                                        commandName, spec, arguments.asList())
+    val commandSpecManager = FakeShellCommandSpecsManager()
+    val suggestionsProvider = ShellCommandTreeSuggestionsProvider(commandSpecManager, FakeShellRuntimeDataProvider(filePathSuggestions))
+    val root = ShellCommandTreeBuilder.build(suggestionsProvider, commandSpecManager,
+                                             commandName, spec, arguments.asList())
     assertions(CommandTreeAssertions(root))
   }
 
@@ -256,40 +256,40 @@ class CommandTreeBuilderTest {
     filePathSuggestions = files.asList()
   }
 
-  private class CommandTreeAssertions(root: CommandPartNode<*>) {
-    private val allChildren: JBIterable<CommandPartNode<*>> = TreeTraversal.PRE_ORDER_DFS.traversal(root) { node -> node.children }
+  private class CommandTreeAssertions(root: ShellCommandTreeNode<*>) {
+    private val allChildren: JBIterable<ShellCommandTreeNode<*>> = TreeTraversal.PRE_ORDER_DFS.traversal(root) { node -> node.children }
 
     fun assertSubcommandOf(cmd: String, parentCmd: String) {
       val childNode = allChildren.find { it.text == cmd } ?: error("Not found node with name: $cmd")
-      assertTrue("Expected that child is subcommand", childNode is SubcommandNode)
+      assertTrue("Expected that child is subcommand", childNode is ShellCommandNode)
       assertTrue("Expected that parent of '$cmd' is a subcommand '$parentCmd', but was: ${childNode.parent}",
-                 (childNode.parent as? SubcommandNode)?.text == parentCmd)
+                 (childNode.parent as? ShellCommandNode)?.text == parentCmd)
     }
 
     fun assertOptionOf(option: String, subcommand: String) {
       val childNode = allChildren.find { it.text == option } ?: error("Not found node with name: $option")
-      assertTrue("Expected that child is option", childNode is OptionNode)
+      assertTrue("Expected that child is option", childNode is ShellOptionNode)
       assertTrue("Expected that parent of '$option' is a subcommand '$subcommand', but was: ${childNode.parent}",
-                 (childNode.parent as? SubcommandNode)?.text == subcommand)
+                 (childNode.parent as? ShellCommandNode)?.text == subcommand)
     }
 
     fun assertArgumentOfOption(arg: String, option: String) {
       val childNode = allChildren.find { it.text == arg } ?: error("Not found node with name: $arg")
-      assertTrue("Expected that child is argument", childNode is ArgumentNode)
+      assertTrue("Expected that child is argument", childNode is ShellArgumentNode)
       assertTrue("Expected that parent of '$arg' is an option '$option', but was: ${childNode.parent}",
-                 (childNode.parent as? OptionNode)?.text == option)
+                 (childNode.parent as? ShellOptionNode)?.text == option)
     }
 
     fun assertArgumentOfSubcommand(arg: String, subcommand: String) {
       val childNode = allChildren.find { it.text == arg } ?: error("Not found node with name: $arg")
-      assertTrue("Expected that child is argument", childNode is ArgumentNode)
+      assertTrue("Expected that child is argument", childNode is ShellArgumentNode)
       assertTrue("Expected that parent of '$arg' is an option '$subcommand', but was: ${childNode.parent}",
-                 (childNode.parent as? SubcommandNode)?.text == subcommand)
+                 (childNode.parent as? ShellCommandNode)?.text == subcommand)
     }
 
     fun assertUnknown(child: String, parent: String) {
       val childNode = allChildren.find { it.text == child } ?: error("Not found node with name: $child")
-      assertTrue("Expected that child is unknown", childNode is UnknownNode)
+      assertTrue("Expected that child is unknown", childNode is ShellUnknownNode)
       assertTrue("Expected that parent of '$child' is '$parent', but was: ${childNode.parent}",
                  childNode.parent?.text == parent)
     }
