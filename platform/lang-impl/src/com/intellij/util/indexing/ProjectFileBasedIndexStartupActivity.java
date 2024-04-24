@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
@@ -50,12 +49,13 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     }
 
     // load indexes while in dumb mode, otherwise someone from read action may hit `FileBasedIndex.getIndex` and hang (IDEA-316697)
-    // also dirty file queues can be read only after [com.intellij.util.indexing.IndexDataInitializer] because it processes corruption marker
     fileBasedIndex.loadIndexes();
-    fileBasedIndex.waitUntilIndicesAreInitialized();
+    RegisteredIndexes registeredIndexes = fileBasedIndex.getRegisteredIndexes();
+    if (registeredIndexes == null) return;
+    boolean wasCorrupted = registeredIndexes.getWasCorrupted();
 
     Path projectQueueFile = getQueueFile(project);
-    ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().getCreationTimestamp());
+    ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, wasCorrupted, ManagingFS.getInstance().getCreationTimestamp());
 
     // Add project to various lists in read action to make sure that
     // they are not added to lists during disposing of project (in this case project may be stuck forever in those lists)
@@ -76,15 +76,10 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
 
     if (!registered) return;
 
-    OrphanDirtyFilesQueue orphanQueue = fileBasedIndex.getOrphanDirtyFileIdsFromLastSession();
-    if (orphanQueue == null) {
-      LOG.error("Orphan dirty files queue is not yet initialized");
-      orphanQueue = new OrphanDirtyFilesQueue(new IntArrayList(), 0L);
-    }
-
     // schedule dumb mode start after the read action we're currently in
     boolean suspended = IndexInfrastructure.isIndexesInitializationSuspended();
-    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, suspended, true, true, myCoroutineScope, "On project open");
+    OrphanDirtyFilesQueue orphanQueue = registeredIndexes.getOrphanDirtyFilesQueue();
+    Job indexesCleanupJob = scanAndIndexProjectAfterOpen(project, orphanQueue, projectDirtyFilesQueue, suspended, !wasCorrupted, true, myCoroutineScope, "On project open");
     forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 

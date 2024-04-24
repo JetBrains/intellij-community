@@ -157,8 +157,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final IntSet myStaleIds = new IntOpenHashSet();
   private final DirtyFiles myDirtyFiles = new DirtyFiles(); // project dirty files from last session and new orphan files not in collectors
   private final Map<Project, Ref<Long>> myLastSeenIndexesInOrphanQueue = new ConcurrentHashMap<>();
-  @Nullable
-  private volatile OrphanDirtyFilesQueue myOrphanDirtyFileIdsFromLastSession;
 
   final Lock myReadLock;
   public final Lock myWriteLock;
@@ -333,10 +331,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     synchronized (myStaleIds) {
       myStaleIds.addAll(staleIds);
     }
-  }
-
-  void setOrphanDirtyFilesQueueFromLastSession(@NotNull OrphanDirtyFilesQueue dirtyFileIds) {
-    myOrphanDirtyFileIdsFromLastSession = dirtyFileIds;
   }
 
   @NotNull
@@ -645,13 +639,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         PersistentIndicesConfiguration.saveConfiguration();
 
         IntSet unprocessedOrphanDirtyFiles = new IntOpenHashSet();
-        OrphanDirtyFilesQueue orphanDirtyFileIds = myOrphanDirtyFileIdsFromLastSession;
-        if (orphanDirtyFileIds == null) {
-          LOG.info("Shutting FileBaseIndex before orphan dirty files queue was read from disk");
-        }
-        else {
-          unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
-        }
+        OrphanDirtyFilesQueue orphanDirtyFileIds = registeredIndexes.getOrphanDirtyFilesQueue();
+        unprocessedOrphanDirtyFiles.addAll(orphanDirtyFileIds.getFileIds());
 
         if (myIsUnitTestMode) {
           IntSet allStaleIdsToCheck = new IntOpenHashSet();
@@ -685,7 +674,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myFilesToUpdateCollector.clear();
         myDirtyFiles.clear();
         vfsCreationStamp = 0;
-        myOrphanDirtyFileIdsFromLastSession = null;
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.close();
@@ -909,11 +897,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         myStaleIds.clear();
       }
     }
-  }
-
-  @Nullable
-  OrphanDirtyFilesQueue getOrphanDirtyFileIdsFromLastSession() {
-    return myOrphanDirtyFileIdsFromLastSession;
   }
 
   void ensureDirtyFileIndexesDeleted(@NotNull Collection<Integer> dirtyFiles) {

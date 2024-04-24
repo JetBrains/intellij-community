@@ -35,8 +35,9 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.serviceContainer.ComponentManagerImplKt.handleComponentError;
+import static com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
 
-final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexConfiguration> {
+final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBasedIndexDataInitializationResult> {
   private static final Logger LOG = Logger.getInstance(FileBasedIndexDataInitialization.class);
 
   private boolean myCurrentVersionCorrupted;
@@ -59,13 +60,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     myRegisteredIndexes = registeredIndexes;
   }
 
-  private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
+  private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions(@NotNull OrphanDirtyFilesQueue orphanDirtyFilesQueue) {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
     Iterator<FileBasedIndexExtension<?, ?>> extensions = FileBasedIndexExtension.EXTENSION_POINT_NAME.getIterable().iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint().size());
 
-    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp());
-    IntSet allDirtyFiles = new IntOpenHashSet(myOrphanDirtyFilesQueue.getFileIds());
+    IntSet allDirtyFiles = new IntOpenHashSet(orphanDirtyFilesQueue.getFileIds());
     if (StaleIndexesChecker.shouldCheckStaleIndexesOnStartup()) {
       readAllProjectDirtyFilesQueues(allDirtyFiles);
     }
@@ -113,7 +113,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
     if (projectQueueFiles != null) {
       for (File file : projectQueueFiles) {
-        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
+        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), false, ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
       }
     }
   }
@@ -131,16 +131,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     //Generally, Index will be shutdown by Disposer -- but to be sure, we'll register a shutdown task also:
     myFileBasedIndex.setUpShutDownTask();
 
-    Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions();
-
-    PersistentIndicesConfiguration.loadConfiguration();
-
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
     for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
       FileBasedIndexInfrastructureExtension.InitializationResult result = extension.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
-                                result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
+                                  result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
     myCurrentVersionCorrupted = myCurrentVersionCorrupted || storageLayoutChanged;
 
@@ -148,6 +144,11 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       CorruptionMarker.dropIndexes();
       ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
+
+    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), myCurrentVersionCorrupted, ManagingFS.getInstance().getCreationTimestamp());
+    Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions(myOrphanDirtyFilesQueue);
+
+    PersistentIndicesConfiguration.loadConfiguration();
 
     return tasks;
   }
@@ -161,7 +162,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   }
 
   @Override
-  protected @NotNull IndexConfiguration finish() {
+  protected @NotNull FileBasedIndexDataInitializationResult finish() {
     try {
       myState.finalizeFileTypeMappingForIndices();
 
@@ -174,7 +175,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       );
 
       myState.freeze();
-      myRegisteredIndexes.setState(myState); // memory barrier
+      FileBasedIndexDataInitializationResult result = new FileBasedIndexDataInitializationResult(myState, myCurrentVersionCorrupted, myOrphanDirtyFilesQueue);
+      myRegisteredIndexes.setInitializationResult(result); // memory barrier
       // check if rebuild was requested for any index during registration
       for (ID<?, ?> indexId : myState.getIndexIDs()) {
         try {
@@ -186,13 +188,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
         }
       }
 
-      return myState;
+      return result;
     }
     finally {
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
       myFileBasedIndex.addStaleIds(myStaleIds);
-      myFileBasedIndex.setOrphanDirtyFilesQueueFromLastSession(myOrphanDirtyFilesQueue);
       myFileBasedIndex.setUpFlusher();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
@@ -223,8 +224,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   @NotNull
   @Override
-  protected String getInitializationFinishedMessage(@NotNull IndexConfiguration initializationResult) {
-    return "Initialized indexes: " + initializationResult.getIndexIDs() + ".";
+  protected String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
+    return "Initialized indexes: " + initializationResult.myState.getIndexIDs() + ".";
   }
 
   private static void saveRegisteredIndicesAndDropUnregisteredOnes(@NotNull Collection<? extends ID<?, ?>> ids) {
@@ -297,6 +298,18 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     @Override
     public void writeActionStarted(@NotNull Object action) {
       myFileBasedIndex.clearUpToDateIndexesForUnsavedOrTransactedDocs();
+    }
+  }
+
+  static class FileBasedIndexDataInitializationResult {
+    final IndexConfiguration myState;
+    final boolean myWasCorrupted;
+    final OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
+
+    FileBasedIndexDataInitializationResult(@NotNull IndexConfiguration state, boolean currentVersionCorrupted, @NotNull OrphanDirtyFilesQueue queue) {
+      myState = state;
+      myWasCorrupted = currentVersionCorrupted;
+      myOrphanDirtyFilesQueue = queue;
     }
   }
 }
