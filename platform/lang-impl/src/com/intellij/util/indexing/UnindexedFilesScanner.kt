@@ -122,8 +122,7 @@ class UnindexedFilesScanner private constructor(private val myProject: Project,
 
   init {
     val filterHolder = myIndex.indexableFilesFilterHolder
-    myFilterHandler = if (isIndexingFilesFilterUpToDate
-    ) IdleFilesFilterScanningHandler(filterHolder)
+    myFilterHandler = if (isIndexingFilesFilterUpToDate) IdleFilesFilterScanningHandler()
     else UpdatingFilesFilterScanningHandler(filterHolder)
     myProvidedStatusMark = if (predefinedIndexableFilesIterators == null) null else mark
     LOG.assertTrue(this.predefinedIndexableFilesIterators == null || !predefinedIndexableFilesIterators.isEmpty())

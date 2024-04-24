@@ -78,10 +78,14 @@ internal fun invalidateProjectFilterIfFirstScanningNotRequested(project: Project
       false
     }
     else {
-      project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, true)
+      setProjectFilterIsInvalidated(project, true)
       true
     }
   }
+}
+
+internal fun setProjectFilterIsInvalidated(project: Project, invalid: Boolean) {
+  project.putUserData(PERSISTENT_INDEXABLE_FILES_FILTER_INVALIDATED, if (invalid) true else null)
 }
 
 internal fun Job.forgetProjectDirtyFilesOnCompletion(fileBasedIndex: FileBasedIndexImpl,
