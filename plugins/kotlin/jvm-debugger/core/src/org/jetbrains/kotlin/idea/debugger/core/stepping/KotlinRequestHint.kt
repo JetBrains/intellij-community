@@ -16,8 +16,7 @@ import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.isOnSuspensionPoint
+import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
@@ -32,6 +31,13 @@ open class KotlinRequestHint(
     private val myInlineFilter = createKotlinInlineFilter(suspendContext)
     override fun isTheSameFrame(context: SuspendContextImpl) =
         super.isTheSameFrame(context) && (myInlineFilter === null || !myInlineFilter.isNestedInline(context))
+
+    override fun getNextStepDepth(context: SuspendContextImpl): Int {
+        if (needTechnicalStepInto(context)) {
+            return StepRequest.STEP_INTO
+        }
+        return super.getNextStepDepth(context)
+    }
 
     override fun doStep(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl?, stepThread: ThreadReferenceProxyImpl?, size: Int, depth: Int, commandToken: Any?) {
         if (depth == StepRequest.STEP_OUT) {
@@ -107,6 +113,9 @@ class KotlinStepOverRequestHint(
                 }
                 val location = frameProxy.safeLocation()
 
+                if (needTechnicalStepInto(context)) {
+                    return StepRequest.STEP_INTO
+                }
                 processSteppingFilters(context, location)?.let { return it }
 
                 val method = location?.safeMethod()
@@ -219,4 +228,23 @@ class KotlinStepIntoRequestHint(
         }
         return STOP
     }
+}
+
+private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {
+    val location = context.location ?: return false
+
+    if (!location.isInKotlinSources()) {
+        return false
+    }
+
+    if (isInSuspendMethod(location) && isOnSuspendReturnOrReenter(location) && !isOneLineMethod(location)) {
+        return true
+    }
+
+    //stepped out from suspend function
+    val method = location.safeMethod()
+    if (method != null && isInvokeSuspendMethod(method) && location.safeLineNumber() < 0) {
+        return true
+    }
+    return false
 }
