@@ -14,6 +14,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.module.Module;
@@ -75,25 +76,35 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
   ) {
     String externalProjectPath = projectData.getLinkedExternalProjectPath();
 
-    AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectSystemId);
-    localSettings.forgetExternalProjects(Collections.singleton(externalProjectPath));
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from local settings", __ -> {
+      AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectSystemId);
+      localSettings.forgetExternalProjects(Collections.singleton(externalProjectPath));
+    });
 
-    AbstractExternalSystemSettings<?, ?, ?> settings = ExternalSystemApiUtil.getSettings(project, projectSystemId);
-    settings.unlinkExternalProject(externalProjectPath);
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from system settings", __ -> {
+      AbstractExternalSystemSettings<?, ?, ?> settings = ExternalSystemApiUtil.getSettings(project, projectSystemId);
+      settings.unlinkExternalProject(externalProjectPath);
+    });
 
-    ExternalProjectsManagerImpl externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project);
-    externalProjectsManager.forgetExternalProjectData(projectSystemId, externalProjectPath);
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from data storage", __ -> {
+      ExternalProjectsManagerImpl externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project);
+      externalProjectsManager.forgetExternalProjectData(projectSystemId, externalProjectPath);
+    });
 
-    if (projectNode != null) {
-      ExternalSystemNode<?> group = projectNode.getGroup();
-      group.remove(projectNode);
-    }
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from tool window", __ -> {
+      if (projectNode != null) {
+        ExternalSystemNode<?> group = projectNode.getGroup();
+        group.remove(projectNode);
+      }
+    });
 
-    List<Module> orphanModules = collectExternalSystemModules(project, projectSystemId, externalProjectPath);
-    if (!orphanModules.isEmpty()) {
-      ProjectDataManagerImpl projectDataManager = ProjectDataManagerImpl.getInstance();
-      projectDataManager.removeData(ProjectKeys.MODULE, orphanModules, Collections.emptyList(), projectData, project, false);
-    }
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Remove project from workspace model", __ -> {
+      List<Module> orphanModules = collectExternalSystemModules(project, projectSystemId, externalProjectPath);
+      if (!orphanModules.isEmpty()) {
+        ProjectDataManagerImpl projectDataManager = ProjectDataManagerImpl.getInstance();
+        projectDataManager.removeData(ProjectKeys.MODULE, orphanModules, Collections.emptyList(), projectData, project, false);
+      }
+    });
   }
 
   private static @NotNull List<Module> collectExternalSystemModules(
