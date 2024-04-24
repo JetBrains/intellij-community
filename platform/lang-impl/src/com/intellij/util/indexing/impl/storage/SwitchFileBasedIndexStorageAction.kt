@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -20,7 +20,7 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val allStorages = customIndexStorageDescriptors() + defaultIndexStorageDescriptor()
-    val activeStorage = allStorages.find { it.bean == FileBasedIndexLayoutSettings.getUsedLayout()}
+    val activeStorage = allStorages.find { it.bean == FileBasedIndexLayoutSettings.getUsedLayout() }
     val popupContext = IndexStorageDescriptorPopupContext(project, allStorages)
     ComboBoxPopup(popupContext, activeStorage, Consumer {
       restartIndexesWithStorage(it)
@@ -47,24 +47,24 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
 }
 
 private data class IndexStorageDescriptor(val presentableName: @Nls String,
-                                val id: String,
-                                val version: Int,
-                                val bean: FileBasedIndexLayoutProviderBean?)
+                                          val id: String,
+                                          val version: Int,
+                                          val bean: FileBasedIndexLayoutProviderBean?)
 
 private fun defaultIndexStorageDescriptor(): IndexStorageDescriptor {
-  return IndexStorageDescriptor(IndexingBundle.message("default.index.storage.presentable.name"),
+  return IndexStorageDescriptor(IndexingBundle.message("ide.indexes.default-storage.presentable.name"),
                                 "default",
                                 0,
                                 null)
 }
 
 private fun customIndexStorageDescriptors(): List<IndexStorageDescriptor> =
-  DefaultIndexStorageLayout.availableLayouts.map {
+  DefaultIndexStorageLayout.supportedLayoutProviders.map {
     IndexStorageDescriptor(it.localizedPresentableName, it.id, it.version, it)
   }
 
 private class IndexStorageDescriptorPopupContext(private val project: Project,
-                                       val indexStorages: List<IndexStorageDescriptor>) : ComboBoxPopup.Context<IndexStorageDescriptor> {
+                                                 indexStorages: List<IndexStorageDescriptor>) : ComboBoxPopup.Context<IndexStorageDescriptor> {
   private val model = CollectionComboBoxModel(indexStorages)
 
   override fun getProject(): Project = project
@@ -74,6 +74,6 @@ private class IndexStorageDescriptorPopupContext(private val project: Project,
   }
 
   override fun getRenderer(): ListCellRenderer<IndexStorageDescriptor> {
-    return SimpleListCellRenderer.create { label, value, _ -> label.text = value.presentableName }
+    return SimpleListCellRenderer.create { label, desc, _ -> label.text = "${desc.presentableName} (${desc.id}: v${desc.version})" }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.application.PathManager
@@ -16,18 +16,29 @@ import java.nio.file.Path
 import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
 
+/**
+ * Persistence for indexLayout, if switched by [com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction]
+ * Chosen layout is stored in `<indexes>/indices.layout` file with binary format:
+ * ```
+ * {layout.id: utf8}{layout.version:varint}
+ * ```
+ */
 object FileBasedIndexLayoutSettings {
   private val log = logger<FileBasedIndexLayoutSettings>()
 
   @Synchronized
   fun setUsedLayout(bean: FileBasedIndexLayoutProviderBean?) {
     try {
-      Files.createDirectories(indexLayoutSettingFile().parent)
+      val indexLayoutSettingFile = indexLayoutSettingFile()
+
+      Files.createDirectories(indexLayoutSettingFile.parent)
+
       if (bean == null) {
-        FileUtil.delete(indexLayoutSettingFile())
+        FileUtil.delete(indexLayoutSettingFile)
         return
       }
-      DataOutputStream(indexLayoutSettingFile().outputStream().buffered()).use {
+
+      DataOutputStream(indexLayoutSettingFile.outputStream().buffered()).use {
         EnumeratorStringDescriptor.INSTANCE.save(it, bean.id)
         DataInputOutputUtil.writeINT(it, bean.version)
       }
@@ -39,20 +50,21 @@ object FileBasedIndexLayoutSettings {
 
   @Synchronized
   fun loadUsedLayout(): Boolean {
-    if (!Files.exists(indexLayoutSettingFile())) {
+    val indexLayoutSettingFile = indexLayoutSettingFile()
+    if (!Files.exists(indexLayoutSettingFile)) {
       currentLayout = Ref.create()
       return false
     }
     else {
       val id: String
       val version: Int
-      DataInputStream(indexLayoutSettingFile().inputStream().buffered()).use {
+      DataInputStream(indexLayoutSettingFile.inputStream().buffered()).use {
         id = EnumeratorStringDescriptor.INSTANCE.read(it)
         version = DataInputOutputUtil.readINT(it)
       }
 
       // scan for exact layout id & version match
-      for (bean in DefaultIndexStorageLayout.availableLayouts) {
+      for (bean in DefaultIndexStorageLayout.supportedLayoutProviders) {
         if (bean.id == id && bean.version == version) {
           currentLayout = Ref.create(bean)
           return false
@@ -60,7 +72,7 @@ object FileBasedIndexLayoutSettings {
       }
 
       // scan only matched id
-      for (bean in DefaultIndexStorageLayout.availableLayouts) {
+      for (bean in DefaultIndexStorageLayout.supportedLayoutProviders) {
         if (bean.id == id) {
           setUsedLayout(bean)
           currentLayout = Ref.create(bean)
@@ -90,7 +102,7 @@ object FileBasedIndexLayoutSettings {
     currentLayout = null
   }
 
-  private var currentLayout : Ref<FileBasedIndexLayoutProviderBean?>? = null
+  private var currentLayout: Ref<FileBasedIndexLayoutProviderBean?>? = null
   private fun indexLayoutSettingFile(): Path = PathManager.getIndexRoot().resolve("indices.layout")
 
 }
