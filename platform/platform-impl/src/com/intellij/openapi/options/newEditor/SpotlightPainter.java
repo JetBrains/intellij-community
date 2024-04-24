@@ -51,7 +51,7 @@ public class SpotlightPainter extends AbstractPainter implements ComponentHighli
     return true;
   }
 
-  void updateLater() {
+  public final void updateLater() {
     myQueue.queue(new Update(this) {
       @Override
       public void run() {
@@ -60,11 +60,11 @@ public class SpotlightPainter extends AbstractPainter implements ComponentHighli
     });
   }
 
-  void updateNow() {
+  public final void updateNow() {
     myUpdater.updateNow(this);
   }
 
-  void update(SettingsFilter filter, Configurable configurable, JComponent component) {
+  public void update(SettingsFilter filter, Configurable configurable, JComponent component) {
     if (configurable == null) {
       myGlassPanel.clear();
       myVisible = false;
