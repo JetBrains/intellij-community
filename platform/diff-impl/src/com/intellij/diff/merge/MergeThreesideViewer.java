@@ -423,6 +423,12 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
   }
 
+  @NotNull
+  @ApiStatus.Internal
+  public TextMergeRequest getMergeRequest() {
+    return myMergeRequest;
+  }
+
   private static MergeLineFragmentsWithImportMetadata getLineFragments(@NotNull ProgressIndicator indicator,
                                                                        @NotNull List<CharSequence> sequences,
                                                                        @Nullable MergeRange importRange,
