@@ -1,5 +1,9 @@
 package com.intellij.terminal.block.completion
 
+import com.intellij.terminal.block.completion.engine.CommandPartNode
+import com.intellij.terminal.block.completion.engine.CommandTreeBuilder
+import com.intellij.terminal.block.completion.engine.CommandTreeSuggestionsProvider
+import com.intellij.terminal.block.completion.engine.SubcommandNode
 import com.intellij.util.containers.TreeTraversal
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.terminal.completion.BaseSuggestion

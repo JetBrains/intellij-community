@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.completion
 
-import com.intellij.terminal.block.completion.*
+import com.intellij.terminal.block.completion.ShellEnvironment
+import com.intellij.terminal.block.completion.engine.CommandPartNode
+import com.intellij.terminal.block.completion.engine.CommandTreeBuilder
+import com.intellij.terminal.block.completion.engine.CommandTreeSuggestionsProvider
+import com.intellij.terminal.block.completion.engine.SubcommandNode
 import com.intellij.terminal.completion.util.FakeCommandSpecManager
 import com.intellij.terminal.completion.util.FakeShellRuntimeDataProvider
 import com.intellij.terminal.completion.util.commandSpec
