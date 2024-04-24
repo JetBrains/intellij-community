@@ -59,6 +59,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -826,6 +827,7 @@ public final class ExternalSystemUtil {
     return buildEvent;
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              @NotNull String executorId,
                              @NotNull Project project,
@@ -833,6 +835,7 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, null, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              final @NotNull String executorId,
                              final @NotNull Project project,
@@ -842,6 +845,7 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, true);
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              final @NotNull String executorId,
                              final @NotNull Project project,
@@ -852,6 +856,7 @@ public final class ExternalSystemUtil {
     runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, activateToolWindowBeforeRun, null);
   }
 
+  @ApiStatus.Obsolete
   public static void runTask(final @NotNull ExternalSystemTaskExecutionSettings taskSettings,
                              final @NotNull String executorId,
                              final @NotNull Project project,
@@ -860,7 +865,20 @@ public final class ExternalSystemUtil {
                              final @NotNull ProgressExecutionMode progressExecutionMode,
                              boolean activateToolWindowBeforeRun,
                              @Nullable UserDataHolderBase userData) {
-    var environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
+    TaskExecutionSpec spec = TaskExecutionSpec.create(project, externalSystemId, executorId, taskSettings)
+      .withProgressExecutionMode(progressExecutionMode)
+      .withCallback(callback)
+      .withUserData(userData)
+      .withActivateToolWindowBeforeRun(activateToolWindowBeforeRun)
+      .build();
+    runTask(spec);
+  }
+
+  public static void runTask(@NotNull TaskExecutionSpec spec) {
+    Project project = spec.getProject();
+    ProjectSystemId externalSystemId = spec.getSystemId();
+
+    var environment = createExecutionEnvironment(project, externalSystemId, spec.getSettings(), spec.getExecutorId());
     if (environment == null) {
       LOG.warn("Execution environment for " + externalSystemId + " is null");
       return;
@@ -868,21 +886,24 @@ public final class ExternalSystemUtil {
 
     var runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
     assert runnerAndConfigurationSettings != null;
-    runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(activateToolWindowBeforeRun);
+    runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(spec.getActivateToolWindowBeforeRun());
 
+    UserDataHolderBase userData = spec.getUserData();
     if (userData != null) {
       var runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
       userData.copyUserDataTo(runConfiguration);
     }
 
-    var title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-    ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, progressExecutionMode, new ExternalSystemTaskUnderProgress() {
+    var title = AbstractExternalSystemTaskConfigurationType.generateName(project, spec.getSettings());
+    ExternalSystemTaskUnderProgress.executeTaskUnderProgress(project, title, spec.getProgressExecutionMode(),
+                                                             new ExternalSystemTaskUnderProgress() {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         environment.putUserData(ExternalSystemRunnableState.PROGRESS_INDICATOR_KEY, indicator);
         indicator.setIndeterminate(true);
 
         boolean result = waitForProcessExecution(project, environment, () -> environment.getRunner().execute(environment));
+        TaskCallback callback = spec.getCallback();
         if (callback != null) {
           if (result) {
             callback.onSuccess();
@@ -891,7 +912,7 @@ public final class ExternalSystemUtil {
             callback.onFailure();
           }
         }
-        if (!result) {
+        if (!result && spec.getActivateToolWindowOnFailure()) {
           ApplicationManager.getApplication().invokeLater(() -> {
             var window = ToolWindowManager.getInstance(project).getToolWindow(environment.getExecutor().getToolWindowId());
             if (window != null) {
